@@ -1,0 +1,17 @@
+---
+title: Chat design Search Engine DB
+---
+flowchart
+    db-cs -. id: converId_userId ..-> se-cs-1 & se-cs-n
+    db-cm -. id: messId_userId ...-> se-cm-1 & se-cm-n
+    se-cs-1 --> se-cm-1
+    se-cs-n --> se-cm-n
+
+    db-cs[(office-chat-conversation)]
+    se-cs-1[[chat-conversation for user-1]]
+    se-cs-n[[chat-conversation for user-n]]
+    db-cm[(office-chat-message)]
+    se-cm-1[[chat-message for user-1]]
+    se-cm-n[[chat-message for user-n]]
+
+

@@ -1,0 +1,87 @@
+---
+title: Task design database
+---
+classDiagram
+
+    office-tasks o-- office-files
+    office-tasks o-- office-task-logs
+    office-users o-- office-tasks
+    office-task-projects o-- office-tasks
+    office-org-charts o-- office-task-projects
+
+    class office-users {
+        id: UUID
+    }
+
+    class office-org-charts {
+        id: UUID
+    }
+
+    class office-task-projects {
+        id: UUID
+        key: string
+
+        orgChart: OfficeOrgChart
+    }
+
+    class office-tasks {
+        id: UUID
+        no: number
+        name: string
+        description: string
+        createdAt: Date
+        updatedAt: Date
+        startTime: Date
+        finishTime: Date
+        doneAt: Date
+
+        %% type: TaskType ? table
+        status: TaskStatus
+        %% severity: TaskSeverity ? table
+        priority: TaskPriority
+
+        reporter: OfficeUser
+        assigned: OfficeUser
+        watchers: OfficeUser[]
+
+        %% --------------------- Type -----------------------
+        %% TaskStatus defined:
+        %% Todo/In_progress/Resolved/Pending/Reject/Cancel/Done
+        %% => “Chờ xử lý” / “Đang xử lý” / “Đã xử lý” / “Tạm dừng” / “Từ chối” / "Đã hủy" / "Hoàn thành"
+        TaskStatus(): Todo/In_progress/Resolved/Pending/Reject/Cancel/Done
+        TaskPriority(): Highest/High/Medium/Low/Lowest
+    }
+
+    class office-objects {
+        id: UUID
+
+        relationType: OfficeObjectType
+        relationId: string
+
+        name: string
+        mimetype: string
+%%        encoding: string
+        size: string
+        location: string
+        etag: string
+        key: string
+        bucket: string
+
+        OfficeObjectType(): Task
+    }
+
+    class office-task-labels {
+        id: UUID
+    }
+
+    class office-task-logs {
+        id: UUID
+        creator: OfficeUser
+        description: string
+        type: TaskLogType
+
+        %% [{field, name, oldValue, newValue}]
+        logs: Json
+
+        TaskLogType(): Comment/History
+    }

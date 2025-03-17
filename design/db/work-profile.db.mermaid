@@ -1,0 +1,53 @@
+---
+title: Work profile design database
+---
+classDiagram
+
+    office-user-work-profile --o office-user
+    office-user --o office-org-chart
+    office-user-work-profile <-- office-user-work-profile-info
+    office-user-work-profile <-- office-user-work-profile-detail
+
+    office-org-chart o-- office-info-blocks
+
+%%    ---------------------------------------
+
+    class office-user-work-profile {
+        id: UUID
+
+        user: OfficeUser
+    }
+
+    class office-user-work-profile-info {
+        id: UUID
+
+        type: String
+        reason: String
+        activeDate: Date
+        isDecided: Boolean
+        decidedNumber: String
+        decidedDate: Date
+
+        workProfile: OfficeUserWorkProfile
+    }
+
+    class office-user-work-profile-detail {
+        id: UUID
+
+        userCode: String
+        department: OfficeOrgChart
+        title: OfficeTitle
+        major: String
+        leader: OfficeUser
+        metadata: Jsonb
+
+        workProfile: OfficeUserWorkProfile
+    }
+
+    class office-info-blocks {
+        id: UUID
+        relationType: OfficeBlockType
+        relationId: String
+
+        OfficeBlockType(): UserWork/...
+    }

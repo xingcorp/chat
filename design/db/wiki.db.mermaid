@@ -1,0 +1,32 @@
+---
+title: Wiki design database
+---
+classDiagram
+
+    office-document-wikis o-- office-document-folders
+    office-document-wiki-versions o-- office-document-wikis
+
+    class office-document-folders {
+        id: UUID
+    }
+
+    class office-document-wikis {
+        id: UUID
+
+        folder: DocumentFolder
+    }
+
+    class office-document-wiki-versions {
+        id: UUID
+        no: Number
+        version: String
+        name: String
+        content: Text
+        imageIds: String[]
+        isPublic: Boolean
+        isLatestVersion: Boolean
+
+        wiki: DocumentWiki
+        approval: OfficeApproval
+    }
+

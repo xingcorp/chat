@@ -1,0 +1,29 @@
+1. User
+    1.1. List user with search
+    1.2. Push notify message
+
+2. Chat
+    2.1. Request connect:
+    2.2. Request connect list:
+
+
+3. Conversation:
+    3.1. Create
+    3.2. Delete
+    3.3. List paginate
+
+
+4. Group:
+    4.1. Create
+    4.2. Edit group name & image
+    4.3. Delete by super admin
+    4.4. Member leave
+    4.5. Set admin
+    4.6. Add/remove member
+
+
+5. Message:
+    5.1. Add
+    5.2. List with paginate
+    5.3. Delete
+    5.4. Delete all message of conversation/group

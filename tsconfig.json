@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "es2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false,
+    "resolveJsonModule": true,
+    "paths": {
+      "@common/*": ["src/common/*"],
+      "@helpers/*": ["src/helpers/*"],
+      "@models/*": ["src/models/*"],
+      "@repositories/*": ["src/models/repositories/*"],
+      "@utils/*": ["src/utils/*"],
+      "@services/*": ["src/services/*"],
+      "@core/*": ["src/modules/core/*"],
+      "@modules/*": ["src/modules/*"],
+      "@middlewares/*": ["src/middlewares/*"],
+      "@decorators/*": ["src/decorators/*"],
+      "@interceptors/*": ["src/interceptors/*"],
+      "@enum/*": ["src/enum/*"],
+      "@service-modules/*": ["src/modules/services/*"],
+      "@args/*": ["src/arguments/*"],
+    }
+  }
+}

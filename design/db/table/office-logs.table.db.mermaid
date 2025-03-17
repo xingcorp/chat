@@ -1,0 +1,26 @@
+---
+title: Office design table office-logs
+---
+classDiagram
+
+    class office-logs {
+        id: UUID
+        userCreator: OfficeUser
+        adminCreator: OfficeSysUser
+        orgCharts: OfficeOrgChart[]
+        rootOrgId: String
+        type: OfficeLogType
+        featureLogType: OfficeFeatureLogType
+        featureLogId: String
+        description: String
+        attachmentIds: UUID[]
+
+    %% [{type, list}]
+        attachmentType: JSON
+
+    %% [{field, name, oldValue, newValue}]
+        logs: JSON
+
+        OfficeLogType(): Comment/History
+        OfficeFeatureLogType(): Paycheck/Other
+    }

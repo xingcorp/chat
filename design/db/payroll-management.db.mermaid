@@ -1,0 +1,51 @@
+---
+title: Salary management design database
+---
+classDiagram
+
+    office-user <-- office-user-paycheck
+    office-payroll <-- office-user-paycheck
+    office-payroll <-- office-info-blocks
+    office-payroll <-- office-org-charts_payrolls_office-payroll
+    office-org-charts <-- office-org-charts_payrolls_office-payroll
+
+    class office-user {
+        id: UUID
+    }
+
+    class office-org-charts {
+        id: UUID
+    }
+
+    class office-org-charts_payrolls_office-payroll {
+        orgId: String
+        payrollId: String
+    }
+
+    class office-info-blocks {
+        id: UUID
+        relationType: OfficeBlockType
+        relationId: String
+
+        OfficeBlockType(): User/Payroll
+    }
+
+    class office-payroll {
+        id: UUID
+        code: String
+        name: String
+        actice: Boolean
+    }
+
+    class office-user-paycheck {
+        id: UUID
+        payrollId: String
+        userId: String
+        code: String
+        name: String
+        month: Number
+        year: Number
+        wage: Number
+        metadata: Json
+        active: Boolean
+    }

@@ -1,0 +1,137 @@
+---
+title: E-learning design database
+---
+classDiagram
+
+    office-learn-projects -- office-learn-projects-requirements
+    office-learn-projects o--o office-learn-skills
+    office-learn-projects o--o office-learn-certifications
+    office-learn-projects --o office-learn-courses
+    office-learn-courses -- office-learn-reports
+    office-learn-courses --o office-learn-sections
+    office-learn-courses o--o office-learn-users
+%%    office-learn-courses o--o office-learn-students
+    office-learn-sections --o office-learn-lessons
+    office-learn-users --o office-learn-user-receivers
+
+    class office-learn-projects {
+        id: UUID
+        code: string
+        name: string
+        timeType: ProjectTimeType
+        dayOfEvent: int
+        startTime: Date
+        endTime: Date
+        summary: string
+        content: string
+        avatarIds: string[]
+        videoIds: string[]
+        status: ActiveStatus
+
+        %%--------------------
+        skills: LearnSkill[]
+        certificates: LearnCertification[]
+        departments: OOG[]
+        orgCharts: OOG[]
+    }
+
+    %%  ???
+    class office-learn-projects-requirements {
+        id: UUID
+
+        %%--------------------
+        project: LearnProject
+    }
+
+    class office-learn-skills {
+        id: UUID
+        code: string
+        name: string
+    }
+
+    class office-learn-certifications {
+        id: UUID
+        code: string
+        name: string
+    }
+
+    class office-learn-courses {
+        id: UUID
+        code: string
+        name: string
+        timeOpen: time
+        timeClose: time
+        joinType: CourseJoinType
+        joinStartDate: Date
+        joinEndDate: Date
+        joinNumber: int
+        trainType: CourseTrainType
+        place: string
+        status: CourseStatus
+
+        proposerId: string
+        %% admin/user
+        proposerType: string
+
+
+        %%--------------------
+        project: LearnProject
+    }
+
+    class office-learn-reports {
+        id: UUID
+
+        %%--------------------
+        course: LearnCourse
+    }
+
+    class office-learn-sections {
+        id: UUID
+        name: string
+        description: string
+
+        %%--------------------
+        course: LearnCourse
+    }
+
+    class office-learn-lessons {
+        id: UUID
+        code: string
+        name: string
+        mediaId: string
+        mediaType: LessonMediaType
+        embedUrl: string
+        description: string
+        attachmentIds: string[]
+    }
+
+    class office-learn-users {
+        id: UUID
+        userId: string
+        %% teacher/student
+        userType: LearnUserType
+        relationId: string
+        %% course/lesson
+        relationType: LearnObjectType
+        timeReceiver: float
+        createdAt
+        updatedAt
+    }
+
+    class office-learn-user-receivers {
+        id: UUID
+        month: int
+        year: int
+        timeReceiver: float
+
+        %%-------------------------
+        learnUser: OfficeLearnUser
+    }
+
+%%    class office-learn-students {
+%%        id: UUID
+%%    }
+
+    class office-user-kpi {
+        id: UUID
+    }

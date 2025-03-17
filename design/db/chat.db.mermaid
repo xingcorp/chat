@@ -1,0 +1,80 @@
+---
+title: Chat design database
+---
+classDiagram
+    office-chat-conversation-member --> office-user
+    office-chat-conversation-member --> office-chat-conversation
+    office-chat-conversation <-- office-chat-message
+    office-user <-- office-chat-message
+    office-user <-- office-chat-message-reader
+    office-chat-message <-- office-chat-message-reader
+    office-chat-message o-- office-chat-message
+    office-chat-message o-- office-chat-message-reaction
+    office-user o-- office-chat-message-reaction
+
+    class office-user {
+        id: UUID
+    }
+
+%%    class office-block-user { }
+
+    class office-chat-conversation {
+        id: UUID
+        name: String
+        type: ConversationType
+        description: Text
+        imgUrl: String
+        groupType: String
+
+        ConversationType(): Direct/Group
+    }
+
+    class office-chat-conversation-member {
+        id: UUID
+        conversationId: String
+        userId: String
+        roomMaster: Boolean
+        superAdmin: Boolean
+        admin: Boolean
+        connected: Boolean
+        hide: Boolean
+        deletedAt: Date
+    }
+
+    class office-chat-message {
+        id: UUID
+        conversationId: String
+        senderId: String
+        receiverId: String
+        message?: String
+        url?: String
+        stickerPath?: String
+        latitude?: Number
+        longitude?: Number
+        type: MessageType
+
+        replyTo: OfficeChatMessage
+        replies: OfficeChatMessage[]
+        reactions: OfficeChatMessageReaction[]
+
+        MessageType(): Text/Image/Video/Location/Call
+    }
+
+    class office-chat-message-reader {
+        id: UUID
+        messageId: String
+        userId: String
+        createdAt: Date
+        deletedAt: Date
+    }
+
+    class office-chat-message-reaction {
+        id: UUID
+        stickerPath?: String
+        createdAt: Date
+        deletedAt: Date
+
+        message: OfficeChatMessage
+        user: OfficeUser
+    }
+

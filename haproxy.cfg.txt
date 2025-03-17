@@ -1,0 +1,14 @@
+global
+    maxconn     100
+defaults
+    mode        tcp
+    retries     5
+    timeout     client  5m
+    timeout     server  5m
+    timeout     connect 10s
+    timeout     check   10s
+frontend        ft_posgres
+    bind        *:5432
+    default_backend bk_posgres
+backend         bk_posgres
+    balance     leastconn

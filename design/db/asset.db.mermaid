@@ -1,0 +1,89 @@
+---
+title: Asset design database
+---
+classDiagram
+
+%%    ---------------------------------------
+
+
+    class office-asset {
+        id: UUID
+
+        no: Int
+        code: String
+        name: String
+        imageIds: String[]
+        serial: String
+        price: BigInt
+        purchaseAt: Date
+        warranty: String
+        warrantyStartedAt: Date
+        warrantyExpiredAt: Date
+        providerText: String
+        status: AssetStatus
+
+        category: CategoryAsset
+%%        provider: ProviderAsset
+        assignments: AssignmentAsset
+        department: OfficeOrgChart
+
+        AssetStatus(): InStock/InUse/..
+    }
+
+%%1. Unit: đơn vị
+%%2. Piece: chiếc, cái
+%%3. Sheet: tờ, tấm
+%%4. Pallet: pallet
+%%5. Roll: cuộn
+%%6. Bundle: bó
+%%7. Set: bộ
+%%8. CBM - CUBIC METER  (M3): MÉT KHỐI
+%%9. Case: thùng, sọt
+%%10. Jar: chum
+%%11. Box: hộp
+%%12. Bag: túi
+%%13. Basket: rổ, thùng
+%%14. Drum: thùng (rượu)
+%%15. BARREL: thùng (dầu, hóa chất)
+%%16. Can: can
+%%17. Carton: thùng carton
+%%18. Bottle: chai
+%%19. Bar: thanh
+%%20. CRATE: kiện hàng
+%%21. Package: kiện hàng
+%%22. Combo: bộ sản phẩm
+%%23. Pair: đôi
+%%24. CARBOY: BÌNH
+%%25. IN SEAWORTHY CARTONS PACKING:
+%%Đóng gói thùng carton phù hợp với vận tải biển
+    class office-asset-category {
+        id: UUID
+
+        no: Int
+        code: String
+        name: String
+        unit: AssetCategoryUnit()
+
+        assets: Asset
+        department: OfficeOrgChart
+
+        AssetCategoryUnit(): Piece/Sheet/Pallet...
+    }
+
+    class office-asset-assignment {
+        id: UUID
+
+        no: Int
+        code: String
+        reason: String
+        startAt: Date
+        endAt: Date
+        assignedType: AssetAssignType
+        assignedId: String
+        assignmentType: AssetAssignType
+        assignmentId: String
+
+        AssetAssignedType()::OfficeUser/OfficeOrgChart
+    }
+
+%%    class office-asset-handover {}
