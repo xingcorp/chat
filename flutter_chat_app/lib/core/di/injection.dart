@@ -9,6 +9,9 @@ import 'package:flutter_chat_app/core/services/resource_manager_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
 import 'package:flutter_chat_app/core/services/graphql_subscription_service.dart';
 import 'package:flutter_chat_app/core/config/app_config.dart';
+import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
+import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 
 /// GetIt instance for dependency injection
 final GetIt getIt = GetIt.instance;
@@ -61,6 +64,19 @@ Future<void> configureInjection() async {
     getIt<GraphQLClient>(),
   );
   getIt.registerSingleton(graphQLSubscriptionService);
+  
+  // Register database service and initialize
+  final databaseService = DatabaseService();
+  await databaseService.initialize();
+  getIt.registerSingleton<DatabaseService>(databaseService);
+  
+  // Register offline-first repository
+  getIt.registerSingleton<OfflineFirstRepository>(
+    OfflineFirstRepositoryImpl(
+      databaseService, 
+      getIt<ConnectivityService>(),
+    ),
+  );
 }
 
 /// Create GraphQL client
