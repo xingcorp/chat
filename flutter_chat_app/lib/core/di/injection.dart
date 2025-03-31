@@ -35,7 +35,6 @@ Future<void> configureInjection() async {
   
   // Register resource services
   final resourceManager = ResourceManagerService();
-  await resourceManager.initialize();
   getIt.registerSingleton(resourceManager);
   
   // Register media processing service
@@ -68,7 +67,7 @@ Future<void> configureInjection() async {
 GraphQLClient _createGraphQLClient() {
   // Link for HTTP operations
   final httpLink = HttpLink(
-    'https://your-graphql-api.com/graphql',
+    'https://stg-office-api.smarthiz.vn/graphql',
     defaultHeaders: {
       'Content-Type': 'application/json',
       // Add auth headers here if needed
@@ -77,7 +76,7 @@ GraphQLClient _createGraphQLClient() {
   
   // Link for WebSocket operations
   final websocketLink = WebSocketLink(
-    'wss://your-graphql-api.com/graphql',
+    'wss://stg-office-api.smarthiz.vn/graphql',
     config: SocketClientConfig(
       initialPayload: {
         // Add auth payload here if needed

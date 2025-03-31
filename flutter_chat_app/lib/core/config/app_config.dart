@@ -1,13 +1,15 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 /// Cấu hình cho ứng dụng
 class AppConfig {
   /// URL cho API GraphQL
-  static const String apiUrl = 'https://your-graphql-api.com/graphql';
+  static String get apiUrl => dotenv.env['GRAPHQL_API_URL'] ?? 'https://stg-office-api.smarthiz.vn/graphql';
   
   /// URL cho WebSocket
-  static const String webSocketUrl = 'wss://your-graphql-api.com/graphql';
+  static String get webSocketUrl => dotenv.env['GRAPHQL_WS_URL'] ?? 'wss://stg-office-api.smarthiz.vn/graphql';
   
   /// URL cho Long Polling
-  static const String longPollingUrl = 'https://your-graphql-api.com/poll';
+  static String get longPollingUrl => dotenv.env['SOCKET_URL'] ?? 'https://stg-office-api.smarthiz.vn/poll';
   
   /// Timeout cho các request (ms)
   static const int requestTimeout = 30000;
