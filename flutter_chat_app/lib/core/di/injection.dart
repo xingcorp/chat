@@ -6,6 +6,9 @@ import 'package:flutter_chat_app/core/services/local_storage_service.dart';
 import 'package:flutter_chat_app/core/services/connectivity_analyzer_service.dart';
 import 'package:flutter_chat_app/core/services/media_processing_service.dart';
 import 'package:flutter_chat_app/core/services/resource_manager_service.dart';
+import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
+import 'package:flutter_chat_app/core/services/graphql_subscription_service.dart';
+import 'package:flutter_chat_app/core/config/app_config.dart';
 
 /// GetIt instance for dependency injection
 final GetIt getIt = GetIt.instance;
@@ -43,6 +46,22 @@ Future<void> configureInjection() async {
   // Register connectivity analyzer service
   final connectivityAnalyzer = ConnectivityAnalyzerService();
   getIt.registerSingleton(connectivityAnalyzer);
+  
+  // Register realtime connection service
+  final realtimeConnectionService = RealtimeConnectionService(
+    webSocketUrl: AppConfig.webSocketUrl,
+    httpUrl: AppConfig.apiUrl,
+    authToken: await _getAuthToken(),
+    connectivityAnalyzer: connectivityAnalyzer,
+  );
+  getIt.registerSingleton(realtimeConnectionService);
+  
+  // Register GraphQL subscription service
+  final graphQLSubscriptionService = GraphQLSubscriptionService(
+    realtimeConnectionService,
+    getIt<GraphQLClient>(),
+  );
+  getIt.registerSingleton(graphQLSubscriptionService);
 }
 
 /// Create GraphQL client
@@ -72,7 +91,7 @@ GraphQLClient _createGraphQLClient() {
   final authLink = AuthLink(
     getToken: () async {
       // Get auth token from storage or service
-      return 'Bearer ...';
+      return 'Bearer ${await _getAuthToken()}';
     },
   );
   
@@ -105,6 +124,16 @@ GraphQLClient _createGraphQLClient() {
       ),
     ),
   );
+}
+
+/// Get auth token from storage
+Future<String> _getAuthToken() async {
+  try {
+    final localStorageService = getIt<LocalStorageService>();
+    return await localStorageService.getString('auth_token') ?? '';
+  } catch (e) {
+    return '';
+  }
 }
 
 /// Module to register non-injectable dependencies

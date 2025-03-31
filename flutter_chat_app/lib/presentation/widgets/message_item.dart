@@ -1,0 +1,530 @@
+import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/core/services/date_formatter_service.dart';
+import 'package:flutter_chat_app/core/utils/message_utils.dart';
+
+/// Widget hiển thị một tin nhắn trong danh sách chat
+class MessageItem extends StatelessWidget {
+  /// Dữ liệu tin nhắn
+  final ChatMessage message;
+  
+  /// Đánh dấu tin nhắn của người dùng hiện tại
+  final bool isCurrentUser;
+  
+  /// Callback khi nhấn vào tin nhắn
+  final VoidCallback? onTap;
+  
+  /// Callback khi nhấn giữ tin nhắn
+  final VoidCallback? onLongPress;
+  
+  /// Đánh dấu tin nhắn đang được highlight (VD: khi tìm kiếm)
+  final bool isHighlighted;
+  
+  /// Constructor
+  const MessageItem({
+    Key? key,
+    required this.message,
+    required this.isCurrentUser,
+    this.onTap,
+    this.onLongPress,
+    this.isHighlighted = false,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(16.0),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 4.0),
+          decoration: BoxDecoration(
+            color: isHighlighted 
+                ? Colors.amber.withOpacity(0.2)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          child: Row(
+            mainAxisAlignment: isCurrentUser 
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (!isCurrentUser) _buildAvatar(),
+              
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: isCurrentUser 
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
+                  children: [
+                    // Tên người gửi (chỉ hiển thị khi không phải người dùng hiện tại)
+                    if (!isCurrentUser && message.sender.fullName.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12.0, bottom: 2.0),
+                        child: Text(
+                          message.sender.fullName,
+                          style: TextStyle(
+                            fontSize: 12.0,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    
+                    // Nội dung tin nhắn chính
+                    _buildMessageContent(context),
+                  ],
+                ),
+              ),
+              
+              if (isCurrentUser) 
+                SizedBox(width: 8.0),
+              
+              if (isCurrentUser) _buildMessageStatus(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  /// Xây dựng avatar của người gửi
+  Widget _buildAvatar() {
+    final String avatarUrl = message.sender.avatar ?? '';
+    
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0, bottom: 4.0),
+      child: SizedBox(
+        width: 32.0,
+        height: 32.0,
+        child: avatarUrl.isNotEmpty 
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(16.0),
+                child: CachedNetworkImage(
+                  imageUrl: avatarUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => CircleAvatar(
+                    backgroundColor: Colors.grey[300],
+                    child: Icon(Icons.person, color: Colors.grey[500], size: 16.0),
+                  ),
+                  errorWidget: (context, url, error) => CircleAvatar(
+                    backgroundColor: Colors.grey[300],
+                    child: Icon(Icons.error, color: Colors.grey[500], size: 16.0),
+                  ),
+                ),
+              )
+            : CircleAvatar(
+                backgroundColor: Colors.grey[300],
+                child: Text(
+                  _getInitials(message.sender.fullName),
+                  style: TextStyle(
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
+  
+  /// Xây dựng nội dung tin nhắn
+  Widget _buildMessageContent(BuildContext context) {
+    final contentType = message.contentType.toLowerCase();
+    
+    // Bong bóng chat
+    return Container(
+      margin: EdgeInsets.only(
+        left: isCurrentUser ? 64.0 : 0.0,
+        right: isCurrentUser ? 0.0 : 64.0,
+      ),
+      decoration: BoxDecoration(
+        color: isCurrentUser 
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).cardColor,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16.0),
+          topRight: Radius.circular(16.0),
+          bottomLeft: Radius.circular(isCurrentUser ? 16.0 : 4.0),
+          bottomRight: Radius.circular(isCurrentUser ? 4.0 : 16.0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16.0),
+          topRight: Radius.circular(16.0),
+          bottomLeft: Radius.circular(isCurrentUser ? 16.0 : 4.0),
+          bottomRight: Radius.circular(isCurrentUser ? 4.0 : 16.0),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Nội dung tin nhắn dựa trên loại
+            if (contentType == 'text')
+              _buildTextMessage(context)
+            else if (contentType == 'image')
+              _buildImageMessage()
+            else if (contentType == 'video')
+              _buildVideoMessage()
+            else if (contentType == 'audio')
+              _buildAudioMessage()
+            else if (contentType == 'file')
+              _buildFileMessage()
+            else
+              _buildUnknownMessage(context),
+            
+            // Thời gian gửi tin nhắn
+            _buildTimestamp(context),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  /// Xây dựng tin nhắn văn bản
+  Widget _buildTextMessage(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      child: Text(
+        message.content,
+        style: TextStyle(
+          fontSize: 15.0,
+          color: isCurrentUser 
+              ? Colors.white
+              : Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
+    );
+  }
+  
+  /// Xây dựng tin nhắn hình ảnh
+  Widget _buildImageMessage() {
+    if (message.attachments.isEmpty) {
+      return _buildErrorMessage('Không tìm thấy hình ảnh');
+    }
+    
+    final attachment = message.attachments.first;
+    final imageUrl = attachment.url;
+    
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: 240.0,
+        maxHeight: 320.0,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16.0),
+          topRight: Radius.circular(16.0),
+        ),
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            height: 200.0,
+            color: Colors.grey[300],
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          errorWidget: (context, url, error) => Container(
+            height: 200.0,
+            color: Colors.grey[300],
+            child: const Center(
+              child: Icon(Icons.error),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  /// Xây dựng tin nhắn video
+  Widget _buildVideoMessage() {
+    if (message.attachments.isEmpty) {
+      return _buildErrorMessage('Không tìm thấy video');
+    }
+    
+    final attachment = message.attachments.first;
+    
+    // Hiển thị thumbnail của video với nút play
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          constraints: BoxConstraints(
+            maxWidth: 240.0,
+            maxHeight: 320.0,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16.0),
+              topRight: Radius.circular(16.0),
+            ),
+            child: Container(
+              color: Colors.black,
+              child: attachment.url.isNotEmpty 
+                  ? CachedNetworkImage(
+                      imageUrl: attachment.url,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        height: 200.0,
+                        color: Colors.grey[800],
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        height: 200.0,
+                        color: Colors.grey[800],
+                        child: const Center(
+                          child: Icon(Icons.movie, color: Colors.white54, size: 48.0),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      height: 200.0,
+                      color: Colors.grey[800],
+                      child: const Center(
+                        child: Icon(Icons.movie, color: Colors.white54, size: 48.0),
+                      ),
+                    ),
+            ),
+          ),
+        ),
+        Icon(
+          Icons.play_circle_fill,
+          color: Colors.white.withOpacity(0.8),
+          size: 48.0,
+        ),
+      ],
+    );
+  }
+  
+  /// Xây dựng tin nhắn âm thanh
+  Widget _buildAudioMessage() {
+    return Container(
+      width: 200.0,
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(
+            Icons.play_arrow,
+            color: isCurrentUser ? Colors.white : Colors.grey[700],
+          ),
+          const SizedBox(width: 8.0),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 3.0,
+                  decoration: BoxDecoration(
+                    color: isCurrentUser ? Colors.white70 : Colors.grey[400],
+                    borderRadius: BorderRadius.circular(1.5),
+                  ),
+                ),
+                const SizedBox(height: 4.0),
+                Text(
+                  '0:00 / 0:30',
+                  style: TextStyle(
+                    fontSize: 10.0,
+                    color: isCurrentUser ? Colors.white70 : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /// Xây dựng tin nhắn file
+  Widget _buildFileMessage() {
+    if (message.attachments.isEmpty) {
+      return _buildErrorMessage('Không tìm thấy tệp đính kèm');
+    }
+    
+    final attachment = message.attachments.first;
+    final fileName = attachment.fileName ?? 'File đính kèm';
+    final fileSize = _formatFileSize(attachment.size);
+    
+    return Container(
+      width: 220.0,
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+      child: Row(
+        children: [
+          Icon(
+            Icons.insert_drive_file,
+            color: isCurrentUser ? Colors.white : Colors.blue,
+            size: 32.0,
+          ),
+          const SizedBox(width: 8.0),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  fileName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.w500,
+                    color: isCurrentUser ? Colors.white : Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 2.0),
+                Text(
+                  fileSize,
+                  style: TextStyle(
+                    fontSize: 12.0,
+                    color: isCurrentUser ? Colors.white70 : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.download,
+            color: isCurrentUser ? Colors.white70 : Colors.grey[700],
+            size: 20.0,
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /// Xây dựng tin nhắn không xác định loại
+  Widget _buildUnknownMessage(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.help_outline,
+            size: 16.0,
+            color: isCurrentUser 
+                ? Colors.white70
+                : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          ),
+          const SizedBox(width: 4.0),
+          Flexible(
+            child: Text(
+              message.content.isNotEmpty 
+                  ? message.content
+                  : 'Không thể hiển thị tin nhắn này',
+              style: TextStyle(
+                fontSize: 14.0,
+                fontStyle: FontStyle.italic,
+                color: isCurrentUser 
+                    ? Colors.white
+                    : Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /// Xây dựng thông báo lỗi
+  Widget _buildErrorMessage(String errorText) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 16.0,
+            color: isCurrentUser ? Colors.white70 : Colors.red[300],
+          ),
+          const SizedBox(width: 4.0),
+          Text(
+            errorText,
+            style: TextStyle(
+              fontSize: 14.0,
+              fontStyle: FontStyle.italic,
+              color: isCurrentUser ? Colors.white70 : Colors.red[300],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /// Xây dựng hiển thị thời gian gửi tin nhắn
+  Widget _buildTimestamp(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0, bottom: 4.0, left: 8.0),
+      child: Align(
+        alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+        child: Text(
+          DateFormatterService.formatTimeForMessage(message.createdAt),
+          style: TextStyle(
+            fontSize: 10.0,
+            color: isCurrentUser 
+                ? Colors.white70
+                : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  /// Xây dựng hiển thị trạng thái tin nhắn (đã gửi, đã nhận, đã đọc)
+  Widget _buildMessageStatus() {
+    // Kiểm tra tin nhắn đã được đọc bởi ai
+    final hasRead = message.readBy.isNotEmpty;
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0),
+      child: Icon(
+        hasRead ? Icons.done_all : Icons.done,
+        size: 16.0,
+        color: hasRead ? Colors.blue : Colors.grey[400],
+      ),
+    );
+  }
+  
+  /// Lấy chữ cái đầu của tên
+  String _getInitials(String fullName) {
+    if (fullName.isEmpty) return '';
+    
+    final nameParts = fullName.split(' ');
+    if (nameParts.length > 1) {
+      return nameParts.first[0] + nameParts.last[0];
+    } else {
+      return nameParts.first[0];
+    }
+  }
+  
+  /// Định dạng kích thước tệp
+  String _formatFileSize(int? sizeInBytes) {
+    if (sizeInBytes == null) return 'Không xác định';
+    
+    const int kb = 1024;
+    const int mb = kb * 1024;
+    const int gb = mb * 1024;
+    
+    if (sizeInBytes >= gb) {
+      return '${(sizeInBytes / gb).toStringAsFixed(1)} GB';
+    } else if (sizeInBytes >= mb) {
+      return '${(sizeInBytes / mb).toStringAsFixed(1)} MB';
+    } else if (sizeInBytes >= kb) {
+      return '${(sizeInBytes / kb).toStringAsFixed(0)} KB';
+    } else {
+      return '$sizeInBytes B';
+    }
+  }
+} 
