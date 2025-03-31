@@ -1,3 +1,5 @@
+import 'package:flutter_chat_app/domain/entities/user.dart';
+
 /// Enum cho các loại nội dung tin nhắn
 enum ContentType {
   text,
@@ -62,6 +64,19 @@ class Attachment {
     required this.size,
     this.metadata,
   });
+  
+  /// Create attachment from GraphQL response
+  factory Attachment.fromJson(Map<String, dynamic> json) {
+    return Attachment(
+      id: json['id'] as String,
+      url: json['url'] as String,
+      thumbnailUrl: json['thumbnailUrl'] as String?,
+      fileName: json['fileName'] as String,
+      contentType: json['contentType'] as String,
+      size: json['size'] as int,
+      metadata: json['metadata'] as Map<String, dynamic>?,
+    );
+  }
 
   @override
   bool operator ==(Object other) {
@@ -85,80 +100,196 @@ class Attachment {
       contentType.hashCode ^
       size.hashCode;
   }
+  
+  /// Convert attachment to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'url': url,
+      'thumbnailUrl': thumbnailUrl,
+      'fileName': fileName,
+      'contentType': contentType,
+      'size': size,
+      'metadata': metadata,
+    };
+  }
 }
 
 /// Entity đại diện cho một tin nhắn chat
 class ChatMessage {
   final String id;
   final String conversationId;
-  final String senderId;
-  final String? senderName;
-  final String? senderAvatar;
+  final User sender;
   final ContentType contentType;
   final String content;
   final List<Attachment> attachments;
-  final DateTime timestamp;
-  final DateTime? deliveredAt;
-  final DateTime? readAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final List<User> readBy;
   final Map<String, dynamic>? metadata;
   final bool isDeleted;
   final bool isSent;
   final String? replyToMessageId;
+  final String? localId;
 
   const ChatMessage({
     required this.id,
     required this.conversationId,
-    required this.senderId,
-    this.senderName,
-    this.senderAvatar,
+    required this.sender,
     required this.contentType,
     required this.content,
     this.attachments = const [],
-    required this.timestamp,
-    this.deliveredAt,
-    this.readAt,
+    required this.createdAt,
+    required this.updatedAt,
+    this.readBy = const [],
     this.metadata,
     this.isDeleted = false,
     this.isSent = true,
     this.replyToMessageId,
+    this.localId,
   });
 
-  bool get isDelivered => deliveredAt != null;
-  bool get isRead => readAt != null;
+  // Aliases for backward compatibility
+  String get senderId => sender.id;
+  String? get senderName => sender.fullName;
+  String? get senderAvatar => sender.avatar;
+  DateTime get timestamp => createdAt;
+  
+  bool get isDelivered => readBy.isNotEmpty;
+  bool get isRead => readBy.isNotEmpty;
+
+  /// Create ChatMessage from GraphQL response
+  factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    return ChatMessage(
+      id: json['id'] as String,
+      conversationId: json['conversationId'] as String,
+      sender: User.fromJson(json['sender'] as Map<String, dynamic>),
+      contentType: _parseContentType(json['contentType']),
+      content: json['content'] as String,
+      attachments: (json['attachments'] as List<dynamic>?)
+          ?.map((e) => Attachment.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      readBy: (json['readBy'] as List<dynamic>?)
+          ?.map((e) => User.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
+      metadata: json['metadata'] as Map<String, dynamic>?,
+      isDeleted: json['isDeleted'] as bool? ?? false,
+      isSent: json['isSent'] as bool? ?? true,
+      replyToMessageId: json['replyToMessageId'] as String?,
+      localId: json['localId'] as String?,
+    );
+  }
+  
+  /// Parse content type from string or enum
+  static ContentType _parseContentType(dynamic value) {
+    if (value is ContentType) return value;
+    
+    final strValue = value.toString().toLowerCase();
+    
+    switch (strValue) {
+      case 'text':
+        return ContentType.text;
+      case 'image':
+        return ContentType.image;
+      case 'video':
+        return ContentType.video;
+      case 'audio':
+        return ContentType.audio;
+      case 'file':
+        return ContentType.file;
+      case 'location':
+        return ContentType.location;
+      case 'contact':
+        return ContentType.contact;
+      case 'sticker':
+        return ContentType.sticker;
+      case 'system':
+        return ContentType.system;
+      default:
+        return ContentType.text;
+    }
+  }
 
   ChatMessage copyWith({
     String? id,
     String? conversationId,
-    String? senderId,
-    String? senderName,
-    String? senderAvatar,
+    User? sender,
     ContentType? contentType,
     String? content,
     List<Attachment>? attachments,
-    DateTime? timestamp,
-    DateTime? deliveredAt,
-    DateTime? readAt,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<User>? readBy,
     Map<String, dynamic>? metadata,
     bool? isDeleted,
     bool? isSent,
     String? replyToMessageId,
+    String? localId,
   }) {
     return ChatMessage(
       id: id ?? this.id,
       conversationId: conversationId ?? this.conversationId,
-      senderId: senderId ?? this.senderId,
-      senderName: senderName ?? this.senderName,
-      senderAvatar: senderAvatar ?? this.senderAvatar,
+      sender: sender ?? this.sender,
       contentType: contentType ?? this.contentType,
       content: content ?? this.content,
       attachments: attachments ?? this.attachments,
-      timestamp: timestamp ?? this.timestamp,
-      deliveredAt: deliveredAt ?? this.deliveredAt,
-      readAt: readAt ?? this.readAt,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      readBy: readBy ?? this.readBy,
       metadata: metadata ?? this.metadata,
       isDeleted: isDeleted ?? this.isDeleted,
       isSent: isSent ?? this.isSent,
       replyToMessageId: replyToMessageId ?? this.replyToMessageId,
+      localId: localId ?? this.localId,
+    );
+  }
+  
+  /// Convert to JSON for sending to GraphQL
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'conversationId': conversationId,
+      'sender': sender.toJson(),
+      'contentType': contentType.toString().split('.').last,
+      'content': content,
+      'attachments': attachments.map((a) => a.toJson()).toList(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'readBy': readBy.map((u) => u.toJson()).toList(),
+      'isDeleted': isDeleted,
+      'isSent': isSent,
+      'replyToMessageId': replyToMessageId,
+      'localId': localId,
+      'metadata': metadata,
+    };
+  }
+
+  /// Create a draft message with local ID
+  factory ChatMessage.draft({
+    required String conversationId,
+    required User sender,
+    required ContentType contentType,
+    required String content,
+    List<Attachment> attachments = const [],
+    String? replyToMessageId,
+  }) {
+    final now = DateTime.now();
+    final localId = 'draft_${now.millisecondsSinceEpoch}_${sender.id}';
+    
+    return ChatMessage(
+      id: localId,
+      localId: localId,
+      conversationId: conversationId,
+      sender: sender,
+      contentType: contentType,
+      content: content,
+      attachments: attachments,
+      createdAt: now,
+      updatedAt: now,
+      isSent: false,
+      replyToMessageId: replyToMessageId,
     );
   }
 
@@ -169,18 +300,17 @@ class ChatMessage {
     return other is ChatMessage &&
       other.id == id &&
       other.conversationId == conversationId &&
-      other.senderId == senderId &&
-      other.senderName == senderName &&
-      other.senderAvatar == senderAvatar &&
+      other.sender == sender &&
       other.contentType == contentType &&
       other.content == content &&
       _listEquals(other.attachments, attachments) &&
-      other.timestamp == timestamp &&
-      other.deliveredAt == deliveredAt &&
-      other.readAt == readAt &&
+      other.createdAt == createdAt &&
+      other.updatedAt == updatedAt &&
+      _listEquals(other.readBy, readBy) &&
       other.isDeleted == isDeleted &&
       other.isSent == isSent &&
-      other.replyToMessageId == replyToMessageId;
+      other.replyToMessageId == replyToMessageId &&
+      other.localId == localId;
   }
 
   bool _listEquals<T>(List<T> a, List<T> b) {
@@ -195,17 +325,16 @@ class ChatMessage {
   int get hashCode {
     return id.hashCode ^
       conversationId.hashCode ^
-      senderId.hashCode ^
-      senderName.hashCode ^
-      senderAvatar.hashCode ^
+      sender.hashCode ^
       contentType.hashCode ^
       content.hashCode ^
       attachments.hashCode ^
-      timestamp.hashCode ^
-      deliveredAt.hashCode ^
-      readAt.hashCode ^
+      createdAt.hashCode ^
+      updatedAt.hashCode ^
+      readBy.hashCode ^
       isDeleted.hashCode ^
       isSent.hashCode ^
-      replyToMessageId.hashCode;
+      replyToMessageId.hashCode ^
+      localId.hashCode;
   }
 } 

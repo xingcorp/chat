@@ -20,6 +20,9 @@ class User {
   
   /// Last seen timestamp
   final DateTime? lastSeen;
+  
+  /// Additional metadata
+  final Map<String, dynamic>? metadata;
 
   /// User constructor
   const User({
@@ -30,6 +33,7 @@ class User {
     this.avatar,
     this.isOnline = false,
     this.lastSeen,
+    this.metadata,
   });
 
   @override
@@ -66,6 +70,7 @@ class User {
     String? avatar,
     bool? isOnline,
     DateTime? lastSeen,
+    Map<String, dynamic>? metadata,
   }) {
     return User(
       id: id ?? this.id,
@@ -75,6 +80,7 @@ class User {
       avatar: avatar ?? this.avatar,
       isOnline: isOnline ?? this.isOnline,
       lastSeen: lastSeen ?? this.lastSeen,
+      metadata: metadata ?? this.metadata,
     );
   }
 
@@ -90,6 +96,7 @@ class User {
       lastSeen: json['lastSeen'] != null 
           ? DateTime.parse(json['lastSeen'] as String)
           : null,
+      metadata: json['metadata'] as Map<String, dynamic>?,
     );
   }
 
@@ -103,6 +110,7 @@ class User {
       'avatar': avatar,
       'isOnline': isOnline,
       'lastSeen': lastSeen?.toIso8601String(),
+      'metadata': metadata,
     };
   }
 } 
