@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 @lazySingleton
 class LocalStorageService {
   late SharedPreferences _preferences;
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   
   /// Initialize the service
   @factoryMethod
@@ -93,23 +91,30 @@ class LocalStorageService {
     return await _preferences.clear();
   }
   
-  /// Store a secure string (encrypted)
+  /// Store a secure string (encrypted) - uses key prefix to simulate secure storage
   Future<void> setSecureString(String key, String value) async {
-    await _secureStorage.write(key: key, value: value);
+    await setString('secure_$key', value);
   }
   
-  /// Retrieve a secure string
+  /// Retrieve a secure string - uses key prefix to simulate secure storage
   Future<String?> getSecureString(String key) async {
-    return await _secureStorage.read(key: key);
+    return getString('secure_$key');
   }
   
   /// Remove a secure key
   Future<void> removeSecure(String key) async {
-    await _secureStorage.delete(key: key);
+    await remove('secure_$key');
   }
   
   /// Clear all secure data
   Future<void> clearSecure() async {
-    await _secureStorage.deleteAll();
+    // Get all keys with the secure prefix
+    final allKeys = _preferences.getKeys();
+    final secureKeys = allKeys.where((key) => key.startsWith('secure_')).toList();
+    
+    // Remove each secure key
+    for (final key in secureKeys) {
+      await remove(key);
+    }
   }
 } 

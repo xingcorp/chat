@@ -1,7 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:injectable/injectable.dart';
-import 'package:flutter_chat_app/core/di/injection.config.dart';
 import 'package:flutter_chat_app/core/services/local_storage_service.dart';
 import 'package:flutter_chat_app/core/services/connectivity_analyzer_service.dart';
 import 'package:flutter_chat_app/core/services/media_processing_service.dart';
@@ -17,17 +16,9 @@ import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 final GetIt getIt = GetIt.instance;
 
 /// Configure dependency injection
-@InjectableInit(
-  initializerName: 'init', // default
-  preferRelativeImports: true, // default
-  asExtension: false, // default
-)
 Future<void> configureInjection() async {
   // Initialize Hive for GraphQL cache
   await initHiveForFlutter();
-  
-  // Initialize the injection
-  init(getIt);
   
   // Register GraphQL client
   getIt.registerSingleton<GraphQLClient>(_createGraphQLClient());
@@ -35,6 +26,10 @@ Future<void> configureInjection() async {
   // Initialize the local storage service
   final localStorageService = await LocalStorageService.init();
   getIt.registerSingleton<LocalStorageService>(localStorageService);
+  
+  // Register connectivity service
+  final connectivityService = ConnectivityService();
+  getIt.registerSingleton<ConnectivityService>(connectivityService);
   
   // Register resource services
   final resourceManager = ResourceManagerService();
@@ -74,7 +69,7 @@ Future<void> configureInjection() async {
   getIt.registerSingleton<OfflineFirstRepository>(
     OfflineFirstRepositoryImpl(
       databaseService, 
-      getIt<ConnectivityService>(),
+      connectivityService,
     ),
   );
 }

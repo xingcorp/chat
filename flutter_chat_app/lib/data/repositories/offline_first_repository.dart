@@ -117,8 +117,9 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
     await _databaseService.saveChat(chat);
     
     // Then sync with server if online
-    if (await _connectivityService.isConnected()) {
-      _syncChat(chat);
+    final isConnected = await _connectivityService.isConnected;
+    if (isConnected) {
+      await _syncChat(chat);
     }
   }
 
@@ -128,8 +129,9 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
     await _databaseService.saveMessage(message);
     
     // Then sync with server if online
-    if (await _connectivityService.isConnected()) {
-      _syncMessage(message);
+    final isConnected = await _connectivityService.isConnected;
+    if (isConnected) {
+      await _syncMessage(message);
     }
   }
 
@@ -139,8 +141,9 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
     await _databaseService.saveUser(user);
     
     // Then sync with server if online
-    if (await _connectivityService.isConnected()) {
-      _syncUser(user);
+    final isConnected = await _connectivityService.isConnected;
+    if (isConnected) {
+      await _syncUser(user);
     }
   }
 
@@ -154,8 +157,9 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
       await _databaseService.deleteChat(chat.id);
       
       // Then sync with server if online
-      if (await _connectivityService.isConnected()) {
-        _syncChatDeletion(id);
+      final isConnected = await _connectivityService.isConnected;
+      if (isConnected) {
+        await _syncChatDeletion(id);
       }
     }
   }
@@ -175,8 +179,9 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
       await _databaseService.deleteMessage(message.id);
       
       // Then sync with server if online
-      if (await _connectivityService.isConnected()) {
-        _syncMessageDeletion(id);
+      final isConnected = await _connectivityService.isConnected;
+      if (isConnected) {
+        await _syncMessageDeletion(id);
       }
     }
   }
@@ -191,8 +196,9 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
       await _databaseService.deleteUser(user.id);
       
       // Then sync with server if online
-      if (await _connectivityService.isConnected()) {
-        _syncUserDeletion(id);
+      final isConnected = await _connectivityService.isConnected;
+      if (isConnected) {
+        await _syncUserDeletion(id);
       }
     }
   }
@@ -225,52 +231,46 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
 
   Future<void> _syncAllChats() async {
     // TODO: Implement actual server sync logic
-    // This would typically involve:
-    // 1. Getting all unsynchronized chats from the local database
-    // 2. Sending them to the server
-    // 3. Getting updates from the server
-    // 4. Updating the local database
+    await Future.delayed(Duration(milliseconds: 500)); // Simulated delay
   }
 
   Future<void> _syncAllMessages() async {
     // TODO: Implement actual server sync logic
-    // This would typically involve:
-    // 1. Getting all unsynchronized messages from the local database
-    // 2. Sending them to the server
-    // 3. Getting updates from the server
-    // 4. Updating the local database
+    await Future.delayed(Duration(milliseconds: 500)); // Simulated delay
   }
 
   Future<void> _syncAllUsers() async {
     // TODO: Implement actual server sync logic
-    // This would typically involve:
-    // 1. Getting all unsynchronized users from the local database
-    // 2. Sending them to the server
-    // 3. Getting updates from the server
-    // 4. Updating the local database
+    await Future.delayed(Duration(milliseconds: 500)); // Simulated delay
   }
 
   Future<void> _syncChat(ChatModel chat) async {
-    // TODO: Implement actual server sync logic for a single chat
+    // TODO: Implement actual server sync logic
+    await Future.delayed(Duration(milliseconds: 300)); // Simulated delay
   }
 
   Future<void> _syncMessage(MessageModel message) async {
-    // TODO: Implement actual server sync logic for a single message
+    // TODO: Implement actual server sync logic
+    await Future.delayed(Duration(milliseconds: 300)); // Simulated delay
   }
 
   Future<void> _syncUser(UserModel user) async {
-    // TODO: Implement actual server sync logic for a single user
+    // TODO: Implement actual server sync logic
+    await Future.delayed(Duration(milliseconds: 300)); // Simulated delay
   }
 
   Future<void> _syncChatDeletion(String chatId) async {
-    // TODO: Implement actual server sync logic for chat deletion
+    // TODO: Implement actual server sync logic
+    await Future.delayed(Duration(milliseconds: 300)); // Simulated delay
   }
 
   Future<void> _syncMessageDeletion(String messageId) async {
-    // TODO: Implement actual server sync logic for message deletion
+    // TODO: Implement actual server sync logic
+    await Future.delayed(Duration(milliseconds: 300)); // Simulated delay
   }
 
   Future<void> _syncUserDeletion(String userId) async {
-    // TODO: Implement actual server sync logic for user deletion
+    // TODO: Implement actual server sync logic
+    await Future.delayed(Duration(milliseconds: 300)); // Simulated delay
   }
 } 

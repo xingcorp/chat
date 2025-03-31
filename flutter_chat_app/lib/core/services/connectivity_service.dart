@@ -1,49 +1,72 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
-/// Service to monitor and handle network connectivity
-@lazySingleton
+/// Service responsible for monitoring device connectivity
+@singleton
 class ConnectivityService {
   final Connectivity _connectivity = Connectivity();
-  final StreamController<bool> _connectivityStreamController = StreamController<bool>.broadcast();
-  bool _isConnected = true;
-
-  /// Constructor
+  bool _hasConnection = false;
+  
+  /// Stream controller for connectivity status changes
+  final StreamController<ConnectivityResult> _connectionChangeController = 
+      StreamController<ConnectivityResult>.broadcast();
+  
+  /// Constructor that initializes connectivity monitoring
   ConnectivityService() {
-    // Initial connectivity check
-    _checkConnectivity();
+    // Initialize connectivity monitoring
+    _initConnectivity();
     
-    // Listen to connectivity changes
+    // Listen for connectivity changes
     _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
   }
-
-  /// Stream that emits connectivity status changes
-  Stream<bool> get onConnectivityChanged => _connectivityStreamController.stream;
-
+  
+  /// Stream of connectivity changes
+  Stream<ConnectivityResult> get onConnectivityChanged => 
+      _connectionChangeController.stream;
+  
   /// Current connection status
-  bool get isConnected => _isConnected;
-
-  /// Initial connectivity check
-  Future<void> _checkConnectivity() async {
-    final connectivityResult = await _connectivity.checkConnectivity();
-    _updateConnectionStatus(connectivityResult);
+  bool get isConnected => _hasConnection;
+  
+  /// Initialize connectivity monitoring
+  Future<void> _initConnectivity() async {
+    try {
+      final result = await _connectivity.checkConnectivity();
+      _updateConnectionStatus(result);
+    } catch (e) {
+      debugPrint('Could not check connectivity status: $e');
+    }
   }
-
+  
   /// Update connection status based on connectivity result
   void _updateConnectionStatus(ConnectivityResult result) {
-    _isConnected = result != ConnectivityResult.none;
-    _connectivityStreamController.add(_isConnected);
+    debugPrint('Connectivity status changed: $result');
+    
+    // Update connection status
+    if (result == ConnectivityResult.mobile || result == ConnectivityResult.wifi) {
+      _hasConnection = true;
+    } else {
+      _hasConnection = false;
+    }
+    
+    // Notify listeners
+    _connectionChangeController.add(result);
   }
-
-  /// Check if the device is currently connected
-  Future<bool> isConnected() async {
-    final connectivityResult = await _connectivity.checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
+  
+  /// Check current network status
+  Future<bool> checkNetworkStatus() async {
+    try {
+      final result = await _connectivity.checkConnectivity();
+      return result == ConnectivityResult.mobile || result == ConnectivityResult.wifi;
+    } catch (e) {
+      debugPrint('Failed to check network status: $e');
+      return false;
+    }
   }
-
-  /// Clean up resources
+  
+  /// Dispose resources
   void dispose() {
-    _connectivityStreamController.close();
+    _connectionChangeController.close();
   }
 } 

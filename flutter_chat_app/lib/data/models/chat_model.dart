@@ -3,6 +3,7 @@ import 'package:isar/isar.dart';
 part 'chat_model.g.dart';
 
 /// Type of chat
+@enumerated
 enum ChatType {
   /// One-to-one chat
   direct,
@@ -28,7 +29,7 @@ class ChatModel {
   final String? name;
 
   /// Type of the chat
-  @enumerated
+  @Enumerated(EnumType.name)
   final ChatType type;
 
   /// ID of the last message in the chat
@@ -38,7 +39,6 @@ class ChatModel {
   final String? lastMessagePreview;
 
   /// Timestamp of the last message
-  @Index()
   final DateTime? lastMessageTime;
 
   /// Number of unread messages

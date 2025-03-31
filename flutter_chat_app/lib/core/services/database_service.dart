@@ -22,21 +22,37 @@ class DatabaseService {
   /// Initializes the database
   Future<void> initialize() async {
     if (_isInitialized) return;
-
-    final dir = await getApplicationDocumentsDirectory();
     
-    _isar = await Isar.open(
-      [
-        ChatModelSchema,
-        MessageModelSchema,
-        UserModelSchema,
-      ],
-      directory: dir.path,
-      inspector: kDebugMode, // Enable inspector in debug mode
-    );
+    final schemas = [
+      ChatModelSchema,
+      MessageModelSchema,
+      UserModelSchema,
+    ];
     
-    _isInitialized = true;
-    debugPrint('Isar DB initialized at ${dir.path}');
+    try {
+      if (kIsWeb) {
+        // Web version - passing empty string since directory is required but not used for web
+        _isar = await Isar.open(
+          schemas,
+          directory: '',
+          inspector: kDebugMode,
+        );
+      } else {
+        // Native platforms
+        final dir = await getApplicationDocumentsDirectory();
+        _isar = await Isar.open(
+          schemas,
+          directory: dir.path,
+          inspector: kDebugMode,
+        );
+      }
+      
+      _isInitialized = true;
+      debugPrint('Isar DB initialized for ${kIsWeb ? 'web' : 'native'} platform');
+    } catch (e) {
+      debugPrint('Error initializing database: $e');
+      rethrow;
+    }
   }
 
   /// Closes the database
@@ -63,6 +79,10 @@ class DatabaseService {
     if (!_isInitialized) return null;
     
     try {
+      if (kIsWeb) {
+        return null; // Not supported on web
+      }
+      
       final directory = await getApplicationDocumentsDirectory();
       final backupPath = '${directory.path}/backup_${DateTime.now().millisecondsSinceEpoch}.isar';
       
@@ -137,21 +157,27 @@ class DatabaseService {
 
   /// Get all chats
   Future<List<ChatModel>> getAllChats() async {
-    return _isar.chatModels.where().findAll();
+    if (!_isInitialized) await initialize();
+    return await _isar.chatModels.where().findAll();
   }
 
   /// Watch chats for changes
   Stream<List<ChatModel>> watchChats() {
+    if (!_isInitialized) initialize();
     return _isar.chatModels.where().watch(fireImmediately: true);
   }
 
   /// Get a specific chat by server ID
   Future<ChatModel?> getChatByServerId(String serverId) async {
-    return _isar.chatModels.where().serverIdEqualTo(serverId).findFirst();
+    if (!_isInitialized) await initialize();
+    return await _isar.chatModels.where().filter()
+        .serverIdEqualTo(serverId)
+        .findFirst();
   }
 
   /// Save a chat
   Future<int> saveChat(ChatModel chat) async {
+    if (!_isInitialized) await initialize();
     late int id;
     await _isar.writeTxn(() async {
       id = await _isar.chatModels.put(chat);
@@ -161,6 +187,7 @@ class DatabaseService {
 
   /// Save multiple chats
   Future<void> saveChats(List<ChatModel> chats) async {
+    if (!_isInitialized) await initialize();
     await _isar.writeTxn(() async {
       await _isar.chatModels.putAll(chats);
     });
@@ -168,6 +195,7 @@ class DatabaseService {
 
   /// Delete a chat
   Future<bool> deleteChat(int id) async {
+    if (!_isInitialized) await initialize();
     bool success = false;
     await _isar.writeTxn(() async {
       success = await _isar.chatModels.delete(id);
@@ -179,34 +207,41 @@ class DatabaseService {
 
   /// Get all messages for a chat
   Future<List<MessageModel>> getMessagesForChat(String chatId) async {
-    return _isar.messageModels
-        .where()
-        .chatIdEqualTo(chatId)
-        .sortByCreatedAtDesc()
+    if (!_isInitialized) await initialize();
+    return await _isar.messageModels.where()
+        .filter().chatIdEqualTo(chatId)
+        .sortByCreatedAt()
         .findAll();
   }
 
   /// Watch messages for a chat
   Stream<List<MessageModel>> watchMessagesForChat(String chatId) {
-    return _isar.messageModels
-        .where()
-        .chatIdEqualTo(chatId)
-        .sortByCreatedAtDesc()
+    if (!_isInitialized) initialize();
+    return _isar.messageModels.where()
+        .filter().chatIdEqualTo(chatId)
+        .sortByCreatedAt()
         .watch(fireImmediately: true);
   }
 
   /// Get a specific message by local ID
   Future<MessageModel?> getMessageByLocalId(String localId) async {
-    return _isar.messageModels.where().localIdEqualTo(localId).findFirst();
+    if (!_isInitialized) await initialize();
+    return await _isar.messageModels.where()
+        .filter().localIdEqualTo(localId)
+        .findFirst();
   }
 
   /// Get a specific message by server ID
   Future<MessageModel?> getMessageByServerId(String serverId) async {
-    return _isar.messageModels.where().serverIdEqualTo(serverId).findFirst();
+    if (!_isInitialized) await initialize();
+    return await _isar.messageModels.where()
+        .filter().serverIdEqualTo(serverId)
+        .findFirst();
   }
 
   /// Save a message
   Future<int> saveMessage(MessageModel message) async {
+    if (!_isInitialized) await initialize();
     late int id;
     await _isar.writeTxn(() async {
       id = await _isar.messageModels.put(message);
@@ -216,6 +251,7 @@ class DatabaseService {
 
   /// Save multiple messages
   Future<void> saveMessages(List<MessageModel> messages) async {
+    if (!_isInitialized) await initialize();
     await _isar.writeTxn(() async {
       await _isar.messageModels.putAll(messages);
     });
@@ -223,6 +259,7 @@ class DatabaseService {
 
   /// Delete a message
   Future<bool> deleteMessage(int id) async {
+    if (!_isInitialized) await initialize();
     bool success = false;
     await _isar.writeTxn(() async {
       success = await _isar.messageModels.delete(id);
@@ -234,21 +271,27 @@ class DatabaseService {
 
   /// Get all users
   Future<List<UserModel>> getAllUsers() async {
-    return _isar.userModels.where().findAll();
+    if (!_isInitialized) await initialize();
+    return await _isar.userModels.where().findAll();
   }
 
   /// Watch users for changes
   Stream<List<UserModel>> watchUsers() {
+    if (!_isInitialized) initialize();
     return _isar.userModels.where().watch(fireImmediately: true);
   }
 
   /// Get a specific user by server ID
   Future<UserModel?> getUserByServerId(String serverId) async {
-    return _isar.userModels.where().serverIdEqualTo(serverId).findFirst();
+    if (!_isInitialized) await initialize();
+    return await _isar.userModels.where()
+        .filter().serverIdEqualTo(serverId)
+        .findFirst();
   }
 
   /// Save a user
   Future<int> saveUser(UserModel user) async {
+    if (!_isInitialized) await initialize();
     late int id;
     await _isar.writeTxn(() async {
       id = await _isar.userModels.put(user);
@@ -258,6 +301,7 @@ class DatabaseService {
 
   /// Save multiple users
   Future<void> saveUsers(List<UserModel> users) async {
+    if (!_isInitialized) await initialize();
     await _isar.writeTxn(() async {
       await _isar.userModels.putAll(users);
     });
@@ -265,10 +309,11 @@ class DatabaseService {
 
   /// Delete a user
   Future<bool> deleteUser(int id) async {
+    if (!_isInitialized) await initialize();
     bool success = false;
     await _isar.writeTxn(() async {
       success = await _isar.userModels.delete(id);
     });
     return success;
   }
-} 
+}

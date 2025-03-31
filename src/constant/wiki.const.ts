@@ -1,1 +1,0 @@
-export const WIKI_COPY_VERSION = 'WIKI_COPY_VERSION'

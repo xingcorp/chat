@@ -1,200 +1,292 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' show Platform;
 
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_app/config/app_config.dart';
-import 'package:flutter_chat_app/config/route/app_router.dart';
-import 'package:flutter_chat_app/config/theme/app_theme.dart';
-import 'package:flutter_chat_app/di/service_locator.dart';
-import 'package:flutter_chat_app/presentation/blocs/app/app_bloc.dart';
-import 'package:flutter_chat_app/presentation/blocs/auth/auth_bloc.dart';
-import 'package:flutter_chat_app/presentation/blocs/chat/chat_bloc.dart';
-import 'package:flutter_chat_app/presentation/blocs/connectivity/connectivity_bloc.dart';
-import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
-import 'package:flutter_chat_app/utils/app_bloc_observer.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_chat_app/core/di/injection.dart';
-import 'package:flutter_chat_app/core/services/background_sync_service.dart';
-import 'package:flutter_chat_app/core/services/chat_sync_service.dart';
-import 'package:flutter_chat_app/core/services/connectivity_service.dart';
-import 'package:flutter_chat_app/core/services/notification_service.dart';
-import 'package:flutter_chat_app/presentation/app.dart';
-import 'package:workmanager/workmanager.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_chat_app/core/services/connectivity_analyzer_service.dart';
-import 'package:flutter_chat_app/core/services/media_processing_service.dart';
-import 'package:flutter_chat_app/core/services/resource_manager_service.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter_chat_app/core/di/injection.dart';
+import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/data/models/chat_model.dart';
+import 'package:flutter_chat_app/data/models/message_model.dart';
+import 'package:flutter_chat_app/data/models/user_model.dart';
+import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
+import 'package:uuid/uuid.dart';
 
-/// Handle Firebase background messages
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Initialize Firebase inside the background handler
-  await Firebase.initializeApp();
-  
-  // Extract notification data
-  final data = message.data;
-  debugPrint("Background message received: ${message.messageId}");
-  debugPrint("Data: $data");
-}
+// Import home screens from respective platform files
+import 'main_mobile.dart' show MobileHomeScreen;
+import 'main_web.dart' show WebHomeScreen;
+import 'main_desktop.dart' show DesktopHomeScreen;
 
-void main() async {
-  await runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    
-    // Load environment variables
-    await dotenv.load(fileName: '.env');
-    
-    // Initialize Firebase
-    await Firebase.initializeApp();
-    
-    // Set up background message handler
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    
-    // Configure dependency injection
-    await configureDependencies();
-    
-    // Initialize media and resource services
-    final resourceManager = GetIt.I<ResourceManagerService>();
-    final mediaProcessor = GetIt.I<MediaProcessingService>();
-    final connectivityAnalyzer = GetIt.I<ConnectivityAnalyzerService>();
-    
-    // Initialize platform-specific features
-    await _initializePlatformSpecifics();
-    
-    // Initialize services
-    await _initializeServices();
-    
-    // Set preferred orientations
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-    
-    // Initialize Crashlytics
-    if (!kDebugMode) {
-      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
-    }
-    
-    // Initialize BLoC observer
-    Bloc.observer = AppBlocObserver();
-    
-    runApp(const MyApp());
-  }, (error, stack) {
-    if (!kDebugMode) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    } else {
-      debugPrint('Error: $error');
-      debugPrint('Stack: $stack');
-    }
-  });
-}
-
-/// Initialize all required services
-Future<void> _initializeServices() async {
-  // Get service instances from dependency injection
-  final connectivityService = GetIt.I<ConnectivityService>();
-  final chatSyncService = GetIt.I<ChatSyncService>();
-  final notificationService = GetIt.I<NotificationService>();
-  final backgroundSyncService = GetIt.I<BackgroundSyncService>();
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize services
-  await chatSyncService.initialize();
-  await notificationService.initialize();
-  await backgroundSyncService.initialize();
+  // Load environment variables
+  await dotenv.load(fileName: '.env');
   
-  // Schedule background sync
-  await backgroundSyncService.schedulePeriodicSync(
-    frequency: const Duration(hours: 1),
-    requiresCharging: false,
-    requiresDeviceIdle: false,
-  );
+  // Configure dependencies
+  await configureInjection();
   
-  // Perform initial sync if connected
-  if (await connectivityService.isConnected()) {
-    await chatSyncService.syncAllChats();
+  // Tùy thuộc vào nền tảng, chúng ta sẽ khởi động các dịch vụ phù hợp
+  if (kIsWeb) {
+    await _initializeWebServices();
+  } else if (Platform.isAndroid || Platform.isIOS) {
+    await _initializeMobileServices();
+  } else {
+    await _initializeDesktopServices();
   }
+  
+  runApp(const MyApp());
 }
 
-/// Initialize platform-specific features
-Future<void> _initializePlatformSpecifics() async {
-  if (Platform.isAndroid || Platform.isIOS) {
-    // Request permissions for media processing
-    await Permission.storage.request();
-    
-    // Initialize background task support
-    await _initializeBackgroundTasks();
-  }
+Future<void> _initializeWebServices() async {
+  // Initialize web-specific services
+  final databaseService = GetIt.I<DatabaseService>();
+  await databaseService.initialize();
 }
 
-/// Initialize background tasks for media processing
-Future<void> _initializeBackgroundTasks() async {
-  try {
-    await Workmanager().initialize(
-      _callbackDispatcher,
-      isInDebugMode: kDebugMode,
-    );
-    
-    // Register periodic tasks
-    await Workmanager().registerPeriodicTask(
-      'mediaProcessingTask',
-      'mediaProcessing',
-      frequency: const Duration(minutes: 15),
-      constraints: Constraints(
-        networkType: NetworkType.connected,
-        batteryNotLow: true,
-      ),
-    );
-    
-    debugPrint('Background tasks initialized successfully');
-  } catch (e) {
-    debugPrint('Failed to initialize background tasks: $e');
-  }
+Future<void> _initializeMobileServices() async {
+  // Initialize mobile-specific services
+  final databaseService = GetIt.I<DatabaseService>();
+  await databaseService.initialize();
 }
 
-/// Background task callback
-@pragma('vm:entry-point')
-void _callbackDispatcher() {
-  Workmanager().executeTask((taskName, inputData) async {
-    try {
-      switch (taskName) {
-        case 'mediaProcessing':
-          // Clean up temporary files
-          final resourceManager = GetIt.I<ResourceManagerService>();
-          await resourceManager.clearTemporaryFiles();
-          
-          // Process any pending media files
-          final mediaProcessor = GetIt.I<MediaProcessingService>();
-          await mediaProcessor.clearTemporaryFiles();
-          break;
-          
-        default:
-          debugPrint('Unknown task: $taskName');
-          break;
-      }
-      
-      return true;
-    } catch (e) {
-      debugPrint('Error executing background task: $e');
-      return false;
-    }
-  });
+Future<void> _initializeDesktopServices() async {
+  // Initialize desktop-specific services
+  final databaseService = GetIt.I<DatabaseService>();
+  await databaseService.initialize();
 }
 
-/// Main app widget
 class MyApp extends StatelessWidget {
-  /// Constructor
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return App();
+    return MaterialApp(
+      title: 'Flutter Chat App',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      home: const PlatformEntryPoint(),
+    );
+  }
+}
+
+// This widget will determine which platform-specific implementation to use
+class PlatformEntryPoint extends StatelessWidget {
+  const PlatformEntryPoint({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Return the appropriate screen based on platform
+    if (kIsWeb) {
+      return const WebHomeScreen();
+    } else if (Platform.isAndroid || Platform.isIOS) {
+      return const MobileHomeScreen();
+    } else {
+      return const DesktopHomeScreen();
+    }
+  }
+}
+
+class IsarTestScreen extends StatefulWidget {
+  const IsarTestScreen({super.key});
+
+  @override
+  State<IsarTestScreen> createState() => _IsarTestScreenState();
+}
+
+class _IsarTestScreenState extends State<IsarTestScreen> {
+  final _repository = GetIt.I<OfflineFirstRepository>();
+  final _uuid = Uuid();
+  bool _isLoading = false;
+  String _statusMessage = 'Ready';
+  List<UserModel> _users = [];
+  List<ChatModel> _chats = [];
+  List<MessageModel> _messages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    _repository.getUserStream().listen((users) {
+      setState(() {
+        _users = users;
+      });
+    });
+    
+    _repository.getChatStream().listen((chats) {
+      setState(() {
+        _chats = chats;
+      });
+    });
+  }
+
+  Future<void> _createTestData() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = 'Creating test data...';
+    });
+
+    try {
+      // Create test user
+      final user = UserModel(
+        serverId: 'srv_${_uuid.v4()}',
+        username: 'testuser',
+        displayName: 'Test User',
+        lastSeen: DateTime.now(),
+      );
+      await _repository.saveUser(user);
+
+      // Create test chat
+      final chat = ChatModel(
+        serverId: 'srv_${_uuid.v4()}',
+        type: ChatType.direct,
+        participantIds: [user.serverId],
+        createdAt: DateTime.now(),
+      );
+      await _repository.saveChat(chat);
+
+      // Create test message
+      final message = MessageModel(
+        localId: _uuid.v4(),
+        chatId: chat.serverId,
+        senderId: user.serverId,
+        content: 'Hello, this is a test message',
+        type: MessageType.text,
+        createdAt: DateTime.now(),
+      );
+      await _repository.saveMessage(message);
+
+      // Load messages for the chat
+      _repository.getMessagesForChat(chat.serverId).listen((messages) {
+        setState(() {
+          _messages = messages;
+        });
+      });
+
+      setState(() {
+        _statusMessage = 'Test data created successfully';
+      });
+    } catch (e) {
+      setState(() {
+        _statusMessage = 'Error creating test data: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _clearData() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = 'Clearing data...';
+    });
+
+    try {
+      final databaseService = GetIt.I<DatabaseService>();
+      await databaseService.clearAllData();
+      
+      setState(() {
+        _messages = [];
+        _statusMessage = 'Data cleared successfully';
+      });
+    } catch (e) {
+      setState(() {
+        _statusMessage = 'Error clearing data: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Isar Offline-First Demo'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Status: $_statusMessage', 
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 20),
+                  
+                  const Text('Users:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  _users.isEmpty
+                      ? const Text('No users yet')
+                      : Column(
+                          children: _users
+                              .map((user) => ListTile(
+                                    title: Text(user.displayName),
+                                    subtitle: Text(user.username),
+                                  ))
+                              .toList(),
+                        ),
+                  const SizedBox(height: 20),
+                  
+                  const Text('Chats:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  _chats.isEmpty
+                      ? const Text('No chats yet')
+                      : Column(
+                          children: _chats
+                              .map((chat) => ListTile(
+                                    title: Text('Chat ${chat.id}'),
+                                    subtitle: Text('Type: ${chat.type.name}'),
+                                  ))
+                              .toList(),
+                        ),
+                  const SizedBox(height: 20),
+                  
+                  const Text('Messages:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  _messages.isEmpty
+                      ? const Text('No messages yet')
+                      : Expanded(
+                          child: ListView.builder(
+                            itemCount: _messages.length,
+                            itemBuilder: (context, index) {
+                              final message = _messages[index];
+                              return ListTile(
+                                title: Text(message.content),
+                                subtitle: Text('Status: ${message.status.name}'),
+                              );
+                            },
+                          ),
+                        ),
+                ],
+              ),
+            ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: _createTestData,
+            tooltip: 'Create Test Data',
+            child: const Icon(Icons.add),
+          ),
+          const SizedBox(height: 10),
+          FloatingActionButton(
+            onPressed: _clearData,
+            tooltip: 'Clear Data',
+            backgroundColor: Colors.red,
+            child: const Icon(Icons.delete),
+          ),
+        ],
+      ),
+    );
   }
 } 

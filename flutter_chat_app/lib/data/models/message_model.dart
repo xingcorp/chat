@@ -3,6 +3,7 @@ import 'package:isar/isar.dart';
 part 'message_model.g.dart';
 
 /// Status of a message in the queue
+@enumerated
 enum MessageStatus {
   /// Message is in the queue waiting to be sent
   pending,
@@ -24,6 +25,7 @@ enum MessageStatus {
 }
 
 /// Type of message content
+@enumerated
 enum MessageType {
   /// Plain text message
   text,
@@ -79,11 +81,11 @@ class MessageModel {
   final String content;
 
   /// Type of message
-  @enumerated
+  @Enumerated(EnumType.name)
   final MessageType type;
 
   /// Status of the message
-  @enumerated
+  @Enumerated(EnumType.name)
   final MessageStatus status;
 
   /// Timestamp when the message was created

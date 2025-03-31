@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_chat_app/core/services/connectivity_analyzer_service.dart';
-import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
+import 'package:flutter_chat_app/core/services/realtime_connection_service.dart' as realtime;
 import 'package:injectable/injectable.dart';
 
 // Events
@@ -22,8 +22,8 @@ class DisconnectRequested extends ConnectionEvent {
 }
 
 class ConnectionStateChanged extends ConnectionEvent {
-  final ConnectionState connectionState;
-  final ConnectionType connectionType;
+  final realtime.ConnectionState connectionState;
+  final realtime.ConnectionType connectionType;
   
   const ConnectionStateChanged({
     required this.connectionState,
@@ -49,7 +49,7 @@ class NetworkQualityChanged extends ConnectionEvent {
 class ConnectionState extends Equatable {
   final bool isConnected;
   final bool isConnecting;
-  final ConnectionType connectionType;
+  final realtime.ConnectionType connectionType;
   final NetworkQuality networkQuality;
   final String? errorMessage;
   
@@ -64,14 +64,14 @@ class ConnectionState extends Equatable {
   factory ConnectionState.initial() => const ConnectionState(
     isConnected: false,
     isConnecting: false,
-    connectionType: ConnectionType.none,
+    connectionType: realtime.ConnectionType.none,
     networkQuality: NetworkQuality.none,
   );
   
   ConnectionState copyWith({
     bool? isConnected,
     bool? isConnecting,
-    ConnectionType? connectionType,
+    realtime.ConnectionType? connectionType,
     NetworkQuality? networkQuality,
     String? errorMessage,
   }) {
@@ -97,7 +97,7 @@ class ConnectionState extends Equatable {
 // BLoC
 @injectable
 class ConnectionBloc extends Bloc<ConnectionEvent, ConnectionState> {
-  final RealtimeConnectionService _realtimeConnectionService;
+  final realtime.RealtimeConnectionService _realtimeConnectionService;
   final ConnectivityAnalyzerService _connectivityAnalyzerService;
   
   late final StreamSubscription<dynamic> _connectionStateSubscription;
@@ -105,7 +105,7 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnectionState> {
   late final StreamSubscription<dynamic> _networkQualitySubscription;
   
   ConnectionBloc({
-    required RealtimeConnectionService realtimeConnectionService,
+    required realtime.RealtimeConnectionService realtimeConnectionService,
     required ConnectivityAnalyzerService connectivityAnalyzerService,
   }) : _realtimeConnectionService = realtimeConnectionService,
        _connectivityAnalyzerService = connectivityAnalyzerService,
@@ -136,18 +136,14 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnectionState> {
     return super.close();
   }
   
-  void _handleConnectionStateChange(core.services.realtime_connection_service.ConnectionState state) {
-    final bool isConnected = state == core.services.realtime_connection_service.ConnectionState.connected;
-    final bool isConnecting = state == core.services.realtime_connection_service.ConnectionState.connecting || 
-                              state == core.services.realtime_connection_service.ConnectionState.reconnecting;
-    
+  void _handleConnectionStateChange(realtime.ConnectionState state) {
     add(ConnectionStateChanged(
       connectionState: state,
       connectionType: _realtimeConnectionService.connectionType,
     ));
   }
   
-  void _handleConnectionTypeChange(ConnectionType type) {
+  void _handleConnectionTypeChange(realtime.ConnectionType type) {
     add(ConnectionStateChanged(
       connectionState: _realtimeConnectionService.connectionState,
       connectionType: type,
@@ -194,9 +190,9 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnectionState> {
     ConnectionStateChanged event,
     Emitter<ConnectionState> emit,
   ) {
-    final bool isConnected = event.connectionState == core.services.realtime_connection_service.ConnectionState.connected;
-    final bool isConnecting = event.connectionState == core.services.realtime_connection_service.ConnectionState.connecting || 
-                              event.connectionState == core.services.realtime_connection_service.ConnectionState.reconnecting;
+    final bool isConnected = event.connectionState == realtime.ConnectionState.connected;
+    final bool isConnecting = event.connectionState == realtime.ConnectionState.connecting || 
+                              event.connectionState == realtime.ConnectionState.reconnecting;
     
     emit(state.copyWith(
       isConnected: isConnected,
@@ -214,4 +210,4 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnectionState> {
       networkQuality: event.networkQuality,
     ));
   }
-} 
+}

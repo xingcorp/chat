@@ -1,0 +1,63 @@
+{
+  "app": {
+    "title": "Ứng dụng Chat Flutter"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "loading": "Đang tải...",
+    "error": "Đã xảy ra lỗi",
+    "retry": "Thử lại",
+    "send": "Gửi",
+    "close": "Đóng"
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "logout": "Đăng xuất",
+    "register": "Đăng ký",
+    "forgotPassword": "Quên mật khẩu",
+    "username": "Tên đăng nhập",
+    "password": "Mật khẩu",
+    "email": "Email",
+    "confirmPassword": "Xác nhận mật khẩu"
+  },
+  "chat": {
+    "newMessage": "Tin nhắn mới",
+    "typeMessage": "Nhập tin nhắn...",
+    "noMessages": "Chưa có tin nhắn",
+    "loadMore": "Tải thêm",
+    "yesterday": "Hôm qua",
+    "today": "Hôm nay"
+  },
+  "connection": {
+    "online": "Trực tuyến",
+    "offline": "Ngoại tuyến",
+    "connecting": "Đang kết nối...",
+    "reconnecting": "Đang kết nối lại...",
+    "poor": "Kết nối kém",
+    "good": "Kết nối tốt",
+    "excellent": "Kết nối rất tốt"
+  },
+  "database": {
+    "testData": "Dữ liệu kiểm thử",
+    "createTestData": "Tạo dữ liệu kiểm thử",
+    "clearData": "Xóa dữ liệu",
+    "dataCleared": "Đã xóa dữ liệu",
+    "users": "Người dùng",
+    "chats": "Cuộc trò chuyện",
+    "messages": "Tin nhắn",
+    "noUsers": "Chưa có người dùng",
+    "noChats": "Chưa có cuộc trò chuyện",
+    "noMessages": "Chưa có tin nhắn"
+  },
+  "errors": {
+    "connectionError": "Lỗi kết nối",
+    "databaseError": "Lỗi cơ sở dữ liệu",
+    "syncError": "Lỗi đồng bộ hóa",
+    "uploadError": "Lỗi tải lên",
+    "downloadError": "Lỗi tải xuống"
+  }
+}
