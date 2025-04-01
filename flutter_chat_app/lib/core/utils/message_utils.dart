@@ -4,23 +4,23 @@ import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 class MessageUtils {
   /// Kiểm tra xem tin nhắn có phải là tin nhắn phương tiện (ảnh, video, âm thanh)
   static bool isMediaMessage(ChatMessage message) {
-    final contentType = message.contentType.toLowerCase();
+    final contentType = message.contentType.toString().toLowerCase();
     return contentType == 'image' || contentType == 'video' || contentType == 'audio';
   }
   
   /// Kiểm tra xem tin nhắn có phải là tin nhắn văn bản
   static bool isTextMessage(ChatMessage message) {
-    return message.contentType.toLowerCase() == 'text';
+    return message.contentType.toString().toLowerCase() == 'text';
   }
   
   /// Kiểm tra xem tin nhắn có phải là tin nhắn file
   static bool isFileMessage(ChatMessage message) {
-    return message.contentType.toLowerCase() == 'file';
+    return message.contentType.toString().toLowerCase() == 'file';
   }
   
   /// Kiểm tra xem tin nhắn có phải là tin nhắn hệ thống
   static bool isSystemMessage(ChatMessage message) {
-    return message.contentType.toLowerCase() == 'system';
+    return message.contentType.toString().toLowerCase() == 'system';
   }
   
   /// Kiểm tra xem tin nhắn có đính kèm không
@@ -118,7 +118,7 @@ class MessageUtils {
   
   /// Trả về tin nhắn ngắn gọn cho thông báo
   static String getNotificationPreview(ChatMessage message) {
-    final contentType = message.contentType.toLowerCase();
+    final contentType = message.contentType.toString().toLowerCase();
     
     if (contentType == 'text') {
       // Lấy nội dung ngắn gọn cho thông báo

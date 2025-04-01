@@ -1,18 +1,23 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/services/date_formatter_service.dart';
-import 'package:flutter_chat_app/core/utils/message_utils.dart';
+import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 
-/// Widget hiển thị một tin nhắn trong danh sách chat
+/// Widget hiển thị một tin nhắn trong đoạn chat
 class MessageItem extends StatelessWidget {
-  /// Dữ liệu tin nhắn
+  /// Tin nhắn cần hiển thị
   final ChatMessage message;
   
-  /// Đánh dấu tin nhắn của người dùng hiện tại
+  /// Người gửi tin nhắn
+  final MessageSender sender;
+  
+  /// Có phải tin nhắn của người dùng hiện tại
   final bool isCurrentUser;
   
-  /// Callback khi nhấn vào tin nhắn
+  /// Có hiển thị tin nhắn đầy đủ
+  final bool showFull;
+  
+  /// Xử lý khi nhấn vào tin nhắn
   final VoidCallback? onTap;
   
   /// Callback khi nhấn giữ tin nhắn
@@ -25,7 +30,9 @@ class MessageItem extends StatelessWidget {
   const MessageItem({
     Key? key,
     required this.message,
+    required this.sender,
     required this.isCurrentUser,
+    this.showFull = true,
     this.onTap,
     this.onLongPress,
     this.isHighlighted = false,
@@ -53,7 +60,7 @@ class MessageItem extends StatelessWidget {
                 : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (!isCurrentUser) _buildAvatar(),
+              if (!isCurrentUser) _buildAvatar(context),
               
               Flexible(
                 child: Column(
@@ -62,11 +69,11 @@ class MessageItem extends StatelessWidget {
                       : CrossAxisAlignment.start,
                   children: [
                     // Tên người gửi (chỉ hiển thị khi không phải người dùng hiện tại)
-                    if (!isCurrentUser && message.sender.fullName.isNotEmpty)
+                    if (!isCurrentUser && message.sender.name.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(left: 12.0, bottom: 2.0),
                         child: Text(
-                          message.sender.fullName,
+                          message.sender.name,
                           style: TextStyle(
                             fontSize: 12.0,
                             fontWeight: FontWeight.w600,
@@ -93,48 +100,38 @@ class MessageItem extends StatelessWidget {
   }
   
   /// Xây dựng avatar của người gửi
-  Widget _buildAvatar() {
-    final String avatarUrl = message.sender.avatar ?? '';
-    
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0, bottom: 4.0),
-      child: SizedBox(
-        width: 32.0,
-        height: 32.0,
-        child: avatarUrl.isNotEmpty 
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(16.0),
-                child: CachedNetworkImage(
-                  imageUrl: avatarUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => CircleAvatar(
-                    backgroundColor: Colors.grey[300],
-                    child: Icon(Icons.person, color: Colors.grey[500], size: 16.0),
-                  ),
-                  errorWidget: (context, url, error) => CircleAvatar(
-                    backgroundColor: Colors.grey[300],
-                    child: Icon(Icons.error, color: Colors.grey[500], size: 16.0),
-                  ),
+  Widget _buildAvatar(BuildContext context) {
+    return CircleAvatar(
+      radius: 16.0,
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      child: message.sender.avatar != null && message.sender.avatar!.isNotEmpty
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(16.0),
+              child: CachedNetworkImage(
+                imageUrl: message.sender.avatar!,
+                width: 32.0,
+                height: 32.0,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Text(
+                  message.sender.name.isNotEmpty ? message.sender.name[0].toUpperCase() : '?',
+                  style: const TextStyle(color: Colors.white),
                 ),
-              )
-            : CircleAvatar(
-                backgroundColor: Colors.grey[300],
-                child: Text(
-                  _getInitials(message.sender.fullName),
-                  style: TextStyle(
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[700],
-                  ),
+                errorWidget: (context, url, error) => Text(
+                  message.sender.name.isNotEmpty ? message.sender.name[0].toUpperCase() : '?',
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
-      ),
+            )
+          : Text(
+              message.sender.name.isNotEmpty ? message.sender.name[0].toUpperCase() : '?',
+              style: const TextStyle(color: Colors.white),
+            ),
     );
   }
   
   /// Xây dựng nội dung tin nhắn
   Widget _buildMessageContent(BuildContext context) {
-    final contentType = message.contentType.toLowerCase();
+    final contentType = message.contentType.toString().toLowerCase();
     
     // Bong bóng chat
     return Container(
@@ -180,7 +177,7 @@ class MessageItem extends StatelessWidget {
             else if (contentType == 'audio')
               _buildAudioMessage()
             else if (contentType == 'file')
-              _buildFileMessage()
+              _buildFileMessage(context)
             else
               _buildUnknownMessage(context),
             
@@ -348,57 +345,76 @@ class MessageItem extends StatelessWidget {
   }
   
   /// Xây dựng tin nhắn file
-  Widget _buildFileMessage() {
+  Widget _buildFileMessage(BuildContext context) {
     if (message.attachments.isEmpty) {
-      return _buildErrorMessage('Không tìm thấy tệp đính kèm');
+      return _buildErrorMessage('Không tìm thấy file');
     }
     
     final attachment = message.attachments.first;
-    final fileName = attachment.fileName ?? 'File đính kèm';
-    final fileSize = _formatFileSize(attachment.size);
     
     return Container(
-      width: 220.0,
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-      child: Row(
-        children: [
-          Icon(
-            Icons.insert_drive_file,
-            color: isCurrentUser ? Colors.white : Colors.blue,
-            size: 32.0,
-          ),
-          const SizedBox(width: 8.0),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  fileName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.w500,
-                    color: isCurrentUser ? Colors.white : Colors.black,
-                  ),
+      constraints: const BoxConstraints(
+        maxWidth: 250.0,
+      ),
+      child: Card(
+        margin: EdgeInsets.zero,
+        color: isCurrentUser
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).cardColor,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(0)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              Container(
+                width: 40.0,
+                height: 40.0,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(4.0),
                 ),
-                const SizedBox(height: 2.0),
-                Text(
-                  fileSize,
-                  style: TextStyle(
-                    fontSize: 12.0,
-                    color: isCurrentUser ? Colors.white70 : Colors.grey[600],
-                  ),
+                child: Icon(
+                  Icons.insert_drive_file,
+                  color: Colors.grey[700],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      attachment.name,
+                      style: TextStyle(
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.bold,
+                        color: isCurrentUser ? Colors.white : Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4.0),
+                    Text(
+                      '${(attachment.size / 1024).toStringAsFixed(1)} KB',
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color: isCurrentUser ? Colors.white70 : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.download,
+                color: isCurrentUser ? Colors.white70 : Colors.grey[700],
+                size: 20.0,
+              ),
+            ],
           ),
-          Icon(
-            Icons.download,
-            color: isCurrentUser ? Colors.white70 : Colors.grey[700],
-            size: 20.0,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -495,36 +511,5 @@ class MessageItem extends StatelessWidget {
         color: hasRead ? Colors.blue : Colors.grey[400],
       ),
     );
-  }
-  
-  /// Lấy chữ cái đầu của tên
-  String _getInitials(String fullName) {
-    if (fullName.isEmpty) return '';
-    
-    final nameParts = fullName.split(' ');
-    if (nameParts.length > 1) {
-      return nameParts.first[0] + nameParts.last[0];
-    } else {
-      return nameParts.first[0];
-    }
-  }
-  
-  /// Định dạng kích thước tệp
-  String _formatFileSize(int? sizeInBytes) {
-    if (sizeInBytes == null) return 'Không xác định';
-    
-    const int kb = 1024;
-    const int mb = kb * 1024;
-    const int gb = mb * 1024;
-    
-    if (sizeInBytes >= gb) {
-      return '${(sizeInBytes / gb).toStringAsFixed(1)} GB';
-    } else if (sizeInBytes >= mb) {
-      return '${(sizeInBytes / mb).toStringAsFixed(1)} MB';
-    } else if (sizeInBytes >= kb) {
-      return '${(sizeInBytes / kb).toStringAsFixed(0)} KB';
-    } else {
-      return '$sizeInBytes B';
-    }
   }
 } 

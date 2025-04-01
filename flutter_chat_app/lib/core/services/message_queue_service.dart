@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:math';
 
@@ -11,39 +10,84 @@ import 'package:flutter_chat_app/core/services/local_storage_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
-import 'package:flutter_chat_app/domain/models/queued_message.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:rxdart/rxdart.dart';
 
-/// Trạng thái của một tin nhắn trong hàng đợi
-enum MessageQueueStatus {
-  /// Đang chờ, chưa thử gửi
-  pending,
+/// Public queued message class for external API
+class QueuedMessage {
+  /// Unique ID of the message
+  final String localId;
+
+  /// Chat ID this message belongs to
+  final String chatId;
   
-  /// Đang trong quá trình gửi
-  sending,
+  /// Message content
+  final String content;
   
-  /// Đã gửi thành công
-  sent,
+  /// Content type
+  final ContentType contentType;
   
-  /// Gửi thất bại, sẽ thử lại
-  failed,
+  /// Current status
+  final MessageQueueStatus status;
   
-  /// Không thể gửi sau nhiều lần thử
-  error,
+  /// Server ID after sending
+  final String? serverId;
   
-  /// Đã được người nhận xác nhận
-  delivered,
+  /// Error message if failed
+  final String? errorMessage;
   
-  /// Đã được đọc
-  read,
+  /// Attachment IDs
+  final List<String> attachmentIds;
   
-  /// Đã được xung đột với tin nhắn từ server
-  conflicted,
+  /// Created at timestamp
+  final DateTime createdAt;
+  
+  /// Last updated at timestamp
+  final DateTime updatedAt;
+  
+  /// Number of retry attempts
+  final int retryCount;
+  
+  /// Scheduled retry time
+  final DateTime? scheduledRetryTime;
+  
+  /// Constructor
+  QueuedMessage({
+    required this.localId,
+    required this.chatId,
+    required this.content,
+    required this.contentType,
+    required this.status,
+    this.serverId,
+    this.errorMessage,
+    this.attachmentIds = const [],
+    required this.createdAt,
+    required this.updatedAt,
+    this.retryCount = 0,
+    this.scheduledRetryTime,
+  });
+  
+  /// Create from internal message
+  factory QueuedMessage._fromInternal(_InternalQueuedMessage internal) {
+    return QueuedMessage(
+      localId: internal.localId,
+      chatId: internal.chatId,
+      content: internal.content,
+      contentType: internal.contentType,
+      status: internal.status,
+      serverId: internal.serverId,
+      errorMessage: internal.errorMessage,
+      attachmentIds: internal.attachmentIds,
+      createdAt: internal.createdAt,
+      updatedAt: internal.updatedAt,
+      retryCount: internal.retryCount,
+      scheduledRetryTime: internal.scheduledRetryTime,
+    );
+  }
 }
 
-/// Model quản lý tin nhắn trong hàng đợi
-class QueuedMessage {
+/// Internal model for queue management, separate from domain model
+class _InternalQueuedMessage {
   /// ID duy nhất để theo dõi tin nhắn trong hàng đợi
   final String localId;
   
@@ -87,7 +131,7 @@ class QueuedMessage {
   final String contentHash;
   
   /// Constructor
-  QueuedMessage({
+  _InternalQueuedMessage({
     String? localId,
     required this.chatId,
     required this.content,
@@ -107,8 +151,8 @@ class QueuedMessage {
         contentHash = _generateContentHash(chatId, content, contentType, attachmentIds);
   
   /// Tạo tin nhắn từ JSON
-  factory QueuedMessage.fromJson(Map<String, dynamic> json) {
-    return QueuedMessage(
+  factory _InternalQueuedMessage.fromJson(Map<String, dynamic> json) {
+    return _InternalQueuedMessage(
       localId: json['localId'],
       chatId: json['chatId'],
       content: json['content'],
@@ -171,14 +215,14 @@ class QueuedMessage {
   }
   
   /// Cập nhật trạng thái của tin nhắn
-  QueuedMessage copyWithStatus({
+  _InternalQueuedMessage copyWithStatus({
     required MessageQueueStatus status,
     String? serverId,
     String? errorMessage,
     DateTime? scheduledRetryTime,
     int? retryCount,
   }) {
-    return QueuedMessage(
+    return _InternalQueuedMessage(
       localId: localId,
       chatId: chatId,
       content: content,
@@ -196,13 +240,13 @@ class QueuedMessage {
   }
   
   /// Kiểm tra xem tin nhắn có giống nhau không dựa vào nội dung
-  bool hasSameContent(QueuedMessage other) {
+  bool hasSameContent(_InternalQueuedMessage other) {
     return contentHash == other.contentHash;
   }
 }
 
 /// A priority queue implementation using a heap
-class HeapPriorityQueue<E> {
+class _HeapPriorityQueue<E> {
   /// The underlying list that stores the heap
   final List<E> _queue = <E>[];
   
@@ -210,7 +254,7 @@ class HeapPriorityQueue<E> {
   final int Function(E a, E b) _comparison;
   
   /// Creates a new priority queue with the provided comparison function
-  HeapPriorityQueue(this._comparison);
+  _HeapPriorityQueue(this._comparison);
   
   /// Adds an element to the queue
   void add(E element) {
@@ -294,16 +338,16 @@ class HeapPriorityQueue<E> {
 }
 
 /// Class to manage message priority queue
-class MessagePriorityQueue {
+class _MessagePriorityQueue {
   /// Internal queue using heap-based priority queue
   final _queue = _createPriorityQueue();
   
   /// Map for quick message lookup by ID
-  final Map<String, QueuedMessage> _messageMap = {};
+  final Map<String, _InternalQueuedMessage> _messageMap = {};
   
   /// Create a priority queue for queued messages
-  static HeapPriorityQueue<QueuedMessage> _createPriorityQueue() {
-    return HeapPriorityQueue<QueuedMessage>(
+  static _HeapPriorityQueue<_InternalQueuedMessage> _createPriorityQueue() {
+    return _HeapPriorityQueue<_InternalQueuedMessage>(
       (a, b) {
         // Compare by retry count (messages with more retries get higher priority)
         final priorityComparison = b.retryCount.compareTo(a.retryCount);
@@ -316,7 +360,7 @@ class MessagePriorityQueue {
   }
   
   /// Add a message to the queue
-  void add(QueuedMessage message) {
+  void add(_InternalQueuedMessage message) {
     // Remove old message if it exists
     if (_messageMap.containsKey(message.localId)) {
       _messageMap.remove(message.localId);
@@ -328,7 +372,7 @@ class MessagePriorityQueue {
   }
   
   /// Get and remove the first message from the queue
-  QueuedMessage? removeFirst() {
+  _InternalQueuedMessage? removeFirst() {
     if (_queue.isEmpty) return null;
     
     final message = _queue.removeFirst();
@@ -351,7 +395,7 @@ class MessagePriorityQueue {
     // so we recreate the queue
     _messageMap.remove(localId);
     
-    final tempList = <QueuedMessage>[];
+    final tempList = <_InternalQueuedMessage>[];
     while (_queue.isNotEmpty) {
       final item = _queue.removeFirst();
       if (item.localId != localId) {
@@ -374,9 +418,9 @@ class MessagePriorityQueue {
   }
   
   /// Get all messages as a list
-  List<QueuedMessage> toList() {
-    final result = <QueuedMessage>[];
-    final tempList = <QueuedMessage>[];
+  List<_InternalQueuedMessage> toList() {
+    final result = <_InternalQueuedMessage>[];
+    final tempList = <_InternalQueuedMessage>[];
     
     // Get all messages
     while (_queue.isNotEmpty) {
@@ -394,13 +438,13 @@ class MessagePriorityQueue {
   }
   
   /// Find message by ID
-  QueuedMessage? operator [](String localId) => _messageMap[localId];
+  _InternalQueuedMessage? operator [](String localId) => _messageMap[localId];
   
   /// Check if message exists
   bool contains(String localId) => _messageMap.containsKey(localId);
   
   /// Filter messages by condition
-  List<QueuedMessage> where(bool Function(QueuedMessage) test) {
+  List<_InternalQueuedMessage> where(bool Function(_InternalQueuedMessage) test) {
     return _messageMap.values.where(test).toList();
   }
 }
@@ -436,12 +480,15 @@ class MessageQueueService {
   final RealtimeConnectionService _realtimeConnectionService;
   
   /// Message priority queue
-  final _messageQueue = MessagePriorityQueue();
+  final _messageQueue = _MessagePriorityQueue();
   
   /// Currently sending messages
-  final Map<String, QueuedMessage> _sendingMessages = {};
+  final Map<String, _InternalQueuedMessage> _sendingMessages = {};
   
-  /// Status update stream controller
+  /// Status update stream controller for internal use
+  final _internalStatusController = BehaviorSubject<_InternalQueuedMessage>();
+  
+  /// Status update stream controller for public API
   final _messageStatusController = BehaviorSubject<QueuedMessage>();
   
   /// Queue processing timer
@@ -459,6 +506,9 @@ class MessageQueueService {
   /// Realtime connection subscription
   StreamSubscription? _realtimeConnectionSubscription;
   
+  /// Internal status subscription
+  StreamSubscription? _internalStatusSubscription;
+  
   /// Initialization flag
   bool _initialized = false;
   
@@ -468,7 +518,13 @@ class MessageQueueService {
     this._localStorageService,
     this._connectivityService,
     this._realtimeConnectionService,
-  );
+  ) {
+    // Set up internal status subscription to map to public API
+    _internalStatusSubscription = _internalStatusController.stream
+        .listen((message) {
+          _messageStatusController.add(QueuedMessage._fromInternal(message));
+        });
+  }
   
   /// Stream of message status updates
   Stream<QueuedMessage> get messageStatusStream => _messageStatusController.stream;
@@ -497,23 +553,23 @@ class MessageQueueService {
   /// Restore queue from local storage
   Future<void> _restoreQueue() async {
     try {
-      final queueJson = await _localStorageService.getString(_storageKey);
-      if (queueJson != null) {
-        final queueData = jsonDecode(queueJson) as List<dynamic>;
+      // getString returns String? directly, not a Future
+      final queueJsonString = _localStorageService.getString(_storageKey);
+      
+      if (queueJsonString != null) {
+        final queueData = jsonDecode(queueJsonString) as List<dynamic>;
         
         // Restore messages to queue
         for (final messageData in queueData) {
           try {
-            final message = QueuedMessage.fromJson(messageData);
+            final message = _InternalQueuedMessage.fromJson(messageData);
             
             // Reset sending status to pending if needed
             if (message.status == MessageQueueStatus.sending) {
               _messageQueue.add(message.copyWithStatus(
                 status: MessageQueueStatus.pending,
               ));
-            } else if (message.status != MessageQueueStatus.sent && 
-                       message.status != MessageQueueStatus.failed && 
-                       message.status != MessageQueueStatus.conflicted) {
+            } else if (!message.status.isTerminal) {
               _messageQueue.add(message);
             }
           } catch (e) {
@@ -535,12 +591,12 @@ class MessageQueueService {
       final allMessages = [..._messageQueue.toList(), ..._sendingMessages.values];
       
       // Only save non-terminal messages
-      final uncompletedMessages = allMessages.where((msg) => 
-          msg.status != MessageQueueStatus.sent && 
-          msg.status != MessageQueueStatus.failed && 
-          msg.status != MessageQueueStatus.conflicted).toList();
+      final uncompletedMessages = allMessages.where((msg) => !msg.status.isTerminal).toList();
       
-      final queueJson = jsonEncode(uncompletedMessages.map((m) => m.toJson()).toList());
+      final messageJsonList = uncompletedMessages.map((m) => m.toJson()).toList();
+      final queueJson = jsonEncode(messageJsonList);
+      
+      // Save to storage
       await _localStorageService.setString(_storageKey, queueJson);
     } catch (e) {
       debugPrint('Failed to save message queue: $e');
@@ -555,7 +611,7 @@ class MessageQueueService {
     List<String> attachmentIds = const [],
   }) async {
     // Create a new queued message
-    final queuedMessage = QueuedMessage(
+    final queuedMessage = _InternalQueuedMessage(
       chatId: chatId,
       content: message,
       contentType: contentType,
@@ -640,7 +696,7 @@ class MessageQueueService {
     final now = DateTime.now();
     
     // Collect messages to process in this batch
-    final messagesToProcess = <QueuedMessage>[];
+    final messagesToProcess = <_InternalQueuedMessage>[];
     
     // Get messages with pending status or scheduled for retry
     while (messagesToProcess.length < _maxBatchSize && !_messageQueue.isEmpty) {
@@ -684,7 +740,7 @@ class MessageQueueService {
   }
   
   /// Send a message
-  Future<void> _sendMessage(QueuedMessage message) async {
+  Future<void> _sendMessage(_InternalQueuedMessage message) async {
     // Update status to sending
     final updatedMessage = message.copyWithStatus(
       status: MessageQueueStatus.sending,
@@ -702,7 +758,7 @@ class MessageQueueService {
         chatId: updatedMessage.chatId,
         content: updatedMessage.content,
         senderId: 'current_user_id', // This should come from a user service
-        contentType: updatedMessage.contentType.toString(),
+        contentType: updatedMessage.contentType.toString().split('.').last,
         attachmentIds: updatedMessage.attachmentIds,
       );
       
@@ -805,27 +861,29 @@ class MessageQueueService {
     }
   }
   
-  /// Notify about message status changes
-  void _notifyMessageStatusChanged(QueuedMessage message) {
-    if (!_messageStatusController.isClosed) {
-      _messageStatusController.add(message);
+  /// Notify about message status changes (internal)
+  void _notifyMessageStatusChanged(_InternalQueuedMessage message) {
+    if (!_internalStatusController.isClosed) {
+      _internalStatusController.add(message);
     }
   }
   
-  /// Get all messages in the queue
+  /// Get all messages in the queue (public)
   List<QueuedMessage> getAllMessages() {
-    return [..._messageQueue.toList(), ..._sendingMessages.values];
+    final internalMessages = [..._messageQueue.toList(), ..._sendingMessages.values];
+    return internalMessages.map((m) => QueuedMessage._fromInternal(m)).toList();
   }
   
-  /// Get a message by ID
+  /// Get a message by ID (public)
   QueuedMessage? getMessageById(String localId) {
-    return _messageQueue[localId] ?? _sendingMessages[localId];
+    final internal = _messageQueue[localId] ?? _sendingMessages[localId];
+    return internal != null ? QueuedMessage._fromInternal(internal) : null;
   }
   
   /// Cancel a pending message
   Future<bool> cancelMessage(String localId) async {
     // Find message
-    final message = getMessageById(localId);
+    final message = _messageQueue[localId] ?? _sendingMessages[localId];
     if (message == null) return false;
     
     // Can only cancel pending or failed messages
@@ -834,9 +892,9 @@ class MessageQueueService {
       return false;
     }
     
-    // Mark as cancelled - using failed status since cancelled is not available
+    // Mark as cancelled - using cancelled status
     final cancelledMessage = message.copyWithStatus(
-      status: MessageQueueStatus.failed,
+      status: MessageQueueStatus.cancelled,
       errorMessage: 'Cancelled by user',
     );
     
@@ -859,7 +917,7 @@ class MessageQueueService {
   /// Retry a failed message
   Future<bool> retryMessage(String localId) async {
     // Find message
-    final message = getMessageById(localId);
+    final message = _messageQueue[localId] ?? _sendingMessages[localId];
     if (message == null) return false;
     
     // Can only retry failed messages
@@ -906,6 +964,8 @@ class MessageQueueService {
     _stopProcessingQueue();
     _connectivitySubscription?.cancel();
     _realtimeConnectionSubscription?.cancel();
+    _internalStatusSubscription?.cancel();
+    _internalStatusController.close();
     _messageStatusController.close();
   }
 } 

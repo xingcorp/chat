@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
+import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
 
 /// Widget hiển thị trạng thái của tin nhắn
 class MessageStatusIndicator extends StatelessWidget {
@@ -56,7 +57,7 @@ class MessageStatusIndicator extends StatelessWidget {
     }
     
     // Ngược lại, lấy trạng thái từ service
-    final queuedMessage = messageQueueService.getMessageStatus(messageId);
+    final queuedMessage = messageQueueService.getMessageById(messageId);
     
     if (queuedMessage == null) {
       // Nếu không tìm thấy tin nhắn, hiển thị đã gửi
@@ -84,6 +85,10 @@ class MessageStatusIndicator extends StatelessWidget {
     bool showProgress = false;
     
     switch (status) {
+      case MessageQueueStatus.draft:
+        iconData = Icons.edit;
+        color = pendingColor;
+        break;
       case MessageQueueStatus.pending:
         iconData = Icons.access_time;
         color = pendingColor;
@@ -109,15 +114,18 @@ class MessageStatusIndicator extends StatelessWidget {
         iconData = Icons.error_outline;
         color = errorColor;
         break;
-      case MessageQueueStatus.error:
-        iconData = Icons.error;
+      case MessageQueueStatus.cancelled:
+        iconData = Icons.cancel;
+        color = errorColor;
+        break;
+      case MessageQueueStatus.conflicted:
+        iconData = Icons.warning;
         color = errorColor;
         break;
     }
     
     // Nếu có lỗi hoặc thất bại, cho phép nhấp để thử lại
-    final canRetry = status == MessageQueueStatus.failed || 
-                     status == MessageQueueStatus.error;
+    final canRetry = status == MessageQueueStatus.failed;
     
     if (showProgress) {
       // Hiển thị indicator quay tròn khi đang gửi

@@ -7,10 +7,10 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/services/local_storage_service.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
-import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/data/repositories/chat_repository.dart';
 import 'package:flutter_chat_app/data/repositories/message_repository.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// Service that handles chat synchronization with the server
 @lazySingleton
@@ -41,7 +41,11 @@ class ChatSyncService {
   /// Initialize the service
   Future<void> initialize() async {
     // Listen to connectivity changes
-    _connectivitySubscription = _connectivityService.onConnectivityChanged.listen(_handleConnectivityChanged);
+    _connectivitySubscription = _connectivityService.onConnectivityChanged
+        .listen((result) {
+          final isConnected = result.any((status) => status != ConnectivityResult.none);
+          _handleConnectivityChanged(isConnected);
+        });
     
     // Set up background channel for receiving messages when app is not in foreground
     final receivePort = ReceivePort();
@@ -60,7 +64,7 @@ class ChatSyncService {
     });
     
     // Restore last sync time from storage
-    final lastSyncTimeStr = await _localStorageService.getString('last_sync_time');
+    final lastSyncTimeStr = _localStorageService.getString('last_sync_time');
     if (lastSyncTimeStr != null) {
       _lastSyncTime = DateTime.parse(lastSyncTimeStr);
     }
@@ -169,7 +173,7 @@ class ChatSyncService {
   
   /// Sync all chats with the server
   Future<void> syncAllChats() async {
-    if (_isSyncing || !await _connectivityService.isConnected()) {
+    if (_isSyncing || !_connectivityService.isConnected) {
       return;
     }
     
@@ -204,7 +208,7 @@ class ChatSyncService {
   
   /// Sync messages for a specific chat
   Future<void> syncChatMessages(String chatId) async {
-    if (!await _connectivityService.isConnected()) {
+    if (!_connectivityService.isConnected) {
       // Save for later sync when offline
       if (!_pendingChatsToSync.contains(chatId)) {
         _pendingChatsToSync.add(chatId);
@@ -237,7 +241,7 @@ class ChatSyncService {
   
   /// Sync pending chats
   Future<void> syncPendingChats() async {
-    if (!await _connectivityService.isConnected()) {
+    if (!_connectivityService.isConnected) {
       return;
     }
     

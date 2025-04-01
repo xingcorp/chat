@@ -16,6 +16,7 @@ class ChatRepository implements IChatRepository {
   ChatRepository(this._client, this._localStorageService);
   
   /// Get the GraphQL client
+  @override
   GraphQLClient get client => _client;
 
   /// Get all chats for the current user
@@ -190,19 +191,19 @@ class ChatRepository implements IChatRepository {
   /// Create a new chat
   @override
   Future<Chat> createChat({
-    required ChatType type,
-    String? name,
-    String? description,
+    required String name,
     required List<String> participantIds,
+    bool isGroup = false,
   }) async {
+    final type = isGroup ? 'GROUP' : 'DIRECT';
+    
     final result = await _client.mutate(
       MutationOptions(
         document: gql(r'''
-          mutation CreateChat($type: String!, $name: String, $description: String, $participantIds: [ID!]!) {
+          mutation CreateChat($type: String!, $name: String, $participantIds: [ID!]!) {
             createChat(input: {
               type: $type,
               name: $name,
-              description: $description,
               participantIds: $participantIds
             }) {
               id
@@ -239,9 +240,8 @@ class ChatRepository implements IChatRepository {
           }
         '''),
         variables: {
-          'type': type.toString().split('.').last,
-          if (name != null) 'name': name,
-          if (description != null) 'description': description,
+          'type': type,
+          'name': name,
           'participantIds': participantIds,
         },
       ),
@@ -269,18 +269,16 @@ class ChatRepository implements IChatRepository {
   Future<Chat> updateChat({
     required String chatId,
     String? name,
-    String? description,
-    String? avatar,
+    String? avatarUrl,
   }) async {
     final result = await _client.mutate(
       MutationOptions(
         document: gql(r'''
-          mutation UpdateChat($chatId: ID!, $name: String, $description: String, $avatar: String) {
+          mutation UpdateChat($chatId: ID!, $name: String, $avatar: String) {
             updateChat(
               chatId: $chatId,
               input: {
                 name: $name,
-                description: $description,
                 avatar: $avatar
               }
             ) {
@@ -320,8 +318,7 @@ class ChatRepository implements IChatRepository {
         variables: {
           'chatId': chatId,
           if (name != null) 'name': name,
-          if (description != null) 'description': description,
-          if (avatar != null) 'avatar': avatar,
+          if (avatarUrl != null) 'avatar': avatarUrl,
         },
       ),
     );
@@ -341,6 +338,72 @@ class ChatRepository implements IChatRepository {
     await saveChatLocally(chat);
     
     return chat;
+  }
+
+  /// Add participants to a chat
+  @override
+  Future<bool> addParticipants({
+    required String chatId,
+    required List<String> userIds,
+  }) async {
+    final result = await _client.mutate(
+      MutationOptions(
+        document: gql(r'''
+          mutation AddUsersToChat($chatId: ID!, $userIds: [ID!]!) {
+            addUsersToChat(chatId: $chatId, userIds: $userIds) {
+              id
+            }
+          }
+        '''),
+        variables: {
+          'chatId': chatId,
+          'userIds': userIds,
+        },
+      ),
+    );
+    
+    if (result.hasException) {
+      throw Exception('Failed to add users to chat: ${result.exception}');
+    }
+    
+    // If we get here, the operation was successful
+    // Refresh the chat to get updated participants
+    await getChatById(chatId);
+    
+    return true;
+  }
+
+  /// Remove participants from a chat
+  @override
+  Future<bool> removeParticipants({
+    required String chatId,
+    required List<String> userIds,
+  }) async {
+    final result = await _client.mutate(
+      MutationOptions(
+        document: gql(r'''
+          mutation RemoveUsersFromChat($chatId: ID!, $userIds: [ID!]!) {
+            removeUsersFromChat(chatId: $chatId, userIds: $userIds) {
+              id
+            }
+          }
+        '''),
+        variables: {
+          'chatId': chatId,
+          'userIds': userIds,
+        },
+      ),
+    );
+    
+    if (result.hasException) {
+      throw Exception('Failed to remove users from chat: ${result.exception}');
+    }
+    
+    // If we get here, the operation was successful
+    // Refresh the chat to get updated participants
+    await getChatById(chatId);
+    
+    return true;
   }
 
   /// Leave a chat
@@ -377,135 +440,80 @@ class ChatRepository implements IChatRepository {
     
     return success;
   }
-
-  /// Add users to a chat
+  
+  /// Delete a chat
   @override
-  Future<Chat> addUsersToChat(String chatId, List<String> userIds) async {
+  Future<bool> deleteChat(String chatId) async {
     final result = await _client.mutate(
       MutationOptions(
         document: gql(r'''
-          mutation AddUsersToChat($chatId: ID!, $userIds: [ID!]!) {
-            addUsersToChat(chatId: $chatId, userIds: $userIds) {
-              id
-              type
-              name
-              description
-              avatar
-              participants {
-                id
-                username
-                email
-                fullName
-                avatar
-                isOnline
-                lastSeen
-              }
-              owner {
-                id
-                username
-                email
-                fullName
-                avatar
-                isOnline
-                lastSeen
-              }
-              admins {
-                id
-                username
-              }
-              unreadCount
-              createdAt
-              updatedAt
-            }
+          mutation DeleteChat($chatId: ID!) {
+            deleteChat(chatId: $chatId)
           }
         '''),
         variables: {
           'chatId': chatId,
-          'userIds': userIds,
         },
       ),
     );
     
     if (result.hasException) {
-      throw Exception('Failed to add users to chat: ${result.exception}');
+      throw Exception('Failed to delete chat: ${result.exception}');
     }
     
-    final chatData = result.data?['addUsersToChat'];
-    if (chatData == null) {
-      throw Exception('No data returned from add users operation');
+    final success = result.data?['deleteChat'] as bool? ?? false;
+    
+    if (success) {
+      // Remove chat from local storage
+      await _localStorageService.remove('chat_$chatId');
+      
+      // Remove from chats list
+      final chats = await getChatsFromLocalStorage();
+      final updatedChats = chats.where((chat) => chat.id != chatId).toList();
+      await _saveChatsToLocalStorage(updatedChats);
     }
     
-    final chat = Chat.fromJson(chatData);
-    
-    // Save to local storage
-    await saveChatLocally(chat);
-    
-    return chat;
+    return success;
   }
-
-  /// Remove users from a chat
+  
+  /// Mark a chat as read
   @override
-  Future<Chat> removeUsersFromChat(String chatId, List<String> userIds) async {
+  Future<bool> markChatAsRead(String chatId) async {
     final result = await _client.mutate(
       MutationOptions(
         document: gql(r'''
-          mutation RemoveUsersFromChat($chatId: ID!, $userIds: [ID!]!) {
-            removeUsersFromChat(chatId: $chatId, userIds: $userIds) {
-              id
-              type
-              name
-              description
-              avatar
-              participants {
-                id
-                username
-                email
-                fullName
-                avatar
-                isOnline
-                lastSeen
-              }
-              owner {
-                id
-                username
-                email
-                fullName
-                avatar
-                isOnline
-                lastSeen
-              }
-              admins {
-                id
-                username
-              }
-              unreadCount
-              createdAt
-              updatedAt
-            }
+          mutation MarkChatAsRead($chatId: ID!) {
+            markChatAsRead(chatId: $chatId)
           }
         '''),
         variables: {
           'chatId': chatId,
-          'userIds': userIds,
         },
       ),
     );
     
     if (result.hasException) {
-      throw Exception('Failed to remove users from chat: ${result.exception}');
+      throw Exception('Failed to mark chat as read: ${result.exception}');
     }
     
-    final chatData = result.data?['removeUsersFromChat'];
-    if (chatData == null) {
-      throw Exception('No data returned from remove users operation');
+    final success = result.data?['markChatAsRead'] as bool? ?? false;
+    
+    if (success) {
+      // Update local chat to reflect read status
+      final chat = await getChatFromLocalStorage(chatId);
+      if (chat != null) {
+        final updatedChat = chat.copyWith(unreadCount: 0);
+        await saveChatLocally(updatedChat);
+      }
     }
     
-    final chat = Chat.fromJson(chatData);
-    
-    // Save to local storage
-    await saveChatLocally(chat);
-    
-    return chat;
+    return success;
+  }
+  
+  /// Sync a chat with the server
+  @override
+  Future<void> syncChat(String chatId) async {
+    await getChatById(chatId);
   }
 
   /// Save chats to local storage
@@ -546,7 +554,6 @@ class ChatRepository implements IChatRepository {
   }
 
   /// Get a chat from local storage by ID
-  @override
   Future<Chat?> getChatFromLocalStorage(String chatId) async {
     final chatJson = _localStorageService.getString('chat_$chatId');
     if (chatJson == null) return null;

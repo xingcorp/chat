@@ -21,17 +21,22 @@ class NetworkInfoImpl implements NetworkInfo {
 
   @override
   Future<bool> get isConnected async {
-    final result = await _connectivity.checkConnectivity();
-    return result != ConnectivityResult.none;
+    final results = await _connectivity.checkConnectivity();
+    // Consider connected if any of the results is not "none"
+    return results.any((result) => result != ConnectivityResult.none);
   }
   
   @override
   Future<ConnectivityResult> get connectivityResult async {
-    return await _connectivity.checkConnectivity();
+    final results = await _connectivity.checkConnectivity();
+    // Return the first result, or none if list is empty
+    return results.isNotEmpty ? results.first : ConnectivityResult.none;
   }
   
   @override
   Stream<ConnectivityResult> get onConnectivityChanged {
-    return _connectivity.onConnectivityChanged;
+    // Map the list of results to a single result by taking the first one
+    return _connectivity.onConnectivityChanged
+        .map((results) => results.isNotEmpty ? results.first : ConnectivityResult.none);
   }
 } 

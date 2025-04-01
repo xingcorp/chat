@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/core/error/exceptions.dart';
+import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:gql_link/src/exceptions.dart' as gql_exceptions;
 
 /// Abstract interface for GraphQL client operations
 abstract class GraphQLClientWrapper {
@@ -112,7 +113,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     String? operationName,
   }) async {
     if (!await _networkInfo.isConnected) {
-      throw NoInternetException();
+      throw app_exceptions.NoInternetException();
     }
 
     try {
@@ -131,8 +132,8 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
 
       return result.data ?? {};
     } catch (e) {
-      if (e is NoInternetException) rethrow;
-      throw ServerException(message: e.toString());
+      if (e is app_exceptions.NoInternetException) rethrow;
+      throw app_exceptions.ServerException(message: e.toString());
     }
   }
 
@@ -144,7 +145,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     String? operationName,
   }) async {
     if (!await _networkInfo.isConnected) {
-      throw NoInternetException();
+      throw app_exceptions.NoInternetException();
     }
 
     try {
@@ -163,8 +164,8 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
 
       return result.data ?? {};
     } catch (e) {
-      if (e is NoInternetException) rethrow;
-      throw ServerException(message: e.toString());
+      if (e is app_exceptions.NoInternetException) rethrow;
+      throw app_exceptions.ServerException(message: e.toString());
     }
   }
 
@@ -190,12 +191,12 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
 
   void _handleGraphQLException(OperationException exception) {
     if (exception.linkException != null) {
-      if (exception.linkException is ServerException) {
-        throw ServerException(
+      if (exception.linkException is app_exceptions.ServerException) {
+        throw app_exceptions.ServerException(
           message: exception.linkException.toString(),
         );
       } else {
-        throw ServerException(
+        throw app_exceptions.ServerException(
           message: 'Network error: ${exception.linkException.toString()}',
         );
       }
@@ -213,7 +214,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
           .toList();
                            
       if (authErrors.isNotEmpty) {
-        throw AuthException(
+        throw app_exceptions.AuthException(
           message: 'Authentication error: $messages',
           code: authErrors.first.extensions?['code'],
           details: exception.graphqlErrors,
@@ -226,7 +227,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
           .toList();
                            
       if (validationErrors.isNotEmpty) {
-        throw ValidationException(
+        throw app_exceptions.ValidationException(
           message: 'Validation error: $messages',
           code: validationErrors.first.extensions?['code'],
           details: exception.graphqlErrors,
@@ -234,13 +235,13 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
       }
 
       // Generic GraphQL error
-      throw ServerException(
+      throw app_exceptions.ServerException(
         message: 'GraphQL error: $messages',
         details: exception.graphqlErrors,
       );
     }
 
-    throw UnknownException(
+    throw app_exceptions.UnknownException(
       message: 'Unknown GraphQL error',
       details: exception,
     );

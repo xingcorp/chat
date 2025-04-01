@@ -3,13 +3,17 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter_chat_app/config/route/app_router.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
 import 'package:flutter_chat_app/core/services/chat_message_service.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
+import 'package:flutter_chat_app/presentation/blocs/auth/auth_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
@@ -39,7 +43,10 @@ Future<void> main() async {
     await _initializeDesktopServices();
   }
   
-  runApp(const MyApp());
+  // Khởi tạo SharedPreferences
+  final sharedPreferences = await SharedPreferences.getInstance();
+  
+  runApp(MyApp(sharedPreferences: sharedPreferences));
 }
 
 Future<void> _initializeWebServices() async {
@@ -93,17 +100,34 @@ Future<void> _initializeDesktopServices() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final SharedPreferences sharedPreferences;
+  
+  const MyApp({super.key, required this.sharedPreferences});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Chat App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    return BlocProvider(
+      create: (context) {
+        final authBloc = AuthBloc(sharedPreferences);
+        // Trigger an auth check on app startup
+        authBloc.add(const AuthCheckRequested());
+        return authBloc;
+      },
+      child: Builder(
+        builder: (context) {
+          final router = AppRouter.router(context);
+          
+          return MaterialApp.router(
+            title: 'Flutter Chat App',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+              useMaterial3: true,
+            ),
+            routerConfig: router,
+          );
+        },
       ),
-      home: const PlatformEntryPoint(),
     );
   }
 }

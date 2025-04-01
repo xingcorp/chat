@@ -217,17 +217,22 @@ class ChatRepositoryImpl implements ChatRepository {
           id: 'local_${DateTime.now().millisecondsSinceEpoch}',
           chatId: chatId,
           content: content,
-          contentType: contentType,
-          attachments: attachments?.map((attachment) => 
-            Attachment.fromJson(attachment)
-          ).toList() ?? [],
-          sender: User(
+          contentType: _parseContentType(contentType),
+          sender: MessageSender(
             id: 'current_user', // Will be replaced with actual user ID from auth
-            username: 'Me',
-            avatar: '', 
+            name: 'Me',
           ),
-          status: MessageStatus.sending,
           createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          attachments: attachments?.map((attachment) => 
+            MessageAttachment(
+              id: attachment['id'] ?? '',
+              url: attachment['url'] ?? '',
+              type: attachment['type'] ?? '',
+              size: attachment['size'] ?? 0,
+              name: attachment['name'] ?? '',
+            )
+          ).toList() ?? [],
         );
         
         // Save to local storage and mark for sync
@@ -368,5 +373,29 @@ class ChatRepositoryImpl implements ChatRepository {
       return e;
     }
     return UnknownException(message: e.toString());
+  }
+
+  /// Parse ContentType from string
+  ContentType _parseContentType(String contentType) {
+    switch (contentType.toLowerCase()) {
+      case 'text':
+        return ContentType.text;
+      case 'image':
+        return ContentType.image;
+      case 'video':
+        return ContentType.video;
+      case 'audio':
+        return ContentType.audio;
+      case 'file':
+        return ContentType.file;
+      case 'location':
+        return ContentType.location;
+      case 'link':
+        return ContentType.link;
+      case 'event':
+        return ContentType.event;
+      default:
+        return ContentType.text;
+    }
   }
 } 
