@@ -1,9 +1,9 @@
 import 'package:isar/isar.dart';
+import 'dart:convert';
 
 part 'chat_model.g.dart';
 
 /// Type of chat
-@enumerated
 enum ChatType {
   /// One-to-one chat
   direct,
@@ -19,17 +19,18 @@ enum ChatType {
 @collection
 class ChatModel {
   /// Chat's unique identifier in the database
-  Id id = Isar.autoIncrement;
+  @Id()
+  final int id;
 
   /// Server ID of the chat
-  @Index(unique: true, replace: true)
+  @Index(unique: true)
   final String serverId;
 
   /// Name of the chat (for groups and channels)
   final String? name;
 
   /// Type of the chat
-  @Enumerated(EnumType.name)
+  @enumValue
   final ChatType type;
 
   /// ID of the last message in the chat
@@ -71,6 +72,7 @@ class ChatModel {
 
   /// Default constructor
   ChatModel({
+    this.id = 0,
     required this.serverId,
     this.name,
     required this.type,
@@ -138,6 +140,7 @@ class ChatModel {
 
   /// Create a copy of this chat with changed fields
   ChatModel copyWith({
+    int? id,
     String? serverId,
     String? name,
     ChatType? type,
@@ -155,6 +158,7 @@ class ChatModel {
     String? metadata,
   }) {
     return ChatModel(
+      id: id ?? this.id,
       serverId: serverId ?? this.serverId,
       name: name ?? this.name,
       type: type ?? this.type,
@@ -241,5 +245,216 @@ class ChatModel {
       isPinned: !isPinned,
       updatedAt: DateTime.now(),
     );
+  }
+
+  /// Create a direct (one-to-one) chat
+  static ChatModel createDirectChat({
+    required int id,
+    required String serverId,
+    required List<String> participantIds,
+    String? lastMessageId,
+    String? lastMessagePreview,
+    DateTime? lastMessageTime,
+    String? avatarUrl,
+  }) {
+    if (participantIds.length != 2) {
+      throw ArgumentError('Direct chat must have exactly 2 participants');
+    }
+
+    return ChatModel(
+      id: id,
+      serverId: serverId,
+      type: ChatType.direct,
+      participantIds: participantIds,
+      lastMessageId: lastMessageId,
+      lastMessagePreview: lastMessagePreview,
+      lastMessageTime: lastMessageTime,
+      avatarUrl: avatarUrl,
+      createdAt: DateTime.now(),
+    );
+  }
+
+  /// Create a group chat
+  static ChatModel createGroupChat({
+    required int id,
+    required String serverId,
+    required String name,
+    required List<String> participantIds,
+    required String adminId,
+    String? avatarUrl,
+    Map<String, dynamic>? groupMetadata,
+  }) {
+    if (participantIds.isEmpty) {
+      throw ArgumentError('Group chat must have at least one participant');
+    }
+
+    if (!participantIds.contains(adminId)) {
+      throw ArgumentError('Admin must be a participant of the group');
+    }
+
+    return ChatModel(
+      id: id,
+      serverId: serverId,
+      name: name,
+      type: ChatType.group,
+      participantIds: participantIds,
+      adminId: adminId,
+      avatarUrl: avatarUrl,
+      metadata: groupMetadata != null ? jsonEncode(groupMetadata) : null,
+      createdAt: DateTime.now(),
+    );
+  }
+
+  /// Create a broadcast channel
+  static ChatModel createChannel({
+    required int id,
+    required String serverId,
+    required String name,
+    required List<String> participantIds,
+    required String adminId,
+    String? avatarUrl,
+    Map<String, dynamic>? channelMetadata,
+  }) {
+    return ChatModel(
+      id: id,
+      serverId: serverId,
+      name: name,
+      type: ChatType.channel,
+      participantIds: participantIds,
+      adminId: adminId,
+      avatarUrl: avatarUrl,
+      metadata: channelMetadata != null ? jsonEncode(channelMetadata) : null,
+      createdAt: DateTime.now(),
+    );
+  }
+
+  /// Get metadata as a map
+  Map<String, dynamic>? get metadataMap {
+    if (metadata == null) return null;
+    try {
+      return jsonDecode(metadata!) as Map<String, dynamic>;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Get chat display name
+  String getDisplayName(String currentUserId, Map<String, String> userNames) {
+    if (type != ChatType.direct) {
+      return name ?? 'Unnamed Group';
+    }
+
+    // For direct chats, use the other user's name
+    final otherUserId = participantIds.firstWhere(
+      (id) => id != currentUserId,
+      orElse: () => participantIds.first,
+    );
+    
+    return userNames[otherUserId] ?? 'Unknown User';
+  }
+
+  /// Check if user is admin of this chat
+  bool isUserAdmin(String userId) {
+    return adminId == userId;
+  }
+
+  /// Check if user is a participant of this chat
+  bool hasParticipant(String userId) {
+    return participantIds.contains(userId);
+  }
+
+  /// Add multiple participants to the chat
+  ChatModel addParticipants(List<String> userIds) {
+    if (userIds.isEmpty) return this;
+    
+    final newParticipants = List<String>.from(participantIds);
+    for (final userId in userIds) {
+      if (!newParticipants.contains(userId)) {
+        newParticipants.add(userId);
+      }
+    }
+    
+    return copyWith(
+      participantIds: newParticipants,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Remove multiple participants from the chat
+  ChatModel removeParticipants(List<String> userIds) {
+    if (userIds.isEmpty) return this;
+    
+    final newParticipants = List<String>.from(participantIds);
+    newParticipants.removeWhere((id) => userIds.contains(id));
+    
+    return copyWith(
+      participantIds: newParticipants,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Change the admin of the chat
+  ChatModel changeAdmin(String newAdminId) {
+    if (!participantIds.contains(newAdminId)) {
+      throw ArgumentError('New admin must be a participant of the chat');
+    }
+    
+    return copyWith(
+      adminId: newAdminId,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Change the name of the chat (for groups and channels)
+  ChatModel changeName(String newName) {
+    if (type == ChatType.direct) {
+      throw UnsupportedError('Cannot change name of direct chat');
+    }
+    
+    return copyWith(
+      name: newName,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Change the avatar of the chat
+  ChatModel changeAvatar(String newAvatarUrl) {
+    return copyWith(
+      avatarUrl: newAvatarUrl,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Update the metadata of the chat
+  ChatModel updateMetadata(Map<String, dynamic> newMetadata) {
+    final currentMetadata = metadataMap ?? {};
+    currentMetadata.addAll(newMetadata);
+    
+    return copyWith(
+      metadata: jsonEncode(currentMetadata),
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Check if the chat has any messages
+  bool get hasMessages => lastMessageId != null;
+
+  /// Check if the chat is a group
+  bool get isGroup => type == ChatType.group;
+
+  /// Check if the chat is a direct chat
+  bool get isDirect => type == ChatType.direct;
+
+  /// Check if the chat is a channel
+  bool get isChannel => type == ChatType.channel;
+
+  /// Get participant count
+  int get participantCount => participantIds.length;
+  
+  /// Check if the chat is active
+  bool get isActive {
+    if (lastMessageTime == null) return false;
+    final now = DateTime.now();
+    return now.difference(lastMessageTime!).inDays < 30; // Active if has messages in last 30 days
   }
 } 

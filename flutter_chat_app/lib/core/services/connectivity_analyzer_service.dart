@@ -30,7 +30,7 @@ class ConnectivityAnalyzerService {
   final Connectivity _connectivity = Connectivity();
   
   /// Stream thông báo thay đổi kết nối
-  final BehaviorSubject<ConnectivityResult> _connectivityStream = BehaviorSubject();
+  final BehaviorSubject<List<ConnectivityResult>> _connectivityStream = BehaviorSubject();
   
   /// Stream thông báo thay đổi chất lượng mạng
   final BehaviorSubject<NetworkQuality> _qualityStream = BehaviorSubject();
@@ -38,8 +38,8 @@ class ConnectivityAnalyzerService {
   /// Stream controller cho ping
   final StreamController<int> _pingResultController = StreamController.broadcast();
   
-  /// Kết nối hiện tại
-  ConnectivityResult _currentConnectivity = ConnectivityResult.none;
+  /// Kết nối hiện tại (có thể có nhiều)
+  List<ConnectivityResult> _currentConnectivity = [ConnectivityResult.none];
   
   /// Chất lượng mạng hiện tại
   NetworkQuality _currentQuality = NetworkQuality.none;
@@ -59,16 +59,17 @@ class ConnectivityAnalyzerService {
     NetworkQuality.poor: 300,       // <= 300ms: Kém
   };
   
+  /// Hệ số giảm ngưỡng tải xuống cho mạng di động
+  static const double _mobileDataDownloadFactor = 1.0 / 3.0;
+  
   /// Timer để kiểm tra định kỳ
   Timer? _periodicCheckTimer;
   
-  /// Constructor
-  ConnectivityAnalyzerService() {
-    _initialize();
-  }
+  /// Constructor (now empty)
+  ConnectivityAnalyzerService();
   
   /// Stream theo dõi trạng thái kết nối (ConnectivityResult)
-  Stream<ConnectivityResult> get connectivityStream => _connectivityStream.stream;
+  Stream<List<ConnectivityResult>> get connectivityStream => _connectivityStream.stream;
   
   /// Stream theo dõi chất lượng mạng (NetworkQuality)
   Stream<NetworkQuality> get qualityStream => _qualityStream.stream;
@@ -77,27 +78,30 @@ class ConnectivityAnalyzerService {
   Stream<int> get pingResultStream => _pingResultController.stream;
   
   /// Getter cho trạng thái kết nối hiện tại
-  ConnectivityResult get currentConnectivity => _currentConnectivity;
+  List<ConnectivityResult> get currentConnectivity => _currentConnectivity;
   
   /// Getter cho chất lượng mạng hiện tại
   NetworkQuality get currentQuality => _currentQuality;
   
   /// Kiểm tra có đang offline không
-  bool get isOffline => _currentConnectivity == ConnectivityResult.none;
+  bool get isOffline => _currentConnectivity.contains(ConnectivityResult.none);
   
-  /// Khởi tạo service
-  void _initialize() async {
-    // Lấy trạng thái kết nối ban đầu
-    _currentConnectivity = await _connectivity.checkConnectivity();
+  /// Initializes the service. Call this after creating the instance.
+  Future<void> initialize() async {
+    try {
+      _currentConnectivity = await _connectivity.checkConnectivity();
+    } catch (e) {
+      debugPrint('Lỗi lấy kết nối ban đầu: $e');
+      _currentConnectivity = [ConnectivityResult.none];
+    }
     _connectivityStream.add(_currentConnectivity);
     
-    // Đăng ký lắng nghe thay đổi kết nối
-    _connectivity.onConnectivityChanged.listen(_handleConnectivityChange);
+    _connectivity.onConnectivityChanged
+        .distinct() // Chỉ xử lý khi kết quả thực sự thay đổi
+        .listen(_handleConnectivityChange);
     
-    // Thực hiện kiểm tra chất lượng mạng ngay lập tức
-    _checkNetworkQuality();
+    await _checkNetworkQuality(); // Await first check
     
-    // Thiết lập kiểm tra định kỳ
     _periodicCheckTimer = Timer.periodic(
       const Duration(minutes: 2), 
       (_) => _checkNetworkQuality(),
@@ -108,20 +112,27 @@ class ConnectivityAnalyzerService {
   void dispose() {
     _connectivityStream.close();
     _qualityStream.close();
-    _pingResultController.close();
+    _pingResultController.close(); // Correct variable name
     _periodicCheckTimer?.cancel();
   }
   
   /// Xử lý khi kết nối thay đổi
-  Future<void> _handleConnectivityChange(ConnectivityResult result) async {
-    debugPrint('Kết nối thay đổi: $result');
+  Future<void> _handleConnectivityChange(List<ConnectivityResult> results) async {
+    // Chỉ xử lý nếu danh sách kết quả không rỗng
+    if (results.isEmpty) {
+        results = [ConnectivityResult.none]; // Coi như none nếu rỗng
+    }
     
+    final representativeResult = _getPrimaryConnectivity(results); // Use helper
+        
+    debugPrint('Kết nối thay đổi (List): $results -> Representative: $representativeResult');
+
     // Cập nhật trạng thái và thông báo
-    _currentConnectivity = result;
-    _connectivityStream.add(result);
+    _currentConnectivity = results;
+    _connectivityStream.add(results);
     
-    // Nếu không có kết nối, cập nhật chất lượng mạng và thông báo
-    if (result == ConnectivityResult.none) {
+    // Nếu không có kết nối nào (tất cả là none hoặc list rỗng), cập nhật chất lượng mạng và thông báo
+    if (representativeResult == ConnectivityResult.none) {
       _updateNetworkQuality(NetworkQuality.none);
     } else {
       // Nếu có kết nối, kiểm tra chất lượng
@@ -131,8 +142,8 @@ class ConnectivityAnalyzerService {
   
   /// Kiểm tra chất lượng mạng hiện tại
   Future<void> _checkNetworkQuality() async {
-    // Nếu không có kết nối, bỏ qua kiểm tra
-    if (_currentConnectivity == ConnectivityResult.none) {
+    // Nếu không có kết nối nào không phải none, bỏ qua kiểm tra
+    if (!_currentConnectivity.any((result) => result != ConnectivityResult.none)) {
       _updateNetworkQuality(NetworkQuality.none);
       return;
     }
@@ -150,14 +161,23 @@ class ConnectivityAnalyzerService {
       debugPrint('Lỗi kiểm tra chất lượng mạng: $e');
       
       // Nếu không thực hiện được ping, giả định kết nối kém
-      if (_currentConnectivity != ConnectivityResult.none) {
+      if (_currentConnectivity.any((result) => result != ConnectivityResult.none)) {
         _updateNetworkQuality(NetworkQuality.poor);
       }
     }
   }
   
   /// Thực hiện ping để đo tốc độ mạng
+  /// Lưu ý: Phương pháp này dùng Socket.connect, không phải ICMP ping thực sự.
+  /// Kết quả có thể không hoàn toàn chính xác và không hoạt động trên Web.
   Future<int> _performNetworkPing() async {
+    // Không thực hiện ping trên web
+    if (kIsWeb) {
+      debugPrint('Ping không được hỗ trợ trên Web, trả về giá trị mặc định.');
+      _pingResultController.add(-1); // Gửi giá trị không hợp lệ
+      throw UnsupportedError('Ping is not supported on Web');
+    }
+
     final List<int> pingTimes = [];
     
     // Thử ping từng máy chủ
@@ -215,7 +235,8 @@ class ConnectivityAnalyzerService {
   /// Cập nhật chất lượng mạng và thông báo
   void _updateNetworkQuality(NetworkQuality quality) {
     // Chỉ cập nhật nếu có thay đổi
-    if (_currentQuality != quality) {
+    // Thêm kiểm tra isClosed để tránh lỗi khi dispose đã được gọi
+    if (_currentQuality != quality && !_qualityStream.isClosed) {
       debugPrint('Chất lượng mạng thay đổi: $quality');
       _currentQuality = quality;
       _qualityStream.add(quality);
@@ -233,13 +254,16 @@ class ConnectivityAnalyzerService {
       NetworkQuality.none: 0,                      // 0MB (không tải)
     };
     
-    // Nếu đang sử dụng dữ liệu di động, áp dụng ngưỡng thấp hơn
-    if (_currentConnectivity == ConnectivityResult.mobile) {
-      // Giảm ngưỡng xuống 1/3 so với WiFi
-      return fileSizeInBytes <= (autoDownloadThresholds[_currentQuality]! ~/ 3);
+    final primaryConnection = _getPrimaryConnectivity(_currentConnectivity);
+
+    // Nếu đang sử dụng dữ liệu di động làm kết nối chính
+    if (primaryConnection == ConnectivityResult.mobile) {
+      // Giảm ngưỡng
+      final mobileThreshold = (autoDownloadThresholds[_currentQuality]! * _mobileDataDownloadFactor).toInt();
+      return fileSizeInBytes <= mobileThreshold;
     }
     
-    // Nếu là WiFi hoặc kết nối khác, áp dụng ngưỡng đầy đủ
+    // Nếu là WiFi hoặc kết nối khác
     return fileSizeInBytes <= autoDownloadThresholds[_currentQuality]!;
   }
   
@@ -259,9 +283,11 @@ class ConnectivityAnalyzerService {
   
   /// Xác định có nên sử dụng chế độ tiết kiệm dữ liệu hay không
   bool shouldUseLowDataMode() {
+    final primaryConnection = _getPrimaryConnectivity(_currentConnectivity);
     // Trên dữ liệu di động hoặc mạng yếu, sử dụng chế độ tiết kiệm
-    return _currentConnectivity == ConnectivityResult.mobile || 
-           _currentQuality == NetworkQuality.poor;
+    return primaryConnection == ConnectivityResult.mobile || 
+           _currentQuality == NetworkQuality.poor ||
+           _currentQuality == NetworkQuality.none; // Thêm none vào low data mode
   }
   
   /// Cấu hình thời gian chờ HTTP request dựa trên chất lượng mạng
@@ -309,6 +335,25 @@ class ConnectivityAnalyzerService {
     } catch (e) {
       debugPrint('Không thể kết nối đến $serverUrl: $e');
       return false;
+    }
+  }
+  
+  /// Xác định kết nối chính từ danh sách kết quả
+  /// Ưu tiên: Ethernet > WiFi > Mobile > Bluetooth > Other > None
+  ConnectivityResult _getPrimaryConnectivity(List<ConnectivityResult> results) {
+    if (results.contains(ConnectivityResult.ethernet)) {
+      return ConnectivityResult.ethernet;
+    } else if (results.contains(ConnectivityResult.wifi)) {
+      return ConnectivityResult.wifi;
+    } else if (results.contains(ConnectivityResult.mobile)) {
+      return ConnectivityResult.mobile;
+    } else if (results.contains(ConnectivityResult.bluetooth)) {
+      return ConnectivityResult.bluetooth;
+    } else if (results.any((r) => r != ConnectivityResult.none)) {
+      // Trả về kết nối đầu tiên không phải none nếu không có loại ưu tiên nào khác
+      return results.firstWhere((r) => r != ConnectivityResult.none);
+    } else {
+      return ConnectivityResult.none; // Mặc định là none
     }
   }
 } 
