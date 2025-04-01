@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AndroidGradleBuildConfiguration">
+    <option name="COMMAND_LINE_OPTIONS" value="--debug and --stacktrace" />
+  </component>
+  <component name="GradleLocalSettings">
+    <option name="projectSyncType">
+      <map>
+        <entry key="$USER_HOME$/Desktop/Blue&amp;White/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/CodeDemoAndroid/AntennaPod/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/CodeDemoAndroid/READ_BOOK" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/CodeDemoAndroid/READ_BOOK/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/CodeDemoAndroid/app_muathe123/muathe123/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/ExAndrod/MovieGuide" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/ExAndrod/bubble" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/ExAndrod/bubble/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/ExAndrod/tachiyomi" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/HHP.doithe66/muathe123" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/HHP.doithe66/muathe123/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/Priodict/BangTuanHoan" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/app_toanlyhoa/App_ToanLyHoa/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/appmuathe123.vn/muathe123/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/appnapthe365.com" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/appnapthe365.com/napthe365" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/appnapthe365.com/napthe365/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/cv365" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/ex/2048-android" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/ex/Telegram" value="PREVIEW" />
+        <entry key="$USER_HOME$/Desktop/ex/Travel-Mate" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/C ++/bubble" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/HHP./app_muathe123/muathe123" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/HHP.muathe123/muathe123" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/HHP.test/svn/app_muathe123/muathe123" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/HHP.timviec365/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/RCardScanner" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/android-ocr" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/blinkinput-android" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/card.io-Android-SDK" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/card.io-Android-SDK/SampleApp" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/cardloader" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/cardloader/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/code-scanner" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/doithe66" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/doithe66/HHP.doithe66/muathe123" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/recharge-card-scanner-android" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/tess-two" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/test-two/eyes-two" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/test1" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/HHP.Project/untitled folder/HHP.doithe66/muathe123/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/Telegram-master" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/muathe123" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/muathe123/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/untitled folder/FolioReader-Android" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/untitled folder/MaterialStepperView" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/untitled folder/android-firebase-chat" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/untitled folder/android-firebase-chat/RivChat" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/untitled folder/android-firebase-chat/RivChat/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/untitled folder/bookdash-android-app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/untitled folder/scancard" value="PREVIEW" />
+        <entry key="$USER_HOME$/Documents/untitled folder/scancard/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Downloads/HHP.doithe66/muathe123" value="PREVIEW" />
+        <entry key="$USER_HOME$/Downloads/HHP.doithe66/muathe123/app" value="PREVIEW" />
+        <entry key="$USER_HOME$/Downloads/Telegram-master" value="PREVIEW" />
+        <entry key="$USER_HOME$/Downloads/tess_ocr_demo_src/app" value="PREVIEW" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectViewState">
+    <option name="flattenPackages" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="android.project.structure.last.selected" value="SDK Location" />
+    <property name="android.project.structure.proportion" value="0.15" />
+    <property name="android.sdk.path" value="$USER_HOME$/Library/Android/sdk" />
+    <property name="settings.editor.selected.configurable" value="AndroidSdkUpdater" />
+  </component>
+  <component name="RunManager">
+    <configuration name="&lt;template&gt;" type="Applet" default="true" selected="false">
+      <option name="MAIN_CLASS_NAME" />
+      <option name="HTML_FILE_NAME" />
+      <option name="HTML_USED" value="false" />
+      <option name="WIDTH" value="400" />
+      <option name="HEIGHT" value="300" />
+      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+      <option name="VM_PARAMETERS" />
+    </configuration>
+    <configuration default="true" type="Application" factoryName="Application">
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="JUnit" factoryName="JUnit">
+      <option name="TEST_OBJECT" value="class" />
+      <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="TestNG">
+      <option name="TEST_OBJECT" value="CLASS" />
+      <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%" />
+      <properties />
+      <listeners />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType">
+      <module name="" />
+      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
+      <option name="PROGRAM_PARAMETERS" />
+      <predefined_log_file enabled="true" id="idea.log" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration>$USER_HOME$/.subversion</configuration>
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+</project>
