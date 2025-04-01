@@ -218,7 +218,7 @@ abstract class IDatabaseImplementation {
   
   /// Delete an object
   Future<bool> delete<T>(int id);
-  
+
   /// Get all chats
   Future<List<ChatModel>> getAllChats();
   
@@ -391,7 +391,7 @@ class WebDatabaseImplementation implements IDatabaseImplementation {
         .sortByCreatedAt()
         .findAll();
   }
-  
+
   @override
   Stream<List<MessageModel>> watchMessagesForChat(String chatId) {
     return Stream.periodic(const Duration(seconds: 1))
