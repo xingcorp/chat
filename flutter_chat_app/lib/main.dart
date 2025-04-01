@@ -7,6 +7,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
+import 'package:flutter_chat_app/core/services/chat_message_service.dart';
+import 'package:flutter_chat_app/core/services/message_queue_service.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
@@ -43,18 +46,50 @@ Future<void> _initializeWebServices() async {
   // Initialize web-specific services
   final databaseService = GetIt.I<DatabaseService>();
   await databaseService.initialize();
+  
+  // Khởi tạo dịch vụ kết nối thời gian thực
+  final realtimeConnectionService = GetIt.I<RealtimeConnectionService>();
+  await realtimeConnectionService.initialize();
+  
+  // Khởi tạo dịch vụ tin nhắn chat
+  final chatMessageService = GetIt.I<ChatMessageService>();
+  await chatMessageService.initialize();
 }
 
 Future<void> _initializeMobileServices() async {
   // Initialize mobile-specific services
   final databaseService = GetIt.I<DatabaseService>();
   await databaseService.initialize();
+  
+  // Khởi tạo dịch vụ kết nối thời gian thực
+  final realtimeConnectionService = GetIt.I<RealtimeConnectionService>();
+  await realtimeConnectionService.initialize();
+  
+  // Khởi tạo dịch vụ hàng đợi tin nhắn
+  final messageQueueService = GetIt.I<MessageQueueService>();
+  await messageQueueService.initialize();
+  
+  // Khởi tạo dịch vụ tin nhắn chat
+  final chatMessageService = GetIt.I<ChatMessageService>();
+  await chatMessageService.initialize();
 }
 
 Future<void> _initializeDesktopServices() async {
   // Initialize desktop-specific services
   final databaseService = GetIt.I<DatabaseService>();
   await databaseService.initialize();
+  
+  // Khởi tạo dịch vụ kết nối thời gian thực
+  final realtimeConnectionService = GetIt.I<RealtimeConnectionService>();
+  await realtimeConnectionService.initialize();
+  
+  // Khởi tạo dịch vụ hàng đợi tin nhắn
+  final messageQueueService = GetIt.I<MessageQueueService>();
+  await messageQueueService.initialize();
+  
+  // Khởi tạo dịch vụ tin nhắn chat
+  final chatMessageService = GetIt.I<ChatMessageService>();
+  await chatMessageService.initialize();
 }
 
 class MyApp extends StatelessWidget {

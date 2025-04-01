@@ -7,9 +7,12 @@ import 'package:flutter_chat_app/core/services/media_processing_service.dart';
 import 'package:flutter_chat_app/core/services/resource_manager_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
 import 'package:flutter_chat_app/core/services/graphql_subscription_service.dart';
+import 'package:flutter_chat_app/core/services/message_queue_service.dart';
+import 'package:flutter_chat_app/core/services/chat_message_service.dart';
 import 'package:flutter_chat_app/core/config/app_config.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
+import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter/foundation.dart';
 
@@ -50,26 +53,49 @@ Future<void> configureInjection() async {
   }
   getIt.registerSingleton(mediaProcessingService);
   
+  // Register database service
+  final databaseService = DatabaseService();
+  getIt.registerSingleton<DatabaseService>(databaseService);
+  
   // Register realtime connection service
   final realtimeConnectionService = RealtimeConnectionService(
     webSocketUrl: AppConfig.webSocketUrl,
     httpUrl: AppConfig.apiUrl,
     authToken: await _getAuthToken(),
     connectivityAnalyzer: connectivityAnalyzer,
+    connectivityService: connectivityService,
   );
-  getIt.registerSingleton(realtimeConnectionService);
+  getIt.registerSingleton<RealtimeConnectionService>(realtimeConnectionService);
   
   // Register GraphQL subscription service
   final graphQLSubscriptionService = GraphQLSubscriptionService(
     realtimeConnectionService,
     getIt<GraphQLClient>(),
   );
-  getIt.registerSingleton(graphQLSubscriptionService);
+  getIt.registerSingleton<GraphQLSubscriptionService>(graphQLSubscriptionService);
   
-  // Register database service and initialize
-  final databaseService = DatabaseService();
-  await databaseService.initialize();
-  getIt.registerSingleton<DatabaseService>(databaseService);
+  // Register message repository
+  getIt.registerSingleton<IMessageRepository>(
+    await _createMessageRepository(getIt<GraphQLClient>(), databaseService),
+  );
+  
+  // Register message queue service
+  final messageQueueService = MessageQueueService(
+    getIt<IMessageRepository>(),
+    localStorageService,
+    connectivityService,
+    realtimeConnectionService,
+  );
+  getIt.registerSingleton<MessageQueueService>(messageQueueService);
+  
+  // Register chat message service
+  final chatMessageService = ChatMessageService(
+    messageQueueService,
+    realtimeConnectionService,
+    graphQLSubscriptionService,
+    getIt<IMessageRepository>(),
+  );
+  getIt.registerSingleton<ChatMessageService>(chatMessageService);
   
   // Register offline-first repository
   getIt.registerSingleton<OfflineFirstRepository>(
@@ -80,11 +106,31 @@ Future<void> configureInjection() async {
   );
 }
 
+/// Tạo repository tin nhắn
+/// Hàm này cần được thay thế bằng implementation thực tế
+Future<IMessageRepository> _createMessageRepository(
+  GraphQLClient graphQLClient,
+  DatabaseService databaseService,
+) async {
+  // Đây là placeholder, thay bằng implementation thực tế
+  return MessageRepositoryPlaceholder();
+}
+
+/// Placeholder cho IMessageRepository, cần thay thế sau
+class MessageRepositoryPlaceholder implements IMessageRepository {
+  // Implementation tạm thời, cần thay thế bằng implementation thực tế
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    debugPrint('Warning: MessageRepository not fully implemented');
+    return null;
+  }
+}
+
 /// Create GraphQL client
 GraphQLClient _createGraphQLClient() {
   // Link for HTTP operations
   final httpLink = HttpLink(
-    'https://stg-office-api.smarthiz.vn/graphql',
+    AppConfig.apiUrl + '/graphql',
     defaultHeaders: {
       'Content-Type': 'application/json',
       // Add auth headers here if needed
@@ -93,7 +139,7 @@ GraphQLClient _createGraphQLClient() {
   
   // Link for WebSocket operations
   final websocketLink = WebSocketLink(
-    'wss://stg-office-api.smarthiz.vn/graphql',
+    AppConfig.webSocketUrl,
     config: SocketClientConfig(
       initialPayload: {
         // Add auth payload here if needed
