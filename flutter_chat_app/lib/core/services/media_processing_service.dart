@@ -66,38 +66,100 @@ class MediaProcessingResult {
     outputBytes = null;
 }
 
-/// Service xử lý media trong isolate riêng
+/// Service factory để tạo implementation phù hợp với từng nền tảng
 @lazySingleton
-class MediaProcessingService {
+class MediaProcessingServiceFactory {
+  /// Tạo instance phù hợp cho từng nền tảng
+  static IMediaProcessingService create() {
+    if (kIsWeb) {
+      return WebMediaProcessingService();
+    } else if (Platform.isIOS || Platform.isAndroid) {
+      return MobileMediaProcessingService();
+    } else {
+      return DesktopMediaProcessingService();
+    }
+  }
+}
+
+/// Interface định nghĩa các phương thức xử lý media
+abstract class IMediaProcessingService {
+  /// Khởi tạo service
+  Future<void> initialize();
+  
+  /// Nén hình ảnh
+  Future<MediaProcessingResult> compressImage({
+    required dynamic imageInput,
+    int quality = 80,
+    bool preserveExif = false,
+  });
+  
+  /// Thay đổi kích thước hình ảnh
+  Future<MediaProcessingResult> resizeImage({
+    required dynamic imageInput, 
+    required int width,
+    required int height,
+    bool maintainAspectRatio = true,
+  });
+  
+  /// Áp dụng bộ lọc hình ảnh
+  Future<MediaProcessingResult> applyImageFilter({
+    required dynamic imageInput,
+    required String filterType,
+  });
+  
+  /// Cắt hình ảnh
+  Future<MediaProcessingResult> cropImage({
+    required dynamic imageInput,
+    required int x,
+    required int y,
+    required int width,
+    required int height,
+  });
+  
+  /// Tạo đường dẫn tệp tạm thời
+  String generateTempFilePath({String extension = '.tmp'});
+}
+
+/// Base class với các phương thức chung
+abstract class BaseMediaProcessingService implements IMediaProcessingService {
   /// Biến cho việc tạo UUID
   final _uuid = Uuid();
   
+  @override
+  String generateTempFilePath({String extension = '.tmp'}) {
+    return 'temp_${_uuid.v4()}$extension';
+  }
+}
+
+/// Cài đặt cho mobile (Android, iOS)
+class MobileMediaProcessingService extends BaseMediaProcessingService {
   /// Thư mục tạm để lưu các tệp xử lý
   late final Directory _tempDir;
-  
-  /// Khởi tạo service
+
+  @override
   Future<void> initialize() async {
     try {
       _tempDir = await getTemporaryDirectory();
-      debugPrint('MediaProcessingService đã khởi tạo thành công');
+      debugPrint('MobileMediaProcessingService đã khởi tạo thành công');
       debugPrint('Thư mục tạm: ${_tempDir.path}');
     } catch (e) {
-      debugPrint('Lỗi khởi tạo MediaProcessingService: $e');
+      debugPrint('Lỗi khởi tạo MobileMediaProcessingService: $e');
       rethrow;
     }
   }
   
-  /// Nén hình ảnh trong isolate
+  @override
   Future<MediaProcessingResult> compressImage({
-    required File imageFile,
+    required dynamic imageInput,
     int quality = 80,
     bool preserveExif = false,
   }) async {
+    final imageFile = imageInput as File;
     final stopwatch = Stopwatch()..start();
     
     try {
       // Tạo đường dẫn tệp đích
-      final outputPath = _generateTempFilePath(extension: '.jpg');
+      final outputPath = '${_tempDir.path}/${generateTempFilePath(extension: '.jpg')}';
       
       // Thực hiện nén trong isolate
       final outputFile = await compute(
@@ -125,17 +187,18 @@ class MediaProcessingService {
     }
   }
   
-  /// Thay đổi kích thước hình ảnh trong isolate
+  @override
   Future<MediaProcessingResult> resizeImage({
-    required File imageFile, 
+    required dynamic imageInput, 
     required int width,
     required int height,
     bool maintainAspectRatio = true,
   }) async {
+    final imageFile = imageInput as File;
     final stopwatch = Stopwatch()..start();
     
     try {
-      final outputPath = _generateTempFilePath(extension: '.jpg');
+      final outputPath = '${_tempDir.path}/${generateTempFilePath(extension: '.jpg')}';
       
       final outputFile = await compute(
         _resizeImageIsolate,
@@ -163,18 +226,19 @@ class MediaProcessingService {
     }
   }
   
-  /// Cắt hình ảnh trong isolate
+  @override
   Future<MediaProcessingResult> cropImage({
-    required File imageFile,
+    required dynamic imageInput,
     required int x,
     required int y,
     required int width,
     required int height,
   }) async {
+    final imageFile = imageInput as File;
     final stopwatch = Stopwatch()..start();
     
     try {
-      final outputPath = _generateTempFilePath(extension: '.jpg');
+      final outputPath = '${_tempDir.path}/${generateTempFilePath(extension: '.jpg')}';
       
       final outputFile = await compute(
         _cropImageIsolate,
@@ -203,15 +267,16 @@ class MediaProcessingService {
     }
   }
   
-  /// Áp dụng bộ lọc hình ảnh trong isolate
+  @override
   Future<MediaProcessingResult> applyImageFilter({
-    required File imageFile,
+    required dynamic imageInput,
     required String filterType,
   }) async {
+    final imageFile = imageInput as File;
     final stopwatch = Stopwatch()..start();
     
     try {
-      final outputPath = _generateTempFilePath(extension: '.jpg');
+      final outputPath = '${_tempDir.path}/${generateTempFilePath(extension: '.jpg')}';
       
       final outputFile = await compute(
         _applyImageFilterIsolate,
@@ -236,174 +301,420 @@ class MediaProcessingService {
       );
     }
   }
+}
+
+/// Cài đặt cho web
+class WebMediaProcessingService extends BaseMediaProcessingService {
+  @override
+  Future<void> initialize() async {
+    debugPrint('WebMediaProcessingService đã khởi tạo thành công');
+  }
   
-  /// Mã hóa tệp trong isolate
-  Future<MediaProcessingResult> encryptFile({
-    required File inputFile,
-    required String password,
+  @override
+  Future<MediaProcessingResult> compressImage({
+    required dynamic imageInput,
+    int quality = 80,
+    bool preserveExif = false,
   }) async {
+    final Uint8List imageBytes = imageInput is Uint8List 
+        ? imageInput 
+        : await (imageInput as File).readAsBytes();
     final stopwatch = Stopwatch()..start();
     
     try {
-      final outputPath = _generateTempFilePath(extension: '.enc');
+      // Xử lý trực tiếp trong main thread vì web không hỗ trợ isolate
+      final result = _compressImageWeb(imageBytes, quality);
       
-      final result = await compute(
-        _encryptFileIsolate,
-        {
-          'inputPath': inputFile.path,
-          'outputPath': outputPath,
-          'password': password,
-        },
+      stopwatch.stop();
+      return MediaProcessingResult.success(
+        outputBytes: result,
+        processingTimeMs: stopwatch.elapsedMilliseconds,
       );
-      
-      if (result['success'] as bool) {
-        stopwatch.stop();
-        return MediaProcessingResult.success(
-          outputFile: File(result['outputPath'] as String),
-          processingTimeMs: stopwatch.elapsedMilliseconds,
-        );
-      } else {
-        stopwatch.stop();
-        return MediaProcessingResult.error(
-          error: result['error'] as String,
-          processingTimeMs: stopwatch.elapsedMilliseconds,
-        );
-      }
     } catch (e) {
       stopwatch.stop();
-      debugPrint('Lỗi mã hóa tệp: $e');
+      debugPrint('Lỗi nén hình ảnh web: $e');
       return MediaProcessingResult.error(
-        error: 'Không thể mã hóa tệp: $e',
+        error: 'Không thể nén hình ảnh trên web: $e',
         processingTimeMs: stopwatch.elapsedMilliseconds,
       );
     }
   }
   
-  /// Giải mã tệp trong isolate
-  Future<MediaProcessingResult> decryptFile({
-    required File encryptedFile,
-    required String password,
-    String? outputExtension,
+  @override
+  Future<MediaProcessingResult> resizeImage({
+    required dynamic imageInput, 
+    required int width,
+    required int height,
+    bool maintainAspectRatio = true,
   }) async {
+    final Uint8List imageBytes = imageInput is Uint8List 
+        ? imageInput 
+        : await (imageInput as File).readAsBytes();
     final stopwatch = Stopwatch()..start();
     
     try {
-      final extension = outputExtension ?? '.dec';
-      final outputPath = _generateTempFilePath(extension: extension);
+      final result = _resizeImageWeb(imageBytes, width, height, maintainAspectRatio);
       
-      final result = await compute(
-        _decryptFileIsolate,
-        {
-          'inputPath': encryptedFile.path,
-          'outputPath': outputPath,
-          'password': password,
-        },
+      stopwatch.stop();
+      return MediaProcessingResult.success(
+        outputBytes: result,
+        processingTimeMs: stopwatch.elapsedMilliseconds,
       );
-      
-      if (result['success'] as bool) {
-        stopwatch.stop();
-        return MediaProcessingResult.success(
-          outputFile: File(result['outputPath'] as String),
-          processingTimeMs: stopwatch.elapsedMilliseconds,
-        );
-      } else {
-        stopwatch.stop();
-        return MediaProcessingResult.error(
-          error: result['error'] as String,
-          processingTimeMs: stopwatch.elapsedMilliseconds,
-        );
-      }
     } catch (e) {
       stopwatch.stop();
-      debugPrint('Lỗi giải mã tệp: $e');
       return MediaProcessingResult.error(
-        error: 'Không thể giải mã tệp: $e',
+        error: 'Không thể thay đổi kích thước hình ảnh trên web: $e',
         processingTimeMs: stopwatch.elapsedMilliseconds,
       );
     }
   }
   
-  /// Xử lý nhiều hình ảnh cùng lúc
-  Future<List<MediaProcessingResult>> batchProcessImages({
-    required List<File> imageFiles,
-    required MediaProcessingType processingType,
-    Map<String, dynamic> options = const {},
+  @override
+  Future<MediaProcessingResult> cropImage({
+    required dynamic imageInput,
+    required int x,
+    required int y,
+    required int width,
+    required int height,
   }) async {
-    final results = <MediaProcessingResult>[];
+    final Uint8List imageBytes = imageInput is Uint8List 
+        ? imageInput 
+        : await (imageInput as File).readAsBytes();
+    final stopwatch = Stopwatch()..start();
     
-    // Chia nhỏ xử lý để tránh quá tải
-    final maxConcurrent = 2;
-    
-    for (int i = 0; i < imageFiles.length; i += maxConcurrent) {
-      final batch = imageFiles.skip(i).take(maxConcurrent);
-      final futures = batch.map((file) {
-        switch (processingType) {
-          case MediaProcessingType.imageCompression:
-            return compressImage(
-              imageFile: file,
-              quality: options['quality'] as int? ?? 80,
-              preserveExif: options['preserveExif'] as bool? ?? false,
-            );
-          case MediaProcessingType.imageResize:
-            return resizeImage(
-              imageFile: file,
-              width: options['width'] as int? ?? 800,
-              height: options['height'] as int? ?? 600,
-              maintainAspectRatio: options['maintainAspectRatio'] as bool? ?? true,
-            );
-          case MediaProcessingType.imageFilter:
-            return applyImageFilter(
-              imageFile: file,
-              filterType: options['filterType'] as String? ?? 'grayscale',
-            );
-          case MediaProcessingType.imageCrop:
-            return cropImage(
-              imageFile: file,
-              x: options['x'] as int? ?? 0,
-              y: options['y'] as int? ?? 0,
-              width: options['width'] as int? ?? 100,
-              height: options['height'] as int? ?? 100,
-            );
-          default:
-            throw ArgumentError('Loại xử lý không hỗ trợ');
-        }
-      });
-      
-      results.addAll(await Future.wait(futures));
-    }
-    
-    return results;
-  }
-  
-  /// Tạo đường dẫn tệp tạm
-  String _generateTempFilePath({
-    required String extension,
-    String prefix = '',
-  }) {
-    final fileName = '$prefix${_uuid.v4()}$extension';
-    return '${_tempDir.path}/$fileName';
-  }
-  
-  /// Xóa tệp tạm
-  Future<void> clearTemporaryFiles() async {
     try {
-      final dir = Directory(_tempDir.path);
+      final result = _cropImageWeb(imageBytes, x, y, width, height);
       
-      final entities = await dir.list().toList();
-      for (var entity in entities) {
-        if (entity is File && 
-            (entity.path.contains('img_') || 
-             entity.path.contains('.enc') ||
-             entity.path.contains('.dec'))) {
-          await entity.delete();
-        }
-      }
-      
-      debugPrint('Đã xóa các tệp tạm');
+      stopwatch.stop();
+      return MediaProcessingResult.success(
+        outputBytes: result,
+        processingTimeMs: stopwatch.elapsedMilliseconds,
+      );
     } catch (e) {
-      debugPrint('Lỗi xóa tệp tạm: $e');
+      stopwatch.stop();
+      return MediaProcessingResult.error(
+        error: 'Không thể cắt hình ảnh trên web: $e',
+        processingTimeMs: stopwatch.elapsedMilliseconds,
+      );
     }
   }
+  
+  @override
+  Future<MediaProcessingResult> applyImageFilter({
+    required dynamic imageInput,
+    required String filterType,
+  }) async {
+    final Uint8List imageBytes = imageInput is Uint8List 
+        ? imageInput 
+        : await (imageInput as File).readAsBytes();
+    final stopwatch = Stopwatch()..start();
+    
+    try {
+      final result = _applyImageFilterWeb(imageBytes, filterType);
+      
+      stopwatch.stop();
+      return MediaProcessingResult.success(
+        outputBytes: result,
+        processingTimeMs: stopwatch.elapsedMilliseconds,
+      );
+    } catch (e) {
+      stopwatch.stop();
+      return MediaProcessingResult.error(
+        error: 'Không thể áp dụng bộ lọc hình ảnh trên web: $e',
+        processingTimeMs: stopwatch.elapsedMilliseconds,
+      );
+    }
+  }
+  
+  /// Nén hình ảnh web
+  Uint8List _compressImageWeb(Uint8List bytes, int quality) {
+    final image = img.decodeImage(bytes);
+    if (image == null) throw Exception('Không thể decode hình ảnh');
+    
+    return Uint8List.fromList(img.encodeJpg(image, quality: quality));
+  }
+  
+  /// Thay đổi kích thước hình ảnh web
+  Uint8List _resizeImageWeb(Uint8List bytes, int width, int height, bool maintainAspectRatio) {
+    final image = img.decodeImage(bytes);
+    if (image == null) throw Exception('Không thể decode hình ảnh');
+    
+    final resized = maintainAspectRatio
+        ? img.copyResize(image, width: width, height: height, interpolation: img.Interpolation.linear)
+        : img.copyResizeCropSquare(image, size: width);
+    
+    return Uint8List.fromList(img.encodeJpg(resized));
+  }
+  
+  /// Cắt hình ảnh web
+  Uint8List _cropImageWeb(Uint8List bytes, int x, int y, int width, int height) {
+    final image = img.decodeImage(bytes);
+    if (image == null) throw Exception('Không thể decode hình ảnh');
+    
+    final cropped = img.copyCrop(image, x: x, y: y, width: width, height: height);
+    
+    return Uint8List.fromList(img.encodeJpg(cropped));
+  }
+  
+  /// Áp dụng bộ lọc hình ảnh web
+  Uint8List _applyImageFilterWeb(Uint8List bytes, String filterType) {
+    final image = img.decodeImage(bytes);
+    if (image == null) throw Exception('Không thể decode hình ảnh');
+    
+    img.Image filtered;
+    switch (filterType) {
+      case 'grayscale':
+        filtered = img.grayscale(image);
+        break;
+      case 'sepia':
+        filtered = img.sepia(image);
+        break;
+      case 'invert':
+        filtered = img.invert(image);
+        break;
+      default:
+        filtered = image;
+    }
+    
+    return Uint8List.fromList(img.encodeJpg(filtered));
+  }
+}
+
+/// Cài đặt cho desktop (Windows, macOS, Linux)
+class DesktopMediaProcessingService extends BaseMediaProcessingService {
+  /// Thư mục tạm để lưu các tệp xử lý
+  late final Directory _tempDir;
+  
+  @override
+  Future<void> initialize() async {
+    try {
+      _tempDir = await getTemporaryDirectory();
+      debugPrint('DesktopMediaProcessingService đã khởi tạo thành công');
+      debugPrint('Thư mục tạm: ${_tempDir.path}');
+    } catch (e) {
+      debugPrint('Lỗi khởi tạo DesktopMediaProcessingService: $e');
+      rethrow;
+    }
+  }
+  
+  // Cài đặt các phương thức tương tự như trong MobileMediaProcessingService
+  // Có thể tận dụng lại phần lớn mã
+  @override
+  Future<MediaProcessingResult> compressImage({
+    required dynamic imageInput,
+    int quality = 80,
+    bool preserveExif = false,
+  }) async {
+    final imageFile = imageInput as File;
+    final stopwatch = Stopwatch()..start();
+    
+    try {
+      // Tạo đường dẫn tệp đích
+      final outputPath = '${_tempDir.path}/${generateTempFilePath(extension: '.jpg')}';
+      
+      // Desktop có thể sử dụng compute isolate như mobile
+      final outputFile = await compute(
+        _compressImageIsolate,
+        {
+          'inputPath': imageFile.path,
+          'outputPath': outputPath,
+          'quality': quality,
+          'preserveExif': preserveExif,
+        },
+      );
+      
+      stopwatch.stop();
+      return MediaProcessingResult.success(
+        outputFile: outputFile,
+        processingTimeMs: stopwatch.elapsedMilliseconds,
+      );
+    } catch (e) {
+      stopwatch.stop();
+      debugPrint('Lỗi nén hình ảnh: $e');
+      return MediaProcessingResult.error(
+        error: 'Không thể nén hình ảnh: $e',
+        processingTimeMs: stopwatch.elapsedMilliseconds,
+      );
+    }
+  }
+  
+  @override
+  Future<MediaProcessingResult> resizeImage({
+    required dynamic imageInput, 
+    required int width,
+    required int height,
+    bool maintainAspectRatio = true,
+  }) async {
+    final imageFile = imageInput as File;
+    final stopwatch = Stopwatch()..start();
+    
+    try {
+      final outputPath = '${_tempDir.path}/${generateTempFilePath(extension: '.jpg')}';
+      
+      final outputFile = await compute(
+        _resizeImageIsolate,
+        {
+          'inputPath': imageFile.path,
+          'outputPath': outputPath,
+          'width': width,
+          'height': height,
+          'maintainAspectRatio': maintainAspectRatio,
+        },
+      );
+      
+      stopwatch.stop();
+      return MediaProcessingResult.success(
+        outputFile: outputFile,
+        processingTimeMs: stopwatch.elapsedMilliseconds,
+      );
+    } catch (e) {
+      stopwatch.stop();
+      debugPrint('Lỗi thay đổi kích thước hình ảnh: $e');
+      return MediaProcessingResult.error(
+        error: 'Không thể thay đổi kích thước hình ảnh: $e',
+        processingTimeMs: stopwatch.elapsedMilliseconds,
+      );
+    }
+  }
+  
+  @override
+  Future<MediaProcessingResult> cropImage({
+    required dynamic imageInput,
+    required int x,
+    required int y,
+    required int width,
+    required int height,
+  }) async {
+    final imageFile = imageInput as File;
+    final stopwatch = Stopwatch()..start();
+    
+    try {
+      final outputPath = '${_tempDir.path}/${generateTempFilePath(extension: '.jpg')}';
+      
+      final outputFile = await compute(
+        _cropImageIsolate,
+        {
+          'inputPath': imageFile.path,
+          'outputPath': outputPath,
+          'x': x,
+          'y': y,
+          'width': width,
+          'height': height,
+        },
+      );
+      
+      stopwatch.stop();
+      return MediaProcessingResult.success(
+        outputFile: outputFile,
+        processingTimeMs: stopwatch.elapsedMilliseconds,
+      );
+    } catch (e) {
+      stopwatch.stop();
+      debugPrint('Lỗi cắt hình ảnh: $e');
+      return MediaProcessingResult.error(
+        error: 'Không thể cắt hình ảnh: $e',
+        processingTimeMs: stopwatch.elapsedMilliseconds,
+      );
+    }
+  }
+  
+  @override
+  Future<MediaProcessingResult> applyImageFilter({
+    required dynamic imageInput,
+    required String filterType,
+  }) async {
+    final imageFile = imageInput as File;
+    final stopwatch = Stopwatch()..start();
+    
+    try {
+      final outputPath = '${_tempDir.path}/${generateTempFilePath(extension: '.jpg')}';
+      
+      final outputFile = await compute(
+        _applyImageFilterIsolate,
+        {
+          'inputPath': imageFile.path,
+          'outputPath': outputPath,
+          'filterType': filterType,
+        },
+      );
+      
+      stopwatch.stop();
+      return MediaProcessingResult.success(
+        outputFile: outputFile,
+        processingTimeMs: stopwatch.elapsedMilliseconds,
+      );
+    } catch (e) {
+      stopwatch.stop();
+      debugPrint('Lỗi áp dụng bộ lọc hình ảnh: $e');
+      return MediaProcessingResult.error(
+        error: 'Không thể áp dụng bộ lọc: $e',
+        processingTimeMs: stopwatch.elapsedMilliseconds,
+      );
+    }
+  }
+}
+
+/// Class cũ giữ lại để tương thích - facade pattern
+@lazySingleton
+class MediaProcessingService implements IMediaProcessingService {
+  final IMediaProcessingService _implementation;
+  
+  MediaProcessingService() : _implementation = MediaProcessingServiceFactory.create();
+  
+  @override
+  Future<void> initialize() => _implementation.initialize();
+  
+  @override
+  Future<MediaProcessingResult> compressImage({
+    required dynamic imageInput,
+    int quality = 80,
+    bool preserveExif = false,
+  }) => _implementation.compressImage(
+    imageInput: imageInput,
+    quality: quality,
+    preserveExif: preserveExif,
+  );
+  
+  @override
+  Future<MediaProcessingResult> resizeImage({
+    required dynamic imageInput,
+    required int width, 
+    required int height,
+    bool maintainAspectRatio = true,
+  }) => _implementation.resizeImage(
+    imageInput: imageInput,
+    width: width,
+    height: height,
+    maintainAspectRatio: maintainAspectRatio,
+  );
+  
+  @override
+  Future<MediaProcessingResult> cropImage({
+    required dynamic imageInput,
+    required int x,
+    required int y,
+    required int width,
+    required int height,
+  }) => _implementation.cropImage(
+    imageInput: imageInput,
+    x: x,
+    y: y,
+    width: width,
+    height: height,
+  );
+  
+  @override
+  Future<MediaProcessingResult> applyImageFilter({
+    required dynamic imageInput,
+    required String filterType,
+  }) => _implementation.applyImageFilter(
+    imageInput: imageInput,
+    filterType: filterType,
+  );
+  
+  @override
+  String generateTempFilePath({String extension = '.tmp'}) => 
+    _implementation.generateTempFilePath(extension: extension);
 }
 
 /// Xử lý nén hình ảnh trong isolate

@@ -12,45 +12,33 @@ import 'dart:io';
 /// and providing methods for database operations.
 @singleton
 class DatabaseService {
-  late final Isar _isar;
+  final IDatabaseImplementation _implementation;
   bool _isInitialized = false;
+
+  /// Factory constructor
+  factory DatabaseService() {
+    if (kIsWeb) {
+      return DatabaseService._withImplementation(WebDatabaseImplementation());
+    } else {
+      return DatabaseService._withImplementation(NativeDatabaseImplementation());
+    }
+  }
+  
+  /// Private constructor with implementation
+  DatabaseService._withImplementation(this._implementation);
 
   /// Returns whether the database is initialized
   bool get isInitialized => _isInitialized;
 
   /// Returns the Isar instance
-  Isar get isar => _isar;
+  Isar get isar => _implementation.isar;
 
   /// Initializes the database
   Future<void> initialize() async {
     if (_isInitialized) return;
     
-    final schemas = [
-      ChatModelSchema,
-      MessageModelSchema,
-      UserModelSchema,
-    ];
-    
     try {
-      if (kIsWeb) {
-        // Web version - for memory-only database
-        _isar = Isar.open(
-          schemas: schemas,
-          directory: Isar.sqliteInMemory,
-          inspector: kDebugMode,
-          name: 'chat_app_db',
-        );
-      } else {
-        // Native platforms
-        final dir = await getApplicationDocumentsDirectory();
-        _isar = Isar.open(
-          schemas: schemas,
-          directory: dir.path,
-          inspector: kDebugMode,
-          name: 'chat_app_db',
-        );
-      }
-      
+      await _implementation.initialize();
       _isInitialized = true;
       debugPrint('Isar DB initialized for ${kIsWeb ? 'web' : 'native'} platform');
     } catch (e) {
@@ -62,7 +50,7 @@ class DatabaseService {
   /// Closes the database
   Future<void> close() async {
     if (!_isInitialized) return;
-    _isar.close();
+    await _implementation.close();
     _isInitialized = false;
     debugPrint('Isar DB closed');
   }
@@ -70,34 +58,14 @@ class DatabaseService {
   /// Clears all data in the database
   Future<void> clearAllData() async {
     if (!_isInitialized) await initialize();
-    
-    _isar.write((isar) {
-      isar.clear(); 
-    });
-    
+    await _implementation.clearAllData();
     debugPrint('Isar DB cleared');
   }
 
   /// Performs a database backup
   Future<String?> backup() async {
     if (!_isInitialized) return null;
-    
-    try {
-      if (kIsWeb) {
-        return null; // Not supported on web
-      }
-      
-      final directory = await getApplicationDocumentsDirectory();
-      final backupPath = '${directory.path}/backup_${DateTime.now().millisecondsSinceEpoch}.isar';
-      
-      _isar.copyToFile(backupPath); 
-      debugPrint('Database backed up to: $backupPath');
-      
-      return backupPath;
-    } catch (e) {
-      debugPrint('Error during database backup: $e');
-      return null;
-    }
+    return _implementation.backup();
   }
 
   /// Export database to JSON format
@@ -105,7 +73,7 @@ class DatabaseService {
     if (!_isInitialized) await initialize();
     
     final chats = await getAllChats();
-    final messages = _isar.messageModels.where().findAll();
+    final messages = await getAllMessages();
     final users = await getAllUsers();
     
     return {
@@ -122,25 +90,7 @@ class DatabaseService {
     if (!_isInitialized) await initialize();
     
     try {
-      _isar.write((isar) {
-        isar.clear();
-        
-        final users = (data['users'] as List?)
-            ?.map((u) => UserModel.fromMap(u as Map<String, dynamic>))
-            .toList() ?? [];
-        isar.userModels.putAll(users);
-        
-        final chats = (data['chats'] as List?)
-            ?.map((c) => ChatModel.fromMap(c as Map<String, dynamic>))
-            .toList() ?? [];
-        isar.chatModels.putAll(chats);
-        
-        final messages = (data['messages'] as List?)
-            ?.map((m) => MessageModel.fromMap(m as Map<String, dynamic>))
-            .toList() ?? [];
-        isar.messageModels.putAll(messages);
-      });
-      
+      await _implementation.importFromJson(data);
       debugPrint('Database imported successfully');
       return true;
     } catch (e) {
@@ -154,10 +104,218 @@ class DatabaseService {
     if (!_isInitialized) {
       throw StateError('Database not initialized. Call initialize() first.');
     }
-    return _isar.collection<ID, OBJ>();
+    return _implementation.collection<ID, OBJ>();
   }
   
   /// Watches for changes on a collection
+  Stream<List<T>> watchCollection<T>() {
+    return _implementation.watchCollection<T>();
+  }
+  
+  /// Gets all objects from a collection
+  Future<List<T>> getAll<T>() async {
+    return _implementation.getAll<T>();
+  }
+  
+  /// Saves an object to the database
+  Future<int> save<T>(T object) async {
+    if (!_isInitialized) await initialize();
+    return _implementation.save<T>(object);
+  }
+  
+  /// Saves multiple objects to the database
+  Future<void> saveAll<T>(List<T> objects) async {
+    if (!_isInitialized) await initialize();
+    await _implementation.saveAll<T>(objects);
+  }
+  
+  /// Deletes an object from the database
+  Future<bool> delete<T>(int id) async {
+    if (!_isInitialized) await initialize();
+    return _implementation.delete<T>(id);
+  }
+  
+  /// Gets all chats
+  Future<List<ChatModel>> getAllChats() async {
+    return _implementation.getAllChats();
+  }
+  
+  /// Gets all messages
+  Future<List<MessageModel>> getAllMessages() async {
+    return _implementation.getAllMessages();
+  }
+  
+  /// Gets all users
+  Future<List<UserModel>> getAllUsers() async {
+    return _implementation.getAllUsers();
+  }
+  
+  /// Gets chat by ID
+  Future<ChatModel?> getChatById(int id) async {
+    return _implementation.getChatById(id);
+  }
+  
+  /// Gets message by ID
+  Future<MessageModel?> getMessageById(int id) async {
+    return _implementation.getMessageById(id);
+  }
+  
+  /// Gets user by ID
+  Future<UserModel?> getUserById(int id) async {
+    return _implementation.getUserById(id);
+  }
+  
+  /// Gets all messages in a chat
+  Future<List<MessageModel>> getMessagesForChat(String chatId) async {
+    return _implementation.getMessagesForChat(chatId);
+  }
+  
+  /// Streams changes to messages in a chat
+  Stream<List<MessageModel>> watchMessagesForChat(String chatId) {
+    return _implementation.watchMessagesForChat(chatId);
+  }
+  
+  /// Gets user by server ID
+  Future<UserModel?> getUserByServerId(String serverId) async {
+    return _implementation.getUserByServerId(serverId);
+  }
+}
+
+/// Interface for database implementations
+abstract class IDatabaseImplementation {
+  /// The Isar instance
+  Isar get isar;
+  
+  /// Initialize the database
+  Future<void> initialize();
+  
+  /// Close the database
+  Future<void> close();
+  
+  /// Clear all data in the database
+  Future<void> clearAllData();
+  
+  /// Backup the database
+  Future<String?> backup();
+  
+  /// Import data from JSON
+  Future<void> importFromJson(Map<String, dynamic> data);
+  
+  /// Get a collection
+  IsarCollection<ID, OBJ> collection<ID, OBJ>();
+  
+  /// Watch changes to a collection
+  Stream<List<T>> watchCollection<T>();
+  
+  /// Get all objects in a collection
+  Future<List<T>> getAll<T>();
+  
+  /// Save an object
+  Future<int> save<T>(T object);
+  
+  /// Save multiple objects
+  Future<void> saveAll<T>(List<T> objects);
+  
+  /// Delete an object
+  Future<bool> delete<T>(int id);
+  
+  /// Get all chats
+  Future<List<ChatModel>> getAllChats();
+  
+  /// Get all messages
+  Future<List<MessageModel>> getAllMessages();
+  
+  /// Get all users
+  Future<List<UserModel>> getAllUsers();
+  
+  /// Get chat by ID
+  Future<ChatModel?> getChatById(int id);
+  
+  /// Get message by ID
+  Future<MessageModel?> getMessageById(int id);
+  
+  /// Get user by ID
+  Future<UserModel?> getUserById(int id);
+  
+  /// Get all messages in a chat
+  Future<List<MessageModel>> getMessagesForChat(String chatId);
+  
+  /// Watch all messages in a chat
+  Stream<List<MessageModel>> watchMessagesForChat(String chatId);
+  
+  /// Get user by server ID
+  Future<UserModel?> getUserByServerId(String serverId);
+}
+
+/// Web implementation of the database
+class WebDatabaseImplementation implements IDatabaseImplementation {
+  late final Isar _isar;
+  
+  @override
+  Isar get isar => _isar;
+  
+  @override
+  Future<void> initialize() async {
+    final schemas = [
+      ChatModelSchema,
+      MessageModelSchema,
+      UserModelSchema,
+    ];
+    
+    _isar = Isar.open(
+      schemas: schemas,
+      directory: Isar.sqliteInMemory,
+      inspector: kDebugMode,
+      name: 'chat_app_db',
+    );
+  }
+  
+  @override
+  Future<void> close() async {
+    _isar.close();
+  }
+  
+  @override
+  Future<void> clearAllData() async {
+    _isar.write((isar) {
+      isar.clear(); 
+    });
+  }
+  
+  @override
+  Future<String?> backup() async {
+    // Not supported on web
+    return null;
+  }
+  
+  @override
+  Future<void> importFromJson(Map<String, dynamic> data) async {
+    _isar.write((isar) {
+      isar.clear();
+      
+      final users = (data['users'] as List?)
+          ?.map((u) => UserModel.fromMap(u as Map<String, dynamic>))
+          .toList() ?? [];
+      isar.userModels.putAll(users);
+      
+      final chats = (data['chats'] as List?)
+          ?.map((c) => ChatModel.fromMap(c as Map<String, dynamic>))
+          .toList() ?? [];
+      isar.chatModels.putAll(chats);
+      
+      final messages = (data['messages'] as List?)
+          ?.map((m) => MessageModel.fromMap(m as Map<String, dynamic>))
+          .toList() ?? [];
+      isar.messageModels.putAll(messages);
+    });
+  }
+  
+  @override
+  IsarCollection<ID, OBJ> collection<ID, OBJ>() {
+    return _isar.collection<ID, OBJ>();
+  }
+  
+  @override
   Stream<List<T>> watchCollection<T>() {
     final collection = this.collection<int, T>();
     // Create a periodic stream that fetches data every 1 second
@@ -165,14 +323,13 @@ class DatabaseService {
       .asyncMap((_) => collection.where().findAll());
   }
   
-  /// Gets all objects from a collection
+  @override
   Future<List<T>> getAll<T>() async {
     return collection<int, T>().where().findAll();
   }
   
-  /// Saves an object to the database
+  @override
   Future<int> save<T>(T object) async {
-    if (!_isInitialized) await initialize();
     await _isar.write((isar) async {
       collection<int, T>().put(object);
     });
@@ -182,364 +339,242 @@ class DatabaseService {
     throw ArgumentError('Object type does not have a retrievable ID after save');
   }
   
-  /// Saves multiple objects to the database
+  @override
   Future<void> saveAll<T>(List<T> objects) async {
-    if (!_isInitialized) await initialize();
     _isar.write((isar) {
       collection<int, T>().putAll(objects); 
     });
   }
   
-  /// Deletes an object from the database
+  @override
   Future<bool> delete<T>(int id) async {
-    if (!_isInitialized) await initialize();
-    final success = await _isar.write((isar) async {
+    return await _isar.write((isar) async {
       return collection<int, T>().delete(id);
     });
-    return success;
   }
   
-  /// Deletes multiple objects from the database
-  Future<int> deleteAll<T>(List<int> ids) async {
-    if (!_isInitialized) await initialize();
-    final count = await _isar.write((isar) async {
-      return collection<int, T>().deleteAll(ids);
-    });
-    return count;
-  }
-  
-  /// Executes a function within a database transaction
-  Future<T> transaction<T>(Future<T> Function(Isar) action) async {
-    if (!_isInitialized) await initialize();
-    return await _isar.write((isar) => action(isar));
-  }
-
-  // CHAT OPERATIONS
-
-  /// Get all chats
+  @override
   Future<List<ChatModel>> getAllChats() async {
-    if (!_isInitialized) await initialize();
     return _isar.chatModels.where().findAll();
   }
-
-  /// Watch chats for changes
-  Stream<List<ChatModel>> watchChats() {
-    if (!_isInitialized) initialize();
-    // Create a periodic stream that fetches data every 1 second
-    return Stream.periodic(const Duration(seconds: 1))
-      .asyncMap((_) => _isar.chatModels.where().findAll());
+  
+  @override
+  Future<List<MessageModel>> getAllMessages() async {
+    return _isar.messageModels.where().findAll();
   }
-
-  /// Get a specific chat by server ID
-  Future<ChatModel?> getChatByServerId(String serverId) async {
-    if (!_isInitialized) await initialize();
-    return _isar.chatModels.where()
-        .serverIdEqualTo(serverId)
-        .findFirst();
+  
+  @override
+  Future<List<UserModel>> getAllUsers() async {
+    return _isar.userModels.where().findAll();
   }
-
-  /// Save a chat
-  Future<int> saveChat(ChatModel chat) async {
-    if (!_isInitialized) await initialize();
-    await _isar.write((isar) async {
-      isar.chatModels.put(chat);
-    });
-    return chat.id ?? 0;
+  
+  @override
+  Future<ChatModel?> getChatById(int id) async {
+    return _isar.chatModels.get(id);
   }
-
-  /// Save multiple chats
-  Future<void> saveChats(List<ChatModel> chats) async {
-    if (!_isInitialized) await initialize();
-    _isar.write((isar) {
-       isar.chatModels.putAll(chats);
-    });
+  
+  @override
+  Future<MessageModel?> getMessageById(int id) async {
+    return _isar.messageModels.get(id);
   }
-
-  /// Delete a chat
-  Future<bool> deleteChat(int id) async {
-    if (!_isInitialized) await initialize();
-    final success = await _isar.write((isar) async {
-      return isar.chatModels.delete(id);
-    });
-    return success;
+  
+  @override
+  Future<UserModel?> getUserById(int id) async {
+    return _isar.userModels.get(id);
   }
-
-  /// Get chats for a specific user
-  Future<List<ChatModel>> getChatsForUser(String userId) async {
-    if (!_isInitialized) await initialize();
-    return _isar.chatModels.where()
-        .participantIdsElementEqualTo(userId)
-        .findAll();
-  }
-
-  /// Get direct chat between two users
-  Future<ChatModel?> getDirectChatBetweenUsers(String user1Id, String user2Id) async {
-    if (!_isInitialized) await initialize();
-    final chats = _isar.chatModels.where()
-        .typeEqualTo(ChatType.direct)
-        .findAll();
-    
-    return chats.firstWhere(
-      (chat) => 
-        chat.participantIds.contains(user1Id) && 
-        chat.participantIds.contains(user2Id) &&
-        chat.participantIds.length == 2,
-      orElse: () => throw StateError('No direct chat found between users'),
-    );
-  }
-
-  /// Create a new chat ID
-  Future<int> createChatId() async {
-    if (!_isInitialized) await initialize();
-    return _isar.chatModels.autoIncrement();
-  }
-
-  // MESSAGE OPERATIONS
-
-  /// Get all messages for a chat
+  
+  @override
   Future<List<MessageModel>> getMessagesForChat(String chatId) async {
-    if (!_isInitialized) await initialize();
-    return _isar.messageModels.where()
+    return _isar.messageModels
+        .where()
         .chatIdEqualTo(chatId)
         .sortByCreatedAt()
         .findAll();
   }
-
-  /// Watch messages for a chat
+  
+  @override
   Stream<List<MessageModel>> watchMessagesForChat(String chatId) {
-    if (!_isInitialized) initialize();
-    // Create a periodic stream that fetches data every 1 second
     return Stream.periodic(const Duration(seconds: 1))
-      .asyncMap((_) => _isar.messageModels.where()
-          .chatIdEqualTo(chatId)
-          .sortByCreatedAt()
-          .findAll());
+        .asyncMap((_) => getMessagesForChat(chatId));
   }
-
-  /// Get a specific message by local ID
-  Future<MessageModel?> getMessageByLocalId(String localId) async {
-    if (!_isInitialized) await initialize();
-    return _isar.messageModels.where()
-        .localIdEqualTo(localId)
-        .findFirst();
-  }
-
-  /// Get a specific message by server ID
-  Future<MessageModel?> getMessageByServerId(String serverId) async {
-    if (!_isInitialized) await initialize();
-    return _isar.messageModels.where()
+  
+  @override
+  Future<UserModel?> getUserByServerId(String serverId) async {
+    return _isar.userModels
+        .where()
         .serverIdEqualTo(serverId)
         .findFirst();
   }
+}
 
-  /// Save a message
-  Future<int> saveMessage(MessageModel message) async {
-    if (!_isInitialized) await initialize();
-    await _isar.write((isar) async {
-      isar.messageModels.put(message);
-    });
-    return message.id ?? 0;
+/// Native implementation of the database (Android, iOS, Desktop)
+class NativeDatabaseImplementation implements IDatabaseImplementation {
+  late final Isar _isar;
+  
+  @override
+  Isar get isar => _isar;
+  
+  @override
+  Future<void> initialize() async {
+    final schemas = [
+      ChatModelSchema,
+      MessageModelSchema,
+      UserModelSchema,
+    ];
+    
+    final dir = await getApplicationDocumentsDirectory();
+    _isar = Isar.open(
+      schemas: schemas,
+      directory: dir.path,
+      inspector: kDebugMode,
+      name: 'chat_app_db',
+    );
   }
-
-  /// Save multiple messages
-  Future<void> saveMessages(List<MessageModel> messages) async {
-    if (!_isInitialized) await initialize();
+  
+  @override
+  Future<void> close() async {
+    _isar.close();
+  }
+  
+  @override
+  Future<void> clearAllData() async {
     _isar.write((isar) {
+      isar.clear(); 
+    });
+  }
+  
+  @override
+  Future<String?> backup() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final backupPath = '${directory.path}/backup_${DateTime.now().millisecondsSinceEpoch}.isar';
+      
+      _isar.copyToFile(backupPath); 
+      debugPrint('Database backed up to: $backupPath');
+      
+      return backupPath;
+    } catch (e) {
+      debugPrint('Error during database backup: $e');
+      return null;
+    }
+  }
+  
+  @override
+  Future<void> importFromJson(Map<String, dynamic> data) async {
+    _isar.write((isar) {
+      isar.clear();
+      
+      final users = (data['users'] as List?)
+          ?.map((u) => UserModel.fromMap(u as Map<String, dynamic>))
+          .toList() ?? [];
+      isar.userModels.putAll(users);
+      
+      final chats = (data['chats'] as List?)
+          ?.map((c) => ChatModel.fromMap(c as Map<String, dynamic>))
+          .toList() ?? [];
+      isar.chatModels.putAll(chats);
+      
+      final messages = (data['messages'] as List?)
+          ?.map((m) => MessageModel.fromMap(m as Map<String, dynamic>))
+          .toList() ?? [];
       isar.messageModels.putAll(messages);
     });
   }
-
-  /// Delete a message
-  Future<bool> deleteMessage(int id) async {
-    if (!_isInitialized) await initialize();
-    final success = await _isar.write((isar) async {
-      return isar.messageModels.delete(id);
-    });
-    return success;
+  
+  @override
+  IsarCollection<ID, OBJ> collection<ID, OBJ>() {
+    return _isar.collection<ID, OBJ>();
   }
-
-  /// Get unread messages count for a chat
-  Future<int> getUnreadMessagesCount(String chatId, String userId) async {
-    if (!_isInitialized) await initialize();
-    
-    final messages = _isar.messageModels.where()
-        .chatIdEqualTo(chatId)
-        .and()
-        .not().senderIdEqualTo(userId)
-        .and()
-        .not().readByElementEqualTo(userId)
-        .findAll();
-    
-    return messages.length;
+  
+  @override
+  Stream<List<T>> watchCollection<T>() {
+    final collection = this.collection<int, T>();
+    return collection.where().watch(fireImmediately: true);
   }
-
-  /// Mark messages as read
-  Future<void> markMessagesAsRead(String chatId, String userId) async {
-    if (!_isInitialized) await initialize();
-    
-    final messages = _isar.messageModels.where()
-        .chatIdEqualTo(chatId)
-        .and()
-        .not().readByElementEqualTo(userId)
-        .findAll();
-    
-    if (messages.isEmpty) return;
-    
+  
+  @override
+  Future<List<T>> getAll<T>() async {
+    return collection<int, T>().where().findAll();
+  }
+  
+  @override
+  Future<int> save<T>(T object) async {
     await _isar.write((isar) async {
-      for (final message in messages) {
-        final updatedMessage = message.markReadBy(userId);
-        isar.messageModels.put(updatedMessage);
-      }
+      collection<int, T>().put(object);
+    });
+    if (object is ChatModel) return object.id ?? 0;
+    if (object is MessageModel) return object.id ?? 0;
+    if (object is UserModel) return object.id ?? 0;
+    throw ArgumentError('Object type does not have a retrievable ID after save');
+  }
+  
+  @override
+  Future<void> saveAll<T>(List<T> objects) async {
+    _isar.write((isar) {
+      collection<int, T>().putAll(objects); 
     });
   }
-
-  /// Create a new message ID
-  Future<int> createMessageId() async {
-    if (!_isInitialized) await initialize();
-    return _isar.messageModels.autoIncrement();
+  
+  @override
+  Future<bool> delete<T>(int id) async {
+    return await _isar.write((isar) async {
+      return collection<int, T>().delete(id);
+    });
   }
-
-  /// Get pinned messages for a chat
-  Future<List<MessageModel>> getPinnedMessages(String chatId) async {
-    if (!_isInitialized) await initialize();
-    
-    return _isar.messageModels.where()
-        .chatIdEqualTo(chatId)
-        .and()
-        .isPinnedEqualTo(true)
-        .findAll();
+  
+  @override
+  Future<List<ChatModel>> getAllChats() async {
+    return _isar.chatModels.where().findAll();
   }
-
-  // USER OPERATIONS
-
-  /// Get all users
+  
+  @override
+  Future<List<MessageModel>> getAllMessages() async {
+    return _isar.messageModels.where().findAll();
+  }
+  
+  @override
   Future<List<UserModel>> getAllUsers() async {
-    if (!_isInitialized) await initialize();
     return _isar.userModels.where().findAll();
   }
-
-  /// Watch users for changes
-  Stream<List<UserModel>> watchUsers() {
-    if (!_isInitialized) initialize();
-    // Create a periodic stream that fetches data every 1 second
-    return Stream.periodic(const Duration(seconds: 1))
-      .asyncMap((_) => _isar.userModels.where().findAll());
+  
+  @override
+  Future<ChatModel?> getChatById(int id) async {
+    return _isar.chatModels.get(id);
   }
-
-  /// Get a specific user by server ID
-  Future<UserModel?> getUserByServerId(String serverId) async {
-    if (!_isInitialized) await initialize();
-    return _isar.userModels.where()
-        .serverIdEqualTo(serverId)
-        .findFirst();
+  
+  @override
+  Future<MessageModel?> getMessageById(int id) async {
+    return _isar.messageModels.get(id);
   }
-
-  /// Get a user by username
-  Future<UserModel?> getUserByUsername(String username) async {
-    if (!_isInitialized) await initialize();
-    return _isar.userModels.where()
-        .usernameEqualTo(username)
-        .findFirst();
+  
+  @override
+  Future<UserModel?> getUserById(int id) async {
+    return _isar.userModels.get(id);
   }
-
-  /// Save a user
-  Future<int> saveUser(UserModel user) async {
-    if (!_isInitialized) await initialize();
-    await _isar.write((isar) async {
-      isar.userModels.put(user);
-    });
-    return user.id ?? 0;
-  }
-
-  /// Save multiple users
-  Future<void> saveUsers(List<UserModel> users) async {
-    if (!_isInitialized) await initialize();
-    _isar.write((isar) {
-      isar.userModels.putAll(users);
-    });
-  }
-
-  /// Delete a user
-  Future<bool> deleteUser(int id) async {
-    if (!_isInitialized) await initialize();
-    final success = await _isar.write((isar) async {
-      return isar.userModels.delete(id);
-    });
-    return success;
-  }
-
-  /// Create a new user ID
-  Future<int> createUserId() async {
-    if (!_isInitialized) await initialize();
-    return _isar.userModels.autoIncrement();
-  }
-
-  /// Search users by name or username
-  Future<List<UserModel>> searchUsers(String query) async {
-    if (!_isInitialized) await initialize();
-    
-    if (query.isEmpty) {
-      return await getAllUsers();
-    }
-    
-    final queryLower = query.toLowerCase();
-    final allUsers = await getAllUsers();
-    
-    return allUsers.where((user) => 
-      user.username.toLowerCase().contains(queryLower) ||
-      user.displayName.toLowerCase().contains(queryLower)
-    ).toList();
-  }
-
-  /// Get online users
-  Future<List<UserModel>> getOnlineUsers() async {
-    if (!_isInitialized) await initialize();
-    
-    return _isar.userModels.where()
-        .isOnlineEqualTo(true)
+  
+  @override
+  Future<List<MessageModel>> getMessagesForChat(String chatId) async {
+    return _isar.messageModels
+        .where()
+        .chatIdEqualTo(chatId)
+        .sortByCreatedAt()
         .findAll();
   }
-
-  /// Get users by role
-  Future<List<UserModel>> getUsersByRole(String role) async {
-    if (!_isInitialized) await initialize();
-    
-    final allUsers = await getAllUsers();
-    return allUsers.where((user) => user.hasRole(role)).toList();
+  
+  @override
+  Stream<List<MessageModel>> watchMessagesForChat(String chatId) {
+    return _isar.messageModels
+        .where()
+        .chatIdEqualTo(chatId)
+        .sortByCreatedAt()
+        .watch(fireImmediately: true);
   }
-
-  /// Get members of a chat
-  Future<List<UserModel>> getChatMembers(String chatId) async {
-    if (!_isInitialized) await initialize();
-    
-    final chat = _isar.chatModels.where()
-        .serverIdEqualTo(chatId)
+  
+  @override
+  Future<UserModel?> getUserByServerId(String serverId) async {
+    return _isar.userModels
+        .where()
+        .serverIdEqualTo(serverId)
         .findFirst();
-    
-    if (chat == null) return [];
-    
-    final memberIds = chat.participantIds;
-    final allUsers = await getAllUsers();
-    
-    return allUsers.where((user) => 
-      memberIds.contains(user.serverId)
-    ).toList();
-  }
-
-  /// Get total database size in bytes
-  Future<int> getDatabaseSize() async {
-    if (!_isInitialized || kIsWeb) return 0;
-    
-    try {
-      final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/chat_app_db.isar');
-      
-      if (!await file.exists()) return 0;
-      
-      return await file.length();
-    } catch (e) {
-      debugPrint('Error getting database size: $e');
-      return 0;
-    }
   }
 }

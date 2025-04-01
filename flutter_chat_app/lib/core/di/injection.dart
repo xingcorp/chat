@@ -11,6 +11,7 @@ import 'package:flutter_chat_app/core/config/app_config.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
+import 'package:flutter/foundation.dart';
 
 /// GetIt instance for dependency injection
 final GetIt getIt = GetIt.instance;
@@ -27,22 +28,27 @@ Future<void> configureInjection() async {
   final localStorageService = await LocalStorageService.init();
   getIt.registerSingleton<LocalStorageService>(localStorageService);
   
-  // Register connectivity service
-  final connectivityService = ConnectivityService();
+  // Register connectivity services with async factories
+  final connectivityService = await ConnectivityService.create();
   getIt.registerSingleton<ConnectivityService>(connectivityService);
+  
+  final connectivityAnalyzer = await ConnectivityAnalyzerService.create();
+  getIt.registerSingleton<ConnectivityAnalyzerService>(connectivityAnalyzer);
   
   // Register resource services
   final resourceManager = ResourceManagerService();
   getIt.registerSingleton(resourceManager);
   
-  // Register media processing service
+  // Register media processing service - safe initialization with platform detection
   final mediaProcessingService = MediaProcessingService();
-  await mediaProcessingService.initialize();
+  try {
+    await mediaProcessingService.initialize();
+  } catch (e) {
+    // Log error but don't stop initialization process
+    debugPrint('Warning: MediaProcessingService initialization failed: $e');
+    debugPrint('Media processing may be limited on this platform');
+  }
   getIt.registerSingleton(mediaProcessingService);
-  
-  // Register connectivity analyzer service
-  final connectivityAnalyzer = ConnectivityAnalyzerService();
-  getIt.registerSingleton(connectivityAnalyzer);
   
   // Register realtime connection service
   final realtimeConnectionService = RealtimeConnectionService(

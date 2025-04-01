@@ -13,8 +13,16 @@ class ConnectivityService {
   final StreamController<List<ConnectivityResult>> _connectionChangeController = 
       StreamController<List<ConnectivityResult>>.broadcast();
   
-  /// Constructor (now empty)
-  ConnectivityService();
+  /// Private constructor
+  ConnectivityService._();
+  
+  /// Async factory method to create and initialize the service
+  @preResolve
+  static Future<ConnectivityService> create() async {
+    final service = ConnectivityService._();
+    await service._initialize();
+    return service;
+  }
   
   /// Stream of connectivity changes (now List)
   Stream<List<ConnectivityResult>> get onConnectivityChanged => 
@@ -23,8 +31,8 @@ class ConnectivityService {
   /// Current connection status (based on any active connection)
   bool get isConnected => _hasConnection;
   
-  /// Initialize connectivity monitoring. Call after creating instance.
-  Future<void> initialize() async {
+  /// Initialize connectivity monitoring
+  Future<void> _initialize() async {
     // Listen for connectivity changes first
     _connectivity.onConnectivityChanged
         .distinct() // Avoid duplicate events

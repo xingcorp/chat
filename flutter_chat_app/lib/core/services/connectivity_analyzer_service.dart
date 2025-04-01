@@ -65,8 +65,16 @@ class ConnectivityAnalyzerService {
   /// Timer để kiểm tra định kỳ
   Timer? _periodicCheckTimer;
   
-  /// Constructor (now empty)
-  ConnectivityAnalyzerService();
+  /// Private constructor
+  ConnectivityAnalyzerService._();
+  
+  /// Async factory method to create and initialize the service
+  @preResolve
+  static Future<ConnectivityAnalyzerService> create() async {
+    final service = ConnectivityAnalyzerService._();
+    await service._initialize();
+    return service;
+  }
   
   /// Stream theo dõi trạng thái kết nối (ConnectivityResult)
   Stream<List<ConnectivityResult>> get connectivityStream => _connectivityStream.stream;
@@ -86,8 +94,8 @@ class ConnectivityAnalyzerService {
   /// Kiểm tra có đang offline không
   bool get isOffline => _currentConnectivity.contains(ConnectivityResult.none);
   
-  /// Initializes the service. Call this after creating the instance.
-  Future<void> initialize() async {
+  /// Initialize the service
+  Future<void> _initialize() async {
     try {
       _currentConnectivity = await _connectivity.checkConnectivity();
     } catch (e) {
