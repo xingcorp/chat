@@ -1,28 +1,31 @@
-/// Enum representing the status of a message in the message queue
+/// Trạng thái của tin nhắn trong hàng đợi
 enum MessageQueueStatus {
-  /// Message is created but not yet queued
-  created,
+  /// Đang soạn: Tin nhắn vẫn đang trong quá trình soạn
+  draft,
   
-  /// Message is in the queue waiting to be sent
-  queued,
+  /// Đang chờ: Tin nhắn đã được thêm vào hàng đợi
+  pending,
   
-  /// Message is currently being sent
+  /// Đang gửi: Tin nhắn đang được gửi
   sending,
   
-  /// Message has been sent successfully
+  /// Đã gửi: Tin nhắn đã được gửi đến server
   sent,
   
-  /// Message sending has failed
-  failed,
-  
-  /// Message has been delivered to the recipient's device
+  /// Đã nhận: Tin nhắn đã được nhận bởi người nhận
   delivered,
   
-  /// Message has been read by the recipient
+  /// Đã đọc: Tin nhắn đã được đọc bởi người nhận
   read,
   
-  /// Message has been cancelled and won't be sent
+  /// Thất bại: Tin nhắn gửi thất bại
+  failed,
+  
+  /// Đã hủy: Tin nhắn đã bị hủy
   cancelled,
+  
+  /// Xung đột: Tin nhắn bị xung đột với dữ liệu từ server
+  conflicted,
 }
 
 /// Extension methods for MessageQueueStatus
@@ -31,7 +34,8 @@ extension MessageQueueStatusX on MessageQueueStatus {
   bool get isTerminal => 
     this == MessageQueueStatus.sent || 
     this == MessageQueueStatus.failed || 
-    this == MessageQueueStatus.cancelled;
+    this == MessageQueueStatus.cancelled ||
+    this == MessageQueueStatus.conflicted;
     
   /// Whether the message is in a state that can be retried
   bool get canRetry => 

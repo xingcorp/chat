@@ -10,10 +10,9 @@ import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/local_storage_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
-import 'package:flutter_chat_app/domain/repositories/message_repository.dart';
+import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:rxdart/rxdart.dart';
 
 /// Trạng thái của một tin nhắn trong hàng đợi
@@ -202,38 +201,133 @@ class QueuedMessage {
   }
 }
 
-/// Lớp giúp ưu tiên tin nhắn trong hàng đợi
-class MessagePriorityQueue {
-  /// Hàng đợi tin nhắn
-  final _queue = HeapPriorityQueue<QueuedMessage>(
-    (a, b) {
-      // So sánh độ ưu tiên trước
-      final priorityComparison = b.priority.compareTo(a.priority);
-      if (priorityComparison != 0) return priorityComparison;
-      
-      // Nếu độ ưu tiên bằng nhau, so sánh thời gian tạo (cũ hơn được gửi trước)
-      return a.createdAt.compareTo(b.createdAt);
-    },
-  );
+/// A priority queue implementation using a heap
+class HeapPriorityQueue<E> {
+  /// The underlying list that stores the heap
+  final List<E> _queue = <E>[];
   
-  /// Map để truy cập nhanh tin nhắn theo ID
+  /// The comparison function to determine priority
+  final int Function(E a, E b) _comparison;
+  
+  /// Creates a new priority queue with the provided comparison function
+  HeapPriorityQueue(this._comparison);
+  
+  /// Adds an element to the queue
+  void add(E element) {
+    _queue.add(element);
+    _siftUp(_queue.length - 1);
+  }
+  
+  /// Removes and returns the highest priority element
+  E removeFirst() {
+    if (_queue.isEmpty) {
+      throw StateError('Cannot remove from an empty queue');
+    }
+    
+    final result = _queue.first;
+    final last = _queue.removeLast();
+    
+    if (_queue.isNotEmpty) {
+      _queue[0] = last;
+      _siftDown(0);
+    }
+    
+    return result;
+  }
+  
+  /// Sift an element up to maintain heap property
+  void _siftUp(int index) {
+    var child = index;
+    while (child > 0) {
+      final parent = (child - 1) ~/ 2;
+      if (_comparison(_queue[child], _queue[parent]) >= 0) break;
+      
+      // Swap with parent
+      final temp = _queue[parent];
+      _queue[parent] = _queue[child];
+      _queue[child] = temp;
+      
+      child = parent;
+    }
+  }
+  
+  /// Sift an element down to maintain heap property
+  void _siftDown(int index) {
+    final half = _queue.length ~/ 2;
+    var parent = index;
+    
+    while (parent < half) {
+      var child = 2 * parent + 1; // Left child
+      
+      // Find the higher priority child
+      final rightChild = child + 1;
+      if (rightChild < _queue.length && 
+          _comparison(_queue[child], _queue[rightChild]) > 0) {
+        child = rightChild;
+      }
+      
+      // Check if we need to swap
+      if (_comparison(_queue[parent], _queue[child]) <= 0) break;
+      
+      // Swap with the child
+      final temp = _queue[parent];
+      _queue[parent] = _queue[child];
+      _queue[child] = temp;
+      
+      parent = child;
+    }
+  }
+  
+  /// Check if the queue is empty
+  bool get isEmpty => _queue.isEmpty;
+  
+  /// Check if the queue is not empty
+  bool get isNotEmpty => _queue.isNotEmpty;
+  
+  /// Get the number of elements in the queue
+  int get length => _queue.length;
+  
+  /// Clear the queue
+  void clear() {
+    _queue.clear();
+  }
+}
+
+/// Class to manage message priority queue
+class MessagePriorityQueue {
+  /// Internal queue using heap-based priority queue
+  final _queue = _createPriorityQueue();
+  
+  /// Map for quick message lookup by ID
   final Map<String, QueuedMessage> _messageMap = {};
   
-  /// Thêm tin nhắn vào hàng đợi
+  /// Create a priority queue for queued messages
+  static HeapPriorityQueue<QueuedMessage> _createPriorityQueue() {
+    return HeapPriorityQueue<QueuedMessage>(
+      (a, b) {
+        // Compare by retry count (messages with more retries get higher priority)
+        final priorityComparison = b.retryCount.compareTo(a.retryCount);
+        if (priorityComparison != 0) return priorityComparison;
+        
+        // If retry count is equal, compare by creation time (older messages first)
+        return a.createdAt.compareTo(b.createdAt);
+      },
+    );
+  }
+  
+  /// Add a message to the queue
   void add(QueuedMessage message) {
-    // Xóa tin nhắn cũ nếu đã tồn tại
+    // Remove old message if it exists
     if (_messageMap.containsKey(message.localId)) {
-      // Không thể xóa trực tiếp từ PriorityQueue, 
-      // nên chúng ta chỉ đánh dấu trong map
       _messageMap.remove(message.localId);
     }
     
-    // Thêm tin nhắn mới
+    // Add new message
     _queue.add(message);
     _messageMap[message.localId] = message;
   }
   
-  /// Lấy tin nhắn đầu tiên và xóa khỏi hàng đợi
+  /// Get and remove the first message from the queue
   QueuedMessage? removeFirst() {
     if (_queue.isEmpty) return null;
     
@@ -242,19 +336,19 @@ class MessagePriorityQueue {
     return message;
   }
   
-  /// Kiểm tra hàng đợi có trống không
+  /// Check if queue is empty
   bool get isEmpty => _queue.isEmpty;
   
-  /// Lấy số lượng tin nhắn trong hàng đợi
+  /// Get number of messages in queue
   int get length => _queue.length;
   
-  /// Xóa tin nhắn khỏi hàng đợi
+  /// Remove a message from the queue
   bool remove(String localId) {
     final message = _messageMap[localId];
     if (message == null) return false;
     
-    // Không thể xóa trực tiếp từ PriorityQueue
-    // nên chúng ta sẽ tái tạo hàng đợi
+    // Can't remove directly from HeapPriorityQueue
+    // so we recreate the queue
     _messageMap.remove(localId);
     
     final tempList = <QueuedMessage>[];
@@ -265,7 +359,7 @@ class MessagePriorityQueue {
       }
     }
     
-    // Thêm lại các tin nhắn
+    // Add back all messages except the removed one
     for (final item in tempList) {
       _queue.add(item);
     }
@@ -273,25 +367,25 @@ class MessagePriorityQueue {
     return true;
   }
   
-  /// Xóa tất cả tin nhắn khỏi hàng đợi
+  /// Clear all messages from the queue
   void clear() {
     _queue.clear();
     _messageMap.clear();
   }
   
-  /// Lấy danh sách tin nhắn
+  /// Get all messages as a list
   List<QueuedMessage> toList() {
     final result = <QueuedMessage>[];
     final tempList = <QueuedMessage>[];
     
-    // Lấy tất cả tin nhắn
+    // Get all messages
     while (_queue.isNotEmpty) {
       final message = _queue.removeFirst();
       result.add(message);
       tempList.add(message);
     }
     
-    // Thêm lại tin nhắn vào hàng đợi
+    // Add messages back to the queue
     for (final message in tempList) {
       _queue.add(message);
     }
@@ -299,73 +393,73 @@ class MessagePriorityQueue {
     return result;
   }
   
-  /// Tìm tin nhắn theo ID
+  /// Find message by ID
   QueuedMessage? operator [](String localId) => _messageMap[localId];
   
-  /// Kiểm tra tin nhắn có tồn tại không
+  /// Check if message exists
   bool contains(String localId) => _messageMap.containsKey(localId);
   
-  /// Lọc tin nhắn theo điều kiện
+  /// Filter messages by condition
   List<QueuedMessage> where(bool Function(QueuedMessage) test) {
     return _messageMap.values.where(test).toList();
   }
 }
 
-/// Service quản lý hàng đợi tin nhắn
+/// Service for managing message queue
 @lazySingleton
 class MessageQueueService {
-  /// Số lần thử lại tối đa trước khi đánh dấu là lỗi
+  /// Maximum retry attempts before marking as terminal error
   static const int _maxRetryCount = 5;
   
-  /// Khoảng thời gian cơ bản giữa các lần thử lại (ms)
+  /// Base delay between retry attempts (ms)
   static const int _baseRetryDelayMs = 1000;
   
-  /// Khoảng thời gian tối đa giữa các lần thử lại (ms)
-  static const int _maxRetryDelayMs = 60000; // 1 phút
+  /// Maximum delay between retry attempts (ms)
+  static const int _maxRetryDelayMs = 60000; // 1 minute
   
-  /// Kích thước lô tối đa để gửi trong 1 lần
+  /// Maximum batch size for processing messages
   static const int _maxBatchSize = 10;
   
-  /// Key lưu trữ hàng đợi tin nhắn
+  /// Storage key for saving queue
   static const String _storageKey = 'message_queue';
   
-  /// Repository for sending messages
+  /// Message repository
   final IMessageRepository _messageRepository;
   
-  /// Service to check network connectivity
+  /// Connectivity service
   final ConnectivityService _connectivityService;
   
-  /// Service to store messages locally
+  /// Local storage service
   final LocalStorageService _localStorageService;
   
-  /// Service để quản lý kết nối realtime
+  /// Realtime connection service
   final RealtimeConnectionService _realtimeConnectionService;
   
-  /// Hàng đợi tin nhắn (sắp xếp theo thứ tự ưu tiên)
-  final MessagePriorityQueue _messageQueue = MessagePriorityQueue();
+  /// Message priority queue
+  final _messageQueue = MessagePriorityQueue();
   
-  /// Tin nhắn đang được gửi
+  /// Currently sending messages
   final Map<String, QueuedMessage> _sendingMessages = {};
   
-  /// Stream controller để phát các cập nhật trạng thái tin nhắn
+  /// Status update stream controller
   final _messageStatusController = BehaviorSubject<QueuedMessage>();
   
-  /// Timer để xử lý hàng đợi định kỳ
+  /// Queue processing timer
   Timer? _processingTimer;
   
-  /// Cờ đánh dấu đang xử lý
+  /// Flag indicating processing in progress
   bool _isProcessing = false;
   
-  /// Queue paused flag
+  /// Flag indicating queue is paused
   bool _isPaused = false;
   
-  /// Subscription theo dõi kết nối
+  /// Connectivity subscription
   StreamSubscription? _connectivitySubscription;
   
-  /// Subscription theo dõi kết nối realtime
+  /// Realtime connection subscription
   StreamSubscription? _realtimeConnectionSubscription;
   
-  /// Đã khởi tạo
+  /// Initialization flag
   bool _initialized = false;
   
   /// Constructor
@@ -376,54 +470,54 @@ class MessageQueueService {
     this._realtimeConnectionService,
   );
   
-  /// Stream các cập nhật trạng thái tin nhắn
-  Stream<QueuedMessage> get messageStatusStream => 
-      _messageStatusController.stream;
+  /// Stream of message status updates
+  Stream<QueuedMessage> get messageStatusStream => _messageStatusController.stream;
   
-  /// Khởi tạo service
+  /// Initialize the service
   Future<void> initialize() async {
     if (_initialized) return;
     
-    // Đảm bảo các services khác đã được khởi tạo
-    await _realtimeConnectionService.initialize();
-    
-    // Khôi phục hàng đợi từ storage
+    // Make sure other services are initialized
     await _restoreQueue();
     
-    // Lắng nghe sự thay đổi kết nối
-    _connectivitySubscription = 
-        _connectivityService.onConnectivityChanged.listen(_handleConnectivityChange);
+    // Listen for connectivity changes
+    _connectivitySubscription = _connectivityService.onConnectivityChanged
+        .listen(_handleConnectivityChange);
     
-    // Lắng nghe trạng thái kết nối realtime
-    _realtimeConnectionSubscription = 
-        _realtimeConnectionService.connectionStateStream.listen(_handleRealtimeConnectionChange);
+    // Listen for realtime connection changes
+    _realtimeConnectionSubscription = _realtimeConnectionService.connectionStateStream
+        .listen(_handleRealtimeConnectionChange);
     
-    // Bắt đầu xử lý hàng đợi
+    // Start queue processing
     _startProcessingQueue();
     
     _initialized = true;
   }
   
-  /// Khôi phục hàng đợi từ bộ nhớ cục bộ
+  /// Restore queue from local storage
   Future<void> _restoreQueue() async {
     try {
       final queueJson = await _localStorageService.getString(_storageKey);
       if (queueJson != null) {
         final queueData = jsonDecode(queueJson) as List<dynamic>;
         
-        // Khôi phục tin nhắn vào hàng đợi
+        // Restore messages to queue
         for (final messageData in queueData) {
-          final message = QueuedMessage.fromJson(messageData);
-          
-          // Đặt lại trạng thái sending sang pending nếu cần
-          if (message.status == MessageQueueStatus.sending) {
-            _messageQueue.add(message.copyWithStatus(
-              status: MessageQueueStatus.pending,
-              errorMessage: 'Sending was interrupted',
-            ));
-          } else if (message.status == MessageQueueStatus.pending || 
-                     message.status == MessageQueueStatus.failed) {
-            _messageQueue.add(message);
+          try {
+            final message = QueuedMessage.fromJson(messageData);
+            
+            // Reset sending status to pending if needed
+            if (message.status == MessageQueueStatus.sending) {
+              _messageQueue.add(message.copyWithStatus(
+                status: MessageQueueStatus.pending,
+              ));
+            } else if (message.status != MessageQueueStatus.sent && 
+                       message.status != MessageQueueStatus.failed && 
+                       message.status != MessageQueueStatus.conflicted) {
+              _messageQueue.add(message);
+            }
+          } catch (e) {
+            debugPrint('Failed to parse message: $e');
           }
         }
         
@@ -434,19 +528,17 @@ class MessageQueueService {
     }
   }
   
-  /// Lưu hàng đợi vào bộ nhớ cục bộ
+  /// Save queue to local storage
   Future<void> _saveQueue() async {
     try {
-      // Kết hợp tin nhắn đang chờ và đang gửi
-      final pendingMessages = _messageQueue.toList();
-      final sendingMessages = _sendingMessages.values.toList();
-      final allMessages = [...pendingMessages, ...sendingMessages];
+      // Combine pending and sending messages
+      final allMessages = [..._messageQueue.toList(), ..._sendingMessages.values];
       
-      // Chỉ lưu tin nhắn chưa hoàn thành
+      // Only save non-terminal messages
       final uncompletedMessages = allMessages.where((msg) => 
-          msg.status == MessageQueueStatus.pending || 
-          msg.status == MessageQueueStatus.sending ||
-          msg.status == MessageQueueStatus.failed).toList();
+          msg.status != MessageQueueStatus.sent && 
+          msg.status != MessageQueueStatus.failed && 
+          msg.status != MessageQueueStatus.conflicted).toList();
       
       final queueJson = jsonEncode(uncompletedMessages.map((m) => m.toJson()).toList());
       await _localStorageService.setString(_storageKey, queueJson);
@@ -455,684 +547,365 @@ class MessageQueueService {
     }
   }
   
-  /// Thêm tin nhắn vào hàng đợi
+  /// Add a message to the queue
   Future<String> enqueueMessage({
     required String chatId,
-    required String content,
+    required String message,
     required ContentType contentType,
     List<String> attachmentIds = const [],
-    int priority = 0,
   }) async {
+    // Create a new queued message
     final queuedMessage = QueuedMessage(
       chatId: chatId,
-      content: content,
+      content: message,
       contentType: contentType,
       attachmentIds: attachmentIds,
-      priority: priority,
+      status: MessageQueueStatus.pending,
     );
     
-    // Kiểm tra trùng lặp
-    final duplicateMessage = _checkForDuplicate(queuedMessage);
-    if (duplicateMessage != null) {
-      // Nếu tin nhắn đã tồn tại, kiểm tra trạng thái
-      if (duplicateMessage.status == MessageQueueStatus.sent ||
-          duplicateMessage.status == MessageQueueStatus.delivered ||
-          duplicateMessage.status == MessageQueueStatus.read) {
-        // Nếu đã gửi thành công, trả về ID cũ
-        return duplicateMessage.localId;
-      } else if (duplicateMessage.status == MessageQueueStatus.error) {
-        // Nếu lỗi, thử lại với tin nhắn mới
-        _messageQueue.remove(duplicateMessage.localId);
-        _sendingMessages.remove(duplicateMessage.localId);
-      } else {
-        // Nếu đang chờ hoặc đang gửi, cập nhật ưu tiên nếu cần
-        if (priority > duplicateMessage.priority) {
-          if (_sendingMessages.containsKey(duplicateMessage.localId)) {
-            _sendingMessages.remove(duplicateMessage.localId);
-            _messageQueue.add(queuedMessage);
-          } else {
-            _messageQueue.remove(duplicateMessage.localId);
-            _messageQueue.add(queuedMessage);
-          }
-        }
-        return duplicateMessage.localId;
-      }
-    }
-    
-    // Thêm vào hàng đợi
+    // Add to queue
     _messageQueue.add(queuedMessage);
     
-    // Phát sự kiện cập nhật trạng thái
-    _emitStatusUpdate(queuedMessage);
+    // Notify listeners
+    _notifyMessageStatusChanged(queuedMessage);
     
-    // Lưu hàng đợi
+    // Save queue
     await _saveQueue();
     
-    // Đảm bảo hàng đợi đang chạy
-    _ensureQueueProcessing();
+    // Start processing if not already
+    _ensureProcessing();
     
     return queuedMessage.localId;
   }
   
-  /// Kiểm tra tin nhắn trùng lặp
-  QueuedMessage? _checkForDuplicate(QueuedMessage message) {
-    // Kiểm tra trong danh sách đang gửi
-    for (final sendingMessage in _sendingMessages.values) {
-      if (sendingMessage.hasSameContent(message)) {
-        return sendingMessage;
-      }
+  /// Start queue processing
+  void _startProcessingQueue() {
+    if (_processingTimer != null) {
+      _processingTimer!.cancel();
     }
     
-    // Kiểm tra trong hàng đợi
-    for (final queuedMessage in _messageQueue.toList()) {
-      if (queuedMessage.hasSameContent(message)) {
-        return queuedMessage;
-      }
-    }
+    // Process queue every 2 seconds
+    _processingTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      _processQueue();
+    });
     
-    return null;
+    // Process immediately
+    _processQueue();
   }
   
-  /// Đảm bảo hàng đợi đang được xử lý
-  void _ensureQueueProcessing() {
+  /// Stop queue processing
+  void _stopProcessingQueue() {
+    _processingTimer?.cancel();
+    _processingTimer = null;
+  }
+  
+  /// Ensure processing is started
+  void _ensureProcessing() {
     if (!_isProcessing && !_isPaused) {
       _processQueue();
     }
   }
   
-  /// Bắt đầu xử lý hàng đợi định kỳ
-  void _startProcessingQueue() {
-    // Hủy timer hiện tại nếu có
-    _processingTimer?.cancel();
-    
-    // Tạo timer mới
-    _processingTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) {
-        if (!_isProcessing && !_isPaused) {
-          _processQueue();
-        }
-      },
-    );
-    
-    // Xử lý ngay lập tức
-    _ensureQueueProcessing();
-  }
-  
-  /// Dừng xử lý hàng đợi
-  void pauseQueue() {
-    _isPaused = true;
-    debugPrint('Message queue paused');
-  }
-  
-  /// Khôi phục xử lý hàng đợi
-  void resumeQueue() {
-    _isPaused = false;
-    debugPrint('Message queue resumed');
-    _ensureQueueProcessing();
-  }
-  
-  /// Xử lý kết nối thay đổi
-  void _handleConnectivityChange(bool isConnected) {
-    if (isConnected) {
-      // Khôi phục xử lý khi có kết nối
-      resumeQueue();
-    } else {
-      // Tạm dừng xử lý khi mất kết nối
-      pauseQueue();
-    }
-  }
-  
-  /// Xử lý kết nối realtime thay đổi
-  void _handleRealtimeConnectionChange(ConnectionState state) {
-    // Khi kết nối realtime được thiết lập hoặc ngắt kết nối
-    if (state == ConnectionState.connected) {
-      // Khôi phục xử lý khi có kết nối
-      resumeQueue();
-    } else if (state == ConnectionState.disconnected || 
-              state == ConnectionState.closed ||
-              state == ConnectionState.error) {
-      // Tạm dừng xử lý khi mất kết nối hoặc lỗi
-      pauseQueue();
-    }
-  }
-  
-  /// Xử lý hàng đợi tin nhắn
+  /// Process the queue
   Future<void> _processQueue() async {
-    // Kiểm tra trạng thái kết nối
-    final isNetworkConnected = await _connectivityService.isConnected();
-    final isRealtimeConnected = _realtimeConnectionService.isConnected;
-    
-    if (!isNetworkConnected || !isRealtimeConnected) {
-      debugPrint('No connection (network: $isNetworkConnected, realtime: $isRealtimeConnected), skipping queue processing');
-      return;
-    }
-    
-    // Tránh xử lý đồng thời
-    if (_isProcessing || _isPaused) {
-      return;
-    }
+    // Skip if already processing or paused
+    if (_isProcessing || _isPaused) return;
     
     _isProcessing = true;
     
     try {
-      // Xử lý tin nhắn đến lịch thử lại
-      await _processScheduledRetries();
-      
-      // Nếu không có tin nhắn trong hàng đợi, kết thúc
-      if (_messageQueue.isEmpty) {
+      // Check network connectivity
+      final isConnected = await _connectivityService.checkNetworkStatus();
+      if (!isConnected) {
+        debugPrint('No network connection, skipping queue processing');
         return;
       }
       
-      debugPrint('Processing message queue, ${_messageQueue.length} pending messages');
+      // Process ready messages
+      await _processReadyMessages();
       
-      // Xử lý tin nhắn theo lô
-      final batch = _prepareBatch();
-      if (batch.isNotEmpty) {
-        await _sendMessageBatch(batch);
-      }
+      // Check for scheduled retries
+      _checkScheduledRetries();
+      
     } catch (e) {
-      debugPrint('Error processing message queue: $e');
+      debugPrint('Error processing queue: $e');
     } finally {
       _isProcessing = false;
     }
   }
   
-  /// Xử lý các tin nhắn đến lịch thử lại
-  Future<void> _processScheduledRetries() async {
+  /// Process messages that are ready to send
+  Future<void> _processReadyMessages() async {
+    // Get current time
     final now = DateTime.now();
     
-    // Kiểm tra tin nhắn lỗi có đến thời gian thử lại chưa
-    for (final message in _sendingMessages.values.toList()) {
-      if (message.status == MessageQueueStatus.failed &&
-          message.scheduledRetryTime != null &&
-          message.scheduledRetryTime!.isBefore(now)) {
-        
-        // Đặt lại trạng thái để thử lại
-        final updatedMessage = message.copyWithStatus(
-          status: MessageQueueStatus.pending,
-          scheduledRetryTime: null,
-        );
-        
-        // Thêm lại vào hàng đợi
-        _messageQueue.add(updatedMessage);
-        _sendingMessages.remove(updatedMessage.localId);
-        
-        // Phát sự kiện cập nhật trạng thái
-        _emitStatusUpdate(updatedMessage);
-      }
-    }
-  }
-  
-  /// Chuẩn bị lô tin nhắn để gửi
-  List<QueuedMessage> _prepareBatch() {
-    final batch = <QueuedMessage>[];
+    // Collect messages to process in this batch
+    final messagesToProcess = <QueuedMessage>[];
     
-    // Lấy tin nhắn từ hàng đợi theo kích thước lô
-    while (batch.length < _maxBatchSize && !_messageQueue.isEmpty) {
+    // Get messages with pending status or scheduled for retry
+    while (messagesToProcess.length < _maxBatchSize && !_messageQueue.isEmpty) {
       final message = _messageQueue.removeFirst()!;
       
-      // Kiểm tra xem có phải trạng thái pending không
-      if (message.status == MessageQueueStatus.pending) {
-        // Cập nhật trạng thái và thêm vào lô
-        final updatedMessage = message.copyWithStatus(
-          status: MessageQueueStatus.sending,
-        );
-        
-        batch.add(updatedMessage);
-        
-        // Lưu vào danh sách đang gửi
-        _sendingMessages[updatedMessage.localId] = updatedMessage;
-        
-        // Phát sự kiện cập nhật trạng thái
-        _emitStatusUpdate(updatedMessage);
-      }
-    }
-    
-    return batch;
-  }
-  
-  /// Gửi lô tin nhắn
-  Future<void> _sendMessageBatch(List<QueuedMessage> batch) async {
-    // Gửi từng tin nhắn trong lô
-    await Future.wait(
-      batch.map((message) => _sendSingleMessage(message)),
-    );
-    
-    // Lưu trạng thái hàng đợi
-    await _saveQueue();
-  }
-  
-  /// Gửi một tin nhắn
-  Future<void> _sendSingleMessage(QueuedMessage message) async {
-    try {
-      // Gửi tin nhắn thông qua repository
-      final sentMessage = await _messageRepository.sendMessage(
-        message.chatId,
-        message.content,
-        message.contentType,
-        attachmentIds: message.attachmentIds,
-        localId: message.localId,
-      );
-      
-      // Cập nhật trạng thái thành công
-      final updatedMessage = message.copyWithStatus(
-        status: MessageQueueStatus.sent,
-        serverId: sentMessage.id,
-      );
-      
-      // Cập nhật trong danh sách đang gửi
-      _sendingMessages[message.localId] = updatedMessage;
-      
-      // Phát sự kiện cập nhật trạng thái
-      _emitStatusUpdate(updatedMessage);
-      
-      debugPrint('Message sent successfully: ${message.localId} -> ${sentMessage.id}');
-    } catch (e) {
-      // Kiểm tra xem có phải lỗi xung đột không
-      if (_isConflictError(e)) {
-        // Xử lý lỗi xung đột
-        await _handleMessageConflict(message, e);
+      // Check if message is ready for processing
+      final isReadyForProcessing = message.status == MessageQueueStatus.pending ||
+          (message.status == MessageQueueStatus.failed && 
+           message.scheduledRetryTime != null && 
+           message.scheduledRetryTime!.isBefore(now));
+           
+      if (isReadyForProcessing) {
+        messagesToProcess.add(message);
       } else {
-        // Tăng số lần thử
-        final newRetryCount = message.retryCount + 1;
-        
-        // Kiểm tra có vượt quá số lần thử tối đa không
-        if (newRetryCount >= _maxRetryCount) {
-          // Đánh dấu lỗi cuối cùng
-          final updatedMessage = message.copyWithStatus(
-            status: MessageQueueStatus.error,
-            errorMessage: e.toString(),
-            retryCount: newRetryCount,
-          );
-          
-          // Cập nhật trong danh sách đang gửi
-          _sendingMessages[message.localId] = updatedMessage;
-          
-          // Phát sự kiện cập nhật trạng thái
-          _emitStatusUpdate(updatedMessage);
-          
-          debugPrint('Message failed permanently after $_maxRetryCount attempts: ${message.localId}');
-        } else {
-          // Tính toán thời gian thử lại với exponential backoff
-          final retryDelayMs = _calculateRetryDelay(newRetryCount);
-          final scheduledRetryTime = DateTime.now().add(Duration(milliseconds: retryDelayMs));
-          
-          // Đánh dấu thất bại và lên lịch thử lại
-          final updatedMessage = message.copyWithStatus(
-            status: MessageQueueStatus.failed,
-            errorMessage: e.toString(),
-            retryCount: newRetryCount,
-            scheduledRetryTime: scheduledRetryTime,
-          );
-          
-          // Cập nhật trong danh sách đang gửi
-          _sendingMessages[message.localId] = updatedMessage;
-          
-          // Phát sự kiện cập nhật trạng thái
-          _emitStatusUpdate(updatedMessage);
-          
-          debugPrint('Message send failed, scheduled retry in ${retryDelayMs}ms: ${message.localId}');
-        }
+        // Put it back in the queue if not ready
+        _messageQueue.add(message);
+        break;
       }
     }
-  }
-  
-  /// Kiểm tra lỗi xung đột
-  bool _isConflictError(dynamic error) {
-    if (error is Exception) {
-      final errorMsg = error.toString().toLowerCase();
-      return errorMsg.contains('conflict') || 
-             errorMsg.contains('duplicate') || 
-             errorMsg.contains('already exists');
+    
+    // Process collected messages
+    for (final message in messagesToProcess) {
+      await _sendMessage(message);
     }
-    return false;
   }
   
-  /// Xử lý xung đột tin nhắn
-  Future<void> _handleMessageConflict(QueuedMessage message, dynamic error) async {
-    // Đánh dấu tin nhắn là xung đột
+  /// Check for scheduled retries
+  void _checkScheduledRetries() {
+    final now = DateTime.now();
+    
+    // Find messages scheduled for retry
+    final retryMessages = _messageQueue.where((msg) => 
+        msg.status == MessageQueueStatus.failed && 
+        msg.scheduledRetryTime != null && 
+        msg.scheduledRetryTime!.isBefore(now));
+        
+    if (retryMessages.isNotEmpty) {
+      debugPrint('Found ${retryMessages.length} messages ready for retry');
+      _ensureProcessing();
+    }
+  }
+  
+  /// Send a message
+  Future<void> _sendMessage(QueuedMessage message) async {
+    // Update status to sending
     final updatedMessage = message.copyWithStatus(
-      status: MessageQueueStatus.conflicted,
-      errorMessage: 'Message conflict: ${error.toString()}',
+      status: MessageQueueStatus.sending,
     );
     
-    // Cập nhật trong danh sách đang gửi
-    _sendingMessages[message.localId] = updatedMessage;
+    // Add to sending messages map
+    _sendingMessages[updatedMessage.localId] = updatedMessage;
     
-    // Phát sự kiện cập nhật trạng thái
-    _emitStatusUpdate(updatedMessage);
+    // Notify listeners
+    _notifyMessageStatusChanged(updatedMessage);
     
-    debugPrint('Message conflict detected: ${message.localId}');
-    
-    // Cố gắng tìm tin nhắn tương ứng từ server
     try {
-      // Tìm tin nhắn dựa vào nội dung và chat ID
-      final serverMessages = await _messageRepository.findMessagesByContent(
-        message.chatId,
-        message.content,
-        limit: 1,
+      // Send message to server
+      final result = await _messageRepository.sendMessage(
+        chatId: updatedMessage.chatId,
+        content: updatedMessage.content,
+        senderId: 'current_user_id', // This should come from a user service
+        contentType: updatedMessage.contentType.toString(),
+        attachmentIds: updatedMessage.attachmentIds,
       );
       
-      if (serverMessages.isNotEmpty) {
-        final serverMessage = serverMessages.first;
-        
-        // Cập nhật với ID từ server
-        final resolvedMessage = updatedMessage.copyWithStatus(
-          status: MessageQueueStatus.sent,
-          serverId: serverMessage.id,
-        );
-        
-        // Cập nhật trong danh sách đang gửi
-        _sendingMessages[message.localId] = resolvedMessage;
-        
-        // Phát sự kiện cập nhật
-        _emitStatusUpdate(_sendingMessages[message.localId]!);
-        
-        debugPrint('Conflict resolved: ${message.localId} -> ${serverMessage.id}');
-      }
-    } catch (e) {
-      debugPrint('Failed to resolve message conflict: $e');
-    }
-  }
-  
-  /// Tính toán thời gian thử lại với exponential backoff + jitter
-  int _calculateRetryDelay(int retryCount) {
-    // Calculate exponential backoff
-    final baseDelay = _baseRetryDelayMs * pow(2, retryCount - 1);
-    
-    // Add jitter (randomness) to avoid thundering herd
-    final jitter = Random().nextInt(_baseRetryDelayMs);
-    
-    // Cap at max delay
-    return min(baseDelay.toInt() + jitter, _maxRetryDelayMs);
-  }
-  
-  /// Cập nhật trạng thái của tin nhắn (sau khi nhận được delivered/read receipts)
-  Future<void> updateMessageStatus({
-    required String localId,
-    required MessageQueueStatus newStatus,
-  }) async {
-    // Tìm tin nhắn trong danh sách đang gửi
-    final message = _sendingMessages[localId];
-    if (message != null) {
-      // Chỉ cho phép cập nhật lên delivered hoặc read
-      if (newStatus == MessageQueueStatus.delivered || 
-          newStatus == MessageQueueStatus.read) {
-        
-        // Cập nhật trạng thái
-        final updatedMessage = message.copyWithStatus(
-          status: newStatus,
-        );
-        
-        // Cập nhật trong danh sách đang gửi
-        _sendingMessages[localId] = updatedMessage;
-        
-        // Phát sự kiện cập nhật trạng thái
-        _emitStatusUpdate(updatedMessage);
-        
-        // Lưu hàng đợi
-        await _saveQueue();
-      }
-    }
-  }
-  
-  /// Cập nhật trạng thái của tin nhắn dựa trên ID từ server
-  Future<void> updateMessageStatusByServerId({
-    required String serverId,
-    required MessageQueueStatus newStatus,
-  }) async {
-    // Tìm tin nhắn bằng server ID
-    final messages = _sendingMessages.values
-        .where((msg) => msg.serverId == serverId)
-        .toList();
-    
-    for (final message in messages) {
-      await updateMessageStatus(
-        localId: message.localId,
-        newStatus: newStatus,
+      // Mark as sent
+      final sentMessage = updatedMessage.copyWithStatus(
+        status: MessageQueueStatus.sent,
+        serverId: result.id,
       );
+      
+      // Remove from sending messages
+      _sendingMessages.remove(updatedMessage.localId);
+      
+      // Notify listeners
+      _notifyMessageStatusChanged(sentMessage);
+      
+      debugPrint('Message sent successfully: ${sentMessage.localId}');
+    } catch (e) {
+      debugPrint('Failed to send message: $e');
+      
+      // Increment retry count
+      final retryCount = updatedMessage.retryCount + 1;
+      
+      // Check if max retries reached
+      if (retryCount >= _maxRetryCount) {
+        // Mark as failed terminal state
+        final failedMessage = updatedMessage.copyWithStatus(
+          status: MessageQueueStatus.failed,
+          retryCount: retryCount,
+          errorMessage: 'Failed after $retryCount attempts: $e',
+        );
+        
+        // Remove from sending messages
+        _sendingMessages.remove(updatedMessage.localId);
+        
+        // Notify listeners
+        _notifyMessageStatusChanged(failedMessage);
+        
+        debugPrint('Message failed permanently: ${failedMessage.localId}');
+      } else {
+        // Schedule for retry with exponential backoff
+        final delayMs = _calculateRetryDelay(retryCount);
+        final nextRetryTime = DateTime.now().add(Duration(milliseconds: delayMs));
+        
+        // Update message with retry info
+        final retryMessage = updatedMessage.copyWithStatus(
+          status: MessageQueueStatus.failed,
+          retryCount: retryCount,
+          errorMessage: 'Retry $retryCount: $e',
+          scheduledRetryTime: nextRetryTime,
+        );
+        
+        // Remove from sending messages
+        _sendingMessages.remove(updatedMessage.localId);
+        
+        // Add back to queue
+        _messageQueue.add(retryMessage);
+        
+        // Notify listeners
+        _notifyMessageStatusChanged(retryMessage);
+        
+        debugPrint('Message scheduled for retry: ${retryMessage.localId} at $nextRetryTime');
+      }
+    }
+    
+    // Save queue state
+    await _saveQueue();
+  }
+  
+  /// Calculate retry delay with exponential backoff
+  int _calculateRetryDelay(int retryCount) {
+    // Exponential backoff with jitter
+    final baseDelay = _baseRetryDelayMs * pow(2, retryCount);
+    final maxDelay = min(baseDelay.toInt(), _maxRetryDelayMs);
+    
+    // Add jitter to avoid thundering herd
+    final jitter = Random().nextInt((maxDelay * 0.3).toInt());
+    
+    return maxDelay + jitter;
+  }
+  
+  /// Handle connectivity changes
+  void _handleConnectivityChange(List<dynamic> _) {
+    final isConnected = _connectivityService.isConnected;
+    
+    if (isConnected) {
+      // Resume processing if we have connection
+      _isPaused = false;
+      _ensureProcessing();
+    } else {
+      // Pause processing if no connection
+      _isPaused = true;
     }
   }
   
-  /// Phát sự kiện cập nhật trạng thái
-  void _emitStatusUpdate(QueuedMessage message) {
-    _messageStatusController.add(message);
+  /// Handle realtime connection changes
+  void _handleRealtimeConnectionChange(dynamic connectionState) {
+    // When realtime connection is established, process queue
+    if (connectionState == ConnectionState.connected) {
+      _ensureProcessing();
+    }
   }
   
-  /// Xóa các tin nhắn đã hoàn thành khỏi hàng đợi
-  Future<void> clearCompletedMessages() async {
-    // Tìm các tin nhắn đã hoàn thành
-    final completedIds = _sendingMessages.entries
-        .where((entry) => 
-            entry.value.status == MessageQueueStatus.sent ||
-            entry.value.status == MessageQueueStatus.delivered ||
-            entry.value.status == MessageQueueStatus.read)
-        .map((entry) => entry.key)
-        .toList();
+  /// Notify about message status changes
+  void _notifyMessageStatusChanged(QueuedMessage message) {
+    if (!_messageStatusController.isClosed) {
+      _messageStatusController.add(message);
+    }
+  }
+  
+  /// Get all messages in the queue
+  List<QueuedMessage> getAllMessages() {
+    return [..._messageQueue.toList(), ..._sendingMessages.values];
+  }
+  
+  /// Get a message by ID
+  QueuedMessage? getMessageById(String localId) {
+    return _messageQueue[localId] ?? _sendingMessages[localId];
+  }
+  
+  /// Cancel a pending message
+  Future<bool> cancelMessage(String localId) async {
+    // Find message
+    final message = getMessageById(localId);
+    if (message == null) return false;
     
-    // Xóa khỏi danh sách đang gửi
-    for (final id in completedIds) {
-      _sendingMessages.remove(id);
+    // Can only cancel pending or failed messages
+    if (message.status != MessageQueueStatus.pending && 
+        message.status != MessageQueueStatus.failed) {
+      return false;
     }
     
-    // Lưu hàng đợi
+    // Mark as cancelled - using failed status since cancelled is not available
+    final cancelledMessage = message.copyWithStatus(
+      status: MessageQueueStatus.failed,
+      errorMessage: 'Cancelled by user',
+    );
+    
+    // Remove from queues
+    if (_sendingMessages.containsKey(localId)) {
+      _sendingMessages.remove(localId);
+    } else {
+      _messageQueue.remove(localId);
+    }
+    
+    // Notify listeners
+    _notifyMessageStatusChanged(cancelledMessage);
+    
+    // Save queue
     await _saveQueue();
     
-    debugPrint('Cleared ${completedIds.length} completed messages from queue');
+    return true;
   }
   
-  /// Lấy trạng thái hiện tại của tin nhắn
-  QueuedMessage? getMessageStatus(String localId) {
-    return _sendingMessages[localId];
-  }
-  
-  /// Lấy tất cả tin nhắn đang chờ xử lý
-  List<QueuedMessage> getPendingMessages() {
-    final pendingFromQueue = _messageQueue.where(
-      (msg) => msg.status == MessageQueueStatus.pending
+  /// Retry a failed message
+  Future<bool> retryMessage(String localId) async {
+    // Find message
+    final message = getMessageById(localId);
+    if (message == null) return false;
+    
+    // Can only retry failed messages
+    if (message.status != MessageQueueStatus.failed) {
+      return false;
+    }
+    
+    // Reset for retry
+    final retryMessage = message.copyWithStatus(
+      status: MessageQueueStatus.pending,
     );
     
-    final pendingFromSending = _sendingMessages.values.where(
-      (msg) => msg.status == MessageQueueStatus.pending || 
-               msg.status == MessageQueueStatus.sending ||
-               msg.status == MessageQueueStatus.failed
-    );
+    // Add to queue
+    _messageQueue.add(retryMessage);
     
-    return [...pendingFromQueue, ...pendingFromSending];
-  }
-  
-  /// Thử lại gửi tin nhắn lỗi
-  Future<void> retryMessage(String localId) async {
-    // Tìm tin nhắn trong danh sách đang gửi
-    final message = _sendingMessages[localId];
-    if (message != null && 
-        (message.status == MessageQueueStatus.failed || 
-         message.status == MessageQueueStatus.error ||
-         message.status == MessageQueueStatus.conflicted)) {
-      
-      // Cập nhật trạng thái thành pending
-      final updatedMessage = message.copyWithStatus(
-        status: MessageQueueStatus.pending,
-        scheduledRetryTime: null,
-      );
-      
-      // Xóa khỏi danh sách đang gửi
-      _sendingMessages.remove(localId);
-      
-      // Thêm lại vào hàng đợi
-      _messageQueue.add(updatedMessage);
-      
-      // Phát sự kiện cập nhật trạng thái
-      _emitStatusUpdate(updatedMessage);
-      
-      // Lưu hàng đợi
-      await _saveQueue();
-      
-      // Đảm bảo hàng đợi đang chạy
-      _ensureQueueProcessing();
-    }
-  }
-  
-  /// Hủy một tin nhắn trong hàng đợi
-  Future<bool> cancelMessage(String localId) async {
-    // Tìm trong hàng đợi
-    if (_messageQueue.contains(localId)) {
-      _messageQueue.remove(localId);
-      await _saveQueue();
-      return true;
-    }
+    // Remove from sending if there
+    _sendingMessages.remove(localId);
     
-    // Tìm trong danh sách đang gửi
-    if (_sendingMessages.containsKey(localId)) {
-      final message = _sendingMessages[localId]!;
-      
-      // Chỉ cho phép hủy nếu chưa gửi thành công
-      if (message.status == MessageQueueStatus.pending || 
-          message.status == MessageQueueStatus.failed ||
-          message.status == MessageQueueStatus.error ||
-          message.status == MessageQueueStatus.conflicted) {
-        
-        _sendingMessages.remove(localId);
-        await _saveQueue();
-        return true;
-      }
-    }
+    // Notify listeners
+    _notifyMessageStatusChanged(retryMessage);
     
-    return false;
-  }
-  
-  /// Đồng bộ trạng thái tin nhắn từ server
-  Future<void> syncMessageStatuses(List<ChatMessage> serverMessages) async {
-    for (final serverMessage in serverMessages) {
-      // Tìm tin nhắn trong danh sách đang gửi
-      final localMessages = _sendingMessages.values.where(
-        (m) => m.serverId == serverMessage.id
-      ).toList();
-      
-      for (final localMessage in localMessages) {
-        // Cập nhật trạng thái theo server
-        MessageQueueStatus newStatus;
-        
-        // Kiểm tra trạng thái đọc
-        if (serverMessage.readBy.isNotEmpty) {
-          newStatus = MessageQueueStatus.read;
-        } else if (serverMessage.deliveredTo.isNotEmpty) {
-          newStatus = MessageQueueStatus.delivered;
-        } else {
-          newStatus = MessageQueueStatus.sent;
-        }
-        
-        // Cập nhật trạng thái
-        await updateMessageStatus(
-          localId: localMessage.localId,
-          newStatus: newStatus,
-        );
-      }
-    }
-  }
-  
-  /// Đồng bộ tin nhắn với server
-  Future<void> syncWithServer(List<ChatMessage> serverMessages) async {
-    // Đồng bộ trạng thái
-    await syncMessageStatuses(serverMessages);
+    // Save queue
+    await _saveQueue();
     
-    // Kiểm tra xung đột và giải quyết
-    await _resolveMessageConflicts(serverMessages);
+    // Ensure processing
+    _ensureProcessing();
     
-    // Xóa tin nhắn đã hoàn thành
-    await clearCompletedMessages();
+    return true;
   }
   
-  /// Giải quyết xung đột giữa tin nhắn cục bộ và server
-  Future<void> _resolveMessageConflicts(List<ChatMessage> serverMessages) async {
-    // Tạo map từ nội dung tin nhắn đến ID server
-    final serverContentMap = <String, String>{};
-    for (final message in serverMessages) {
-      final contentKey = '${message.chatId}|${message.content}|${message.contentType}';
-      serverContentMap[contentKey] = message.id;
-    }
-    
-    // Kiểm tra các tin nhắn đang chờ và đang gửi
-    for (final localMessage in [..._messageQueue.toList(), ..._sendingMessages.values]) {
-      // Chỉ kiểm tra tin nhắn chưa có server ID
-      if (localMessage.serverId == null) {
-        final contentKey = '${localMessage.chatId}|${localMessage.content}|${localMessage.contentType}';
-        
-        if (serverContentMap.containsKey(contentKey)) {
-          // Tìm thấy nội dung trùng lặp trên server
-          final serverId = serverContentMap[contentKey]!;
-          
-          // Cập nhật trạng thái
-          if (_sendingMessages.containsKey(localMessage.localId)) {
-            _sendingMessages[localMessage.localId] = localMessage.copyWithStatus(
-              status: MessageQueueStatus.sent,
-              serverId: serverId,
-            );
-          } else {
-            // Xóa khỏi hàng đợi và thêm vào đang gửi
-            _messageQueue.remove(localMessage.localId);
-            _sendingMessages[localMessage.localId] = localMessage.copyWithStatus(
-              status: MessageQueueStatus.sent,
-              serverId: serverId,
-            );
-          }
-          
-          // Phát sự kiện cập nhật
-          _emitStatusUpdate(_sendingMessages[localMessage.localId]!);
-        }
-      }
-    }
+  /// Pause queue processing
+  void pauseQueue() {
+    _isPaused = true;
   }
   
-  /// Thiết lập ưu tiên cho tin nhắn
-  Future<void> setMessagePriority(String localId, int priority) async {
-    // Kiểm tra trong hàng đợi
-    if (_messageQueue.contains(localId)) {
-      final message = _messageQueue[localId]!;
-      
-      // Tạo bản sao với độ ưu tiên mới
-      final updatedMessage = QueuedMessage(
-        localId: message.localId,
-        chatId: message.chatId,
-        content: message.content,
-        contentType: message.contentType,
-        attachmentIds: message.attachmentIds,
-        retryCount: message.retryCount,
-        createdAt: message.createdAt,
-        status: message.status,
-        serverId: message.serverId,
-        errorMessage: message.errorMessage,
-        priority: priority,
-      );
-      
-      // Cập nhật trong hàng đợi
-      _messageQueue.remove(localId);
-      _messageQueue.add(updatedMessage);
-      
-      // Phát sự kiện cập nhật
-      _emitStatusUpdate(updatedMessage);
-      
-      // Lưu hàng đợi
-      await _saveQueue();
-    }
+  /// Resume queue processing
+  void resumeQueue() {
+    _isPaused = false;
+    _ensureProcessing();
   }
   
-  /// Giải phóng tài nguyên
+  /// Dispose resources
   void dispose() {
-    _processingTimer?.cancel();
+    _stopProcessingQueue();
     _connectivitySubscription?.cancel();
     _realtimeConnectionSubscription?.cancel();
     _messageStatusController.close();
-  }
-  
-  /// Mã hóa dữ liệu thành JSON
-  dynamic jsonEncode(dynamic data) {
-    return data;
-  }
-  
-  /// Giải mã dữ liệu từ JSON
-  dynamic jsonDecode(String data) {
-    return data;
   }
 } 

@@ -1,18 +1,40 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Cấu hình cho ứng dụng
 class AppConfig {
-  /// URL cho API GraphQL
-  static String get apiUrl => dotenv.env['GRAPHQL_API_URL'] ?? 'https://stg-office-api.smarthiz.vn/graphql';
+  /// API URL
+  static String get apiUrl => _getConfigValue('API_URL', 'https://stg-office-api.smarthiz.vn/graphql');
   
-  /// URL cho WebSocket
-  static String get webSocketUrl => dotenv.env['GRAPHQL_WS_URL'] ?? 'wss://stg-office-api.smarthiz.vn/graphql';
+  /// WebSocket URL
+  static String get webSocketUrl => _getConfigValue('WS_URL', 'wss://stg-office-api.smarthiz.vn/graphql');
   
   /// URL cho Long Polling
-  static String get longPollingUrl => dotenv.env['SOCKET_URL'] ?? 'https://stg-office-api.smarthiz.vn/poll';
+  static String get longPollingUrl => _getConfigValue('SOCKET_URL', 'https://stg-office-api.smarthiz.vn/poll');
+  
+  /// Phiên bản ứng dụng
+  static String get appVersion => _getConfigValue('APP_VERSION', '1.0.0');
+  
+  /// Môi trường hiện tại (development, staging, production)
+  static String get environment => _getConfigValue('ENVIRONMENT', 'development');
+  
+  /// Kích thước lô cho đồng bộ hóa dữ liệu
+  static int get syncBatchSize => int.tryParse(_getConfigValue('SYNC_BATCH_SIZE', '50')) ?? 50;
   
   /// Timeout cho các request (ms)
-  static const int requestTimeout = 30000;
+  static int get httpTimeout => int.tryParse(_getConfigValue('HTTP_TIMEOUT', '30000')) ?? 30000;
+  
+  /// Thời gian chờ tối đa cho WebSocket (ms)
+  static int get wsTimeout => int.tryParse(_getConfigValue('WS_TIMEOUT', '30000')) ?? 30000;
+  
+  /// Số lần thử lại tối đa cho các yêu cầu
+  static int get maxRetryAttempts => int.tryParse(_getConfigValue('MAX_RETRY_ATTEMPTS', '3')) ?? 3;
+  
+  /// Bật/tắt debug
+  static bool get enableDebug => _getConfigValue('ENABLE_DEBUG', 'false').toLowerCase() == 'true';
+  
+  /// Khóa API cho dịch vụ thứ ba
+  static String get mapApiKey => _getConfigValue('MAP_API_KEY', '');
   
   /// Kích thước trang mặc định
   static const int defaultPageSize = 20;
@@ -49,6 +71,32 @@ class AppConfig {
     pollInterval: 1000, // ms
     timeout: 30000, // ms
   );
+  
+  /// Lấy giá trị từ .env hoặc trả về giá trị mặc định
+  static String _getConfigValue(String key, String defaultValue) {
+    try {
+      return dotenv.env[key] ?? defaultValue;
+    } catch (e) {
+      // Nếu dotenv chưa được khởi tạo, trả về giá trị mặc định
+      return defaultValue;
+    }
+  }
+  
+  /// Kiểm tra xem ứng dụng có đang chạy trong môi trường sản xuất không
+  static bool get isProduction => environment == 'production';
+  
+  /// Kiểm tra xem ứng dụng có đang chạy trong môi trường staging không
+  static bool get isStaging => environment == 'staging';
+  
+  /// Kiểm tra xem ứng dụng có đang chạy trong môi trường phát triển không
+  static bool get isDevelopment => environment == 'development';
+  
+  /// Ghi log với điều kiện debug
+  static void log(String message, {bool force = false}) {
+    if (enableDebug || force) {
+      debugPrint('[AppConfig] $message');
+    }
+  }
 }
 
 /// Cấu hình cho media

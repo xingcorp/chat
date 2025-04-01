@@ -5,6 +5,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
 import 'package:uuid/uuid.dart';
+import 'package:rxdart/rxdart.dart';
 
 /// Định nghĩa các loại subscription
 enum SubscriptionType {
@@ -92,7 +93,7 @@ class GraphQLSubscriptionService {
     if (_initialized) return;
     
     // Đảm bảo RealtimeConnectionService đã được khởi tạo
-    if (!_realtimeConnectionService._initialized) {
+    if (!_realtimeConnectionService.isConnected) {
       await _realtimeConnectionService.initialize();
     }
     
@@ -163,8 +164,8 @@ class GraphQLSubscriptionService {
       _realtimeConnectionService.connect();
     }
     
-    // Trả về stream đã được throttle để tránh lặp lại tin nhắn
-    return controller.stream.throttleTime(throttleWindow);
+    // Trả về stream với khoảng thời gian gộp sự kiện
+    return controller.stream.debounceTime(throttleWindow);
   }
   
   /// Hủy tất cả subscription
