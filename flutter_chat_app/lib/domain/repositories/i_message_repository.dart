@@ -28,7 +28,7 @@ abstract class IMessageRepository {
     required String chatId,
     required String content,
     required String senderId,
-    required String contentType,
+    required ContentType contentType,
     List<String> attachmentIds = const [],
   });
   

@@ -1,249 +1,184 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:gql_link/src/exceptions.dart' as gql_exceptions;
+import 'package:gql_exec/gql_exec.dart';
+import 'package:gql_link/gql_link.dart' show ClientException;
 
-/// Abstract interface for GraphQL client operations
+/// Giao diện cho GraphQL client wrapper
 abstract class GraphQLClientWrapper {
-  /// Execute a GraphQL query operation
-  Future<Map<String, dynamic>> query(
-    String queryString, {
-    Map<String, dynamic>? variables,
-    FetchPolicy? fetchPolicy,
-    String? operationName,
-  });
+  /// GraphQL client instance
+  GraphQLClient get client;
 
-  /// Execute a GraphQL mutation operation
-  Future<Map<String, dynamic>> mutate(
-    String mutationString, {
-    Map<String, dynamic>? variables,
-    FetchPolicy? fetchPolicy,
-    String? operationName,
-  });
+  /// Thực hiện truy vấn GraphQL
+  Future<QueryResult> query(QueryOptions options);
 
-  /// Subscribe to a GraphQL subscription
-  Stream<Map<String, dynamic>> subscribe(
-    String subscriptionString, {
-    Map<String, dynamic>? variables,
-    String? operationName,
-  });
+  /// Thực hiện mutation GraphQL
+  Future<QueryResult> mutate(MutationOptions options);
+
+  /// Đăng ký subscription GraphQL
+  Stream<QueryResult> subscribe(SubscriptionOptions options);
+
+  /// Cập nhật token xác thực
+  Future<void> updateAuthToken(String token);
 }
 
-/// Implementation of GraphQL client
+/// Implementation của GraphQLClientWrapper
 class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
-  final GraphQLClient _client;
+  GraphQLClient _client;
   final NetworkInfo _networkInfo;
 
   /// Constructor
   GraphQLClientWrapperImpl(this._client, this._networkInfo);
 
-  /// Factory method to create a GraphQL client
+  /// Tạo GraphQL client với token
   static Future<GraphQLClient> createClient({
-    String? token,
-    ValueNotifier<GraphQLClient>? clientNotifier,
+    required String? token,
+    required ValueNotifier<GraphQLClient> clientNotifier,
   }) async {
+    // HTTP link với token
     final httpLink = HttpLink(
-      dotenv.env['GRAPHQL_API_URL'] ?? 'http://localhost:3000/graphql',
+      dotenv.env['GRAPHQL_API_URL'] ?? 'https://example.com/graphql',
+      defaultHeaders: {
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
     );
 
-    final authLink = AuthLink(
-      getToken: () => token != null ? 'Bearer $token' : null,
-    );
-
-    // Create a WebSocket link for subscriptions
-    final websocketLink = WebSocketLink(
-      dotenv.env['GRAPHQL_WS_URL'] ?? 'ws://localhost:3000/graphql',
+    // WebSocket link với token
+    final wsLink = WebSocketLink(
+      dotenv.env['GRAPHQL_WS_URL'] ?? 'wss://example.com/graphql',
       config: SocketClientConfig(
-        initialPayload: token != null
-            ? <String, dynamic>{
-                'Authorization': 'Bearer $token',
-              }
-            : null,
+        initialPayload: {
+          if (token != null && token.isNotEmpty) 'token': token,
+        },
         autoReconnect: true,
         inactivityTimeout: const Duration(seconds: 30),
       ),
     );
 
-    // Split links based on operation type (query/mutation vs subscription)
+    // Link theo loại operation
     final link = Link.split(
       (request) => request.isSubscription,
-      websocketLink,
-      authLink.concat(httpLink),
+      wsLink,
+      httpLink,
     );
 
-    // Initialize Hive for caching
-    await initHiveForFlutter();
+    // Khởi tạo cache
+    final cache = GraphQLCache(store: HiveStore());
 
-    // Create GraphQL client
+    // Tạo client
     final client = GraphQLClient(
       link: link,
-      cache: GraphQLCache(
-        store: HiveStore(),
-      ),
+      cache: cache,
       defaultPolicies: DefaultPolicies(
         query: Policies(
-          fetch: FetchPolicy.cacheAndNetwork,
+          fetch: FetchPolicy.networkOnly,
           error: ErrorPolicy.all,
+          cacheReread: CacheRereadPolicy.ignoreAll,
         ),
         mutate: Policies(
           fetch: FetchPolicy.networkOnly,
           error: ErrorPolicy.all,
+          cacheReread: CacheRereadPolicy.ignoreAll,
         ),
         subscribe: Policies(
           fetch: FetchPolicy.networkOnly,
           error: ErrorPolicy.all,
+          cacheReread: CacheRereadPolicy.ignoreAll,
         ),
       ),
     );
 
-    if (clientNotifier != null) {
-      clientNotifier.value = client;
-    }
+    // Cập nhật notifier
+    clientNotifier.value = client;
 
     return client;
   }
 
   @override
-  Future<Map<String, dynamic>> query(
-    String queryString, {
-    Map<String, dynamic>? variables,
-    FetchPolicy? fetchPolicy,
-    String? operationName,
-  }) async {
-    if (!await _networkInfo.isConnected) {
-      throw app_exceptions.NoInternetException();
-    }
+  GraphQLClient get client => _client;
 
+  @override
+  Future<QueryResult> query(QueryOptions options) async {
     try {
-      final options = QueryOptions(
-        document: gql(queryString),
-        variables: variables ?? {},
-        fetchPolicy: fetchPolicy,
-        operationName: operationName,
-      );
-
-      final result = await _client.query(options);
-
-      if (result.hasException) {
-        _handleGraphQLException(result.exception!);
+      final isConnected = await _networkInfo.isConnected;
+      if (!isConnected) {
+        throw app_exceptions.NoInternetException();
       }
 
-      return result.data ?? {};
+      return await _client.query(options);
     } catch (e) {
-      if (e is app_exceptions.NoInternetException) rethrow;
-      throw app_exceptions.ServerException(message: e.toString());
+      debugPrint('GraphQL query error: $e');
+      rethrow;
     }
   }
 
   @override
-  Future<Map<String, dynamic>> mutate(
-    String mutationString, {
-    Map<String, dynamic>? variables,
-    FetchPolicy? fetchPolicy,
-    String? operationName,
-  }) async {
-    if (!await _networkInfo.isConnected) {
-      throw app_exceptions.NoInternetException();
-    }
-
+  Future<QueryResult> mutate(MutationOptions options) async {
     try {
-      final options = MutationOptions(
-        document: gql(mutationString),
-        variables: variables ?? {},
-        fetchPolicy: fetchPolicy,
-        operationName: operationName,
-      );
-
-      final result = await _client.mutate(options);
-
-      if (result.hasException) {
-        _handleGraphQLException(result.exception!);
+      final isConnected = await _networkInfo.isConnected;
+      if (!isConnected) {
+        throw app_exceptions.NoInternetException();
       }
 
-      return result.data ?? {};
+      return await _client.mutate(options);
     } catch (e) {
-      if (e is app_exceptions.NoInternetException) rethrow;
-      throw app_exceptions.ServerException(message: e.toString());
+      debugPrint('GraphQL mutation error: $e');
+      rethrow;
     }
   }
 
   @override
-  Stream<Map<String, dynamic>> subscribe(
-    String subscriptionString, {
-    Map<String, dynamic>? variables,
-    String? operationName,
-  }) {
-    final options = SubscriptionOptions(
-      document: gql(subscriptionString),
-      variables: variables ?? {},
-      operationName: operationName,
+  Stream<QueryResult> subscribe(SubscriptionOptions options) {
+    try {
+      return _client.subscribe(options).handleError((error) {
+        debugPrint('GraphQL subscription error: $error');
+        return error;
+      });
+    } catch (e) {
+      debugPrint('GraphQL subscribe error: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateAuthToken(String token) async {
+    // Tạo client mới với token mới
+    final httpLink = HttpLink(
+      dotenv.env['GRAPHQL_API_URL'] ?? 'https://example.com/graphql',
+      defaultHeaders: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
     );
 
-    return _client.subscribe(options).map((result) {
-      if (result.hasException) {
-        _handleGraphQLException(result.exception!);
-      }
-      return result.data ?? {};
-    });
-  }
+    final wsLink = WebSocketLink(
+      dotenv.env['GRAPHQL_WS_URL'] ?? 'wss://example.com/graphql',
+      config: SocketClientConfig(
+        initialPayload: {
+          'token': token,
+        },
+        autoReconnect: true,
+        inactivityTimeout: const Duration(seconds: 30),
+      ),
+    );
 
-  void _handleGraphQLException(OperationException exception) {
-    if (exception.linkException != null) {
-      if (exception.linkException is app_exceptions.ServerException) {
-        throw app_exceptions.ServerException(
-          message: exception.linkException.toString(),
-        );
-      } else {
-        throw app_exceptions.ServerException(
-          message: 'Network error: ${exception.linkException.toString()}',
-        );
-      }
-    }
+    final link = Link.split(
+      (request) => request.isSubscription,
+      wsLink,
+      httpLink,
+    );
 
-    if (exception.graphqlErrors.isNotEmpty) {
-      final messages = exception.graphqlErrors
-          .map((error) => error.message)
-          .join(', ');
-          
-      // Check for authentication errors
-      final authErrors = exception.graphqlErrors
-          .where((error) => error.extensions?['code'] == 'UNAUTHENTICATED' ||
-                           error.extensions?['code'] == 'FORBIDDEN')
-          .toList();
-                           
-      if (authErrors.isNotEmpty) {
-        throw app_exceptions.AuthException(
-          message: 'Authentication error: $messages',
-          code: authErrors.first.extensions?['code'],
-          details: exception.graphqlErrors,
-        );
-      }
+    // Sử dụng lại cache hiện tại
+    final cache = _client.cache;
 
-      // Check for validation errors
-      final validationErrors = exception.graphqlErrors
-          .where((error) => error.extensions?['code'] == 'BAD_USER_INPUT')
-          .toList();
-                           
-      if (validationErrors.isNotEmpty) {
-        throw app_exceptions.ValidationException(
-          message: 'Validation error: $messages',
-          code: validationErrors.first.extensions?['code'],
-          details: exception.graphqlErrors,
-        );
-      }
-
-      // Generic GraphQL error
-      throw app_exceptions.ServerException(
-        message: 'GraphQL error: $messages',
-        details: exception.graphqlErrors,
-      );
-    }
-
-    throw app_exceptions.UnknownException(
-      message: 'Unknown GraphQL error',
-      details: exception,
+    // Tạo client mới
+    _client = GraphQLClient(
+      link: link,
+      cache: cache,
+      defaultPolicies: _client.defaultPolicies,
     );
   }
 } 

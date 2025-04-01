@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 
 /// Định nghĩa các loại subscription
 enum SubscriptionType {
@@ -88,31 +89,19 @@ class GraphQLSubscriptionService {
     this._client,
   );
   
+  /// Kiểm tra service đã được khởi tạo chưa
+  bool get isInitialized => _initialized;
+  
   /// Khởi tạo service
   Future<void> initialize() async {
     if (_initialized) return;
-    
-    // Đảm bảo RealtimeConnectionService đã được khởi tạo
-    if (!_realtimeConnectionService.isConnected) {
+    try {
       await _realtimeConnectionService.initialize();
+      _initialized = true;
+    } catch (e) {
+      debugPrint('Error initializing GraphQLSubscriptionService: $e');
+      rethrow;
     }
-    
-    // Lắng nghe trạng thái kết nối
-    _connectionStateSubscription = _realtimeConnectionService.connectionStateStream.listen((state) {
-      if (state == ConnectionState.connected) {
-        _connectionStatusController.add(true);
-        _resubscribeAll();
-      } else if (state == ConnectionState.disconnected || 
-                state == ConnectionState.closed) {
-        _connectionStatusController.add(false);
-        _markAllSubscriptionsAsPending();
-      }
-    });
-    
-    // Lắng nghe tin nhắn từ server
-    _messageSubscription = _realtimeConnectionService.messageStream.listen(_handleMessage);
-    
-    _initialized = true;
   }
   
   /// Stream theo dõi trạng thái kết nối
@@ -442,6 +431,158 @@ class GraphQLSubscriptionService {
   /// Kết nối thủ công
   Future<bool> connect() async {
     return _realtimeConnectionService.connect();
+  }
+  
+  /// Subscribe to receive new messages
+  Stream<ChatMessage> subscribeToNewMessages() {
+    final options = SubscriptionOptions(
+      document: gql(r'''
+        subscription OnNewMessage {
+          messageCreated {
+            id
+            chatId
+            content
+            contentType
+            sender {
+              id
+              username
+              email
+              fullName
+              avatar
+              isOnline
+              lastSeen
+            }
+            readBy
+            deliveredTo
+            attachments {
+              id
+              url
+              type
+              size
+              name
+            }
+            createdAt
+            updatedAt
+          }
+        }
+      '''),
+    );
+    
+    return _client.subscribe(options).map((result) {
+      if (result.hasException) {
+        throw result.exception!;
+      }
+      
+      if (result.data == null) {
+        throw Exception('No data received from message subscription');
+      }
+      
+      return ChatMessage.fromJson(result.data!['messageCreated']);
+    });
+  }
+  
+  /// Subscribe to receive message status changes
+  Stream<ChatMessage> subscribeToMessageStatusChanges() {
+    final options = SubscriptionOptions(
+      document: gql(r'''
+        subscription OnMessageStatusChanged {
+          messageStatusChanged {
+            id
+            chatId
+            content
+            contentType
+            sender {
+              id
+              username
+              email
+              fullName
+              avatar
+              isOnline
+              lastSeen
+            }
+            readBy
+            deliveredTo
+            attachments {
+              id
+              url
+              type
+              size
+              name
+            }
+            createdAt
+            updatedAt
+          }
+        }
+      '''),
+    );
+    
+    return _client.subscribe(options).map((result) {
+      if (result.hasException) {
+        throw result.exception!;
+      }
+      
+      if (result.data == null) {
+        throw Exception('No data received from message status subscription');
+      }
+      
+      return ChatMessage.fromJson(result.data!['messageStatusChanged']);
+    });
+  }
+  
+  /// Subscribe to receive typing indicators
+  Stream<Map<String, dynamic>> subscribeToTypingIndicators(String chatId) {
+    final options = SubscriptionOptions(
+      document: gql(r'''
+        subscription OnTypingIndicator($chatId: ID!) {
+          typingIndicator(chatId: $chatId) {
+            userId
+            username
+            isTyping
+            timestamp
+          }
+        }
+      '''),
+      variables: {'chatId': chatId},
+    );
+    
+    return _client.subscribe(options).map((result) {
+      if (result.hasException) {
+        throw result.exception!;
+      }
+      
+      if (result.data == null) {
+        throw Exception('No data received from typing indicator subscription');
+      }
+      
+      return result.data!['typingIndicator'];
+    });
+  }
+  
+  /// Subscribe to receive presence updates
+  Stream<Map<String, dynamic>> subscribeToPresenceUpdates() {
+    final options = SubscriptionOptions(
+      document: gql(r'''
+        subscription OnPresenceChanged {
+          presenceChanged {
+            userId
+            isOnline
+            lastSeen
+          }
+        }
+      '''),
+    );
+    
+    return _client.subscribe(options).map((result) {
+      if (result.hasException) {
+        throw result.exception!;
+      }
+      
+      if (result.data == null) {
+        throw Exception('No data received from presence subscription');
+      }
+      
+      return result.data!['presenceChanged'];
+    });
   }
 }
 
