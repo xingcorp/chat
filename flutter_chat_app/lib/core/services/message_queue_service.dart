@@ -563,14 +563,14 @@ class MessageQueueService {
         for (final messageData in queueData) {
           try {
             final message = _InternalQueuedMessage.fromJson(messageData);
-            
+          
             // Reset sending status to pending if needed
-            if (message.status == MessageQueueStatus.sending) {
-              _messageQueue.add(message.copyWithStatus(
-                status: MessageQueueStatus.pending,
-              ));
+          if (message.status == MessageQueueStatus.sending) {
+            _messageQueue.add(message.copyWithStatus(
+              status: MessageQueueStatus.pending,
+            ));
             } else if (!message.status.isTerminal) {
-              _messageQueue.add(message);
+            _messageQueue.add(message);
             }
           } catch (e) {
             debugPrint('Failed to parse message: $e');
@@ -642,7 +642,7 @@ class MessageQueueService {
     
     // Process queue every 2 seconds
     _processingTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      _processQueue();
+          _processQueue();
     });
     
     // Process immediately
@@ -904,13 +904,13 @@ class MessageQueueService {
     } else {
       _messageQueue.remove(localId);
     }
-    
+      
     // Notify listeners
     _notifyMessageStatusChanged(cancelledMessage);
-    
+      
     // Save queue
-    await _saveQueue();
-    
+      await _saveQueue();
+      
     return true;
   }
   
@@ -934,13 +934,13 @@ class MessageQueueService {
     _messageQueue.add(retryMessage);
     
     // Remove from sending if there
-    _sendingMessages.remove(localId);
+        _sendingMessages.remove(localId);
     
     // Notify listeners
     _notifyMessageStatusChanged(retryMessage);
     
     // Save queue
-    await _saveQueue();
+        await _saveQueue();
     
     // Ensure processing
     _ensureProcessing();
