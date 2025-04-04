@@ -49,6 +49,9 @@ import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
 import 'package:flutter_chat_app/data/repositories/message_repository_with_cache.dart';
+import 'package:flutter_chat_app/core/cache/cache_stats.dart';
+import 'package:flutter_chat_app/core/cache/preload_manager.dart';
+import 'package:flutter_chat_app/core/cache/background_sync_worker.dart';
 
 final getIt = GetIt.instance;
 
@@ -88,6 +91,25 @@ Future<void> configureDependencies() async {
   
   getIt.registerLazySingleton<MediaCacheManager>(() => MediaCacheManager());
   getIt.registerLazySingleton<CacheSyncStrategy>(() => CacheSyncStrategy());
+  
+  // Thêm các services caching mới
+  getIt.registerLazySingletonAsync<CacheStats>(() async {
+    final cacheStats = CacheStats();
+    await cacheStats.initialize();
+    return cacheStats;
+  });
+  
+  getIt.registerLazySingletonAsync<PreloadManager>(() async {
+    final preloadManager = PreloadManager();
+    await preloadManager.initialize();
+    return preloadManager;
+  });
+  
+  getIt.registerLazySingletonAsync<BackgroundSyncWorker>(() async {
+    final syncWorker = BackgroundSyncWorker();
+    await syncWorker.initialize();
+    return syncWorker;
+  });
   
   // GraphQL Client
   getIt.registerLazySingletonAsync<GraphQLClient>(() async {

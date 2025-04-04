@@ -21,6 +21,11 @@ import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
+import 'package:flutter_chat_app/core/cache/cache_stats.dart';
+import 'package:flutter_chat_app/core/cache/preload_manager.dart';
+import 'package:flutter_chat_app/core/cache/background_sync_worker.dart';
+import 'package:flutter_chat_app/di/service_locator.dart';
 
 // Import home screens from respective platform files
 import 'main_mobile.dart' show MobileHomeScreen;
@@ -47,6 +52,19 @@ Future<void> main() async {
   
   // Khởi tạo SharedPreferences
   final sharedPreferences = await SharedPreferences.getInstance();
+  
+  // Khởi tạo các managers cache
+  final appCacheManager = await GetIt.I<AppCacheManager>();
+  
+  // Khởi tạo và bắt đầu preload dữ liệu
+  final preloadManager = await GetIt.I<PreloadManager>();
+  unawaited(preloadManager.preloadEssentialData());
+  
+  // Khởi tạo background sync worker
+  final backgroundSyncWorker = await GetIt.I<BackgroundSyncWorker>();
+  
+  // Khởi tạo cache stats
+  final cacheStats = await GetIt.I<CacheStats>();
   
   runApp(MyApp(sharedPreferences: sharedPreferences));
 }
