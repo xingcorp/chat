@@ -265,7 +265,7 @@ class RealtimeConnectionService {
     _checkWebSocketTimer = null;
     
     // Đóng WebSocket
-    await _webSocketChannel?.sink.close(ws_status.goingAway);
+    await _webSocketChannel?.sink.close(1000);
     _webSocketChannel = null;
     
     _updateConnectionType(ConnectionType.none);
@@ -370,7 +370,7 @@ class RealtimeConnectionService {
       final wsUrl = _buildWebSocketUrl();
       
       // Đóng kết nối cũ nếu có
-      await _webSocketChannel?.sink.close(ws_status.goingAway);
+      await _webSocketChannel?.sink.close(1000);
       
       // Tạo kết nối mới
       _webSocketChannel = WebSocketChannel.connect(Uri.parse(wsUrl));

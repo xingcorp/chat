@@ -1,0 +1,214 @@
+import 'package:flutter_chat_app/core/network/graphql_client.dart';
+import 'package:flutter_chat_app/data/models/message_model.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
+
+/// Interface for remote message data source operations
+abstract class MessageRemoteDataSource {
+  /// Get messages for a specific chat
+  Future<List<MessageModel>> getChatMessages(String chatId, {int limit = 20, String? cursor});
+  
+  /// Send a message
+  Future<MessageModel> sendMessage(MessageModel message);
+  
+  /// Delete a message
+  Future<bool> deleteMessage(String messageId);
+  
+  /// Mark messages as read
+  Future<bool> markMessagesAsRead(String chatId);
+  
+  /// Subscribe to new messages for a specific chat
+  Stream<MessageModel> subscribeToMessages(String chatId);
+  
+  /// Subscribe to typing indicators for a specific chat
+  Stream<Map<String, dynamic>> subscribeToTypingIndicators(String chatId);
+}
+
+/// Implementation of [MessageRemoteDataSource]
+class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
+  final GraphQLClientWrapper _client;
+  final io.Socket _socket;
+  
+  /// Constructor
+  MessageRemoteDataSourceImpl(this._client, this._socket);
+  
+  @override
+  Future<List<MessageModel>> getChatMessages(String chatId, {int limit = 20, String? cursor}) async {
+    final variables = <String, dynamic>{
+      'chatId': chatId,
+      'limit': limit,
+    };
+    
+    if (cursor != null) {
+      variables['cursor'] = cursor;
+    }
+    
+    final result = await _client.query(
+      '''
+      query GetChatMessages(\$chatId: ID!, \$limit: Int, \$cursor: String) {
+        getChatMessages(chatId: \$chatId, limit: \$limit, cursor: \$cursor) {
+          id
+          chatId
+          senderId
+          content
+          type
+          attachments {
+            id
+            url
+            type
+            filename
+            size
+            metadata
+          }
+          createdAt
+          updatedAt
+          readBy
+          sender {
+            id
+            username
+            displayName
+            avatarUrl
+          }
+        }
+      }
+      ''',
+      variables: variables,
+    );
+    
+    if (result['data'] == null || result['data']['getChatMessages'] == null) {
+      return [];
+    }
+    
+    final List<dynamic> messagesData = result['data']['getChatMessages'];
+    return messagesData
+        .map((messageData) => MessageModel.fromMap(messageData))
+        .toList();
+  }
+  
+  @override
+  Future<MessageModel> sendMessage(MessageModel message) async {
+    // Prepare message data
+    final messageData = message.toMap();
+    
+    // Remove client-only fields
+    messageData.remove('localId');
+    messageData.remove('status');
+    messageData.remove('isSending');
+    
+    final result = await _client.mutate(
+      '''
+      mutation SendMessage(\$chatId: ID!, \$content: String!, \$type: MessageType!, \$attachments: [AttachmentInput]) {
+        sendMessage(
+          input: {
+            chatId: \$chatId,
+            content: \$content,
+            type: \$type,
+            attachments: \$attachments
+          }
+        ) {
+          id
+          chatId
+          senderId
+          content
+          type
+          attachments {
+            id
+            url
+            type
+            filename
+            size
+            metadata
+          }
+          createdAt
+          updatedAt
+          readBy
+          sender {
+            id
+            username
+            displayName
+            avatarUrl
+          }
+        }
+      }
+      ''',
+      variables: {
+        'chatId': message.chatId,
+        'content': message.content,
+        'type': message.type.toString().split('.').last.toUpperCase(),
+        'attachments': message.attachments?.map((a) => a.toMap()).toList(),
+      },
+    );
+    
+    if (result['data'] == null || result['data']['sendMessage'] == null) {
+      throw Exception('Failed to send message');
+    }
+    
+    final sentMessageData = result['data']['sendMessage'];
+    return MessageModel.fromMap(sentMessageData);
+  }
+  
+  @override
+  Future<bool> deleteMessage(String messageId) async {
+    final result = await _client.mutate(
+      '''
+      mutation DeleteMessage(\$messageId: ID!) {
+        deleteMessage(messageId: \$messageId)
+      }
+      ''',
+      variables: {'messageId': messageId},
+    );
+    
+    if (result['data'] == null) {
+      return false;
+    }
+    
+    return result['data']['deleteMessage'] ?? false;
+  }
+  
+  @override
+  Future<bool> markMessagesAsRead(String chatId) async {
+    final result = await _client.mutate(
+      '''
+      mutation MarkMessagesAsRead(\$chatId: ID!) {
+        markMessagesAsRead(chatId: \$chatId)
+      }
+      ''',
+      variables: {'chatId': chatId},
+    );
+    
+    if (result['data'] == null) {
+      return false;
+    }
+    
+    return result['data']['markMessagesAsRead'] ?? false;
+  }
+  
+  @override
+  Stream<MessageModel> subscribeToMessages(String chatId) {
+    // Connect to the socket if not already connected
+    if (!_socket.connected) {
+      _socket.connect();
+    }
+    
+    // Listen for 'new_message' events for the specified chat
+    return _socket
+        .emit('join_chat', {'chatId': chatId})
+        .on('new_message')
+        .where((data) => data['chatId'] == chatId)
+        .map((data) => MessageModel.fromMap(data));
+  }
+  
+  @override
+  Stream<Map<String, dynamic>> subscribeToTypingIndicators(String chatId) {
+    // Connect to the socket if not already connected
+    if (!_socket.connected) {
+      _socket.connect();
+    }
+    
+    // Listen for 'typing' events for the specified chat
+    return _socket
+        .emit('join_chat', {'chatId': chatId})
+        .on('typing')
+        .where((data) => data['chatId'] == chatId)
+        .map((data) => data as Map<String, dynamic>);
+  }
+} 
