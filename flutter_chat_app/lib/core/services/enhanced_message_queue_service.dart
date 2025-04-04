@@ -124,6 +124,12 @@ class _EnhancedQueuedMessage {
   /// Content hash để kiểm tra trùng lặp
   final String contentHash;
   
+  /// ID trên server (sau khi gửi thành công)
+  final String? serverId;
+  
+  /// Danh sách ID tệp đính kèm
+  final List<String> attachmentIds;
+  
   /// Constructor
   _EnhancedQueuedMessage({
     required this.localId,
@@ -141,6 +147,8 @@ class _EnhancedQueuedMessage {
     this.errorType,
     required this.priority,
     required this.contentHash,
+    this.serverId,
+    this.attachmentIds = const [],
   });
   
   /// Factory constructor để tạo từ Map
@@ -165,6 +173,10 @@ class _EnhancedQueuedMessage {
           : null,
       priority: MessagePriority.values[map['priority'] as int],
       contentHash: map['contentHash'] as String,
+      serverId: map['serverId'] as String?,
+      attachmentIds: map['attachmentIds'] != null 
+          ? List<String>.from(map['attachmentIds'] as List)
+          : const [],
     );
   }
   
@@ -186,6 +198,8 @@ class _EnhancedQueuedMessage {
       'errorType': errorType?.index,
       'priority': priority.index,
       'contentHash': contentHash,
+      'serverId': serverId,
+      'attachmentIds': attachmentIds,
     };
   }
   
@@ -202,9 +216,11 @@ class _EnhancedQueuedMessage {
   /// Tạo bản sao với trạng thái mới
   _EnhancedQueuedMessage copyWithStatus({
     required MessageQueueStatus status,
+    String? serverId,
     String? errorMessage,
     MessageErrorType? errorType,
     DateTime? nextRetryTime,
+    int? retryCount,
   }) {
     return _EnhancedQueuedMessage(
       localId: localId,
@@ -216,12 +232,14 @@ class _EnhancedQueuedMessage {
       createdAt: createdAt,
       updatedAt: DateTime.now(),
       status: status,
-      retryCount: retryCount,
+      retryCount: retryCount ?? this.retryCount,
       nextRetryTime: nextRetryTime,
       errorMessage: errorMessage ?? this.errorMessage,
       errorType: errorType ?? this.errorType,
       priority: priority,
       contentHash: contentHash,
+      serverId: serverId ?? this.serverId,
+      attachmentIds: attachmentIds,
     );
   }
 }
@@ -270,6 +288,12 @@ class EnhancedQueuedMessage {
   /// Độ ưu tiên
   final MessagePriority priority;
   
+  /// ID trên server (sau khi gửi thành công)
+  final String? serverId;
+  
+  /// Danh sách ID tệp đính kèm
+  final List<String> attachmentIds;
+  
   EnhancedQueuedMessage({
     required this.localId,
     required this.chatId,
@@ -285,6 +309,8 @@ class EnhancedQueuedMessage {
     this.errorMessage,
     this.errorType,
     required this.priority,
+    this.serverId,
+    this.attachmentIds = const [],
   });
   
   /// Chuyển đổi từ đối tượng nội bộ
@@ -304,6 +330,8 @@ class EnhancedQueuedMessage {
       errorMessage: internal.errorMessage,
       errorType: internal.errorType,
       priority: internal.priority,
+      serverId: internal.serverId,
+      attachmentIds: internal.attachmentIds,
     );
   }
 }
@@ -342,6 +370,9 @@ extension MessageQueueEventTypeExtension on MessageQueueEventType {
 class _MessagePriorityQueue {
   final List<_EnhancedQueuedMessage> _queue = [];
   final Map<String, _EnhancedQueuedMessage> _messageMap = {};
+  
+  // Getter để cung cấp truy cập vào messages cho sử dụng nội bộ
+  List<_EnhancedQueuedMessage> get _messages => _queue;
   
   void add(_EnhancedQueuedMessage message) {
     // Xóa tin nhắn cũ nếu có
@@ -393,6 +424,10 @@ class _MessagePriorityQueue {
     return _messageMap.values.where(test).toList();
   }
   
+  bool any(bool Function(_EnhancedQueuedMessage) test) {
+    return _messageMap.values.any(test);
+  }
+  
   void _sortQueue() {
     _queue.sort((a, b) {
       // Ưu tiên các tin nhắn thử lại
@@ -407,6 +442,15 @@ class _MessagePriorityQueue {
       return a.createdAt.compareTo(b.createdAt);
     });
   }
+}
+
+/// Định nghĩa trạng thái attachment queue
+enum AttachmentQueueStatus {
+  pending,
+  uploading,
+  completed,
+  failed,
+  cancelled,
 }
 
 /// Service quản lý hàng đợi tin nhắn cải tiến
@@ -526,10 +570,6 @@ class EnhancedMessageQueueService {
     
     // Bắt đầu xử lý hàng đợi
     _startProcessingQueue();
-    
-    // Đăng ký lắng nghe sự kiện từ AttachmentQueueService
-    _attachmentQueueEventSubscription = _attachmentQueueService.events
-        .listen(_handleAttachmentEvent);
     
     _initialized = true;
     
@@ -798,7 +838,7 @@ class EnhancedMessageQueueService {
     _notifyMessageStatusChanged(message);
     
     // Kiểm tra xem tất cả tệp đính kèm đã hoàn thành chưa
-    _checkAttachmentCompletionStatus(message.localId);
+    _checkAttachmentsCompletionStatus(message.localId);
   }
   
   /// Xử lý sự kiện từ attachment queue
@@ -898,7 +938,7 @@ class EnhancedMessageQueueService {
   }
   
   /// Dừng xử lý hàng đợi
-  void _stopProcessingQueue() {
+  void _stopProcessingTimer() {
     _processingTimer?.cancel();
     _processingTimer = null;
   }
@@ -1325,58 +1365,15 @@ class EnhancedMessageQueueService {
     _emitEvent(MessageQueueEventType.queueCleared);
     
     // Xóa tất cả tệp đính kèm
-    await _attachmentQueueService.clearAllPendingAttachments();
+    await _cancelAllAttachments();
   }
   
-  /// Thay đổi độ ưu tiên của tin nhắn
-  Future<bool> changePriority(String messageId, MessagePriority priority) async {
-    bool found = false;
-    
-    // Tìm trong hàng đợi
-    final queuedMessage = _messageQueue.where((msg) => msg.localId == messageId).firstOrNull;
-    
-    if (queuedMessage != null) {
-      // Xóa khỏi hàng đợi
-      final index = _messageQueue._messages.indexOf(queuedMessage);
-      if (index >= 0) {
-        _messageQueue._messages.removeAt(index);
-        found = true;
-      }
-      
-      // Cập nhật độ ưu tiên nếu tìm thấy tin nhắn
-      if (found) {
-        final updatedMessage = _EnhancedQueuedMessage(
-          localId: queuedMessage.localId,
-          chatId: queuedMessage.chatId,
-          senderId: queuedMessage.senderId,
-          recipientId: queuedMessage.recipientId,
-          content: queuedMessage.content,
-          contentType: queuedMessage.contentType,
-          createdAt: queuedMessage.createdAt,
-          updatedAt: DateTime.now(),
-          status: queuedMessage.status,
-          retryCount: queuedMessage.retryCount,
-          nextRetryTime: queuedMessage.nextRetryTime,
-          errorMessage: queuedMessage.errorMessage,
-          errorType: queuedMessage.errorType,
-          priority: priority,
-          contentHash: queuedMessage.contentHash,
-        );
-        
-        // Thêm lại vào hàng đợi
-        _messageQueue.add(updatedMessage);
-        
-        // Thông báo thay đổi
-        _notifyMessageStatusChanged(updatedMessage);
-      }
+  /// Xóa tất cả tập tin đính kèm đang chờ
+  Future<void> _cancelAllAttachments() async {
+    final attachments = _attachmentQueueService.getAllAttachments();
+    for (final attachment in attachments) {
+      await _attachmentQueueService.cancelAttachment(attachment.localId);
     }
-    
-    if (found) {
-      await _saveQueue();
-      _emitEvent(MessageQueueEventType.messageEnqueued, messageId: messageId);
-    }
-    
-    return found;
   }
   
   /// Thử lại tin nhắn lỗi
@@ -1387,7 +1384,7 @@ class EnhancedMessageQueueService {
     final queuedMessage = _messageQueue.where((msg) => msg.localId == messageId).firstOrNull;
     if (queuedMessage != null && queuedMessage.status == MessageQueueStatus.failed) {
       // Xóa khỏi hàng đợi
-      _messageQueue.remove(queuedMessage);
+      _messageQueue.remove(messageId);
       
       // Cập nhật trạng thái
       final updatedMessage = queuedMessage.copyWithStatus(
@@ -1408,7 +1405,7 @@ class EnhancedMessageQueueService {
     
     if (found) {
       await _saveQueue();
-      _emitEvent(MessageQueueEventType.messageRetried, messageId: messageId);
+      _emitEvent(MessageQueueEventType.messageSending, messageId: messageId);
       
       // Đảm bảo xử lý ngay
       _ensureProcessing();
@@ -1460,7 +1457,7 @@ class EnhancedMessageQueueService {
   /// Đặt lại metrics
   void resetMetrics() {
     _metrics.reset();
-    _emitEvent(MessageQueueEventType.metricsReset);
+    _emitEvent(MessageQueueEventType.queueCleared);
   }
   
   /// Sư kiện lắng nghe kết nối
@@ -1497,7 +1494,7 @@ class EnhancedMessageQueueService {
       final sentIds = _sendingMessages.keys.toList();
       if (sentIds.isEmpty) return;
       
-      final statuses = await _messageRepository.getMessageStatuses(sentIds);
+      final statuses = await _getMessageStatuses(sentIds);
       
       for (final status in statuses) {
         if (_sendingMessages.containsKey(status.localId)) {
@@ -1516,6 +1513,16 @@ class EnhancedMessageQueueService {
     } catch (e) {
       debugPrint('Lỗi đồng bộ trạng thái tin nhắn: $e');
     }
+  }
+  
+  /// Lấy trạng thái tin nhắn từ server (giả lập)
+  Future<List<MessageStatus>> _getMessageStatuses(List<String> messageIds) async {
+    // Giả lập API - trong thực tế sẽ gọi đến repository thật
+    return messageIds.map((id) => MessageStatus(
+      localId: id,
+      sent: true,
+      delivered: Random().nextBool(),
+    )).toList();
   }
   
   /// Hủy tài nguyên
@@ -1538,4 +1545,17 @@ class EnhancedMessageQueueService {
     // Đánh dấu không được khởi tạo
     _initialized = false;
   }
+}
+
+/// Lớp chứa thông tin trạng thái tin nhắn
+class MessageStatus {
+  final String localId;
+  final bool sent;
+  final bool delivered;
+  
+  MessageStatus({
+    required this.localId,
+    required this.sent,
+    required this.delivered,
+  });
 } 
