@@ -52,6 +52,9 @@ import 'package:flutter_chat_app/data/repositories/message_repository_with_cache
 import 'package:flutter_chat_app/core/cache/cache_stats.dart';
 import 'package:flutter_chat_app/core/cache/preload_manager.dart';
 import 'package:flutter_chat_app/core/cache/background_sync_worker.dart';
+import 'package:flutter_chat_app/core/network/socket_analytics.dart';
+import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
+import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';
 
 final getIt = GetIt.instance;
 
@@ -148,6 +151,25 @@ Future<void> configureDependencies() async {
     socketManager.initialize(getIt<io.Socket>());
     return socketManager;
   });
+  
+  // Socket Analytics
+  getIt.registerLazySingleton<SocketAnalytics>(() => SocketAnalytics(getIt<SocketManager>()));
+  
+  // Socket Rate Limiter
+  getIt.registerLazySingleton<SocketRateLimiter>(() => SocketRateLimiter(
+    defaultRateLimit: 120, // 120 tin nhắn/phút
+    eventRateLimits: {
+      'chat_message': 60, // 60 tin nhắn/phút cho chat_message
+      'typing': 30, // 30 events/phút cho typing
+    }
+  ));
+  
+  // Enhanced Socket Manager
+  getIt.registerLazySingleton<EnhancedSocketManager>(() => EnhancedSocketManager(
+    getIt<SocketManager>(),
+    getIt<SocketAnalytics>(),
+    getIt<SocketRateLimiter>()
+  ));
   
   // Data Sources
   getIt.registerLazySingleton<UserLocalDataSource>(() => UserLocalDataSourceImpl(getIt()));
