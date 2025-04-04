@@ -26,6 +26,10 @@ import 'package:flutter_chat_app/core/cache/cache_stats.dart';
 import 'package:flutter_chat_app/core/cache/preload_manager.dart';
 import 'package:flutter_chat_app/core/cache/background_sync_worker.dart';
 import 'package:flutter_chat_app/di/service_locator.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_chat_app/core/monitoring/analytics_manager.dart';
+import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
+import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
 
 // Import home screens from respective platform files
 import 'main_mobile.dart' show MobileHomeScreen;
@@ -33,12 +37,20 @@ import 'main_web.dart' show WebHomeScreen;
 import 'main_desktop.dart' show DesktopHomeScreen;
 
 Future<void> main() async {
+  // Đảm bảo Flutter engine được khởi tạo
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load environment variables
+  try {
+    // Khởi tạo Firebase
+    await Firebase.initializeApp();
+  } catch (e) {
+    print('Firebase initialization failed: $e');
+  }
+  
+  // Tải biến môi trường
   await dotenv.load(fileName: '.env');
   
-  // Configure dependencies
+  // Đăng ký và khởi tạo dependency injection
   await configureInjection();
   
   // Tùy thuộc vào nền tảng, chúng ta sẽ khởi động các dịch vụ phù hợp
@@ -62,11 +74,44 @@ Future<void> main() async {
   
   // Khởi tạo background sync worker
   final backgroundSyncWorker = await GetIt.I<BackgroundSyncWorker>();
-  
+    
   // Khởi tạo cache stats
   final cacheStats = await GetIt.I<CacheStats>();
   
-  runApp(MyApp(sharedPreferences: sharedPreferences));
+  // Khởi tạo monitoring services nếu có
+  CrashReporter? crashReporter;
+  PerformanceMonitor? performanceMonitor;
+  AnalyticsManager? analyticsManager;
+  
+  try {
+    crashReporter = await GetIt.I.getAsync<CrashReporter>();
+    performanceMonitor = await GetIt.I.getAsync<PerformanceMonitor>();
+    analyticsManager = await GetIt.I.getAsync<AnalyticsManager>();
+    
+    // Bắt đầu tracking hiệu suất ứng dụng
+    await performanceMonitor.startTrace(TraceType.appStartup);
+    
+    // Dừng trace sau khi app khởi động
+    Future.delayed(const Duration(seconds: 5), () async {
+      await performanceMonitor?.stopTrace(TraceType.appStartup);
+      
+      // Log sự kiện khởi động ứng dụng
+      await analyticsManager?.logEvent('app_started', {
+        'startup_time': DateTime.now().toIso8601String(),
+      });
+    });
+  } catch (e) {
+    // Log lỗi nếu không khởi tạo được monitoring services
+    print('Could not initialize monitoring services: $e');
+  }
+  
+  // Bắt tất cả lỗi không xử lý trong zone
+  runZonedGuarded(() {
+    runApp(MyApp(sharedPreferences: sharedPreferences));
+  }, (error, stackTrace) {
+    print('Unhandled error: $error\n$stackTrace');
+    crashReporter?.recordError(error, stackTrace, reason: 'unhandled_error');
+  });
 }
 
 Future<void> _initializeWebServices() async {
