@@ -13,6 +13,7 @@ import 'package:firebase_auth_web/firebase_auth_web.dart';
 import 'package:firebase_core_web/firebase_core_web.dart';
 import 'package:firebase_messaging_web/firebase_messaging_web.dart';
 import 'package:flutter_image_compress_web/flutter_image_compress_web.dart';
+import 'package:flutter_keyboard_visibility_web/flutter_keyboard_visibility_web.dart';
 import 'package:flutter_native_splash/flutter_native_splash_web.dart';
 import 'package:flutter_secure_storage_web/flutter_secure_storage_web.dart';
 import 'package:image_picker_for_web/image_picker_for_web.dart';
@@ -32,6 +33,7 @@ void registerPlugins([final Registrar? pluginRegistrar]) {
   FirebaseCoreWeb.registerWith(registrar);
   FirebaseMessagingWeb.registerWith(registrar);
   FlutterImageCompressWeb.registerWith(registrar);
+  FlutterKeyboardVisibilityPlugin.registerWith(registrar);
   FlutterNativeSplashWeb.registerWith(registrar);
   FlutterSecureStorageWeb.registerWith(registrar);
   ImagePickerPlugin.registerWith(registrar);
