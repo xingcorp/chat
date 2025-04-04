@@ -151,7 +151,7 @@ class PerformanceMonitor {
       // Thêm metrics nếu có
       if (metrics != null) {
         metrics.forEach((key, value) {
-          trace.putMetric(key, value);
+          trace.setMetric(key, value);
         });
       }
       
@@ -185,7 +185,7 @@ class PerformanceMonitor {
       }
       
       // Thêm metric
-      trace.putMetric(metricName, value);
+      trace.setMetric(metricName, value);
       
       _logger.v('Thêm metric $metricName = $value cho trace $traceName');
     } catch (e) {

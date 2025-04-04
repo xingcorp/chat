@@ -195,7 +195,7 @@ class AnalyticsService {
       // Đặt user properties
       await setUserProperties(
         email: user.email,
-        displayName: user.displayName,
+        displayName: user.fullName,
         customProperties: {
           'last_login': DateTime.now().toIso8601String(),
         },

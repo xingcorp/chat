@@ -3,7 +3,7 @@
   "packages": [
     {
       "name": "_fe_analyzer_shared",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/_fe_analyzer_shared-76.0.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/_fe_analyzer_shared-72.0.0",
       "packageUri": "lib/",
       "languageVersion": "3.3"
     },
@@ -15,13 +15,13 @@
     },
     {
       "name": "_macros",
-      "rootUri": "file:///D:/FlutterSDK/flutter_v3292/bin/cache/dart-sdk/pkg/_macros",
+      "rootUri": "file:///D:/FlutterSDK/flutter_v3245/bin/cache/dart-sdk/pkg/_macros",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
     {
       "name": "analyzer",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/analyzer-6.11.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/analyzer-6.7.0",
       "packageUri": "lib/",
       "languageVersion": "3.3"
     },
@@ -45,7 +45,7 @@
     },
     {
       "name": "archive",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/archive-4.0.5",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/archive-3.6.1",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -57,15 +57,15 @@
     },
     {
       "name": "asn1lib",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/asn1lib-1.6.2",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/asn1lib-1.5.8",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.0"
     },
     {
       "name": "async",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/async-2.12.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/async-2.11.0",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "2.18"
     },
     {
       "name": "audio_session",
@@ -87,45 +87,45 @@
     },
     {
       "name": "boolean_selector",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/boolean_selector-2.1.2",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/boolean_selector-2.1.1",
       "packageUri": "lib/",
-      "languageVersion": "3.1"
+      "languageVersion": "2.17"
     },
     {
       "name": "build",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/build-2.4.2",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/build-2.4.1",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "2.19"
     },
     {
       "name": "build_config",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/build_config-1.1.2",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/build_config-1.1.1",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "2.14"
     },
     {
       "name": "build_daemon",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/build_daemon-4.0.4",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/build_daemon-4.0.2",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.4"
     },
     {
       "name": "build_resolvers",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/build_resolvers-2.4.4",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/build_resolvers-2.4.2",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.0"
     },
     {
       "name": "build_runner",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/build_runner-2.4.15",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/build_runner-2.4.13",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.5"
     },
     {
       "name": "build_runner_core",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/build_runner_core-8.0.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/build_runner_core-7.3.2",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.5"
     },
     {
       "name": "built_collection",
@@ -159,9 +159,9 @@
     },
     {
       "name": "characters",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/characters-1.4.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/characters-1.3.0",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "2.12"
     },
     {
       "name": "checked_yaml",
@@ -171,9 +171,9 @@
     },
     {
       "name": "chewie",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/chewie-1.11.1",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/chewie-1.10.0",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.5"
     },
     {
       "name": "ci",
@@ -189,9 +189,9 @@
     },
     {
       "name": "clock",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/clock-1.1.2",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/clock-1.1.1",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "2.12"
     },
     {
       "name": "code_builder",
@@ -201,9 +201,9 @@
     },
     {
       "name": "collection",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/collection-1.19.1",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/collection-1.18.0",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "2.18"
     },
     {
       "name": "connectivity_plus",
@@ -267,13 +267,13 @@
     },
     {
       "name": "custom_lint_visitor",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/custom_lint_visitor-1.0.0+6.11.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/custom_lint_visitor-1.0.0+6.7.0",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
     {
       "name": "dart_style",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/dart_style-2.3.8",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/dart_style-2.3.7",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -285,7 +285,7 @@
     },
     {
       "name": "device_info_plus",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/device_info_plus-11.3.3",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/device_info_plus-11.3.0",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -327,15 +327,15 @@
     },
     {
       "name": "fake_async",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/fake_async-1.3.2",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/fake_async-1.3.1",
       "packageUri": "lib/",
-      "languageVersion": "3.3"
+      "languageVersion": "2.12"
     },
     {
       "name": "ffi",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/ffi-2.1.4",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/ffi-2.1.3",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.3"
     },
     {
       "name": "file",
@@ -477,9 +477,9 @@
     },
     {
       "name": "flutter",
-      "rootUri": "file:///D:/FlutterSDK/flutter_v3292/packages/flutter",
+      "rootUri": "file:///D:/FlutterSDK/flutter_v3245/packages/flutter",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.3"
     },
     {
       "name": "flutter_background_service",
@@ -633,21 +633,21 @@
     },
     {
       "name": "flutter_localizations",
-      "rootUri": "file:///D:/FlutterSDK/flutter_v3292/packages/flutter_localizations",
+      "rootUri": "file:///D:/FlutterSDK/flutter_v3245/packages/flutter_localizations",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.2"
     },
     {
       "name": "flutter_native_splash",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_native_splash-2.4.5",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_native_splash-2.4.4",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
     {
       "name": "flutter_plugin_android_lifecycle",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.27",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.26",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.5"
     },
     {
       "name": "flutter_secure_storage",
@@ -705,15 +705,15 @@
     },
     {
       "name": "flutter_test",
-      "rootUri": "file:///D:/FlutterSDK/flutter_v3292/packages/flutter_test",
+      "rootUri": "file:///D:/FlutterSDK/flutter_v3245/packages/flutter_test",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.3"
     },
     {
       "name": "flutter_web_plugins",
-      "rootUri": "file:///D:/FlutterSDK/flutter_v3292/packages/flutter_web_plugins",
+      "rootUri": "file:///D:/FlutterSDK/flutter_v3245/packages/flutter_web_plugins",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.2"
     },
     {
       "name": "freezed",
@@ -849,15 +849,15 @@
     },
     {
       "name": "http_parser",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/http_parser-4.1.2",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/http_parser-4.0.2",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "2.12"
     },
     {
       "name": "image",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/image-4.5.4",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/image-4.3.0",
       "packageUri": "lib/",
-      "languageVersion": "3.0"
+      "languageVersion": "2.15"
     },
     {
       "name": "image_picker",
@@ -867,9 +867,9 @@
     },
     {
       "name": "image_picker_android",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker_android-0.8.12+22",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker_android-0.8.12+21",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.5"
     },
     {
       "name": "image_picker_for_web",
@@ -981,13 +981,13 @@
     },
     {
       "name": "leak_tracker",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker-10.0.8",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker-10.0.5",
       "packageUri": "lib/",
       "languageVersion": "3.2"
     },
     {
       "name": "leak_tracker_flutter_testing",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker_flutter_testing-3.0.9",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker_flutter_testing-3.0.5",
       "packageUri": "lib/",
       "languageVersion": "3.2"
     },
@@ -999,9 +999,9 @@
     },
     {
       "name": "lints",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/lints-5.1.1",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/lints-5.0.0",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.5"
     },
     {
       "name": "logger",
@@ -1017,21 +1017,21 @@
     },
     {
       "name": "lottie",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/lottie-3.3.1",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/lottie-3.2.0",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.2"
     },
     {
       "name": "macros",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/macros-0.1.3-main.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/macros-0.1.2-main.4",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
     {
       "name": "matcher",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/matcher-0.12.17",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/matcher-0.12.16+1",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "3.0"
     },
     {
       "name": "material_color_utilities",
@@ -1041,7 +1041,7 @@
     },
     {
       "name": "meta",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/meta-1.16.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/meta-1.15.0",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -1053,9 +1053,9 @@
     },
     {
       "name": "mockito",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/mockito-5.4.5",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/mockito-5.4.4",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.1"
     },
     {
       "name": "mocktail",
@@ -1113,9 +1113,9 @@
     },
     {
       "name": "path",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/path-1.9.1",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/path-1.9.0",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "3.0"
     },
     {
       "name": "path_parsing",
@@ -1131,9 +1131,9 @@
     },
     {
       "name": "path_provider_android",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/path_provider_android-2.2.16",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/path_provider_android-2.2.15",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.5"
     },
     {
       "name": "path_provider_foundation",
@@ -1161,9 +1161,9 @@
     },
     {
       "name": "petitparser",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/petitparser-6.1.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/petitparser-6.0.2",
       "packageUri": "lib/",
-      "languageVersion": "3.5"
+      "languageVersion": "3.2"
     },
     {
       "name": "photo_view",
@@ -1196,12 +1196,6 @@
       "languageVersion": "2.12"
     },
     {
-      "name": "posix",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/posix-6.0.1",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
       "name": "provider",
       "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/provider-6.1.4",
       "packageUri": "lib/",
@@ -1215,9 +1209,9 @@
     },
     {
       "name": "pubspec_parse",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/pubspec_parse-1.5.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/pubspec_parse-1.4.0",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.2"
     },
     {
       "name": "recase",
@@ -1228,6 +1222,12 @@
     {
       "name": "rxdart",
       "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/rxdart-0.28.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "scroll_to_index",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/scroll_to_index-3.0.1",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -1245,9 +1245,9 @@
     },
     {
       "name": "shared_preferences_android",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences_android-2.4.8",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences_android-2.4.7",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.5"
     },
     {
       "name": "shared_preferences_foundation",
@@ -1281,9 +1281,9 @@
     },
     {
       "name": "shelf",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/shelf-1.4.2",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/shelf-1.4.1",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "2.17"
     },
     {
       "name": "shelf_packages_handler",
@@ -1299,9 +1299,9 @@
     },
     {
       "name": "shelf_web_socket",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/shelf_web_socket-3.0.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/shelf_web_socket-2.0.1",
       "packageUri": "lib/",
-      "languageVersion": "3.5"
+      "languageVersion": "3.3"
     },
     {
       "name": "shimmer",
@@ -1311,9 +1311,9 @@
     },
     {
       "name": "sky_engine",
-      "rootUri": "file:///D:/FlutterSDK/flutter_v3292/bin/cache/pkg/sky_engine",
+      "rootUri": "file:///D:/FlutterSDK/flutter_v3245/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.2"
     },
     {
       "name": "socket_io_client",
@@ -1353,9 +1353,9 @@
     },
     {
       "name": "source_span",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/source_span-1.10.1",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/source_span-1.10.0",
       "packageUri": "lib/",
-      "languageVersion": "3.1"
+      "languageVersion": "2.18"
     },
     {
       "name": "sprintf",
@@ -1365,27 +1365,27 @@
     },
     {
       "name": "sqflite",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite-2.4.2",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite-2.4.1",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.5"
     },
     {
       "name": "sqflite_android",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_android-2.4.1",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_android-2.4.0",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.5"
     },
     {
       "name": "sqflite_common",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_common-2.5.5",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_common-2.5.4+6",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.5"
     },
     {
       "name": "sqflite_darwin",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_darwin-2.4.2",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_darwin-2.4.1+1",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.5"
     },
     {
       "name": "sqflite_platform_interface",
@@ -1395,15 +1395,15 @@
     },
     {
       "name": "stack_trace",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/stack_trace-1.12.1",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/stack_trace-1.11.1",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "2.18"
     },
     {
       "name": "stream_channel",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/stream_channel-2.1.4",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/stream_channel-2.1.2",
       "packageUri": "lib/",
-      "languageVersion": "3.3"
+      "languageVersion": "2.19"
     },
     {
       "name": "stream_transform",
@@ -1413,39 +1413,39 @@
     },
     {
       "name": "string_scanner",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/string_scanner-1.4.1",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/string_scanner-1.2.0",
       "packageUri": "lib/",
-      "languageVersion": "3.1"
+      "languageVersion": "2.18"
     },
     {
       "name": "synchronized",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/synchronized-3.3.1",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/synchronized-3.3.0+3",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.5"
     },
     {
       "name": "term_glyph",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/term_glyph-1.2.2",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/term_glyph-1.2.1",
       "packageUri": "lib/",
-      "languageVersion": "3.1"
+      "languageVersion": "2.12"
     },
     {
       "name": "test",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/test-1.25.15",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/test-1.25.7",
       "packageUri": "lib/",
-      "languageVersion": "3.5"
+      "languageVersion": "3.2"
     },
     {
       "name": "test_api",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/test_api-0.7.4",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/test_api-0.7.2",
       "packageUri": "lib/",
-      "languageVersion": "3.5"
+      "languageVersion": "3.2"
     },
     {
       "name": "test_core",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/test_core-0.6.8",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/test_core-0.6.4",
       "packageUri": "lib/",
-      "languageVersion": "3.5"
+      "languageVersion": "3.2"
     },
     {
       "name": "timezone",
@@ -1515,9 +1515,9 @@
     },
     {
       "name": "video_player_android",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/video_player_android-2.8.2",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/video_player_android-2.7.16",
       "packageUri": "lib/",
-      "languageVersion": "3.6"
+      "languageVersion": "3.5"
     },
     {
       "name": "video_player_avfoundation",
@@ -1538,8 +1538,14 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "visibility_detector",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/visibility_detector-0.4.0+2",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "vm_service",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/vm_service-14.3.1",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/vm_service-14.2.5",
       "packageUri": "lib/",
       "languageVersion": "3.3"
     },
@@ -1587,15 +1593,15 @@
     },
     {
       "name": "win32",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/win32-5.12.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/win32-5.10.1",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.5"
     },
     {
       "name": "win32_registry",
-      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/win32_registry-2.1.0",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/win32_registry-1.1.5",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.4"
     },
     {
       "name": "workmanager",
@@ -1628,10 +1634,10 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2025-04-04T11:05:53.366337Z",
+  "generated": "2025-04-04T11:21:57.343192Z",
   "generator": "pub",
-  "generatorVersion": "3.7.2",
-  "flutterRoot": "file:///D:/FlutterSDK/flutter_v3292",
-  "flutterVersion": "3.29.2",
+  "generatorVersion": "3.5.4",
+  "flutterRoot": "file:///D:/FlutterSDK/flutter_v3245",
+  "flutterVersion": "3.24.5",
   "pubCache": "file:///C:/Users/Admin/AppData/Local/Pub/Cache"
 }

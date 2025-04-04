@@ -106,7 +106,7 @@ class CrashReporter {
         exception,
         stackTrace,
         reason: reason,
-        information: information,
+        information: information ?? [],
         printDetails: !kReleaseMode,
       );
     }
@@ -166,7 +166,7 @@ class CrashReporter {
   /// Tạo crash test để kiểm tra
   Future<void> testCrash() async {
     if (_isCrashlyticsEnabled) {
-      await _crashlytics.crash();
+      _crashlytics.crash();
     } else {
       _logger.w('Crashlytics disabled in debug mode. No test crash will occur.');
       throw Exception('Test Crash');
