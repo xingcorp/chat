@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="GithubDefaultAccount">
-    <option name="defaultAccountId" value="79a02d55-200b-427a-b7ac-8b93ea0dc7ef" />
-  </component>
   <component name="Kotlin2JsCompilerArguments">
     <option name="sourceMapEmbedSources" />
     <option name="sourceMapPrefix" />
@@ -22,5 +19,8 @@
         </selected-state>
       </profile-state>
     </entry>
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="io.flutter" />
   </component>
 </project>

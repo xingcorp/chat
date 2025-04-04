@@ -1,56 +1,53 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
+import 'package:injectable/injectable.dart';
 
-/// Abstract interface for local storage operations
+/// Interface for local storage operations
 abstract class LocalStorage {
-  /// Sets a boolean value
-  Future<bool> setBool(String key, bool value);
-  
-  /// Gets a boolean value
-  Future<bool?> getBool(String key);
-  
-  /// Sets an integer value
-  Future<bool> setInt(String key, int value);
-  
-  /// Gets an integer value
-  Future<int?> getInt(String key);
-  
-  /// Sets a double value
-  Future<bool> setDouble(String key, double value);
-  
-  /// Gets a double value
-  Future<double?> getDouble(String key);
-  
-  /// Sets a string value
-  Future<bool> setString(String key, String value);
-  
-  /// Gets a string value
+  /// Get a string value
   Future<String?> getString(String key);
   
-  /// Sets a string list value
-  Future<bool> setStringList(String key, List<String> value);
+  /// Save a string value
+  Future<bool> saveString(String key, String value);
   
-  /// Gets a string list value
-  Future<List<String>?> getStringList(String key);
+  /// Get a boolean value
+  Future<bool?> getBool(String key);
   
-  /// Sets an object value by encoding it to JSON
-  Future<bool> setObject(String key, Map<String, dynamic> value);
+  /// Save a boolean value
+  Future<bool> saveBool(String key, bool value);
   
-  /// Gets an object value by decoding it from JSON
-  Future<Map<String, dynamic>?> getObject(String key);
+  /// Get an integer value
+  Future<int?> getInt(String key);
   
-  /// Checks if the key exists
-  Future<bool> containsKey(String key);
+  /// Save an integer value
+  Future<bool> saveInt(String key, int value);
   
-  /// Removes a value
+  /// Get a double value
+  Future<double?> getDouble(String key);
+  
+  /// Save a double value
+  Future<bool> saveDouble(String key, double value);
+  
+  /// Get a list of objects
+  Future<List<dynamic>> getList(String key);
+  
+  /// Save a list of objects
+  Future<bool> saveList(String key, List<dynamic> list);
+  
+  /// Remove a value
   Future<bool> remove(String key);
   
-  /// Clears all values
+  /// Clear all values
   Future<bool> clear();
+  
+  /// Check if a key exists
+  Future<bool> containsKey(String key);
 }
 
-/// Implementation of the LocalStorage interface using SharedPreferences
+/// Implementation of local storage using SharedPreferences
+@LazySingleton(as: LocalStorage)
 class LocalStorageImpl implements LocalStorage {
   final SharedPreferences _prefs;
   
@@ -58,8 +55,13 @@ class LocalStorageImpl implements LocalStorage {
   LocalStorageImpl(this._prefs);
   
   @override
-  Future<bool> setBool(String key, bool value) async {
-    return await _prefs.setBool(key, value);
+  Future<String?> getString(String key) async {
+    return _prefs.getString(key);
+  }
+  
+  @override
+  Future<bool> saveString(String key, String value) async {
+    return _prefs.setString(key, value);
   }
   
   @override
@@ -68,8 +70,8 @@ class LocalStorageImpl implements LocalStorage {
   }
   
   @override
-  Future<bool> setInt(String key, int value) async {
-    return await _prefs.setInt(key, value);
+  Future<bool> saveBool(String key, bool value) async {
+    return _prefs.setBool(key, value);
   }
   
   @override
@@ -78,8 +80,8 @@ class LocalStorageImpl implements LocalStorage {
   }
   
   @override
-  Future<bool> setDouble(String key, double value) async {
-    return await _prefs.setDouble(key, value);
+  Future<bool> saveInt(String key, int value) async {
+    return _prefs.setInt(key, value);
   }
   
   @override
@@ -88,55 +90,47 @@ class LocalStorageImpl implements LocalStorage {
   }
   
   @override
-  Future<bool> setString(String key, String value) async {
-    return await _prefs.setString(key, value);
+  Future<bool> saveDouble(String key, double value) async {
+    return _prefs.setDouble(key, value);
   }
   
   @override
-  Future<String?> getString(String key) async {
-    return _prefs.getString(key);
-  }
-  
-  @override
-  Future<bool> setStringList(String key, List<String> value) async {
-    return await _prefs.setStringList(key, value);
-  }
-  
-  @override
-  Future<List<String>?> getStringList(String key) async {
-    return _prefs.getStringList(key);
-  }
-  
-  @override
-  Future<bool> setObject(String key, Map<String, dynamic> value) async {
-    final String jsonString = json.encode(value);
-    return await _prefs.setString(key, jsonString);
-  }
-  
-  @override
-  Future<Map<String, dynamic>?> getObject(String key) async {
-    final String? jsonString = _prefs.getString(key);
-    if (jsonString == null) return null;
-    
+  Future<List<dynamic>> getList(String key) async {
     try {
-      return json.decode(jsonString) as Map<String, dynamic>;
-    } catch (_) {
-      return null;
+      final data = _prefs.getString(key);
+      if (data == null) {
+        return [];
+      }
+      return jsonDecode(data) as List<dynamic>;
+    } catch (e) {
+      debugPrint('Error getting list from local storage: $e');
+      return [];
     }
+  }
+  
+  @override
+  Future<bool> saveList(String key, List<dynamic> list) async {
+    try {
+      final jsonString = jsonEncode(list);
+      return _prefs.setString(key, jsonString);
+    } catch (e) {
+      debugPrint('Error saving list to local storage: $e');
+      return false;
+    }
+  }
+  
+  @override
+  Future<bool> remove(String key) async {
+    return _prefs.remove(key);
+  }
+  
+  @override
+  Future<bool> clear() async {
+    return _prefs.clear();
   }
   
   @override
   Future<bool> containsKey(String key) async {
     return _prefs.containsKey(key);
-  }
-  
-  @override
-  Future<bool> remove(String key) async {
-    return await _prefs.remove(key);
-  }
-  
-  @override
-  Future<bool> clear() async {
-    return await _prefs.clear();
   }
 } 

@@ -2,64 +2,82 @@
 
 /// Query to fetch chat list for a user
 class ChatQueries {
-  /// Get all chats for the current user
-  static const String getUserChats = r'''
-    query GetUserChats($limit: Int, $offset: Int) {
-      getUserChats(limit: $limit, offset: $offset) {
+  /// Get a list of chats for the current user
+  static const String getUserChats = '''
+    query GetUserChats(\$limit: Int, \$offset: Int) {
+      getUserChats(limit: \$limit, offset: \$offset) {
         id
-        type
         name
+        type
+        avatarUrl
+        createdAt
+        updatedAt
         lastMessage {
           id
-          content
-          createdAt
+          text
           sender {
             id
-            username
-            avatar
+            fullName
+            avatarUrl
+          }
+          createdAt
+          readBy {
+            id
           }
         }
         participants {
           id
-          username
-          avatar
+          fullName
+          avatarUrl
           isOnline
           lastSeen
         }
         unreadCount
-        createdAt
-        updatedAt
       }
     }
   ''';
 
-  /// Get chat details by ID
-  static const String getChatDetails = r'''
-    query GetChatDetails($chatId: ID!) {
-      getChatById(id: $chatId) {
+  /// Get details of a specific chat by ID
+  static const String getChatDetails = '''
+    query GetChatDetails(\$chatId: ID!) {
+      getChatById(id: \$chatId) {
         id
-        type
         name
+        type
+        avatarUrl
+        createdAt
+        updatedAt
         participants {
           id
-          username
-          avatar
+          fullName
+          avatarUrl
           isOnline
           lastSeen
         }
-        createdAt
-        updatedAt
+        lastMessage {
+          id
+          text
+          sender {
+            id
+            fullName
+          }
+          createdAt
+          readBy {
+            id
+          }
+        }
+        unreadCount
       }
     }
   ''';
 
-  /// Get messages for a chat
-  static const String getChatMessages = r'''
-    query GetChatMessages($chatId: ID!, $limit: Int, $before: String) {
-      getChatMessages(chatId: $chatId, limit: $limit, before: $before) {
+  /// Get messages for a specific chat
+  static const String getChatMessages = '''
+    query GetChatMessages(\$chatId: ID!, \$limit: Int, \$before: DateTime) {
+      getChatMessages(chatId: \$chatId, limit: \$limit, before: \$before) {
         id
-        content
-        contentType
+        text
+        chatId
         attachments {
           id
           url
@@ -69,16 +87,15 @@ class ChatQueries {
         }
         sender {
           id
-          username
-          avatar
-        }
-        readBy {
-          id
-          username
-          readAt
+          fullName
+          avatarUrl
         }
         createdAt
         updatedAt
+        readBy {
+          id
+          fullName
+        }
       }
     }
   ''';
@@ -86,46 +103,102 @@ class ChatQueries {
 
 /// Mutations for chat operations
 class ChatMutations {
-  /// Create a new direct chat
-  static const String createDirectChat = r'''
-    mutation CreateDirectChat($participantId: ID!) {
-      createDirectChat(participantId: $participantId) {
+  /// Create a direct chat with a user
+  static const String createDirectChat = '''
+    mutation CreateDirectChat(\$participantId: ID!) {
+      createDirectChat(participantId: \$participantId) {
         id
-        type
-        participants {
-          id
-          username
-          avatar
-        }
-        createdAt
-      }
-    }
-  ''';
-
-  /// Create a new group chat
-  static const String createGroupChat = r'''
-    mutation CreateGroupChat($name: String!, $participantIds: [ID!]!) {
-      createGroupChat(name: $name, participantIds: $participantIds) {
-        id
-        type
         name
+        type
+        avatarUrl
+        createdAt
         participants {
           id
-          username
-          avatar
+          fullName
+          avatarUrl
+          isOnline
         }
-        createdAt
       }
     }
   ''';
 
-  /// Send a message
-  static const String sendMessage = r'''
-    mutation SendMessage($chatId: ID!, $content: String!, $contentType: MessageContentType = TEXT, $attachments: [AttachmentInput]) {
-      sendMessage(chatId: $chatId, content: $content, contentType: $contentType, attachments: $attachments) {
+  /// Create a group chat
+  static const String createGroupChat = '''
+    mutation CreateGroupChat(\$name: String!, \$participantIds: [ID!]!) {
+      createGroupChat(name: \$name, participantIds: \$participantIds) {
         id
-        content
-        contentType
+        name
+        type
+        avatarUrl
+        createdAt
+        participants {
+          id
+          fullName
+          avatarUrl
+          isOnline
+        }
+      }
+    }
+  ''';
+
+  /// Update chat details
+  static const String updateChat = '''
+    mutation UpdateChat(\$chatId: ID!, \$name: String, \$avatarUrl: String) {
+      updateChat(id: \$chatId, name: \$name, avatarUrl: \$avatarUrl) {
+        id
+        name
+        type
+        avatarUrl
+        updatedAt
+      }
+    }
+  ''';
+
+  /// Add users to a chat
+  static const String addUserToChat = '''
+    mutation AddUserToChat(\$chatId: ID!, \$userIds: [ID!]!) {
+      addUsersToChat(chatId: \$chatId, userIds: \$userIds) {
+        success
+        message
+      }
+    }
+  ''';
+
+  /// Remove users from a chat
+  static const String removeUserFromChat = '''
+    mutation RemoveUserFromChat(\$chatId: ID!, \$userIds: [ID!]!) {
+      removeUsersFromChat(chatId: \$chatId, userIds: \$userIds) {
+        success
+        message
+      }
+    }
+  ''';
+
+  /// Delete a chat
+  static const String deleteChat = '''
+    mutation DeleteChat(\$chatId: ID!) {
+      deleteChat(id: \$chatId) {
+        success
+        message
+      }
+    }
+  ''';
+
+  /// Send a message in a chat
+  static const String sendMessage = '''
+    mutation SendMessage(
+      \$chatId: ID!, 
+      \$text: String!, 
+      \$attachments: [AttachmentInput]
+    ) {
+      sendMessage(
+        chatId: \$chatId, 
+        text: \$text, 
+        attachments: \$attachments
+      ) {
+        id
+        text
+        chatId
         attachments {
           id
           url
@@ -135,66 +208,41 @@ class ChatMutations {
         }
         sender {
           id
-          username
-          avatar
+          fullName
+          avatarUrl
         }
         createdAt
+        readBy {
+          id
+        }
       }
     }
   ''';
 
-  /// Mark messages as read
-  static const String markMessagesAsRead = r'''
-    mutation MarkMessagesAsRead($chatId: ID!) {
-      markMessagesAsRead(chatId: $chatId) {
-        success
-        unreadCount
-      }
-    }
-  ''';
-
-  /// Delete a message
-  static const String deleteMessage = r'''
-    mutation DeleteMessage($messageId: ID!) {
-      deleteMessage(id: $messageId) {
+  /// Mark messages as read in a chat
+  static const String markMessagesAsRead = '''
+    mutation MarkMessagesAsRead(\$chatId: ID!) {
+      markMessagesAsRead(chatId: \$chatId) {
         success
         message
       }
     }
   ''';
 
-  /// Add participants to a group chat
-  static const String addParticipantsToChat = r'''
-    mutation AddParticipantsToChat($chatId: ID!, $participantIds: [ID!]!) {
-      addParticipantsToChat(chatId: $chatId, participantIds: $participantIds) {
-        id
-        participants {
-          id
-          username
-          avatar
-        }
+  /// Delete a message
+  static const String deleteMessage = '''
+    mutation DeleteMessage(\$messageId: ID!) {
+      deleteMessage(id: \$messageId) {
+        success
+        message
       }
     }
   ''';
 
-  /// Remove participant from a group chat
-  static const String removeParticipantFromChat = r'''
-    mutation RemoveParticipantFromChat($chatId: ID!, $participantId: ID!) {
-      removeParticipantFromChat(chatId: $chatId, participantId: $participantId) {
-        id
-        participants {
-          id
-          username
-          avatar
-        }
-      }
-    }
-  ''';
-
-  /// Leave a group chat
-  static const String leaveChat = r'''
-    mutation LeaveChat($chatId: ID!) {
-      leaveChat(chatId: $chatId) {
+  /// Leave a chat
+  static const String leaveChat = '''
+    mutation LeaveChat(\$chatId: ID!) {
+      leaveChat(chatId: \$chatId) {
         success
         message
       }
@@ -205,12 +253,12 @@ class ChatMutations {
 /// Subscriptions for real-time chat updates
 class ChatSubscriptions {
   /// Subscribe to new messages in a chat
-  static const String newMessage = r'''
-    subscription OnNewMessage($chatId: ID) {
-      newMessage(chatId: $chatId) {
+  static const String newMessage = '''
+    subscription OnNewMessage(\$chatId: ID!) {
+      newMessage(chatId: \$chatId) {
         id
-        content
-        contentType
+        text
+        chatId
         attachments {
           id
           url
@@ -218,67 +266,39 @@ class ChatSubscriptions {
           name
           size
         }
-        chat {
-          id
-          name
-          type
-        }
         sender {
           id
-          username
-          avatar
+          fullName
+          avatarUrl
         }
         createdAt
+        readBy {
+          id
+        }
       }
     }
   ''';
 
-  /// Subscribe to typing status events
-  static const String typingStatus = r'''
-    subscription OnTypingStatus($chatId: ID!) {
-      typingStatus(chatId: $chatId) {
-        chatId
+  /// Subscribe to typing status in a chat
+  static const String typingStatus = '''
+    subscription OnTypingStatus(\$chatId: ID!) {
+      typingStatus(chatId: \$chatId) {
         userId
-        username
+        userName
+        chatId
         isTyping
       }
     }
   ''';
 
   /// Subscribe to user presence status changes
-  static const String userPresence = r'''
+  static const String userPresence = '''
     subscription OnUserPresence {
       userPresence {
         userId
         isOnline
         lastSeen
       }
-    }
-  ''';
-
-  /// Subscribe to message read status updates
-  static const String messageReadStatus = r'''
-    subscription OnMessageReadStatus($chatId: ID!) {
-      messageReadStatus(chatId: $chatId) {
-        chatId
-        messageId
-        userId
-        username
-        readAt
-      }
-    }
-  ''';
-}
-
-/// Input types for GraphQL mutations
-class ChatInputTypes {
-  /// Input for attachment
-  static const String attachmentInput = r'''
-    input AttachmentInput {
-      url: String!
-      type: String!
-      name: String!
-      size: Int!
     }
   ''';
 } 

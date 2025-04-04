@@ -577,4 +577,241 @@ class NativeDatabaseImplementation implements IDatabaseImplementation {
         .serverIdEqualTo(serverId)
         .findFirst();
   }
+
+  /// Watch chats collection changes
+  Stream<List<ChatModel>> watchChats() {
+    return isar.chatModels.where().watch(fireImmediately: true);
+  }
+  
+  /// Get chat by server ID
+  Future<ChatModel?> getChatByServerId(String serverId) async {
+    return isar.chatModels
+        .where()
+        .serverIdEqualTo(serverId)
+        .findFirst();
+  }
+  
+  /// Get message by server ID
+  Future<MessageModel?> getMessageByServerId(String serverId) async {
+    return isar.messageModels
+        .where()
+        .serverIdEqualTo(serverId)
+        .findFirst();
+  }
+  
+  /// Get message by local ID
+  Future<MessageModel?> getMessageByLocalId(String localId) async {
+    return isar.messageModels
+        .where()
+        .localIdEqualTo(localId)
+        .findFirst();
+  }
+  
+  /// Watch users collection changes
+  Stream<List<UserModel>> watchUsers() {
+    return isar.userModels.where().watch(fireImmediately: true);
+  }
+  
+  /// Save chat
+  Future<void> saveChat(ChatModel chat) async {
+    isar.write((isar) {
+      isar.chatModels.put(chat);
+    });
+  }
+  
+  /// Save message
+  Future<void> saveMessage(MessageModel message) async {
+    isar.write((isar) {
+      isar.messageModels.put(message);
+    });
+  }
+  
+  /// Save user
+  Future<void> saveUser(UserModel user) async {
+    isar.write((isar) {
+      isar.userModels.put(user);
+    });
+  }
+  
+  /// Delete chat
+  Future<void> deleteChat(int id) async {
+    isar.write((isar) {
+      isar.chatModels.delete(id);
+    });
+  }
+  
+  /// Delete message
+  Future<void> deleteMessage(int id) async {
+    isar.write((isar) {
+      isar.messageModels.delete(id);
+    });
+  }
+  
+  /// Delete user
+  Future<void> deleteUser(int id) async {
+    isar.write((isar) {
+      isar.userModels.delete(id);
+    });
+  }
+}
+
+// Add extensions to WebDatabaseImplementation class as well
+extension WebDatabaseImplementationExtension on WebDatabaseImplementation {
+  /// Watch chats collection changes
+  Stream<List<ChatModel>> watchChats() {
+    return Stream.periodic(const Duration(seconds: 1))
+      .asyncMap((_) => isar.chatModels.where().findAll());
+  }
+  
+  /// Get chat by server ID
+  Future<ChatModel?> getChatByServerId(String serverId) async {
+    return isar.chatModels
+        .where()
+        .serverIdEqualTo(serverId)
+        .findFirst();
+  }
+  
+  /// Get message by server ID
+  Future<MessageModel?> getMessageByServerId(String serverId) async {
+    return isar.messageModels
+        .where()
+        .serverIdEqualTo(serverId)
+        .findFirst();
+  }
+  
+  /// Get message by local ID
+  Future<MessageModel?> getMessageByLocalId(String localId) async {
+    return isar.messageModels
+        .where()
+        .localIdEqualTo(localId)
+        .findFirst();
+  }
+  
+  /// Watch users collection changes
+  Stream<List<UserModel>> watchUsers() {
+    return Stream.periodic(const Duration(seconds: 1))
+      .asyncMap((_) => isar.userModels.where().findAll());
+  }
+  
+  /// Save chat
+  Future<void> saveChat(ChatModel chat) async {
+    isar.write((isar) {
+      isar.chatModels.put(chat);
+    });
+  }
+  
+  /// Save message
+  Future<void> saveMessage(MessageModel message) async {
+    isar.write((isar) {
+      isar.messageModels.put(message);
+    });
+  }
+  
+  /// Save user
+  Future<void> saveUser(UserModel user) async {
+    isar.write((isar) {
+      isar.userModels.put(user);
+    });
+  }
+  
+  /// Delete chat
+  Future<void> deleteChat(int id) async {
+    isar.write((isar) {
+      isar.chatModels.delete(id);
+    });
+  }
+  
+  /// Delete message
+  Future<void> deleteMessage(int id) async {
+    isar.write((isar) {
+      isar.messageModels.delete(id);
+    });
+  }
+  
+  /// Delete user
+  Future<void> deleteUser(int id) async {
+    isar.write((isar) {
+      isar.userModels.delete(id);
+    });
+  }
+}
+
+// Add the methods to the DatabaseService class
+extension DatabaseServiceExtension on DatabaseService {
+  /// Watch chats collection
+  Stream<List<ChatModel>> watchChats() {
+    return _implementation is WebDatabaseImplementation
+        ? ((_implementation as WebDatabaseImplementation).watchChats())
+        : ((_implementation as NativeDatabaseImplementation).watchChats());
+  }
+  
+  /// Get chat by server ID
+  Future<ChatModel?> getChatByServerId(String serverId) async {
+    return _implementation is WebDatabaseImplementation
+        ? await (_implementation as WebDatabaseImplementation).getChatByServerId(serverId)
+        : await (_implementation as NativeDatabaseImplementation).getChatByServerId(serverId);
+  }
+  
+  /// Get message by server ID
+  Future<MessageModel?> getMessageByServerId(String serverId) async {
+    return _implementation is WebDatabaseImplementation
+        ? await (_implementation as WebDatabaseImplementation).getMessageByServerId(serverId)
+        : await (_implementation as NativeDatabaseImplementation).getMessageByServerId(serverId);
+  }
+  
+  /// Get message by local ID
+  Future<MessageModel?> getMessageByLocalId(String localId) async {
+    return _implementation is WebDatabaseImplementation
+        ? await (_implementation as WebDatabaseImplementation).getMessageByLocalId(localId)
+        : await (_implementation as NativeDatabaseImplementation).getMessageByLocalId(localId);
+  }
+  
+  /// Watch users collection
+  Stream<List<UserModel>> watchUsers() {
+    return _implementation is WebDatabaseImplementation
+        ? ((_implementation as WebDatabaseImplementation).watchUsers())
+        : ((_implementation as NativeDatabaseImplementation).watchUsers());
+  }
+  
+  /// Save chat
+  Future<void> saveChat(ChatModel chat) async {
+    return _implementation is WebDatabaseImplementation
+        ? await (_implementation as WebDatabaseImplementation).saveChat(chat)
+        : await (_implementation as NativeDatabaseImplementation).saveChat(chat);
+  }
+  
+  /// Save message
+  Future<void> saveMessage(MessageModel message) async {
+    return _implementation is WebDatabaseImplementation
+        ? await (_implementation as WebDatabaseImplementation).saveMessage(message)
+        : await (_implementation as NativeDatabaseImplementation).saveMessage(message);
+  }
+  
+  /// Save user
+  Future<void> saveUser(UserModel user) async {
+    return _implementation is WebDatabaseImplementation
+        ? await (_implementation as WebDatabaseImplementation).saveUser(user)
+        : await (_implementation as NativeDatabaseImplementation).saveUser(user);
+  }
+  
+  /// Delete chat
+  Future<void> deleteChat(int id) async {
+    return _implementation is WebDatabaseImplementation
+        ? await (_implementation as WebDatabaseImplementation).deleteChat(id)
+        : await (_implementation as NativeDatabaseImplementation).deleteChat(id);
+  }
+  
+  /// Delete message
+  Future<void> deleteMessage(int id) async {
+    return _implementation is WebDatabaseImplementation
+        ? await (_implementation as WebDatabaseImplementation).deleteMessage(id)
+        : await (_implementation as NativeDatabaseImplementation).deleteMessage(id);
+  }
+  
+  /// Delete user
+  Future<void> deleteUser(int id) async {
+    return _implementation is WebDatabaseImplementation
+        ? await (_implementation as WebDatabaseImplementation).deleteUser(id)
+        : await (_implementation as NativeDatabaseImplementation).deleteUser(id);
+  }
 }

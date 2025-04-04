@@ -3,10 +3,13 @@ import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:gql_link/src/exceptions.dart' as gql_exceptions;
+import 'package:injectable/injectable.dart';
 
 /// Abstract interface for GraphQL client operations
 abstract class GraphQLClientWrapper {
+  /// Get the underlying GraphQLClient instance
+  GraphQLClient get client;
+
   /// Execute a GraphQL query operation
   Future<Map<String, dynamic>> query(
     String queryString, {
@@ -32,12 +35,17 @@ abstract class GraphQLClientWrapper {
 }
 
 /// Implementation of GraphQL client
+@LazySingleton(as: GraphQLClientWrapper)
 class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
   final GraphQLClient _client;
   final NetworkInfo _networkInfo;
 
   /// Constructor
   GraphQLClientWrapperImpl(this._client, this._networkInfo);
+
+  /// Get the underlying GraphQLClient instance
+  @override
+  GraphQLClient get client => _client;
 
   /// Factory method to create a GraphQL client
   static Future<GraphQLClient> createClient({
@@ -191,15 +199,9 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
 
   void _handleGraphQLException(OperationException exception) {
     if (exception.linkException != null) {
-      if (exception.linkException is app_exceptions.ServerException) {
-        throw app_exceptions.ServerException(
-          message: exception.linkException.toString(),
-        );
-      } else {
-        throw app_exceptions.ServerException(
-          message: 'Network error: ${exception.linkException.toString()}',
-        );
-      }
+      throw app_exceptions.ServerException(
+        message: 'Network error: ${exception.linkException.toString()}',
+      );
     }
 
     if (exception.graphqlErrors.isNotEmpty) {

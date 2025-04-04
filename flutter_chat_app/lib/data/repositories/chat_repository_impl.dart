@@ -4,12 +4,13 @@ import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/data/datasources/chat/chat_local_datasource.dart';
 import 'package:flutter_chat_app/data/graphql/chat_operations.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/domain/entities/user.dart';
-import 'package:flutter_chat_app/domain/repositories/chat_repository.dart';
+import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
+import 'package:graphql_flutter/graphql_flutter.dart' hide ServerException, UnknownException;
+import 'package:injectable/injectable.dart';
 
 /// Chat repository implementation
-class ChatRepositoryImpl implements ChatRepository {
+@LazySingleton(as: IChatRepository)
+class ChatRepositoryImpl implements IChatRepository {
   final GraphQLClientWrapper _graphQLClient;
   final ChatLocalDataSource _localDataSource;
   final NetworkInfo _networkInfo;
@@ -20,9 +21,12 @@ class ChatRepositoryImpl implements ChatRepository {
     this._localDataSource,
     this._networkInfo,
   );
+  
+  @override
+  GraphQLClient get client => _graphQLClient.client;
 
   @override
-  Future<List<Chat>> getUserChats() async {
+  Future<List<Chat>> getChats() async {
     try {
       // Try to load from local storage first (offline-first)
       final localChats = await _localDataSource.getChats();
@@ -63,7 +67,7 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Future<Chat> getChatDetails(String chatId) async {
+  Future<Chat?> getChatById(String chatId) async {
     try {
       // Try to load from local storage first
       final localChat = await _localDataSource.getChatById(chatId);
@@ -104,163 +108,252 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Future<List<ChatMessage>> getChatMessages(String chatId, {int limit = 20, String? before}) async {
+  Future<List<Chat>> getChatsFromLocalStorage() async {
     try {
-      // Try to load from local storage first
-      final localMessages = await _localDataSource.getChatMessages(chatId, limit: limit, before: before);
-      
-      // If online, fetch latest from server
-      if (await _networkInfo.isConnected) {
-        try {
-          final result = await _graphQLClient.query(
-            ChatQueries.getChatMessages,
-            variables: {
-              'chatId': chatId,
-              'limit': limit,
-              'before': before,
-            },
-          );
-          
-          final List<dynamic> messageData = result['getChatMessages'] ?? [];
-          final List<ChatMessage> remoteMessages = messageData
-              .map((message) => ChatMessage.fromJson(message as Map<String, dynamic>))
-              .toList();
-          
-          // Save to local storage
-          await _localDataSource.saveMessages(chatId, remoteMessages);
-          
-          return remoteMessages;
-        } catch (e) {
-          // If remote fetch fails but we have local data, use that
-          if (localMessages.isNotEmpty) {
-            return localMessages;
-          }
-          rethrow;
-        }
-      }
-      
-      return localMessages;
+      return await _localDataSource.getChats();
     } on Exception catch (e) {
       throw _handleException(e);
     }
   }
 
   @override
-  Future<Chat> createDirectChat(String participantId) async {
+  Future<void> saveChatLocally(Chat chat) async {
+    try {
+      await _localDataSource.saveChat(chat);
+    } on Exception catch (e) {
+      throw _handleException(e);
+    }
+  }
+
+  @override
+  Future<Chat> createChat({
+    required String name,
+    required List<String> participantIds,
+    bool isGroup = false,
+  }) async {
     try {
       if (!await _networkInfo.isConnected) {
         throw NoInternetException();
       }
       
-      final result = await _graphQLClient.mutate(
-        ChatMutations.createDirectChat,
-        variables: {
-          'participantId': participantId,
-        },
-      );
-      
-      final chatData = result['createDirectChat'];
-      final Chat newChat = Chat.fromJson(chatData as Map<String, dynamic>);
-      
-      // Save to local storage
-      await _localDataSource.saveChat(newChat);
-      
-      return newChat;
-    } on Exception catch (e) {
-      throw _handleException(e);
-    }
-  }
-
-  @override
-  Future<Chat> createGroupChat(String name, List<String> participantIds) async {
-    try {
-      if (!await _networkInfo.isConnected) {
-        throw NoInternetException();
-      }
-      
-      final result = await _graphQLClient.mutate(
-        ChatMutations.createGroupChat,
-        variables: {
-          'name': name,
-          'participantIds': participantIds,
-        },
-      );
-      
-      final chatData = result['createGroupChat'];
-      final Chat newChat = Chat.fromJson(chatData as Map<String, dynamic>);
-      
-      // Save to local storage
-      await _localDataSource.saveChat(newChat);
-      
-      return newChat;
-    } on Exception catch (e) {
-      throw _handleException(e);
-    }
-  }
-
-  @override
-  Future<ChatMessage> sendMessage(String chatId, String content, {String contentType = 'TEXT', List<Map<String, dynamic>>? attachments}) async {
-    try {
-      final Map<String, dynamic> variables = {
-        'chatId': chatId,
-        'content': content,
-        'contentType': contentType,
-      };
-
-      if (attachments != null && attachments.isNotEmpty) {
-        variables['attachments'] = attachments;
-      }
-      
-      // If offline, store message locally and mark for sync
-      if (!await _networkInfo.isConnected) {
-        final message = ChatMessage(
-          id: 'local_${DateTime.now().millisecondsSinceEpoch}',
-          chatId: chatId,
-          content: content,
-          contentType: _parseContentType(contentType),
-          sender: MessageSender(
-            id: 'current_user', // Will be replaced with actual user ID from auth
-            name: 'Me',
-          ),
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          attachments: attachments?.map((attachment) => 
-            MessageAttachment(
-              id: attachment['id'] ?? '',
-              url: attachment['url'] ?? '',
-              type: attachment['type'] ?? '',
-              size: attachment['size'] ?? 0,
-              name: attachment['name'] ?? '',
-            )
-          ).toList() ?? [],
+      if (isGroup) {
+        final result = await _graphQLClient.mutate(
+          ChatMutations.createGroupChat,
+          variables: {
+            'name': name,
+            'participantIds': participantIds,
+          },
         );
         
-        // Save to local storage and mark for sync
-        await _localDataSource.saveMessage(chatId, message, needsSync: true);
+        final chatData = result['createGroupChat'];
+        final Chat newChat = Chat.fromJson(chatData as Map<String, dynamic>);
         
-        return message;
+        // Save to local storage
+        await _localDataSource.saveChat(newChat);
+        
+        return newChat;
+      } else {
+        // Direct chat
+        final result = await _graphQLClient.mutate(
+          ChatMutations.createDirectChat,
+          variables: {
+            'participantId': participantIds.first,
+          },
+        );
+        
+        final chatData = result['createDirectChat'];
+        final Chat newChat = Chat.fromJson(chatData as Map<String, dynamic>);
+        
+        // Save to local storage
+        await _localDataSource.saveChat(newChat);
+        
+        return newChat;
+      }
+    } on Exception catch (e) {
+      throw _handleException(e);
+    }
+  }
+
+  @override
+  Future<Chat> updateChat({
+    required String chatId,
+    String? name,
+    String? avatarUrl,
+  }) async {
+    try {
+      if (!await _networkInfo.isConnected) {
+        throw NoInternetException();
       }
       
-      // If online, send directly
+      final variables = {
+        'chatId': chatId,
+      };
+      
+      if (name != null) {
+        variables['name'] = name;
+      }
+      
+      if (avatarUrl != null) {
+        variables['avatarUrl'] = avatarUrl;
+      }
+      
       final result = await _graphQLClient.mutate(
-        ChatMutations.sendMessage,
+        ChatMutations.updateChat,
         variables: variables,
       );
       
-      final messageData = result['sendMessage'];
-      final ChatMessage newMessage = ChatMessage.fromJson(messageData as Map<String, dynamic>);
+      final chatData = result['updateChat'];
+      final Chat updatedChat = Chat.fromJson(chatData as Map<String, dynamic>);
       
       // Save to local storage
-      await _localDataSource.saveMessage(chatId, newMessage);
+      await _localDataSource.saveChat(updatedChat);
       
-      return newMessage;
+      return updatedChat;
     } on Exception catch (e) {
       throw _handleException(e);
     }
   }
 
   @override
-  Future<bool> markMessagesAsRead(String chatId) async {
+  Future<bool> addParticipants({
+    required String chatId,
+    required List<String> userIds,
+  }) async {
+    try {
+      if (!await _networkInfo.isConnected) {
+        throw NoInternetException();
+      }
+      
+      final result = await _graphQLClient.mutate(
+        ChatMutations.addUserToChat,
+        variables: {
+          'chatId': chatId,
+          'userIds': userIds,
+        },
+      );
+      
+      final success = result['addUsersToChat']['success'] as bool;
+      
+      if (success) {
+        // Reload chat data to update participants
+        final chatResult = await _graphQLClient.query(
+          ChatQueries.getChatDetails,
+          variables: {
+            'chatId': chatId,
+          },
+        );
+        
+        final chatData = chatResult['getChatById'];
+        final Chat updatedChat = Chat.fromJson(chatData as Map<String, dynamic>);
+        
+        // Save to local storage
+        await _localDataSource.saveChat(updatedChat);
+      }
+      
+      return success;
+    } on Exception catch (e) {
+      throw _handleException(e);
+    }
+  }
+
+  @override
+  Future<bool> removeParticipants({
+    required String chatId,
+    required List<String> userIds,
+  }) async {
+    try {
+      if (!await _networkInfo.isConnected) {
+        throw NoInternetException();
+      }
+      
+      final result = await _graphQLClient.mutate(
+        ChatMutations.removeUserFromChat,
+        variables: {
+          'chatId': chatId,
+          'userIds': userIds,
+        },
+      );
+      
+      final success = result['removeUsersFromChat']['success'] as bool;
+      
+      if (success) {
+        // Reload chat data to update participants
+        final chatResult = await _graphQLClient.query(
+          ChatQueries.getChatDetails,
+          variables: {
+            'chatId': chatId,
+          },
+        );
+        
+        final chatData = chatResult['getChatById'];
+        final Chat updatedChat = Chat.fromJson(chatData as Map<String, dynamic>);
+        
+        // Save to local storage
+        await _localDataSource.saveChat(updatedChat);
+      }
+      
+      return success;
+    } on Exception catch (e) {
+      throw _handleException(e);
+    }
+  }
+
+  @override
+  Future<bool> leaveChat(String chatId) async {
+    try {
+      if (!await _networkInfo.isConnected) {
+        throw NoInternetException();
+      }
+      
+      final result = await _graphQLClient.mutate(
+        ChatMutations.leaveChat,
+        variables: {
+          'chatId': chatId,
+        },
+      );
+      
+      final success = result['leaveChat']['success'] as bool;
+      
+      if (success) {
+        // Delete from local storage
+        await _localDataSource.deleteChat(chatId);
+      }
+      
+      return success;
+    } on Exception catch (e) {
+      throw _handleException(e);
+    }
+  }
+
+  @override
+  Future<bool> deleteChat(String chatId) async {
+    try {
+      if (!await _networkInfo.isConnected) {
+        throw NoInternetException();
+      }
+      
+      final result = await _graphQLClient.mutate(
+        ChatMutations.deleteChat,
+        variables: {
+          'chatId': chatId,
+        },
+      );
+      
+      final success = result['deleteChat']['success'] as bool;
+      
+      if (success) {
+        // Delete from local storage
+        await _localDataSource.deleteChat(chatId);
+      }
+      
+      return success;
+    } on Exception catch (e) {
+      throw _handleException(e);
+    }
+  }
+
+  @override
+  Future<bool> markChatAsRead(String chatId) async {
     try {
       if (!await _networkInfo.isConnected) {
         // Mark locally and queue for sync
@@ -288,76 +381,25 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Stream<ChatMessage> subscribeToChatMessages(String? chatId) {
-    return _graphQLClient
-        .subscribe(
-          ChatSubscriptions.newMessage,
-          variables: chatId != null ? {'chatId': chatId} : null,
-        )
-        .asyncMap((event) {
-          final messageData = event['newMessage'];
-          final message = ChatMessage.fromJson(messageData as Map<String, dynamic>);
-          
-          // Save to local storage
-          _localDataSource.saveMessage(message.chatId, message);
-          
-          return message;
-        });
-  }
-
-  @override
-  Stream<Map<String, dynamic>> subscribeToTypingStatus(String chatId) {
-    return _graphQLClient
-        .subscribe(
-          ChatSubscriptions.typingStatus,
-          variables: {'chatId': chatId},
-        )
-        .map((event) => event['typingStatus'] as Map<String, dynamic>);
-  }
-
-  @override
-  Future<bool> syncOfflineMessages() async {
-    if (!await _networkInfo.isConnected) {
-      return false;
-    }
-    
+  Future<void> syncChat(String chatId) async {
     try {
-      final pendingMessages = await _localDataSource.getPendingMessages();
-      
-      for (final message in pendingMessages) {
-        try {
-          Map<String, dynamic> variables = {
-            'chatId': message.chatId,
-            'content': message.content,
-            'contentType': message.contentType,
-          };
-          
-          if (message.attachments.isNotEmpty) {
-            variables['attachments'] = message.attachments.map((attachment) => {
-              'url': attachment.url,
-              'type': attachment.type,
-              'name': attachment.name,
-              'size': attachment.size,
-            }).toList();
-          }
-          
-          final result = await _graphQLClient.mutate(
-            ChatMutations.sendMessage,
-            variables: variables,
-          );
-          
-          final messageData = result['sendMessage'];
-          final syncedMessage = ChatMessage.fromJson(messageData as Map<String, dynamic>);
-          
-          // Replace local message with synced one
-          await _localDataSource.replaceMessage(message.chatId, message.id, syncedMessage);
-        } catch (e) {
-          // Mark as failed and continue with next message
-          await _localDataSource.updateMessageStatus(message.chatId, message.id, MessageStatus.failed);
-        }
+      if (!await _networkInfo.isConnected) {
+        return;
       }
       
-      return true;
+      // Get chat from server
+      final result = await _graphQLClient.query(
+        ChatQueries.getChatDetails,
+        variables: {
+          'chatId': chatId,
+        },
+      );
+      
+      final chatData = result['getChatById'];
+      final Chat remoteChat = Chat.fromJson(chatData as Map<String, dynamic>);
+      
+      // Save to local storage
+      await _localDataSource.saveChat(remoteChat);
     } on Exception catch (e) {
       throw _handleException(e);
     }
@@ -373,29 +415,5 @@ class ChatRepositoryImpl implements ChatRepository {
       return e;
     }
     return UnknownException(message: e.toString());
-  }
-
-  /// Parse ContentType from string
-  ContentType _parseContentType(String contentType) {
-    switch (contentType.toLowerCase()) {
-      case 'text':
-        return ContentType.text;
-      case 'image':
-        return ContentType.image;
-      case 'video':
-        return ContentType.video;
-      case 'audio':
-        return ContentType.audio;
-      case 'file':
-        return ContentType.file;
-      case 'location':
-        return ContentType.location;
-      case 'link':
-        return ContentType.link;
-      case 'event':
-        return ContentType.event;
-      default:
-        return ContentType.text;
-    }
   }
 } 

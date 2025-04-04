@@ -31,6 +31,11 @@ class ConnectivityService {
   /// Current connection status (based on any active connection)
   bool get isConnected => _hasConnection;
   
+  /// Method to check if device is connected (can be awaited)
+  Future<bool> checkConnected() async {
+    return _hasConnection;
+  }
+  
   /// Initialize connectivity monitoring
   Future<void> _initialize() async {
     // Listen for connectivity changes first

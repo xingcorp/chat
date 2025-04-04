@@ -11,6 +11,7 @@ import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
 import 'package:uuid/uuid.dart';
 import 'main.dart' show MyApp;
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +25,10 @@ Future<void> main() async {
   // Initialize services for desktop
   await _initializeDesktopServices();
   
-  runApp(const MyApp());
+  // Initialize SharedPreferences
+  final sharedPreferences = await SharedPreferences.getInstance();
+  
+  runApp(MyApp(sharedPreferences: sharedPreferences));
 }
 
 Future<void> _initializeDesktopServices() async {

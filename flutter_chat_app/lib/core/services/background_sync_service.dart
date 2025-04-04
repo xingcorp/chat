@@ -253,7 +253,7 @@ class BackgroundSyncService {
   /// Stop the continuous background service
   Future<bool> stopBackgroundService() async {
     // Invoke the stop service event
-    await _backgroundService.invoke('stopService');
+    _backgroundService.invoke('stopService');
     
     // Cancel any work manager tasks
     await _workmanager.cancelByUniqueName(_taskUniqueName);

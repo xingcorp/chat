@@ -1,12 +1,15 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/services/chat_sync_service.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
+import 'package:flutter_chat_app/domain/models/queued_message.dart';
 import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 
@@ -48,12 +51,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<_ConnectivityChanged>(_onConnectivityChanged);
     
     // Listen for new messages from repository
-    _messageSubscription = _messageRepository.messageStream.listen((message) {
-      add(ChatEvent.newMessageReceived(message));
-    });
+    if (_messageRepository is MessageStreamProvider) {
+      final provider = _messageRepository as MessageStreamProvider;
+      _messageSubscription = provider.messageStream.listen((message) {
+        add(ChatEvent.newMessageReceived(message));
+      });
+    }
     
     // Listen for connectivity changes
-    _connectivitySubscription = _connectivityService.onConnectivityChanged.listen((isConnected) {
+    _connectivitySubscription = _connectivityService.onConnectivityChanged.listen((connectivityResults) {
+      // Extract actual connectivity status from the results
+      final isConnected = connectivityResults.any((result) => result != ConnectivityResult.none);
       add(ChatEvent.connectivityChanged(isConnected));
     });
   }
@@ -74,7 +82,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
       
       // Then try to fetch from server if online
-      if (await _connectivityService.isConnected()) {
+      if (await _connectivityService.checkConnected()) {
         final chats = await _chatRepository.getChats();
         emit(ChatState.loaded(chats: chats));
       }
@@ -92,14 +100,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     
     try {
       // First try to get from local storage
-      final localChat = await _chatRepository.getChatFromLocalStorage(event.chatId);
+      final localChat = await _chatRepository.getChatById(event.chatId);
       
       if (localChat != null) {
         emit(ChatState.chatDetailsLoaded(chat: localChat));
       }
       
       // Then try to fetch from server if online
-      if (await _connectivityService.isConnected()) {
+      if (await _connectivityService.checkConnected()) {
         final chat = await _chatRepository.getChatById(event.chatId);
         if (chat != null) {
           emit(ChatState.chatDetailsLoaded(chat: chat));
@@ -127,7 +135,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     
     try {
       // First try to get from local storage
-      final localMessages = await _messageRepository.getMessagesFromLocalStorage(event.chatId);
+      final localMessages = await _messageRepository.getMessages(event.chatId);
       
       if (localMessages.isNotEmpty) {
         emit(ChatState.messagesLoaded(
@@ -138,11 +146,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
       
       // Then try to fetch from server if online
-      if (await _connectivityService.isConnected()) {
-        final messages = await _messageRepository.getChatMessages(
+      if (await _connectivityService.checkConnected()) {
+        final messages = await _messageRepository.getMessages(
           event.chatId,
           limit: event.limit,
-          offset: event.offset,
         );
         
         emit(ChatState.messagesLoaded(
@@ -163,14 +170,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ) async {
     try {
       final message = await _messageRepository.sendMessage(
-        event.chatId,
-        event.content,
-        event.contentType,
+        chatId: event.chatId,
+        content: event.content,
+        contentType: event.contentType.toString().split('.').last,
+        senderId: 'current_user', // This should ideally come from authentication service
         attachmentIds: event.attachmentIds,
       );
       
       // Update the local chat to have this as the last message
-      final chat = await _chatRepository.getChatFromLocalStorage(event.chatId);
+      final chat = await _chatRepository.getChatById(event.chatId);
       if (chat != null) {
         final updatedChat = chat.copyWith(
           lastMessage: message,
@@ -192,12 +200,23 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     Emitter<ChatState> emit,
   ) async {
     try {
-      final chat = await _chatRepository.createChat(
-        type: event.type,
-        name: event.name,
-        description: event.description,
-        participantIds: event.participantIds,
-      );
+      late final Chat chat;
+      
+      if (event.type == ChatType.direct) {
+        // For direct chats, use the appropriate method
+        chat = await _chatRepository.createChat(
+          name: event.name ?? '',
+          participantIds: event.participantIds,
+          isGroup: false,
+        );
+      } else {
+        // For group chats
+        chat = await _chatRepository.createChat(
+          name: event.name ?? 'New Group Chat',
+          participantIds: event.participantIds,
+          isGroup: true,
+        );
+      }
       
       // Reload chats to include the new one
       add(const ChatEvent.loadChats());
@@ -215,8 +234,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       await _chatRepository.updateChat(
         chatId: event.chatId,
         name: event.name,
-        description: event.description,
-        avatar: event.avatar,
+        avatarUrl: event.avatar,
       );
       
       // Reload chat details
@@ -249,7 +267,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     Emitter<ChatState> emit,
   ) async {
     try {
-      await _chatRepository.addUsersToChat(event.chatId, event.userIds);
+      await _chatRepository.addParticipants(
+        chatId: event.chatId,
+        userIds: event.userIds,
+      );
       
       // Reload chat details
       add(ChatEvent.loadChatDetails(chatId: event.chatId));
@@ -264,7 +285,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     Emitter<ChatState> emit,
   ) async {
     try {
-      await _chatRepository.removeUsersFromChat(event.chatId, event.userIds);
+      await _chatRepository.removeParticipants(
+        chatId: event.chatId,
+        userIds: event.userIds,
+      );
       
       // Reload chat details
       add(ChatEvent.loadChatDetails(chatId: event.chatId));
@@ -279,7 +303,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     Emitter<ChatState> emit,
   ) async {
     try {
-      await _messageRepository.markMessagesAsRead(event.chatId, event.messageIds);
+      // Mark all messages in the chat as read
+      await _messageRepository.markChatAsRead(event.chatId);
       
       // Reload messages to update read status
       add(ChatEvent.loadMessages(chatId: event.chatId));
@@ -293,7 +318,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     _SyncChats event,
     Emitter<ChatState> emit,
   ) async {
-    if (!await _connectivityService.isConnected()) {
+    if (!await _connectivityService.checkConnected()) {
       emit(const ChatState.offline());
       return;
     }
@@ -315,7 +340,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     _SyncMessages event,
     Emitter<ChatState> emit,
   ) async {
-    if (!await _connectivityService.isConnected()) {
+    if (!await _connectivityService.checkConnected()) {
       emit(const ChatState.offline());
       return;
     }
@@ -339,7 +364,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     final currentState = state;
     
     if (currentState is _MessagesLoaded && 
-        currentState.chatId == event.message.id) {
+        currentState.chatId == event.message.chatId) {
       // If we're currently viewing the chat this message belongs to, update messages
       final updatedMessages = List<ChatMessage>.from(currentState.messages)
         ..add(event.message)
@@ -353,10 +378,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       
       // Mark this message as read if it's not from the current user
       // In a real app, you'd check if the sender is not the current user
-      await _messageRepository.markMessagesAsRead(
-        event.message.id,
-        [event.message.id],
-      );
+      await _messageRepository.markAsRead(event.message.id);
     } else if (currentState is _Loaded || currentState is _ChatDetailsLoaded) {
       // If we're viewing the chat list, update it to show the new message
       add(const ChatEvent.loadChats());
@@ -387,4 +409,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     _connectivitySubscription?.cancel();
     return super.close();
   }
+}
+
+/// Mixin to provide message stream for repositories
+mixin MessageStreamProvider {
+  /// Stream of incoming messages
+  Stream<ChatMessage> get messageStream;
 } 
