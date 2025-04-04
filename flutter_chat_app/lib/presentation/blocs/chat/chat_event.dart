@@ -4,7 +4,9 @@ part of 'chat_bloc.dart';
 @freezed
 class ChatEvent with _$ChatEvent {
   /// Load all chats
-  const factory ChatEvent.loadChats() = _LoadChats;
+  const factory ChatEvent.loadChats({
+    @Default(false) bool forceRefresh,
+  }) = _LoadChats;
   
   /// Load details for a specific chat
   const factory ChatEvent.loadChatDetails({
@@ -81,4 +83,7 @@ class ChatEvent with _$ChatEvent {
   
   /// Message status updated from queue service
   const factory ChatEvent.messageStatusUpdated(QueuedMessage message) = _MessageStatusUpdated;
+  
+  /// Chat updated from real-time source
+  const factory ChatEvent.chatUpdated({required Chat chat}) = _ChatUpdated;
 } 

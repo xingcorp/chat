@@ -22,12 +22,12 @@ const ChatModelSchema = IsarGeneratedSchema(
     properties: [
       IsarPropertySchema(
         name: 'serverId',
-      type: IsarType.string,
-    ),
+        type: IsarType.string,
+      ),
       IsarPropertySchema(
         name: 'name',
-      type: IsarType.string,
-    ),
+        type: IsarType.string,
+      ),
       IsarPropertySchema(
         name: 'type',
         type: IsarType.byte,
@@ -43,8 +43,8 @@ const ChatModelSchema = IsarGeneratedSchema(
       ),
       IsarPropertySchema(
         name: 'lastMessageTime',
-      type: IsarType.dateTime,
-    ),
+        type: IsarType.dateTime,
+      ),
       IsarPropertySchema(
         name: 'unreadCount',
         type: IsarType.long,
@@ -55,12 +55,12 @@ const ChatModelSchema = IsarGeneratedSchema(
       ),
       IsarPropertySchema(
         name: 'adminId',
-      type: IsarType.string,
-    ),
+        type: IsarType.string,
+      ),
       IsarPropertySchema(
         name: 'avatarUrl',
-      type: IsarType.string,
-    ),
+        type: IsarType.string,
+      ),
       IsarPropertySchema(
         name: 'isMuted',
         type: IsarType.bool,
@@ -71,16 +71,16 @@ const ChatModelSchema = IsarGeneratedSchema(
       ),
       IsarPropertySchema(
         name: 'createdAt',
-      type: IsarType.dateTime,
-    ),
+        type: IsarType.dateTime,
+      ),
       IsarPropertySchema(
         name: 'updatedAt',
         type: IsarType.dateTime,
       ),
       IsarPropertySchema(
         name: 'metadata',
-      type: IsarType.string,
-    ),
+        type: IsarType.string,
+      ),
       IsarPropertySchema(
         name: 'metadataMap',
         type: IsarType.json,
@@ -103,8 +103,8 @@ const ChatModelSchema = IsarGeneratedSchema(
       ),
       IsarPropertySchema(
         name: 'participantCount',
-      type: IsarType.long,
-    ),
+        type: IsarType.long,
+      ),
       IsarPropertySchema(
         name: 'isActive',
         type: IsarType.bool,
@@ -113,7 +113,7 @@ const ChatModelSchema = IsarGeneratedSchema(
     indexes: [
       IsarIndexSchema(
         name: 'serverId',
-      properties: [
+        properties: [
           "serverId",
         ],
         unique: true,
@@ -121,7 +121,7 @@ const ChatModelSchema = IsarGeneratedSchema(
       ),
       IsarIndexSchema(
         name: 'createdAt',
-      properties: [
+        properties: [
           "createdAt",
         ],
         unique: false,
@@ -891,8 +891,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterOrEqualCondition(
           property: 1,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -906,8 +906,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessCondition(
           property: 1,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -922,8 +922,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessOrEqualCondition(
           property: 1,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -938,9 +938,9 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         BetweenCondition(
           property: 1,
-        lower: lower,
-        upper: upper,
-        caseSensitive: caseSensitive,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -954,8 +954,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         StartsWithCondition(
           property: 1,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -969,8 +969,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EndsWithCondition(
           property: 1,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -983,8 +983,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         ContainsCondition(
           property: 1,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -997,8 +997,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         MatchesCondition(
           property: 1,
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1009,7 +1009,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const EqualCondition(
           property: 1,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -1021,7 +1021,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const GreaterCondition(
           property: 1,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -1062,8 +1062,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterCondition(
           property: 2,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1078,8 +1078,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterOrEqualCondition(
           property: 2,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1093,8 +1093,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessCondition(
           property: 2,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1125,9 +1125,9 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         BetweenCondition(
           property: 2,
-        lower: lower,
-        upper: upper,
-        caseSensitive: caseSensitive,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1141,8 +1141,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         StartsWithCondition(
           property: 2,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1156,8 +1156,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EndsWithCondition(
           property: 2,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1170,8 +1170,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         ContainsCondition(
           property: 2,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1184,8 +1184,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         MatchesCondition(
           property: 2,
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1196,7 +1196,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const EqualCondition(
           property: 2,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -1207,7 +1207,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const GreaterCondition(
           property: 2,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -1318,7 +1318,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EqualCondition(
           property: 4,
-        value: value,
+          value: value,
           caseSensitive: caseSensitive,
         ),
       );
@@ -1334,7 +1334,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterCondition(
           property: 4,
-        value: value,
+          value: value,
           caseSensitive: caseSensitive,
         ),
       );
@@ -1350,8 +1350,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterOrEqualCondition(
           property: 4,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1366,8 +1366,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessCondition(
           property: 4,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1382,8 +1382,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessOrEqualCondition(
           property: 4,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1399,9 +1399,9 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         BetweenCondition(
           property: 4,
-        lower: lower,
-        upper: upper,
-        caseSensitive: caseSensitive,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1416,8 +1416,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         StartsWithCondition(
           property: 4,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1432,8 +1432,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EndsWithCondition(
           property: 4,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1445,8 +1445,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         ContainsCondition(
           property: 4,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1458,8 +1458,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         MatchesCondition(
           property: 4,
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1471,7 +1471,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const EqualCondition(
           property: 4,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -1483,7 +1483,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const GreaterCondition(
           property: 4,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -1512,8 +1512,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EqualCondition(
           property: 5,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1528,8 +1528,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterCondition(
           property: 5,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1560,8 +1560,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessCondition(
           property: 5,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1593,9 +1593,9 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         BetweenCondition(
           property: 5,
-        lower: lower,
-        upper: upper,
-        caseSensitive: caseSensitive,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1610,8 +1610,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         StartsWithCondition(
           property: 5,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1626,8 +1626,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EndsWithCondition(
           property: 5,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1639,8 +1639,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         ContainsCondition(
           property: 5,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1652,8 +1652,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         MatchesCondition(
           property: 5,
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1665,7 +1665,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const EqualCondition(
           property: 5,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -1677,7 +1677,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const GreaterCondition(
           property: 5,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -1705,7 +1705,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EqualCondition(
           property: 6,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -1719,7 +1719,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterCondition(
           property: 6,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -1747,7 +1747,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessCondition(
           property: 6,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -1776,8 +1776,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         BetweenCondition(
           property: 6,
-        lower: lower,
-        upper: upper,
+          lower: lower,
+          upper: upper,
         ),
       );
     });
@@ -1875,8 +1875,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EqualCondition(
           property: 8,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1891,8 +1891,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterCondition(
           property: 8,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1907,8 +1907,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterOrEqualCondition(
           property: 8,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1956,9 +1956,9 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         BetweenCondition(
           property: 8,
-        lower: lower,
-        upper: upper,
-        caseSensitive: caseSensitive,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1973,8 +1973,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         StartsWithCondition(
           property: 8,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -1989,8 +1989,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EndsWithCondition(
           property: 8,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2002,8 +2002,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         ContainsCondition(
           property: 8,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2011,13 +2011,13 @@ extension ChatModelQueryFilter
 
   QueryBuilder<ChatModel, ChatModel, QAfterFilterCondition>
       participantIdsElementMatches(String pattern,
-      {bool caseSensitive = true}) {
+          {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
           property: 8,
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2029,7 +2029,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const EqualCondition(
           property: 8,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -2041,7 +2041,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const GreaterCondition(
           property: 8,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -2081,8 +2081,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EqualCondition(
           property: 9,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2096,8 +2096,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterCondition(
           property: 9,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2112,8 +2112,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterOrEqualCondition(
           property: 9,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2159,9 +2159,9 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         BetweenCondition(
           property: 9,
-        lower: lower,
-        upper: upper,
-        caseSensitive: caseSensitive,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2175,8 +2175,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         StartsWithCondition(
           property: 9,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2190,8 +2190,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EndsWithCondition(
           property: 9,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2204,8 +2204,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         ContainsCondition(
           property: 9,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2218,8 +2218,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         MatchesCondition(
           property: 9,
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2230,7 +2230,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const EqualCondition(
           property: 9,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -2242,7 +2242,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const GreaterCondition(
           property: 9,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -2269,8 +2269,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EqualCondition(
           property: 10,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2285,8 +2285,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterCondition(
           property: 10,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2301,8 +2301,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterOrEqualCondition(
           property: 10,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2348,9 +2348,9 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         BetweenCondition(
           property: 10,
-        lower: lower,
-        upper: upper,
-        caseSensitive: caseSensitive,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2364,8 +2364,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         StartsWithCondition(
           property: 10,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2379,8 +2379,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EndsWithCondition(
           property: 10,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2393,8 +2393,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         ContainsCondition(
           property: 10,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2402,13 +2402,13 @@ extension ChatModelQueryFilter
 
   QueryBuilder<ChatModel, ChatModel, QAfterFilterCondition> avatarUrlMatches(
       String pattern,
-          {bool caseSensitive = true}) {
+      {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
           property: 10,
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2419,7 +2419,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const EqualCondition(
           property: 10,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -2431,7 +2431,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const GreaterCondition(
           property: 10,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -2525,7 +2525,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessOrEqualCondition(
           property: 13,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -2566,7 +2566,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EqualCondition(
           property: 14,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -2594,7 +2594,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterOrEqualCondition(
           property: 14,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -2607,7 +2607,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessCondition(
           property: 14,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -2621,7 +2621,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessOrEqualCondition(
           property: 14,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -2678,8 +2678,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterCondition(
           property: 15,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2694,8 +2694,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterOrEqualCondition(
           property: 15,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2709,8 +2709,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessCondition(
           property: 15,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2741,9 +2741,9 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         BetweenCondition(
           property: 15,
-        lower: lower,
-        upper: upper,
-        caseSensitive: caseSensitive,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2757,8 +2757,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         StartsWithCondition(
           property: 15,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2772,8 +2772,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EndsWithCondition(
           property: 15,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2786,8 +2786,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         ContainsCondition(
           property: 15,
-        value: value,
-        caseSensitive: caseSensitive,
+          value: value,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2800,8 +2800,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         MatchesCondition(
           property: 15,
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
         ),
       );
     });
@@ -2812,7 +2812,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const EqualCondition(
           property: 15,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -2824,7 +2824,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         const GreaterCondition(
           property: 15,
-        value: '',
+          value: '',
         ),
       );
     });
@@ -2837,7 +2837,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EqualCondition(
           property: 17,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -2850,7 +2850,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EqualCondition(
           property: 18,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -2863,7 +2863,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         EqualCondition(
           property: 19,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -2918,7 +2918,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         GreaterOrEqualCondition(
           property: 21,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -2932,7 +2932,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessCondition(
           property: 21,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -2946,7 +2946,7 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         LessOrEqualCondition(
           property: 21,
-        value: value,
+          value: value,
         ),
       );
     });
@@ -2961,8 +2961,8 @@ extension ChatModelQueryFilter
       return query.addFilterCondition(
         BetweenCondition(
           property: 21,
-        lower: lower,
-        upper: upper,
+          lower: lower,
+          upper: upper,
         ),
       );
     });
@@ -3714,7 +3714,7 @@ extension ChatModelQueryWhereDistinct
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(18);
     });
-}
+  }
 
   QueryBuilder<ChatModel, ChatModel, QAfterDistinct> distinctByIsDirect() {
     return QueryBuilder.apply(this, (query) {
@@ -3740,7 +3740,7 @@ extension ChatModelQueryWhereDistinct
       return query.addDistinctBy(22);
     });
   }
-  }
+}
 
 extension ChatModelQueryProperty1
     on QueryBuilder<ChatModel, ChatModel, QProperty> {

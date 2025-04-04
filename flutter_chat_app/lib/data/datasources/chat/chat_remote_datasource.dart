@@ -1,4 +1,5 @@
 import 'package:flutter_chat_app/core/network/graphql_client.dart';
+import 'package:flutter_chat_app/core/network/socket_manager.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -39,9 +40,9 @@ abstract class ChatRemoteDataSource {
 /// Implementation of [ChatRemoteDataSource]
 class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
   final GraphQLClientWrapper _client;
-  final io.Socket _socket;
+  final SocketManager _socketManager;
   
-  ChatRemoteDataSourceImpl(this._client, this._socket);
+  ChatRemoteDataSourceImpl(this._client, this._socketManager);
   
   @override
   Future<List<ChatModel>> getUserChats() async {
@@ -325,14 +326,12 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
   
   @override
   Stream<ChatModel> subscribeToChats() {
-    // Connect to the socket if not already connected
-    if (!_socket.connected) {
-      _socket.connect();
-    }
+    // Đảm bảo socket được kết nối
+    _socketManager.connect();
     
     // Stream controller for chat updates
-    return _socket
-        .on('chat_updated')
+    return _socketManager
+        .on<Map<String, dynamic>>('chat_updated')
         .map((data) => ChatModel.fromJson(data));
   }
 } 

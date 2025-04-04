@@ -31,4 +31,34 @@ class LocaleChanged extends AppEvent {
   
   @override
   List<Object> get props => [locale];
+}
+
+/// Event triggered when app enters foreground
+class AppEnteredForeground extends AppEvent {
+  const AppEnteredForeground();
+}
+
+/// Event triggered when app enters background
+class AppEnteredBackground extends AppEvent {
+  const AppEnteredBackground();
+}
+
+/// Event triggered when a socket connection is requested
+class SocketConnectionRequested extends AppEvent {
+  const SocketConnectionRequested();
+}
+
+/// Event triggered when a socket connection is closed
+class SocketConnectionClosed extends AppEvent {
+  const SocketConnectionClosed();
+}
+
+/// Event triggered when socket connection state changes
+class SocketConnectionStateChanged extends AppEvent {
+  final SocketConnectionState state;
+  
+  const SocketConnectionStateChanged(this.state);
+  
+  @override
+  List<Object> get props => [state];
 } 

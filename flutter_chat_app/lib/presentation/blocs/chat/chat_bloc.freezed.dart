@@ -18,7 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$ChatEvent {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -43,11 +43,12 @@ mixin _$ChatEvent {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -69,11 +70,12 @@ mixin _$ChatEvent {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -95,6 +97,7 @@ mixin _$ChatEvent {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -115,6 +118,7 @@ mixin _$ChatEvent {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -134,6 +138,7 @@ mixin _$ChatEvent {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -153,6 +158,7 @@ mixin _$ChatEvent {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -183,6 +189,8 @@ abstract class _$$LoadChatsImplCopyWith<$Res> {
   factory _$$LoadChatsImplCopyWith(
           _$LoadChatsImpl value, $Res Function(_$LoadChatsImpl) then) =
       __$$LoadChatsImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({bool forceRefresh});
 }
 
 /// @nodoc
@@ -195,31 +203,58 @@ class __$$LoadChatsImplCopyWithImpl<$Res>
 
   /// Create a copy of ChatEvent
   /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? forceRefresh = null,
+  }) {
+    return _then(_$LoadChatsImpl(
+      forceRefresh: null == forceRefresh
+          ? _value.forceRefresh
+          : forceRefresh // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
 }
 
 /// @nodoc
 
 class _$LoadChatsImpl implements _LoadChats {
-  const _$LoadChatsImpl();
+  const _$LoadChatsImpl({this.forceRefresh = false});
+
+  @override
+  @JsonKey()
+  final bool forceRefresh;
 
   @override
   String toString() {
-    return 'ChatEvent.loadChats()';
+    return 'ChatEvent.loadChats(forceRefresh: $forceRefresh)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _$LoadChatsImpl);
+        (other.runtimeType == runtimeType &&
+            other is _$LoadChatsImpl &&
+            (identical(other.forceRefresh, forceRefresh) ||
+                other.forceRefresh == forceRefresh));
   }
 
   @override
-  int get hashCode => runtimeType.hashCode;
+  int get hashCode => Object.hash(runtimeType, forceRefresh);
+
+  /// Create a copy of ChatEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$LoadChatsImplCopyWith<_$LoadChatsImpl> get copyWith =>
+      __$$LoadChatsImplCopyWithImpl<_$LoadChatsImpl>(this, _$identity);
 
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -244,14 +279,15 @@ class _$LoadChatsImpl implements _LoadChats {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
-    return loadChats();
+    return loadChats(forceRefresh);
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -273,14 +309,15 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
-    return loadChats?.call();
+    return loadChats?.call(forceRefresh);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -302,10 +339,11 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (loadChats != null) {
-      return loadChats();
+      return loadChats(forceRefresh);
     }
     return orElse();
   }
@@ -328,6 +366,7 @@ class _$LoadChatsImpl implements _LoadChats {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return loadChats(this);
   }
@@ -350,6 +389,7 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return loadChats?.call(this);
   }
@@ -372,6 +412,7 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (loadChats != null) {
@@ -382,7 +423,15 @@ class _$LoadChatsImpl implements _LoadChats {
 }
 
 abstract class _LoadChats implements ChatEvent {
-  const factory _LoadChats() = _$LoadChatsImpl;
+  const factory _LoadChats({final bool forceRefresh}) = _$LoadChatsImpl;
+
+  bool get forceRefresh;
+
+  /// Create a copy of ChatEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$LoadChatsImplCopyWith<_$LoadChatsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -454,7 +503,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -479,6 +528,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return loadChatDetails(chatId);
   }
@@ -486,7 +536,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -508,6 +558,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return loadChatDetails?.call(chatId);
   }
@@ -515,7 +566,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -537,6 +588,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (loadChatDetails != null) {
@@ -563,6 +615,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return loadChatDetails(this);
   }
@@ -585,6 +638,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return loadChatDetails?.call(this);
   }
@@ -607,6 +661,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (loadChatDetails != null) {
@@ -716,7 +771,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -741,6 +796,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return loadMessages(chatId, limit, offset);
   }
@@ -748,7 +804,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -770,6 +826,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return loadMessages?.call(chatId, limit, offset);
   }
@@ -777,7 +834,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -799,6 +856,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (loadMessages != null) {
@@ -825,6 +883,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return loadMessages(this);
   }
@@ -847,6 +906,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return loadMessages?.call(this);
   }
@@ -869,6 +929,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (loadMessages != null) {
@@ -1005,7 +1066,7 @@ class _$SendMessageImpl implements _SendMessage {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -1030,6 +1091,7 @@ class _$SendMessageImpl implements _SendMessage {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return sendMessage(chatId, content, contentType, attachmentIds);
   }
@@ -1037,7 +1099,7 @@ class _$SendMessageImpl implements _SendMessage {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -1059,6 +1121,7 @@ class _$SendMessageImpl implements _SendMessage {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return sendMessage?.call(chatId, content, contentType, attachmentIds);
   }
@@ -1066,7 +1129,7 @@ class _$SendMessageImpl implements _SendMessage {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -1088,6 +1151,7 @@ class _$SendMessageImpl implements _SendMessage {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (sendMessage != null) {
@@ -1114,6 +1178,7 @@ class _$SendMessageImpl implements _SendMessage {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return sendMessage(this);
   }
@@ -1136,6 +1201,7 @@ class _$SendMessageImpl implements _SendMessage {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return sendMessage?.call(this);
   }
@@ -1158,6 +1224,7 @@ class _$SendMessageImpl implements _SendMessage {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (sendMessage != null) {
@@ -1295,7 +1362,7 @@ class _$CreateChatImpl implements _CreateChat {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -1320,6 +1387,7 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return createChat(type, name, description, participantIds);
   }
@@ -1327,7 +1395,7 @@ class _$CreateChatImpl implements _CreateChat {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -1349,6 +1417,7 @@ class _$CreateChatImpl implements _CreateChat {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return createChat?.call(type, name, description, participantIds);
   }
@@ -1356,7 +1425,7 @@ class _$CreateChatImpl implements _CreateChat {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -1378,6 +1447,7 @@ class _$CreateChatImpl implements _CreateChat {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (createChat != null) {
@@ -1404,6 +1474,7 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return createChat(this);
   }
@@ -1426,6 +1497,7 @@ class _$CreateChatImpl implements _CreateChat {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return createChat?.call(this);
   }
@@ -1448,6 +1520,7 @@ class _$CreateChatImpl implements _CreateChat {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (createChat != null) {
@@ -1571,7 +1644,7 @@ class _$UpdateChatImpl implements _UpdateChat {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -1596,6 +1669,7 @@ class _$UpdateChatImpl implements _UpdateChat {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return updateChat(chatId, name, description, avatar);
   }
@@ -1603,7 +1677,7 @@ class _$UpdateChatImpl implements _UpdateChat {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -1625,6 +1699,7 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return updateChat?.call(chatId, name, description, avatar);
   }
@@ -1632,7 +1707,7 @@ class _$UpdateChatImpl implements _UpdateChat {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -1654,6 +1729,7 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (updateChat != null) {
@@ -1680,6 +1756,7 @@ class _$UpdateChatImpl implements _UpdateChat {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return updateChat(this);
   }
@@ -1702,6 +1779,7 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return updateChat?.call(this);
   }
@@ -1724,6 +1802,7 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (updateChat != null) {
@@ -1820,7 +1899,7 @@ class _$LeaveChatImpl implements _LeaveChat {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -1845,6 +1924,7 @@ class _$LeaveChatImpl implements _LeaveChat {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return leaveChat(chatId);
   }
@@ -1852,7 +1932,7 @@ class _$LeaveChatImpl implements _LeaveChat {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -1874,6 +1954,7 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return leaveChat?.call(chatId);
   }
@@ -1881,7 +1962,7 @@ class _$LeaveChatImpl implements _LeaveChat {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -1903,6 +1984,7 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (leaveChat != null) {
@@ -1929,6 +2011,7 @@ class _$LeaveChatImpl implements _LeaveChat {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return leaveChat(this);
   }
@@ -1951,6 +2034,7 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return leaveChat?.call(this);
   }
@@ -1973,6 +2057,7 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (leaveChat != null) {
@@ -2079,7 +2164,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -2104,6 +2189,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return addUsersToChat(chatId, userIds);
   }
@@ -2111,7 +2197,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -2133,6 +2219,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return addUsersToChat?.call(chatId, userIds);
   }
@@ -2140,7 +2227,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -2162,6 +2249,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (addUsersToChat != null) {
@@ -2188,6 +2276,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return addUsersToChat(this);
   }
@@ -2210,6 +2299,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return addUsersToChat?.call(this);
   }
@@ -2232,6 +2322,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (addUsersToChat != null) {
@@ -2341,7 +2432,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -2366,6 +2457,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return removeUsersFromChat(chatId, userIds);
   }
@@ -2373,7 +2465,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -2395,6 +2487,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return removeUsersFromChat?.call(chatId, userIds);
   }
@@ -2402,7 +2495,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -2424,6 +2517,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (removeUsersFromChat != null) {
@@ -2450,6 +2544,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return removeUsersFromChat(this);
   }
@@ -2472,6 +2567,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return removeUsersFromChat?.call(this);
   }
@@ -2494,6 +2590,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (removeUsersFromChat != null) {
@@ -2604,7 +2701,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -2629,6 +2726,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return markMessagesAsRead(chatId, messageIds);
   }
@@ -2636,7 +2734,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -2658,6 +2756,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return markMessagesAsRead?.call(chatId, messageIds);
   }
@@ -2665,7 +2764,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -2687,6 +2786,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (markMessagesAsRead != null) {
@@ -2713,6 +2813,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return markMessagesAsRead(this);
   }
@@ -2735,6 +2836,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return markMessagesAsRead?.call(this);
   }
@@ -2757,6 +2859,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (markMessagesAsRead != null) {
@@ -2822,7 +2925,7 @@ class _$SyncChatsImpl implements _SyncChats {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -2847,6 +2950,7 @@ class _$SyncChatsImpl implements _SyncChats {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return syncChats();
   }
@@ -2854,7 +2958,7 @@ class _$SyncChatsImpl implements _SyncChats {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -2876,6 +2980,7 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return syncChats?.call();
   }
@@ -2883,7 +2988,7 @@ class _$SyncChatsImpl implements _SyncChats {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -2905,6 +3010,7 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (syncChats != null) {
@@ -2931,6 +3037,7 @@ class _$SyncChatsImpl implements _SyncChats {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return syncChats(this);
   }
@@ -2953,6 +3060,7 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return syncChats?.call(this);
   }
@@ -2975,6 +3083,7 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (syncChats != null) {
@@ -3056,7 +3165,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -3081,6 +3190,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return syncMessages(chatId);
   }
@@ -3088,7 +3198,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -3110,6 +3220,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return syncMessages?.call(chatId);
   }
@@ -3117,7 +3228,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -3139,6 +3250,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (syncMessages != null) {
@@ -3165,6 +3277,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return syncMessages(this);
   }
@@ -3187,6 +3300,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return syncMessages?.call(this);
   }
@@ -3209,6 +3323,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (syncMessages != null) {
@@ -3300,7 +3415,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -3325,6 +3440,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return newMessageReceived(message);
   }
@@ -3332,7 +3448,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -3354,6 +3470,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return newMessageReceived?.call(message);
   }
@@ -3361,7 +3478,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -3383,6 +3500,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (newMessageReceived != null) {
@@ -3409,6 +3527,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return newMessageReceived(this);
   }
@@ -3431,6 +3550,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return newMessageReceived?.call(this);
   }
@@ -3453,6 +3573,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (newMessageReceived != null) {
@@ -3545,7 +3666,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -3570,6 +3691,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return connectivityChanged(isConnected);
   }
@@ -3577,7 +3699,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -3599,6 +3721,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return connectivityChanged?.call(isConnected);
   }
@@ -3606,7 +3729,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -3628,6 +3751,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (connectivityChanged != null) {
@@ -3654,6 +3778,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return connectivityChanged(this);
   }
@@ -3676,6 +3801,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return connectivityChanged?.call(this);
   }
@@ -3698,6 +3824,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (connectivityChanged != null) {
@@ -3742,10 +3869,10 @@ class __$$MessageStatusUpdatedImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? message = freezed,
+    Object? message = null,
   }) {
     return _then(_$MessageStatusUpdatedImpl(
-      freezed == message
+      null == message
           ? _value.message
           : message // ignore: cast_nullable_to_non_nullable
               as QueuedMessage,
@@ -3771,12 +3898,11 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$MessageStatusUpdatedImpl &&
-            const DeepCollectionEquality().equals(other.message, message));
+            (identical(other.message, message) || other.message == message));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(message));
+  int get hashCode => Object.hash(runtimeType, message);
 
   /// Create a copy of ChatEvent
   /// with the given fields replaced by the non-null parameter values.
@@ -3791,7 +3917,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() loadChats,
+    required TResult Function(bool forceRefresh) loadChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -3816,6 +3942,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     required TResult Function(ChatMessage message) newMessageReceived,
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
   }) {
     return messageStatusUpdated(message);
   }
@@ -3823,7 +3950,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? loadChats,
+    TResult? Function(bool forceRefresh)? loadChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -3845,6 +3972,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult? Function(ChatMessage message)? newMessageReceived,
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
   }) {
     return messageStatusUpdated?.call(message);
   }
@@ -3852,7 +3980,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? loadChats,
+    TResult Function(bool forceRefresh)? loadChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -3874,6 +4002,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult Function(ChatMessage message)? newMessageReceived,
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
     required TResult orElse(),
   }) {
     if (messageStatusUpdated != null) {
@@ -3900,6 +4029,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     required TResult Function(_NewMessageReceived value) newMessageReceived,
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
   }) {
     return messageStatusUpdated(this);
   }
@@ -3922,6 +4052,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult? Function(_NewMessageReceived value)? newMessageReceived,
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
   }) {
     return messageStatusUpdated?.call(this);
   }
@@ -3944,6 +4075,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult Function(_NewMessageReceived value)? newMessageReceived,
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
     required TResult orElse(),
   }) {
     if (messageStatusUpdated != null) {
@@ -3964,6 +4096,254 @@ abstract class _MessageStatusUpdated implements ChatEvent {
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$MessageStatusUpdatedImplCopyWith<_$MessageStatusUpdatedImpl>
       get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$ChatUpdatedImplCopyWith<$Res> {
+  factory _$$ChatUpdatedImplCopyWith(
+          _$ChatUpdatedImpl value, $Res Function(_$ChatUpdatedImpl) then) =
+      __$$ChatUpdatedImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({Chat chat});
+}
+
+/// @nodoc
+class __$$ChatUpdatedImplCopyWithImpl<$Res>
+    extends _$ChatEventCopyWithImpl<$Res, _$ChatUpdatedImpl>
+    implements _$$ChatUpdatedImplCopyWith<$Res> {
+  __$$ChatUpdatedImplCopyWithImpl(
+      _$ChatUpdatedImpl _value, $Res Function(_$ChatUpdatedImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ChatEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? chat = null,
+  }) {
+    return _then(_$ChatUpdatedImpl(
+      chat: null == chat
+          ? _value.chat
+          : chat // ignore: cast_nullable_to_non_nullable
+              as Chat,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ChatUpdatedImpl implements _ChatUpdated {
+  const _$ChatUpdatedImpl({required this.chat});
+
+  @override
+  final Chat chat;
+
+  @override
+  String toString() {
+    return 'ChatEvent.chatUpdated(chat: $chat)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ChatUpdatedImpl &&
+            (identical(other.chat, chat) || other.chat == chat));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, chat);
+
+  /// Create a copy of ChatEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ChatUpdatedImplCopyWith<_$ChatUpdatedImpl> get copyWith =>
+      __$$ChatUpdatedImplCopyWithImpl<_$ChatUpdatedImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function(String chatId) loadChatDetails,
+    required TResult Function(String chatId, int limit, int offset)
+        loadMessages,
+    required TResult Function(String chatId, String content,
+            ContentType contentType, List<String> attachmentIds)
+        sendMessage,
+    required TResult Function(ChatType type, String? name, String? description,
+            List<String> participantIds)
+        createChat,
+    required TResult Function(
+            String chatId, String? name, String? description, String? avatar)
+        updateChat,
+    required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId, List<String> userIds)
+        addUsersToChat,
+    required TResult Function(String chatId, List<String> userIds)
+        removeUsersFromChat,
+    required TResult Function(String chatId, List<String> messageIds)
+        markMessagesAsRead,
+    required TResult Function() syncChats,
+    required TResult Function(String chatId) syncMessages,
+    required TResult Function(ChatMessage message) newMessageReceived,
+    required TResult Function(bool isConnected) connectivityChanged,
+    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
+  }) {
+    return chatUpdated(chat);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function(String chatId)? loadChatDetails,
+    TResult? Function(String chatId, int limit, int offset)? loadMessages,
+    TResult? Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult? Function(ChatType type, String? name, String? description,
+            List<String> participantIds)?
+        createChat,
+    TResult? Function(
+            String chatId, String? name, String? description, String? avatar)?
+        updateChat,
+    TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult? Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult? Function()? syncChats,
+    TResult? Function(String chatId)? syncMessages,
+    TResult? Function(ChatMessage message)? newMessageReceived,
+    TResult? Function(bool isConnected)? connectivityChanged,
+    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
+  }) {
+    return chatUpdated?.call(chat);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(bool forceRefresh)? loadChats,
+    TResult Function(String chatId)? loadChatDetails,
+    TResult Function(String chatId, int limit, int offset)? loadMessages,
+    TResult Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult Function(ChatType type, String? name, String? description,
+            List<String> participantIds)?
+        createChat,
+    TResult Function(
+            String chatId, String? name, String? description, String? avatar)?
+        updateChat,
+    TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult Function()? syncChats,
+    TResult Function(String chatId)? syncMessages,
+    TResult Function(ChatMessage message)? newMessageReceived,
+    TResult Function(bool isConnected)? connectivityChanged,
+    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
+    required TResult orElse(),
+  }) {
+    if (chatUpdated != null) {
+      return chatUpdated(chat);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadChatDetails value) loadChatDetails,
+    required TResult Function(_LoadMessages value) loadMessages,
+    required TResult Function(_SendMessage value) sendMessage,
+    required TResult Function(_CreateChat value) createChat,
+    required TResult Function(_UpdateChat value) updateChat,
+    required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_AddUsersToChat value) addUsersToChat,
+    required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
+    required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
+    required TResult Function(_SyncChats value) syncChats,
+    required TResult Function(_SyncMessages value) syncMessages,
+    required TResult Function(_NewMessageReceived value) newMessageReceived,
+    required TResult Function(_ConnectivityChanged value) connectivityChanged,
+    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
+  }) {
+    return chatUpdated(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadChatDetails value)? loadChatDetails,
+    TResult? Function(_LoadMessages value)? loadMessages,
+    TResult? Function(_SendMessage value)? sendMessage,
+    TResult? Function(_CreateChat value)? createChat,
+    TResult? Function(_UpdateChat value)? updateChat,
+    TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_AddUsersToChat value)? addUsersToChat,
+    TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult? Function(_SyncChats value)? syncChats,
+    TResult? Function(_SyncMessages value)? syncMessages,
+    TResult? Function(_NewMessageReceived value)? newMessageReceived,
+    TResult? Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
+  }) {
+    return chatUpdated?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadChatDetails value)? loadChatDetails,
+    TResult Function(_LoadMessages value)? loadMessages,
+    TResult Function(_SendMessage value)? sendMessage,
+    TResult Function(_CreateChat value)? createChat,
+    TResult Function(_UpdateChat value)? updateChat,
+    TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_AddUsersToChat value)? addUsersToChat,
+    TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult Function(_SyncChats value)? syncChats,
+    TResult Function(_SyncMessages value)? syncMessages,
+    TResult Function(_NewMessageReceived value)? newMessageReceived,
+    TResult Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
+    required TResult orElse(),
+  }) {
+    if (chatUpdated != null) {
+      return chatUpdated(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ChatUpdated implements ChatEvent {
+  const factory _ChatUpdated({required final Chat chat}) = _$ChatUpdatedImpl;
+
+  Chat get chat;
+
+  /// Create a copy of ChatEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ChatUpdatedImplCopyWith<_$ChatUpdatedImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -5568,7 +5948,7 @@ class __$$MessageStatusChangedImplCopyWithImpl<$Res>
   $Res call({
     Object? chatId = null,
     Object? localId = null,
-    Object? status = freezed,
+    Object? status = null,
     Object? serverId = freezed,
   }) {
     return _then(_$MessageStatusChangedImpl(
@@ -5580,7 +5960,7 @@ class __$$MessageStatusChangedImplCopyWithImpl<$Res>
           ? _value.localId
           : localId // ignore: cast_nullable_to_non_nullable
               as String,
-      status: freezed == status
+      status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as MessageQueueStatus,
@@ -5622,14 +6002,14 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
             other is _$MessageStatusChangedImpl &&
             (identical(other.chatId, chatId) || other.chatId == chatId) &&
             (identical(other.localId, localId) || other.localId == localId) &&
-            const DeepCollectionEquality().equals(other.status, status) &&
+            (identical(other.status, status) || other.status == status) &&
             (identical(other.serverId, serverId) ||
                 other.serverId == serverId));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, chatId, localId,
-      const DeepCollectionEquality().hash(status), serverId);
+  int get hashCode =>
+      Object.hash(runtimeType, chatId, localId, status, serverId);
 
   /// Create a copy of ChatState
   /// with the given fields replaced by the non-null parameter values.

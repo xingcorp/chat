@@ -8,10 +8,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/config/route/app_router.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
+import 'package:flutter_chat_app/core/lifecycle/app_lifecycle_observer.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
 import 'package:flutter_chat_app/core/services/chat_message_service.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
+import 'package:flutter_chat_app/presentation/blocs/app/app_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/auth/auth_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
@@ -99,20 +101,50 @@ Future<void> _initializeDesktopServices() async {
   await chatMessageService.initialize();
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final SharedPreferences sharedPreferences;
   
   const MyApp({super.key, required this.sharedPreferences});
+  
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
 
+class _MyAppState extends State<MyApp> {
+  late AppLifecycleObserver _lifecycleObserver;
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // Khởi tạo và đăng ký lifecycle observer
+    _lifecycleObserver = AppLifecycleObserver(context);
+    _lifecycleObserver.register();
+  }
+  
+  @override
+  void dispose() {
+    // Hủy đăng ký lifecycle observer khi widget bị hủy
+    _lifecycleObserver.unregister();
+    super.dispose();
+  }
+  
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) {
-        final authBloc = AuthBloc(sharedPreferences);
-        // Trigger an auth check on app startup
-        authBloc.add(const AuthCheckRequested());
-        return authBloc;
-      },
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => GetIt.I<AppBloc>()..add(const AppInitialized()),
+        ),
+        BlocProvider(
+          create: (context) {
+            final authBloc = AuthBloc(widget.sharedPreferences);
+            // Trigger an auth check on app startup
+            authBloc.add(const AuthCheckRequested());
+            return authBloc;
+          },
+        ),
+      ],
       child: Builder(
         builder: (context) {
           final router = AppRouter.router(context);

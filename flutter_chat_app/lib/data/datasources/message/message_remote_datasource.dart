@@ -1,4 +1,5 @@
 import 'package:flutter_chat_app/core/network/graphql_client.dart';
+import 'package:flutter_chat_app/core/network/socket_manager.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
@@ -26,10 +27,10 @@ abstract class MessageRemoteDataSource {
 /// Implementation of [MessageRemoteDataSource]
 class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
   final GraphQLClientWrapper _client;
-  final io.Socket _socket;
+  final SocketManager _socketManager;
   
   /// Constructor
-  MessageRemoteDataSourceImpl(this._client, this._socket);
+  MessageRemoteDataSourceImpl(this._client, this._socketManager);
   
   @override
   Future<List<MessageModel>> getChatMessages(String chatId, {int limit = 20, String? cursor}) async {
@@ -184,31 +185,30 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
   
   @override
   Stream<MessageModel> subscribeToMessages(String chatId) {
-    // Connect to the socket if not already connected
-    if (!_socket.connected) {
-      _socket.connect();
-    }
+    // Đảm bảo socket được kết nối
+    _socketManager.connect();
     
-    // Listen for 'new_message' events for the specified chat
-    return _socket
-        .emit('join_chat', {'chatId': chatId})
-        .on('new_message')
+    // Tham gia vào chat room
+    _socketManager.emit('join_chat', {'chatId': chatId});
+    
+    // Lắng nghe sự kiện 'new_message' cho chat cụ thể
+    return _socketManager
+        .on<Map<String, dynamic>>('new_message')
         .where((data) => data['chatId'] == chatId)
         .map((data) => MessageModel.fromMap(data));
   }
   
   @override
   Stream<Map<String, dynamic>> subscribeToTypingIndicators(String chatId) {
-    // Connect to the socket if not already connected
-    if (!_socket.connected) {
-      _socket.connect();
-    }
+    // Đảm bảo socket được kết nối
+    _socketManager.connect();
     
-    // Listen for 'typing' events for the specified chat
-    return _socket
-        .emit('join_chat', {'chatId': chatId})
-        .on('typing')
-        .where((data) => data['chatId'] == chatId)
-        .map((data) => data as Map<String, dynamic>);
+    // Tham gia vào chat room
+    _socketManager.emit('join_chat', {'chatId': chatId});
+    
+    // Lắng nghe sự kiện 'typing' cho chat cụ thể
+    return _socketManager
+        .on<Map<String, dynamic>>('typing')
+        .where((data) => data['chatId'] == chatId);
   }
 } 

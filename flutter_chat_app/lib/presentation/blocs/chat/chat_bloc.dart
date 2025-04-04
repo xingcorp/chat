@@ -12,6 +12,9 @@ import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
 import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
+import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
+import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
+import 'package:logger/logger.dart';
 
 part 'chat_event.dart';
 part 'chat_state.dart';
@@ -24,9 +27,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final IMessageRepository _messageRepository;
   final ChatSyncService _chatSyncService;
   final ConnectivityService _connectivityService;
+  final CacheSyncStrategy _cacheSyncStrategy;
+  final MediaCacheManager _mediaCacheManager;
+  final Logger _logger = Logger();
   
   StreamSubscription? _messageSubscription;
   StreamSubscription? _connectivitySubscription;
+  StreamSubscription? _chatUpdatesSubscription;
   
   /// Constructor
   ChatBloc(
@@ -34,6 +41,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     this._messageRepository,
     this._chatSyncService,
     this._connectivityService,
+    this._cacheSyncStrategy,
+    this._mediaCacheManager,
   ) : super(const ChatState.initial()) {
     on<_LoadChats>(_onLoadChats);
     on<_LoadChatDetails>(_onLoadChatDetails);
@@ -49,6 +58,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<_SyncMessages>(_onSyncMessages);
     on<_NewMessageReceived>(_onNewMessageReceived);
     on<_ConnectivityChanged>(_onConnectivityChanged);
+    on<_ChatUpdated>(_onChatUpdated);
     
     // Listen for new messages from repository
     if (_messageRepository is MessageStreamProvider) {
@@ -71,22 +81,37 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     _LoadChats event,
     Emitter<ChatState> emit,
   ) async {
+    if (state is _Loaded && !event.forceRefresh) {
+      return; // Đã tải rồi, không cần tải lại
+    }
+    
     emit(const ChatState.loading());
     
     try {
-      // First try to get from local storage for instant response
-      final localChats = await _chatRepository.getChatsFromLocalStorage();
+      _logger.i('Tải danh sách chat của người dùng');
       
-      if (localChats.isNotEmpty) {
-        emit(ChatState.loaded(chats: localChats));
+      // Kiểm tra xem có cần refresh cache không
+      final shouldRefresh = event.forceRefresh || _cacheSyncStrategy.shouldRefreshChatList();
+      
+      // Lấy danh sách chat
+      final chats = await _chatRepository.getChats();
+      
+      _logger.i('Đã tải ${chats.length} chat');
+      
+      // Reset dirty flag sau khi tải thành công
+      if (shouldRefresh) {
+        _cacheSyncStrategy.resetChatListDirtyFlag();
       }
       
-      // Then try to fetch from server if online
-      if (await _connectivityService.checkConnected()) {
-        final chats = await _chatRepository.getChats();
-        emit(ChatState.loaded(chats: chats));
-      }
+      // Pre-cache avatars for better UX
+      _prefetchAvatars(chats);
+      
+      // Subscribe to real-time updates nếu chưa có
+      _subscribeToRealTimeUpdates();
+      
+      emit(ChatState.loaded(chats: chats));
     } catch (e) {
+      _logger.e('Lỗi khi tải danh sách chat: $e');
       emit(ChatState.error(message: 'Failed to load chats: $e'));
     }
   }
@@ -230,17 +255,33 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     _UpdateChat event,
     Emitter<ChatState> emit,
   ) async {
+    if (state is! _Loaded) return;
+    
+    final currentState = state as _Loaded;
+    final currentChats = List<Chat>.from(currentState.chats);
+    
     try {
-      await _chatRepository.updateChat(
+      _logger.i('Cập nhật chat: ${event.chatId}');
+      
+      final updatedChat = await _chatRepository.updateChat(
         chatId: event.chatId,
         name: event.name,
         avatarUrl: event.avatar,
       );
       
-      // Reload chat details
-      add(ChatEvent.loadChatDetails(chatId: event.chatId));
+      // Cập nhật chat trong danh sách
+      final index = currentChats.indexWhere((chat) => chat.id == event.chatId);
+      if (index != -1) {
+        currentChats[index] = updatedChat;
+        
+        // Đánh dấu chat cụ thể đã thay đổi
+        _cacheSyncStrategy.markChatDetailsDirty(event.chatId);
+        
+        emit(ChatState.loaded(chats: currentChats));
+      }
     } catch (e) {
-      emit(ChatState.error(message: 'Failed to update chat: $e'));
+      _logger.e('Lỗi khi cập nhật chat: $e');
+      // Không thay đổi state, có thể hiển thị thông báo lỗi
     }
   }
   
@@ -249,15 +290,29 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     _LeaveChat event,
     Emitter<ChatState> emit,
   ) async {
+    if (state is! _Loaded) return;
+    
+    final currentState = state as _Loaded;
+    
     try {
+      _logger.i('Rời khỏi chat: ${event.chatId}');
+      
       final success = await _chatRepository.leaveChat(event.chatId);
       
       if (success) {
-        // Reload chats to exclude the one left
-        add(const ChatEvent.loadChats());
+        // Xóa chat khỏi danh sách
+        final updatedChats = currentState.chats
+            .where((chat) => chat.id != event.chatId)
+            .toList();
+        
+        // Đánh dấu danh sách chat đã thay đổi
+        _cacheSyncStrategy.markChatListDirty();
+        
+        emit(ChatState.loaded(chats: updatedChats));
       }
     } catch (e) {
-      emit(ChatState.error(message: 'Failed to leave chat: $e'));
+      _logger.e('Lỗi khi rời khỏi chat: $e');
+      // Không thay đổi state, có thể hiển thị thông báo lỗi
     }
   }
   
@@ -403,10 +458,68 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
   
+  /// Xử lý sự kiện chat được cập nhật (từ real-time)
+  void _onChatUpdated(_ChatUpdated event, Emitter<ChatState> emit) {
+    if (state is! _Loaded) return;
+    
+    final currentState = state as _Loaded;
+    final currentChats = List<Chat>.from(currentState.chats);
+    
+    final chat = event.chat;
+    _logger.i('Chat được cập nhật (real-time): ${chat.id}');
+    
+    // Kiểm tra xem chat đã có trong danh sách chưa
+    final index = currentChats.indexWhere((c) => c.id == chat.id);
+    
+    if (index != -1) {
+      // Cập nhật chat hiện có
+      currentChats[index] = chat;
+    } else {
+      // Thêm chat mới vào đầu danh sách
+      currentChats.insert(0, chat);
+    }
+    
+    // Đánh dấu cache đã thay đổi
+    _cacheSyncStrategy.markChatListDirty();
+    _cacheSyncStrategy.markChatDetailsDirty(chat.id);
+    
+    // Sắp xếp lại danh sách theo lastMessageTime
+    currentChats.sort((a, b) => 
+        (b.lastMessageTime ?? DateTime(1970))
+        .compareTo(a.lastMessageTime ?? DateTime(1970)));
+    
+    emit(ChatState.loaded(chats: currentChats));
+  }
+  
+  /// Pre-load avatars cho UX tốt hơn
+  void _prefetchAvatars(List<Chat> chats) {
+    // Collect avatar URLs
+    final avatarUrls = chats
+        .where((chat) => chat.avatar != null && chat.avatar!.isNotEmpty)
+        .map((chat) => chat.avatar!)
+        .toList();
+    
+    // Prefetch thumbnails
+    if (avatarUrls.isNotEmpty) {
+      _mediaCacheManager.prefetchThumbnails(avatarUrls);
+    }
+  }
+  
+  /// Đăng ký nhận cập nhật real-time
+  void _subscribeToRealTimeUpdates() {
+    // TODO: Implement when socket manager is available
+    // Cancel existing subscription
+    // _chatUpdatesSubscription?.cancel();
+    // _chatUpdatesSubscription = _socketService.onChatUpdated().listen((chat) {
+    //   add(ChatEvent.chatUpdated(chat: chat));
+    // });
+  }
+  
   @override
   Future<void> close() {
     _messageSubscription?.cancel();
     _connectivitySubscription?.cancel();
+    _chatUpdatesSubscription?.cancel();
     return super.close();
   }
 }

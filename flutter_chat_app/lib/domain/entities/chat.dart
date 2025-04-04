@@ -188,6 +188,9 @@ class Chat {
     };
   }
 
+  /// Get last message time for sorting
+  DateTime? get lastMessageTime => lastMessage?.createdAt;
+
   /// Parse chat type from string
   static ChatType _parseType(String typeStr) {
     switch (typeStr.toLowerCase()) {
