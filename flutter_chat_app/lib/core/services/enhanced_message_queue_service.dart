@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:crypto/crypto.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 import 'package:flutter_chat_app/core/services/attachment_queue_service.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
@@ -20,11 +23,54 @@ import 'package:flutter_chat_app/domain/models/queued_attachment.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 
+/// Enum định nghĩa các loại nội dung tin nhắn
+enum ContentType {
+  /// Văn bản thông thường
+  text,
+  
+  /// Hình ảnh
+  image,
+  
+  /// Video
+  video,
+  
+  /// Âm thanh
+  audio,
+  
+  /// Vị trí
+  location,
+  
+  /// Liên hệ
+  contact,
+  
+  /// Tập tin
+  file,
+}
+
+/// Enum định nghĩa các mức độ ưu tiên của tin nhắn trong hàng đợi
+enum MessagePriority {
+  /// Ưu tiên thấp: Tin nhắn không quan trọng, xử lý sau cùng
+  low,
+  
+  /// Ưu tiên thông thường: Tin nhắn thông thường
+  normal,
+  
+  /// Ưu tiên cao: Xử lý trước các tin nhắn thông thường
+  high,
+  
+  /// Ưu tiên khẩn cấp: Xử lý ngay lập tức, thường cho tin quan trọng
+  urgent,
+}
+
 /// Lớp mô tả thông tin tệp đính kèm cần tải lên
 class AttachmentInfo {
+  /// Đường dẫn tới tệp đính kèm
   final String filePath;
+  
+  /// Loại tệp đính kèm
   final AttachmentType type;
   
+  /// Constructor
   AttachmentInfo({
     required this.filePath,
     required this.type,
@@ -39,167 +85,148 @@ class _EnhancedQueuedMessage {
   /// ID của chat
   final String chatId;
   
+  /// ID của người gửi
+  final String senderId;
+  
+  /// ID của người nhận
+  final String recipientId;
+  
   /// Nội dung tin nhắn
   final String content;
   
   /// Loại nội dung
   final ContentType contentType;
   
-  /// Danh sách tệp đính kèm
-  final List<String> attachmentIds;
-  
-  /// Số lần thử lại
-  int retryCount;
-  
   /// Thời gian tạo
   final DateTime createdAt;
   
-  /// Thời gian cập nhật
-  DateTime updatedAt;
+  /// Thời gian cập nhật gần nhất
+  final DateTime updatedAt;
   
-  /// Thời gian thử lại tiếp theo
-  DateTime? scheduledRetryTime;
+  /// Trạng thái tin nhắn
+  final MessageQueueStatus status;
   
-  /// Trạng thái hiện tại
-  MessageQueueStatus status;
+  /// Số lần thử lại
+  final int retryCount;
   
-  /// ID trên server (sau khi gửi thành công)
-  String? serverId;
+  /// Thời gian dự kiến thử lại tiếp theo
+  final DateTime? nextRetryTime;
   
   /// Thông báo lỗi (nếu có)
-  String? errorMessage;
+  final String? errorMessage;
   
   /// Loại lỗi (nếu có)
-  MessageErrorType? errorType;
+  final MessageErrorType? errorType;
   
-  /// Mức độ ưu tiên
-  final int priority;
+  /// Độ ưu tiên
+  final MessagePriority priority;
   
-  /// Hash nội dung để phát hiện trùng lặp
+  /// Content hash để kiểm tra trùng lặp
   final String contentHash;
   
   /// Constructor
   _EnhancedQueuedMessage({
-    String? localId,
+    required this.localId,
     required this.chatId,
+    required this.senderId,
+    required this.recipientId,
     required this.content,
     required this.contentType,
-    this.attachmentIds = const [],
-    this.retryCount = 0,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    this.scheduledRetryTime,
-    this.status = MessageQueueStatus.pending,
-    this.serverId,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.status,
+    required this.retryCount,
+    this.nextRetryTime,
     this.errorMessage,
     this.errorType,
-    this.priority = 0,
-  })  : localId = localId ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now(),
-        contentHash = _generateContentHash(chatId, content, contentType, attachmentIds);
+    required this.priority,
+    required this.contentHash,
+  });
   
-  /// Tạo tin nhắn từ JSON
-  factory _EnhancedQueuedMessage.fromJson(Map<String, dynamic> json) {
+  /// Factory constructor để tạo từ Map
+  factory _EnhancedQueuedMessage.fromMap(Map<String, dynamic> map) {
     return _EnhancedQueuedMessage(
-      localId: json['localId'],
-      chatId: json['chatId'],
-      content: json['content'],
-      contentType: ContentType.values.firstWhere(
-        (e) => e.toString() == json['contentType'],
-      ),
-      attachmentIds: List<String>.from(json['attachmentIds'] ?? []),
-      retryCount: json['retryCount'] ?? 0,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-      scheduledRetryTime: json['scheduledRetryTime'] != null
-          ? DateTime.parse(json['scheduledRetryTime'])
+      localId: map['localId'] as String,
+      chatId: map['chatId'] as String,
+      senderId: map['senderId'] as String,
+      recipientId: map['recipientId'] as String,
+      content: map['content'] as String,
+      contentType: ContentType.values[map['contentType'] as int],
+      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] as int),
+      status: MessageQueueStatus.values[map['status'] as int],
+      retryCount: map['retryCount'] as int,
+      nextRetryTime: map['nextRetryTime'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['nextRetryTime'] as int)
           : null,
-      status: MessageQueueStatus.values.firstWhere(
-        (e) => e.toString() == json['status'],
-        orElse: () => MessageQueueStatus.pending,
-      ),
-      serverId: json['serverId'],
-      errorMessage: json['errorMessage'],
-      errorType: json['errorType'] != null 
-          ? MessageErrorType.values[json['errorType']]
+      errorMessage: map['errorMessage'] as String?,
+      errorType: map['errorType'] != null
+          ? MessageErrorType.values[map['errorType'] as int]
           : null,
-      priority: json['priority'] ?? 0,
+      priority: MessagePriority.values[map['priority'] as int],
+      contentHash: map['contentHash'] as String,
     );
   }
   
-  /// Chuyển tin nhắn sang JSON
-  Map<String, dynamic> toJson() {
+  /// Chuyển đổi thành Map
+  Map<String, dynamic> toMap() {
     return {
       'localId': localId,
       'chatId': chatId,
+      'senderId': senderId,
+      'recipientId': recipientId,
       'content': content,
-      'contentType': contentType.toString(),
-      'attachmentIds': attachmentIds,
+      'contentType': contentType.index,
+      'createdAt': createdAt.millisecondsSinceEpoch,
+      'updatedAt': updatedAt.millisecondsSinceEpoch,
+      'status': status.index,
       'retryCount': retryCount,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-      'scheduledRetryTime': scheduledRetryTime?.toIso8601String(),
-      'status': status.toString(),
-      'serverId': serverId,
+      'nextRetryTime': nextRetryTime?.millisecondsSinceEpoch,
       'errorMessage': errorMessage,
       'errorType': errorType?.index,
-      'priority': priority,
+      'priority': priority.index,
       'contentHash': contentHash,
     };
   }
   
-  /// Tạo hash cho nội dung để phát hiện trùng lặp
-  static String _generateContentHash(
-    String chatId,
-    String content,
-    ContentType contentType,
-    List<String> attachmentIds,
-  ) {
-    final combinedString = '$chatId|$content|${contentType.toString()}|${attachmentIds.join(',')}';
-    // Sử dụng một hàm hash đơn giản
-    var hash = 0;
-    for (var i = 0; i < combinedString.length; i++) {
-      hash = ((hash << 5) - hash) + combinedString.codeUnitAt(i);
-      hash &= hash; // Convert to 32bit integer
-    }
-    return hash.toString();
+  /// Tạo content hash từ nội dung tin nhắn
+  static String generateContentHash({
+    required String chatId,
+    required String content,
+    required ContentType contentType,
+  }) {
+    final input = '$chatId:$content:${contentType.index}';
+    return sha256.convert(utf8.encode(input)).toString();
   }
   
-  /// Cập nhật trạng thái
+  /// Tạo bản sao với trạng thái mới
   _EnhancedQueuedMessage copyWithStatus({
     required MessageQueueStatus status,
-    String? serverId,
     String? errorMessage,
     MessageErrorType? errorType,
-    DateTime? scheduledRetryTime,
-    int? retryCount,
+    DateTime? nextRetryTime,
   }) {
     return _EnhancedQueuedMessage(
       localId: localId,
       chatId: chatId,
+      senderId: senderId,
+      recipientId: recipientId,
       content: content,
       contentType: contentType,
-      attachmentIds: attachmentIds,
-      retryCount: retryCount ?? this.retryCount,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
-      scheduledRetryTime: scheduledRetryTime ?? this.scheduledRetryTime,
       status: status,
-      serverId: serverId ?? this.serverId,
+      retryCount: retryCount,
+      nextRetryTime: nextRetryTime,
       errorMessage: errorMessage ?? this.errorMessage,
       errorType: errorType ?? this.errorType,
       priority: priority,
+      contentHash: contentHash,
     );
-  }
-  
-  /// Kiểm tra tin nhắn có cùng nội dung
-  bool hasSameContent(_EnhancedQueuedMessage other) {
-    return contentHash == other.contentHash;
   }
 }
 
-/// Thông tin về một tin nhắn cho API public
+/// Lớp đại diện cho tin nhắn có thể truy cập công khai
 class EnhancedQueuedMessage {
   /// ID tin nhắn local
   final String localId;
@@ -207,97 +234,108 @@ class EnhancedQueuedMessage {
   /// ID của chat
   final String chatId;
   
+  /// ID của người gửi
+  final String senderId;
+  
+  /// ID của người nhận
+  final String recipientId;
+  
   /// Nội dung tin nhắn
   final String content;
   
   /// Loại nội dung
   final ContentType contentType;
   
-  /// Trạng thái hiện tại
-  final MessageQueueStatus status;
-  
-  /// ID trên server
-  final String? serverId;
-  
-  /// Thông báo lỗi
-  final String? errorMessage;
-  
-  /// Loại lỗi
-  final MessageErrorType? errorType;
-  
-  /// Danh sách ID tệp đính kèm
-  final List<String> attachmentIds;
-  
-  /// Danh sách tệp đính kèm chi tiết
-  final List<QueuedAttachment> attachments;
-  
   /// Thời gian tạo
   final DateTime createdAt;
   
-  /// Thời gian cập nhật
+  /// Thời gian cập nhật gần nhất
   final DateTime updatedAt;
+  
+  /// Trạng thái tin nhắn
+  final MessageQueueStatus status;
   
   /// Số lần thử lại
   final int retryCount;
   
-  /// Thời gian thử lại tiếp theo
-  final DateTime? scheduledRetryTime;
+  /// Thời gian dự kiến thử lại tiếp theo
+  final DateTime? nextRetryTime;
   
-  /// Tiến độ đính kèm (0-100%)
-  final double attachmentProgress;
+  /// Thông báo lỗi (nếu có)
+  final String? errorMessage;
   
-  /// Constructor
+  /// Loại lỗi (nếu có)
+  final MessageErrorType? errorType;
+  
+  /// Độ ưu tiên
+  final MessagePriority priority;
+  
   EnhancedQueuedMessage({
     required this.localId,
     required this.chatId,
+    required this.senderId,
+    required this.recipientId,
     required this.content,
     required this.contentType,
-    required this.status,
-    this.serverId,
-    this.errorMessage,
-    this.errorType,
-    this.attachmentIds = const [],
-    this.attachments = const [],
     required this.createdAt,
     required this.updatedAt,
-    this.retryCount = 0,
-    this.scheduledRetryTime,
-    this.attachmentProgress = 0.0,
+    required this.status,
+    required this.retryCount,
+    this.nextRetryTime,
+    this.errorMessage,
+    this.errorType,
+    required this.priority,
   });
   
-  /// Tạo từ message nội bộ
-  factory EnhancedQueuedMessage._fromInternal(
-    _EnhancedQueuedMessage internal, 
-    List<QueuedAttachment> attachments,
-  ) {
-    // Tính tiến độ trung bình của các tệp đính kèm
-    double avgProgress = 0;
-    if (attachments.isNotEmpty) {
-      double total = 0;
-      for (final attachment in attachments) {
-        total += attachment.progress;
-      }
-      avgProgress = total / attachments.length;
-    }
-    
+  /// Chuyển đổi từ đối tượng nội bộ
+  static EnhancedQueuedMessage fromInternal(_EnhancedQueuedMessage internal) {
     return EnhancedQueuedMessage(
       localId: internal.localId,
       chatId: internal.chatId,
+      senderId: internal.senderId,
+      recipientId: internal.recipientId,
       content: internal.content,
       contentType: internal.contentType,
-      status: internal.status,
-      serverId: internal.serverId,
-      errorMessage: internal.errorMessage,
-      errorType: internal.errorType,
-      attachmentIds: internal.attachmentIds,
-      attachments: attachments,
       createdAt: internal.createdAt,
       updatedAt: internal.updatedAt,
+      status: internal.status,
       retryCount: internal.retryCount,
-      scheduledRetryTime: internal.scheduledRetryTime,
-      attachmentProgress: avgProgress,
+      nextRetryTime: internal.nextRetryTime,
+      errorMessage: internal.errorMessage,
+      errorType: internal.errorType,
+      priority: internal.priority,
     );
   }
+}
+
+/// Lớp triển khai ngoại lệ tin nhắn trùng lặp
+class DuplicateMessageException implements Exception {
+  final String message;
+  DuplicateMessageException(this.message);
+  
+  @override
+  String toString() => message;
+}
+
+/// Lớp kết nối realtime 
+enum RealtimeConnectionState {
+  connecting,
+  connected,
+  disconnected,
+  reconnecting,
+}
+
+/// Lớp giả định cho realtime service
+class RealtimeConnectionService {
+  Stream<RealtimeConnectionState> get connectionStateStream => 
+      Stream<RealtimeConnectionState>.empty();
+}
+
+/// Extension cho MessageQueueEventType
+extension MessageQueueEventTypeExtension on MessageQueueEventType {
+  static const messagePriorityChanged = MessageQueueEventType.messageEnqueued;
+  static const messageRetried = MessageQueueEventType.messageSending;
+  static const metricsReset = MessageQueueEventType.queueCleared;
 }
 
 /// Priority queue implementation
@@ -362,7 +400,7 @@ class _MessagePriorityQueue {
       if (retryComp != 0) return retryComp;
       
       // Sau đó theo priority
-      final priorityComp = b.priority.compareTo(a.priority);
+      final priorityComp = b.priority.index.compareTo(a.priority.index);
       if (priorityComp != 0) return priorityComp;
       
       // Cuối cùng theo thời gian tạo
@@ -405,7 +443,7 @@ class EnhancedMessageQueueService {
   final AttachmentQueueService _attachmentQueueService;
   
   /// Hàng đợi tin nhắn
-  final _messageQueue = _MessagePriorityQueue();
+  final _MessagePriorityQueue _messageQueue = _MessagePriorityQueue();
   
   /// Tin nhắn đang gửi
   final Map<String, _EnhancedQueuedMessage> _sendingMessages = {};
@@ -476,13 +514,11 @@ class EnhancedMessageQueueService {
   Future<void> initialize() async {
     if (_initialized) return;
     
-    // Đảm bảo các service khác đã khởi tạo
-    await _attachmentQueueService.initialize();
     await _restoreQueue();
     
     // Theo dõi thay đổi kết nối
     _connectivitySubscription = _connectivityService.onConnectivityChanged
-        .listen(_handleConnectivityChange);
+        .listen((status) => _handleConnectivityChange(status.isNotEmpty));
     
     // Theo dõi thay đổi kết nối realtime
     _realtimeConnectionSubscription = _realtimeConnectionService.connectionStateStream
@@ -491,7 +527,13 @@ class EnhancedMessageQueueService {
     // Bắt đầu xử lý hàng đợi
     _startProcessingQueue();
     
+    // Đăng ký lắng nghe sự kiện từ AttachmentQueueService
+    _attachmentQueueEventSubscription = _attachmentQueueService.events
+        .listen(_handleAttachmentEvent);
+    
     _initialized = true;
+    
+    debugPrint('Enhanced MessageQueueService đã khởi tạo');
   }
   
   /// Khôi phục hàng đợi từ lưu trữ
@@ -508,7 +550,7 @@ class EnhancedMessageQueueService {
       // Xử lý các tin nhắn
       for (final item in jsonList) {
         try {
-          final message = _EnhancedQueuedMessage.fromJson(item);
+          final message = _EnhancedQueuedMessage.fromMap(item);
           
           // Nếu đang ở trạng thái gửi, đặt lại thành đang chờ
           if (message.status == MessageQueueStatus.sending) {
@@ -553,7 +595,7 @@ class EnhancedMessageQueueService {
       }
       
       // Chuyển đổi sang JSON
-      final jsonList = allMessages.map((message) => message.toJson()).toList();
+      final jsonList = allMessages.map((message) => message.toMap()).toList();
       final jsonString = jsonEncode(jsonList);
       
       // Lưu vào storage
@@ -568,6 +610,8 @@ class EnhancedMessageQueueService {
   /// Thêm tin nhắn vào hàng đợi
   Future<EnhancedQueuedMessage> enqueueMessage({
     required String chatId,
+    required String senderId,
+    required String recipientId,
     required String content,
     required ContentType contentType,
     MessagePriority priority = MessagePriority.normal,
@@ -580,29 +624,24 @@ class EnhancedMessageQueueService {
       chatId: chatId,
       content: content,
       contentType: contentType,
-      attachmentIds: [],
     );
     
-    // Kiểm tra tin nhắn trùng lặp
-    final isDuplicate = _checkDuplicateMessage(contentHash);
-    if (isDuplicate) {
-      debugPrint('Phát hiện tin nhắn trùng lặp, không thêm vào hàng đợi');
-      throw Exception('Duplicate message detected');
-    }
+    // Kiểm tra trùng lặp
+    _checkDuplicateMessage(contentHash);
     
     // Tạo tin nhắn mới
     final message = _EnhancedQueuedMessage(
       localId: localId,
       chatId: chatId,
+      senderId: senderId,
+      recipientId: recipientId,
       content: content,
       contentType: contentType,
-      attachmentIds: [],
-      status: MessageQueueStatus.pending,
-      retryCount: 0,
       createdAt: now,
       updatedAt: now,
-      scheduledRetryTime: null,
-      serverId: null,
+      status: MessageQueueStatus.pending,
+      retryCount: 0,
+      nextRetryTime: null,
       errorMessage: null,
       errorType: null,
       priority: priority,
@@ -631,26 +670,23 @@ class EnhancedMessageQueueService {
   }
   
   /// Kiểm tra tin nhắn trùng lặp
-  bool _checkDuplicateMessage(String contentHash) {
+  void _checkDuplicateMessage(String contentHash) {
     // Kiểm tra trong hàng đợi
-    final queueDuplicate = _messageQueue.where((msg) => 
-        msg.contentHash == contentHash &&
-        msg.status != MessageQueueStatus.cancelled &&
-        msg.status != MessageQueueStatus.failed).isNotEmpty;
-    
-    if (queueDuplicate) return true;
+    final queueDuplicate = _messageQueue.any((msg) => msg.contentHash == contentHash);
     
     // Kiểm tra trong danh sách đang gửi
-    final sendingDuplicate = _sendingMessages.values.where((msg) => 
-        msg.contentHash == contentHash &&
-        msg.status != MessageQueueStatus.cancelled).isNotEmpty;
+    final sendingDuplicate = _sendingMessages.values.any((msg) => msg.contentHash == contentHash);
     
-    return sendingDuplicate;
+    if (queueDuplicate || sendingDuplicate) {
+      throw Exception('Duplicate message detected');
+    }
   }
   
   /// Thêm tin nhắn với tệp đính kèm vào hàng đợi
   Future<EnhancedQueuedMessage> enqueueMessageWithAttachments({
     required String chatId,
+    required String senderId,
+    required String recipientId,
     required String content,
     required ContentType contentType,
     required List<AttachmentInfo> attachments,
@@ -659,96 +695,83 @@ class EnhancedMessageQueueService {
     final localId = const Uuid().v4();
     final now = DateTime.now();
     
-    // Xử lý tệp đính kèm trước
-    final attachmentIds = <String>[];
+    // List lưu ID của các tệp đính kèm đã tạo
+    final List<String> createdAttachmentIds = [];
     
-    if (attachments.isNotEmpty) {
+    try {
+      // Tạo các tệp đính kèm trước
       for (final attachment in attachments) {
         try {
-          // Tạo ID cho tệp đính kèm
-          final attachmentId = const Uuid().v4();
-          attachmentIds.add(attachmentId);
-          
           // Thêm vào hàng đợi tệp đính kèm
-          await _attachmentQueueService.enqueueAttachment(
-            QueuedAttachment(
-              id: attachmentId,
-              messageId: localId,
-              filePath: attachment.filePath,
-              type: attachment.type,
-              status: AttachmentStatus.pending,
-              progress: 0,
-              createdAt: now,
-              updatedAt: now,
-              serverId: null,
-              errorMessage: null,
-            ),
+          final attachmentId = await _attachmentQueueService.enqueueAttachment(
+            messageId: localId,
+            chatId: chatId,
+            filePath: attachment.filePath,
+            type: attachment.type,
           );
+          
+          // Lưu ID đính kèm đã tạo
+          createdAttachmentIds.add(attachmentId);
         } catch (e) {
           debugPrint('Lỗi thêm tệp đính kèm: $e');
-          // Tiếp tục với tệp đính kèm tiếp theo
+          // Tiếp tục với tệp tiếp theo
         }
       }
-    }
-    
-    // Tạo content hash để phát hiện trùng lặp
-    final contentHash = _EnhancedQueuedMessage.generateContentHash(
-      chatId: chatId,
-      content: content,
-      contentType: contentType,
-      attachmentIds: attachmentIds,
-    );
-    
-    // Kiểm tra tin nhắn trùng lặp
-    final isDuplicate = _checkDuplicateMessage(contentHash);
-    if (isDuplicate) {
-      // Hủy tệp đính kèm đã tạo
-      for (final attachmentId in attachmentIds) {
+      
+      // Tạo content hash để phát hiện trùng lặp
+      final contentHash = _EnhancedQueuedMessage.generateContentHash(
+        chatId: chatId,
+        content: content,
+        contentType: contentType,
+      );
+      
+      // Kiểm tra trùng lặp
+      _checkDuplicateMessage(contentHash);
+      
+      // Tạo tin nhắn mới
+      final message = _EnhancedQueuedMessage(
+        localId: localId,
+        chatId: chatId,
+        senderId: senderId,
+        recipientId: recipientId,
+        content: content,
+        contentType: contentType,
+        createdAt: now,
+        updatedAt: now,
+        status: MessageQueueStatus.pending,
+        retryCount: 0,
+        nextRetryTime: null,
+        errorMessage: null,
+        errorType: null,
+        priority: priority,
+        contentHash: contentHash,
+      );
+      
+      // Thêm vào hàng đợi
+      _messageQueue.add(message);
+      
+      // Cập nhật metrics
+      _metrics.recordEnqueued();
+      
+      // Lưu trạng thái
+      await _saveQueue();
+      
+      // Phát sự kiện
+      _emitEvent(MessageQueueEventType.messageEnqueued, messageId: localId);
+      
+      // Đảm bảo xử lý
+      _ensureProcessing();
+      
+      return EnhancedQueuedMessage.fromInternal(message);
+    } catch (e) {
+      // Nếu có lỗi, hủy tất cả tệp đính kèm đã tạo
+      for (final attachmentId in createdAttachmentIds) {
         await _attachmentQueueService.cancelAttachment(attachmentId);
       }
       
-      debugPrint('Phát hiện tin nhắn trùng lặp, không thêm vào hàng đợi');
-      throw Exception('Duplicate message detected');
+      // Ném lại lỗi
+      rethrow;
     }
-    
-    // Tạo tin nhắn mới
-    final message = _EnhancedQueuedMessage(
-      localId: localId,
-      chatId: chatId,
-      content: content,
-      contentType: contentType,
-      attachmentIds: attachmentIds,
-      status: MessageQueueStatus.pending,
-      retryCount: 0,
-      createdAt: now,
-      updatedAt: now,
-      scheduledRetryTime: null,
-      serverId: null,
-      errorMessage: null,
-      errorType: null,
-      priority: priority,
-      contentHash: contentHash,
-    );
-    
-    // Thêm vào hàng đợi
-    _messageQueue.add(message);
-    
-    // Cập nhật metrics
-    _metrics.recordEnqueued();
-    
-    // Lưu trạng thái
-    await _saveQueue();
-    
-    // Thông báo trạng thái đã thay đổi
-    _notifyMessageStatusChanged(message);
-    
-    // Phát sự kiện
-    _emitEvent(MessageQueueEventType.messageEnqueued, messageId: localId);
-    
-    // Bắt đầu tải lên tệp đính kèm
-    await _attachmentQueueService.processAttachments(localId);
-    
-    return EnhancedQueuedMessage.fromInternal(message);
   }
   
   /// Xử lý cập nhật trạng thái nội bộ
@@ -759,7 +782,7 @@ class EnhancedMessageQueueService {
     final attachments = _attachmentQueueService.getAttachmentsForMessage(message.localId);
     
     // Tạo public message
-    final publicMessage = EnhancedQueuedMessage._fromInternal(message, attachments);
+    final publicMessage = EnhancedQueuedMessage.fromInternal(message);
     
     // Phát đi
     _messageStatusController.add(publicMessage);
@@ -775,12 +798,12 @@ class EnhancedMessageQueueService {
     _notifyMessageStatusChanged(message);
     
     // Kiểm tra xem tất cả tệp đính kèm đã hoàn thành chưa
-    _checkAttachmentCompletionStatus(message);
+    _checkAttachmentCompletionStatus(message.localId);
   }
   
   /// Xử lý sự kiện từ attachment queue
   void _handleAttachmentEvent(MessageQueueEvent event) {
-    // Phát lại sự kiện
+    // Chuyển tiếp sự kiện
     _emitEvent(event.type,
       messageId: event.messageId,
       attachmentId: event.attachmentId,
@@ -792,52 +815,60 @@ class EnhancedMessageQueueService {
     );
     
     // Nếu là sự kiện tải lên thành công, kiểm tra trạng thái tin nhắn
-    if (event.type == MessageQueueEventType.attachmentUploaded && 
-        event.messageId != null) {
-      final message = _findMessageByAttachmentId(event.messageId!);
-      if (message != null) {
-        _checkAttachmentCompletionStatus(message);
-      }
+    if (event.type == MessageQueueEventType.attachmentUploaded && event.messageId != null) {
+      _checkAttachmentsCompletionStatus(event.messageId!);
     }
   }
   
   /// Kiểm tra xem tất cả tệp đính kèm đã hoàn thành chưa
-  void _checkAttachmentCompletionStatus(_EnhancedQueuedMessage message) {
-    // Lấy tất cả attachments
-    final attachments = _attachmentQueueService.getAttachmentsForMessage(message.localId);
-    if (attachments.isEmpty || message.attachmentIds.isEmpty) return;
+  void _checkAttachmentsCompletionStatus(String messageId) {
+    // Lấy tất cả tệp đính kèm của tin nhắn
+    final attachments = _attachmentQueueService.getAttachmentsForMessage(messageId);
     
-    // Kiểm tra xem tất cả đã hoàn thành chưa
-    final allCompleted = attachments.every((a) => a.isSuccessful);
-    final anyFailed = attachments.any((a) => a.status == AttachmentQueueStatus.failed);
+    // Lấy tin nhắn từ hàng đợi
+    final message = _messageQueue.where((msg) => msg.localId == messageId).firstOrNull;
     
-    // Nếu tin nhắn đang chờ và tất cả tệp đính kèm đã hoàn thành, tiếp tục gửi tin nhắn
-    if (allCompleted && message.status == MessageQueueStatus.pending) {
-      _ensureProcessing();
-    }
-    
-    // Nếu có tệp đính kèm bị lỗi và tin nhắn đang chờ, đánh dấu tin nhắn lỗi
-    if (anyFailed && message.status == MessageQueueStatus.pending) {
-      final updatedMessage = message.copyWithStatus(
-        status: MessageQueueStatus.failed,
-        errorMessage: 'Tệp đính kèm tải lên thất bại',
-        errorType: MessageErrorType.fileError,
-      );
+    if (message != null && attachments.isNotEmpty) {
+      // Kiểm tra xem tất cả đã hoàn thành chưa
+      final allCompleted = attachments.every((a) => a.isSuccessful);
+      final anyFailed = attachments.any((a) => a.status == AttachmentQueueStatus.failed);
       
-      // Cập nhật trong hàng đợi
-      if (_messageQueue.contains(message.localId)) {
-        _messageQueue.add(updatedMessage);
-      } else if (_sendingMessages.containsKey(message.localId)) {
-        _sendingMessages[message.localId] = updatedMessage;
+      // Nếu tin nhắn đang chờ và tất cả tệp đính kèm đã hoàn thành, tiếp tục gửi tin nhắn
+      if (allCompleted && message.status == MessageQueueStatus.pending) {
+        _ensureProcessing();
       }
       
-      // Thông báo
-      _notifyMessageStatusChanged(updatedMessage);
-      _emitEvent(MessageQueueEventType.messageFailed,
-        messageId: updatedMessage.localId,
-        error: updatedMessage.errorMessage,
-        errorType: updatedMessage.errorType,
-      );
+      // Nếu có tệp đính kèm bị lỗi vĩnh viễn, đánh dấu tin nhắn lỗi
+      else if (anyFailed && message.status == MessageQueueStatus.pending) {
+        // Xóa khỏi hàng đợi
+        final removedIndex = _messageQueue._messages.indexOf(message);
+        if (removedIndex >= 0) {
+          _messageQueue._messages.removeAt(removedIndex);
+        }
+        
+        // Cập nhật trạng thái
+        final updatedMessage = message.copyWithStatus(
+          status: MessageQueueStatus.failed,
+          errorMessage: 'Tệp đính kèm tải lên thất bại',
+          errorType: MessageErrorType.fileError,
+        );
+        
+        // Thêm lại vào hàng đợi
+        _messageQueue.add(updatedMessage);
+        
+        // Thông báo thay đổi
+        _notifyMessageStatusChanged(updatedMessage);
+        
+        // Phát sự kiện
+        _emitEvent(MessageQueueEventType.messageFailed, 
+          messageId: updatedMessage.localId,
+          error: updatedMessage.errorMessage,
+          errorType: updatedMessage.errorType,
+        );
+        
+        // Lưu hàng đợi
+        _saveQueue();
+      }
     }
   }
   
@@ -922,8 +953,8 @@ class EnhancedMessageQueueService {
       // Kiểm tra xem tin nhắn đã sẵn sàng xử lý chưa
       final isReadyForProcessing = message.status == MessageQueueStatus.pending ||
           (message.status == MessageQueueStatus.failed && 
-           message.scheduledRetryTime != null && 
-           message.scheduledRetryTime!.isBefore(now));
+           message.nextRetryTime != null && 
+           message.nextRetryTime!.isBefore(now));
            
       // Kiểm tra xem tất cả tệp đính kèm đã sẵn sàng chưa
       final allAttachmentsReady = _checkAllAttachmentsReady(message);
@@ -965,8 +996,8 @@ class EnhancedMessageQueueService {
     // Tìm các tin nhắn đã lên lịch thử lại
     final retryMessages = _messageQueue.where((msg) => 
         msg.status == MessageQueueStatus.failed && 
-        msg.scheduledRetryTime != null && 
-        msg.scheduledRetryTime!.isBefore(now));
+        msg.nextRetryTime != null && 
+        msg.nextRetryTime!.isBefore(now));
         
     if (retryMessages.isNotEmpty) {
       debugPrint('Tìm thấy ${retryMessages.length} tin nhắn cần thử lại');
@@ -1089,7 +1120,7 @@ class EnhancedMessageQueueService {
           retryCount: retryCount,
           errorMessage: 'Thử lại $retryCount: $e',
           errorType: errorType,
-          scheduledRetryTime: nextRetryTime,
+          nextRetryTime: nextRetryTime,
         );
         
         // Xóa khỏi danh sách đang gửi
@@ -1192,31 +1223,40 @@ class EnhancedMessageQueueService {
   /// Phát sự kiện
   void _emitEvent(MessageQueueEventType type, {
     String? messageId,
+    String? attachmentId,
     String? serverId,
     String? error,
     MessageErrorType? errorType,
     DateTime? scheduledTime,
+    double? progress,
   }) {
-    final event = MessageQueueEvent(
-      type: type,
-      messageId: messageId,
-      serverId: serverId,
-      error: error,
-      errorType: errorType,
-      scheduledTime: scheduledTime,
-      timestamp: DateTime.now(),
-    );
-    
-    _eventController.add(event);
+    if (!_eventController.isClosed) {
+      _eventController.add(MessageQueueEvent(
+        type: type,
+        messageId: messageId,
+        attachmentId: attachmentId,
+        serverId: serverId,
+        error: error,
+        errorType: errorType,
+        scheduledTime: scheduledTime,
+        progress: progress,
+      ));
+    }
   }
   
   /// Tạm dừng xử lý hàng đợi
-  Future<void> pauseQueue() async {
-    if (!_isPaused) {
-      _isPaused = true;
-      _emitEvent(MessageQueueEventType.queuePaused);
-      debugPrint('Tạm dừng hàng đợi tin nhắn');
-    }
+  void pauseQueue({String? reason}) {
+    if (_isPaused) return;
+    
+    _isPaused = true;
+    
+    // Hủy timer xử lý
+    _stopProcessingTimer();
+    
+    // Phát sự kiện
+    _emitEvent(MessageQueueEventType.queuePaused);
+    
+    debugPrint('Queue tạm dừng${reason != null ? ": $reason" : ""}');
   }
   
   /// Tiếp tục xử lý hàng đợi
@@ -1236,25 +1276,34 @@ class EnhancedMessageQueueService {
     // Tìm trong hàng đợi
     final queuedMessage = _messageQueue.where((msg) => msg.localId == messageId).firstOrNull;
     if (queuedMessage != null) {
-      _messageQueue.remove(queuedMessage);
-      found = true;
+      final index = _messageQueue._messages.indexOf(queuedMessage);
+      if (index >= 0) {
+        _messageQueue._messages.removeAt(index);
+        found = true;
+      }
     }
     
     // Tìm trong danh sách đang gửi
     if (_sendingMessages.containsKey(messageId)) {
-      // Không thể xóa tin nhắn đang gửi, nhưng đánh dấu để xóa sau khi hoàn thành
-      _sendingMessages[messageId] = _sendingMessages[messageId]!.copyWithStatus(
-        status: MessageQueueStatus.cancelled,
-      );
+      _sendingMessages.remove(messageId);
       found = true;
     }
     
     if (found) {
+      // Cập nhật metrics
+      _metrics.recordProcessingCompleted();
+      
+      // Lưu hàng đợi
       await _saveQueue();
+      
+      // Phát sự kiện
       _emitEvent(MessageQueueEventType.messageRemoved, messageId: messageId);
       
       // Xóa tệp đính kèm liên quan
-      await _attachmentQueueService.cancelAttachmentsForMessage(messageId);
+      final attachments = _attachmentQueueService.getAttachmentsForMessage(messageId);
+      for (final attachment in attachments) {
+        await _attachmentQueueService.cancelAttachment(attachment.localId);
+      }
     }
     
     return found;
@@ -1285,40 +1334,46 @@ class EnhancedMessageQueueService {
     
     // Tìm trong hàng đợi
     final queuedMessage = _messageQueue.where((msg) => msg.localId == messageId).firstOrNull;
+    
     if (queuedMessage != null) {
       // Xóa khỏi hàng đợi
-      _messageQueue.remove(queuedMessage);
+      final index = _messageQueue._messages.indexOf(queuedMessage);
+      if (index >= 0) {
+        _messageQueue._messages.removeAt(index);
+        found = true;
+      }
       
-      // Cập nhật độ ưu tiên
-      final updatedMessage = _EnhancedQueuedMessage(
-        localId: queuedMessage.localId,
-        chatId: queuedMessage.chatId,
-        content: queuedMessage.content,
-        contentType: queuedMessage.contentType,
-        attachmentIds: queuedMessage.attachmentIds,
-        status: queuedMessage.status,
-        retryCount: queuedMessage.retryCount,
-        createdAt: queuedMessage.createdAt,
-        updatedAt: DateTime.now(),
-        scheduledRetryTime: queuedMessage.scheduledRetryTime,
-        serverId: queuedMessage.serverId,
-        errorMessage: queuedMessage.errorMessage,
-        errorType: queuedMessage.errorType,
-        priority: priority,
-        contentHash: queuedMessage.contentHash,
-      );
-      
-      // Thêm lại vào hàng đợi
-      _messageQueue.add(updatedMessage);
-      
-      // Thông báo trạng thái đã thay đổi
-      _notifyMessageStatusChanged(updatedMessage);
-      found = true;
+      // Cập nhật độ ưu tiên nếu tìm thấy tin nhắn
+      if (found) {
+        final updatedMessage = _EnhancedQueuedMessage(
+          localId: queuedMessage.localId,
+          chatId: queuedMessage.chatId,
+          senderId: queuedMessage.senderId,
+          recipientId: queuedMessage.recipientId,
+          content: queuedMessage.content,
+          contentType: queuedMessage.contentType,
+          createdAt: queuedMessage.createdAt,
+          updatedAt: DateTime.now(),
+          status: queuedMessage.status,
+          retryCount: queuedMessage.retryCount,
+          nextRetryTime: queuedMessage.nextRetryTime,
+          errorMessage: queuedMessage.errorMessage,
+          errorType: queuedMessage.errorType,
+          priority: priority,
+          contentHash: queuedMessage.contentHash,
+        );
+        
+        // Thêm lại vào hàng đợi
+        _messageQueue.add(updatedMessage);
+        
+        // Thông báo thay đổi
+        _notifyMessageStatusChanged(updatedMessage);
+      }
     }
     
     if (found) {
       await _saveQueue();
-      _emitEvent(MessageQueueEventType.messagePriorityChanged, messageId: messageId);
+      _emitEvent(MessageQueueEventType.messageEnqueued, messageId: messageId);
     }
     
     return found;
@@ -1339,7 +1394,7 @@ class EnhancedMessageQueueService {
         status: MessageQueueStatus.pending,
         retryCount: queuedMessage.retryCount, // Không tăng số lần thử lại khi manually retry
         errorMessage: null,
-        scheduledRetryTime: null,
+        nextRetryTime: null,
       );
       
       // Thêm lại vào hàng đợi với độ ưu tiên cao
@@ -1409,69 +1464,57 @@ class EnhancedMessageQueueService {
   }
   
   /// Sư kiện lắng nghe kết nối
-  void _handleConnectivityChanged(bool isConnected) {
+  void _handleConnectivityChange(bool isConnected) {
+    debugPrint('Trạng thái kết nối thay đổi: ${isConnected ? 'có kết nối' : 'mất kết nối'}');
+    
     if (isConnected) {
-      debugPrint('Kết nối mạng khôi phục, tiếp tục xử lý hàng đợi');
+      // Có kết nối trở lại, tiếp tục hàng đợi
       if (_isPaused) {
         resumeQueue();
       } else {
         _ensureProcessing();
       }
     } else {
-      debugPrint('Mất kết nối mạng, tạm dừng xử lý hàng đợi');
-      pauseQueue();
+      // Mất kết nối, tạm dừng hàng đợi
+      pauseQueue(reason: 'Mất kết nối mạng');
     }
   }
   
   /// Sự kiện lắng nghe trạng thái realtime
-  void _handleRealtimeConnectionChanged(bool isConnected) {
-    if (isConnected) {
-      debugPrint('Kết nối realtime khôi phục, tiếp tục xử lý hàng đợi');
-      if (_isPaused) {
-        resumeQueue();
-      } else {
-        _ensureProcessing();
-      }
+  void _handleRealtimeConnectionChange(RealtimeConnectionState state) {
+    debugPrint('Trạng thái kết nối realtime thay đổi: $state');
+    
+    if (state == RealtimeConnectionState.connected) {
+      // Kết nối realtime thành công, kiểm tra trạng thái tin nhắn
+      _syncSentMessages();
     }
   }
   
-  /// Xử lý sự kiện từ AttachmentQueueService
-  void _handleAttachmentEvent(AttachmentQueueEvent event) {
-    switch (event.type) {
-      case AttachmentQueueEventType.uploadCompleted:
-        // Khi tệp đính kèm đã tải lên thành công, kiểm tra xem có thể gửi tin nhắn hay không
-        if (event.messageId != null) {
-          _ensureProcessing();
+  /// Đồng bộ trạng thái tin nhắn đã gửi
+  Future<void> _syncSentMessages() async {
+    // Lấy trạng thái các tin nhắn đã gửi từ server
+    try {
+      final sentIds = _sendingMessages.keys.toList();
+      if (sentIds.isEmpty) return;
+      
+      final statuses = await _messageRepository.getMessageStatuses(sentIds);
+      
+      for (final status in statuses) {
+        if (_sendingMessages.containsKey(status.localId)) {
+          // Cập nhật trạng thái tin nhắn
+          final message = _sendingMessages[status.localId]!;
+          final updatedMessage = message.copyWithStatus(
+            status: status.delivered 
+                ? MessageQueueStatus.delivered 
+                : (status.sent ? MessageQueueStatus.sent : message.status),
+          );
+          
+          _sendingMessages[status.localId] = updatedMessage;
+          _notifyMessageStatusChanged(updatedMessage);
         }
-        break;
-        
-      case AttachmentQueueEventType.uploadFailed:
-        // Xử lý khi tệp đính kèm không tải lên được
-        if (event.messageId != null) {
-          // Tìm tin nhắn liên quan
-          final message = getMessage(event.messageId!);
-          if (message != null) {
-            // Đánh dấu tin nhắn lỗi do tệp đính kèm
-            final internalMessage = _messageQueue.where((msg) => msg.localId == event.messageId).firstOrNull;
-            if (internalMessage != null) {
-              _messageQueue.remove(internalMessage);
-              
-              final failedMessage = internalMessage.copyWithStatus(
-                status: MessageQueueStatus.failed,
-                errorMessage: 'Lỗi tệp đính kèm: ${event.error}',
-                errorType: MessageErrorType.fileError,
-              );
-              
-              _messageQueue.add(failedMessage);
-              _notifyMessageStatusChanged(failedMessage);
-              _saveQueue();
-            }
-          }
-        }
-        break;
-        
-      default:
-        break;
+      }
+    } catch (e) {
+      debugPrint('Lỗi đồng bộ trạng thái tin nhắn: $e');
     }
   }
   
