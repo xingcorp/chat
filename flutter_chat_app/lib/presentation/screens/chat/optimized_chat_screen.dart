@@ -1,0 +1,640 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/services/media_service.dart';
+import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
+import 'package:flutter_chat_app/domain/entities/chat.dart';
+import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/presentation/blocs/chat/chat_bloc.dart';
+import 'package:flutter_chat_app/presentation/widgets/chat/message_item.dart';
+import 'package:get_it/get_it.dart';
+import 'package:scroll_to_index/scroll_to_index.dart';
+
+class OptimizedChatScreen extends StatefulWidget {
+  final String chatId;
+
+  const OptimizedChatScreen({
+    Key? key,
+    required this.chatId,
+  }) : super(key: key);
+
+  @override
+  State<OptimizedChatScreen> createState() => _OptimizedChatScreenState();
+}
+
+class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsBindingObserver {
+  final _messageController = TextEditingController();
+  final _scrollController = AutoScrollController();
+  final _isolateManager = GetIt.I<IsolateManager>();
+  final _mediaService = GetIt.I<MediaService>();
+  
+  bool _isAttachmentMenuOpen = false;
+  bool _isRecording = false;
+  bool _isTyping = false;
+  bool _isLoadingMessages = false;
+  String? _replyToMessageId;
+  
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadInitialMessages();
+    _initializeIsolateManager();
+  }
+  
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _messageController.dispose();
+    super.dispose();
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<ChatBloc>().add(ChatEvent.markChatAsRead(chatId: widget.chatId));
+    }
+  }
+  
+  Future<void> _initializeIsolateManager() async {
+    await _isolateManager.initialize();
+  }
+  
+  void _loadInitialMessages() {
+    context.read<ChatBloc>().add(ChatEvent.loadMessages(
+      chatId: widget.chatId,
+      limit: 30,
+    ));
+    
+    // Mark chat as read when opened
+    context.read<ChatBloc>().add(ChatEvent.markChatAsRead(chatId: widget.chatId));
+  }
+  
+  void _loadMoreMessages() {
+    if (_isLoadingMessages) return;
+    
+    setState(() {
+      _isLoadingMessages = true;
+    });
+    
+    final chatBloc = context.read<ChatBloc>();
+    final currentState = chatBloc.state;
+    
+    if (currentState is ChatLoaded) {
+      final messages = currentState.messagesByChatId[widget.chatId] ?? [];
+      if (messages.isNotEmpty) {
+        chatBloc.add(ChatEvent.loadMessages(
+          chatId: widget.chatId,
+          limit: 30,
+          beforeMessageId: messages.first.id,
+        ));
+      }
+    }
+    
+    // Reset loading state after a delay
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isLoadingMessages = false;
+        });
+      }
+    });
+  }
+  
+  void _sendMessage() {
+    final messageText = _messageController.text.trim();
+    if (messageText.isEmpty && !_isRecording) return;
+    
+    // Clear text field immediately for better UX
+    _messageController.clear();
+    
+    if (_isRecording) {
+      _stopRecordingAndSend();
+    } else {
+      context.read<ChatBloc>().add(ChatEvent.sendMessage(
+        chatId: widget.chatId,
+        content: messageText,
+        contentType: ContentType.text,
+        replyToMessageId: _replyToMessageId,
+      ));
+    }
+    
+    // Clear reply
+    setState(() {
+      _replyToMessageId = null;
+    });
+  }
+  
+  void _startRecording() {
+    setState(() {
+      _isRecording = true;
+    });
+    
+    // Implement audio recording logic here
+  }
+  
+  void _stopRecordingAndSend() {
+    setState(() {
+      _isRecording = false;
+    });
+    
+    // Implement logic to stop recording and send audio message
+  }
+  
+  void _handleAttachmentSelection(ContentType type) {
+    setState(() {
+      _isAttachmentMenuOpen = false;
+    });
+    
+    // Process attachment selection in isolate if needed
+    _isolateManager.processInBackground(
+      taskType: IsolateTaskType.fileOperation,
+      data: {'type': type.toString()},
+      params: {'chatId': widget.chatId},
+    ).then((result) {
+      if (result.isSuccess && result.result != null) {
+        // Handle the processed attachment
+        final attachmentInfo = result.result as Map<String, dynamic>;
+        
+        // Now send the message with attachment
+        context.read<ChatBloc>().add(ChatEvent.sendMessage(
+          chatId: widget.chatId,
+          content: '',
+          contentType: type,
+          attachments: [attachmentInfo['path']],
+          replyToMessageId: _replyToMessageId,
+        ));
+        
+        // Clear reply
+        setState(() {
+          _replyToMessageId = null;
+        });
+      }
+    });
+  }
+  
+  void _handleMessageTap(ChatMessage message) {
+    // Implement message tap handling
+  }
+  
+  void _handleMessageLongPress(ChatMessage message) {
+    // Show message options menu (reply, forward, delete, etc.)
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => _buildMessageOptionsSheet(message),
+    );
+  }
+  
+  Widget _buildMessageOptionsSheet(ChatMessage message) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.reply),
+            title: const Text('Reply'),
+            onTap: () {
+              Navigator.pop(context);
+              setState(() {
+                _replyToMessageId = message.id;
+              });
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.forward),
+            title: const Text('Forward'),
+            onTap: () {
+              Navigator.pop(context);
+              // Implement forward logic
+            },
+          ),
+          if (message.isFromCurrentUser)
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Delete', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmDeleteMessage(message);
+              },
+            ),
+        ],
+      ),
+    );
+  }
+  
+  void _confirmDeleteMessage(ChatMessage message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Message'),
+        content: const Text('Are you sure you want to delete this message?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<ChatBloc>().add(ChatEvent.deleteMessage(
+                chatId: widget.chatId,
+                messageId: message.id,
+              ));
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: BlocBuilder<ChatBloc, ChatState>(
+          buildWhen: (previous, current) {
+            if (previous is ChatLoaded && current is ChatLoaded) {
+              return previous.chats != current.chats;
+            }
+            return true;
+          },
+          builder: (context, state) {
+            if (state is ChatLoaded) {
+              final chat = state.chats.firstWhere(
+                (c) => c.id == widget.chatId,
+                orElse: () => Chat(
+                  id: widget.chatId,
+                  name: 'Chat',
+                  unreadCount: 0,
+                  lastMessage: null,
+                ),
+              );
+              
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(chat.name, style: const TextStyle(fontSize: 16)),
+                  if (chat.isTyping)
+                    const Text(
+                      'Typing...',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                ],
+              );
+            }
+            
+            return const Text('Chat');
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.call),
+            onPressed: () {
+              // Implement voice call
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.videocam),
+            onPressed: () {
+              // Implement video call
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {
+              // Show chat options
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Reply preview
+          if (_replyToMessageId != null)
+            BlocBuilder<ChatBloc, ChatState>(
+              builder: (context, state) {
+                if (state is ChatLoaded) {
+                  final messages = state.messagesByChatId[widget.chatId] ?? [];
+                  final replyMessage = messages.firstWhere(
+                    (m) => m.id == _replyToMessageId,
+                    orElse: () => null as ChatMessage,
+                  );
+                  
+                  if (replyMessage != null) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.grey.shade200,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Replying to ${replyMessage.senderName}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  replyMessage.content,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              setState(() {
+                                _replyToMessageId = null;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                }
+                
+                return const SizedBox.shrink();
+              },
+            ),
+          
+          // Messages list
+          Expanded(
+            child: BlocBuilder<ChatBloc, ChatState>(
+              buildWhen: (previous, current) {
+                if (previous is ChatLoaded && current is ChatLoaded) {
+                  return previous.messagesByChatId[widget.chatId] != 
+                         current.messagesByChatId[widget.chatId];
+                }
+                return true;
+              },
+              builder: (context, state) {
+                if (state is ChatLoading && state.messagesByChatId.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                if (state is ChatError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Error: ${state.message}'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadInitialMessages,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                final List<ChatMessage> messages;
+                if (state is ChatLoaded) {
+                  messages = state.messagesByChatId[widget.chatId] ?? [];
+                } else {
+                  messages = [];
+                }
+                
+                if (messages.isEmpty) {
+                  return const Center(
+                    child: Text('No messages yet. Start the conversation!'),
+                  );
+                }
+                
+                // Use ListView.builder with key-based items and AutoScrollController
+                return ListView.builder(
+                  controller: _scrollController,
+                  reverse: true,
+                  itemCount: messages.length + (_isLoadingMessages ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (_isLoadingMessages && index == 0) {
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        alignment: Alignment.center,
+                        child: const CircularProgressIndicator(),
+                      );
+                    }
+                    
+                    final messageIndex = _isLoadingMessages ? index - 1 : index;
+                    if (messageIndex < 0 || messageIndex >= messages.length) {
+                      return const SizedBox.shrink();
+                    }
+                    
+                    final message = messages[messageIndex];
+                    final showSenderInfo = _shouldShowSenderInfo(messages, messageIndex);
+                    final isLastInGroup = _isLastInMessageGroup(messages, messageIndex);
+                    
+                    return AutoScrollTag(
+                      key: ValueKey('message-${message.id}'),
+                      controller: _scrollController,
+                      index: messageIndex,
+                      child: MessageItem(
+                        message: message,
+                        onTap: () => _handleMessageTap(message),
+                        onLongPress: () => _handleMessageLongPress(message),
+                        isLastInGroup: isLastInGroup,
+                        showSenderInfo: showSenderInfo,
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          
+          // Input field
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 3,
+                  offset: const Offset(0, -1),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isAttachmentMenuOpen)
+                    _buildAttachmentMenu(),
+                  
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(_isAttachmentMenuOpen 
+                            ? Icons.close 
+                            : Icons.add,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isAttachmentMenuOpen = !_isAttachmentMenuOpen;
+                            });
+                          },
+                        ),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                    child: TextField(
+                                      controller: _messageController,
+                                      decoration: const InputDecoration(
+                                        hintText: 'Type a message',
+                                        border: InputBorder.none,
+                                      ),
+                                      maxLines: 5,
+                                      minLines: 1,
+                                      textCapitalization: TextCapitalization.sentences,
+                                      onChanged: (value) {
+                                        final isTypingNow = value.isNotEmpty;
+                                        if (isTypingNow != _isTyping) {
+                                          setState(() {
+                                            _isTyping = isTypingNow;
+                                          });
+                                          
+                                          // Notify typing status
+                                          context.read<ChatBloc>().add(ChatEvent.updateTypingStatus(
+                                            chatId: widget.chatId,
+                                            isTyping: isTypingNow,
+                                          ));
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.camera_alt_outlined),
+                                  onPressed: () {
+                                    _handleAttachmentSelection(ContentType.image);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onLongPress: _startRecording,
+                          onLongPressUp: _stopRecordingAndSend,
+                          child: CircleAvatar(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            radius: 24,
+                            child: Icon(
+                              _messageController.text.trim().isEmpty
+                                ? (_isRecording ? Icons.stop : Icons.mic)
+                                : Icons.send,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildAttachmentMenu() {
+    return Container(
+      height: 100,
+      padding: const EdgeInsets.all(8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildAttachmentOption(
+            icon: Icons.photo,
+            label: 'Image',
+            color: Colors.purple,
+            onTap: () => _handleAttachmentSelection(ContentType.image),
+          ),
+          _buildAttachmentOption(
+            icon: Icons.videocam,
+            label: 'Video',
+            color: Colors.red,
+            onTap: () => _handleAttachmentSelection(ContentType.video),
+          ),
+          _buildAttachmentOption(
+            icon: Icons.insert_drive_file,
+            label: 'File',
+            color: Colors.blue,
+            onTap: () => _handleAttachmentSelection(ContentType.file),
+          ),
+          _buildAttachmentOption(
+            icon: Icons.location_on,
+            label: 'Location',
+            color: Colors.green,
+            onTap: () => _handleAttachmentSelection(ContentType.location),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildAttachmentOption({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            backgroundColor: color,
+            radius: 25,
+            child: Icon(icon, color: Colors.white),
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
+  
+  // Helper methods for determining message groups
+  bool _shouldShowSenderInfo(List<ChatMessage> messages, int index) {
+    if (index >= messages.length - 1) return true;
+    
+    final currentMessage = messages[index];
+    final nextMessage = messages[index + 1];
+    
+    return currentMessage.sender.id != nextMessage.sender.id;
+  }
+  
+  bool _isLastInMessageGroup(List<ChatMessage> messages, int index) {
+    if (index <= 0) return true;
+    
+    final currentMessage = messages[index];
+    final previousMessage = messages[index - 1];
+    
+    return currentMessage.sender.id != previousMessage.sender.id;
+  }
+} 

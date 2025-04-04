@@ -25,6 +25,24 @@ enum ContentType {
   event,
 }
 
+/// Trạng thái tin nhắn
+enum MessageStatus {
+  /// Đang gửi
+  sending,
+  
+  /// Đã gửi (đến server)
+  sent,
+  
+  /// Đã nhận (đến thiết bị người nhận)
+  delivered,
+  
+  /// Đã đọc (người nhận đã đọc)
+  read,
+  
+  /// Gửi thất bại
+  failed,
+}
+
 /// Hàm tiện ích để so sánh danh sách
 bool _listEquals<T>(List<T>? a, List<T>? b) {
   if (a == null) return b == null;
@@ -321,5 +339,53 @@ class ChatMessage {
       readBy.hashCode ^
       deliveredTo.hashCode ^
       attachments.hashCode;
+  }
+  
+  /// Trạng thái hiện tại của tin nhắn
+  MessageStatus get status {
+    if (readBy.isNotEmpty) {
+      return MessageStatus.read;
+    } else if (deliveredTo.isNotEmpty) {
+      return MessageStatus.delivered;
+    } else {
+      return MessageStatus.sent;
+    }
+  }
+  
+  /// Tên người gửi
+  String get senderName => sender.name;
+  
+  /// Kiểm tra tin nhắn có phải từ người dùng hiện tại
+  bool get isFromCurrentUser => sender.id == 'current_user_id'; // Replace with actual logic
+  
+  /// Kiểm tra tin nhắn có chứa media
+  bool get hasMedia => contentType == ContentType.image || 
+                      contentType == ContentType.video || 
+                      contentType == ContentType.audio || 
+                      (contentType == ContentType.file && attachments.isNotEmpty);
+  
+  /// URL media chính của tin nhắn
+  String get mediaUrl {
+    if (attachments.isNotEmpty) {
+      return attachments.first.url;
+    }
+    return '';
+  }
+  
+  /// Kiểm tra tin nhắn có phải là hình ảnh
+  bool get isImage => contentType == ContentType.image;
+  
+  /// Kiểm tra tin nhắn có phải là video
+  bool get isVideo => contentType == ContentType.video;
+  
+  /// Kiểm tra tin nhắn có phải là âm thanh
+  bool get isAudio => contentType == ContentType.audio;
+  
+  /// Tên tệp đính kèm
+  String? get fileName {
+    if (attachments.isNotEmpty) {
+      return attachments.first.name;
+    }
+    return null;
   }
 } 
