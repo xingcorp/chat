@@ -7,13 +7,24 @@ import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:injectable/injectable.dart';
+
+/// Thời gian cache hợp lệ (30 phút)
+const Duration _cacheTtl = Duration(minutes: 30);
 
 /// Implementation of [IChatRepository]
+@LazySingleton(as: IChatRepository)
 class ChatRepositoryImpl implements IChatRepository {
   final NetworkInfo _networkInfo;
   final ChatLocalDataSource _localDataSource;
   final ChatRemoteDataSource _remoteDataSource;
   final GraphQLClientWrapper _graphQLClient;
+
+  /// Lưu trữ thời gian cập nhật cho mỗi chat
+  final Map<String, DateTime> _lastChatRefreshTime = {};
+  
+  /// Lưu trữ thời gian cập nhật cho toàn bộ danh sách chat
+  DateTime? _lastChatsListRefreshTime;
 
   /// Constructor
   ChatRepositoryImpl(
@@ -26,46 +37,93 @@ class ChatRepositoryImpl implements IChatRepository {
   @override
   GraphQLClient get client => _graphQLClient.client;
 
+  /// Kiểm tra xem cache có còn hiệu lực không
+  bool _isCacheValid(String? chatId) {
+    final now = DateTime.now();
+    
+    // Nếu có chat ID cụ thể, kiểm tra cache cho chat đó
+    if (chatId != null) {
+      final lastRefresh = _lastChatRefreshTime[chatId];
+      if (lastRefresh == null) return false;
+      
+      return now.difference(lastRefresh) < _cacheTtl;
+    }
+    
+    // Nếu không có chat ID, kiểm tra cache cho toàn bộ danh sách
+    if (_lastChatsListRefreshTime == null) return false;
+    return now.difference(_lastChatsListRefreshTime!) < _cacheTtl;
+  }
+  
+  /// Cập nhật thời gian refresh cho cache
+  void _updateCacheTimestamp(String? chatId) {
+    final now = DateTime.now();
+    
+    if (chatId != null) {
+      _lastChatRefreshTime[chatId] = now;
+    } else {
+      _lastChatsListRefreshTime = now;
+    }
+  }
+
   @override
   Future<List<Chat>> getChats() async {
-    if (await _networkInfo.isConnected) {
+    // Kiểm tra có kết nối không
+    final isConnected = await _networkInfo.isConnected;
+    
+    // Kiểm tra cache còn hiệu lực không
+    final isCacheValid = _isCacheValid(null);
+    
+    // Nếu có kết nối và cache không còn hiệu lực, lấy dữ liệu từ server
+    if (isConnected && !isCacheValid) {
       try {
         final remoteChatModels = await _remoteDataSource.getUserChats();
         
-        // Save chats to local storage
-        for (final chatModel in remoteChatModels) {
-          await _localDataSource.saveChat(chatModel);
-        }
+        // Lưu chats vào local storage và cập nhật thời gian cache
+        await Future.wait(
+          remoteChatModels.map((model) => _localDataSource.saveChat(model))
+        );
         
-        // Convert to domain entities
+        _updateCacheTimestamp(null);
+        
+        // Chuyển đổi sang domain entities
         return remoteChatModels.map((model) => model.toDomain()).toList();
-      } on Exception {
-        // Fallback to local data on error
+      } on Exception catch (e) {
+        // Log lỗi trước khi dùng dữ liệu local
+        print('Lỗi khi tải dữ liệu từ server: $e');
         return getChatsFromLocalStorage();
       }
     } else {
-      // No internet connection
+      // Nếu không có kết nối hoặc cache còn hiệu lực, dùng dữ liệu local
       return getChatsFromLocalStorage();
     }
   }
 
   @override
   Future<Chat?> getChatById(String chatId) async {
-    if (await _networkInfo.isConnected) {
+    // Kiểm tra có kết nối không
+    final isConnected = await _networkInfo.isConnected;
+    
+    // Kiểm tra cache còn hiệu lực không
+    final isCacheValid = _isCacheValid(chatId);
+    
+    // Nếu có kết nối và cache không còn hiệu lực, lấy dữ liệu từ server
+    if (isConnected && !isCacheValid) {
       try {
         final remoteChatModel = await _remoteDataSource.getChatDetails(chatId);
         
-        // Save to local storage
+        // Lưu vào local storage và cập nhật thời gian cache
         await _localDataSource.saveChat(remoteChatModel);
+        _updateCacheTimestamp(chatId);
         
         return remoteChatModel.toDomain();
-      } on Exception {
-        // Fallback to local data on error
+      } on Exception catch (e) {
+        // Log lỗi trước khi dùng dữ liệu local
+        print('Lỗi khi tải chi tiết chat từ server: $e');
         final localChatModel = await _localDataSource.getChatById(chatId);
         return localChatModel?.toDomain();
       }
     } else {
-      // No internet connection
+      // Nếu không có kết nối hoặc cache còn hiệu lực, dùng dữ liệu local
       final localChatModel = await _localDataSource.getChatById(chatId);
       return localChatModel?.toDomain();
     }
@@ -81,6 +139,9 @@ class ChatRepositoryImpl implements IChatRepository {
   Future<void> saveChatLocally(Chat chat) async {
     final chatModel = ChatModel.fromDomain(chat);
     await _localDataSource.saveChat(chatModel);
+    
+    // Cập nhật timestamp để biết cache này mới
+    _updateCacheTimestamp(chat.id);
   }
 
   @override
@@ -107,8 +168,12 @@ class ChatRepositoryImpl implements IChatRepository {
         result = await _remoteDataSource.createDirectChat(participantIds.first);
       }
       
-      // Save to local storage
+      // Lưu vào local storage và cập nhật cache
       await _localDataSource.saveChat(result);
+      _updateCacheTimestamp(result.id);
+      
+      // Phải vô hiệu hóa cache danh sách chat vì đã có chat mới
+      _lastChatsListRefreshTime = null;
       
       return result.toDomain();
     } catch (e) {
@@ -133,8 +198,12 @@ class ChatRepositoryImpl implements IChatRepository {
         avatarUrl: avatarUrl,
       );
       
-      // Save to local storage
+      // Lưu vào local storage và cập nhật cache
       await _localDataSource.saveChat(result);
+      _updateCacheTimestamp(chatId);
+      
+      // Vô hiệu hóa cache danh sách chat
+      _lastChatsListRefreshTime = null;
       
       return result.toDomain();
     } catch (e) {
@@ -154,7 +223,7 @@ class ChatRepositoryImpl implements IChatRepository {
     try {
       final result = await _remoteDataSource.addUsersToChat(chatId, userIds);
       
-      // Update local cache
+      // Cập nhật local cache
       if (result) {
         await syncChat(chatId);
       }
@@ -165,89 +234,37 @@ class ChatRepositoryImpl implements IChatRepository {
     }
   }
 
-  @override
-  Future<bool> removeParticipants({
-    required String chatId,
-    required List<String> userIds,
-  }) async {
-    if (!(await _networkInfo.isConnected)) {
-      throw NoInternetException();
-    }
-
-    try {
-      final result = await _remoteDataSource.removeUsersFromChat(chatId, userIds);
-      
-      // Update local cache
-      if (result) {
-        await syncChat(chatId);
-      }
-      
-      return result;
-    } catch (e) {
-      throw ServerException(message: 'Failed to remove participants: $e');
-    }
+  /// Vô hiệu hóa cache cho một chat cụ thể
+  void invalidateCache(String chatId) {
+    _lastChatRefreshTime.remove(chatId);
   }
-
-  @override
-  Future<bool> leaveChat(String chatId) async {
-    if (!(await _networkInfo.isConnected)) {
-      throw NoInternetException();
-    }
-
-    try {
-      final result = await _remoteDataSource.leaveChat(chatId);
-      
-      // Remove from local storage if successfully left
-      if (result) {
-        await _localDataSource.deleteChat(chatId);
-      }
-      
-      return result;
-    } catch (e) {
-      throw ServerException(message: 'Failed to leave chat: $e');
-    }
+  
+  /// Vô hiệu hóa toàn bộ cache
+  void invalidateAllCache() {
+    _lastChatRefreshTime.clear();
+    _lastChatsListRefreshTime = null;
   }
-
-  @override
-  Future<bool> deleteChat(String chatId) async {
-    if (!(await _networkInfo.isConnected)) {
-      throw NoInternetException();
-    }
-
-    try {
-      final result = await _remoteDataSource.deleteChat(chatId);
-      
-      // Remove from local storage if successfully deleted
-      if (result) {
-        await _localDataSource.deleteChat(chatId);
-      }
-      
-      return result;
-    } catch (e) {
-      throw ServerException(message: 'Failed to delete chat: $e');
-    }
-  }
-
-  @override
-  Future<bool> markChatAsRead(String chatId) async {
-    // This would typically call a backend API to mark the chat as read
-    // But since we haven't defined this in the remote data source yet,
-    // we'll assume it's successful for now
-    return true;
-  }
-
+  
+  /// Đồng bộ chat và vô hiệu hóa cache 
   @override
   Future<void> syncChat(String chatId) async {
-    if (!(await _networkInfo.isConnected)) {
-      return; // Can't sync without internet
-    }
-
-    try {
-      final remoteChat = await _remoteDataSource.getChatDetails(chatId);
-      await _localDataSource.saveChat(remoteChat);
-    } catch (e) {
-      // Log error but don't throw, as this is a background sync
-      print('Failed to sync chat $chatId: $e');
+    // Vô hiệu hóa cache
+    invalidateCache(chatId);
+    
+    if (await _networkInfo.isConnected) {
+      try {
+        // Lấy dữ liệu mới từ server
+        final remoteChatModel = await _remoteDataSource.getChatDetails(chatId);
+        
+        // Lưu vào local storage
+        await _localDataSource.saveChat(remoteChatModel);
+        
+        // Cập nhật thời gian cache
+        _updateCacheTimestamp(chatId);
+      } catch (e) {
+        // Nếu có lỗi, ghi log nhưng không throw exception
+        print('Không thể đồng bộ chat $chatId: $e');
+      }
     }
   }
 } 

@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package flutter_chat_app;
+
+option java_package = "com.flutterchatapp.proto";
+option java_outer_classname = "ChatProtos";
+
+// Thông tin về người gửi tin nhắn
+message SenderProto {
+  string id = 1;
+  string name = 2;
+  string avatar_url = 3;
+  string status = 4;
+}
+
+// Loại nội dung tin nhắn
+enum ContentTypeProto {
+  TEXT = 0;
+  IMAGE = 1;
+  VIDEO = 2;
+  AUDIO = 3;
+  FILE = 4;
+  LOCATION = 5;
+  STICKER = 6;
+}
+
+// Thông tin về tệp đính kèm
+message AttachmentProto {
+  string id = 1;
+  string url = 2;
+  string thumbnail_url = 3;
+  string mime_type = 4;
+  int64 size = 5;
+  string name = 6;
+  int32 width = 7;
+  int32 height = 8;
+  int64 duration = 9; // thời lượng nếu là audio/video
+}
+
+// Trạng thái tin nhắn
+enum MessageStatusProto {
+  SENDING = 0;
+  SENT = 1;
+  DELIVERED = 2;
+  READ = 3;
+  FAILED = 4;
+}
+
+// Tin nhắn chat
+message ChatMessageProto {
+  string id = 1;
+  string local_id = 2;
+  string chat_id = 3;
+  SenderProto sender = 4;
+  string content = 5;
+  ContentTypeProto content_type = 6;
+  repeated AttachmentProto attachments = 7;
+  int64 created_at = 8; // timestamp
+  int64 updated_at = 9; // timestamp
+  MessageStatusProto status = 10;
+  string reply_to_message_id = 11;
+  bool is_deleted = 12;
+  string client_timestamp = 13; // timestamp từ client
+  map<string, string> metadata = 14; // dữ liệu metadata
+  bool is_edited = 15;
+  int64 edited_at = 16; // timestamp
+}
+
+// Danh sách tin nhắn
+message ChatMessageListProto {
+  repeated ChatMessageProto messages = 1;
+  bool has_more = 2;
+  string next_cursor = 3;
+} 

@@ -44,6 +44,9 @@ class OptimizedMessageList extends StatefulWidget {
   /// Called when user starts/stops scrolling
   final Function(bool isScrolling)? onScrollStateChanged;
   
+  /// Average height estimate for message items (used for optimization)
+  final double estimatedItemHeight;
+  
   const OptimizedMessageList({
     Key? key,
     required this.messages,
@@ -57,6 +60,7 @@ class OptimizedMessageList extends StatefulWidget {
     this.isGroupChat = false,
     this.scrollController,
     this.onScrollStateChanged,
+    this.estimatedItemHeight = 80.0,
   }) : super(key: key);
   
   @override
@@ -199,116 +203,113 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
     scrollToIndex(lastIndex, animated: animated);
   }
   
+  /// Check if we need to scroll to bottom on initial load
   void _scrollToBottomIfNeeded() {
-    // If we have a pending message to scroll to, do that instead
+    if (widget.messages.isEmpty) return;
+    
+    // If we have a specific message to scroll to, try to do that first
     if (_scrollToMessageId != null) {
-      scrollToMessage(_scrollToMessageId!, animated: true);
-      _scrollToMessageId = null;
-      return;
+      final found = scrollToMessage(_scrollToMessageId!, animated: false);
+      if (found) {
+        _scrollToMessageId = null;
+        return;
+      }
     }
     
-    // Otherwise scroll to bottom for initial load
-    _scrollToBottom(animated: false);
-  }
-  
-  /// Track which messages are currently visible on screen
-  void _trackVisibleMessages(String messageId, bool isVisible) {
-    if (isVisible) {
-      _visibleMessageIds.add(messageId);
-    } else {
-      _visibleMessageIds.remove(messageId);
-    }
-    
-    // Report to analytics which messages are visible
-    if (_visibleMessageIds.isNotEmpty) {
-      widget.onMessagesVisible?.call(_visibleMessageIds.toList());
+    // Otherwise scroll to bottom if there are recent messages from current user
+    final recentMessages = widget.messages.reversed.take(10);
+    if (recentMessages.any((m) => m.sender.id == widget.currentUserId)) {
+      _scrollToBottom(animated: false);
     }
   }
   
   @override
   Widget build(BuildContext context) {
-    return NotificationListener<ScrollNotification>(
+    if (widget.messages.isEmpty) {
+      return const Center(child: Text('Không có tin nhắn'));
+    }
+    
+    // Performance trace
+    _performanceMonitor.startTrace('render_message_list',
+      attributes: {'count': widget.messages.length.toString()});
+    
+    Widget messageList = ListView.builder(
+      // Key performance optimizations here:
+      itemExtent: widget.estimatedItemHeight, // Fixed item height for better performance
+      cacheExtent: MediaQuery.of(context).size.height * 2, // Increase cache for smoother scrolling
+      physics: const AlwaysScrollableScrollPhysics(),
+      reverse: true,
+      controller: _scrollController,
+      itemCount: widget.messages.length + (widget.isLoadingMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        // Show loading indicator at the top when loading more messages
+        if (widget.isLoadingMore && index == 0) {
+          return const Center(
+            key: ValueKey(_loadMoreTag),
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        
+        // Adjust index to account for loading indicator
+        final messageIndex = widget.isLoadingMore ? index - 1 : index;
+        if (messageIndex < 0 || messageIndex >= widget.messages.length) {
+          return const SizedBox.shrink();
+        }
+        
+        final message = widget.messages[messageIndex];
+        
+        // Wrap each message in RepaintBoundary for render optimization
+        return RepaintBoundary(
+          child: AutoScrollTag(
+            key: ValueKey('message_scroll_${message.id}'),
+            controller: _scrollController,
+            index: messageIndex,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              child: VisibilityDetector(
+                key: ValueKey('visibility_${message.id}'),
+                onVisibilityChanged: (visibilityInfo) {
+                  // Track which messages are visible
+                  if (visibilityInfo.visibleFraction > 0.7) {
+                    _visibleMessageIds.add(message.id);
+                    widget.onMessagesVisible?.call([message.id]);
+                  } else {
+                    _visibleMessageIds.remove(message.id);
+                  }
+                },
+                child: MessageItem(
+                  message: message,
+                  isCurrentUser: message.sender.id == widget.currentUserId,
+                  showSenderInfo: widget.isGroupChat,
+                  onTap: widget.onMessageTap != null ? () => widget.onMessageTap!(message) : null,
+                  onLongPress: widget.onMessageLongPress != null ? () => widget.onMessageLongPress!(message) : null,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    
+    // Wrap the list in a NotificationListener to detect scrolling
+    messageList = NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         if (notification is ScrollUpdateNotification) {
           _handleScroll();
         }
         return false;
       },
-      child: ListView.builder(
-        controller: _scrollController,
-        reverse: true, // Display newest messages at the bottom
-        physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: widget.messages.length + (widget.isLoadingMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          // Show loading indicator at the top when loading more
-          if (widget.isLoadingMore && index == 0) {
-            return Container(
-              key: const Key(_loadMoreTag),
-              height: 50,
-              alignment: Alignment.center,
-              child: const CircularProgressIndicator(),
-            );
-          }
-          
-          final messageIndex = widget.isLoadingMore ? index - 1 : index;
-          if (messageIndex < 0 || messageIndex >= widget.messages.length) {
-            return const SizedBox.shrink();
-          }
-          
-          final message = widget.messages[messageIndex];
-          final showSenderInfo = widget.isGroupChat && 
-                               !message.isFromCurrentUser && 
-                               _shouldShowSenderInfo(messageIndex);
-          
-          final isLastInGroup = _isLastInMessageGroup(messageIndex);
-          
-          return AutoScrollTag(
-            key: ValueKey('message-${message.id}'),
-            controller: _scrollController,
-            index: messageIndex,
-            child: VisibilityDetector(
-              key: ValueKey('visibility-${message.id}'),
-              onVisibilityChanged: (info) {
-                // Consider a message visible if at least 30% is showing
-                final isVisible = info.visibleFraction > 0.3;
-                _trackVisibleMessages(message.id, isVisible);
-              },
-              child: MessageItem(
-                message: message,
-                onTap: widget.onMessageTap != null ? 
-                  () => widget.onMessageTap!(message) : null,
-                onLongPress: widget.onMessageLongPress != null ? 
-                  () => widget.onMessageLongPress!(message) : null,
-                isLastInGroup: isLastInGroup,
-                showSenderInfo: showSenderInfo,
-              ),
-            ),
-          );
-        },
-      ),
+      child: messageList,
     );
-  }
-  
-  /// Determine if this message should show sender info
-  bool _shouldShowSenderInfo(int index) {
-    if (index >= widget.messages.length - 1) return true;
     
-    final currentMessage = widget.messages[index];
-    final nextMessage = widget.messages[index + 1];
+    // Stop the performance trace after building
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _performanceMonitor.stopTrace('render_message_list');
+    });
     
-    // Show sender info if this is the first message from this sender
-    // after messages from other senders
-    return currentMessage.sender.id != nextMessage.sender.id;
-  }
-  
-  /// Determine if this message is the last in a group of messages from the same sender
-  bool _isLastInMessageGroup(int index) {
-    if (index <= 0) return true;
-    
-    final currentMessage = widget.messages[index];
-    final previousMessage = widget.messages[index - 1];
-    
-    // Last in group if next message is from a different sender
-    return currentMessage.sender.id != previousMessage.sender.id;
+    return messageList;
   }
 } 

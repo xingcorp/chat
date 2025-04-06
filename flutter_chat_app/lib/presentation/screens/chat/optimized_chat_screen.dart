@@ -33,6 +33,13 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
   bool _isLoadingMessages = false;
   String? _replyToMessageId;
   
+  // Cached build methods to prevent unnecessary rebuilds
+  final Map<String, Widget> _cachedMessageItems = {};
+  
+  // Memoized widget lists
+  List<ChatMessage>? _previousMessages;
+  List<Widget>? _cachedMessageWidgets;
+  
   @override
   void initState() {
     super.initState();
@@ -45,7 +52,14 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _messageController.dispose();
+    _clearCache();
     super.dispose();
+  }
+  
+  void _clearCache() {
+    _cachedMessageItems.clear();
+    _cachedMessageWidgets = null;
+    _previousMessages = null;
   }
   
   @override
@@ -79,7 +93,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
     final chatBloc = context.read<ChatBloc>();
     final currentState = chatBloc.state;
     
-    if (currentState is ChatLoaded) {
+    if (currentState is MessagesLoaded) {
       final messages = currentState.messagesByChatId[widget.chatId] ?? [];
       if (messages.isNotEmpty) {
         chatBloc.add(ChatEvent.loadMessages(
@@ -247,19 +261,92 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
     );
   }
   
+  // Memoize message item widgets to prevent unnecessary rebuilds
+  List<Widget> _buildMessageList(List<ChatMessage> messages, String currentUserId) {
+    // Return cached list if messages haven't changed
+    if (_previousMessages != null && 
+        _cachedMessageWidgets != null && 
+        _areSameMessages(_previousMessages!, messages)) {
+      return _cachedMessageWidgets!;
+    }
+    
+    final chatState = context.read<ChatBloc>().state;
+    final isGroupChat = chatState is MessagesLoaded 
+        ? chatState.chats?.firstWhere((c) => c.id == widget.chatId, orElse: () => Chat.empty()).isGroup ?? false 
+        : false;
+    
+    final widgets = messages.map((message) {
+      // Use cached widget if available
+      if (_cachedMessageItems.containsKey(message.id) && !message.isSending) {
+        return _cachedMessageItems[message.id]!;
+      }
+      
+      // Build and cache new message widget
+      final messageWidget = MessageItem(
+        key: ValueKey('message_${message.id}'),
+        message: message,
+        isCurrentUser: message.sender.id == currentUserId,
+        showSenderInfo: isGroupChat,
+        onTap: () => _handleMessageTap(message),
+        onLongPress: () => _handleMessageLongPress(message),
+      );
+      
+      // Only cache non-sending messages (since they might update)
+      if (!message.isSending) {
+        _cachedMessageItems[message.id] = messageWidget;
+      }
+      
+      return messageWidget;
+    }).toList();
+    
+    // Cache for future use
+    _previousMessages = List.from(messages);
+    _cachedMessageWidgets = widgets;
+    
+    return widgets;
+  }
+  
+  // Helper to compare message lists
+  bool _areSameMessages(List<ChatMessage> previous, List<ChatMessage> current) {
+    if (previous.length != current.length) return false;
+    
+    for (int i = 0; i < previous.length; i++) {
+      final prev = previous[i];
+      final curr = current[i];
+      
+      if (prev.id != curr.id || 
+          prev.status != curr.status || 
+          prev.isSending != curr.isSending) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
+  // Use RepaintBoundary for input area to prevent entire screen rebuild
+  Widget _buildInputArea() {
+    return RepaintBoundary(
+      child: Container(
+        // Existing input area code...
+      ),
+    );
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: BlocBuilder<ChatBloc, ChatState>(
           buildWhen: (previous, current) {
-            if (previous is ChatLoaded && current is ChatLoaded) {
-              return previous.chats != current.chats;
+            if (previous is MessagesLoaded && current is MessagesLoaded) {
+              return previous.messagesByChatId[widget.chatId] != 
+                     current.messagesByChatId[widget.chatId];
             }
             return true;
           },
           builder: (context, state) {
-            if (state is ChatLoaded) {
+            if (state is MessagesLoaded) {
               final chat = state.chats.firstWhere(
                 (c) => c.id == widget.chatId,
                 orElse: () => Chat(
@@ -313,7 +400,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           if (_replyToMessageId != null)
             BlocBuilder<ChatBloc, ChatState>(
               builder: (context, state) {
-                if (state is ChatLoaded) {
+                if (state is MessagesLoaded) {
                   final messages = state.messagesByChatId[widget.chatId] ?? [];
                   final replyMessage = messages.firstWhere(
                     (m) => m.id == _replyToMessageId,
@@ -370,7 +457,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           Expanded(
             child: BlocBuilder<ChatBloc, ChatState>(
               buildWhen: (previous, current) {
-                if (previous is ChatLoaded && current is ChatLoaded) {
+                if (previous is MessagesLoaded && current is MessagesLoaded) {
                   return previous.messagesByChatId[widget.chatId] != 
                          current.messagesByChatId[widget.chatId];
                 }
@@ -398,7 +485,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                 }
                 
                 final List<ChatMessage> messages;
-                if (state is ChatLoaded) {
+                if (state is MessagesLoaded) {
                   messages = state.messagesByChatId[widget.chatId] ?? [];
                 } else {
                   messages = [];
