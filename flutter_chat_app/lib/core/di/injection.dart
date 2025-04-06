@@ -15,6 +15,7 @@ import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_chat_app/core/services/animation_service.dart';
 
 /// GetIt instance for dependency injection
 final GetIt getIt = GetIt.instance;
@@ -104,6 +105,11 @@ Future<void> configureInjection() async {
       connectivityService,
     ),
   );
+  
+  // Đăng ký và khởi tạo Animation Service
+  final animationService = AnimationService();
+  await animationService.initialize();
+  getIt.registerSingleton<AnimationService>(animationService);
 }
 
 /// Tạo repository tin nhắn
