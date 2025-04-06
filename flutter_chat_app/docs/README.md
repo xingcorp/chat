@@ -1,105 +1,93 @@
-# Flutter Chat App Documentation
+# Tài liệu phát triển Flutter Chat App
 
-This directory contains comprehensive documentation for the Flutter Chat App project.
+Chào mừng bạn đến với tài liệu phát triển Flutter Chat App. Tài liệu này cung cấp thông tin chi tiết về kiến trúc, cách thức triển khai, và các hướng dẫn tối ưu hóa cho ứng dụng.
 
-## English
+## Cấu trúc tài liệu
 
-### Documentation Structure
+### Phát triển (Development)
+
+- [Tiêu chuẩn lập trình](./development/coding_standards.md) - Quy ước coding và cách tổ chức code
+- [Kiến trúc ứng dụng](./development/architecture.md) - Kiến trúc tổng thể của ứng dụng
+
+### Triển khai (Implementation)
+
+- [Hướng dẫn triển khai](./implementation/implementation_guide.md) - Cách triển khai các thành phần chính
+- [Hệ thống Animation](./implementation/animation_system.md) - Chi tiết về hệ thống animation
+- [Hướng dẫn Animation](./implementation/animation_guide.md) - Các kỹ thuật animation áp dụng trong ứng dụng
+
+### Hiệu suất (Performance)
+
+- [Hướng dẫn tối ưu hiệu suất](./performance/performance_guide.md) - Các chiến lược tối ưu hiệu suất ứng dụng
+
+### Hệ thống Core
+
+- [Đồng bộ hóa Offline](./core/offline_sync.md) - Triển khai chức năng đồng bộ offline
+
+## Các bước triển khai ứng dụng
+
+Dưới đây là các bước cơ bản để bắt đầu phát triển ứng dụng:
+
+1. **Thiết lập môi trường**
+   - Cài đặt Flutter SDK
+   - Cài đặt các công cụ phát triển
+   - Cấu hình môi trường phát triển
+
+2. **Tìm hiểu kiến trúc**
+   - Xem qua tài liệu [Kiến trúc ứng dụng](./development/architecture.md)
+   - Nắm rõ các layer và cách chúng tương tác
+
+3. **Triển khai các thành phần**
+   - Tuân thủ [Hướng dẫn triển khai](./implementation/implementation_guide.md)
+   - Áp dụng các kỹ thuật animation từ [Hệ thống Animation](./implementation/animation_system.md)
+
+4. **Tối ưu hiệu suất**
+   - Áp dụng các kỹ thuật từ [Hướng dẫn tối ưu hiệu suất](./performance/performance_guide.md)
+
+5. **Đảm bảo chất lượng code**
+   - Tuân thủ [Tiêu chuẩn lập trình](./development/coding_standards.md)
+   - Viết tests cho các thành phần
+
+## Các thư mục và file chính
 
 ```
-docs/
-├── README.md                    # This file
-├── architecture/                # Architecture documentation
-│   ├── clean_architecture.md    # Clean Architecture principles
-│   ├── dependency_injection.md  # DI implementation details
-│   └── diagrams/               # Architecture diagrams
-├── optimization/                # Performance optimization docs
-│   ├── optimization_timeline.md # Timeline for optimization
-│   ├── optimization_strategies.md # Detailed optimization strategies
-│   ├── offline_sync_strategy.md # Offline synchronization strategy
-│   └── animation_optimization.md # Animation optimization strategy
-├── guides/                      # Developer guides
-│   ├── setup.md                 # Project setup guide
-│   ├── coding_standards.md      # Coding standards
-│   └── testing.md               # Testing guidelines
-├── api/                         # API documentation
-│   ├── endpoints.md             # API endpoints
-│   └── data_models.md           # Data models
-└── design/                      # Design documentation
-    ├── ui_guidelines.md         # UI design guidelines
-    └── mockups/                 # UI mockups
+lib/
+├── core/                  # Core utilities, DI, services
+├── data/                  # Data layer
+├── domain/                # Domain layer
+├── presentation/          # Presentation layer
+│   ├── blocs/             # BLoCs/Cubits
+│   ├── screens/           # Screens
+│   └── widgets/           # Reusable widgets
+├── app.dart               # App configuration
+└── main.dart              # Entry point
 ```
 
-### Documentation Types
+## Quy trình phát triển
 
-1. **Architecture Documentation**: Describes the overall system architecture, design patterns, and component interactions.
+1. **Branch-based development**
+   - Tạo branch mới cho mỗi tính năng
+   - Đặt tên branch theo format: `feature/tên-tính-năng`
 
-2. **Optimization Documentation**: Contains strategies and timelines for performance optimization and scalability.
-   - **Offline Synchronization**: Detailed approach for implementing robust offline-first capabilities.
-   - **Animation Optimization**: Comprehensive strategy for smooth, efficient animations across platforms.
+2. **Pull Requests**
+   - Tạo PR khi tính năng hoàn thiện
+   - Yêu cầu ít nhất 1 reviewer
 
-3. **Developer Guides**: Practical guides for developers working on the project, including setup instructions, coding standards, and testing procedures.
+3. **Code Review**
+   - Đảm bảo code tuân thủ [Tiêu chuẩn lập trình](./development/coding_standards.md)
+   - Đảm bảo performance tối ưu theo [Hướng dẫn hiệu suất](./performance/performance_guide.md)
 
-4. **API Documentation**: Details about the API endpoints, request/response formats, and data models.
+4. **Testing**
+   - Unit tests cho business logic
+   - Widget tests cho UI
+   - Integration tests cho luồng người dùng
 
-5. **Design Documentation**: UI/UX guidelines, mockups, and design decisions.
+## Liên hệ và hỗ trợ
 
-## How to Contribute to Documentation
+Nếu bạn có câu hỏi hoặc cần hỗ trợ, vui lòng liên hệ:
 
-1. Follow the existing structure when adding new documents
-2. Use Markdown format for all documentation
-3. Include both English and Vietnamese translations when possible
-4. Add diagrams and visual aids where appropriate
-5. Keep documentation up-to-date with code changes
+- **Technical Lead**: tech.lead@example.com
+- **Project Manager**: pm@example.com
 
 ---
 
-## Tiếng Việt
-
-### Cấu trúc Tài liệu
-
-```
-docs/
-├── README.md                    # File này
-├── architecture/                # Tài liệu kiến trúc
-│   ├── clean_architecture.md    # Nguyên tắc Clean Architecture
-│   ├── dependency_injection.md  # Chi tiết triển khai DI
-│   └── diagrams/               # Sơ đồ kiến trúc
-├── optimization/                # Tài liệu tối ưu hóa hiệu suất
-│   ├── optimization_timeline.md # Timeline cho tối ưu hóa
-│   ├── optimization_strategies.md # Chiến lược tối ưu hóa chi tiết
-│   ├── offline_sync_strategy.md # Chiến lược đồng bộ hóa offline
-│   └── animation_optimization.md # Chiến lược tối ưu hóa animation
-├── guides/                      # Hướng dẫn cho nhà phát triển
-│   ├── setup.md                 # Hướng dẫn thiết lập dự án
-│   ├── coding_standards.md      # Tiêu chuẩn code
-│   └── testing.md               # Hướng dẫn kiểm thử
-├── api/                         # Tài liệu API
-│   ├── endpoints.md             # Các endpoint API
-│   └── data_models.md           # Các mô hình dữ liệu
-└── design/                      # Tài liệu thiết kế
-    ├── ui_guidelines.md         # Hướng dẫn thiết kế UI
-    └── mockups/                 # Mockup UI
-```
-
-### Các Loại Tài liệu
-
-1. **Tài liệu Kiến trúc**: Mô tả kiến trúc hệ thống tổng thể, mẫu thiết kế và tương tác giữa các thành phần.
-
-2. **Tài liệu Tối ưu hóa**: Chứa các chiến lược và lộ trình cho việc tối ưu hóa hiệu suất và khả năng mở rộng.
-   - **Đồng bộ hóa Offline**: Phương pháp chi tiết để triển khai khả năng offline-first mạnh mẽ.
-   - **Tối ưu hóa Animation**: Chiến lược toàn diện cho animation mượt mà, hiệu quả trên các nền tảng.
-
-3. **Hướng dẫn cho Nhà phát triển**: Hướng dẫn thực tế cho các nhà phát triển làm việc trên dự án, bao gồm hướng dẫn thiết lập, tiêu chuẩn code và quy trình kiểm thử.
-
-4. **Tài liệu API**: Chi tiết về các endpoint API, định dạng request/response và mô hình dữ liệu.
-
-5. **Tài liệu Thiết kế**: Hướng dẫn UI/UX, mockup và quyết định thiết kế.
-
-## Cách Đóng góp vào Tài liệu
-
-1. Tuân theo cấu trúc hiện có khi thêm tài liệu mới
-2. Sử dụng định dạng Markdown cho tất cả tài liệu
-3. Bao gồm cả bản dịch tiếng Anh và tiếng Việt khi có thể
-4. Thêm sơ đồ và trợ giúp trực quan khi thích hợp
-5. Giữ tài liệu cập nhật với các thay đổi code 
+© 2023 Flutter Chat App Team 
