@@ -1,15 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
-import 'base_state.dart';
-import '../../../core/services/error_reporting_service.dart';
-import '../../../core/services/analytics_service.dart';
-import '../../../core/services/state_persistence_service.dart';
-import '../../../core/services/performance_monitoring_service.dart';
-import '../../../core/services/connectivity_service.dart';
+import 'package:get_it/get_it.dart';
+import '../../../core/monitoring/analytics_service.dart';
 import '../../../core/monitoring/crash_reporter.dart';
+import '../../../core/monitoring/performance_monitor.dart';
+import 'base_state.dart';
 
 /// Lớp cơ sở trừu tượng cho tất cả các BLoC.
 /// EventType là kiểu dữ liệu cho các sự kiện mà BLoC này xử lý.
@@ -24,34 +22,40 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
   final GetIt _serviceLocator = GetIt.instance;
   
   // Services
-  late final ErrorReportingService _errorReportingService;
-  late final AnalyticsService _analyticsService;
-  late final StatePersistenceService _stateRepository;
-  late final PerformanceMonitoringService _performanceMonitor;
-  late final ConnectivityService _connectivityService;
   late final CrashReporter _crashReporter;
+  late final AnalyticsService _analyticsService;
+  late final PerformanceMonitor _performanceMonitor;
 
   // Khởi tạo BLoC với trạng thái ban đầu.
   BaseBloc(StateType initialState) : super(initialState) {
     // Khởi tạo services từ DI container
     _initServices();
     
-    // Đăng ký xử lý lỗi
-    super.onError = _handleError;
+    // Cấu hình xử lý sự kiện
+    _registerEventHandlers();
     
     // Lắng nghe sự kiện thay đổi kết nối mạng
     _setupConnectivityListener();
   }
   
+  /// Đăng ký handlers cho các sự kiện, có thể ghi đè bởi lớp con
+  @protected
+  void _registerEventHandlers() {
+    // Lớp con có thể ghi đè để đăng ký handlers cho các sự kiện cụ thể
+  }
+  
+  /// Xử lý lỗi với báo cáo lỗi, phân loại và logging
+  @protected
+  void handleError(Object error, StackTrace stackTrace) {
+    _handleError(error, stackTrace);
+  }
+  
   /// Khởi tạo các services cần thiết
   void _initServices() {
     try {
-      _errorReportingService = _serviceLocator<ErrorReportingService>();
-      _analyticsService = _serviceLocator<AnalyticsService>();
-      _stateRepository = _serviceLocator<StatePersistenceService>();
-      _performanceMonitor = _serviceLocator<PerformanceMonitoringService>();
-      _connectivityService = _serviceLocator<ConnectivityService>();
-      _crashReporter = _serviceLocator<CrashReporter>();
+      _crashReporter = _serviceLocator.get<CrashReporter>();
+      _analyticsService = _serviceLocator.get<AnalyticsService>();
+      _performanceMonitor = _serviceLocator.get<PerformanceMonitor>();
     } catch (e) {
       _logger.w('Một số services không khả dụng: $e');
     }
@@ -59,18 +63,7 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
   
   /// Theo dõi sự thay đổi kết nối mạng
   void _setupConnectivityListener() {
-    try {
-      final subscription = _connectivityService.onConnectivityChanged.listen((hasConnection) {
-        if (hasConnection && state is BaseError && (state as BaseError).type == ErrorType.network) {
-          // Tự động thử lại khi có kết nối trở lại
-          _handleConnectivityRestored();
-        }
-      });
-      
-      _subscriptions.add(subscription);
-    } catch (e) {
-      _logger.w('Không thể thiết lập theo dõi kết nối: $e');
-    }
+    // Lắng nghe thay đổi kết nối mạng nếu cần
   }
   
   /// Phương thức được gọi khi kết nối mạng được khôi phục
@@ -108,8 +101,11 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
 
     // Tracking analytics
     try {
-      _analyticsService.trackError('${runtimeType.toString()}_${errorType.toString()}', 
-        error.toString());
+      _analyticsService.logError(
+        errorType: '${runtimeType.toString()}_error',
+        errorMessage: error.toString(),
+        errorDetails: stackTrace.toString(),
+      );
     } catch (e) {
       _logger.w('Không thể ghi nhận analytics: $e');
     }
@@ -206,41 +202,13 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
       
       // Báo cáo lỗi đến dịch vụ theo dõi lỗi từ xa
       try {
-        _crashReporter.recordError(error, stackTrace, reason: message);
+        if (error != null && stackTrace != null) {
+          _crashReporter.recordError(error, stackTrace, reason: message);
+        }
       } catch (e) {
         _logger.w('Không thể báo cáo lỗi: $e');
       }
     }
-  }
-  
-  /// Lưu trạng thái hiện tại nếu có thể
-  void persistState() {
-    if (state is Persistable) {
-      try {
-        _stateRepository.saveState(
-          runtimeType.toString(), 
-          (state as Persistable).toJson()
-        );
-      } catch (e) {
-        _logger.w('Không thể lưu trữ trạng thái: $e');
-      }
-    }
-  }
-  
-  /// Tải trạng thái đã lưu
-  Future<StateType?> loadPersistedState() async {
-    if (state is Persistable) {
-      try {
-        final json = await _stateRepository.loadState(runtimeType.toString());
-        if (json != null) {
-          // Cần triển khai logic chuyển đổi json -> State trong class con
-          return null; // TODO: Implement in subclasses
-        }
-      } catch (e) {
-        _logger.w('Không thể tải trạng thái: $e');
-      }
-    }
-    return null;
   }
   
   /// Thực thi một thao tác với cơ chế thử lại tự động
@@ -259,44 +227,63 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
       emitLoading(message: loadingMessage);
     }
     
-    final stopwatch = Stopwatch()..start();
+    final operationName = '${runtimeType.toString()}_operation';
     
-    while (attempts < maxRetries) {
-      try {
-        final result = await operation();
-        stopwatch.stop();
-        
-        // Báo cáo hiệu suất nếu thao tác mất quá nhiều thời gian
-        if (stopwatch.elapsedMilliseconds > 500) {
-          _performanceMonitor.trackOperationTime(
-            '${runtimeType.toString()}_operation',
-            stopwatch.elapsedMilliseconds
+    try {
+      // Sử dụng phương thức traceFunction của PerformanceMonitor
+      return await _performanceMonitor.traceFunction<T?>(
+        TraceType.custom,
+        () async {
+          // Thêm thuộc tính về số lần thử tối đa
+          await _performanceMonitor.addTraceAttribute(
+            TraceType.custom, 
+            customTraceName: operationName,
+            attributeName: 'retry_max',
+            value: maxRetries.toString()
           );
-        }
-        
-        return result;
-      } catch (e, stackTrace) {
-        attempts++;
-        _logger.w('Thao tác thất bại (lần thử $attempts/$maxRetries): $e');
-        
-        if (attempts >= maxRetries) {
-          // Đã hết số lần thử, phát ra lỗi
-          final errorType = _classifyError(e);
-          emitError(
-            _extractUserFriendlyMessage(e, errorType),
-            error: e,
-            stackTrace: stackTrace,
-            type: errorType
-          );
+          
+          while (attempts < maxRetries) {
+            try {
+              return await operation();
+            } catch (e, stackTrace) {
+              attempts++;
+              _logger.w('Thao tác thất bại (lần thử $attempts/$maxRetries): $e');
+              
+              if (attempts >= maxRetries) {
+                // Đã hết số lần thử, phát ra lỗi
+                final errorType = _classifyError(e);
+                emitError(
+                  _extractUserFriendlyMessage(e, errorType),
+                  error: e,
+                  stackTrace: stackTrace,
+                  type: errorType
+                );
+                
+                // Thêm thông tin kết quả thất bại
+                await _performanceMonitor.addTraceAttribute(
+                  TraceType.custom,
+                  customTraceName: operationName,
+                  attributeName: 'result',
+                  value: 'failed'
+                );
+                
+                return null;
+              }
+              
+              // Chờ trước khi thử lại
+              await Future.delayed(retryDelay * attempts);
+            }
+          }
+          
           return null;
-        }
-        
-        // Chờ trước khi thử lại
-        await Future.delayed(retryDelay * attempts);
-      }
+        },
+        customTraceName: operationName,
+        attributes: {'bloc': runtimeType.toString()}
+      );
+    } catch (e) {
+      _logger.e('Lỗi khi theo dõi hiệu suất: $e');
+      return null;
     }
-    
-    return null;
   }
   
   /// Thêm subscription để theo dõi và hủy khi BLoC đóng
@@ -314,11 +301,15 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
     // Ghi log thay đổi trạng thái
     _logger.d('[${runtimeType.toString()}] State change: $stateChangeSummary');
     
-    // Analytics
+    // Analytics 
     try {
-      _analyticsService.trackStateTransition(
-        '${runtimeType.toString()}_state_change',
-        stateChangeSummary
+      _analyticsService.logEvent(
+        AnalyticsEvent.custom,
+        customEventName: 'state_change',
+        parameters: {
+          'bloc': runtimeType.toString(),
+          'transition': stateChangeSummary
+        }
       );
     } catch (e) {
       // Bỏ qua lỗi analytics
@@ -329,7 +320,7 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
   void onTransition(Transition<EventType, StateType> transition) {
     super.onTransition(transition);
     
-    final stopwatch = Stopwatch()..start();
+    final transitionName = '${runtimeType.toString()}_transition';
     
     final String transitionSummary = 
         '${transition.event.runtimeType} caused ${transition.currentState.runtimeType} -> ${transition.nextState.runtimeType}';
@@ -337,14 +328,35 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
     // Ghi log các transition
     _logger.d('[${runtimeType.toString()}] Transition: $transitionSummary');
     
-    // Theo dõi thời gian xử lý transition
-    stopwatch.stop();
-    if (stopwatch.elapsedMilliseconds > 16) {  // 1 frame = ~16ms
-      _performanceMonitor.trackOperationTime(
-        '${runtimeType.toString()}_${transition.event.runtimeType}',
-        stopwatch.elapsedMilliseconds
+    // Theo dõi hiệu suất transition
+    try {
+      _performanceMonitor.startTrace(
+        TraceType.custom,
+        customTraceName: transitionName,
+        attributes: {
+          'event_type': transition.event.runtimeType.toString(),
+          'from_state': transition.currentState.runtimeType.toString(),
+          'to_state': transition.nextState.runtimeType.toString(),
+        }
       );
+      
+      // Dừng trace sau khi transition xong
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _performanceMonitor.stopTrace(
+          TraceType.custom,
+          customTraceName: transitionName
+        );
+      });
+    } catch (e) {
+      // Bỏ qua lỗi monitoring
     }
+  }
+  
+  /// Ghi đè để xử lý lỗi
+  @override
+  void onError(Object error, StackTrace stackTrace) {
+    _handleError(error, stackTrace);
+    super.onError(error, stackTrace);
   }
   
   @override
