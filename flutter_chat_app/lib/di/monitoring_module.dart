@@ -8,6 +8,7 @@ import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
 import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/message_delivery_tracker.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/services/performance_service.dart';
 
 /// Module đăng ký các dịch vụ monitoring vào dependency injection
 @module
@@ -43,6 +44,17 @@ abstract class MonitoringModule {
     // Disable trong chế độ debug
     await performance.setPerformanceCollectionEnabled(!kDebugMode);
     return performance;
+  }
+  
+  /// Cung cấp PerformanceService
+  @preResolve
+  @lazySingleton
+  Future<PerformanceService> providePerformanceService(
+    FirebasePerformance performance,
+  ) async {
+    final service = PerformanceService(performance);
+    await service.initialize();
+    return service;
   }
   
   /// Cung cấp Analytics Service dựa trên Firebase

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -33,6 +33,8 @@ import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
 import 'package:flutter_chat_app/core/services/device_capability_service.dart';
+import 'package:flutter_chat_app/core/services/performance_service.dart';
+import 'package:flutter_chat_app/presentation/widgets/app_wrapper.dart';
 
 // Import home screens from respective platform files
 import 'main_mobile.dart' show MobileHomeScreen;
@@ -121,6 +123,18 @@ Future<void> main() async {
   } catch (e) {
     // Log lỗi nếu không khởi tạo được monitoring services
     print('Could not initialize monitoring services: $e');
+  }
+  
+  // Khởi tạo PerformanceService
+  final performanceService = GetIt.I<PerformanceService>();
+  await performanceService.initialize();
+  
+  // Nếu đang trong chế độ debug, bật overlay hiệu suất khi khởi động
+  if (kDebugMode) {
+    // Cung cấp thời gian cho các widget khác khởi tạo
+    Future.delayed(const Duration(seconds: 2), () {
+      performanceService.showPerformanceOverlay = true;
+    });
   }
   
   // Bắt tất cả lỗi không xử lý trong zone
@@ -230,7 +244,7 @@ class _MyAppState extends State<MyApp> {
         builder: (context) {
           final router = AppRouter.router(context);
           
-          return MaterialApp.router(
+          return wrapApp(MaterialApp.router(
             title: 'Flutter Chat App',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
@@ -238,11 +252,57 @@ class _MyAppState extends State<MyApp> {
               useMaterial3: true,
             ),
             routerConfig: router,
-          );
+          ));
         },
       ),
     );
   }
+}
+
+Widget wrapApp(Widget child) {
+  // Chỉ thêm nút trong môi trường debug
+  if (kDebugMode) {
+    return Stack(
+      children: [
+        child,
+        Positioned(
+          top: 50,
+          right: 0,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                // Toggle performance overlay
+                final performanceService = GetIt.I<PerformanceService>();
+                performanceService.togglePerformanceOverlay();
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                child: const Icon(
+                  Icons.speed,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  // Không thêm overlay nút trong môi trường production
+  return child;
 }
 
 // This widget will determine which platform-specific implementation to use
@@ -508,7 +568,7 @@ class MyApp extends StatelessWidget {
         builder: (context) {
           final router = AppRouter.router(context);
           
-          return MaterialApp.router(
+          return wrapApp(MaterialApp.router(
             title: 'Flutter Chat App',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
@@ -516,7 +576,7 @@ class MyApp extends StatelessWidget {
               useMaterial3: true,
             ),
             routerConfig: router,
-          );
+          ));
         },
       ),
     );
