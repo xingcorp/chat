@@ -2,11 +2,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/config/app_config.dart';
+import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
 import 'package:flutter_chat_app/core/network/graphql_client.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/network/socket_manager.dart';
 import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
+import 'package:flutter_chat_app/core/utils/adaptive_animations.dart';
+import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
+import 'package:flutter_chat_app/core/utils/optimized_repaint_boundary.dart';
+import 'package:flutter_chat_app/core/utils/virtual_scroll_controller.dart';
 import 'package:flutter_chat_app/data/datasources/chat/chat_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/chat/chat_remote_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_local_datasource.dart';
@@ -58,176 +63,163 @@ import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';
 
 final getIt = GetIt.instance;
 
+/// Initialize core performance services
+Future<void> initCoreServices() async {
+  // Performance Monitor - needed by other services
+  getIt.registerSingleton<PerformanceMonitor>(PerformanceMonitor());
+  
+  // Initialize Isolate Manager
+  final isolateManager = IsolateManager(getIt<PerformanceMonitor>());
+  await isolateManager.initialize();
+  getIt.registerSingleton<IsolateManager>(isolateManager);
+  
+  // Adaptive Animation Manager
+  getIt.registerSingleton<AdaptiveAnimationManager>(
+    AdaptiveAnimationManager(getIt<PerformanceMonitor>())
+  );
+}
+
 /// Configure dependency injection
-Future<void> configureDependencies() async {
-  // External Libraries
-  getIt.registerSingleton<Logger>(Logger());
+Future<void> setupServiceLocator() async {
+  // First, initialize core performance services
+  await initCoreServices();
   
-  final sharedPreferences = await SharedPreferences.getInstance();
-  getIt.registerSingleton<SharedPreferences>(sharedPreferences);
-  
-  getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
-  
+  // Network
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
-  
-  // GraphQL Client
-  final clientValueNotifier = ValueNotifier<GraphQLClient>(
-    GraphQLClient(
-      cache: GraphQLCache(),
-      link: HttpLink('https://example.com/graphql'), // Default, will be replaced
-    ),
+  getIt.registerLazySingleton<NetworkInfo>(
+    () => NetworkInfoImpl(getIt<Connectivity>())
   );
   
-  getIt.registerSingleton<ValueNotifier<GraphQLClient>>(clientValueNotifier);
+  // GraphQL Client
+  getIt.registerLazySingleton<GraphQLClient>(() {
+    final httpLink = HttpLink('https://your-api-url.com/graphql');
+    return GraphQLClient(
+      cache: GraphQLCache(),
+      link: httpLink,
+    );
+  });
   
-  // Core
-  getIt.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(getIt()));
-  getIt.registerLazySingleton<LocalStorage>(() => LocalStorageImpl(getIt()));
+  // Storage
+  final sharedPreferences = await SharedPreferences.getInstance();
+  getIt.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
+  getIt.registerLazySingleton<LocalStorage>(
+    () => LocalStorageImpl(getIt<SharedPreferences>())
+  );
   getIt.registerLazySingleton<SecureStorage>(() => SecureStorageImpl());
   
   // Cache Managers
-  getIt.registerLazySingletonAsync<AppCacheManager>(() async {
-    final cacheManager = AppCacheManager();
-    await cacheManager.initialize();
-    return cacheManager;
-  });
-  
+  getIt.registerLazySingleton<AppCacheManager>(() => AppCacheManager());
   getIt.registerLazySingleton<MediaCacheManager>(() => MediaCacheManager());
-  getIt.registerLazySingleton<CacheSyncStrategy>(() => CacheSyncStrategy());
-  
-  // Thêm các services caching mới
-  getIt.registerLazySingletonAsync<CacheStats>(() async {
-    final cacheStats = CacheStats();
-    await cacheStats.initialize();
-    return cacheStats;
-  });
-  
-  getIt.registerLazySingletonAsync<PreloadManager>(() async {
-    final preloadManager = PreloadManager();
-    await preloadManager.initialize();
-    return preloadManager;
-  });
-  
-  getIt.registerLazySingletonAsync<BackgroundSyncWorker>(() async {
-    final syncWorker = BackgroundSyncWorker();
-    await syncWorker.initialize();
-    return syncWorker;
-  });
-  
-  // GraphQL Client
-  getIt.registerLazySingletonAsync<GraphQLClient>(() async {
-    final secureStorage = getIt<SecureStorage>();
-    final token = await secureStorage.getString('auth_token');
-    return GraphQLClientWrapperImpl.createClient(
-      token: token,
-      clientNotifier: getIt<ValueNotifier<GraphQLClient>>(),
-    );
-  });
-  
-  getIt.registerLazySingleton<GraphQLClientWrapper>(
-    () => GraphQLClientWrapperImpl(
-      getIt.getAsync<GraphQLClient>(),
-      getIt<NetworkInfo>(),
-    ),
-  );
-  
-  // Socket.IO
-  getIt.registerLazySingleton<io.Socket>(() {
-    return io.io(AppConfig.socketUrl, <String, dynamic>{
-      'transports': ['websocket'],
-      'autoConnect': false,
-      'forceNew': true,
-      'reconnection': false, // Tắt reconnection mặc định của socket.io-client
-      'timeout': 10000,
-      'extraHeaders': {
-        'platform': 'flutter'
-      }
-    });
-  });
-  
-  // Socket Manager
-  getIt.registerLazySingleton<SocketManager>(() {
-    final socketManager = SocketManager();
-    socketManager.initialize(getIt<io.Socket>());
-    return socketManager;
-  });
-  
-  // Socket Analytics
-  getIt.registerLazySingleton<SocketAnalytics>(() => SocketAnalytics(getIt<SocketManager>()));
-  
-  // Socket Rate Limiter
-  getIt.registerLazySingleton<SocketRateLimiter>(() => SocketRateLimiter(
-    defaultRateLimit: 120, // 120 tin nhắn/phút
-    eventRateLimits: {
-      'chat_message': 60, // 60 tin nhắn/phút cho chat_message
-      'typing': 30, // 30 events/phút cho typing
-    }
-  ));
-  
-  // Enhanced Socket Manager
-  getIt.registerLazySingleton<EnhancedSocketManager>(() => EnhancedSocketManager(
-    getIt<SocketManager>(),
-    getIt<SocketAnalytics>(),
-    getIt<SocketRateLimiter>()
-  ));
   
   // Data Sources
-  getIt.registerLazySingleton<UserLocalDataSource>(() => UserLocalDataSourceImpl(getIt()));
-  getIt.registerLazySingleton<UserRemoteDataSource>(() => UserRemoteDataSourceImpl(getIt()));
-  getIt.registerLazySingleton<ChatLocalDataSource>(() => ChatLocalDataSourceImpl(getIt()));
-  getIt.registerLazySingleton<ChatRemoteDataSource>(() => ChatRemoteDataSourceImpl(getIt(), getIt<SocketManager>()));
-  getIt.registerLazySingleton<MessageLocalDataSource>(() => MessageLocalDataSourceImpl(getIt()));
-  getIt.registerLazySingleton<MessageRemoteDataSource>(() => MessageRemoteDataSourceImpl(getIt(), getIt<SocketManager>()));
+  getIt.registerLazySingleton<ChatLocalDataSource>(
+    () => ChatLocalDataSourceImpl(getIt<LocalStorage>())
+  );
+  getIt.registerLazySingleton<ChatRemoteDataSource>(
+    () => ChatRemoteDataSourceImpl(getIt<GraphQLClient>())
+  );
+  getIt.registerLazySingleton<MessageLocalDataSource>(
+    () => MessageLocalDataSourceImpl(getIt<LocalStorage>())
+  );
+  getIt.registerLazySingleton<MessageRemoteDataSource>(
+    () => MessageRemoteDataSourceImpl(getIt<GraphQLClient>())
+  );
+  getIt.registerLazySingleton<UserLocalDataSource>(
+    () => UserLocalDataSourceImpl(getIt<LocalStorage>())
+  );
+  getIt.registerLazySingleton<UserRemoteDataSource>(
+    () => UserRemoteDataSourceImpl(getIt<GraphQLClient>())
+  );
   
   // Repositories
-  getIt.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(getIt(), getIt(), getIt(), getIt()));
-  getIt.registerLazySingleton<UserRepository>(() => UserRepositoryImpl(getIt(), getIt(), getIt()));
-  getIt.registerLazySingleton<ChatRepository>(() => ChatRepositoryImpl(getIt(), getIt(), getIt()));
-  getIt.registerLazySingleton<MessageRepository>(() => MessageRepositoryImpl(getIt(), getIt(), getIt()));
-  
-  // Repositories with Cache
-  getIt.registerLazySingletonAsync<MessageRepositoryWithCache>(() async {
-    final appCacheManager = await getIt.getAsync<AppCacheManager>();
-    return MessageRepositoryWithCache(
+  getIt.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(
+      getIt<SecureStorage>(),
+      getIt<LocalStorage>(),
+    )
+  );
+  getIt.registerLazySingleton<ChatRepository>(
+    () => ChatRepositoryImpl(
+      getIt<NetworkInfo>(),
+      getIt<ChatLocalDataSource>(),
+      getIt<ChatRemoteDataSource>(),
+    )
+  );
+  getIt.registerLazySingleton<MessageRepository>(
+    () => MessageRepositoryWithCache(
       getIt<NetworkInfo>(),
       getIt<MessageLocalDataSource>(),
       getIt<MessageRemoteDataSource>(),
-      appCacheManager,
-      getIt<CacheSyncStrategy>(),
-      getIt<MediaCacheManager>(),
-    );
-  });
+      getIt<AppCacheManager>(),
+    )
+  );
+  getIt.registerLazySingleton<UserRepository>(
+    () => UserRepositoryImpl(
+      getIt<NetworkInfo>(),
+      getIt<UserLocalDataSource>(),
+      getIt<UserRemoteDataSource>(),
+    )
+  );
   
-  // Use Cases - Auth
-  getIt.registerLazySingleton(() => CheckAuthStatusUseCase(getIt()));
-  getIt.registerLazySingleton(() => LoginUseCase(getIt()));
-  getIt.registerLazySingleton(() => LogoutUseCase(getIt()));
-  getIt.registerLazySingleton(() => RegisterUseCase(getIt()));
-  
-  // Use Cases - User
-  getIt.registerLazySingleton(() => GetUserProfileUseCase(getIt()));
-  getIt.registerLazySingleton(() => UpdateUserProfileUseCase(getIt()));
-  getIt.registerLazySingleton(() => GetUserContactsUseCase(getIt()));
-  getIt.registerLazySingleton(() => SearchUsersUseCase(getIt()));
-  
-  // Use Cases - Chat
-  getIt.registerLazySingleton(() => GetUserChatsUseCase(getIt()));
-  getIt.registerLazySingleton(() => GetChatDetailsUseCase(getIt()));
-  getIt.registerLazySingleton(() => CreateGroupChatUseCase(getIt()));
-  
-  // Use Cases - Message
-  getIt.registerLazySingleton(() => GetChatMessagesUseCase(getIt()));
-  getIt.registerLazySingleton(() => SendMessageUseCase(getIt()));
+  // Use Cases
+  getIt.registerLazySingleton(() => CheckAuthStatusUseCase(getIt<AuthRepository>()));
+  getIt.registerLazySingleton(() => LoginUseCase(getIt<AuthRepository>()));
+  getIt.registerLazySingleton(() => LogoutUseCase(getIt<AuthRepository>()));
+  getIt.registerLazySingleton(() => RegisterUseCase(getIt<AuthRepository>()));
+  getIt.registerLazySingleton(() => GetChatDetailsUseCase(getIt<ChatRepository>()));
+  getIt.registerLazySingleton(() => GetUserChatsUseCase(getIt<ChatRepository>()));
+  getIt.registerLazySingleton(() => CreateGroupChatUseCase(getIt<ChatRepository>()));
+  getIt.registerLazySingleton(() => GetChatMessagesUseCase(getIt<MessageRepository>()));
+  getIt.registerLazySingleton(() => SendMessageUseCase(getIt<MessageRepository>()));
+  getIt.registerLazySingleton(() => GetUserContactsUseCase(getIt<UserRepository>()));
+  getIt.registerLazySingleton(() => GetUserProfileUseCase(getIt<UserRepository>()));
+  getIt.registerLazySingleton(() => SearchUsersUseCase(getIt<UserRepository>()));
+  getIt.registerLazySingleton(() => UpdateUserProfileUseCase(getIt<UserRepository>()));
   
   // BLoCs
-  getIt.registerFactory(() => AppBloc(socketManager: getIt<SocketManager>()));
-  getIt.registerFactory(() => ConnectivityBloc(getIt()));
-  getIt.registerFactory(() => AuthBloc(getIt(), getIt(), getIt(), getIt()));
-  getIt.registerFactory(() => UserBloc(getIt(), getIt(), getIt(), getIt()));
-  getIt.registerFactory(() => ChatBloc(getIt(), getIt(), getIt()));
-  getIt.registerFactory(() => MessageBloc(
-    repository: getIt<MessageRepositoryWithCache>(),
-    cacheSyncStrategy: getIt<CacheSyncStrategy>(),
-    mediaCacheManager: getIt<MediaCacheManager>(),
+  getIt.registerFactory(() => AppBloc());
+  getIt.registerFactory(
+    () => AuthBloc(
+      getIt<CheckAuthStatusUseCase>(),
+      getIt<LoginUseCase>(),
+      getIt<LogoutUseCase>(),
+      getIt<RegisterUseCase>(),
+    )
+  );
+  getIt.registerFactory(
+    () => ChatBloc(
+      getIt<GetUserChatsUseCase>(),
+      getIt<GetChatDetailsUseCase>(),
+      getIt<CreateGroupChatUseCase>(),
+    )
+  );
+  getIt.registerFactory(
+    () => MessageBloc(
+      getIt<GetChatMessagesUseCase>(),
+      getIt<SendMessageUseCase>(),
+    )
+  );
+  getIt.registerFactory(
+    () => UserBloc(
+      getIt<GetUserProfileUseCase>(),
+      getIt<GetUserContactsUseCase>(),
+      getIt<SearchUsersUseCase>(),
+      getIt<UpdateUserProfileUseCase>(),
+    )
+  );
+  getIt.registerFactory(
+    () => ConnectivityBloc(
+      getIt<NetworkInfo>(),
+    )
+  );
+  
+  // Factories for utility classes that might be created multiple times
+  getIt.registerFactory(() => VirtualScrollController(
+    maxMessageBuffer: 100,
+    bufferZoneSize: 30,
   ));
+  
+  // Initialize all services that need it
+  await getIt<AppCacheManager>().initialize();
+  await getIt<MediaCacheManager>().initialize();
 } 

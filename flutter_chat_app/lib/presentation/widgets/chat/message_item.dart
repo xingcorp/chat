@@ -7,6 +7,10 @@ import 'package:get_it/get_it.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_chat_app/core/services/media_service.dart';
 import 'package:flutter_chat_app/core/utils/date_formatter.dart';
+import 'package:flutter_chat_app/presentation/widgets/message_status_indicator.dart';
+import 'package:flutter_chat_app/core/utils/animation_config.dart';
+import 'package:flutter_chat_app/presentation/widgets/attachment_preview.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class MessageItem extends StatefulWidget {
   final ChatMessage message;
@@ -14,6 +18,7 @@ class MessageItem extends StatefulWidget {
   final VoidCallback? onLongPress;
   final bool isLastInGroup;
   final bool showSenderInfo;
+  final bool highlightMessage;
 
   const MessageItem({
     Key? key,
@@ -22,6 +27,7 @@ class MessageItem extends StatefulWidget {
     this.onLongPress,
     this.isLastInGroup = false,
     this.showSenderInfo = false,
+    this.highlightMessage = false,
   }) : super(key: key);
 
   @override
@@ -130,255 +136,192 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     final theme = Theme.of(context);
     final isCurrentUser = widget.message.isFromCurrentUser;
     
-    return Align(
-      alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-        child: IntrinsicWidth(
-          child: Material(
-            color: isCurrentUser 
-                ? theme.colorScheme.primary.withOpacity(0.8)
-                : theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            elevation: 1,
-            child: InkWell(
-              onTap: widget.onTap,
-              onLongPress: widget.onLongPress,
-              borderRadius: BorderRadius.circular(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Show sender name for group chats
-                  if (widget.showSenderInfo && !isCurrentUser)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 0),
-                      child: Text(
-                        widget.message.senderName,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          color: isCurrentUser 
-                              ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  
-                  // Media content
-                  if (widget.message.hasMedia)
-                    _buildMediaContent(),
-                  
-                  // Text content
-                  if (widget.message.content.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Text(
-                        widget.message.content,
-                        style: TextStyle(
-                          color: isCurrentUser 
-                              ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                  
-                  // Time and status indicators
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12, right: 12, bottom: 8, top: 0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          DateFormatter.formatMessageTime(widget.message.createdAt),
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isCurrentUser 
-                                ? theme.colorScheme.onPrimary.withOpacity(0.7)
-                                : theme.colorScheme.onSurface.withOpacity(0.7),
-                          ),
-                        ),
-                        if (isCurrentUser) ...[
-                          const SizedBox(width: 4),
-                          _buildStatusIndicator(),
-                        ],
-                      ],
+    final messageBubble = RepaintBoundary(
+      child: _buildMessageBubble(context, isCurrentUser),
+    );
+    
+    return GestureDetector(
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
+      child: Container(
+        margin: EdgeInsets.only(
+          left: 8.0,
+          right: 8.0,
+          bottom: widget.isLastInGroup ? 12.0 : 4.0,
+          top: widget.showSenderInfo ? 8.0 : 0.0,
+        ),
+        child: Column(
+          crossAxisAlignment: isCurrentUser 
+              ? CrossAxisAlignment.end 
+              : CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Sender info for group chats
+            if (widget.showSenderInfo && !isCurrentUser)
+              Padding(
+                padding: const EdgeInsets.only(left: 12.0, bottom: 4.0),
+                child: RepaintBoundary(
+                  child: Text(
+                    widget.message.senderName,
+                    style: TextStyle(
+                      fontSize: 12.0,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.secondary,
                     ),
                   ),
-                ],
+                ),
               ),
+            
+            // Message row with avatar for non-current user
+            Row(
+              mainAxisAlignment: isCurrentUser 
+                  ? MainAxisAlignment.end 
+                  : MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Avatar for messages from others
+                if (!isCurrentUser && widget.isLastInGroup)
+                  RepaintBoundary(
+                    child: _buildAvatar(context),
+                  )
+                else if (!isCurrentUser)
+                  const SizedBox(width: 36.0),
+                
+                // Message bubble
+                Flexible(
+                  child: messageBubble,
+                ),
+                
+                // Space for status indicator on own messages
+                if (isCurrentUser)
+                  const SizedBox(width: 4.0),
+                
+                // Message status indicator for own messages
+                if (isCurrentUser)
+                  RepaintBoundary(
+                    child: MessageStatusIndicator(
+                      status: widget.message.status,
+                      isRead: widget.message.isRead,
+                    ),
+                  ),
+              ],
             ),
-          ),
+          ],
         ),
       ),
     );
   }
   
-  Widget _buildMediaContent() {
-    if (_isMediaError) {
-      return Container(
-        width: 250,
-        height: 150,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-        ),
-        child: const Center(
-          child: Icon(Icons.error_outline, color: Colors.red, size: 40),
-        ),
-      );
-    }
+  Widget _buildMessageBubble(BuildContext context, bool isFromCurrentUser) {
+    final ThemeData theme = Theme.of(context);
+    final messageAlignment = isFromCurrentUser 
+        ? CrossAxisAlignment.end 
+        : CrossAxisAlignment.start;
     
-    if (!_isMediaLoaded) {
-      return Shimmer.fromColors(
-        baseColor: Colors.grey.shade300,
-        highlightColor: Colors.grey.shade100,
-        child: Container(
-          width: 250,
-          height: 150,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-          ),
-        ),
-      );
-    }
+    // Different color for current user vs others
+    final bubbleColor = isFromCurrentUser 
+        ? theme.colorScheme.primary.withOpacity(0.8) 
+        : theme.cardColor;
     
-    // Handle different media types
-    if (widget.message.isImage) {
-      return ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 250),
-          child: AspectRatio(
-            aspectRatio: _mediaAspectRatio,
-            child: _localMediaFile != null
-                ? Image.file(
-                    _localMediaFile!,
-                    fit: BoxFit.cover,
-                    cacheWidth: 500, // Limit memory usage
-                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                      if (frame == null) {
-                        return Shimmer.fromColors(
-                          baseColor: Colors.grey.shade300,
-                          highlightColor: Colors.grey.shade100,
-                          child: Container(color: Colors.white),
-                        );
-                      }
-                      return child;
-                    },
-                  )
-                : CachedNetworkImage(
-                    imageUrl: widget.message.mediaUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Shimmer.fromColors(
-                      baseColor: Colors.grey.shade300,
-                      highlightColor: Colors.grey.shade100,
-                      child: Container(color: Colors.white),
-                    ),
-                    errorWidget: (context, url, error) => const Icon(Icons.error),
-                  ),
-          ),
-        ),
-      );
-    } else if (widget.message.isVideo) {
-      return Stack(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 250),
-              child: AspectRatio(
-                aspectRatio: _mediaAspectRatio,
-                child: Container(
-                  color: Colors.black,
-                  child: _localMediaFile != null
-                      ? Image.file(
-                          _localMediaFile!, // This should be a thumbnail
-                          fit: BoxFit.cover,
-                          cacheWidth: 500,
-                        )
-                      : const Center(child: CircularProgressIndicator()),
-                ),
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: Center(
-              child: Icon(
-                Icons.play_circle_fill,
-                color: Colors.white.withOpacity(0.8),
-                size: 48,
-              ),
-            ),
+    final textColor = isFromCurrentUser 
+        ? theme.colorScheme.onPrimary 
+        : theme.textTheme.bodyMedium?.color ?? Colors.black;
+    
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.75,
+      ),
+      decoration: BoxDecoration(
+        color: widget.highlightMessage 
+            ? bubbleColor.withOpacity(0.7) 
+            : bubbleColor,
+        borderRadius: _getBubbleBorderRadius(isFromCurrentUser),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 2.0,
+            offset: const Offset(0, 1),
           ),
         ],
-      );
-    } else if (widget.message.isAudio) {
-      return Container(
-        width: 250,
-        padding: const EdgeInsets.all(12),
-        child: Row(
+      ),
+      child: ClipRRect(
+        borderRadius: _getBubbleBorderRadius(isFromCurrentUser),
+        child: Column(
+          crossAxisAlignment: messageAlignment,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.audiotrack),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Audio Message', style: TextStyle(fontWeight: FontWeight.bold)),
-                  Container(
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
+            // Reply indicator if this is a reply
+            if (widget.message.replyTo != null)
+              _buildReplyPreview(context, isFromCurrentUser),
+            
+            // Attachment previews if any
+            if (widget.message.attachments.isNotEmpty)
+              _buildAttachmentPreviews(context),
+            
+            // Message content
+            if (widget.message.content.isNotEmpty || widget.message.attachments.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 8.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: messageAlignment,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Message text
+                    RepaintBoundary(
+                      child: Text(
+                        widget.message.content,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 16.0,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    
+                    const SizedBox(height: 4.0),
+                    
+                    // Timestamp
+                    RepaintBoundary(
+                      child: Text(
+                        timeago.format(widget.message.createdAt, locale: 'en_short'),
+                        style: TextStyle(
+                          color: textColor.withOpacity(0.7),
+                          fontSize: 10.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Icon(Icons.play_arrow),
           ],
         ),
-      );
-    } else {
-      // File attachment
-      return Container(
-        width: 250,
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            const Icon(Icons.attach_file),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                widget.message.fileName ?? 'Attachment',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const Icon(Icons.download),
-          ],
-        ),
-      );
-    }
+      ),
+    );
   }
   
-  Widget _buildStatusIndicator() {
-    switch (widget.message.status) {
-      case MessageStatus.sending:
-        return const Icon(Icons.access_time, size: 12, color: Colors.white70);
-      case MessageStatus.sent:
-        return const Icon(Icons.check, size: 12, color: Colors.white70);
-      case MessageStatus.delivered:
-        return const Icon(Icons.done_all, size: 12, color: Colors.white70);
-      case MessageStatus.read:
-        return Icon(Icons.done_all, size: 12, color: Colors.blue.shade300);
-      case MessageStatus.failed:
-        return const Icon(Icons.error_outline, size: 12, color: Colors.red);
-      default:
-        return const SizedBox(width: 12, height: 12);
-    }
+  Widget _buildAvatar(BuildContext context) {
+    // Implementation of _buildAvatar method
+    // This method should return a widget representing the avatar
+    throw UnimplementedError();
+  }
+  
+  Widget _buildReplyPreview(BuildContext context, bool isFromCurrentUser) {
+    // Implementation of _buildReplyPreview method
+    // This method should return a widget representing the reply preview
+    throw UnimplementedError();
+  }
+  
+  Widget _buildAttachmentPreviews(BuildContext context) {
+    // Implementation of _buildAttachmentPreviews method
+    // This method should return a widget representing the attachment previews
+    throw UnimplementedError();
+  }
+  
+  BorderRadius _getBubbleBorderRadius(bool isFromCurrentUser) {
+    // Implementation of _getBubbleBorderRadius method
+    // This method should return the appropriate BorderRadius for the message bubble
+    throw UnimplementedError();
   }
 } 

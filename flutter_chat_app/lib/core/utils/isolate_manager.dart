@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -23,8 +24,32 @@ enum IsolateTaskType {
   /// Search operations
   searchOperation,
   
+  /// Text processing (analysis, formatting)
+  textProcessing,
+  
+  /// AI/ML local operations
+  aiProcessing,
+  
+  /// Fuzzy search operations
+  fuzzySearch,
+  
   /// Other custom tasks
   custom,
+}
+
+/// Priority levels for tasks
+enum TaskPriority {
+  /// Low priority tasks (can be delayed)
+  low,
+  
+  /// Medium priority tasks (default)
+  medium,
+  
+  /// High priority tasks
+  high,
+  
+  /// Critical tasks (processed ASAP)
+  critical
 }
 
 /// Message passed to isolate
@@ -74,38 +99,95 @@ class IsolateResult {
   });
 }
 
+/// Represents a task pending execution
+class _PendingTask {
+  final IsolateMessage message;
+  final Completer<IsolateResult> completer;
+  
+  _PendingTask(this.message, this.completer);
+}
+
 /// A service for offloading heavy processing tasks to a background isolate
 @singleton
 class IsolateManager {
   static const String _isolateName = 'processing_isolate';
   
-  Isolate? _isolate;
-  SendPort? _sendPort;
-  final ReceivePort _receivePort = ReceivePort();
+  /// Maximum number of isolates in the pool
+  static const int _maxIsolates = 3;
+  
+  /// List of isolates in the pool
+  final List<Isolate?> _isolates = List.filled(_maxIsolates, null);
+  
+  /// List of send ports for communication with isolates
+  final List<SendPort?> _sendPorts = List.filled(_maxIsolates, null);
+  
+  /// Receive ports for each isolate
+  final List<ReceivePort> _receivePorts = List.generate(_maxIsolates, (_) => ReceivePort());
+  
+  /// Queue of pending tasks organized by priority
+  final Map<TaskPriority, Queue<_PendingTask>> _taskQueues = {
+    TaskPriority.low: Queue<_PendingTask>(),
+    TaskPriority.medium: Queue<_PendingTask>(),
+    TaskPriority.high: Queue<_PendingTask>(),
+    TaskPriority.critical: Queue<_PendingTask>(),
+  };
+  
+  /// Active tasks being processed by each isolate
+  final List<String?> _activeTaskIds = List.filled(_maxIsolates, null);
+  
+  /// Map of task ID to its completer
   final Map<String, Completer<IsolateResult>> _pendingTasks = {};
+  
   final PerformanceMonitor _performance;
   
   bool _isInitialized = false;
   
   IsolateManager(this._performance);
   
-  /// Initialize the isolate manager
+  /// Initialize the isolate manager with a pool of isolates
   Future<void> initialize() async {
     if (_isInitialized) return;
     
     try {
-      // Register the receive port for isolate communication
-      final instanceName = _isolateName;
+      // Initialize isolates in the pool
+      for (int i = 0; i < _maxIsolates; i++) {
+        await _initializeIsolate(i);
+      }
+      
+      _isInitialized = true;
+      
+      // Start task processing
+      _processTaskQueue();
+    } catch (e) {
+      debugPrint('Failed to initialize isolate pool: $e');
+      _isInitialized = false;
+      
+      // Kill any isolates that were created
+      for (int i = 0; i < _maxIsolates; i++) {
+        if (_isolates[i] != null) {
+          _isolates[i]!.kill(priority: Isolate.immediate);
+          _isolates[i] = null;
+        }
+      }
+    }
+  }
+  
+  /// Initialize a single isolate in the pool
+  Future<void> _initializeIsolate(int index) async {
+    try {
+      final instanceName = '${_isolateName}_$index';
+      
+      // Register the receive port for this isolate
       IsolateNameServer.registerPortWithName(
-        _receivePort.sendPort,
+        _receivePorts[index].sendPort,
         instanceName,
       );
       
-      // Listen for messages from the isolate
-      _receivePort.listen(_handleIsolateMessage);
+      // Listen for messages from this isolate
+      _receivePorts[index].listen((message) => _handleIsolateMessage(message, index));
       
       // Spawn the isolate
-      _isolate = await Isolate.spawn(
+      _isolates[index] = await Isolate.spawn(
         _isolateEntryPoint,
         instanceName,
         debugName: instanceName,
@@ -114,7 +196,7 @@ class IsolateManager {
       // Wait for the isolate to send its SendPort
       final completer = Completer<SendPort>();
       late StreamSubscription subscription;
-      subscription = _receivePort.listen((message) {
+      subscription = _receivePorts[index].listen((message) {
         if (message is SendPort && !completer.isCompleted) {
           completer.complete(message);
           subscription.cancel();
@@ -122,30 +204,36 @@ class IsolateManager {
       });
       
       // Set timeout for getting the SendPort
-      _sendPort = await completer.future.timeout(
+      _sendPorts[index] = await completer.future.timeout(
         const Duration(seconds: 5),
         onTimeout: () {
-          throw TimeoutException('Failed to initialize isolate');
+          throw TimeoutException('Failed to initialize isolate $index');
         },
       );
-      
-      _isInitialized = true;
     } catch (e) {
-      // Fall back to main thread execution if isolate fails
-      debugPrint('Failed to initialize isolate: $e');
-      _isInitialized = false;
-      _isolate?.kill(priority: Isolate.immediate);
-      _isolate = null;
+      debugPrint('Failed to initialize isolate $index: $e');
+      
+      // Clean up resources for this isolate
+      if (_isolates[index] != null) {
+        _isolates[index]!.kill(priority: Isolate.immediate);
+        _isolates[index] = null;
+      }
+      
+      final instanceName = '${_isolateName}_$index';
+      IsolateNameServer.removePortNameMapping(instanceName);
+      
+      rethrow;
     }
   }
   
-  /// Process data in the background isolate
-  /// Falls back to the main thread if isolate is not available
+  /// Process data in a background isolate from the pool
+  /// Falls back to the main thread if isolates are not available
   Future<IsolateResult> processInBackground({
     required IsolateTaskType taskType,
     required dynamic data,
     String? taskId,
     Map<String, dynamic>? params,
+    TaskPriority priority = TaskPriority.medium,
   }) async {
     final id = taskId ?? 'task_${DateTime.now().millisecondsSinceEpoch}_${_pendingTasks.length}';
     
@@ -153,8 +241,8 @@ class IsolateManager {
     _performance.startTrace('isolate_task_$id');
     
     try {
-      // If isolate is not initialized, process on main thread
-      if (!_isInitialized || _sendPort == null) {
+      // If isolate pool is not initialized, process on main thread
+      if (!_isInitialized || _sendPorts.every((port) => port == null)) {
         final result = await _processOnMainThread(
           taskType: taskType,
           taskId: id,
@@ -166,6 +254,10 @@ class IsolateManager {
         return result;
       }
       
+      // Create a completer to wait for the result
+      final completer = Completer<IsolateResult>();
+      _pendingTasks[id] = completer;
+      
       // Prepare the message to send to isolate
       final message = IsolateMessage(
         taskType: taskType,
@@ -174,12 +266,11 @@ class IsolateManager {
         params: params,
       );
       
-      // Create a completer to wait for the result
-      final completer = Completer<IsolateResult>();
-      _pendingTasks[id] = completer;
+      // Queue the task with its priority
+      _taskQueues[priority]!.add(_PendingTask(message, completer));
       
-      // Send the message to the isolate
-      _sendPort!.send(message);
+      // Try to process the queue immediately
+      _processTaskQueue();
       
       // Wait for the result with timeout
       final result = await completer.future.timeout(
@@ -201,6 +292,63 @@ class IsolateManager {
         taskId: id,
         error: e.toString(),
       );
+    }
+  }
+  
+  /// Process the task queue based on priorities
+  void _processTaskQueue() {
+    // Check for available isolates
+    for (int i = 0; i < _maxIsolates; i++) {
+      if (_isolates[i] != null && _sendPorts[i] != null && _activeTaskIds[i] == null) {
+        // This isolate is available for processing
+        _PendingTask? task = _getNextTaskByPriority();
+        
+        if (task != null) {
+          _activeTaskIds[i] = task.message.taskId;
+          _sendPorts[i]!.send(task.message);
+        }
+      }
+    }
+  }
+  
+  /// Get the next task to process based on priority
+  _PendingTask? _getNextTaskByPriority() {
+    // Try to get a task from each queue in order of priority
+    if (_taskQueues[TaskPriority.critical]!.isNotEmpty) {
+      return _taskQueues[TaskPriority.critical]!.removeFirst();
+    }
+    
+    if (_taskQueues[TaskPriority.high]!.isNotEmpty) {
+      return _taskQueues[TaskPriority.high]!.removeFirst();
+    }
+    
+    if (_taskQueues[TaskPriority.medium]!.isNotEmpty) {
+      return _taskQueues[TaskPriority.medium]!.removeFirst();
+    }
+    
+    if (_taskQueues[TaskPriority.low]!.isNotEmpty) {
+      return _taskQueues[TaskPriority.low]!.removeFirst();
+    }
+    
+    return null;
+  }
+  
+  /// Handle messages coming back from the isolate
+  void _handleIsolateMessage(dynamic message, int isolateIndex) {
+    if (message is IsolateResult) {
+      // Mark the isolate as available again
+      _activeTaskIds[isolateIndex] = null;
+      
+      // Complete the pending task
+      final completer = _pendingTasks.remove(message.taskId);
+      if (completer != null && !completer.isCompleted) {
+        completer.complete(message);
+      }
+      
+      // Process the next task in the queue
+      _processTaskQueue();
+    } else if (message is SendPort) {
+      // This is handled during initialization
     }
   }
   
@@ -251,6 +399,27 @@ class IsolateManager {
           });
           break;
           
+        case IsolateTaskType.textProcessing:
+          result = await compute(_processText, {
+            'data': data,
+            'params': params,
+          });
+          break;
+          
+        case IsolateTaskType.aiProcessing:
+          result = await compute(_processAI, {
+            'data': data,
+            'params': params,
+          });
+          break;
+          
+        case IsolateTaskType.fuzzySearch:
+          result = await compute(_processFuzzySearch, {
+            'data': data,
+            'params': params,
+          });
+          break;
+          
         case IsolateTaskType.custom:
           result = await compute(_processCustom, {
             'data': data,
@@ -273,25 +442,18 @@ class IsolateManager {
     }
   }
   
-  /// Handle messages coming back from the isolate
-  void _handleIsolateMessage(dynamic message) {
-    if (message is IsolateResult) {
-      final completer = _pendingTasks.remove(message.taskId);
-      if (completer != null && !completer.isCompleted) {
-        completer.complete(message);
-      }
-    }
-  }
-  
   /// Dispose the isolate manager
   void dispose() {
-    if (_isolate != null) {
-      _isolate!.kill(priority: Isolate.immediate);
-      _isolate = null;
+    for (int i = 0; i < _maxIsolates; i++) {
+      if (_isolates[i] != null) {
+        _isolates[i]!.kill(priority: Isolate.immediate);
+        _isolates[i] = null;
+      }
+      
+      final instanceName = '${_isolateName}_$i';
+      IsolateNameServer.removePortNameMapping(instanceName);
+      _receivePorts[i].close();
     }
-    
-    IsolateNameServer.removePortNameMapping(_isolateName);
-    _receivePort.close();
     
     // Complete any pending tasks with error
     for (final task in _pendingTasks.values) {
@@ -300,6 +462,11 @@ class IsolateManager {
       }
     }
     _pendingTasks.clear();
+    
+    // Clear task queues
+    for (final queue in _taskQueues.values) {
+      queue.clear();
+    }
     
     _isInitialized = false;
   }
@@ -368,6 +535,27 @@ Future<void> _processMessage(IsolateMessage message, SendPort sendPort) async {
         
       case IsolateTaskType.searchOperation:
         result = await _processSearch({
+          'data': message.data,
+          'params': message.params,
+        });
+        break;
+        
+      case IsolateTaskType.textProcessing:
+        result = await _processText({
+          'data': message.data,
+          'params': message.params,
+        });
+        break;
+        
+      case IsolateTaskType.aiProcessing:
+        result = await _processAI({
+          'data': message.data,
+          'params': message.params,
+        });
+        break;
+        
+      case IsolateTaskType.fuzzySearch:
+        result = await _processFuzzySearch({
           'data': message.data,
           'params': message.params,
         });
@@ -506,6 +694,57 @@ Future<dynamic> _processSearch(Map<String, dynamic> args) async {
   
   return {
     'error': 'Invalid search parameters',
+  };
+}
+
+/// Process text processing
+Future<dynamic> _processText(Map<String, dynamic> args) async {
+  final data = args['data'];
+  final params = args['params'] as Map<String, dynamic>?;
+  
+  // Implementation for text processing
+  // For example, analyzing text, formatting, etc.
+  
+  // Simulated processing for now
+  await Future.delayed(const Duration(milliseconds: 100));
+  
+  return {
+    'processed': true,
+    'type': data.runtimeType.toString(),
+  };
+}
+
+/// Process AI/ML local operations
+Future<dynamic> _processAI(Map<String, dynamic> args) async {
+  final data = args['data'];
+  final params = args['params'] as Map<String, dynamic>?;
+  
+  // Implementation for AI/ML local operations
+  // For example, training a model, making predictions, etc.
+  
+  // Simulated processing for now
+  await Future.delayed(const Duration(milliseconds: 100));
+  
+  return {
+    'processed': true,
+    'type': data.runtimeType.toString(),
+  };
+}
+
+/// Process fuzzy search operations
+Future<dynamic> _processFuzzySearch(Map<String, dynamic> args) async {
+  final data = args['data'];
+  final params = args['params'] as Map<String, dynamic>?;
+  
+  // Implementation for fuzzy search operations
+  // For example, finding similar items in a dataset
+  
+  // Simulated processing for now
+  await Future.delayed(const Duration(milliseconds: 100));
+  
+  return {
+    'processed': true,
+    'type': data.runtimeType.toString(),
   };
 }
 
