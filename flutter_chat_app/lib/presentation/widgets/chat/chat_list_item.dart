@@ -10,10 +10,10 @@ class ChatListItem extends StatelessWidget {
   /// Dữ liệu chat
   final Chat chat;
   
-  /// Callback khi người dùng nhấn vào mục
+  /// Callback khi nhấn vào item
   final Function(Chat) onTap;
   
-  /// Có đang được chọn không
+  /// Đang được chọn không
   final bool isSelected;
   
   /// Constructor
@@ -49,8 +49,8 @@ class ChatListItem extends StatelessWidget {
                 id: chat.id,
                 imageUrl: chat.avatarUrl,
                 displayName: chat.name,
-                size: 56,
-                hasBorder: chat.unreadCount > 0,
+                size: 50,
+                hasBorder: true,
                 borderColor: theme.colorScheme.primary,
               ),
               const SizedBox(width: 12),
@@ -99,18 +99,18 @@ class ChatListItem extends StatelessWidget {
                     
                     const SizedBox(height: 4),
                     
-                    // Dòng dưới: Tin nhắn cuối và số tin nhắn chưa đọc
+                    // Dòng dưới: Preview tin nhắn và số tin nhắn chưa đọc
                     Row(
                       children: [
-                        // Tin nhắn cuối
+                        // Preview tin nhắn
                         Expanded(
                           child: Text(
                             chat.lastMessagePreview ?? '',
                             style: TextStyle(
                               fontSize: 14,
-                              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
                               fontWeight: chat.unreadCount > 0
-                                  ? FontWeight.bold
+                                  ? FontWeight.w500
                                   : FontWeight.normal,
                             ),
                             maxLines: 1,
@@ -119,12 +119,13 @@ class ChatListItem extends StatelessWidget {
                         ),
                         
                         // Số tin nhắn chưa đọc
-                        if (chat.unreadCount > 0)
+                        if (chat.unreadCount > 0) ...[
+                          const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: theme.colorScheme.primary,
-                              shape: BoxShape.circle,
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               chat.unreadCount.toString(),
@@ -135,6 +136,7 @@ class ChatListItem extends StatelessWidget {
                               ),
                             ),
                           ),
+                        ],
                       ],
                     ),
                   ],

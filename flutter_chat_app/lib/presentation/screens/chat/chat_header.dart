@@ -45,6 +45,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
               imageUrl: chat.avatarUrl,
               displayName: chat.name,
               size: 40,
+              hasBorder: true,
             ),
           ),
           

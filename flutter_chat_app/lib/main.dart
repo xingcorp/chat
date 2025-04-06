@@ -30,6 +30,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_manager.dart';
 import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_chat_app/core/services/animation_service.dart';
+import 'package:flutter_chat_app/core/services/device_capability_service.dart';
 
 // Import home screens from respective platform files
 import 'main_mobile.dart' show MobileHomeScreen;
@@ -37,8 +40,23 @@ import 'main_web.dart' show WebHomeScreen;
 import 'main_desktop.dart' show DesktopHomeScreen;
 
 Future<void> main() async {
-  // Đảm bảo Flutter engine được khởi tạo
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Thiết lập hướng màn hình và màu theme cho status bar
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  
+  // Cấu hình SystemUI
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
   
   try {
     // Khởi tạo Firebase
@@ -442,5 +460,138 @@ class _IsarTestScreenState extends State<IsarTestScreen> {
         ],
       ),
     );
+  }
+}
+
+/// Thiết lập các services sử dụng DI
+Future<void> setupServices() async {
+  final getIt = GetIt.instance;
+  
+  // Đăng ký DeviceCapabilityService để đánh giá khả năng thiết bị
+  final deviceCapabilityService = DeviceCapabilityService();
+  getIt.registerSingleton<DeviceCapabilityService>(deviceCapabilityService);
+  
+  // Khởi tạo benchmark và đánh giá thiết bị
+  await deviceCapabilityService.initialize();
+  
+  // Đăng ký AnimationService để quản lý cấu hình animation
+  getIt.registerSingleton<AnimationService>(
+    AnimationService(deviceCapabilityService),
+  );
+  
+  // Đăng ký các services khác...
+}
+
+/// Widget gốc của ứng dụng
+class MyApp extends StatelessWidget {
+  final SharedPreferences sharedPreferences;
+  
+  const MyApp({Key? key, required this.sharedPreferences}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => GetIt.I<AppBloc>()..add(const AppInitialized()),
+        ),
+        BlocProvider(
+          create: (context) {
+            final authBloc = AuthBloc(sharedPreferences);
+            // Trigger an auth check on app startup
+            authBloc.add(const AuthCheckRequested());
+            return authBloc;
+          },
+        ),
+      ],
+      child: Builder(
+        builder: (context) {
+          final router = AppRouter.router(context);
+          
+          return MaterialApp.router(
+            title: 'Flutter Chat App',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+              useMaterial3: true,
+            ),
+            routerConfig: router,
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Màn hình chính
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _buildBody(),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.chat_outlined),
+            selectedIcon: Icon(Icons.chat),
+            label: 'Chats',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.people_outline),
+            selectedIcon: Icon(Icons.people),
+            label: 'Contacts',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildBody() {
+    // Placeholder cho các tab
+    switch (_currentIndex) {
+      case 0:
+        return const Center(
+          child: Text(
+            'Chats Tab',
+            style: TextStyle(fontSize: 24),
+          ),
+        );
+      case 1:
+        return const Center(
+          child: Text(
+            'Contacts Tab',
+            style: TextStyle(fontSize: 24),
+          ),
+        );
+      case 2:
+        return const Center(
+          child: Text(
+            'Settings Tab',
+            style: TextStyle(fontSize: 24),
+          ),
+        );
+      default:
+        return const SizedBox.shrink();
+    }
   }
 } 

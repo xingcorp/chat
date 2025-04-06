@@ -155,14 +155,87 @@ class AnimationService {
     }
     
     // Sử dụng custom transition theo loại
-    return PageTransitions.createRoute<T>(
-      page: builder,
-      type: transitionType,
+    return PageRouteBuilder<T>(
       settings: settings,
+      pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+      transitionDuration: _config.defaultDuration,
       fullscreenDialog: fullscreenDialog,
-      duration: _config.defaultDuration,
-      curve: _config.defaultCurve,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return _buildTransition(
+          transitionType,
+          animation.drive(CurveTween(curve: _config.defaultCurve)),
+          secondaryAnimation.drive(CurveTween(curve: _config.defaultCurve)),
+          child,
+        );
+      },
     );
+  }
+  
+  /// Tạo transition widget theo loại
+  Widget _buildTransition(
+    PageTransitionType type,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    switch (type) {
+      case PageTransitionType.fadeAndSlideFromRight:
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.25, 0.0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+        );
+        
+      case PageTransitionType.fadeAndSlideFromLeft:
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(-0.25, 0.0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+        );
+        
+      case PageTransitionType.fadeAndSlideFromBottom:
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.0, 0.25),
+            end: Offset.zero,
+          ).animate(animation),
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+        );
+        
+      case PageTransitionType.fade:
+        return FadeTransition(
+          opacity: animation,
+          child: child,
+        );
+        
+      case PageTransitionType.scale:
+        return ScaleTransition(
+          scale: Tween<double>(
+            begin: 0.95,
+            end: 1.0,
+          ).animate(animation),
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+        );
+        
+      case PageTransitionType.none:
+        return child;
+    }
   }
   
   /// Tạo heroTag với prefix

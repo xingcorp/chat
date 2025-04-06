@@ -34,7 +34,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
     
     // Lấy cấu hình animation từ service
     final animationService = GetIt.I<AnimationService>();
-    _duration = animationService.config.typingIndicatorDuration;
+    _duration = animationService.config.defaultDuration;
     
     // Tạo controllers animation
     _controllers = List.generate(3, (index) {
@@ -42,14 +42,14 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
         vsync: this,
         duration: _duration,
       )..repeat(reverse: true, period: Duration(
-        milliseconds: _duration.inMilliseconds + (index * 160))
-      );
+        milliseconds: (_duration.inMilliseconds * 0.8).round() + (index * 200),
+      ));
     });
   }
   
   @override
   void dispose() {
-    // Giải phóng tài nguyên
+    // Giải phóng controllers
     for (var controller in _controllers) {
       controller.dispose();
     }
@@ -101,36 +101,41 @@ class TypingIndicatorWithFade extends StatelessWidget {
   /// Có ai đang gõ không
   final bool isTyping;
   
-  /// Tên người gõ
+  /// Tên người đang gõ
   final String? displayName;
+  
+  /// Có hiển thị tên không
+  final bool showName;
   
   /// Constructor
   const TypingIndicatorWithFade({
     Key? key,
     required this.isTyping,
     this.displayName,
+    this.showName = true,
   }) : super(key: key);
   
   @override
   Widget build(BuildContext context) {
     final animationService = GetIt.I<AnimationService>();
     
+    // Nếu không dùng micro-animations hoặc thiết bị yếu
+    if (!animationService.config.useMicroAnimations) {
+      return isTyping
+          ? TypingIndicator(displayName: displayName, showName: showName)
+          : const SizedBox.shrink();
+    }
+    
+    // Sử dụng AnimatedSwitcher để có hiệu ứng fade in/out
     return AnimatedSwitcher(
-      duration: animationService.config.defaultDuration,
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(
-          opacity: animation,
-          child: SizeTransition(
-            sizeFactor: animation,
-            axisAlignment: -1.0,
-            child: child,
-          ),
-        );
-      },
+      duration: animationService.config.fastDuration,
+      switchInCurve: Curves.easeIn,
+      switchOutCurve: Curves.easeOut,
       child: isTyping
           ? TypingIndicator(
               key: const ValueKey('typing'),
               displayName: displayName,
+              showName: showName,
             )
           : const SizedBox.shrink(key: ValueKey('not_typing')),
     );

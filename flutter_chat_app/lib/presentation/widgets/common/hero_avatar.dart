@@ -8,13 +8,13 @@ class HeroAvatar extends StatelessWidget {
   /// ID của chat/user, dùng làm tag cho Hero
   final String id;
   
-  /// URL hình ảnh
+  /// URL của hình ảnh
   final String? imageUrl;
   
-  /// Tên hiển thị (khi không có ảnh)
+  /// Tên hiển thị khi không có hình ảnh
   final String? displayName;
   
-  /// Kích thước của avatar
+  /// Kích thước avatar
   final double size;
   
   /// Có viền hay không
@@ -25,7 +25,7 @@ class HeroAvatar extends StatelessWidget {
   
   /// Độ dày viền
   final double borderWidth;
-  
+
   /// Constructor
   const HeroAvatar({
     Key? key,
@@ -33,7 +33,7 @@ class HeroAvatar extends StatelessWidget {
     this.imageUrl,
     this.displayName,
     this.size = 40.0,
-    this.hasBorder = false,
+    this.hasBorder = true,
     this.borderColor,
     this.borderWidth = 2.0,
   }) : super(key: key);
@@ -95,6 +95,7 @@ class HeroAvatar extends StatelessWidget {
           child: CachedNetworkImage(
             imageUrl: imageUrl!,
             fit: BoxFit.cover,
+            filterQuality: filterQuality,
             placeholder: (context, url) => Container(
               color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               child: Center(
@@ -111,32 +112,23 @@ class HeroAvatar extends StatelessWidget {
               ),
             ),
             errorWidget: (context, url, error) => placeholderWidget(),
-            filterQuality: filterQuality,
           ),
         ),
       );
     }
     
-    // Wrap trong Hero widget cho animation
-    return Hero(
-      tag: 'avatar-$id',
-      child: avatarWidget(),
-      flightShuttleBuilder: (
-        BuildContext flightContext,
-        Animation<double> animation,
-        HeroFlightDirection flightDirection,
-        BuildContext fromHeroContext,
-        BuildContext toHeroContext,
-      ) {
-        // Tạo hiệu ứng mượt mà khi chuyển đổi
-        return AnimatedBuilder(
-          animation: animation,
-          child: avatarWidget(),
-          builder: (context, child) {
-            return avatarWidget();
-          },
-        );
-      },
-    );
+    // Tạo Hero tag duy nhất
+    final heroTag = 'avatar-${id}';
+    
+    // Kiểm tra nếu thiết bị có hỗ trợ Hero animation không
+    if (animationService.config.useHeroAnimations) {
+      return Hero(
+        tag: heroTag,
+        child: avatarWidget(),
+      );
+    } else {
+      // Trả về widget thông thường nếu không dùng Hero
+      return avatarWidget();
+    }
   }
 } 

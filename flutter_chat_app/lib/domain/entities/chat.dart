@@ -1,144 +1,64 @@
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/entities/user.dart';
 
-/// Chat type enum
-enum ChatType {
-  /// Direct chat between two users
-  direct,
-  
-  /// Group chat with multiple users
-  group
-}
-
-/// Chat entity that matches the GraphQL API structure
+/// Entity đại diện cho một cuộc trò chuyện
 class Chat {
-  /// Unique identifier
+  /// ID của chat
   final String id;
   
-  /// Chat type (direct or group)
-  final ChatType type;
-  
-  /// Chat name (null for direct chats)
+  /// Tên của chat
   final String? name;
   
-  /// Chat description (for group chats)
-  final String? description;
+  /// URL hình đại diện
+  final String? avatarUrl;
   
-  /// Group avatar (for group chats)
-  final String? avatar;
+  /// Thời gian tin nhắn cuối
+  final DateTime? lastMessageTime;
   
-  /// Last message in the chat
-  final ChatMessage? lastMessage;
+  /// Nội dung tin nhắn cuối
+  final String? lastMessagePreview;
   
-  /// Chat participants
-  final List<User> participants;
-  
-  /// Owner of the chat (for group chats)
-  final User? owner;
-  
-  /// Admin users (for group chats)
-  final List<User> admins;
-  
-  /// Number of unread messages for current user
+  /// Số tin nhắn chưa đọc
   final int unreadCount;
   
-  /// Creation timestamp
-  final DateTime createdAt;
+  /// Loại chat
+  final ChatType type;
   
-  /// Last update timestamp
-  final DateTime updatedAt;
-
+  /// Danh sách ID thành viên
+  final List<String> participantIds;
+  
   /// Constructor
   const Chat({
     required this.id,
-    required this.type,
     this.name,
-    this.description,
-    this.avatar,
-    this.lastMessage,
-    required this.participants,
-    this.owner,
-    this.admins = const [],
+    this.avatarUrl,
+    this.lastMessageTime,
+    this.lastMessagePreview,
     this.unreadCount = 0,
-    required this.createdAt,
-    required this.updatedAt,
+    this.type = ChatType.direct,
+    this.participantIds = const [],
   });
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    
-    return other is Chat &&
-      other.id == id &&
-      other.type == type &&
-      other.name == name &&
-      other.description == description &&
-      other.avatar == avatar &&
-      other.lastMessage == lastMessage &&
-      _listEquals(other.participants, participants) &&
-      other.owner == owner &&
-      _listEquals(other.admins, admins) &&
-      other.unreadCount == unreadCount &&
-      other.createdAt == createdAt &&
-      other.updatedAt == updatedAt;
-  }
-
-  /// Helper to compare equality of two lists
-  bool _listEquals<T>(List<T>? a, List<T>? b) {
-    if (a == null) return b == null;
-    if (b == null || a.length != b.length) return false;
-    
-    for (int i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    
-    return true;
-  }
-
-  @override
-  int get hashCode {
-    return id.hashCode ^
-      type.hashCode ^
-      name.hashCode ^
-      description.hashCode ^
-      avatar.hashCode ^
-      lastMessage.hashCode ^
-      participants.hashCode ^
-      owner.hashCode ^
-      admins.hashCode ^
-      unreadCount.hashCode ^
-      createdAt.hashCode ^
-      updatedAt.hashCode;
-  }
-
-  /// Create a copy with modified values
+  
+  /// Tạo bản sao với một số thuộc tính mới
   Chat copyWith({
     String? id,
-    ChatType? type,
     String? name,
-    String? description,
-    String? avatar,
-    ChatMessage? lastMessage,
-    List<User>? participants,
-    User? owner,
-    List<User>? admins,
+    String? avatarUrl,
+    DateTime? lastMessageTime,
+    String? lastMessagePreview,
     int? unreadCount,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    ChatType? type,
+    List<String>? participantIds,
   }) {
     return Chat(
       id: id ?? this.id,
-      type: type ?? this.type,
       name: name ?? this.name,
-      description: description ?? this.description,
-      avatar: avatar ?? this.avatar,
-      lastMessage: lastMessage ?? this.lastMessage,
-      participants: participants ?? this.participants,
-      owner: owner ?? this.owner,
-      admins: admins ?? this.admins,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      lastMessageTime: lastMessageTime ?? this.lastMessageTime,
+      lastMessagePreview: lastMessagePreview ?? this.lastMessagePreview,
       unreadCount: unreadCount ?? this.unreadCount,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      type: type ?? this.type,
+      participantIds: participantIds ?? this.participantIds,
     );
   }
 
@@ -146,27 +66,17 @@ class Chat {
   factory Chat.fromJson(Map<String, dynamic> json) {
     return Chat(
       id: json['id'] as String,
-      type: _parseType(json['type'] as String),
       name: json['name'] as String?,
-      description: json['description'] as String?,
-      avatar: json['avatar'] as String?,
-      lastMessage: json['lastMessage'] != null 
-        ? ChatMessage.fromJson(json['lastMessage'] as Map<String, dynamic>)
+      avatarUrl: json['avatarUrl'] as String?,
+      lastMessageTime: json['lastMessageTime'] != null 
+        ? DateTime.parse(json['lastMessageTime'] as String)
         : null,
-      participants: (json['participants'] as List<dynamic>)
-        .map((participant) => User.fromJson(participant as Map<String, dynamic>))
-        .toList(),
-      owner: json['owner'] != null 
-        ? User.fromJson(json['owner'] as Map<String, dynamic>)
-        : null,
-      admins: json['admins'] != null
-        ? (json['admins'] as List<dynamic>)
-            .map((admin) => User.fromJson(admin as Map<String, dynamic>))
-            .toList()
-        : [],
+      lastMessagePreview: json['lastMessagePreview'] as String?,
       unreadCount: json['unreadCount'] as int? ?? 0,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      type: _parseType(json['type'] as String),
+      participantIds: (json['participantIds'] as List<dynamic>)
+        .map((id) => id as String)
+        .toList(),
     );
   }
 
@@ -174,22 +84,15 @@ class Chat {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'type': type.toString().split('.').last,
       'name': name,
-      'description': description,
-      'avatar': avatar,
-      'lastMessage': lastMessage?.toJson(),
-      'participants': participants.map((participant) => participant.toJson()).toList(),
-      'owner': owner?.toJson(),
-      'admins': admins.map((admin) => admin.toJson()).toList(),
+      'avatarUrl': avatarUrl,
+      'lastMessageTime': lastMessageTime?.toIso8601String(),
+      'lastMessagePreview': lastMessagePreview,
       'unreadCount': unreadCount,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'type': type.toString().split('.').last,
+      'participantIds': participantIds,
     };
   }
-
-  /// Get last message time for sorting
-  DateTime? get lastMessageTime => lastMessage?.createdAt;
 
   /// Parse chat type from string
   static ChatType _parseType(String typeStr) {
@@ -198,8 +101,22 @@ class Chat {
         return ChatType.direct;
       case 'group':
         return ChatType.group;
+      case 'channel':
+        return ChatType.channel;
       default:
         return ChatType.direct;
     }
   }
+}
+
+/// Loại chat
+enum ChatType {
+  /// Chat trực tiếp (1-1)
+  direct,
+  
+  /// Nhóm chat
+  group,
+  
+  /// Kênh chat
+  channel,
 }

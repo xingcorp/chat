@@ -35,17 +35,25 @@ final curve = animationService.config.defaultCurve;
 
 ### 3. Page Transitions
 
-Sử dụng `PageTransitions` để tạo chuyển trang với hiệu ứng:
+`AnimationService` cung cấp phương thức để tạo route transition tùy chỉnh:
 
 ```dart
 Navigator.push(
   context,
-  PageTransitions.createRoute(
-    page: (context) => DetailScreen(id: id),
-    type: PageTransitionType.fadeAndSlideFromRight,
+  animationService.createRoute(
+    builder: (context) => DetailScreen(id: id),
+    transitionType: PageTransitionType.fadeAndSlideFromRight,
   ),
 );
 ```
+
+Các loại transition có sẵn:
+- `fadeAndSlideFromRight`: Fade + Slide từ phải qua
+- `fadeAndSlideFromLeft`: Fade + Slide từ trái qua
+- `fadeAndSlideFromBottom`: Fade + Slide từ dưới lên
+- `fade`: Chỉ có hiệu ứng mờ dần
+- `scale`: Hiệu ứng phóng to
+- `none`: Không có hiệu ứng
 
 ## Hero Animation
 
@@ -69,6 +77,15 @@ HeroAvatar(
   size: 40,
 )
 ```
+
+HeroAvatar có các tham số:
+- `id`: ID duy nhất (dùng để tạo hero tag)
+- `imageUrl`: URL ảnh đại diện
+- `displayName`: Tên hiển thị khi không có hình
+- `size`: Kích thước avatar
+- `hasBorder`: Có viền hay không
+- `borderColor`: Màu viền
+- `borderWidth`: Độ dày viền
 
 #### 2. Sử dụng trong Danh sách Chat
 
@@ -165,11 +182,73 @@ CachedNetworkImage(
 )
 ```
 
+3. **Microanimations**: Bật/tắt các hiệu ứng nhỏ dựa trên cấu hình
+
+```dart
+// Kiểm tra trước khi sử dụng microcanimations
+if (animationService.config.useMicroAnimations) {
+  return AnimatedOpacity(
+    opacity: isVisible ? 1.0 : 0.0,
+    duration: animationService.config.fastDuration,
+    child: widget,
+  );
+} else {
+  return isVisible ? widget : SizedBox.shrink();
+}
+```
+
+## Thành phần khác
+
+### 1. TypingIndicator
+
+Widget hiển thị chỉ báo đang nhập văn bản:
+
+```dart
+TypingIndicatorWithFade(
+  isTyping: isUserTyping,
+  displayName: user.name,
+)
+```
+
+### 2. MediaGalleryScreen
+
+Màn hình dạng lưới hiển thị ảnh/videos với Hero animation:
+
+```dart
+Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => MediaGalleryScreen(
+      chatId: chatId,
+      title: 'Hình ảnh',
+    ),
+  ),
+);
+```
+
+### 3. ImageViewerScreen
+
+Màn hình xem hình ảnh với khả năng phóng to, zoom và Hero animation:
+
+```dart
+Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => ImageViewerScreen(
+      imageUrl: url,
+      heroTag: heroTag,
+      title: title,
+    ),
+  ),
+);
+```
+
 ## Sự cố thường gặp
 
 1. **Flickering**: Đảm bảo sử dụng `Material` widget bên trong Hero nếu có text
 2. **Lỗi tag trùng lặp**: Luôn đảm bảo tag là duy nhất
 3. **Hiệu suất kém**: Giảm độ phức tạp animation trên thiết bị yếu
+4. **Layout Shifts**: Đảm bảo kích thước của widget Hero giống nhau ở màn hình nguồn và đích
 
 ## Tham khảo
 

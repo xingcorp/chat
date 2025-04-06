@@ -16,6 +16,7 @@ import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
+import 'package:flutter_chat_app/core/services/device_capability_service.dart';
 
 /// GetIt instance for dependency injection
 final GetIt getIt = GetIt.instance;
@@ -107,9 +108,7 @@ Future<void> configureInjection() async {
   );
   
   // Đăng ký và khởi tạo Animation Service
-  final animationService = AnimationService();
-  await animationService.initialize();
-  getIt.registerSingleton<AnimationService>(animationService);
+  await configureAnimationServices();
 }
 
 /// Tạo repository tin nhắn
@@ -202,6 +201,21 @@ Future<String> _getAuthToken() async {
   } catch (e) {
     return '';
   }
+}
+
+/// Configure animation services
+Future<void> configureAnimationServices() async {
+  // Đăng ký DeviceCapabilityService để đánh giá khả năng thiết bị
+  final deviceCapabilityService = DeviceCapabilityService();
+  getIt.registerSingleton<DeviceCapabilityService>(deviceCapabilityService);
+  
+  // Khởi tạo benchmark và đánh giá thiết bị
+  await deviceCapabilityService.initialize();
+  
+  // Đăng ký AnimationService để quản lý cấu hình animation
+  getIt.registerSingleton<AnimationService>(
+    AnimationService(deviceCapabilityService),
+  );
 }
 
 /// Module to register non-injectable dependencies
