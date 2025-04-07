@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 
 /// Các loại xử lý media được hỗ trợ
 enum MediaProcessingType {
@@ -91,6 +92,7 @@ abstract class IMediaProcessingService {
     required dynamic imageInput,
     int quality = 80,
     bool preserveExif = false,
+    Function(double progress)? onProgress,
   });
   
   /// Thay đổi kích thước hình ảnh
@@ -153,6 +155,7 @@ class MobileMediaProcessingService extends BaseMediaProcessingService {
     required dynamic imageInput,
     int quality = 80,
     bool preserveExif = false,
+    Function(double progress)? onProgress,
   }) async {
     final imageFile = imageInput as File;
     final stopwatch = Stopwatch()..start();
@@ -161,20 +164,66 @@ class MobileMediaProcessingService extends BaseMediaProcessingService {
       // Tạo đường dẫn tệp đích
       final outputPath = '${_tempDir.path}/${generateTempFilePath(extension: '.jpg')}';
       
-      // Thực hiện nén trong isolate
-      final outputFile = await compute(
-        _compressImageIsolate,
-        {
-          'inputPath': imageFile.path,
-          'outputPath': outputPath,
-          'quality': quality,
-          'preserveExif': preserveExif,
-        },
-      );
+      // Sử dụng IsolateManager với báo cáo tiến độ
+      if (onProgress != null) {
+        // Tạo stream controller để theo dõi tiến độ
+        final progressController = StreamController<IsolateProgress>();
+        
+        // Lắng nghe cập nhật tiến độ
+        progressController.stream.listen((progress) {
+          onProgress(progress.progress);
+        });
+        
+        // Xử lý trong isolate với báo cáo tiến độ
+        final result = await _isolateManager.processInBackground(
+          taskType: IsolateTaskType.imageProcessing,
+          data: {
+            'path': imageFile.path,
+            'size': imageFile.lengthSync(),
+          },
+          params: {
+            'operation': 'compress',
+            'quality': quality,
+            'outputPath': outputPath,
+            'preserveExif': preserveExif,
+          },
+          progressController: progressController,
+        );
+        
+        // Đóng controller sau khi hoàn thành
+        await progressController.close();
+        
+        if (result.isSuccess && result.result != null) {
+          final outputFile = File(result.result['outputPath'] as String? ?? outputPath);
+          
+          stopwatch.stop();
+          return MediaProcessingResult.success(
+            outputFile: outputFile,
+            processingTimeMs: stopwatch.elapsedMilliseconds,
+          );
+        }
+      } else {
+        // Desktop có thể sử dụng compute isolate như mobile
+        final outputFile = await compute(
+          _compressImageIsolate,
+          {
+            'inputPath': imageFile.path,
+            'outputPath': outputPath,
+            'quality': quality,
+            'preserveExif': preserveExif,
+          },
+        );
+        
+        stopwatch.stop();
+        return MediaProcessingResult.success(
+          outputFile: outputFile,
+          processingTimeMs: stopwatch.elapsedMilliseconds,
+        );
+      }
       
       stopwatch.stop();
-      return MediaProcessingResult.success(
-        outputFile: outputFile,
+      return MediaProcessingResult.error(
+        error: 'Không thể nén hình ảnh: Không có kết quả trả về',
         processingTimeMs: stopwatch.elapsedMilliseconds,
       );
     } catch (e) {
@@ -315,6 +364,7 @@ class WebMediaProcessingService extends BaseMediaProcessingService {
     required dynamic imageInput,
     int quality = 80,
     bool preserveExif = false,
+    Function(double progress)? onProgress,
   }) async {
     final Uint8List imageBytes = imageInput is Uint8List 
         ? imageInput 
@@ -504,6 +554,7 @@ class DesktopMediaProcessingService extends BaseMediaProcessingService {
     required dynamic imageInput,
     int quality = 80,
     bool preserveExif = false,
+    Function(double progress)? onProgress,
   }) async {
     final imageFile = imageInput as File;
     final stopwatch = Stopwatch()..start();
@@ -512,20 +563,66 @@ class DesktopMediaProcessingService extends BaseMediaProcessingService {
       // Tạo đường dẫn tệp đích
       final outputPath = '${_tempDir.path}/${generateTempFilePath(extension: '.jpg')}';
       
-      // Desktop có thể sử dụng compute isolate như mobile
-      final outputFile = await compute(
-        _compressImageIsolate,
-        {
-          'inputPath': imageFile.path,
-          'outputPath': outputPath,
-          'quality': quality,
-          'preserveExif': preserveExif,
-        },
-      );
+      // Sử dụng IsolateManager với báo cáo tiến độ
+      if (onProgress != null) {
+        // Tạo stream controller để theo dõi tiến độ
+        final progressController = StreamController<IsolateProgress>();
+        
+        // Lắng nghe cập nhật tiến độ
+        progressController.stream.listen((progress) {
+          onProgress(progress.progress);
+        });
+        
+        // Xử lý trong isolate với báo cáo tiến độ
+        final result = await _isolateManager.processInBackground(
+          taskType: IsolateTaskType.imageProcessing,
+          data: {
+            'path': imageFile.path,
+            'size': imageFile.lengthSync(),
+          },
+          params: {
+            'operation': 'compress',
+            'quality': quality,
+            'outputPath': outputPath,
+            'preserveExif': preserveExif,
+          },
+          progressController: progressController,
+        );
+        
+        // Đóng controller sau khi hoàn thành
+        await progressController.close();
+        
+        if (result.isSuccess && result.result != null) {
+          final outputFile = File(result.result['outputPath'] as String? ?? outputPath);
+          
+          stopwatch.stop();
+          return MediaProcessingResult.success(
+            outputFile: outputFile,
+            processingTimeMs: stopwatch.elapsedMilliseconds,
+          );
+        }
+      } else {
+        // Desktop có thể sử dụng compute isolate như mobile
+        final outputFile = await compute(
+          _compressImageIsolate,
+          {
+            'inputPath': imageFile.path,
+            'outputPath': outputPath,
+            'quality': quality,
+            'preserveExif': preserveExif,
+          },
+        );
+        
+        stopwatch.stop();
+        return MediaProcessingResult.success(
+          outputFile: outputFile,
+          processingTimeMs: stopwatch.elapsedMilliseconds,
+        );
+      }
       
       stopwatch.stop();
-      return MediaProcessingResult.success(
-        outputFile: outputFile,
+      return MediaProcessingResult.error(
+        error: 'Không thể nén hình ảnh: Không có kết quả trả về',
         processingTimeMs: stopwatch.elapsedMilliseconds,
       );
     } catch (e) {
@@ -669,10 +766,12 @@ class MediaProcessingService implements IMediaProcessingService {
     required dynamic imageInput,
     int quality = 80,
     bool preserveExif = false,
+    Function(double progress)? onProgress,
   }) => _implementation.compressImage(
     imageInput: imageInput,
     quality: quality,
     preserveExif: preserveExif,
+    onProgress: onProgress,
   );
   
   @override

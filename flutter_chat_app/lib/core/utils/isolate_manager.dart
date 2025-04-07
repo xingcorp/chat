@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:isolate';
 import 'dart:ui';
+import 'dart:typed_data';
+import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
@@ -66,11 +69,19 @@ class IsolateMessage {
   /// Additional parameters
   final Map<String, dynamic>? params;
   
+  /// Progress reporter port
+  final SendPort? progressPort;
+  
+  /// Whether task is cancellable
+  final bool isCancellable;
+  
   IsolateMessage({
     required this.taskType,
     required this.taskId,
     required this.data,
     this.params,
+    this.progressPort,
+    this.isCancellable = false,
   });
 }
 
@@ -99,12 +110,32 @@ class IsolateResult {
   });
 }
 
+/// Progress update from isolate
+class IsolateProgress {
+  /// Task ID
+  final String taskId;
+  
+  /// Progress value (0.0 to 1.0)
+  final double progress;
+  
+  /// Optional status message
+  final String? message;
+  
+  IsolateProgress({
+    required this.taskId,
+    required this.progress,
+    this.message,
+  });
+}
+
 /// Represents a task pending execution
 class _PendingTask {
   final IsolateMessage message;
   final Completer<IsolateResult> completer;
+  final StreamController<IsolateProgress>? progressController;
+  bool isCancelled = false;
   
-  _PendingTask(this.message, this.completer);
+  _PendingTask(this.message, this.completer, this.progressController);
 }
 
 /// A service for offloading heavy processing tasks to a background isolate
@@ -112,17 +143,23 @@ class _PendingTask {
 class IsolateManager {
   static const String _isolateName = 'processing_isolate';
   
-  /// Maximum number of isolates in the pool
-  static const int _maxIsolates = 3;
+  /// The default number of isolates in the pool
+  static const int _defaultMaxIsolates = 3;
+  
+  /// Number of isolates in the pool (calculated based on device)
+  late final int _maxIsolates;
   
   /// List of isolates in the pool
-  final List<Isolate?> _isolates = List.filled(_maxIsolates, null);
+  late final List<Isolate?> _isolates;
   
   /// List of send ports for communication with isolates
-  final List<SendPort?> _sendPorts = List.filled(_maxIsolates, null);
+  late final List<SendPort?> _sendPorts;
   
   /// Receive ports for each isolate
-  final List<ReceivePort> _receivePorts = List.generate(_maxIsolates, (_) => ReceivePort());
+  late final List<ReceivePort> _receivePorts;
+  
+  /// Health status of each isolate (last ping time)
+  late final List<DateTime?> _isolateLastActive;
   
   /// Queue of pending tasks organized by priority
   final Map<TaskPriority, Queue<_PendingTask>> _taskQueues = {
@@ -133,16 +170,44 @@ class IsolateManager {
   };
   
   /// Active tasks being processed by each isolate
-  final List<String?> _activeTaskIds = List.filled(_maxIsolates, null);
+  late final List<String?> _activeTaskIds;
   
-  /// Map of task ID to its completer
-  final Map<String, Completer<IsolateResult>> _pendingTasks = {};
+  /// Map of task ID to its pending task
+  final Map<String, _PendingTask> _pendingTasks = {};
+  
+  /// Timer for health check of isolates
+  Timer? _healthCheckTimer;
   
   final PerformanceMonitor _performance;
   
   bool _isInitialized = false;
   
-  IsolateManager(this._performance);
+  IsolateManager(this._performance) {
+    // Initialize with optimal number of isolates based on device
+    _maxIsolates = _calculateOptimalIsolateCount();
+    _isolates = List.filled(_maxIsolates, null);
+    _sendPorts = List.filled(_maxIsolates, null);
+    _receivePorts = List.generate(_maxIsolates, (_) => ReceivePort());
+    _isolateLastActive = List.filled(_maxIsolates, null);
+    _activeTaskIds = List.filled(_maxIsolates, null);
+  }
+  
+  /// Calculate optimal number of isolates based on available CPUs
+  int _calculateOptimalIsolateCount() {
+    // Get number of processors, with fallback to default
+    int cpuCores;
+    try {
+      cpuCores = Platform.numberOfProcessors;
+    } catch (e) {
+      cpuCores = _defaultMaxIsolates;
+    }
+    
+    // Use at most cpuCores-1 to avoid starving main thread
+    // but minimum 1 and maximum 6
+    return cpuCores > 1 
+        ? (cpuCores - 1).clamp(1, 6) 
+        : 1;
+  }
   
   /// Initialize the isolate manager with a pool of isolates
   Future<void> initialize() async {
@@ -155,6 +220,9 @@ class IsolateManager {
       }
       
       _isInitialized = true;
+      
+      // Start background health check
+      _startHealthCheck();
       
       // Start task processing
       _processTaskQueue();
@@ -172,10 +240,94 @@ class IsolateManager {
     }
   }
   
+  /// Start periodic health check of isolates
+  void _startHealthCheck() {
+    _healthCheckTimer?.cancel();
+    _healthCheckTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _checkIsolateHealth();
+    });
+  }
+  
+  /// Check health of all isolates and restart any that appear to be dead
+  Future<void> _checkIsolateHealth() async {
+    final now = DateTime.now();
+    
+    for (int i = 0; i < _maxIsolates; i++) {
+      // Skip if no isolate at this index
+      if (_isolates[i] == null) continue;
+      
+      // Check if isolate has been inactive for too long
+      final lastActive = _isolateLastActive[i];
+      if (lastActive != null && now.difference(lastActive).inMinutes > 5) {
+        debugPrint('Isolate $i appears to be dead, restarting...');
+        
+        // Restart this isolate
+        await _restartIsolate(i);
+      } else if (_sendPorts[i] != null) {
+        // Ping the isolate to check it's responsive
+        try {
+          _sendPorts[i]!.send('ping');
+        } catch (e) {
+          debugPrint('Error sending ping to isolate $i: $e, restarting...');
+          await _restartIsolate(i);
+        }
+      }
+    }
+  }
+  
+  /// Restart a specific isolate
+  Future<void> _restartIsolate(int index) async {
+    // Kill existing isolate
+    if (_isolates[index] != null) {
+      try {
+        _isolates[index]!.kill(priority: Isolate.immediate);
+      } catch (e) {
+        // Ignore errors when killing
+      }
+      _isolates[index] = null;
+    }
+    
+    // Close and reset the receive port
+    _receivePorts[index].close();
+    _receivePorts[index] = ReceivePort();
+    
+    // Reset the send port
+    _sendPorts[index] = null;
+    
+    // Clear active task
+    final activeTaskId = _activeTaskIds[index];
+    if (activeTaskId != null) {
+      final task = _pendingTasks[activeTaskId];
+      if (task != null) {
+        // Requeue the task if it wasn't cancelled
+        if (!task.isCancelled) {
+          _taskQueues[TaskPriority.high]!.addFirst(task);
+        }
+        _pendingTasks.remove(activeTaskId);
+      }
+      _activeTaskIds[index] = null;
+    }
+    
+    // Initialize the isolate again
+    try {
+      await _initializeIsolate(index);
+      
+      // Process queue immediately if there are pending tasks
+      _processTaskQueue();
+    } catch (e) {
+      debugPrint('Failed to restart isolate $index: $e');
+    }
+  }
+  
   /// Initialize a single isolate in the pool
   Future<void> _initializeIsolate(int index) async {
     try {
       final instanceName = '${_isolateName}_$index';
+      
+      // Unregister if already registered
+      if (IsolateNameServer.lookupPortByName(instanceName) != null) {
+        IsolateNameServer.removePortNameMapping(instanceName);
+      }
       
       // Register the receive port for this isolate
       IsolateNameServer.registerPortWithName(
@@ -210,6 +362,9 @@ class IsolateManager {
           throw TimeoutException('Failed to initialize isolate $index');
         },
       );
+      
+      // Mark isolate as active now
+      _isolateLastActive[index] = DateTime.now();
     } catch (e) {
       debugPrint('Failed to initialize isolate $index: $e');
       
@@ -234,6 +389,8 @@ class IsolateManager {
     String? taskId,
     Map<String, dynamic>? params,
     TaskPriority priority = TaskPriority.medium,
+    StreamController<IsolateProgress>? progressController,
+    bool enableCancellation = false,
   }) async {
     final id = taskId ?? 'task_${DateTime.now().millisecondsSinceEpoch}_${_pendingTasks.length}';
     
@@ -241,14 +398,37 @@ class IsolateManager {
     _performance.startTrace('isolate_task_$id');
     
     try {
+      // Create a progress port if progress reporting is requested
+      ReceivePort? progressPort;
+      StreamSubscription? progressSubscription;
+      
+      if (progressController != null) {
+        progressPort = ReceivePort();
+        progressSubscription = progressPort.listen((progress) {
+          if (progress is Map<String, dynamic>) {
+            final update = IsolateProgress(
+              taskId: id,
+              progress: progress['progress'] as double,
+              message: progress['message'] as String?,
+            );
+            progressController.add(update);
+          }
+        });
+      }
+      
       // If isolate pool is not initialized, process on main thread
       if (!_isInitialized || _sendPorts.every((port) => port == null)) {
         final result = await _processOnMainThread(
           taskType: taskType,
           taskId: id,
-          data: data,
+          data: data is TransferableTypedData ? data.materialize().asUint8List() : data,
           params: params,
+          progressPort: progressPort?.sendPort,
         );
+        
+        // Cleanup progress port
+        await progressSubscription?.cancel();
+        progressPort?.close();
         
         _performance.stopTrace('isolate_task_$id');
         return result;
@@ -256,7 +436,6 @@ class IsolateManager {
       
       // Create a completer to wait for the result
       final completer = Completer<IsolateResult>();
-      _pendingTasks[id] = completer;
       
       // Prepare the message to send to isolate
       final message = IsolateMessage(
@@ -264,10 +443,16 @@ class IsolateManager {
         taskId: id,
         data: data,
         params: params,
+        progressPort: progressPort?.sendPort,
+        isCancellable: enableCancellation,
       );
       
+      // Create the pending task object
+      final pendingTask = _PendingTask(message, completer, progressController);
+      _pendingTasks[id] = pendingTask;
+      
       // Queue the task with its priority
-      _taskQueues[priority]!.add(_PendingTask(message, completer));
+      _taskQueues[priority]!.add(pendingTask);
       
       // Try to process the queue immediately
       _processTaskQueue();
@@ -280,6 +465,10 @@ class IsolateManager {
           throw TimeoutException('Processing timed out');
         },
       );
+      
+      // Cleanup progress port
+      await progressSubscription?.cancel();
+      progressPort?.close();
       
       _performance.stopTrace('isolate_task_$id');
       return result;
@@ -295,79 +484,215 @@ class IsolateManager {
     }
   }
   
-  /// Process the task queue based on priorities
-  void _processTaskQueue() {
-    // Check for available isolates
-    for (int i = 0; i < _maxIsolates; i++) {
-      if (_isolates[i] != null && _sendPorts[i] != null && _activeTaskIds[i] == null) {
-        // This isolate is available for processing
-        _PendingTask? task = _getNextTaskByPriority();
-        
-        if (task != null) {
-          _activeTaskIds[i] = task.message.taskId;
-          _sendPorts[i]!.send(task.message);
+  /// Cancel a running task if possible
+  Future<bool> cancelTask(String taskId) async {
+    final task = _pendingTasks[taskId];
+    if (task == null) return false;
+    
+    // Mark as cancelled
+    task.isCancelled = true;
+    
+    // If not yet started, remove from queue
+    bool removed = false;
+    for (final queue in _taskQueues.values) {
+      final iterator = queue.iterator;
+      while (iterator.moveNext()) {
+        if (iterator.current.message.taskId == taskId) {
+          queue.remove(iterator.current);
+          removed = true;
+          break;
+        }
+      }
+      if (removed) break;
+    }
+    
+    // If already running and cancellable, try to signal cancellation
+    if (!removed) {
+      for (int i = 0; i < _maxIsolates; i++) {
+        if (_activeTaskIds[i] == taskId && _sendPorts[i] != null) {
+          try {
+            _sendPorts[i]!.send({'type': 'cancel', 'taskId': taskId});
+            // We don't know if cancellation succeeded yet, so return true
+            return true;
+          } catch (e) {
+            debugPrint('Error sending cancellation: $e');
+          }
         }
       }
     }
+    
+    // If it was in a queue and we removed it, or if we sent a cancellation
+    // signal, complete with cancelled error
+    if (removed) {
+      task.completer.complete(IsolateResult(
+        taskType: task.message.taskType,
+        taskId: taskId,
+        error: 'Task cancelled',
+      ));
+      _pendingTasks.remove(taskId);
+      return true;
+    }
+    
+    return false;
   }
   
-  /// Get the next task to process based on priority
-  _PendingTask? _getNextTaskByPriority() {
-    // Try to get a task from each queue in order of priority
-    if (_taskQueues[TaskPriority.critical]!.isNotEmpty) {
-      return _taskQueues[TaskPriority.critical]!.removeFirst();
-    }
+  /// Process the task queue based on priorities
+  void _processTaskQueue() {
+    // Priorities in order (critical first)
+    final priorities = [
+      TaskPriority.critical,
+      TaskPriority.high, 
+      TaskPriority.medium,
+      TaskPriority.low,
+    ];
     
-    if (_taskQueues[TaskPriority.high]!.isNotEmpty) {
-      return _taskQueues[TaskPriority.high]!.removeFirst();
-    }
-    
-    if (_taskQueues[TaskPriority.medium]!.isNotEmpty) {
-      return _taskQueues[TaskPriority.medium]!.removeFirst();
-    }
-    
-    if (_taskQueues[TaskPriority.low]!.isNotEmpty) {
-      return _taskQueues[TaskPriority.low]!.removeFirst();
-    }
-    
-    return null;
-  }
-  
-  /// Handle messages coming back from the isolate
-  void _handleIsolateMessage(dynamic message, int isolateIndex) {
-    if (message is IsolateResult) {
-      // Mark the isolate as available again
-      _activeTaskIds[isolateIndex] = null;
+    // Try to find an available isolate
+    for (int i = 0; i < _maxIsolates; i++) {
+      // Skip if this isolate is not ready or already processing
+      if (_sendPorts[i] == null || _activeTaskIds[i] != null) continue;
       
-      // Complete the pending task
-      final completer = _pendingTasks.remove(message.taskId);
-      if (completer != null && !completer.isCompleted) {
-        completer.complete(message);
+      // Find the highest priority non-empty queue
+      _PendingTask? task;
+      for (final priority in priorities) {
+        if (_taskQueues[priority]!.isNotEmpty) {
+          task = _taskQueues[priority]!.removeFirst();
+          break;
+        }
       }
       
-      // Process the next task in the queue
-      _processTaskQueue();
-    } else if (message is SendPort) {
-      // This is handled during initialization
+      // If we found a task, send it to the isolate
+      if (task != null && !task.isCancelled) {
+        final taskId = task.message.taskId;
+        _activeTaskIds[i] = taskId;
+        
+        // Optimize data transfer for large byte arrays
+        dynamic dataToSend = task.message.data;
+        if (dataToSend is Uint8List && dataToSend.length > 100 * 1024) {
+          dataToSend = TransferableTypedData.fromList([dataToSend]);
+        }
+        
+        final messageToSend = IsolateMessage(
+          taskType: task.message.taskType,
+          taskId: taskId,
+          data: dataToSend,
+          params: task.message.params,
+          progressPort: task.message.progressPort,
+          isCancellable: task.message.isCancellable,
+        );
+        
+        try {
+          // Send the message to the isolate
+          _sendPorts[i]!.send(messageToSend);
+          
+          // Update last active timestamp
+          _isolateLastActive[i] = DateTime.now();
+        } catch (e) {
+          debugPrint('Error sending task to isolate: $e');
+          
+          // Mark isolate as unavailable
+          _sendPorts[i] = null;
+          _activeTaskIds[i] = null;
+          
+          // Requeue the task
+          _taskQueues[TaskPriority.high]!.addFirst(task);
+          
+          // Restart isolate in background
+          _restartIsolate(i);
+        }
+      }
+    }
+    
+    // Process on main thread if all isolates are busy
+    if (_sendPorts.every((port) => port == null) || 
+        _activeTaskIds.every((id) => id != null)) {
+      _processHighPriorityTasksOnMainThread();
     }
   }
   
-  /// Process the data on the main thread as fallback
+  /// Process high priority tasks on main thread if all isolates are busy
+  void _processHighPriorityTasksOnMainThread() {
+    // Only process critical tasks on main thread when isolates are busy
+    if (_taskQueues[TaskPriority.critical]!.isEmpty) return;
+    
+    final task = _taskQueues[TaskPriority.critical]!.removeFirst();
+    if (task.isCancelled) return;
+    
+    final taskId = task.message.taskId;
+    
+    // Process on main thread and complete the completer
+    _processOnMainThread(
+      taskType: task.message.taskType,
+      taskId: taskId,
+      data: task.message.data is TransferableTypedData ? 
+            task.message.data.materialize().asUint8List() : 
+            task.message.data,
+      params: task.message.params,
+      progressPort: task.message.progressPort,
+    ).then((result) {
+      task.completer.complete(result);
+      _pendingTasks.remove(taskId);
+    });
+  }
+  
+  /// Handle messages received from isolates
+  void _handleIsolateMessage(dynamic message, int isolateIndex) {
+    // Update isolate last active timestamp
+    _isolateLastActive[isolateIndex] = DateTime.now();
+    
+    if (message == 'pong') {
+      // Ping response, isolate is alive
+      return;
+    }
+    
+    if (message is IsolateResult) {
+      // Find the pending task for this result
+      final taskId = message.taskId;
+      final task = _pendingTasks[taskId];
+      
+      // Mark this isolate as available
+      _activeTaskIds[isolateIndex] = null;
+      
+      // Complete the task if it hasn't been cancelled
+      if (task != null && !task.isCancelled) {
+        task.completer.complete(message);
+        _pendingTasks.remove(taskId);
+      }
+      
+      // Process the next task in queue
+      _processTaskQueue();
+    }
+  }
+  
+  /// Process a task on the main thread (fallback)
   Future<IsolateResult> _processOnMainThread({
     required IsolateTaskType taskType,
     required String taskId,
     required dynamic data,
     Map<String, dynamic>? params,
+    SendPort? progressPort,
   }) async {
     try {
       // Process according to task type
       dynamic result;
+      
+      // Helper for reporting progress
+      void reportProgress(double progress, [String? message]) {
+        progressPort?.send({
+          'progress': progress,
+          'message': message,
+        });
+      }
+      
+      // Dummy cancellation check for consistency with isolate processing
+      bool checkCancelled() => false;
       
       switch (taskType) {
         case IsolateTaskType.imageProcessing:
           result = await compute(_processImage, {
             'data': data,
             'params': params,
+            'reportProgress': reportProgress,
+            'isCancelled': checkCancelled,
           });
           break;
           
@@ -375,6 +700,8 @@ class IsolateManager {
           result = await compute(_processFile, {
             'data': data,
             'params': params,
+            'reportProgress': reportProgress,
+            'isCancelled': checkCancelled,
           });
           break;
           
@@ -382,6 +709,8 @@ class IsolateManager {
           result = await compute(_processData, {
             'data': data,
             'params': params,
+            'reportProgress': reportProgress,
+            'isCancelled': checkCancelled,
           });
           break;
           
@@ -389,6 +718,8 @@ class IsolateManager {
           result = await compute(_processCrypto, {
             'data': data,
             'params': params,
+            'reportProgress': reportProgress,
+            'isCancelled': checkCancelled,
           });
           break;
           
@@ -396,6 +727,8 @@ class IsolateManager {
           result = await compute(_processSearch, {
             'data': data,
             'params': params,
+            'reportProgress': reportProgress,
+            'isCancelled': checkCancelled,
           });
           break;
           
@@ -403,6 +736,8 @@ class IsolateManager {
           result = await compute(_processText, {
             'data': data,
             'params': params,
+            'reportProgress': reportProgress,
+            'isCancelled': checkCancelled,
           });
           break;
           
@@ -410,6 +745,8 @@ class IsolateManager {
           result = await compute(_processAI, {
             'data': data,
             'params': params,
+            'reportProgress': reportProgress,
+            'isCancelled': checkCancelled,
           });
           break;
           
@@ -417,6 +754,8 @@ class IsolateManager {
           result = await compute(_processFuzzySearch, {
             'data': data,
             'params': params,
+            'reportProgress': reportProgress,
+            'isCancelled': checkCancelled,
           });
           break;
           
@@ -424,8 +763,13 @@ class IsolateManager {
           result = await compute(_processCustom, {
             'data': data,
             'params': params,
+            'reportProgress': reportProgress,
+            'isCancelled': checkCancelled,
           });
           break;
+          
+        default:
+          throw Exception('Unknown task type');
       }
       
       return IsolateResult(
@@ -442,30 +786,19 @@ class IsolateManager {
     }
   }
   
-  /// Dispose the isolate manager
+  /// Dispose resources
   void dispose() {
+    _healthCheckTimer?.cancel();
+    
     for (int i = 0; i < _maxIsolates; i++) {
       if (_isolates[i] != null) {
         _isolates[i]!.kill(priority: Isolate.immediate);
-        _isolates[i] = null;
       }
+      
+      _receivePorts[i].close();
       
       final instanceName = '${_isolateName}_$i';
       IsolateNameServer.removePortNameMapping(instanceName);
-      _receivePorts[i].close();
-    }
-    
-    // Complete any pending tasks with error
-    for (final task in _pendingTasks.values) {
-      if (!task.isCompleted) {
-        task.completeError('Isolate manager was disposed');
-      }
-    }
-    _pendingTasks.clear();
-    
-    // Clear task queues
-    for (final queue in _taskQueues.values) {
-      queue.clear();
     }
     
     _isInitialized = false;
@@ -490,16 +823,51 @@ void _isolateEntryPoint(String name) {
   // Send this isolate's send port to the main isolate
   mainSendPort.send(receivePort.sendPort);
   
+  // Keep track of cancelable tasks
+  final Map<String, bool> cancelledTasks = {};
+  
   // Listen for tasks from the main isolate
   receivePort.listen((message) {
     if (message is IsolateMessage) {
-      _processMessage(message, mainSendPort);
+      _processMessage(message, mainSendPort, cancelledTasks);
+    } else if (message is Map<String, dynamic> && message['type'] == 'cancel') {
+      // Handle cancellation request
+      final taskId = message['taskId'] as String;
+      cancelledTasks[taskId] = true;
+    } else if (message == 'ping') {
+      // Respond to ping with pong for health checks
+      mainSendPort.send('pong');
     }
   });
 }
 
 /// Process a message in the isolate and send the result back
-Future<void> _processMessage(IsolateMessage message, SendPort sendPort) async {
+Future<void> _processMessage(
+  IsolateMessage message, 
+  SendPort sendPort,
+  Map<String, bool> cancelledTasks
+) async {
+  // Extract data, handle TransferableTypedData
+  final data = message.data is TransferableTypedData 
+      ? message.data.materialize().asUint8List()
+      : message.data;
+  
+  // Get progress port if available
+  final progressPort = message.progressPort;
+  
+  // Helper for reporting progress
+  void reportProgress(double progress, [String? statusMessage]) {
+    progressPort?.send({
+      'progress': progress,
+      'message': statusMessage,
+    });
+  }
+  
+  // Check for cancellation
+  bool isCancelled() {
+    return cancelledTasks[message.taskId] == true;
+  }
+  
   try {
     dynamic result;
     
@@ -507,66 +875,90 @@ Future<void> _processMessage(IsolateMessage message, SendPort sendPort) async {
     switch (message.taskType) {
       case IsolateTaskType.imageProcessing:
         result = await _processImage({
-          'data': message.data,
+          'data': data,
           'params': message.params,
+          'reportProgress': reportProgress,
+          'isCancelled': isCancelled,
         });
         break;
         
       case IsolateTaskType.fileOperation:
         result = await _processFile({
-          'data': message.data,
+          'data': data,
           'params': message.params,
+          'reportProgress': reportProgress,
+          'isCancelled': isCancelled,
         });
         break;
         
       case IsolateTaskType.dataProcessing:
         result = await _processData({
-          'data': message.data,
+          'data': data,
           'params': message.params,
+          'progressPort': progressPort,
         });
         break;
         
       case IsolateTaskType.cryptoOperation:
         result = await _processCrypto({
-          'data': message.data,
+          'data': data,
           'params': message.params,
+          'progressPort': progressPort,
         });
         break;
         
       case IsolateTaskType.searchOperation:
         result = await _processSearch({
-          'data': message.data,
+          'data': data,
           'params': message.params,
+          'progressPort': progressPort,
         });
         break;
         
       case IsolateTaskType.textProcessing:
         result = await _processText({
-          'data': message.data,
+          'data': data,
           'params': message.params,
+          'progressPort': progressPort,
         });
         break;
         
       case IsolateTaskType.aiProcessing:
         result = await _processAI({
-          'data': message.data,
+          'data': data,
           'params': message.params,
+          'progressPort': progressPort,
         });
         break;
         
       case IsolateTaskType.fuzzySearch:
         result = await _processFuzzySearch({
-          'data': message.data,
+          'data': data,
           'params': message.params,
+          'progressPort': progressPort,
         });
         break;
         
       case IsolateTaskType.custom:
         result = await _processCustom({
-          'data': message.data,
+          'data': data,
           'params': message.params,
+          'progressPort': progressPort,
         });
         break;
+    }
+    
+    // Clean up
+    cancelledTasks.remove(message.taskId);
+    
+    // Check if cancelled during processing
+    if (isCancelled()) {
+      sendPort.send(IsolateResult(
+        taskType: message.taskType,
+        taskId: message.taskId,
+        error: 'Task was cancelled',
+      ));
+      return;
     }
     
     // Send the result back to the main isolate
@@ -578,6 +970,9 @@ Future<void> _processMessage(IsolateMessage message, SendPort sendPort) async {
     
     sendPort.send(isolateResult);
   } catch (e) {
+    // Clean up
+    cancelledTasks.remove(message.taskId);
+    
     // Send the error back to the main isolate
     final isolateResult = IsolateResult(
       taskType: message.taskType,
@@ -595,30 +990,83 @@ Future<void> _processMessage(IsolateMessage message, SendPort sendPort) async {
 Future<dynamic> _processImage(Map<String, dynamic> args) async {
   final data = args['data'];
   final params = args['params'] as Map<String, dynamic>?;
+  final reportProgress = args['reportProgress'] as Function?;
+  final isCancelled = args['isCancelled'] as Function?;
   
-  // Implementation would depend on what processing is needed
-  // For example, resize or compress images
+  // Báo cáo bắt đầu
+  reportProgress?.call(0.0, 'Khởi tạo xử lý hình ảnh');
   
-  // Simulated processing for now
-  await Future.delayed(const Duration(milliseconds: 100));
+  // Trích xuất thông tin từ params
+  final operation = params?['operation'] as String? ?? 'resize';
+  final quality = params?['quality'] as int? ?? 80;
   
-  return {
+  // Giả lập xử lý nhiều bước có thể hủy bỏ
+  for (int i = 0; i < 10; i++) {
+    // Kiểm tra hủy bỏ
+    if (isCancelled?.call() == true) {
+      return {'cancelled': true};
+    }
+    
+    // Giả lập xử lý
+    await Future.delayed(const Duration(milliseconds: 50));
+    
+    // Báo cáo tiến trình
+    reportProgress?.call((i + 1) / 10, 'Xử lý phần ${i + 1}/10');
+  }
+  
+  // Báo cáo hoàn thành
+  reportProgress?.call(1.0, 'Xử lý hình ảnh hoàn tất');
+  
+  Map<String, dynamic> result = {
     'processed': true,
-    'original_size': data['size'],
-    'new_size': data['size'] * 0.7,
+    'operation': operation,
   };
+  
+  if (data is Map<String, dynamic> && data.containsKey('size')) {
+    final originalSize = data['size'] as num;
+    result['original_size'] = originalSize;
+    
+    // Giả lập kết quả nén
+    if (operation == 'compress') {
+      // Kích thước mới phụ thuộc vào chất lượng
+      result['new_size'] = originalSize * (quality / 100);
+      result['compression_ratio'] = (100 - quality) / 100;
+    } 
+    // Giả lập kết quả resize
+    else if (operation == 'resize') {
+      final scale = params?['scale'] as double? ?? 0.8;
+      result['new_size'] = originalSize * scale * scale; // Area reduces by scale²
+      result['scale_factor'] = scale;
+    }
+  }
+  
+  return result;
 }
 
 /// Process file operations
 Future<dynamic> _processFile(Map<String, dynamic> args) async {
   final data = args['data'];
   final params = args['params'] as Map<String, dynamic>?;
+  final reportProgress = args['reportProgress'] as Function?;
+  final isCancelled = args['isCancelled'] as Function?;
+  
+  reportProgress?.call(0.0, 'Bắt đầu xử lý tệp');
   
   // Implementation for file operations
   // For example, copying, moving, or renaming files
   
-  // Simulated processing for now
-  await Future.delayed(const Duration(milliseconds: 100));
+  // Simulated processing with progress
+  final steps = 5;
+  for (int i = 0; i < steps; i++) {
+    if (isCancelled?.call() == true) {
+      return {'cancelled': true};
+    }
+    
+    await Future.delayed(const Duration(milliseconds: 100));
+    reportProgress?.call((i + 1) / steps, 'Xử lý tệp: ${(i + 1) / steps * 100}%');
+  }
+  
+  reportProgress?.call(1.0, 'Hoàn thành xử lý tệp');
   
   return {
     'success': true,
@@ -630,41 +1078,81 @@ Future<dynamic> _processFile(Map<String, dynamic> args) async {
 Future<dynamic> _processData(Map<String, dynamic> args) async {
   final data = args['data'];
   final params = args['params'] as Map<String, dynamic>?;
+  final reportProgress = args['reportProgress'] as Function?;
+  final isCancelled = args['isCancelled'] as Function?;
   
-  // Implementation for data processing
-  // For example, parsing JSON, formatting data, etc.
+  reportProgress?.call(0.0, 'Bắt đầu xử lý dữ liệu');
   
-  // Simulated processing for now
-  await Future.delayed(const Duration(milliseconds: 100));
-  
+  // Phân tích dữ liệu theo số lượng phần tử
   if (data is List) {
+    final total = data.length;
+    for (int i = 0; i < total; i += max(1, total ~/ 10)) {
+      if (isCancelled?.call() == true) {
+        return {'cancelled': true};
+      }
+      
+      await Future.delayed(const Duration(milliseconds: 20));
+      reportProgress?.call(i / total, 'Xử lý phần tử ${i + 1}/$total');
+    }
+    
+    reportProgress?.call(1.0, 'Hoàn thành xử lý dữ liệu');
     return {
       'processed': true,
-      'count': data.length,
-      'summary': 'Processed ${data.length} items',
+      'count': total,
+      'summary': 'Đã xử lý $total phần tử',
+    };
+  } 
+  // Phân tích dữ liệu đơn lẻ
+  else {
+    for (int i = 0; i < 5; i++) {
+      if (isCancelled?.call() == true) {
+        return {'cancelled': true};
+      }
+      
+      await Future.delayed(const Duration(milliseconds: 50));
+      reportProgress?.call((i + 1) / 5, 'Xử lý dữ liệu ${(i + 1) * 20}%');
+    }
+    
+    reportProgress?.call(1.0, 'Hoàn thành xử lý dữ liệu');
+    return {
+      'processed': true,
+      'type': data?.runtimeType.toString() ?? 'null',
     };
   }
-  
-  return {
-    'processed': true,
-    'type': data.runtimeType.toString(),
-  };
 }
 
 /// Process crypto operations
 Future<dynamic> _processCrypto(Map<String, dynamic> args) async {
   final data = args['data'];
   final params = args['params'] as Map<String, dynamic>?;
+  final reportProgress = args['reportProgress'] as Function?;
+  final isCancelled = args['isCancelled'] as Function?;
   
-  // Implementation for crypto operations
-  // For example, encryption, decryption, hashing
+  final operation = params?['operation'] as String? ?? 'encrypt';
+  final algorithm = params?['algorithm'] as String? ?? 'AES';
   
-  // Simulated processing for now
-  await Future.delayed(const Duration(milliseconds: 100));
+  reportProgress?.call(0.0, 'Khởi tạo $operation với $algorithm');
+  
+  // Giả lập các bước của thao tác mã hóa
+  final totalSteps = operation == 'hash' ? 3 : 5;
+  
+  for (int i = 0; i < totalSteps; i++) {
+    if (isCancelled?.call() == true) {
+      return {'cancelled': true};
+    }
+    
+    // Giả lập thời gian xử lý
+    await Future.delayed(const Duration(milliseconds: 80));
+    reportProgress?.call((i + 1) / totalSteps, 
+      'Đang $operation: bước ${i + 1}/$totalSteps');
+  }
+  
+  reportProgress?.call(1.0, 'Hoàn thành $operation');
   
   return {
     'processed': true,
-    'algorithm': params?['algorithm'] ?? 'default',
+    'operation': operation,
+    'algorithm': algorithm,
   };
 }
 
@@ -672,28 +1160,44 @@ Future<dynamic> _processCrypto(Map<String, dynamic> args) async {
 Future<dynamic> _processSearch(Map<String, dynamic> args) async {
   final data = args['data'];
   final params = args['params'] as Map<String, dynamic>?;
+  final reportProgress = args['reportProgress'] as Function?;
+  final isCancelled = args['isCancelled'] as Function?;
   
-  // Implementation for search operations
-  // For example, full-text search in a large dataset
+  reportProgress?.call(0.0, 'Chuẩn bị tìm kiếm');
   
-  // Simulated processing for now
+  final query = params?['query'] as String? ?? '';
+  final caseSensitive = params?['caseSensitive'] as bool? ?? false;
+  
+  // Giả lập chuẩn bị index/dữ liệu cho tìm kiếm
   await Future.delayed(const Duration(milliseconds: 100));
+  reportProgress?.call(0.2, 'Đã chuẩn bị dữ liệu tìm kiếm');
   
-  if (data is List && params?['query'] != null) {
-    final query = params!['query'] as String;
-    final results = data.where((item) => 
-      item.toString().toLowerCase().contains(query.toLowerCase())
-    ).toList();
-    
-    return {
-      'results': results,
-      'count': results.length,
-      'query': query,
-    };
+  if (isCancelled?.call() == true) {
+    return {'cancelled': true};
   }
   
+  // Giả lập quá trình tìm kiếm
+  final searchSteps = data is List ? data.length : 5;
+  final maxSteps = min(20, searchSteps); // Giới hạn số bước để tránh quá nhiều
+  
+  for (int i = 0; i < maxSteps; i++) {
+    if (isCancelled?.call() == true) {
+      return {'cancelled': true, 'progress': i / maxSteps};
+    }
+    
+    await Future.delayed(const Duration(milliseconds: 30));
+    reportProgress?.call(0.2 + 0.8 * (i + 1) / maxSteps, 
+      'Đang tìm kiếm: ${((i + 1) / maxSteps * 100).toStringAsFixed(0)}%');
+  }
+  
+  reportProgress?.call(1.0, 'Tìm kiếm hoàn tất');
+  
+  // Trả về kết quả giả lập
   return {
-    'error': 'Invalid search parameters',
+    'processed': true,
+    'query': query,
+    'caseSensitive': caseSensitive,
+    'resultsCount': 5, // Giả lập tìm thấy 5 kết quả
   };
 }
 
@@ -701,50 +1205,140 @@ Future<dynamic> _processSearch(Map<String, dynamic> args) async {
 Future<dynamic> _processText(Map<String, dynamic> args) async {
   final data = args['data'];
   final params = args['params'] as Map<String, dynamic>?;
+  final reportProgress = args['reportProgress'] as Function?;
+  final isCancelled = args['isCancelled'] as Function?;
   
-  // Implementation for text processing
-  // For example, analyzing text, formatting, etc.
+  reportProgress?.call(0.0, 'Khởi tạo xử lý văn bản');
   
-  // Simulated processing for now
-  await Future.delayed(const Duration(milliseconds: 100));
+  final operation = params?['operation'] as String? ?? 'analyze';
+  
+  // Xác định số lượng bước dựa trên loại thao tác
+  int steps;
+  switch (operation) {
+    case 'analyze':
+      steps = 8;
+      break;
+    case 'format':
+      steps = 5;
+      break;
+    case 'translate':
+      steps = 10;
+      break;
+    default:
+      steps = 5;
+  }
+  
+  // Giả lập xử lý văn bản
+  for (int i = 0; i < steps; i++) {
+    if (isCancelled?.call() == true) {
+      return {'cancelled': true};
+    }
+    
+    await Future.delayed(const Duration(milliseconds: 40));
+    reportProgress?.call((i + 1) / steps, 
+      '${_getTextOperationDescription(operation)}: ${((i + 1) / steps * 100).toStringAsFixed(0)}%');
+  }
+  
+  reportProgress?.call(1.0, 'Xử lý văn bản hoàn tất');
   
   return {
     'processed': true,
-    'type': data.runtimeType.toString(),
+    'operation': operation,
   };
 }
 
-/// Process AI/ML local operations
+/// Get description for text operation
+String _getTextOperationDescription(String operation) {
+  switch (operation) {
+    case 'analyze':
+      return 'Phân tích văn bản';
+    case 'format':
+      return 'Định dạng văn bản';
+    case 'translate':
+      return 'Dịch văn bản';
+    default:
+      return 'Xử lý văn bản';
+  }
+}
+
+/// Process AI/ML operations
 Future<dynamic> _processAI(Map<String, dynamic> args) async {
   final data = args['data'];
   final params = args['params'] as Map<String, dynamic>?;
+  final reportProgress = args['reportProgress'] as Function?;
+  final isCancelled = args['isCancelled'] as Function?;
   
-  // Implementation for AI/ML local operations
-  // For example, training a model, making predictions, etc.
+  final model = params?['model'] as String? ?? 'default';
   
-  // Simulated processing for now
-  await Future.delayed(const Duration(milliseconds: 100));
+  reportProgress?.call(0.0, 'Chuẩn bị mô hình $model');
+  
+  // Giả lập tải mô hình
+  for (int i = 0; i < 3; i++) {
+    if (isCancelled?.call() == true) {
+      return {'cancelled': true};
+    }
+    
+    await Future.delayed(const Duration(milliseconds: 200));
+    reportProgress?.call((i + 1) / 10, 'Đang tải mô hình: ${(i + 1) * 10}%');
+  }
+  
+  // Giả lập xử lý dữ liệu
+  for (int i = 0; i < 7; i++) {
+    if (isCancelled?.call() == true) {
+      return {'cancelled': true};
+    }
+    
+    await Future.delayed(const Duration(milliseconds: 100));
+    final progressPercent = 30 + ((i + 1) / 7 * 70);
+    reportProgress?.call(0.3 + 0.7 * (i + 1) / 7, 'Đang xử lý: ${progressPercent.toStringAsFixed(0)}%');
+  }
+  
+  reportProgress?.call(1.0, 'Xử lý AI hoàn tất');
   
   return {
     'processed': true,
-    'type': data.runtimeType.toString(),
+    'model': model,
+    'confidence': 0.87,
   };
 }
 
-/// Process fuzzy search operations
+/// Process fuzzy search
 Future<dynamic> _processFuzzySearch(Map<String, dynamic> args) async {
   final data = args['data'];
   final params = args['params'] as Map<String, dynamic>?;
+  final reportProgress = args['reportProgress'] as Function?;
+  final isCancelled = args['isCancelled'] as Function?;
   
-  // Implementation for fuzzy search operations
-  // For example, finding similar items in a dataset
+  final query = params?['query'] as String? ?? '';
+  final threshold = params?['threshold'] as double? ?? 0.7;
   
-  // Simulated processing for now
+  reportProgress?.call(0.0, 'Chuẩn bị tìm kiếm mờ');
+  
+  // Giả lập chuẩn bị dữ liệu
   await Future.delayed(const Duration(milliseconds: 100));
+  reportProgress?.call(0.1, 'Đã chuẩn bị dữ liệu');
+  
+  if (isCancelled?.call() == true) {
+    return {'cancelled': true};
+  }
+  
+  // Giả lập tìm kiếm mờ
+  for (int i = 0; i < 9; i++) {
+    if (isCancelled?.call() == true) {
+      return {'cancelled': true};
+    }
+    
+    await Future.delayed(const Duration(milliseconds: 50));
+    reportProgress?.call(0.1 + 0.9 * (i + 1) / 9, 'Đang tìm kiếm mờ: ${(10 + (i + 1) / 9 * 90).toStringAsFixed(0)}%');
+  }
+  
+  reportProgress?.call(1.0, 'Tìm kiếm mờ hoàn tất');
   
   return {
     'processed': true,
-    'type': data.runtimeType.toString(),
+    'query': query,
+    'threshold': threshold,
+    'matches': 3, // Giả lập số kết quả phù hợp
   };
 }
 
@@ -752,15 +1346,27 @@ Future<dynamic> _processFuzzySearch(Map<String, dynamic> args) async {
 Future<dynamic> _processCustom(Map<String, dynamic> args) async {
   final data = args['data'];
   final params = args['params'] as Map<String, dynamic>?;
+  final reportProgress = args['reportProgress'] as Function?;
+  final isCancelled = args['isCancelled'] as Function?;
   
-  // Implementation for custom operations
-  // This would be specific to the application's needs
+  final customOperation = params?['customOperation'] as String? ?? 'unknown';
   
-  // Simulated processing for now
-  await Future.delayed(const Duration(milliseconds: 100));
+  reportProgress?.call(0.0, 'Bắt đầu xử lý tuỳ chỉnh: $customOperation');
+  
+  // Giả lập xử lý tuỳ chỉnh
+  for (int i = 0; i < 5; i++) {
+    if (isCancelled?.call() == true) {
+      return {'cancelled': true};
+    }
+    
+    await Future.delayed(const Duration(milliseconds: 100));
+    reportProgress?.call((i + 1) / 5, 'Xử lý tuỳ chỉnh: ${(i + 1) * 20}%');
+  }
+  
+  reportProgress?.call(1.0, 'Xử lý tuỳ chỉnh hoàn tất');
   
   return {
     'processed': true,
-    'operation': params?['operation'] ?? 'unknown',
+    'customOperation': customOperation,
   };
 } 
