@@ -9,6 +9,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/utils/system_resources.dart';
 
 /// Types of background tasks that can be executed
 enum IsolateTaskType {
@@ -146,6 +147,15 @@ class IsolateManager {
   /// The default number of isolates in the pool
   static const int _defaultMaxIsolates = 3;
   
+  /// Minimum number of workers to maintain
+  static const int _minWorkers = 1;
+  
+  /// Maximum number of workers
+  static const int _maxWorkers = 6;
+  
+  /// Current target number of workers
+  late int _targetWorkerCount;
+  
   /// Number of isolates in the pool (calculated based on device)
   late final int _maxIsolates;
   
@@ -178,13 +188,29 @@ class IsolateManager {
   /// Timer for health check of isolates
   Timer? _healthCheckTimer;
   
+  /// Timer for auto-scaling check
+  Timer? _scalingTimer;
+  
+  /// Last time the pool was scaled
+  DateTime? _lastScalingTime;
+  
+  /// Cooldown period for scaling
+  static const Duration _scalingCooldown = Duration(seconds: 30);
+  
   final PerformanceMonitor _performance;
+  final SystemResourceMonitor _resourceMonitor;
   
   bool _isInitialized = false;
   
-  IsolateManager(this._performance) {
+  /// Current state of dynamic scaling
+  bool _dynamicScalingEnabled = true;
+  
+  IsolateManager(this._performance, this._resourceMonitor) {
     // Initialize with optimal number of isolates based on device
     _maxIsolates = _calculateOptimalIsolateCount();
+    _targetWorkerCount = _getInitialWorkerCount();
+    
+    // Create arrays with maximum size possible
     _isolates = List.filled(_maxIsolates, null);
     _sendPorts = List.filled(_maxIsolates, null);
     _receivePorts = List.generate(_maxIsolates, (_) => ReceivePort());
@@ -202,11 +228,39 @@ class IsolateManager {
       cpuCores = _defaultMaxIsolates;
     }
     
-    // Use at most cpuCores-1 to avoid starving main thread
-    // but minimum 1 and maximum 6
-    return cpuCores > 1 
-        ? (cpuCores - 1).clamp(1, 6) 
-        : 1;
+    // Maximum possible workers (capped by CPU cores)
+    return max(_maxWorkers, cpuCores - 1);
+  }
+  
+  /// Get initial worker count based on device
+  int _getInitialWorkerCount() {
+    try {
+      final cpuCores = Platform.numberOfProcessors;
+      
+      // Start with half the cores, minimum 1, maximum 3
+      return max(1, min(3, cpuCores ~/ 2));
+    } catch (e) {
+      return 2; // Default to 2 workers initially
+    }
+  }
+  
+  /// Get the current number of active (running) workers
+  int get activeWorkerCount => _isolates.where((isolate) => isolate != null).length;
+  
+  /// Get the current target worker count
+  int get targetWorkerCount => _targetWorkerCount;
+  
+  /// Enable or disable dynamic scaling
+  set dynamicScalingEnabled(bool value) {
+    if (_dynamicScalingEnabled != value) {
+      _dynamicScalingEnabled = value;
+      if (_dynamicScalingEnabled) {
+        _startScalingCheck();
+      } else {
+        _scalingTimer?.cancel();
+        _scalingTimer = null;
+      }
+    }
   }
   
   /// Initialize the isolate manager with a pool of isolates
@@ -214,8 +268,8 @@ class IsolateManager {
     if (_isInitialized) return;
     
     try {
-      // Initialize isolates in the pool
-      for (int i = 0; i < _maxIsolates; i++) {
+      // Initialize with target worker count
+      for (int i = 0; i < _targetWorkerCount; i++) {
         await _initializeIsolate(i);
       }
       
@@ -223,6 +277,11 @@ class IsolateManager {
       
       // Start background health check
       _startHealthCheck();
+      
+      // Start auto-scaling check
+      if (_dynamicScalingEnabled) {
+        _startScalingCheck();
+      }
       
       // Start task processing
       _processTaskQueue();
@@ -248,13 +307,131 @@ class IsolateManager {
     });
   }
   
+  /// Start periodic check for auto-scaling
+  void _startScalingCheck() {
+    _scalingTimer?.cancel();
+    _scalingTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _checkForAutoScaling();
+    });
+  }
+  
+  /// Check if we need to scale up or down the worker pool
+  Future<void> _checkForAutoScaling() async {
+    if (!_isInitialized || !_dynamicScalingEnabled) return;
+    
+    // Respect cooldown period
+    final now = DateTime.now();
+    if (_lastScalingTime != null && 
+        now.difference(_lastScalingTime!) < _scalingCooldown) {
+      return;
+    }
+    
+    try {
+      // Count total pending tasks
+      final pendingTasks = _taskQueues.values
+          .fold<int>(0, (sum, queue) => sum + queue.length);
+      
+      // Update resource monitor with pending task count
+      _resourceMonitor.updatePendingTasksCount(pendingTasks);
+      
+      // Get current system state
+      final resourceState = _resourceMonitor.currentState;
+      
+      // Check if we should scale up or down
+      if (resourceState.shouldScaleUp(activeWorkerCount, _maxIsolates)) {
+        await _scaleUp();
+      } else if (resourceState.shouldScaleDown(activeWorkerCount, _minWorkers)) {
+        await _scaleDown();
+      }
+    } catch (e) {
+      debugPrint('Error during auto-scaling check: $e');
+    }
+  }
+  
+  /// Scale up by adding workers
+  Future<void> _scaleUp() async {
+    debugPrint('Scaling up isolate pool');
+    
+    // Find the next available slot
+    int? nextSlot;
+    for (int i = 0; i < _maxIsolates; i++) {
+      if (_isolates[i] == null) {
+        nextSlot = i;
+        break;
+      }
+    }
+    
+    // If we found a slot, initialize a new isolate
+    if (nextSlot != null) {
+      try {
+        await _initializeIsolate(nextSlot);
+        _targetWorkerCount = min(_targetWorkerCount + 1, _maxIsolates);
+        _lastScalingTime = DateTime.now();
+        
+        // Process queue immediately
+        _processTaskQueue();
+      } catch (e) {
+        debugPrint('Failed to scale up isolate pool: $e');
+      }
+    }
+  }
+  
+  /// Scale down by removing workers
+  Future<void> _scaleDown() async {
+    debugPrint('Scaling down isolate pool');
+    
+    // Find an idle worker to remove
+    int? idleWorker;
+    for (int i = 0; i < _maxIsolates; i++) {
+      if (_isolates[i] != null && _activeTaskIds[i] == null) {
+        idleWorker = i;
+        break;
+      }
+    }
+    
+    // If we found an idle worker, shut it down
+    if (idleWorker != null) {
+      try {
+        await _shutdownIsolate(idleWorker);
+        _targetWorkerCount = max(_targetWorkerCount - 1, _minWorkers);
+        _lastScalingTime = DateTime.now();
+      } catch (e) {
+        debugPrint('Failed to scale down isolate pool: $e');
+      }
+    }
+  }
+  
+  /// Shut down a specific isolate gracefully
+  Future<void> _shutdownIsolate(int index) async {
+    if (_isolates[index] == null) return;
+    
+    try {
+      // Kill the isolate
+      _isolates[index]!.kill(priority: Isolate.immediate);
+      
+      // Clean up resources
+      _isolates[index] = null;
+      _sendPorts[index] = null;
+      _receivePorts[index].close();
+      _receivePorts[index] = ReceivePort();
+      _isolateLastActive[index] = null;
+      _activeTaskIds[index] = null;
+      
+      // Unregister the port
+      final instanceName = '${_isolateName}_$index';
+      IsolateNameServer.removePortNameMapping(instanceName);
+    } catch (e) {
+      debugPrint('Error shutting down isolate $index: $e');
+    }
+  }
+  
   /// Check health of all isolates and restart any that appear to be dead
   Future<void> _checkIsolateHealth() async {
     final now = DateTime.now();
     
     for (int i = 0; i < _maxIsolates; i++) {
-      // Skip if no isolate at this index
-      if (_isolates[i] == null) continue;
+      // Skip if no isolate at this index or if we're over target count
+      if (_isolates[i] == null || i >= _targetWorkerCount) continue;
       
       // Check if isolate has been inactive for too long
       final lastActive = _isolateLastActive[i];
@@ -308,14 +485,16 @@ class IsolateManager {
       _activeTaskIds[index] = null;
     }
     
-    // Initialize the isolate again
-    try {
-      await _initializeIsolate(index);
-      
-      // Process queue immediately if there are pending tasks
-      _processTaskQueue();
-    } catch (e) {
-      debugPrint('Failed to restart isolate $index: $e');
+    // Initialize the isolate again if within target count
+    if (index < _targetWorkerCount) {
+      try {
+        await _initializeIsolate(index);
+        
+        // Process queue immediately if there are pending tasks
+        _processTaskQueue();
+      } catch (e) {
+        debugPrint('Failed to restart isolate $index: $e');
+      }
     }
   }
   
@@ -538,6 +717,11 @@ class IsolateManager {
   
   /// Process the task queue based on priorities
   void _processTaskQueue() {
+    // Update resource monitor with pending task count
+    final pendingTasks = _taskQueues.values
+        .fold<int>(0, (sum, queue) => sum + queue.length);
+    _resourceMonitor.updatePendingTasksCount(pendingTasks);
+    
     // Priorities in order (critical first)
     final priorities = [
       TaskPriority.critical,
@@ -549,7 +733,7 @@ class IsolateManager {
     // Try to find an available isolate
     for (int i = 0; i < _maxIsolates; i++) {
       // Skip if this isolate is not ready or already processing
-      if (_sendPorts[i] == null || _activeTaskIds[i] != null) continue;
+      if (_sendPorts[i] == null || _activeTaskIds[i] != null || i >= _targetWorkerCount) continue;
       
       // Find the highest priority non-empty queue
       _PendingTask? task;
@@ -604,8 +788,17 @@ class IsolateManager {
     
     // Process on main thread if all isolates are busy
     if (_sendPorts.every((port) => port == null) || 
-        _activeTaskIds.every((id) => id != null)) {
+        _isolates.where((isolate) => isolate != null).length < _minWorkers ||
+        _activeTaskIds.where((id) => id == null).length == 0) {
       _processHighPriorityTasksOnMainThread();
+    }
+    
+    // Check if we need to scale up immediately due to high task load
+    if (_dynamicScalingEnabled && 
+        pendingTasks > activeWorkerCount * 5 && 
+        activeWorkerCount < _targetWorkerCount) {
+      // Schedule immediate scale up outside of this call
+      Future.microtask(() => _checkForAutoScaling());
     }
   }
   
@@ -789,6 +982,7 @@ class IsolateManager {
   /// Dispose resources
   void dispose() {
     _healthCheckTimer?.cancel();
+    _scalingTimer?.cancel();
     
     for (int i = 0; i < _maxIsolates; i++) {
       if (_isolates[i] != null) {

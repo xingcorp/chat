@@ -4,14 +4,17 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
+import 'package:flutter_chat_app/core/utils/system_resources.dart';
 
 /// Ví dụ sử dụng IsolateManager nâng cao
 class IsolateManagerDemo extends StatefulWidget {
   final IsolateManager isolateManager;
+  final SystemResourceMonitor resourceMonitor;
   
   const IsolateManagerDemo({
     Key? key,
     required this.isolateManager,
+    required this.resourceMonitor,
   }) : super(key: key);
 
   @override
@@ -25,6 +28,85 @@ class _IsolateManagerDemoState extends State<IsolateManagerDemo> {
   bool _isProcessing = false;
   String? _taskId;
   String? _resultMessage;
+  
+  // Thông tin về worker pool
+  int _activeWorkers = 0;
+  int _targetWorkers = 0;
+  int _pendingTasks = 0;
+  bool _dynamicScalingEnabled = true;
+  
+  // Thông tin hệ thống
+  int _loadScore = 0;
+  String _cpuLevel = 'Thấp';
+  String _memoryLevel = 'Thấp';
+  
+  // Timer cập nhật thông tin
+  Timer? _updateTimer;
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    // Cập nhật thông tin worker pool mỗi giây
+    _updateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _updatePoolInfo();
+    });
+    
+    // Lắng nghe thay đổi tài nguyên hệ thống
+    widget.resourceMonitor.resourceStateStream.listen((state) {
+      setState(() {
+        _loadScore = state.loadScore;
+        _cpuLevel = _getCpuLevelName(state.cpuLevel);
+        _memoryLevel = _getMemoryLevelName(state.memoryLevel);
+        _pendingTasks = state.pendingTasksCount;
+      });
+    });
+    
+    // Cập nhật ngay lần đầu
+    _updatePoolInfo();
+  }
+  
+  @override
+  void dispose() {
+    _updateTimer?.cancel();
+    super.dispose();
+  }
+  
+  // Cập nhật thông tin về worker pool
+  void _updatePoolInfo() {
+    setState(() {
+      _activeWorkers = widget.isolateManager.activeWorkerCount;
+      _targetWorkers = widget.isolateManager.targetWorkerCount;
+    });
+  }
+  
+  // Trả về tên mức CPU
+  String _getCpuLevelName(CpuUsageLevel level) {
+    switch (level) {
+      case CpuUsageLevel.low:
+        return 'Thấp';
+      case CpuUsageLevel.medium:
+        return 'Trung bình';
+      case CpuUsageLevel.high:
+        return 'Cao';
+      default:
+        return 'Không xác định';
+    }
+  }
+  
+  // Trả về tên mức memory
+  String _getMemoryLevelName(MemoryUsageLevel level) {
+    switch (level) {
+      case MemoryUsageLevel.low:
+        return 'Thấp';
+      case MemoryUsageLevel.medium:
+        return 'Trung bình';
+      case MemoryUsageLevel.high:
+        return 'Cao';
+      default:
+        return 'Không xác định';
+    }
+  }
   
   // Xử lý hình ảnh với báo cáo tiến độ
   Future<void> _processImageWithProgress() async {
@@ -93,135 +175,86 @@ class _IsolateManagerDemoState extends State<IsolateManagerDemo> {
     }
   }
   
-  // Xử lý vượt quá thời gian (hủy tác vụ sau 5 giây)
-  Future<void> _processWithCancellation() async {
-    // Tạo controller để theo dõi tiến độ
-    final progressController = StreamController<IsolateProgress>();
+  // Xử lý dữ liệu lớn để kiểm tra auto-scaling
+  Future<void> _processHeavyLoad() async {
+    // Tạo và chạy nhiều tác vụ song song để kích hoạt auto-scaling
     
     setState(() {
-      _progress = 0.0;
-      _statusMessage = 'Bắt đầu xử lý tệp lớn...';
+      _statusMessage = 'Đang tạo tải nặng...';
       _isProcessing = true;
       _resultMessage = null;
     });
     
-    // Lắng nghe cập nhật tiến độ
-    progressController.stream.listen((progress) {
-      setState(() {
-        _progress = progress.progress;
-        _statusMessage = progress.message ?? 'Đang xử lý...';
-      });
-    });
+    // Đếm số tác vụ hoàn thành
+    int completedTasks = 0;
+    const totalTasks = 10;
     
     try {
-      // Tạo task ID
-      final taskId = 'file_task_${DateTime.now().millisecondsSinceEpoch}';
-      _taskId = taskId;
-      
-      // Xử lý trong isolate với báo cáo tiến độ
-      // Sử dụng Future.microtask để bắt đầu xử lý trước
-      unawaited(Future.microtask(() async {
-        await Future.delayed(const Duration(seconds: 5));
-        if (_isProcessing && _taskId == taskId) {
-          debugPrint('Hủy tác vụ sau 5 giây: $taskId');
-          await widget.isolateManager.cancelTask(taskId);
-        }
-      }));
-      
-      final result = await widget.isolateManager.processInBackground(
-        taskType: IsolateTaskType.fileOperation,
-        taskId: taskId,
-        data: {
-          'path': '/path/to/large/file.dat',
-          'size': 100000000, // 100MB
-        },
-        params: {
-          'operation': 'encode',
-        },
-        progressController: progressController,
-        priority: TaskPriority.medium,
-        enableCancellation: true,
-      );
-      
-      if (result.isSuccess) {
-        setState(() {
-          _resultMessage = 'Xử lý thành công!';
+      // Tạo 10 tác vụ song song
+      final tasks = List.generate(totalTasks, (index) {
+        // Tạo controller để theo dõi tiến độ cho mỗi tác vụ
+        final progressController = StreamController<IsolateProgress>();
+        
+        // Lấy tiến độ cụ thể cho tác vụ này
+        progressController.stream.listen((_) {
+          // Không cần cập nhật UI với từng tác vụ
         });
-      } else {
-        setState(() {
-          _resultMessage = 'Xử lý thất bại: ${result.error}';
+        
+        // Dữ liệu giả lập
+        final data = List.generate(10000, (i) => {'id': i, 'value': 'item-$i'});
+        
+        // Trả về future của tác vụ
+        return widget.isolateManager.processInBackground(
+          taskType: IsolateTaskType.dataProcessing,
+          data: data,
+          params: {
+            'operation': 'transform',
+            'complexity': 'high',
+          },
+          progressController: progressController,
+          priority: index % 3 == 0 ? TaskPriority.high : TaskPriority.medium,
+        ).then((result) {
+          // Đóng controller
+          progressController.close();
+          
+          // Cập nhật tiến độ tổng thể
+          completedTasks++;
+          setState(() {
+            _progress = completedTasks / totalTasks;
+            _statusMessage = 'Đã xử lý $completedTasks/$totalTasks tác vụ';
+          });
+          
+          return result;
         });
-      }
+      });
+      
+      // Chờ tất cả tác vụ hoàn thành
+      final results = await Future.wait(tasks);
+      
+      // Đếm số tác vụ thành công
+      final successCount = results.where((r) => r.isSuccess).length;
+      
+      setState(() {
+        _resultMessage = 'Đã hoàn thành $successCount/$totalTasks tác vụ\n'
+            'Worker pool đã thay đổi thành $_activeWorkers worker';
+      });
     } catch (e) {
       setState(() {
-        _resultMessage = 'Lỗi: $e';
+        _resultMessage = 'Lỗi khi tạo tải nặng: $e';
       });
     } finally {
-      await progressController.close();
       setState(() {
         _isProcessing = false;
+        _progress = 1.0;
       });
     }
   }
   
-  // Xử lý dữ liệu lớn
-  Future<void> _processLargeData() async {
-    // Tạo controller để theo dõi tiến độ
-    final progressController = StreamController<IsolateProgress>();
-    
-    setState(() {
-      _progress = 0.0;
-      _statusMessage = 'Bắt đầu xử lý dữ liệu lớn...';
-      _isProcessing = true;
-      _resultMessage = null;
-    });
-    
-    // Lắng nghe cập nhật tiến độ
-    progressController.stream.listen((progress) {
-      setState(() {
-        _progress = progress.progress;
-        _statusMessage = progress.message ?? 'Đang xử lý...';
-      });
-    });
-    
-    try {
-      // Tạo dữ liệu lớn (danh sách 10000 phần tử)
-      final largeData = List.generate(10000, (i) => {'id': i, 'value': 'item-$i'});
-      
-      // Xử lý trong isolate với báo cáo tiến độ
-      final result = await widget.isolateManager.processInBackground(
-        taskType: IsolateTaskType.dataProcessing,
-        data: largeData,
-        params: {
-          'operation': 'transform',
-        },
-        progressController: progressController,
-        priority: TaskPriority.low,
-      );
-      
-      _taskId = result.taskId;
-      
-      if (result.isSuccess) {
-        setState(() {
-          _resultMessage = 'Xử lý dữ liệu thành công!\n'
-              'Số lượng phần tử: ${result.result['count'] ?? '?'}\n'
-              'Kết quả: ${result.result['summary'] ?? '?'}';
-        });
-      } else {
-        setState(() {
-          _resultMessage = 'Xử lý thất bại: ${result.error}';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _resultMessage = 'Lỗi: $e';
-      });
-    } finally {
-      await progressController.close();
-      setState(() {
-        _isProcessing = false;
-      });
-    }
+  // Bật/tắt auto scaling
+  void _toggleAutoScaling() {
+    _dynamicScalingEnabled = !_dynamicScalingEnabled;
+    widget.isolateManager.dynamicScalingEnabled = _dynamicScalingEnabled;
+    setState(() {});
   }
   
   // Hủy tác vụ đang chạy
@@ -246,72 +279,132 @@ class _IsolateManagerDemoState extends State<IsolateManagerDemo> {
       appBar: AppBar(
         title: const Text('Ví dụ IsolateManager'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Hiển thị tiến độ
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Trạng thái: $_statusMessage'),
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(value: _progress),
-                    const SizedBox(height: 8),
-                    Text('Tiến độ: ${(_progress * 100).toStringAsFixed(1)}%'),
-                  ],
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Hiển thị kết quả
-            if (_resultMessage != null)
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Thông tin worker pool
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Text(_resultMessage!),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Worker Pool', 
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Worker hoạt động: $_activeWorkers / $_targetWorkers'),
+                      Text('Tác vụ đang chờ: $_pendingTasks'),
+                      Text('Auto-scaling: ${_dynamicScalingEnabled ? "Bật" : "Tắt"}'),
+                      const SizedBox(height: 8),
+                      SwitchListTile(
+                        title: const Text('Auto-scaling'),
+                        value: _dynamicScalingEnabled,
+                        onChanged: (_) => _toggleAutoScaling(),
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            
-            const SizedBox(height: 16),
-            
-            // Các nút hành động
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ElevatedButton(
-                  onPressed: _isProcessing ? null : _processImageWithProgress,
-                  child: const Text('Xử lý hình ảnh'),
-                ),
-                
-                ElevatedButton(
-                  onPressed: _isProcessing ? null : _processWithCancellation,
-                  child: const Text('Xử lý & tự động hủy (5s)'),
-                ),
-                
-                ElevatedButton(
-                  onPressed: _isProcessing ? null : _processLargeData,
-                  child: const Text('Xử lý dữ liệu lớn'),
-                ),
-                
-                ElevatedButton(
-                  onPressed: _isProcessing ? _cancelCurrentTask : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
+              
+              const SizedBox(height: 16),
+              
+              // Thông tin tài nguyên hệ thống
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Tài nguyên hệ thống', 
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Mức tải: $_loadScore/100'),
+                      Text('CPU: $_cpuLevel'),
+                      Text('Bộ nhớ: $_memoryLevel'),
+                    ],
                   ),
-                  child: const Text('Hủy tác vụ hiện tại'),
                 ),
-              ],
-            ),
-          ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Hiển thị tiến độ
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Tiến độ tác vụ', 
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Trạng thái: $_statusMessage'),
+                      const SizedBox(height: 8),
+                      LinearProgressIndicator(value: _progress),
+                      const SizedBox(height: 8),
+                      Text('Tiến độ: ${(_progress * 100).toStringAsFixed(1)}%'),
+                    ],
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Hiển thị kết quả
+              if (_resultMessage != null)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Kết quả', 
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(_resultMessage!),
+                      ],
+                    ),
+                  ),
+                ),
+              
+              const SizedBox(height: 16),
+              
+              // Các nút hành động
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ElevatedButton(
+                    onPressed: _isProcessing ? null : _processImageWithProgress,
+                    child: const Text('Xử lý hình ảnh'),
+                  ),
+                  
+                  ElevatedButton(
+                    onPressed: _isProcessing ? null : _processHeavyLoad,
+                    child: const Text('Tạo tải nặng'),
+                  ),
+                  
+                  ElevatedButton(
+                    onPressed: _isProcessing ? _cancelCurrentTask : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Hủy tác vụ hiện tại'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
