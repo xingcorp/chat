@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_app/config/theme/app_theme.dart';
+import 'package:flutter_chat_app/core/theme/app_theme.dart';
 import 'package:flutter_chat_app/core/network/socket_manager.dart';
 
 part 'app_event.dart';
