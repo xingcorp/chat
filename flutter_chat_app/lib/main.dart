@@ -13,6 +13,7 @@ import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
 import 'package:flutter_chat_app/core/services/chat_message_service.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
+import 'package:flutter_chat_app/core/theme/app_theme.dart';
 import 'package:flutter_chat_app/presentation/blocs/app/app_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/auth/auth_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,6 +36,7 @@ import 'package:flutter_chat_app/core/services/animation_service.dart';
 import 'package:flutter_chat_app/core/services/device_capability_service.dart';
 import 'package:flutter_chat_app/core/services/performance_service.dart';
 import 'package:flutter_chat_app/presentation/widgets/app_wrapper.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // Import home screens from respective platform files
 import 'main_mobile.dart' show MobileHomeScreen;
@@ -139,7 +141,14 @@ Future<void> main() async {
   
   // Bắt tất cả lỗi không xử lý trong zone
   runZonedGuarded(() {
-    runApp(MyApp(sharedPreferences: sharedPreferences));
+    runApp(
+      ScreenUtilInit(
+        designSize: const Size(375, 812), // iPhone X design size
+        minTextAdapt: true,
+        splitScreenMode: true,
+        builder: (context, child) => MyApp(sharedPreferences: sharedPreferences),
+      ),
+    );
   }, (error, stackTrace) {
     print('Unhandled error: $error\n$stackTrace');
     crashReporter?.recordError(error, stackTrace, reason: 'unhandled_error');
