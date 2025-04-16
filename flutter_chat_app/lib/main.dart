@@ -205,122 +205,39 @@ Future<void> _initializeDesktopServices() async {
   await chatMessageService.initialize();
 }
 
-class MyApp extends StatefulWidget {
+/// Widget gốc của ứng dụng
+class MyApp extends StatelessWidget {
   final SharedPreferences sharedPreferences;
   
-  const MyApp({super.key, required this.sharedPreferences});
-  
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
+  const MyApp({
+    Key? key, 
+    required this.sharedPreferences,
+  }) : super(key: key);
 
-class _MyAppState extends State<MyApp> {
-  late AppLifecycleObserver _lifecycleObserver;
-  
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    
-    // Khởi tạo và đăng ký lifecycle observer
-    _lifecycleObserver = AppLifecycleObserver(context);
-    _lifecycleObserver.register();
-  }
-  
-  @override
-  void dispose() {
-    // Hủy đăng ký lifecycle observer khi widget bị hủy
-    _lifecycleObserver.unregister();
-    super.dispose();
-  }
-  
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (context) => GetIt.I<AppBloc>()..add(const AppInitialized()),
+        BlocProvider<AppBloc>(
+          create: (context) => GetIt.I<AppBloc>(),
         ),
-        BlocProvider(
-          create: (context) {
-            final authBloc = AuthBloc(widget.sharedPreferences);
-            // Trigger an auth check on app startup
-            authBloc.add(const AuthCheckRequested());
-            return authBloc;
-          },
+        BlocProvider<AuthBloc>(
+          create: (context) => GetIt.I<AuthBloc>(),
         ),
       ],
-      child: Builder(
-        builder: (context) {
-          final router = AppRouter.router(context);
-          
-          return wrapApp(MaterialApp.router(
-            title: 'Flutter Chat App',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-              useMaterial3: true,
-            ),
-            routerConfig: router,
-          ));
-        },
+      child: MaterialApp(
+        title: 'Flutter Chat App',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        // ... rest of your app configuration
+        home: _buildHomeScreen(),
       ),
     );
   }
-}
 
-Widget wrapApp(Widget child) {
-  // Chỉ thêm nút trong môi trường debug
-  if (kDebugMode) {
-    return Stack(
-      children: [
-        child,
-        Positioned(
-          top: 50,
-          right: 0,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                // Toggle performance overlay
-                final performanceService = GetIt.I<PerformanceService>();
-                performanceService.togglePerformanceOverlay();
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    bottomLeft: Radius.circular(8),
-                  ),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                child: const Icon(
-                  Icons.speed,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  
-  // Không thêm overlay nút trong môi trường production
-  return child;
-}
-
-// This widget will determine which platform-specific implementation to use
-class PlatformEntryPoint extends StatelessWidget {
-  const PlatformEntryPoint({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Return the appropriate screen based on platform
+  Widget _buildHomeScreen() {
     if (kIsWeb) {
       return const WebHomeScreen();
     } else if (Platform.isAndroid || Platform.isIOS) {
@@ -549,47 +466,6 @@ Future<void> setupServices() async {
   );
   
   // Đăng ký các services khác...
-}
-
-/// Widget gốc của ứng dụng
-class MyApp extends StatelessWidget {
-  final SharedPreferences sharedPreferences;
-  
-  const MyApp({Key? key, required this.sharedPreferences}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => GetIt.I<AppBloc>()..add(const AppInitialized()),
-        ),
-        BlocProvider(
-          create: (context) {
-            final authBloc = AuthBloc(sharedPreferences);
-            // Trigger an auth check on app startup
-            authBloc.add(const AuthCheckRequested());
-            return authBloc;
-          },
-        ),
-      ],
-      child: Builder(
-        builder: (context) {
-          final router = AppRouter.router(context);
-          
-          return wrapApp(MaterialApp.router(
-            title: 'Flutter Chat App',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-              useMaterial3: true,
-            ),
-            routerConfig: router,
-          ));
-        },
-      ),
-    );
-  }
 }
 
 /// Màn hình chính

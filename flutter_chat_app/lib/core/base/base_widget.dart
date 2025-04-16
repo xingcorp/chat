@@ -71,20 +71,17 @@ abstract class BaseState<T extends BaseStatefulWidget> extends State<T> with Wid
   }
 }
 
-/// Base class cho tất cả các widget không trạng thái trong ứng dụng
+/// Base class for all stateless widgets
 abstract class BaseStatelessWidget extends StatelessWidget {
+  /// Constructor
   const BaseStatelessWidget({Key? key}) : super(key: key);
-  
+
+  /// Build method to override in descendants
   @override
-  @mustCallSuper
   Widget build(BuildContext context) {
-    if (kDebugMode) {
-      LogUtils.d('BaseStatelessWidget<${runtimeType.toString()}>', 'build()');
-    }
     return buildContent(context);
   }
-  
-  /// Phương thức xây dựng nội dung widget, phải được override
-  @protected
+
+  /// Build content method to be implemented by subclasses
   Widget buildContent(BuildContext context);
 } 

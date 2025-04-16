@@ -4,7 +4,7 @@ import 'package:flutter_chat_app/core/theme/app_colors.dart';
 
 /// Các text style chuẩn hóa cho toàn bộ ứng dụng
 class AppTextStyles {
-  // Heading styles
+  /// Heading lớn nhất - H1
   static TextStyle heading1({
     Color? color,
     FontWeight? fontWeight,

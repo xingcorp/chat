@@ -1,113 +1,80 @@
 import 'package:flutter/material.dart';
 
-/// Màu sắc được sử dụng trong ứng dụng
+/// Class định nghĩa các màu sắc trong ứng dụng
 class AppColors {
-  // Primary Colors
+  /// Màu chính
   static const Color primary = Color(0xFF2196F3);
-  static const Color primaryLight = Color(0xFF64B5F6);
-  static const Color primaryDark = Color(0xFF1976D2);
-  static const Color primaryBackground = Color(0xFFE3F2FD);
   
-  // Secondary Colors
-  static const Color secondary = Color(0xFF03A9F4);
-  static const Color secondaryLight = Color(0xFF4FC3F7);
-  static const Color secondaryDark = Color(0xFF0288D1);
-  static const Color secondaryBackground = Color(0xFFE1F5FE);
+  /// Màu chủ đề thứ cấp
+  static const Color secondary = Color(0xFFFF9800);
   
-  // Accent Colors
-  static const Color accent = Color(0xFF00BCD4);
-  static const Color accentLight = Color(0xFF4DD0E1);
-  static const Color accentDark = Color(0xFF0097A7);
-  
-  // Neutral Colors
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color black = Color(0xFF000000);
-  static const Color grey = Color(0xFF9E9E9E);
-  static const Color greyLight = Color(0xFFE0E0E0);
-  static const Color greyDark = Color(0xFF616161);
-  
-  // Background Colors
+  /// Màu nền
   static const Color background = Color(0xFFF5F5F5);
+  
+  /// Màu nền thẻ
   static const Color cardBackground = Color(0xFFFFFFFF);
-  static const Color scaffoldBackground = Color(0xFFF5F5F5);
-  static const Color dialogBackground = Color(0xFFFFFFFF);
   
-  // Text Colors
+  /// Màu văn bản chính
   static const Color textPrimary = Color(0xFF212121);
+  
+  /// Màu văn bản thứ cấp
   static const Color textSecondary = Color(0xFF757575);
-  static const Color textHint = Color(0xFF9E9E9E);
-  static const Color textDisabled = Color(0xFFBDBDBD);
-  static const Color textButton = Color(0xFFFFFFFF);
-  static const Color textLink = Color(0xFF2196F3);
   
-  // Icon Colors
-  static const Color iconPrimary = Color(0xFF212121);
-  static const Color iconSecondary = Color(0xFF757575);
-  static const Color iconDisabled = Color(0xFFBDBDBD);
+  /// Màu biểu tượng
+  static const Color icon = Color(0xFF616161);
   
-  // Status Colors
+  /// Màu bóng
+  static const Color shadow = Color(0x1A000000);
+  
+  /// Màu viền
+  static const Color border = Color(0xFFE0E0E0);
+  
+  /// Màu xanh lá
   static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFFC107);
+  
+  /// Màu lỗi
   static const Color error = Color(0xFFF44336);
+  
+  /// Màu cảnh báo
+  static const Color warning = Color(0xFFFFC107);
+  
+  /// Màu thông tin
   static const Color info = Color(0xFF2196F3);
   
-  // Chat Colors
+  /// Màu nền của input chat
+  static const Color chatInputBackground = Color(0xFFF5F5F5);
+  
+  /// Màu nền của tin nhắn gửi đi
   static const Color sentMessageBackground = Color(0xFFE3F2FD);
+  
+  /// Màu văn bản của tin nhắn gửi đi
+  static const Color sentMessageText = Color(0xFF000000);
+  
+  /// Màu nền của tin nhắn nhận được
   static const Color receivedMessageBackground = Color(0xFFFFFFFF);
-  static const Color sentMessageText = Color(0xFF212121);
-  static const Color receivedMessageText = Color(0xFF212121);
-  static const Color messageTime = Color(0xFF9E9E9E);
-  static const Color typing = Color(0xFF4CAF50);
-  static const Color online = Color(0xFF4CAF50);
-  static const Color offline = Color(0xFF9E9E9E);
-  static const Color chatInputBackground = Color(0xFFFFFFFF);
   
-  // Shadow
-  static const Color shadowColor = Color(0x1A000000);
+  /// Màu văn bản của tin nhắn nhận được
+  static const Color receivedMessageText = Color(0xFF000000);
   
-  // Gradients
-  static const List<Color> primaryGradient = [
-    Color(0xFF2196F3),
-    Color(0xFF03A9F4),
-  ];
+  /// Màu xám nhạt
+  static const Color greyLight = Color(0xFFE0E0E0);
   
-  static const List<Color> successGradient = [
-    Color(0xFF4CAF50),
-    Color(0xFF8BC34A),
-  ];
+  /// Màu xám đậm
+  static const Color greyDark = Color(0xFF9E9E9E);
   
-  static const List<Color> errorGradient = [
-    Color(0xFFF44336),
-    Color(0xFFE57373),
-  ];
+  /// Màu nền chính
+  static const Color primaryBackground = Color(0xFFE3F2FD);
   
-  // Dark Mode Colors
-  static const Color primaryDarkMode = Color(0xFF90CAF9);
-  static const Color backgroundDarkMode = Color(0xFF121212);
-  static const Color surfaceDarkMode = Color(0xFF1E1E1E);
-  static const Color errorDarkMode = Color(0xFFCF6679);
-  
-  static const Color textPrimaryDarkMode = Color(0xFFFFFFFF);
-  static const Color textSecondaryDarkMode = Color(0xFFB0B0B0);
-  
-  static const Color sentMessageBackgroundDarkMode = Color(0xFF2979FF);
-  static const Color receivedMessageBackgroundDarkMode = Color(0xFF424242);
-  static const Color sentMessageTextDarkMode = Color(0xFFFFFFFF);
-  static const Color receivedMessageTextDarkMode = Color(0xFFFFFFFF);
-  
-  // Functions to get color based on theme
-  static Color getTextPrimaryColor(bool isDarkMode) => 
-      isDarkMode ? textPrimaryDarkMode : textPrimary;
-      
-  static Color getTextSecondaryColor(bool isDarkMode) => 
-      isDarkMode ? textSecondaryDarkMode : textSecondary;
-      
-  static Color getBackgroundColor(bool isDarkMode) => 
-      isDarkMode ? backgroundDarkMode : background;
-      
-  static Color getSentMessageBackgroundColor(bool isDarkMode) => 
-      isDarkMode ? sentMessageBackgroundDarkMode : sentMessageBackground;
-      
-  static Color getReceivedMessageBackgroundColor(bool isDarkMode) => 
-      isDarkMode ? receivedMessageBackgroundDarkMode : receivedMessageBackground;
+  /// Màu nền thứ cấp
+  static const Color secondaryBackground = Color(0xFFFFF3E0);
+
+  /// Lấy màu nền cho tin nhắn gửi đi, dựa vào chế độ tối/sáng
+  static Color getSentMessageBackgroundColor(bool isDarkMode) {
+    return isDarkMode ? const Color(0xFF0D47A1) : sentMessageBackground;
+  }
+
+  /// Lấy màu nền cho tin nhắn nhận được, dựa vào chế độ tối/sáng
+  static Color getReceivedMessageBackgroundColor(bool isDarkMode) {
+    return isDarkMode ? const Color(0xFF424242) : receivedMessageBackground;
+  }
 } 

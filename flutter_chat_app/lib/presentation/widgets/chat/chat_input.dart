@@ -7,6 +7,7 @@ import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter_chat_app/core/utils/attachment_type.dart';
 
 /// Các loại hành động đính kèm
 enum AttachmentType {
@@ -35,7 +36,7 @@ class ChatInput extends BaseStatefulWidget {
   final VoidCallback? onVoiceRecordingStarted;
   
   /// Callback khi kết thúc ghi âm và gửi
-  final Function(Duration)? onVoiceRecordingEnded;
+  final Function(String)? onVoiceRecordingEnded;
   
   /// Callback khi huỷ ghi âm
   final VoidCallback? onVoiceRecordingCancelled;
@@ -79,7 +80,7 @@ class _ChatInputState extends BaseState<ChatInput> {
   bool _isRecording = false;
   
   /// Thời điểm bắt đầu ghi âm
-  DateTime? _recordingStartTime;
+  late DateTime? _recordingStartTime;
   
   /// Timer đếm thời gian ghi âm
   Timer? _recordingTimer;
@@ -107,6 +108,9 @@ class _ChatInputState extends BaseState<ChatInput> {
     
     // Lắng nghe focus thay đổi
     _focusNode.addListener(_handleFocusChanged);
+    
+    // Khởi tạo
+    _recordingStartTime = null;
   }
   
   @override
@@ -195,8 +199,8 @@ class _ChatInputState extends BaseState<ChatInput> {
       backgroundColor: Theme.of(context).cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(AppConstants.kLargeBorderRadius.r),
-          topRight: Radius.circular(AppConstants.kLargeBorderRadius.r),
+          topLeft: Radius.circular(AppConstants.kLargeBorderRadius),
+          topRight: Radius.circular(AppConstants.kLargeBorderRadius),
         ),
       ),
       builder: (context) {
@@ -206,7 +210,7 @@ class _ChatInputState extends BaseState<ChatInput> {
             children: [
               // Title
               Padding(
-                padding: EdgeInsets.all(AppConstants.kDefaultPadding.r),
+                padding: EdgeInsets.all(AppConstants.kDefaultPadding),
                 child: Text(
                   'Đính kèm',
                   style: AppTextStyles.heading5(),
@@ -214,13 +218,13 @@ class _ChatInputState extends BaseState<ChatInput> {
               ),
               
               // Divider
-              Divider(height: 1.r),
+              const Divider(height: 1),
               
               // Grid các loại đính kèm
               GridView.count(
                 shrinkWrap: true,
                 crossAxisCount: 4,
-                padding: EdgeInsets.all(AppConstants.kDefaultPadding.r),
+                padding: EdgeInsets.all(AppConstants.kDefaultPadding),
                 children: [
                   _buildAttachmentButton(
                     icon: Icons.photo,
@@ -264,9 +268,6 @@ class _ChatInputState extends BaseState<ChatInput> {
                   ),
                 ],
               ),
-              
-              // Bottom padding
-              SizedBox(height: 16.h),
             ],
           ),
         );
@@ -280,31 +281,31 @@ class _ChatInputState extends BaseState<ChatInput> {
     required String label,
     required VoidCallback onTap,
   }) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(
-        AppConstants.kDefaultBorderRadius.r,
-      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 50.r,
-            height: 50.r,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              color: AppColors.primaryBackground,
+              color: Theme.of(context).primaryColor.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: AppColors.primary,
-              size: 24.r,
+              color: Theme.of(context).primaryColor,
+              size: 28,
             ),
           ),
-          SizedBox(height: 8.h),
+          const SizedBox(height: 8),
           Text(
             label,
-            style: AppTextStyles.bodySmall(),
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
           ),
         ],
       ),
@@ -315,7 +316,7 @@ class _ChatInputState extends BaseState<ChatInput> {
   void _startRecording() {
     if (!widget.enableVoiceRecording) return;
     
-    safeSetState(() {
+    setState(() {
       _isRecording = true;
       _recordingStartTime = DateTime.now();
       _recordingDuration = 0;
@@ -323,113 +324,80 @@ class _ChatInputState extends BaseState<ChatInput> {
       _dragStartPosition = null;
     });
     
-    // Thông báo bắt đầu
+    // Thông báo bắt đầu ghi âm
     widget.onVoiceRecordingStarted?.call();
-    
-    // Phản hồi haptic
-    HapticFeedback.mediumImpact();
     
     // Bắt đầu timer đếm thời gian
     _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      safeSetState(() {
-        _recordingDuration += 1;
+      setState(() {
+        _recordingDuration++;
       });
     });
-    
-    LogUtils.d('ChatInput', 'Started voice recording');
   }
   
-  /// Kết thúc ghi âm và gửi
-  void _stopAndSendRecording() {
+  /// Dừng ghi âm
+  void _stopRecording(LongPressEndDetails details) {
     if (!_isRecording) return;
     
-    final duration = Duration(seconds: _recordingDuration);
+    final bool isCancelled = _isDraggingToCancel;
     
-    safeSetState(() {
+    setState(() {
       _isRecording = false;
       _recordingTimer?.cancel();
       _recordingTimer = null;
     });
     
-    // Phản hồi haptic
-    HapticFeedback.mediumImpact();
-    
-    // Kiểm tra nếu kéo để huỷ
-    if (_isDraggingToCancel) {
+    // Thông báo kết quả ghi âm
+    if (isCancelled) {
       widget.onVoiceRecordingCancelled?.call();
-      LogUtils.d('ChatInput', 'Cancelled voice recording');
     } else {
-      // Gửi recording nếu thời lượng đủ
-      if (_recordingDuration >= 1) {
-        widget.onVoiceRecordingEnded?.call(duration);
-        LogUtils.d('ChatInput', 'Sent voice recording: ${duration.inSeconds}s');
-      } else {
-        // Huỷ nếu thời lượng quá ngắn
-        widget.onVoiceRecordingCancelled?.call();
-        LogUtils.d('ChatInput', 'Recording too short, cancelled');
-      }
+      // Giả lập gửi âm thanh, trong thực tế sẽ lưu file và trả về path
+      final String fakePath = 'recording_${DateTime.now().millisecondsSinceEpoch}.mp3';
+      widget.onVoiceRecordingEnded?.call(fakePath);
     }
   }
   
-  /// Format thời gian ghi âm
-  String _formatRecordingDuration() {
-    final minutes = (_recordingDuration ~/ 60).toString().padLeft(2, '0');
-    final seconds = (_recordingDuration % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
-  
   @override
-  Widget buildContent(BuildContext context) {
+  Widget build(BuildContext context) {
+    final bool isTextEmpty = _textController.text.isEmpty;
+    
+    // Kiểm tra nếu đang ghi âm
+    if (_isRecording) {
+      return _buildRecordingUI();
+    }
+    
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowColor.withOpacity(0.1),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
             offset: const Offset(0, -1),
-          ),
+          )
         ],
       ),
-      child: SafeArea(
-        child: _isRecording ? _buildRecordingUI() : _buildNormalInputUI(),
-      ),
-    );
-  }
-  
-  /// UI nhập tin nhắn bình thường
-  Widget _buildNormalInputUI() {
-    return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: AppConstants.kDefaultPadding.r,
-        vertical: AppConstants.kSmallPadding.r,
+        horizontal: AppConstants.kSmallPadding,
+        vertical: AppConstants.kSmallPadding,
       ),
       child: Row(
         children: [
-          // Nút đính kèm
           if (widget.enableAttachments)
             IconButton(
-              icon: Icon(
-                Icons.add_circle_outline,
-                color: AppColors.primary,
-                size: 24.r,
-              ),
+              icon: const Icon(Icons.attach_file),
               onPressed: _showAttachmentMenu,
-              splashRadius: 20.r,
             ),
-          
-          // Text input
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.chatInputBackground,
-                borderRadius: BorderRadius.circular(
-                  AppConstants.kCircularBorderRadius.r,
-                ),
-                border: Border.all(
-                  color: AppColors.greyLight,
-                  width: 1.r,
-                ),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[800]
+                    : Colors.grey[200],
+                borderRadius: BorderRadius.circular(AppConstants.kDefaultBorderRadius),
+              ),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppConstants.kSmallPadding,
               ),
               child: Row(
                 children: [
@@ -437,179 +405,125 @@ class _ChatInputState extends BaseState<ChatInput> {
                     child: TextField(
                       controller: _textController,
                       focusNode: _focusNode,
+                      minLines: 1,
+                      maxLines: 5,
                       decoration: InputDecoration(
-                        hintText: widget.hint,
-                        hintStyle: AppTextStyles.inputHint(),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12.r,
-                          vertical: 8.r,
+                        hintText: widget.hint,
+                        hintStyle: TextStyle(
+                          color: Colors.grey[500],
                         ),
                       ),
-                      textCapitalization: TextCapitalization.sentences,
-                      keyboardType: TextInputType.multiline,
-                      maxLines: 5,
-                      minLines: 1,
-                      onSubmitted: (_) => _handleSendMessage(),
+                      onSubmitted: (_) {
+                        _handleSendMessage();
+                      },
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          
-          // Nút gửi hoặc ghi âm
-          _textController.text.trim().isNotEmpty
-              ? IconButton(
+          isTextEmpty && widget.enableVoiceRecording
+              ? GestureDetector(
+                  onLongPress: _startRecording,
+                  onLongPressEnd: _stopRecording,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.mic,
+                      color: Colors.white,
+                    ),
+                  ),
+                )
+              : IconButton(
                   icon: Icon(
                     Icons.send,
-                    color: AppColors.primary,
-                    size: 24.r,
+                    color: Theme.of(context).primaryColor,
                   ),
                   onPressed: _handleSendMessage,
-                  splashRadius: 20.r,
-                )
-              : widget.enableVoiceRecording
-                  ? GestureDetector(
-                      onLongPress: _startRecording,
-                      child: Padding(
-                        padding: EdgeInsets.all(8.r),
-                        child: Icon(
-                          Icons.mic,
-                          color: AppColors.primary,
-                          size: 24.r,
-                        ),
-                      ),
-                    )
-                  : IconButton(
-                      icon: Icon(
-                        Icons.send,
-                        color: AppColors.textDisabled,
-                        size: 24.r,
-                      ),
-                      onPressed: null,
-                      splashRadius: 20.r,
-                    ),
+                ),
         ],
       ),
     );
   }
   
-  /// UI ghi âm
+  /// Widget hiển thị khi đang ghi âm
   Widget _buildRecordingUI() {
     return GestureDetector(
-      onLongPressEnd: (_) => _stopAndSendRecording(),
+      onLongPressEnd: _stopRecording,
       onPanUpdate: (details) {
         if (_dragStartPosition == null) {
-          _dragStartPosition = details.globalPosition;
+          _dragStartPosition = details.localPosition;
+          return;
         }
         
-        // Tính khoảng cách kéo
-        final dragDistance = (_dragStartPosition! - details.globalPosition).dy;
+        // Tính khoảng cách kéo theo chiều ngang (phải sang trái để huỷ)
+        final double dragDistance = _dragStartPosition!.dx - details.localPosition.dx;
         
-        // Nếu kéo lên trên một khoảng đủ lớn, đánh dấu là huỷ
+        // Nếu kéo quá ngưỡng, đánh dấu là huỷ
         if (dragDistance > 50) {
           if (!_isDraggingToCancel) {
-            safeSetState(() {
+            setState(() {
               _isDraggingToCancel = true;
             });
-            HapticFeedback.lightImpact();
           }
         } else if (_isDraggingToCancel) {
-          safeSetState(() {
+          setState(() {
             _isDraggingToCancel = false;
           });
         }
       },
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: AppConstants.kDefaultPadding.r,
-          vertical: AppConstants.kDefaultPadding.r,
+          horizontal: AppConstants.kDefaultPadding,
+          vertical: AppConstants.kSmallPadding,
         ),
-        color: _isDraggingToCancel
-            ? Colors.red.withOpacity(0.1)
-            : AppColors.primary.withOpacity(0.1),
+        color: Theme.of(context).cardColor,
         child: Row(
           children: [
-            // Icon microphone
-            Container(
-              width: 40.r,
-              height: 40.r,
-              decoration: BoxDecoration(
-                color: _isDraggingToCancel
-                    ? Colors.red
-                    : AppColors.primary,
-                shape: BoxShape.circle,
+            if (_isDraggingToCancel)
+              const Icon(
+                Icons.delete,
+                color: Colors.red,
+              )
+            else
+              const Icon(
+                Icons.mic,
+                color: Colors.red,
               ),
-              child: Icon(
-                _isDraggingToCancel ? Icons.close : Icons.mic,
-                color: Colors.white,
-                size: 24.r,
-              ),
-            ),
-            
-            SizedBox(width: 16.w),
-            
-            // Recording indicator and timer
+            const SizedBox(width: 16),
             Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _isDraggingToCancel
-                        ? 'Thả để huỷ'
-                        : 'Đang ghi âm...',
-                    style: AppTextStyles.bodyMedium(
-                      color: _isDraggingToCancel
-                          ? Colors.red
-                          : AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Row(
-                    children: [
-                      Container(
-                        width: 8.r,
-                        height: 8.r,
-                        decoration: BoxDecoration(
-                          color: _isDraggingToCancel
-                              ? Colors.red
-                              : Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Text(
-                        _formatRecordingDuration(),
-                        style: AppTextStyles.bodySmall(),
-                      ),
-                    ],
-                  ),
-                ],
+              child: Text(
+                _isDraggingToCancel
+                    ? 'Thả để huỷ ghi âm'
+                    : 'Đang ghi âm... ${_formatRecordingDuration()}',
+                style: TextStyle(
+                  color: _isDraggingToCancel ? Colors.red : Colors.grey[600],
+                ),
               ),
             ),
-            
-            // Swipe instruction
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.keyboard_arrow_up,
-                  color: AppColors.textSecondary,
-                  size: 24.r,
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  'Kéo lên\nđể huỷ',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.caption(),
-                ),
-              ],
+            Text(
+              'Thả để gửi',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+  
+  /// Format thời gian ghi âm
+  String _formatRecordingDuration() {
+    final minutes = (_recordingDuration ~/ 60).toString().padLeft(2, '0');
+    final seconds = (_recordingDuration % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 } 

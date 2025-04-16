@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_chat_app/core/base/base_state.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -49,10 +49,15 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
   bool _hasError = false;
   
   @override
+  Widget build(BuildContext context) {
+    return buildContent(context);
+  }
+  
+  @override
   Widget buildContent(BuildContext context) {
     // Chiều rộng và cao mặc định
-    final defaultWidth = 200.w;
-    final defaultHeight = 150.h;
+    const defaultWidth = 200.0;
+    const defaultHeight = 150.0;
     
     return GestureDetector(
       onTap: widget.onTap,
@@ -62,7 +67,7 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
         decoration: BoxDecoration(
           color: AppColors.greyLight,
           borderRadius: BorderRadius.circular(
-            widget.borderRadius ?? AppConstants.kDefaultBorderRadius.r,
+            widget.borderRadius ?? AppConstants.kDefaultBorderRadius,
           ),
         ),
         child: _buildMedia(),
@@ -147,16 +152,16 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
         
         // Play button
         Container(
-          width: 40.r,
-          height: 40.r,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.5),
             shape: BoxShape.circle,
           ),
-          child: Icon(
+          child: const Icon(
             Icons.play_arrow,
             color: Colors.white,
-            size: 24.r,
+            size: 24,
           ),
         ),
         
@@ -177,11 +182,11 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
       color: AppColors.greyLight,
       child: Center(
         child: SizedBox(
-          width: 24.r,
-          height: 24.r,
+          width: 24,
+          height: 24,
           child: CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-            strokeWidth: 2.r,
+            strokeWidth: 2,
           ),
         ),
       ),
@@ -198,17 +203,17 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            const Icon(
               Icons.error_outline,
-              color: AppColors.error,
-              size: 24.r,
+              color: Colors.grey,
+              size: 32,
             ),
-            SizedBox(height: 4.h),
-            Text(
-              'Không thể tải',
+            const SizedBox(height: 8),
+            const Text(
+              'Không thể tải media',
               style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12.sp,
+                color: Colors.grey,
+                fontSize: 12,
               ),
             ),
           ],

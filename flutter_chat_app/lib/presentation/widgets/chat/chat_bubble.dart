@@ -134,7 +134,7 @@ class ChatBubble extends BaseStatelessWidget {
   
   /// Lấy bán kính bo góc cho bubble dựa trên vị trí trong nhóm
   BorderRadius _getBubbleRadius() {
-    final radius = AppConstants.kDefaultBorderRadius.r;
+    final radius = AppConstants.kDefaultBorderRadius;
     
     if (isMe) {
       return BorderRadius.only(
@@ -163,14 +163,14 @@ class ChatBubble extends BaseStatelessWidget {
   
   /// Lấy margin cho bubble dựa trên vị trí trong nhóm
   EdgeInsets _getBubbleMargin() {
-    final defaultPadding = AppConstants.kDefaultPadding.r;
-    final smallPadding = AppConstants.kSmallPadding.r;
+    final defaultPadding = AppConstants.kDefaultPadding;
+    final smallPadding = AppConstants.kSmallPadding;
     
     return EdgeInsets.only(
       left: isMe ? defaultPadding : smallPadding,
       right: isMe ? smallPadding : defaultPadding,
-      top: isFirstInGroup ? smallPadding : 2.r,
-      bottom: isLastInGroup ? smallPadding : 2.r,
+      top: isFirstInGroup ? smallPadding : 2,
+      bottom: isLastInGroup ? smallPadding : 2,
     );
   }
   
@@ -187,7 +187,7 @@ class ChatBubble extends BaseStatelessWidget {
   
   /// Build nội dung tin nhắn dựa trên loại tin nhắn
   Widget _buildContent(BuildContext context) {
-    final padding = AppConstants.kDefaultPadding.r;
+    final padding = AppConstants.kDefaultPadding;
     
     switch (type) {
       case ChatMessageType.text:
@@ -202,84 +202,115 @@ class ChatBubble extends BaseStatelessWidget {
             ),
           ),
         );
-        
       case ChatMessageType.image:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(_getBubbleRadius().topLeft.x),
-                topRight: Radius.circular(_getBubbleRadius().topRight.x),
-              ),
-              child: MediaPreview(
+        return GestureDetector(
+          onTap: onMediaTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              MediaPreview(
                 mediaUrl: mediaUrl!,
                 isImage: true,
                 onTap: onMediaTap,
               ),
-            ),
-            if (message.isNotEmpty)
-              Padding(
-                padding: EdgeInsets.all(padding),
-                child: Text(
-                  message,
-                  style: AppTextStyles.chatMessage(
-                    color: isMe 
-                        ? AppColors.sentMessageText 
-                        : AppColors.receivedMessageText,
+              if (message.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.all(padding),
+                  child: Text(
+                    message,
+                    style: AppTextStyles.chatMessage(
+                      color: isMe 
+                          ? AppColors.sentMessageText 
+                          : AppColors.receivedMessageText,
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         );
-        
       case ChatMessageType.video:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(_getBubbleRadius().topLeft.x),
-                topRight: Radius.circular(_getBubbleRadius().topRight.x),
-              ),
-              child: MediaPreview(
+        return GestureDetector(
+          onTap: onMediaTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              MediaPreview(
                 mediaUrl: mediaUrl!,
                 thumbnailUrl: thumbnailUrl,
                 isImage: false,
                 onTap: onMediaTap,
               ),
-            ),
-            if (message.isNotEmpty)
-              Padding(
-                padding: EdgeInsets.all(padding),
-                child: Text(
-                  message,
-                  style: AppTextStyles.chatMessage(
-                    color: isMe 
-                        ? AppColors.sentMessageText 
-                        : AppColors.receivedMessageText,
+              if (message.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.all(padding),
+                  child: Text(
+                    message,
+                    style: AppTextStyles.chatMessage(
+                      color: isMe 
+                          ? AppColors.sentMessageText 
+                          : AppColors.receivedMessageText,
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         );
-        
+      case ChatMessageType.audio:
+        return Padding(
+          padding: EdgeInsets.all(padding),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.play_circle_fill,
+                color: Colors.grey[600],
+                size: 36,
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Ghi âm',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isMe 
+                          ? AppColors.sentMessageText 
+                          : AppColors.receivedMessageText,
+                    ),
+                  ),
+                  Text(
+                    '${audioDuration ?? 0} giây',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
       case ChatMessageType.file:
         return Padding(
           padding: EdgeInsets.all(padding),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.insert_drive_file, size: 24.r),
-              SizedBox(width: 8.w),
+              Icon(
+                Icons.insert_drive_file,
+                color: Colors.grey[600],
+                size: 36,
+              ),
+              const SizedBox(width: 8),
               Flexible(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       fileName ?? 'File',
-                      style: AppTextStyles.chatMessage(
-                        fontWeight: FontWeight.w500,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
                         color: isMe 
                             ? AppColors.sentMessageText 
                             : AppColors.receivedMessageText,
@@ -290,8 +321,9 @@ class ChatBubble extends BaseStatelessWidget {
                     if (fileSize != null)
                       Text(
                         _formatFileSize(fileSize!),
-                        style: AppTextStyles.chatTime(
-                          color: AppColors.textSecondary,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
                         ),
                       ),
                   ],
@@ -300,8 +332,74 @@ class ChatBubble extends BaseStatelessWidget {
             ],
           ),
         );
-        
-      // Các case khác có thể được thêm vào sau
+      case ChatMessageType.location:
+        return Padding(
+          padding: EdgeInsets.all(padding),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.location_on,
+                color: Colors.grey[600],
+                size: 36,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Vị trí',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isMe 
+                      ? AppColors.sentMessageText 
+                      : AppColors.receivedMessageText,
+                ),
+              ),
+            ],
+          ),
+        );
+      case ChatMessageType.sticker:
+        return Image.network(
+          mediaUrl!,
+          width: 128,
+          height: 128,
+          fit: BoxFit.contain,
+        );
+      case ChatMessageType.contact:
+        return Padding(
+          padding: EdgeInsets.all(padding),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.person,
+                color: Colors.grey[600],
+                size: 36,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                message,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isMe 
+                      ? AppColors.sentMessageText 
+                      : AppColors.receivedMessageText,
+                ),
+              ),
+            ],
+          ),
+        );
+      case ChatMessageType.system:
+        return Padding(
+          padding: EdgeInsets.all(padding),
+          child: Text(
+            message,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+              fontStyle: FontStyle.italic,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        );
       default:
         return Padding(
           padding: EdgeInsets.all(padding),
@@ -317,37 +415,22 @@ class ChatBubble extends BaseStatelessWidget {
     }
   }
   
-  /// Build timestamp và trạng thái tin nhắn
+  /// Build widget hiển thị thời gian và trạng thái tin nhắn
   Widget _buildTimestampAndStatus(BuildContext context) {
-    if (!isLastInGroup) return const SizedBox.shrink();
-    
     return Padding(
-      padding: EdgeInsets.only(
-        right: 8.r,
-        bottom: 4.r,
-        left: 8.r,
-      ),
+      padding: const EdgeInsets.only(right: 8, bottom: 4, left: 8),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             _formatTime(timestamp),
-            style: AppTextStyles.chatTime(),
-          ),
-          SizedBox(width: 4.w),
-          if (isMe) _buildStatusIcon(),
-          if (status == MessageStatus.failed)
-            GestureDetector(
-              onTap: onRetry,
-              child: Padding(
-                padding: EdgeInsets.all(4.r),
-                child: Icon(
-                  Icons.refresh,
-                  size: 12.r,
-                  color: AppColors.error,
-                ),
-              ),
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.grey,
             ),
+          ),
+          const SizedBox(width: 4),
+          if (isMe) _buildStatusIcon(),
         ],
       ),
     );
@@ -357,73 +440,65 @@ class ChatBubble extends BaseStatelessWidget {
   Widget _buildStatusIcon() {
     switch (status) {
       case MessageStatus.sending:
-        return Icon(
+        return const Icon(
           Icons.access_time,
-          size: 12.r,
-          color: AppColors.grey,
+          size: 12,
+          color: Colors.grey,
         );
       case MessageStatus.sent:
-        return Icon(
+        return const Icon(
           Icons.check,
-          size: 12.r,
-          color: AppColors.grey,
+          size: 12,
+          color: Colors.grey,
         );
       case MessageStatus.delivered:
-        return Icon(
+        return const Icon(
           Icons.done_all,
-          size: 12.r,
-          color: AppColors.grey,
+          size: 12,
+          color: Colors.grey,
         );
       case MessageStatus.read:
-        return Icon(
+        return const Icon(
           Icons.done_all,
-          size: 12.r,
-          color: AppColors.primary,
+          size: 12,
+          color: Colors.blue,
         );
       case MessageStatus.failed:
-        return Icon(
-          Icons.error_outline,
-          size: 12.r,
-          color: AppColors.error,
+        return GestureDetector(
+          onTap: onRetry,
+          child: const Icon(
+            Icons.error_outline,
+            size: 12,
+            color: Colors.red,
+          ),
         );
+      default:
+        return const SizedBox.shrink();
     }
   }
   
-  /// Format thời gian hiển thị
-  String _formatTime(DateTime dateTime) {
+  /// Format thời gian theo ngày hoặc giờ
+  String _formatTime(DateTime time) {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = DateTime(now.year, now.month, now.day - 1);
-    final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    final difference = now.difference(time);
     
-    final hours = dateTime.hour.toString().padLeft(2, '0');
-    final minutes = dateTime.minute.toString().padLeft(2, '0');
-    final time = '$hours:$minutes';
-    
-    if (messageDate == today) {
-      return time;
-    } else if (messageDate == yesterday) {
-      return 'Hôm qua';
+    if (difference.inDays > 0) {
+      return '${time.day}/${time.month}/${time.year}';
     } else {
-      final day = dateTime.day.toString().padLeft(2, '0');
-      final month = dateTime.month.toString().padLeft(2, '0');
-      return '$day/$month';
+      return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
     }
   }
   
-  /// Format kích thước file
-  String _formatFileSize(int bytes) {
-    if (bytes < 1024) {
-      return '$bytes B';
-    } else if (bytes < 1024 * 1024) {
-      final kb = bytes / 1024;
-      return '${kb.toStringAsFixed(1)} KB';
-    } else if (bytes < 1024 * 1024 * 1024) {
-      final mb = bytes / (1024 * 1024);
-      return '${mb.toStringAsFixed(1)} MB';
+  /// Format kích thước file thành chuỗi đọc được
+  String _formatFileSize(int size) {
+    if (size < 1024) {
+      return '$size B';
+    } else if (size < 1024 * 1024) {
+      return '${(size / 1024).toStringAsFixed(1)} KB';
+    } else if (size < 1024 * 1024 * 1024) {
+      return '${(size / (1024 * 1024)).toStringAsFixed(1)} MB';
     } else {
-      final gb = bytes / (1024 * 1024 * 1024);
-      return '${gb.toStringAsFixed(1)} GB';
+      return '${(size / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
     }
   }
 } 
