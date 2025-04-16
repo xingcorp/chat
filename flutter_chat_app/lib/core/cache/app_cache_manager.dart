@@ -8,6 +8,9 @@ import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get_it/get_it.dart';
+
+import 'cache_stats.dart';
 
 /// Manager lưu trữ và quản lý cache của ứng dụng
 class AppCacheManager {
@@ -42,6 +45,12 @@ class AppCacheManager {
   
   /// Hive box cho api cache
   late Box<String> _apiCacheBox;
+  
+  /// Trạng thái khởi tạo
+  bool _isInitialized = false;
+  
+  /// Kiểm tra đã khởi tạo chưa
+  bool get isInitialized => _isInitialized;
   
   /// Private constructor
   AppCacheManager._internal();
@@ -97,6 +106,7 @@ class AppCacheManager {
     
     await _cleanupCacheIfNeeded();
     
+    _isInitialized = true;
     _logger.i('AppCacheManager đã được khởi tạo');
   }
   
@@ -124,59 +134,116 @@ class AppCacheManager {
     T Function(Map<String, dynamic>)? fromJson,
     T Function(List<dynamic>)? fromJsonList,
   }) async {
-    // Kiểm tra memory cache trước
-    if (_memoryCache.containsKey(key)) {
-      final cacheEntry = _memoryCache[key]!;
-      if (cacheEntry.expiry.isAfter(DateTime.now())) {
-        _logger.v('Lấy API response từ memory cache: $key');
-        return cacheEntry.data as T;
-      } else {
-        // Xóa cache đã hết hạn
-        _memoryCache.remove(key);
-      }
-    }
+    final startTime = DateTime.now().millisecondsSinceEpoch;
+    bool isHit = false;
     
-    // Kiểm tra disk cache
-    if (await _apiCacheBox.containsKey(key)) {
-      final expiryTimestamp = _prefs.getInt('${key}_expiry');
-      if (expiryTimestamp != null) {
-        final expiry = DateTime.fromMillisecondsSinceEpoch(expiryTimestamp);
-        if (expiry.isAfter(DateTime.now())) {
-          try {
-            final jsonString = _apiCacheBox.get(key);
-            if (jsonString != null) {
-              final dynamic decoded = jsonDecode(jsonString);
-              
-              if (fromJson != null && decoded is Map<String, dynamic>) {
-                _logger.v('Lấy API response từ disk cache: $key (Object)');
-                final result = fromJson(decoded);
-                // Lưu vào memory cache
-                _memoryCache[key] = _CacheEntry<T>(result, expiry);
-                return result;
-              } else if (fromJsonList != null && decoded is List<dynamic>) {
-                _logger.v('Lấy API response từ disk cache: $key (List)');
-                final result = fromJsonList(decoded);
-                // Lưu vào memory cache
-                _memoryCache[key] = _CacheEntry<T>(result, expiry);
-                return result;
-              } else {
-                _logger.v('Lấy API response từ disk cache: $key (Raw)');
-                return decoded as T;
-              }
-            }
-          } catch (e) {
-            _logger.e('Lỗi khi đọc API response từ cache: $e');
-          }
+    try {
+      // Kiểm tra memory cache trước
+      if (_memoryCache.containsKey(key)) {
+        final cacheEntry = _memoryCache[key]!;
+        if (cacheEntry.expiry.isAfter(DateTime.now())) {
+          _logger.v('Lấy API response từ memory cache: $key');
+          isHit = true;
+          await _updateAccessStats(key, true);
+          return cacheEntry.data as T;
         } else {
           // Xóa cache đã hết hạn
-          await _apiCacheBox.delete(key);
-          await _prefs.remove('${key}_expiry');
+          _memoryCache.remove(key);
         }
       }
+      
+      // Kiểm tra disk cache
+      if (await _apiCacheBox.containsKey(key)) {
+        final expiryTimestamp = _prefs.getInt('${key}_expiry');
+        if (expiryTimestamp != null) {
+          final expiry = DateTime.fromMillisecondsSinceEpoch(expiryTimestamp);
+          if (expiry.isAfter(DateTime.now())) {
+            try {
+              final jsonString = _apiCacheBox.get(key);
+              if (jsonString != null) {
+                final dynamic decoded = jsonDecode(jsonString);
+                
+                if (fromJson != null && decoded is Map<String, dynamic>) {
+                  _logger.v('Lấy API response từ disk cache: $key (Object)');
+                  final result = fromJson(decoded);
+                  // Lưu vào memory cache
+                  _memoryCache[key] = _CacheEntry<T>(result, expiry);
+                  isHit = true;
+                  await _updateAccessStats(key, true);
+                  _preloadRelatedData(key, decoded);
+                  return result;
+                } else if (fromJsonList != null && decoded is List<dynamic>) {
+                  _logger.v('Lấy API response từ disk cache: $key (List)');
+                  final result = fromJsonList(decoded);
+                  // Lưu vào memory cache
+                  _memoryCache[key] = _CacheEntry<T>(result, expiry);
+                  isHit = true;
+                  await _updateAccessStats(key, true);
+                  _preloadRelatedData(key, decoded);
+                  return result;
+                } else {
+                  _logger.v('Lấy API response từ disk cache: $key (Raw)');
+                  final result = decoded as T;
+                  _memoryCache[key] = _CacheEntry<T>(result, expiry);
+                  isHit = true;
+                  await _updateAccessStats(key, true);
+                  return result;
+                }
+              }
+            } catch (e) {
+              _logger.e('Lỗi khi đọc API response từ cache: $e');
+            }
+          } else {
+            // Xóa cache đã hết hạn
+            await _apiCacheBox.delete(key);
+            await _prefs.remove('${key}_expiry');
+            await _prefs.remove('${key}_last_access');
+          }
+        }
+      }
+      
+      _logger.v('Cache miss: $key');
+      await _updateAccessStats(key, false);
+      return null;
+    } finally {
+      final endTime = DateTime.now().millisecondsSinceEpoch;
+      final duration = endTime - startTime;
+      
+      try {
+        // Ghi lại thống kê hiệu suất nếu có CacheStats service
+        final cacheStats = GetIt.I.isRegistered<CacheStats>() ? GetIt.I<CacheStats>() : null;
+        if (cacheStats != null) {
+          if (isHit) {
+            cacheStats.recordApiHit(key, duration.toDouble());
+          } else {
+            cacheStats.recordApiMiss(key, duration.toDouble());
+          }
+        }
+      } catch (e) {
+        // Bỏ qua nếu không thể ghi thống kê
+      }
     }
-    
-    _logger.v('Cache miss: $key');
-    return null;
+  }
+  
+  /// Cập nhật thống kê truy cập
+  Future<void> _updateAccessStats(String key, bool isHit) async {
+    try {
+      // Tăng số lần truy cập
+      final accessCount = _prefs.getInt('${key}_access_count') ?? 0;
+      await _prefs.setInt('${key}_access_count', accessCount + 1);
+      
+      // Cập nhật thời gian truy cập gần nhất
+      await _prefs.setInt('${key}_last_access', DateTime.now().millisecondsSinceEpoch);
+    } catch (e) {
+      // Bỏ qua nếu có lỗi khi cập nhật thống kê
+    }
+  }
+  
+  /// Tiền tải dữ liệu liên quan nếu có thể
+  void _preloadRelatedData(String key, dynamic data) {
+    // Trong ứng dụng thực, thực hiện tiền tải dữ liệu liên quan
+    // Ví dụ: Nếu đây là một chat, có thể tiền tải avatar của người dùng
+    // hoặc tin nhắn gần đây
   }
   
   /// Phương thức cho cache media
@@ -251,64 +318,193 @@ class AppCacheManager {
   Future<int> _calculateTotalCacheSize() async {
     int totalSize = 0;
     
-    // Tính kích thước của cache directories
-    final tempDir = await getTemporaryDirectory();
-    final cacheDir = Directory('${tempDir.path}/libCachedImageData');
-    
-    if (await cacheDir.exists()) {
-      await for (final file in cacheDir.list(recursive: true, followLinks: false)) {
-        if (file is File) {
-          final size = await file.length();
-          totalSize += size;
+    try {
+      // Tính kích thước của cache directories
+      final tempDir = await getTemporaryDirectory();
+      final cacheDirs = [
+        Directory('${tempDir.path}/libCachedImageData'),
+        Directory('${tempDir.path}/${KEY_PREFIX}default_cache'),
+        Directory('${tempDir.path}/${KEY_PREFIX}media_cache'),
+        Directory('${tempDir.path}/${KEY_PREFIX}thumbnail_cache')
+      ];
+      
+      final futures = <Future<int>>[];
+      
+      // Tính kích thước cho mỗi directory
+      for (final dir in cacheDirs) {
+        futures.add(_calculateDirectorySize(dir));
+      }
+      
+      // Chờ tất cả tính toán hoàn tất và tổng hợp kết quả
+      final sizes = await Future.wait(futures);
+      totalSize = sizes.fold(0, (sum, size) => sum + size);
+      
+      // Ước tính kích thước của Hive và SharedPreferences cache
+      if (_apiCacheBox.isOpen) {
+        // Sử dụng độ dài thực tế của các giá trị thay vì ước tính
+        for (final key in _apiCacheBox.keys) {
+          final value = _apiCacheBox.get(key);
+          if (value != null) {
+            totalSize += value.length;
+          }
         }
       }
+      
+      _logger.v('Tổng kích thước cache: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)}MB');
+    } catch (e) {
+      _logger.e('Lỗi khi tính toán kích thước cache: $e');
     }
-    
-    // Ước tính kích thước của Hive và SharedPreferences cache
-    totalSize += await _apiCacheBox.length * 1000; // Ước tính trung bình 1KB mỗi entry
     
     return totalSize;
   }
   
+  /// Tính kích thước của một thư mục
+  Future<int> _calculateDirectorySize(Directory directory) async {
+    int size = 0;
+    
+    if (!await directory.exists()) {
+      return 0;
+    }
+    
+    try {
+      await for (final entity in directory.list(recursive: true, followLinks: false)) {
+        if (entity is File) {
+          final fileSize = await entity.length();
+          size += fileSize;
+        }
+      }
+    } catch (e) {
+      _logger.w('Lỗi khi tính kích thước thư mục ${directory.path}: $e');
+    }
+    
+    return size;
+  }
+  
   /// Xóa cache cũ nhất theo chiến lược LRU
   Future<void> _removeOldestCache() async {
-    // Xóa các file cũ nhất từ các cache managers
-    await _defaultCacheManager.emptyCache();
-    await _mediaCacheManager.emptyCache();
+    _logger.i('Bắt đầu dọn dẹp cache theo chiến lược LRU');
     
-    // Giữ lại thumbnails vì chúng nhỏ và hữu ích
-    
-    // Xóa 50% API cache entries cũ nhất
-    final keys = _prefs.getKeys().where((k) => k.endsWith('_expiry')).toList();
-    final entries = <String, int>{};
-    
-    for (final key in keys) {
-      final expiryTimestamp = _prefs.getInt(key);
-      if (expiryTimestamp != null) {
-        final cacheKey = key.substring(0, key.length - 7); // Loại bỏ '_expiry'
-        entries[cacheKey] = expiryTimestamp;
+    try {
+      // Lấy thông tin về kích thước hiện tại
+      final currentSize = await _calculateTotalCacheSize();
+      final targetSize = (MAX_CACHE_SIZE_MB * 0.7 * 1024 * 1024).toInt(); // Mục tiêu giảm xuống 70% kích thước tối đa
+      
+      _logger.i('Kích thước hiện tại: ${(currentSize / (1024 * 1024)).toStringAsFixed(2)}MB, '
+          'mục tiêu: ${(targetSize / (1024 * 1024)).toStringAsFixed(2)}MB');
+      
+      // Xóa cache theo thứ tự ưu tiên
+      
+      // 1. Đầu tiên xóa cache media không quan trọng (giữ lại thumbnails)
+      await _mediaCacheManager.emptyCache();
+      int sizeAfterMedia = await _calculateTotalCacheSize();
+      
+      if (sizeAfterMedia <= targetSize) {
+        _logger.i('Hoàn tất dọn dẹp sau khi xóa media cache');
+        return;
       }
+      
+      // 2. Xóa bớt thumbnail cache nếu vẫn cần
+      await _thumbnailCacheManager.emptyCache();
+      int sizeAfterThumbnails = await _calculateTotalCacheSize();
+      
+      if (sizeAfterThumbnails <= targetSize) {
+        _logger.i('Hoàn tất dọn dẹp sau khi xóa thumbnails');
+        return;
+      }
+      
+      // 3. Xóa API cache entry lâu nhất trong số các entry ít được truy cập
+      final keys = _prefs.getKeys().where((k) => k.endsWith('_expiry')).toList();
+      final entries = <String, _CacheEntryMetadata>{};
+      
+      // Thu thập metadata về các cache entry
+      for (final key in keys) {
+        final expiryTimestamp = _prefs.getInt(key);
+        if (expiryTimestamp != null) {
+          final cacheKey = key.substring(0, key.length - 7); // Loại bỏ '_expiry'
+          final lastAccessTime = _prefs.getInt('${cacheKey}_last_access') ?? expiryTimestamp;
+          
+          entries[cacheKey] = _CacheEntryMetadata(
+            key: cacheKey,
+            expiryTime: expiryTimestamp,
+            lastAccessTime: lastAccessTime,
+            frequency: _prefs.getInt('${cacheKey}_access_count') ?? 0
+          );
+        }
+      }
+      
+      if (entries.isNotEmpty) {
+        // Sắp xếp theo thứ tự: Ít truy cập nhất -> Lâu nhất không được truy cập -> Gần hết hạn nhất
+        final sortedEntries = entries.values.toList()
+          ..sort((a, b) {
+            // Đầu tiên sắp xếp theo tần suất truy cập
+            final freqCompare = a.frequency.compareTo(b.frequency);
+            if (freqCompare != 0) return freqCompare;
+            
+            // Sau đó theo thời gian truy cập gần đây nhất
+            return a.lastAccessTime.compareTo(b.lastAccessTime);
+          });
+        
+        // Xóa 40% cache entry ít được sử dụng nhất
+        final entriesToRemove = sortedEntries.take((sortedEntries.length * 0.4).ceil());
+        int removedCount = 0;
+        
+        for (final entry in entriesToRemove) {
+          await _apiCacheBox.delete(entry.key);
+          await _prefs.remove('${entry.key}_expiry');
+          await _prefs.remove('${entry.key}_last_access');
+          await _prefs.remove('${entry.key}_access_count');
+          _memoryCache.remove(entry.key);
+          removedCount++;
+          
+          // Kiểm tra xem đã đạt đủ kích thước mục tiêu chưa sau mỗi 10 entry
+          if (removedCount % 10 == 0) {
+            final currentSize = await _calculateTotalCacheSize();
+            if (currentSize <= targetSize) {
+              _logger.i('Hoàn tất dọn dẹp sau khi xóa $removedCount API cache entries');
+              return;
+            }
+          }
+        }
+        
+        _logger.i('Đã xóa $removedCount API cache entries');
+      }
+      
+      // 4. Nếu vẫn cần, xóa tất cả cache
+      if (await _calculateTotalCacheSize() > targetSize) {
+        _logger.w('Vẫn vượt quá kích thước mục tiêu sau khi áp dụng chiến lược LRU, xóa tất cả cache');
+        await _defaultCacheManager.emptyCache();
+        _memoryCache.clear();
+        await _apiCacheBox.clear();
+      }
+    } catch (e) {
+      _logger.e('Lỗi trong quá trình dọn dẹp cache: $e');
     }
-    
-    // Sắp xếp theo thời gian tạo (hoặc hết hạn)
-    final sortedEntries = entries.entries.toList()
-      ..sort((a, b) => a.value.compareTo(b.value));
-    
-    // Xóa 50% entries cũ nhất
-    final entriesToRemove = sortedEntries.take(sortedEntries.length ~/ 2);
-    for (final entry in entriesToRemove) {
-      await _apiCacheBox.delete(entry.key);
-      await _prefs.remove('${entry.key}_expiry');
-      _memoryCache.remove(entry.key);
-    }
-    
-    _logger.i('Đã xóa ${entriesToRemove.length} cache entries cũ');
   }
   
   /// Kiểm tra xem một key có trong cache không (cho debugging)
   bool isInMemoryCache(String key) => _memoryCache.containsKey(key);
   
   Future<bool> isInDiskCache(String key) async => await _apiCacheBox.containsKey(key);
+  
+  /// Lấy tất cả cache key
+  Future<List<String>> getAllCacheKeys() async {
+    if (!_isInitialized) {
+      _logger.w('Không thể lấy cache keys: AppCacheManager chưa được khởi tạo');
+      return [];
+    }
+    
+    final List<String> keys = [];
+    
+    // Lấy keys từ memory cache
+    keys.addAll(_memoryCache.keys);
+    
+    // Lấy keys từ disk cache (Hive)
+    if (_apiCacheBox.isOpen) {
+      keys.addAll(_apiCacheBox.keys.map((dynamic key) => key.toString()));
+    }
+    
+    return keys;
+  }
 }
 
 /// Class lưu trữ cache entry với dữ liệu và thời gian hết hạn
@@ -317,4 +513,19 @@ class _CacheEntry<T> {
   final DateTime expiry;
   
   _CacheEntry(this.data, this.expiry);
+}
+
+/// Class metadata cho cache entry
+class _CacheEntryMetadata {
+  final String key;
+  final int expiryTime;
+  final int lastAccessTime;
+  final int frequency;
+  
+  _CacheEntryMetadata({
+    required this.key,
+    required this.expiryTime,
+    required this.lastAccessTime,
+    required this.frequency
+  });
 } 

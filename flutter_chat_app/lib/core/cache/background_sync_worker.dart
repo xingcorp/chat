@@ -4,7 +4,8 @@ import 'dart:ui';
 
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
-import 'package:flutter_chat_app/core/services/connectivity_service.dart';
+import 'package:flutter_chat_app/core/network/connectivity/connectivity_service.dart';
+import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
@@ -22,7 +23,7 @@ class BackgroundSyncWorker {
   
   /// Dependencies
   final CacheSyncStrategy _cacheSyncStrategy = CacheSyncStrategy();
-  late final ConnectivityService _connectivityService;
+  late final IConnectivityService _connectivityService;
   
   /// Đã khởi tạo chưa
   bool _isInitialized = false;
@@ -31,24 +32,28 @@ class BackgroundSyncWorker {
   ReceivePort? _receivePort;
   
   /// Các hằng số
-  static const String BACKGROUND_SYNC_TASK = 'com.flutter_chat_app.BACKGROUND_SYNC';
-  static const String PERIODIC_SYNC_TASK = 'com.flutter_chat_app.PERIODIC_SYNC';
-  static const Duration MIN_SYNC_INTERVAL = Duration(minutes: 15);
-  static const Duration DEFAULT_SYNC_INTERVAL = Duration(hours: 1);
-  static const int MAX_BACKGROUND_TASKS = 3; // Số lượng tối đa task chạy song song
+  static const String backgroundSyncTask = 'com.flutter_chat_app.BACKGROUND_SYNC';
+  static const String periodicSyncTask = 'com.flutter_chat_app.PERIODIC_SYNC';
+  static const Duration minSyncInterval = Duration(minutes: 15);
+  static const Duration defaultSyncInterval = Duration(hours: 1);
+  static const int maxBackgroundTasks = 3; // Số lượng tối đa task chạy song song
   
   /// Private constructor
-  BackgroundSyncWorker._internal();
+  BackgroundSyncWorker._internal() {
+    _connectivityService = GetIt.instance<IConnectivityService>();
+  }
   
   /// Khởi tạo worker
-  Future<void> initialize() async {
+  Future<void> initialize({IConnectivityService? connectivityService}) async {
     if (_isInitialized) return;
     
     try {
       _logger.i('Khởi tạo BackgroundSyncWorker');
       
-      // Khởi tạo dependencies
-      _connectivityService = await ConnectivityService.create();
+      // Set connectivity service if provided
+      if (connectivityService != null) {
+        _connectivityService = connectivityService;
+      }
       
       // Khởi tạo Workmanager
       await Workmanager().initialize(
@@ -86,11 +91,11 @@ class BackgroundSyncWorker {
   Future<void> _schedulePeriodicSync() async {
     final prefs = await SharedPreferences.getInstance();
     final intervalMinutes = prefs.getInt('background_sync_interval_minutes') ?? 
-        DEFAULT_SYNC_INTERVAL.inMinutes;
+        defaultSyncInterval.inMinutes;
     
     await Workmanager().registerPeriodicTask(
-      PERIODIC_SYNC_TASK,
-      PERIODIC_SYNC_TASK,
+      periodicSyncTask,
+      periodicSyncTask,
       frequency: Duration(minutes: intervalMinutes),
       constraints: Constraints(
         networkType: NetworkType.connected,
@@ -105,8 +110,8 @@ class BackgroundSyncWorker {
   
   /// Thay đổi khoảng thời gian đồng bộ
   Future<void> setSyncInterval(Duration interval) async {
-    if (interval < MIN_SYNC_INTERVAL) {
-      interval = MIN_SYNC_INTERVAL;
+    if (interval < minSyncInterval) {
+      interval = minSyncInterval;
     }
     
     final prefs = await SharedPreferences.getInstance();
@@ -124,7 +129,8 @@ class BackgroundSyncWorker {
     Map<String, dynamic>? inputData,
   }) async {
     // Kiểm tra xem có kết nối mạng không
-    if (!await _connectivityService.checkConnected()) {
+    final isConnected = await _connectivityService.isConnected();
+    if (!isConnected) {
       _logger.w('Không thể đồng bộ ngay lập tức: Không có kết nối mạng');
       return;
     }
@@ -144,7 +150,7 @@ class BackgroundSyncWorker {
     
     await Workmanager().registerOneOffTask(
       'immediate_sync_${DateTime.now().millisecondsSinceEpoch}',
-      BACKGROUND_SYNC_TASK,
+      backgroundSyncTask,
       inputData: taskData,
       constraints: Constraints(
         networkType: NetworkType.connected,
@@ -180,7 +186,41 @@ class BackgroundSyncWorker {
       inputData: {'wakeup': true},
     );
   }
+  
+  /// Sử dụng cache sync strategy để đồng bộ một loại dữ liệu
+  Future<void> syncDataWithStrategy(String dataType) async {
+    if (!_isInitialized) {
+      await initialize();
+    }
+    
+    // Use appropriate methods based on data type
+    switch (dataType) {
+      case 'user_data':
+        if (_cacheSyncStrategy.shouldRefreshUserData()) {
+          _logger.i('Đồng bộ dữ liệu người dùng');
+          // Perform sync
+          _cacheSyncStrategy.resetUserDataDirtyFlag();
+        }
+        break;
+      case 'chat_list':
+        if (_cacheSyncStrategy.shouldRefreshChatList()) {
+          _logger.i('Đồng bộ danh sách chat');
+          // Perform sync
+          _cacheSyncStrategy.resetChatListDirtyFlag();
+        }
+        break;
+      case 'chat_messages':
+        _logger.i('Đồng bộ tất cả tin nhắn chat đã đánh dấu dirty');
+        // Would need to iterate through all dirty chat messages
+        break;
+      default:
+        _logger.w('Không hỗ trợ đồng bộ cho loại dữ liệu: $dataType');
+    }
+  }
 }
+
+/// Inject GetIt để có thể truy cập dịch vụ DI
+final getIt = GetIt.instance;
 
 /// Callback chính cho Workmanager
 @pragma('vm:entry-point')
@@ -194,8 +234,8 @@ void callbackDispatcher() {
     sendPort?.send('Bắt đầu task: $taskName');
     
     try {
-      if (taskName == BackgroundSyncWorker.BACKGROUND_SYNC_TASK ||
-          taskName == BackgroundSyncWorker.PERIODIC_SYNC_TASK) {
+      if (taskName == BackgroundSyncWorker.backgroundSyncTask ||
+          taskName == BackgroundSyncWorker.periodicSyncTask) {
         await _performBackgroundSync(logger, inputData);
       }
       
@@ -243,8 +283,38 @@ Future<void> _performBackgroundSync(Logger logger, Map<String, dynamic>? inputDa
     // Thực hiện đồng bộ cho từng loại dữ liệu
     logger.i('Đồng bộ các loại dữ liệu: $dataTypes');
     
-    // Giả lập đồng bộ (trong thực tế sẽ gọi APIs thực)
-    await Future.delayed(const Duration(seconds: 2));
+    // Khởi tạo cache sync strategy
+    final cacheSyncStrategy = CacheSyncStrategy();
+    
+    // Đồng bộ từng loại dữ liệu
+    for (final dataType in dataTypes) {
+      switch (dataType) {
+        case 'user_data':
+          if (cacheSyncStrategy.shouldRefreshUserData()) {
+            logger.i('Đồng bộ dữ liệu người dùng');
+            // Implement actual sync
+            cacheSyncStrategy.resetUserDataDirtyFlag();
+          }
+          break;
+        case 'chat_list':
+          if (cacheSyncStrategy.shouldRefreshChatList()) {
+            logger.i('Đồng bộ danh sách chat');
+            // Implement actual sync
+            cacheSyncStrategy.resetChatListDirtyFlag();
+          }
+          break;
+        case 'chat_messages':
+          logger.i('Đồng bộ tin nhắn chat');
+          // Would implement actual sync
+          break;
+        case 'media':
+          logger.i('Đồng bộ media');
+          // Would implement actual sync
+          break;
+        default:
+          logger.w('Không hỗ trợ đồng bộ cho loại dữ liệu: $dataType');
+      }
+    }
     
     // Cập nhật thời gian đồng bộ cuối cùng
     await prefs.setInt('last_background_sync_time', DateTime.now().millisecondsSinceEpoch);

@@ -1,6 +1,7 @@
 import 'dart:async';
-import 'package:dartz/dartz.dart';
+
 import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 
 /// Base class cho các use case không có tham số đầu vào
@@ -11,14 +12,14 @@ abstract class NoParamsUseCase<Type> {
 /// Base class cho các use case có tham số đầu vào
 abstract class UseCase<Type, Params> {
   /// Phương thức thực thi usecase
-  /// [params] Tham số đầu vào
+  /// Tham số đầu vào [params]
   /// Trả về [Either] với [Failure] bên trái và [Type] bên phải
   Future<Either<Failure, Type>> call(Params params);
   
   /// Phương thức gọi usecase với xử lý lỗi tự động
-  /// [params] Tham số đầu vào
-  /// [onSuccess] Callback khi thành công
-  /// [onFailure] Callback khi thất bại
+  /// Tham số đầu vào [params]
+  /// Callback khi thành công [onSuccess]
+  /// Callback khi thất bại [onFailure]
   Future<void> execute({
     required Params params,
     required Function(Type) onSuccess,
@@ -40,7 +41,7 @@ abstract class UseCase<Type, Params> {
 /// Base class cho các use case stream
 abstract class StreamUseCase<Type, Params> {
   /// Phương thức thực thi usecase stream
-  /// [params] Tham số đầu vào
+  /// Tham số đầu vào [params]
   /// Trả về Stream của [Either] với [Failure] bên trái và [Type] bên phải
   Stream<Either<Failure, Type>> call(Params params);
 }

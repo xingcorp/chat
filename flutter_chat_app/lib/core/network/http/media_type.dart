@@ -12,12 +12,23 @@ class MediaType {
   /// Các tham số bổ sung (ví dụ: "charset=utf-8")
   final Map<String, String> parameters;
   
+  /// Cache cho các MediaType đã parse
+  static final Map<String, MediaType> _parseCache = {};
+  
+  /// Cache cho các MediaType từ file extension
+  static final Map<String, MediaType?> _extensionCache = {};
+  
   /// Constructor mặc định
-  MediaType(this.type, this.subtype, [Map<String, String>? parameters])
-      : parameters = parameters ?? {};
+  const MediaType(this.type, this.subtype, [Map<String, String>? parameters])
+      : parameters = parameters ?? const {};
   
   /// Tạo MediaType từ một chuỗi MIME type (ví dụ: "application/json; charset=utf-8")
   factory MediaType.parse(String mimeTypeString) {
+    // Kiểm tra cache trước
+    if (_parseCache.containsKey(mimeTypeString)) {
+      return _parseCache[mimeTypeString]!;
+    }
+    
     final parts = mimeTypeString.split(';');
     final mimeType = parts[0].trim().toLowerCase();
     final parameters = <String, String>{};
@@ -36,16 +47,39 @@ class MediaType {
       throw FormatException('Invalid MIME type: $mimeTypeString');
     }
     
-    return MediaType(typeParts[0], typeParts[1], parameters);
+    // Tạo và cache instance
+    final mediaType = MediaType(typeParts[0], typeParts[1], parameters);
+    
+    // Giới hạn kích thước cache
+    if (_parseCache.length > 100) {
+      _parseCache.remove(_parseCache.keys.first);
+    }
+    
+    _parseCache[mimeTypeString] = mediaType;
+    return mediaType;
   }
   
   /// Tạo MediaType từ file extension
   static MediaType? fromFileExtension(String extension) {
-    final mimeType = lookupMimeType('file.$extension');
-    if (mimeType != null) {
-      return MediaType.parse(mimeType);
+    // Kiểm tra cache trước
+    if (_extensionCache.containsKey(extension)) {
+      return _extensionCache[extension];
     }
-    return null;
+    
+    final mimeType = lookupMimeType('file.$extension');
+    MediaType? result;
+    
+    if (mimeType != null) {
+      result = MediaType.parse(mimeType);
+    }
+    
+    // Giới hạn kích thước cache
+    if (_extensionCache.length > 100) {
+      _extensionCache.remove(_extensionCache.keys.first);
+    }
+    
+    _extensionCache[extension] = result;
+    return result;
   }
   
   /// Kiểm tra xem MediaType này có khớp với loại được chỉ định hay không
@@ -69,40 +103,46 @@ class MediaType {
   /// Các MediaType phổ biến
   
   /// application/json
-  static final json = MediaType('application', 'json');
+  static const json = MediaType('application', 'json');
   
   /// application/octet-stream
-  static final binary = MediaType('application', 'octet-stream');
+  static const binary = MediaType('application', 'octet-stream');
   
   /// application/x-www-form-urlencoded
-  static final formUrlEncoded = MediaType('application', 'x-www-form-urlencoded');
+  static const formUrlEncoded = MediaType('application', 'x-www-form-urlencoded');
   
   /// multipart/form-data
-  static final multipartFormData = MediaType('multipart', 'form-data');
+  static const multipartFormData = MediaType('multipart', 'form-data');
   
   /// text/plain
-  static final text = MediaType('text', 'plain', {'charset': 'utf-8'});
+  static const text = MediaType('text', 'plain', {'charset': 'utf-8'});
   
   /// text/html
-  static final html = MediaType('text', 'html', {'charset': 'utf-8'});
+  static const html = MediaType('text', 'html', {'charset': 'utf-8'});
   
   /// image/jpeg
-  static final jpeg = MediaType('image', 'jpeg');
+  static const jpeg = MediaType('image', 'jpeg');
   
   /// image/png
-  static final png = MediaType('image', 'png');
+  static const png = MediaType('image', 'png');
   
   /// image/gif
-  static final gif = MediaType('image', 'gif');
+  static const gif = MediaType('image', 'gif');
   
   /// image/webp
-  static final webp = MediaType('image', 'webp');
+  static const webp = MediaType('image', 'webp');
   
   /// audio/mpeg
-  static final mp3 = MediaType('audio', 'mpeg');
+  static const mp3 = MediaType('audio', 'mpeg');
   
   /// video/mp4
-  static final mp4 = MediaType('video', 'mp4');
+  static const mp4 = MediaType('video', 'mp4');
+  
+  /// Tối ưu bộ nhớ cache
+  static void clearCache() {
+    _parseCache.clear();
+    _extensionCache.clear();
+  }
   
   @override
   String toString() {

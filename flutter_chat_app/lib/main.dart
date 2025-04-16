@@ -37,6 +37,8 @@ import 'package:flutter_chat_app/core/services/device_capability_service.dart';
 import 'package:flutter_chat_app/core/services/performance_service.dart';
 import 'package:flutter_chat_app/presentation/widgets/app_wrapper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_chat_app/core/upgrade_services.dart';
+import 'package:flutter_chat_app/core/services/enhanced_message_queue_service.dart';
 
 // Import home screens from respective platform files
 import 'main_mobile.dart' show MobileHomeScreen;
@@ -139,6 +141,17 @@ Future<void> main() async {
     });
   }
   
+  // Initialize dependency injection
+  await configureInjection();
+  
+  // Try to upgrade to EnhancedMessageQueueService if available
+  try {
+    await upgradeToEnhancedMessageQueue();
+    debugPrint("✓ Enhanced message queue service enabled");
+  } catch (e) {
+    debugPrint("Using standard message queue service: $e");
+  }
+  
   // Bắt tất cả lỗi không xử lý trong zone
   runZonedGuarded(() {
     runApp(
@@ -178,9 +191,16 @@ Future<void> _initializeMobileServices() async {
   final realtimeConnectionService = GetIt.I<RealtimeConnectionService>();
   await realtimeConnectionService.initialize();
   
-  // Khởi tạo dịch vụ hàng đợi tin nhắn
-  final messageQueueService = GetIt.I<MessageQueueService>();
-  await messageQueueService.initialize();
+  // Khởi tạo dịch vụ hàng đợi tin nhắn (standard or enhanced)
+  if (GetIt.I.isRegistered<EnhancedMessageQueueService>()) {
+    final enhancedMessageQueueService = GetIt.I<EnhancedMessageQueueService>();
+    await enhancedMessageQueueService.initialize();
+    debugPrint('Using EnhancedMessageQueueService for mobile platform');
+  } else {
+    final messageQueueService = GetIt.I<MessageQueueService>();
+    await messageQueueService.initialize();
+    debugPrint('Using standard MessageQueueService for mobile platform');
+  }
   
   // Khởi tạo dịch vụ tin nhắn chat
   final chatMessageService = GetIt.I<ChatMessageService>();

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 
 /// Base class cho tất cả các widget có trạng thái trong ứng dụng
@@ -8,13 +7,17 @@ abstract class BaseStatefulWidget extends StatefulWidget {
   const BaseStatefulWidget({Key? key}) : super(key: key);
   
   /// Allow widgets to control when they should rebuild for optimization
-  bool shouldRebuild(covariant BaseStatefulWidget oldWidget) => true;
+  /// Returns true if the widget should rebuild when the configuration changes
+  /// Default implementation returns true, subclasses should override for optimization
+  bool shouldRebuild(covariant BaseStatefulWidget oldWidget) {
+    return true; // Default implementation always rebuilds
+  }
 }
 
 /// Base class cho tất cả các StatefulWidget State
 /// Cung cấp các phương thức tiện ích và tối ưu vòng đời
 abstract class BaseState<T extends BaseStatefulWidget> extends State<T> with WidgetsBindingObserver {
-  final String _tag = 'BaseState<${T.toString()}>';
+  late final String _tag = 'BaseState<$T>';
   bool _mounted = false;
   
   /// Trạng thái mounted của widget
@@ -60,14 +63,22 @@ abstract class BaseState<T extends BaseStatefulWidget> extends State<T> with Wid
     LogUtils.d(_tag, 'didChangeAppLifecycleState: $state');
     
     // Handle app lifecycle state changes
-    if (state == AppLifecycleState.resumed) {
-      onAppResumed();
-    } else if (state == AppLifecycleState.paused) {
-      onAppPaused();
-    } else if (state == AppLifecycleState.inactive) {
-      onAppInactive();
-    } else if (state == AppLifecycleState.detached) {
-      onAppDetached();
+    switch (state) {
+      case AppLifecycleState.resumed:
+        onAppResumed();
+        break;
+      case AppLifecycleState.paused:
+        onAppPaused();
+        break;
+      case AppLifecycleState.inactive:
+        onAppInactive();
+        break;
+      case AppLifecycleState.detached:
+        onAppDetached();
+        break;
+      default:
+        // Handle any future lifecycle states that might be added
+        break;
     }
     
     super.didChangeAppLifecycleState(state);

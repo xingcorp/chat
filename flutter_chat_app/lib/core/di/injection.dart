@@ -8,15 +8,20 @@ import 'package:flutter_chat_app/core/services/resource_manager_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
 import 'package:flutter_chat_app/core/services/graphql_subscription_service.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
+import 'package:flutter_chat_app/core/services/enhanced_message_queue_service.dart';
+import 'package:flutter_chat_app/core/services/attachment_queue_service.dart';
 import 'package:flutter_chat_app/core/services/chat_message_service.dart';
 import 'package:flutter_chat_app/core/config/app_config.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
+import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
 import 'package:flutter_chat_app/core/services/device_capability_service.dart';
+import 'package:flutter_chat_app/core/services/media_cache.dart';
+import 'package:connectivity/connectivity.dart';
 
 /// GetIt instance for dependency injection
 final GetIt getIt = GetIt.instance;
@@ -33,11 +38,11 @@ Future<void> configureInjection() async {
   final localStorageService = await LocalStorageService.init();
   getIt.registerSingleton<LocalStorageService>(localStorageService);
   
-  // Register connectivity services with async factories
-  final connectivityService = await ConnectivityService.create();
+  // Register connectivity service 
+  final connectivityService = ConnectivityService(await Connectivity().checkConnectivity());
   getIt.registerSingleton<ConnectivityService>(connectivityService);
   
-  final connectivityAnalyzer = await ConnectivityAnalyzerService.create();
+  final connectivityAnalyzer = ConnectivityAnalyzerService();
   getIt.registerSingleton<ConnectivityAnalyzerService>(connectivityAnalyzer);
   
   // Register resource services
@@ -81,6 +86,24 @@ Future<void> configureInjection() async {
     await _createMessageRepository(getIt<GraphQLClient>(), databaseService),
   );
   
+  // Register attachment repository
+  getIt.registerSingleton<IAttachmentRepository>(
+    await _createAttachmentRepository(getIt<GraphQLClient>(), databaseService),
+  );
+  
+  // Register MediaCache service
+  final mediaCache = await MediaCache.create();
+  getIt.registerSingleton<MediaCache>(mediaCache);
+  
+  // Register AttachmentQueueService
+  final attachmentQueueService = AttachmentQueueService(
+    getIt<IAttachmentRepository>(),
+    connectivityService,
+    localStorageService,
+    mediaCache,
+  );
+  getIt.registerSingleton<AttachmentQueueService>(attachmentQueueService);
+  
   // Register message queue service
   final messageQueueService = MessageQueueService(
     getIt<IMessageRepository>(),
@@ -89,6 +112,13 @@ Future<void> configureInjection() async {
     realtimeConnectionService,
   );
   getIt.registerSingleton<MessageQueueService>(messageQueueService);
+  
+  // Also register EnhancedMessageQueueService for advanced features
+  // (Note: This requires AttachmentQueueService to be registered first)
+  if (!getIt.isRegistered<AttachmentQueueService>()) {
+    debugPrint('Warning: Cannot register EnhancedMessageQueueService because AttachmentQueueService is not registered');
+    debugPrint('Using standard MessageQueueService instead');
+  }
   
   // Register chat message service
   final chatMessageService = ChatMessageService(

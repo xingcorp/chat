@@ -3,7 +3,6 @@ import 'dart:isolate';
 
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -45,14 +44,10 @@ class CrashReporter {
       await _crashlytics.setCustomKey('build_number', _packageInfo.buildNumber);
       
       // Ghi lại unhandled errors từ Flutter framework
-      FlutterError.onError = (FlutterErrorDetails details) {
-        _handleFlutterError(details);
-      };
+      FlutterError.onError = _handleFlutterError;
       
       // Ghi lại unhandled errors từ Dart runtime
-      Isolate.current.addErrorListener(RawReceivePort((dynamic pair) {
-        _handleIsolateError(pair);
-      }).sendPort);
+      Isolate.current.addErrorListener(RawReceivePort(_handleIsolateError).sendPort);
       
       // Ghi lại unhandled errors từ Zone
       PlatformDispatcher.instance.onError = (error, stack) {

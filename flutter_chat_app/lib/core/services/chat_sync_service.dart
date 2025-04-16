@@ -146,10 +146,13 @@ class ChatSyncService {
       final chatList = await _chatRepository.getChatsFromLocalStorage();
       for (final chat in chatList) {
         if (chat.id == message.chatId && 
-            (chat.lastMessage == null || message.createdAt.isAfter(chat.lastMessage!.createdAt))) {
+            (chat.lastMessageTime == null || 
+             (message.createdAt.isAfter(chat.lastMessageTime!)))) {
           final updatedChat = chat.copyWith(
-            lastMessage: message,
-            updatedAt: message.createdAt,
+            lastMessageTime: message.createdAt,
+            lastMessagePreview: message.content,
+            // If there's an unread count field, you might want to increase it here
+            // unreadCount: chat.unreadCount + 1,
           );
           await _chatRepository.saveChatLocally(updatedChat);
         }

@@ -268,17 +268,41 @@ class MediaCacheManager {
     List<String> imageUrls, {
     int thumbnailSize = THUMBNAIL_SIZE_SMALL,
     bool preloadFullImages = false,
+    bool prioritize = false,
   }) async {
     if (imageUrls.isEmpty) return;
     
-    // Thêm vào hàng đợi tiền tải
-    for (final url in imageUrls) {
-      if (!_preloadQueue.contains(url) && !_currentlyPreloading.contains(url)) {
-        _preloadQueue.add(url);
+    // Lọc bỏ các URL đã có trong hàng đợi hoặc đang được tiền tải
+    final newUrls = imageUrls.where((url) => 
+      !_preloadQueue.contains(url) && !_currentlyPreloading.contains(url)).toList();
+    
+    if (newUrls.isEmpty) return;
+    
+    _logger.v('Thêm ${newUrls.length} URLs vào hàng đợi tiền tải');
+    
+    // Kiểm tra xem có URLs nào đã có trong cache để bỏ qua
+    final urlsToCheck = <String>[];
+    
+    for (final url in newUrls) {
+      final thumbnailCacheKey = '${url}_thumb_$thumbnailSize';
+      
+      // Thêm vào danh sách kiểm tra
+      urlsToCheck.add(thumbnailCacheKey);
+      if (preloadFullImages) {
+        urlsToCheck.add(url);
       }
     }
     
-    // Bắt đầu tiền tải nếu chưa đạt số lượng tối đa
+    // Thêm URLs cần tiền tải vào hàng đợi
+    if (prioritize) {
+      // Thêm vào đầu hàng đợi nếu cần ưu tiên
+      _preloadQueue.insertAll(0, newUrls);
+    } else {
+      // Thêm vào cuối hàng đợi
+      _preloadQueue.addAll(newUrls);
+    }
+    
+    // Bắt đầu tiền tải
     _processPreloadQueue(thumbnailSize, preloadFullImages);
   }
   
@@ -293,28 +317,49 @@ class MediaCacheManager {
     _currentlyPreloading.add(url);
     
     // Tiền tải bất đồng bộ
-    () async {
-      try {
-        // Tiền tải thumbnail
-        await getImageThumbnail(url, size: thumbnailSize, useIsolate: true);
-        
-        // Tiền tải ảnh đầy đủ nếu được yêu cầu
-        if (preloadFullImages) {
-          await getOptimizedImage(url, useIsolate: true);
-        }
-      } catch (e) {
-        _logger.w('Lỗi khi tiền tải ảnh $url: $e');
-      } finally {
-        _currentlyPreloading.remove(url);
-        
-        // Xử lý URL tiếp theo trong hàng đợi
-        _processPreloadQueue(thumbnailSize, preloadFullImages);
-      }
-    }();
+    _preloadImageAsync(url, thumbnailSize, preloadFullImages).then((_) {
+      _currentlyPreloading.remove(url);
+      
+      // Tiếp tục xử lý hàng đợi
+      _processPreloadQueue(thumbnailSize, preloadFullImages);
+    }).catchError((e) {
+      _logger.w('Lỗi khi tiền tải ảnh $url: $e');
+      _currentlyPreloading.remove(url);
+      
+      // Tiếp tục xử lý hàng đợi bất kể lỗi
+      _processPreloadQueue(thumbnailSize, preloadFullImages);
+    });
     
     // Nếu vẫn có thể xử lý thêm, tiếp tục lấy từ hàng đợi
     if (_currentlyPreloading.length < _maxConcurrentPreloads) {
       _processPreloadQueue(thumbnailSize, preloadFullImages);
+    }
+  }
+  
+  /// Tiến hành tiền tải một ảnh
+  Future<void> _preloadImageAsync(String url, int thumbnailSize, bool preloadFullImages) async {
+    try {
+      // Tạo thumbnail cache key
+      final thumbnailCacheKey = '${url}_thumb_$thumbnailSize';
+      
+      // Kiểm tra xem thumbnail đã có trong cache chưa
+      bool thumbnailCached = await _cacheManager.isMediaCached(thumbnailCacheKey, thumbnail: true);
+      
+      // Nếu thumbnail chưa có trong cache, tiền tải
+      if (!thumbnailCached) {
+        await getImageThumbnail(url, size: thumbnailSize, useIsolate: true);
+      }
+      
+      // Nếu yêu cầu tiền tải ảnh đầy đủ và chưa có trong cache
+      if (preloadFullImages) {
+        bool fullImageCached = await _cacheManager.isMediaCached(url);
+        if (!fullImageCached) {
+          await getOptimizedImage(url, useIsolate: true);
+        }
+      }
+    } catch (e) {
+      _logger.w('Lỗi khi tiền tải ảnh $url: $e');
+      rethrow;
     }
   }
   

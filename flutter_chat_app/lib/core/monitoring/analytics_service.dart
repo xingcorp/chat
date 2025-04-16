@@ -2,12 +2,13 @@ import 'dart:async';
 
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
-import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
 import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/entities/user.dart';
+import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 /// Các sự kiện analytics được theo dõi
 enum AnalyticsEvent {
@@ -108,13 +109,19 @@ class AnalyticsService {
       // Cấu hình Firebase Analytics
       await _analytics.setAnalyticsCollectionEnabled(_isAnalyticsEnabled);
       
+      // Lấy thông tin phiên bản ứng dụng
+      final packageInfo = await PackageInfo.fromPlatform();
+      
       // Thiết lập các properties mặc định
-      _defaultProperties['app_version'] = '1.0.0'; // Thay bằng phiên bản thực tế
+      _defaultProperties['app_version'] = packageInfo.version;
+      _defaultProperties['build_number'] = packageInfo.buildNumber;
       _defaultProperties['platform'] = kIsWeb ? 'web' : defaultTargetPlatform.toString();
       
       _logger.i('Analytics Service đã được khởi tạo. Bật thu thập: $_isAnalyticsEnabled');
-    } catch (e) {
+    } catch (e, stackTrace) {
       _logger.e('Lỗi khi khởi tạo Analytics Service: $e');
+      // Record error for later analysis
+      await _crashReporter.recordError(e, stackTrace, reason: 'analytics_init_error');
     }
   }
   
@@ -135,13 +142,16 @@ class AnalyticsService {
       _defaultProperties['user_id'] = userId;
       
       // Thêm user ID vào tất cả các traces
-      await _performanceMonitor.setGlobalAttributes({
-        'user_id': userId,
-      });
+      await _performanceMonitor.addTraceAttribute(
+        TraceType.appStartup,
+        attributeName: 'user_id',
+        value: userId,
+      );
       
       _logger.i('Đã thiết lập user ID: $userId');
-    } catch (e) {
+    } catch (e, stackTrace) {
       _logger.e('Lỗi khi thiết lập user ID: $e');
+      await _crashReporter.recordError(e, stackTrace, reason: 'set_user_id_error');
     }
   }
   
@@ -179,8 +189,9 @@ class AnalyticsService {
       }
       
       _logger.i('Đã thiết lập user properties');
-    } catch (e) {
+    } catch (e, stackTrace) {
       _logger.e('Lỗi khi thiết lập user properties: $e');
+      await _crashReporter.recordError(e, stackTrace, reason: 'set_user_properties_error');
     }
   }
   
@@ -202,8 +213,9 @@ class AnalyticsService {
       );
       
       _logger.i('Đã thiết lập thông tin người dùng: ${user.id}');
-    } catch (e) {
+    } catch (e, stackTrace) {
       _logger.e('Lỗi khi thiết lập thông tin người dùng: $e');
+      await _crashReporter.recordError(e, stackTrace, reason: 'set_user_error');
     }
   }
   
@@ -231,6 +243,11 @@ class AnalyticsService {
         'timestamp': DateTime.now().toIso8601String(),
       };
       
+      // Add current user ID if available and not already in parameters
+      if (_currentUserId != null && !combinedParams.containsKey('user_id')) {
+        combinedParams['user_id'] = _currentUserId;
+      }
+      
       if (parameters != null) {
         combinedParams.addAll(parameters);
       }
@@ -244,9 +261,11 @@ class AnalyticsService {
         parameters: convertedParams,
       );
       
-      _logger.v('Đã ghi nhận sự kiện: $eventName với ${convertedParams.length} parameters');
+      _logger.t('Đã ghi nhận sự kiện: $eventName với ${convertedParams.length} parameters');
     } catch (e) {
       _logger.e('Lỗi khi ghi nhận sự kiện: $e');
+      // Don't report analytics errors to prevent circular dependencies
+      // Just log them silently
     }
   }
   
@@ -343,7 +362,7 @@ class AnalyticsService {
         parameters: params,
       );
       
-      _logger.v('Đã ghi nhận screen view: $screenName');
+      _logger.t('Đã ghi nhận screen view: $screenName');
     } catch (e) {
       _logger.e('Lỗi khi ghi nhận screen view: $e');
     }
@@ -362,16 +381,16 @@ class AnalyticsService {
       // Ghi nhận lỗi trong Firebase Analytics
       await _analytics.logEvent(
         name: 'app_error',
-        parameters: {
+        parameters: _convertParameters({
           'error_type': errorType,
           if (errorMessage != null) 'error_message': errorMessage,
           if (errorDetails != null) 'error_details': errorDetails,
           'fatal': fatal,
           'timestamp': DateTime.now().toIso8601String(),
-        },
+        }),
       );
       
-      _logger.v('Đã ghi nhận lỗi: $errorType');
+      _logger.t('Đã ghi nhận lỗi: $errorType');
     } catch (e) {
       _logger.e('Lỗi khi ghi nhận lỗi: $e');
     }
@@ -399,12 +418,15 @@ class AnalyticsService {
         }
       }
       
+      // Chuyển đổi params sang Map<String, Object> trước khi gọi logEvent
+      final convertedParams = _convertParameters(params);
+      
       await _analytics.logEvent(
         name: 'app_metric',
-        parameters: params,
+        parameters: convertedParams,
       );
       
-      _logger.v('Đã theo dõi metric: $metricName = $value');
+      _logger.t('Đã theo dõi metric: $metricName = $value');
     } catch (e) {
       _logger.e('Lỗi khi theo dõi metric: $e');
     }
@@ -491,7 +513,7 @@ class AnalyticsService {
       
       if (value is String || value is num || value is bool) {
         result[key] = value;
-      } else {
+      } else if (value != null) {
         // Chuyển đổi các giá trị khác thành string
         result[key] = value.toString();
       }

@@ -209,8 +209,74 @@ class CacheSyncStrategy {
   /// Invalidate tất cả cache bắt đầu bằng một prefix
   void _invalidateWithPrefix(String prefix) {
     // Thực hiện invalidate
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      // Delay để không block UI thread
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      try {
+        _logger.v('Invalidate cache với prefix: $prefix');
+        
+        // Lấy tất cả key bắt đầu bằng prefix
+        final allKeys = _cacheManager.isInitialized 
+            ? await _cacheManager.getAllCacheKeys() 
+            : <String>[];
+        
+        final keysToInvalidate = allKeys
+            .where((key) => key.startsWith(prefix))
+            .toList();
+        
+        if (keysToInvalidate.isEmpty) {
+          _logger.v('Không tìm thấy key nào với prefix: $prefix');
+          return;
+        }
+        
+        _logger.v('Tìm thấy ${keysToInvalidate.length} key với prefix: $prefix');
+        
+        // Invalidate từng key
+        for (final key in keysToInvalidate) {
+          await _cacheManager.invalidateCache(key);
+        }
+        
+        _logger.i('Đã invalidate ${keysToInvalidate.length} cache entries với prefix: $prefix');
+      } catch (e) {
+        _logger.e('Lỗi khi invalidate cache với prefix $prefix: $e');
+      }
     });
+  }
+  
+  /// Xử lý tin nhắn mới và đảm bảo cache được cập nhật
+  void handleNewMessage(String chatId, dynamic messageData) {
+    // Đánh dấu các cache liên quan đến dirty
+    markChatMessagesDirty(chatId);
+    markChatListDirty(); // Vì tin nhắn cuối cùng trong danh sách chat thay đổi
+    
+    // Invalidate cache cụ thể cho tin nhắn
+    if (messageData != null && messageData is Map && messageData.containsKey('id')) {
+      final messageId = messageData['id'] as String;
+      _invalidateMessageCache(chatId, messageId);
+    }
+    
+    _logger.i('Đã xử lý tin nhắn mới cho chat $chatId');
+  }
+  
+  /// Xử lý cập nhật trạng thái đọc tin nhắn
+  void handleReadReceipt(String chatId, List<String> messageIds) {
+    // Đánh dấu tin nhắn chat đã thay đổi
+    markChatMessagesDirty(chatId);
+    
+    // Invalidate từng tin nhắn cụ thể đã được đọc
+    for (final messageId in messageIds) {
+      _cacheManager.invalidateCache('message_$messageId');
+    }
+    
+    _logger.i('Đã xử lý trạng thái đọc tin nhắn cho ${messageIds.length} tin nhắn trong chat $chatId');
+  }
+  
+  /// Xử lý cập nhật trạng thái online/offline của người dùng
+  void handleUserStatusChange(String userId, String status) {
+    // Đánh dấu dữ liệu người dùng đã thay đổi
+    markUserDataDirty();
+    
+    // Invalidate cache cụ thể cho người dùng này
+    _invalidateUserCache(userId);
+    
+    _logger.i('Đã xử lý thay đổi trạng thái của người dùng $userId: $status');
   }
 } 

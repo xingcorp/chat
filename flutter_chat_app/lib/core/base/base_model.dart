@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
 
 /// Base class cho tất cả các model trong ứng dụng
 /// Mô hình hóa dữ liệu trong tầng presentation

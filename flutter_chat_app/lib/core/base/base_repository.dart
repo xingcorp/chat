@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:dartz/dartz.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
+import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 
 /// Interface cho tất cả các repository trong ứng dụng
@@ -48,7 +48,7 @@ abstract class BaseRepository {
         return Right(localData);
       } catch (e) {
         LogUtils.e('Repository', 'Local data source error: $e');
-        return Left(ConnectionFailure(message: 'No internet connection and no cached data'));
+        return Left(const ConnectionFailure(message: 'No internet connection and no cached data'));
       }
     }
   }
@@ -95,7 +95,7 @@ abstract class BaseRepository {
           return Left(ServerFailure(message: e.toString()));
         }
       } else {
-        return Left(ConnectionFailure(message: 'No internet connection and no cached data'));
+        return Left(const ConnectionFailure(message: 'No internet connection and no cached data'));
       }
     }
   }
@@ -131,7 +131,7 @@ abstract class BaseRepository {
         return Left(ServerFailure(message: e.toString()));
       }
     } else {
-      return Left(ConnectionFailure(message: 'No internet connection'));
+      return Left(const ConnectionFailure(message: 'No internet connection'));
     }
   }
   

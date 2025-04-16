@@ -415,7 +415,7 @@ class AttachmentQueueService {
     try {
       // Kiểm tra xem file còn tồn tại không
       if (!updatedAttachment.fileExists) {
-        throw FileSystemException('File không tồn tại');
+        throw const FileSystemException('File không tồn tại');
       }
       
       // Tải tập tin lên server
@@ -537,7 +537,7 @@ class AttachmentQueueService {
   
   /// Tải tập tin lên server với cập nhật tiến độ
   Future<AttachmentUploadResult> _uploadAttachment(QueuedAttachment attachment) async {
-    final completer = Completer<AttachmentUploadResult>();
+    StreamSubscription? streamSubscription;
     
     try {
       // Lấy file
@@ -545,6 +545,15 @@ class AttachmentQueueService {
       if (!file.existsSync()) {
         throw FileSystemException('File không tồn tại: ${attachment.filePath}');
       }
+      
+      // Hủy subscription cũ nếu tồn tại
+      if (_activeUploads.containsKey(attachment.localId)) {
+        await _activeUploads[attachment.localId]?.cancel();
+        _activeUploads.remove(attachment.localId);
+      }
+      
+      // Tạo Completer để hoàn thành khi có kết quả
+      final completer = Completer<AttachmentUploadResult>();
       
       // Tải lên với cập nhật tiến độ
       final uploadStream = _attachmentRepository.uploadAttachment(
@@ -571,36 +580,55 @@ class AttachmentQueueService {
         },
       );
       
-      // Theo dõi tải lên
-      final subscription = uploadStream.listen(
-        (result) {
+      // Lắng nghe kết quả
+      streamSubscription = uploadStream.listen(
+        (data) {
           if (!completer.isCompleted) {
-            completer.complete(result);
+            completer.complete(data);
           }
-          
-          // Xóa khỏi danh sách uploads đang hoạt động
-          _activeUploads.remove(attachment.localId);
         },
-        onError: (error) {
+        onError: (error, stack) {
           if (!completer.isCompleted) {
-            completer.completeError(error);
+            completer.completeError(error, stack);
           }
-          
-          // Xóa khỏi danh sách uploads đang hoạt động
-          _activeUploads.remove(attachment.localId);
         },
-        cancelOnError: true,
+        onDone: () {
+          if (!completer.isCompleted) {
+            completer.completeError(
+              Exception('Kết thúc stream mà không có kết quả'), 
+              StackTrace.current
+            );
+          }
+        },
+        cancelOnError: false,
       );
       
       // Lưu subscription để có thể hủy nếu cần
-      _activeUploads[attachment.localId] = subscription;
+      _activeUploads[attachment.localId] = streamSubscription;
       
-      return await completer.future;
-    } catch (e) {
-      if (!completer.isCompleted) {
-        completer.completeError(e);
+      // Đặt timeout
+      final timeout = Timer(const Duration(minutes: 30), () {
+        if (!completer.isCompleted) {
+          completer.completeError(
+            TimeoutException('Tải lên tập tin quá thời gian'),
+            StackTrace.current
+          );
+        }
+      });
+      
+      // Đợi kết quả
+      final result = await completer.future;
+      
+      // Hủy timeout
+      timeout.cancel();
+      
+      return result;
+    } finally {
+      // Đảm bảo dọn dẹp mọi subscription
+      if (streamSubscription != null) {
+        await streamSubscription.cancel();
       }
-      return await completer.future;
+      _activeUploads.remove(attachment.localId);
     }
   }
   
@@ -893,27 +921,4 @@ class AttachmentQueueService {
     _attachmentStatusController.close();
     _eventController.close();
   }
-}
-
-/// Kết quả của việc tải lên tập tin đính kèm
-class AttachmentUploadResult {
-  /// ID trên server
-  final String id;
-  
-  /// URL truy cập
-  final String url;
-  
-  /// Kích thước tập tin
-  final int size;
-  
-  /// Thời gian tạo
-  final DateTime createdAt;
-  
-  /// Constructor
-  AttachmentUploadResult({
-    required this.id,
-    required this.url,
-    required this.size,
-    required this.createdAt,
-  });
 } 

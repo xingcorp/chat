@@ -840,8 +840,8 @@ class MessageQueueService {
   }
   
   /// Handle connectivity changes
-  void _handleConnectivityChange(List<dynamic> _) {
-    final isConnected = _connectivityService.isConnected;
+  Future<void> _handleConnectivityChange(List<dynamic> _) async {
+    final isConnected = await _connectivityService.isConnected();
     
     if (isConnected) {
       // Resume processing if we have connection

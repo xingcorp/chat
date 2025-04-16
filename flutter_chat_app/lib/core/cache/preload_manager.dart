@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/cache/cache_stats.dart';
@@ -7,6 +8,8 @@ import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/entities/user.dart';
+import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
+import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,6 +28,9 @@ class PreloadManager {
   final AppCacheManager _cacheManager = AppCacheManager();
   final MediaCacheManager _mediaCacheManager = MediaCacheManager();
   final CacheStats _cacheStats = CacheStats();
+  
+  /// Isolate Manager
+  late IsolateManager _isolateManager;
   
   /// Tiến trình tiền tải
   double _preloadProgress = 0.0;
@@ -47,44 +53,117 @@ class PreloadManager {
   static const int PRELOAD_USER_LIMIT = 20;
   static const Duration PRELOAD_INTERVAL = Duration(hours: 12);
   
+  /// Chạy duy nhất một lần 
+  static Completer<void>? _runningPreloadTask;
+  
   /// Private constructor
   PreloadManager._internal();
   
   /// Khởi tạo
   Future<void> initialize() async {
     _prefs = await SharedPreferences.getInstance();
+    
+    try {
+      // Lấy IsolateManager từ DI container
+      _isolateManager = GetIt.I<IsolateManager>();
+    } catch (e) {
+      _logger.w('Không thể lấy IsolateManager từ DI container: $e');
+    }
+    
     _logger.i('PreloadManager đã được khởi tạo');
   }
   
   /// Tiền tải dữ liệu quan trọng
   Future<void> preloadEssentialData() async {
+    // Ngăn nhiều lần gọi đồng thời
+    if (_runningPreloadTask != null && !_runningPreloadTask!.isCompleted) {
+      _logger.i('Đang có tiền tải đang chạy, bỏ qua yêu cầu mới');
+      return _runningPreloadTask!.future;
+    }
+    
+    // Khởi tạo completer mới
+    _runningPreloadTask = Completer<void>();
+    
     // Kiểm tra xem đã đến lúc cần tiền tải lại chưa
     if (!_shouldPreload()) {
       _logger.i('Bỏ qua tiền tải, chưa đến thời gian');
-      return;
+      _runningPreloadTask!.complete();
+      return _runningPreloadTask!.future;
     }
     
     _logger.i('Bắt đầu tiền tải dữ liệu quan trọng');
     _resetProgress();
     
     try {
-      // Tiền tải các loại dữ liệu song song
-      await Future.wait([
-        _preloadUserProfile(),
-        _preloadRecentChats(),
-        _preloadFrequentlyUsedData(),
-      ]);
+      // Nếu có isolate manager, sử dụng isolates để tải
+      if (_isolateManager != null) {
+        await _preloadWithIsolates();
+      } else {
+        // Tiền tải các loại dữ liệu song song
+        await Future.wait([
+          _preloadUserProfile(),
+          _preloadRecentChats(),
+          _preloadFrequentlyUsedData(),
+        ]);
+      }
       
       _logger.i('Tiền tải dữ liệu hoàn tất');
       
       // Lưu thời gian tiền tải
       await _prefs.setInt('last_preload_time', DateTime.now().millisecondsSinceEpoch);
       
-      await _progressController.close();
+      // Hoàn tất tiền tải
+      _runningPreloadTask!.complete();
+      
+      if (!_progressController.isClosed) {
+        await _progressController.close();
+      }
     } catch (e) {
       _logger.e('Lỗi khi tiền tải dữ liệu: $e');
       _updateProgress(1.0); // Hoàn thành (có lỗi)
+      _runningPreloadTask!.completeError(e);
     }
+    
+    return _runningPreloadTask!.future;
+  }
+  
+  /// Tiền tải dữ liệu sử dụng isolates
+  Future<void> _preloadWithIsolates() async {
+    _logger.i('Tiền tải dữ liệu sử dụng isolates');
+    
+    final tasks = <Future<void>>[];
+    
+    // Tăng số lượng task
+    _increaseTaskCount(); // User profile
+    _increaseTaskCount(); // Recent chats
+    _increaseTaskCount(); // Frequently used data
+    
+    // Tiền tải thông tin người dùng trong isolate
+    tasks.add(_isolateManager.processInBackground(
+      taskType: IsolateTaskType.dataProcessing,
+      taskId: 'preload_user_profile',
+      data: null,
+      priority: TaskPriority.high
+    ).then((_) => _completeTask()));
+    
+    // Tiền tải các cuộc trò chuyện gần đây
+    tasks.add(_isolateManager.processInBackground(
+      taskType: IsolateTaskType.dataProcessing,
+      taskId: 'preload_recent_chats',
+      data: null,
+      priority: TaskPriority.high
+    ).then((_) => _completeTask()));
+    
+    // Tiền tải dữ liệu thường xuyên sử dụng
+    tasks.add(_isolateManager.processInBackground(
+      taskType: IsolateTaskType.dataProcessing,
+      taskId: 'preload_frequent_data',
+      data: null,
+      priority: TaskPriority.medium
+    ).then((_) => _completeTask()));
+    
+    // Chờ tất cả hoàn tất
+    await Future.wait(tasks);
   }
   
   /// Tiền tải thông tin người dùng

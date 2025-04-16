@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
@@ -82,7 +82,7 @@ class MessageDeliveryTracker {
       },
     );
     
-    _logger.v('Bắt đầu theo dõi tin nhắn: $id trong chat: $chatId');
+    _logger.t('Bắt đầu theo dõi tin nhắn: $id trong chat: $chatId');
     
     return id;
   }
@@ -139,7 +139,7 @@ class MessageDeliveryTracker {
       // Cập nhật metrics cho trace
       _updateTraceMetrics(messageId);
       
-      _logger.v('Cập nhật trạng thái tin nhắn $messageId: $status');
+      _logger.t('Cập nhật trạng thái tin nhắn $messageId: $status');
     } catch (e) {
       _logger.e('Lỗi khi cập nhật trạng thái tin nhắn: $e');
     }
@@ -238,6 +238,8 @@ class MessageDeliveryTracker {
         );
       }
     }
+    
+    _logger.t('Cập nhật metrics cho trace: $messageId');
   }
   
   /// Hoàn thành theo dõi tin nhắn
@@ -294,7 +296,7 @@ class MessageDeliveryTracker {
       // Dọn dẹp
       _messageTraces.remove(messageId);
       
-      _logger.v('Hoàn thành theo dõi tin nhắn $messageId: ${isFailed ? "thất bại" : "thành công"}');
+      _logger.t('Hoàn thành theo dõi tin nhắn $messageId: ${isFailed ? "thất bại" : "thành công"}');
     } catch (e) {
       _logger.e('Lỗi khi hoàn thành trace cho tin nhắn: $e');
     }
@@ -334,7 +336,7 @@ class MessageDeliveryTracker {
   
   /// Tạo trace cho tin nhắn đã có sẵn (từ queue)
   Future<void> trackExistingQueuedMessage(QueuedMessage queuedMessage) async {
-    final messageId = queuedMessage.messageId;
+    final messageId = queuedMessage.localId;
     
     // Tạo thông tin theo dõi mới
     final deliveryInfo = MessageDeliveryInfo(
@@ -350,19 +352,23 @@ class MessageDeliveryTracker {
     // Cập nhật trạng thái hiện tại
     MessageStatus status;
     switch (queuedMessage.status) {
-      case 'queued':
+      case MessageQueueStatus.pending:
         status = MessageStatus.waitingForConnection;
         deliveryInfo.waitingForConnectionAt = DateTime.now();
         break;
-      case 'sending':
+      case MessageQueueStatus.sending:
         status = MessageStatus.sending;
         deliveryInfo.sendingAt = DateTime.now();
         break;
-      case 'sent':
+      case MessageQueueStatus.sent:
+      case MessageQueueStatus.delivered:
+      case MessageQueueStatus.read:
         status = MessageStatus.sent;
         deliveryInfo.sentAt = DateTime.now();
         break;
-      case 'failed':
+      case MessageQueueStatus.failed:
+      case MessageQueueStatus.cancelled:
+      case MessageQueueStatus.conflicted:
         status = MessageStatus.failed;
         deliveryInfo.failedAt = DateTime.now();
         break;
@@ -384,7 +390,7 @@ class MessageDeliveryTracker {
       },
     );
     
-    _logger.v('Bắt đầu theo dõi tin nhắn queued: $messageId, trạng thái: $status');
+    _logger.t('Bắt đầu theo dõi tin nhắn queued: $messageId, trạng thái: $status');
   }
 }
 
