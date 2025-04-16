@@ -537,7 +537,7 @@ class MessageQueueService {
     await _restoreQueue();
     
     // Listen for connectivity changes
-    _connectivitySubscription = _connectivityService.onConnectivityChanged
+    _connectivitySubscription = _connectivityService.onStatusChanged
         .listen(_handleConnectivityChange);
     
     // Listen for realtime connection changes
@@ -671,7 +671,7 @@ class MessageQueueService {
     
     try {
       // Check network connectivity
-      final isConnected = await _connectivityService.checkNetworkStatus();
+      final isConnected = await _connectivityService.isConnected();
       if (!isConnected) {
         debugPrint('No network connection, skipping queue processing');
         return;

@@ -265,7 +265,7 @@ class AttachmentQueueService {
     
     try {
       // Kiểm tra kết nối mạng
-      final isConnected = await _connectivityService.checkNetworkStatus();
+      final isConnected = await _connectivityService.isConnected();
       if (!isConnected) {
         debugPrint('Không có kết nối mạng, bỏ qua xử lý hàng đợi');
         

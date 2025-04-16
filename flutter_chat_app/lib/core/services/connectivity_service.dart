@@ -4,31 +4,31 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
-/// Dịch vụ theo dõi và quản lý kết nối mạng
+/// Service for monitoring and managing network connectivity
 @singleton
 class ConnectivityService {
-  /// Loại kết nối hiện tại
-  ConnectivityResult _connectionStatus = ConnectivityResult.none;
+  /// Current connection types
+  List<ConnectivityResult> _connectionStatus = [];
   
-  /// Stream phát ra kết nối hiện tại
-  final _connectionController = StreamController<ConnectivityResult>.broadcast();
+  /// Stream that emits the current connections
+  final _connectionController = StreamController<List<ConnectivityResult>>.broadcast();
   
-  /// Stream phát ra thông tin có kết nối mạng không
+  /// Stream that emits whether network is connected
   final _hasConnectionController = StreamController<bool>.broadcast();
   
   /// Logger
   final _logger = Logger();
   
-  /// Đối tượng Connectivity Plus
+  /// Connectivity Plus instance
   final Connectivity _connectivity;
   
-  /// Subscription cho thay đổi kết nối
-  StreamSubscription<ConnectivityResult>? _subscription;
+  /// Subscription for connectivity changes
+  StreamSubscription<List<ConnectivityResult>>? _subscription;
   
-  /// Thời gian kiểm tra kết nối lần cuối
+  /// Time of last check
   DateTime _lastCheck = DateTime.now();
   
-  /// Thời gian tối thiểu giữa các lần kiểm tra
+  /// Minimum interval between checks
   static const Duration _minCheckInterval = Duration(seconds: 2);
   
   /// Constructor
@@ -36,35 +36,38 @@ class ConnectivityService {
     _initialize();
   }
   
-  /// Stream phát ra trạng thái kết nối
-  Stream<ConnectivityResult> get onStatusChanged => 
+  /// Stream for connectivity status changes
+  Stream<List<ConnectivityResult>> get onStatusChanged => 
       _connectionController.stream;
   
-  /// Stream phát ra thông tin có kết nối hay không
+  /// Stream for connectivity availability changes
   Stream<bool> get onConnectivityChanged => 
       _hasConnectionController.stream;
   
-  /// Getter cho loại kết nối hiện tại
-  ConnectivityResult get connectionStatus => _connectionStatus;
+  /// Getter for current connectivity types
+  List<ConnectivityResult> get connectionStatus => _connectionStatus;
   
-  /// Kiểm tra xem hiện tại có kết nối hay không
+  /// Check if there is any connection
   bool get hasConnection => 
-      _connectionStatus != ConnectivityResult.none;
+      _connectionStatus.isNotEmpty && _connectionStatus.any((result) => result != ConnectivityResult.none);
   
-  /// Kiểm tra có phải kết nối Wi-Fi không
-  bool get isWifi => _connectionStatus == ConnectivityResult.wifi;
+  /// Check if WiFi connection exists
+  bool get isWifi => _connectionStatus.contains(ConnectivityResult.wifi);
   
-  /// Kiểm tra có phải kết nối di động không
-  bool get isMobile => _connectionStatus == ConnectivityResult.mobile;
+  /// Check if mobile data connection exists
+  bool get isMobile => _connectionStatus.contains(ConnectivityResult.mobile);
   
-  /// Khởi tạo service và lắng nghe sự kiện thay đổi
-  void _initialize() async {
+  /// Check if ethernet connection exists
+  bool get isEthernet => _connectionStatus.contains(ConnectivityResult.ethernet);
+  
+  /// Initialize service and listen for events
+  Future<void> _initialize() async {
     try {
-      // Lấy trạng thái kết nối ban đầu
+      // Get initial connection status
       _connectionStatus = await _connectivity.checkConnectivity();
       _emitCurrentState();
       
-      // Đăng ký lắng nghe thay đổi kết nối
+      // Subscribe to connectivity changes
       _subscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
       
       _logger.i('Connectivity Service initialized. Initial status: $_connectionStatus');
@@ -73,53 +76,68 @@ class ConnectivityService {
     }
   }
   
-  /// Cập nhật trạng thái kết nối khi có thay đổi
-  void _updateConnectionStatus(ConnectivityResult result) {
+  /// Update connection status when changes occur
+  void _updateConnectionStatus(List<ConnectivityResult> results) {
     final now = DateTime.now();
     if (now.difference(_lastCheck) < _minCheckInterval) {
-      // Tránh spam quá nhiều sự kiện trong thời gian ngắn
+      // Avoid too many events in a short time
       return;
     }
     
     _lastCheck = now;
     
-    // Chỉ cập nhật nếu thực sự thay đổi
-    if (result != _connectionStatus) {
-      _logger.d('Connection status changed: $_connectionStatus -> $result');
-      _connectionStatus = result;
+    // Only update if actually changed - compare regardless of order
+    if (!_areListsEqual(_connectionStatus, results)) {
+      _logger.d('Connection status changed: $_connectionStatus -> $results');
+      _connectionStatus = results;
       _emitCurrentState();
     }
   }
   
-  /// Phát ra trạng thái hiện tại
-  void _emitCurrentState() {
-    _connectionController.add(_connectionStatus);
-    _hasConnectionController.add(_connectionStatus != ConnectivityResult.none);
+  /// Compare two lists regardless of order
+  bool _areListsEqual(List<ConnectivityResult> list1, List<ConnectivityResult> list2) {
+    if (list1.length != list2.length) return false;
+    
+    final sortedList1 = List<ConnectivityResult>.from(list1)..sort((a, b) => a.index.compareTo(b.index));
+    final sortedList2 = List<ConnectivityResult>.from(list2)..sort((a, b) => a.index.compareTo(b.index));
+    
+    for (int i = 0; i < sortedList1.length; i++) {
+      if (sortedList1[i] != sortedList2[i]) return false;
+    }
+    
+    return true;
   }
   
-  /// Kiểm tra kết nối thủ công
-  Future<ConnectivityResult> checkConnectivity() async {
+  /// Emit current state
+  void _emitCurrentState() {
+    _connectionController.add(_connectionStatus);
+    _hasConnectionController.add(hasConnection);
+  }
+  
+  /// Manually check connectivity
+  Future<List<ConnectivityResult>> checkConnectivity() async {
     try {
-      final result = await _connectivity.checkConnectivity();
-      _updateConnectionStatus(result);
-      return result;
+      final results = await _connectivity.checkConnectivity();
+      _updateConnectionStatus(results);
+      return results;
     } catch (e) {
       _logger.e('Error checking connectivity: $e');
-      return ConnectivityResult.none;
+      return [];
     }
   }
   
-  /// Kiểm tra có kết nối không
+  /// Check if connected to any network
   Future<bool> isConnected() async {
-    final result = await checkConnectivity();
-    return result != ConnectivityResult.none;
+    final results = await checkConnectivity();
+    return results.isNotEmpty && results.any((result) => result != ConnectivityResult.none);
   }
   
-  /// Giải phóng tài nguyên
+  /// Release resources
   void dispose() {
     _subscription?.cancel();
     _connectionController.close();
     _hasConnectionController.close();
     _logger.d('Connectivity Service disposed');
   }
-} 
+
+}

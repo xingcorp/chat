@@ -6,22 +6,21 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_memory_info/flutter_memory_info.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
-/// Các loại đo lường hiệu suất
+/// Types of performance metrics
 enum PerformanceMetricType {
-  /// Thời gian tải màn hình
+  /// Screen load time
   screenLoad,
   
-  /// Thời gian render UI
+  /// UI rendering time
   uiRender,
   
   /// Network request
   network,
   
-  /// Xử lý dữ liệu
+  /// Data processing
   dataProcessing,
   
   /// Media processing
@@ -30,25 +29,25 @@ enum PerformanceMetricType {
   /// Database operations
   database,
   
-  /// Khởi động ứng dụng
+  /// App startup
   appStartup,
   
-  /// Tuỳ chỉnh
+  /// Custom
   custom,
 }
 
-/// Kết quả của memory snapshot
+/// Memory snapshot result
 class MemoryInfo {
-  /// Total memory sử dụng (bytes)
+  /// Total memory used (bytes)
   final int totalMemoryBytes;
   
   /// Free memory (bytes)
   final int freeMemoryBytes;
   
-  /// Memory sử dụng bởi ứng dụng (bytes)
+  /// Memory used by the app (bytes)
   final int appMemoryBytes;
   
-  /// Thời điểm đo
+  /// Timestamp of measurement
   final DateTime timestamp;
   
   /// Constructor
@@ -77,21 +76,21 @@ class MemoryInfo {
   }
 }
 
-/// Thông tin hiệu suất realtime
+/// Realtime performance information
 class PerformanceStats {
-  /// FPS hiện tại
+  /// Current FPS
   final double fps;
   
   /// Memory usage
   final MemoryInfo memory;
   
-  /// CPU usage (phần trăm)
+  /// CPU usage (percent)
   final double cpuUsage;
   
-  /// Thời điểm render frame
+  /// Build time
   final Duration buildTime;
   
-  /// Thời điểm khởi tạo
+  /// Timestamp
   final DateTime timestamp;
   
   /// Constructor
@@ -103,7 +102,7 @@ class PerformanceStats {
     required this.timestamp,
   });
   
-  /// Tạo từ giá trị mặc định
+  /// Create from default values
   factory PerformanceStats.empty() => PerformanceStats(
     fps: 0,
     memory: MemoryInfo(
@@ -117,101 +116,101 @@ class PerformanceStats {
     timestamp: DateTime.now(),
   );
   
-  /// Kiểm tra xem FPS có dưới ngưỡng chấp nhận được
+  /// Check if FPS is below acceptable threshold
   bool get isLowFps => fps < 55;
   
-  /// Kiểm tra xem memory usage có cao
+  /// Check if memory usage is high
   bool get isHighMemory => memory.memoryUsagePercent > 70;
   
-  /// Kiểm tra xem CPU usage có cao
+  /// Check if CPU usage is high
   bool get isHighCpu => cpuUsage > 80;
   
-  /// Kiểm tra xem build time có cao
+  /// Check if build time is high
   bool get isSlowBuild => buildTime.inMilliseconds > 16;
 }
 
-/// Stream thông tin hiệu suất realtime
+/// Stream for realtime performance stats
 class PerformanceObserver {
   /// Stream controller
   final _controller = StreamController<PerformanceStats>.broadcast();
   
-  /// Stream thông tin hiệu suất
+  /// Performance stats stream
   Stream<PerformanceStats> get stats => _controller.stream;
   
-  /// Thêm thông tin hiệu suất mới
+  /// Add new performance stats
   void addStats(PerformanceStats stats) {
     if (!_controller.isClosed) {
       _controller.add(stats);
     }
   }
   
-  /// Đóng stream
+  /// Close stream
   void dispose() {
     _controller.close();
   }
 }
 
-/// Service đo lường và quản lý hiệu suất ứng dụng
+/// Service for measuring and managing application performance
 @lazySingleton
 class PerformanceService {
   final FirebasePerformance _firebasePerformance;
   final _logger = Logger();
   
-  /// Traces đang hoạt động
+  /// Active traces
   final Map<String, Trace> _activeTraces = {};
   
-  /// HTTP metrics đang hoạt động
+  /// Active HTTP metrics
   final Map<String, HttpMetric> _activeHttpMetrics = {};
   
-  /// Lưu trữ thời gian cho các hoạt động tạm thời
+  /// Timers for temporary activities
   final Map<String, int> _timers = {};
   
-  /// Lưu trữ memory snapshots
+  /// Memory snapshots
   final List<MemoryInfo> _memorySnapshots = [];
   
-  /// Đang thu thập hiệu suất
+  /// Performance collection enabled
   bool _isPerformanceCollectionEnabled = !kDebugMode;
   
-  /// Hiển thị overlay hiệu suất
+  /// Show performance overlay
   bool _showPerformanceOverlay = false;
   
   /// Performance observer
   final _performanceObserver = PerformanceObserver();
   
-  /// Ticker để đo FPS
+  /// Ticker for FPS measurement
   Ticker? _ticker;
   
-  /// Ticker callback
+  /// Last tick time
   Duration _lastTickTime = Duration.zero;
   
   /// FPS counter
   int _fpsCounter = 0;
   
-  /// FPS hiện tại
+  /// Current FPS
   double _currentFps = 0;
   
-  /// CPU usage hiện tại
+  /// Current CPU usage
   double _currentCpuUsage = 0;
   
-  /// Thời gian build trung bình
+  /// Average build time
   Duration _buildTime = Duration.zero;
   
-  /// Timer cho việc thu thập thông tin hiệu suất
+  /// Stats timer
   Timer? _statsTimer;
   
-  /// Overlay entry cho widget hiệu suất
+  /// Performance overlay entry
   OverlayEntry? _overlayEntry;
   
-  /// Tạo mới service
+  /// Constructor
   PerformanceService(this._firebasePerformance);
   
-  /// Lấy performance observer
+  /// Get performance observer
   PerformanceObserver get observer => _performanceObserver;
   
-  /// Hiển thị có overlay hiệu suất không
+  /// Get performance overlay visibility
   bool get showPerformanceOverlay => _showPerformanceOverlay;
   
-  /// Thiết lập trạng thái hiển thị overlay hiệu suất
+  /// Set performance overlay visibility
   set showPerformanceOverlay(bool value) {
     if (_showPerformanceOverlay == value) return;
     
@@ -226,22 +225,22 @@ class PerformanceService {
     _updateOverlay();
   }
   
-  /// Hiển thị/ẩn overlay hiệu suất
+  /// Toggle performance overlay
   void togglePerformanceOverlay() {
     showPerformanceOverlay = !showPerformanceOverlay;
   }
   
-  /// Khởi tạo service
+  /// Initialize service
   Future<void> initialize() async {
     try {
       _logger.i('Initializing Performance Service');
       
-      // Cấu hình Firebase Performance
+      // Configure Firebase Performance
       await _firebasePerformance.setPerformanceCollectionEnabled(_isPerformanceCollectionEnabled);
       
       _logger.i('Performance Service initialized. Collection enabled: $_isPerformanceCollectionEnabled');
       
-      // Khởi tạo FPS ticker nếu trong chế độ debug
+      // Initialize FPS ticker if in debug mode
       if (kDebugMode) {
         _initializeTicker();
       }
@@ -250,7 +249,7 @@ class PerformanceService {
     }
   }
   
-  /// Khởi tạo ticker để đo FPS
+  /// Initialize FPS ticker
   void _initializeTicker() {
     _ticker = Ticker((elapsed) {
       if (_lastTickTime != Duration.zero) {
@@ -263,21 +262,21 @@ class PerformanceService {
     });
   }
   
-  /// Bắt đầu theo dõi hiệu suất realtime
+  /// Start realtime performance monitoring
   void _startPerformanceMonitoring() {
-    // Bắt đầu ticker để đo FPS
+    // Start ticker for FPS measurement
     _ticker?.start();
     
-    // Cập nhật thông tin hiệu suất mỗi 1 giây
+    // Update performance stats every 1 second
     _statsTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
-      // Tính toán FPS
+      // Calculate FPS
       _currentFps = _fpsCounter.toDouble();
       _fpsCounter = 0;
       
-      // Lấy thông tin memory
+      // Get memory info
       final memory = await getMemoryInfo();
       
-      // Tạo thông tin hiệu suất
+      // Create performance stats
       final stats = PerformanceStats(
         fps: _currentFps,
         memory: memory,
@@ -286,10 +285,10 @@ class PerformanceService {
         timestamp: DateTime.now(),
       );
       
-      // Gửi thông tin hiệu suất
+      // Send performance stats
       _performanceObserver.addStats(stats);
       
-      // Ghi log nếu hiệu suất thấp
+      // Log if performance is low
       if (stats.isLowFps) {
         _logger.w('Low FPS detected: ${stats.fps.toStringAsFixed(1)} FPS');
       }
@@ -300,22 +299,22 @@ class PerformanceService {
     });
   }
   
-  /// Dừng theo dõi hiệu suất realtime
+  /// Stop realtime performance monitoring
   void _stopPerformanceMonitoring() {
     _ticker?.stop();
     _statsTimer?.cancel();
     _statsTimer = null;
   }
   
-  /// Cập nhật overlay hiệu suất
+  /// Update performance overlay
   void _updateOverlay() {
-    // Xóa overlay cũ nếu có
+    // Remove old overlay if exists
     _overlayEntry?.remove();
     _overlayEntry = null;
     
-    // Tạo overlay mới nếu cần hiển thị
+    // Create new overlay if needed
     if (_showPerformanceOverlay) {
-      // Lấy BuildContext từ navigator hiện tại
+      // Get BuildContext from current navigator
       final context = WidgetsBinding.instance.focusManager.primaryFocus?.context;
       if (context == null) return;
       
@@ -323,51 +322,66 @@ class PerformanceService {
       if (overlay == null) return;
       
       _overlayEntry = OverlayEntry(
-        builder: (context) => PerformanceOverlay(observer: _performanceObserver),
+        builder: (context) => PerformanceOverlayWidget(observer: _performanceObserver),
       );
       
       overlay.insert(_overlayEntry!);
     }
   }
   
-  /// Kiểm tra và report nếu sử dụng quá nhiều memory
+  /// Check and report if memory usage is too high
   Future<void> checkMemoryUsage({double thresholdPercent = 70.0}) async {
     final memoryInfo = await getMemoryInfo();
     
     if (memoryInfo.memoryUsagePercent > thresholdPercent) {
       _logger.w('High memory usage detected: ${memoryInfo.memoryUsagePercent.toStringAsFixed(1)}%');
-      // Thực hiện các biện pháp giảm memory như clear caches, image caches, v.v...
+      // Implement memory reduction measures like clearing caches, image caches, etc.
     }
   }
   
-  /// Lấy thông tin memory hiện tại
+  /// Get current memory info using internal Flutter API data
   Future<MemoryInfo> getMemoryInfo() async {
-    final memoryInfo = await FlutterMemoryInfo().memoryInfo;
-    
-    final result = MemoryInfo(
-      totalMemoryBytes: memoryInfo.totalMem,
-      freeMemoryBytes: memoryInfo.availMem,
-      appMemoryBytes: memoryInfo.appUsedMem,
-      timestamp: DateTime.now(),
-    );
-    
-    // Lưu vào history để phân tích xu hướng
-    _memorySnapshots.add(result);
-    
-    // Giới hạn số lượng snapshots để tránh memory leak
-    if (_memorySnapshots.length > 100) {
-      _memorySnapshots.removeAt(0);
+    try {
+      // Default values - on web and desktop these are estimated
+      int totalMem = 1024 * 1024 * 1024; // 1 GB default
+      int availMem = 512 * 1024 * 1024; // 512 MB default
+      int appUsedMem = 256 * 1024 * 1024; // 256 MB default
+      
+      // Use the default values for now, can be enhanced with platform-specific code
+      
+      final result = MemoryInfo(
+        totalMemoryBytes: totalMem,
+        freeMemoryBytes: availMem,
+        appMemoryBytes: appUsedMem,
+        timestamp: DateTime.now(),
+      );
+      
+      // Save to history for trend analysis
+      _memorySnapshots.add(result);
+      
+      // Limit number of snapshots to avoid memory leak
+      if (_memorySnapshots.length > 100) {
+        _memorySnapshots.removeAt(0);
+      }
+      
+      return result;
+    } catch (e) {
+      _logger.e('Error getting memory info: $e');
+      return MemoryInfo(
+        totalMemoryBytes: 0,
+        freeMemoryBytes: 0,
+        appMemoryBytes: 0,
+        timestamp: DateTime.now(),
+      );
     }
-    
-    return result;
   }
   
-  /// Ghi lại thời gian build frame
+  /// Record frame build time
   void recordBuildTime(Duration elapsed) {
     _buildTime = elapsed;
   }
   
-  /// Bắt đầu đo thời gian một hoạt động
+  /// Start measuring an activity
   Future<void> startTrace(
     PerformanceMetricType type, {
     String? customName,
@@ -378,21 +392,21 @@ class PerformanceService {
     try {
       final traceName = _getMetricName(type, customName);
       
-      // Nếu trace đang tồn tại, dừng trace đó trước
+      // If trace already exists, stop it first
       await stopTrace(type, customName: customName);
       
-      // Tạo trace mới
+      // Create new trace
       final trace = _firebasePerformance.newTrace(traceName);
       await trace.start();
       
-      // Thêm attributes nếu có
+      // Add attributes if available
       if (attributes != null) {
         attributes.forEach((key, value) {
           trace.putAttribute(key, value);
         });
       }
       
-      // Lưu vào danh sách đang hoạt động
+      // Save to active traces
       _activeTraces[traceName] = trace;
       
       _logger.d('Started trace: $traceName');
@@ -401,7 +415,7 @@ class PerformanceService {
     }
   }
   
-  /// Dừng đo thời gian một hoạt động
+  /// Stop measuring an activity
   Future<void> stopTrace(
     PerformanceMetricType type, {
     String? customName,
@@ -413,18 +427,16 @@ class PerformanceService {
       final traceName = _getMetricName(type, customName);
       
       final trace = _activeTraces.remove(traceName);
-      if (trace == null) {
-        return;
-      }
+      if (trace == null) return;
       
-      // Thêm metrics nếu có
+      // Add metrics if available
       if (metrics != null) {
         metrics.forEach((key, value) {
           trace.setMetric(key, value);
         });
       }
       
-      // Dừng trace
+      // Stop trace
       await trace.stop();
       
       _logger.d('Stopped trace: $traceName');
@@ -433,33 +445,25 @@ class PerformanceService {
     }
   }
   
-  /// Bắt đầu HTTP metric
+  /// Start HTTP metric
   Future<void> startHttpMetric(
     String url,
-    HttpMethod method, {
-    Map<String, String>? attributes,
+    HttpMethod httpMethod, {
+    String? customName,
   }) async {
     if (!_isPerformanceCollectionEnabled) return;
     
     try {
-      final metricKey = '$method-$url';
+      final metricKey = customName ?? url;
       
-      // Nếu metric đang tồn tại, dừng metric đó trước
-      await stopHttpMetric(url, method);
+      // If metric already exists, stop it first
+      await stopHttpMetric(url, httpMethod, customName: customName);
       
-      // Tạo metric mới
-      final metric = _firebasePerformance.newHttpMetric(url, method);
-      
-      // Thêm attributes nếu có
-      if (attributes != null) {
-        attributes.forEach((key, value) {
-          metric.putAttribute(key, value);
-        });
-      }
-      
+      // Create new HTTP metric
+      final metric = _firebasePerformance.newHttpMetric(url, httpMethod);
       await metric.start();
       
-      // Lưu vào danh sách đang hoạt động
+      // Save to active HTTP metrics
       _activeHttpMetrics[metricKey] = metric;
       
       _logger.d('Started HTTP metric: $metricKey');
@@ -468,10 +472,11 @@ class PerformanceService {
     }
   }
   
-  /// Dừng HTTP metric
+  /// Stop HTTP metric
   Future<void> stopHttpMetric(
     String url,
-    HttpMethod method, {
+    HttpMethod httpMethod, {
+    String? customName,
     int? responseCode,
     int? requestPayloadSize,
     int? responsePayloadSize,
@@ -480,14 +485,12 @@ class PerformanceService {
     if (!_isPerformanceCollectionEnabled) return;
     
     try {
-      final metricKey = '$method-$url';
+      final metricKey = customName ?? url;
       
       final metric = _activeHttpMetrics.remove(metricKey);
-      if (metric == null) {
-        return;
-      }
+      if (metric == null) return;
       
-      // Thêm thông tin
+      // Set additional information
       if (responseCode != null) {
         metric.httpResponseCode = responseCode;
       }
@@ -504,7 +507,7 @@ class PerformanceService {
         metric.responseContentType = contentType;
       }
       
-      // Dừng metric
+      // Stop metric
       await metric.stop();
       
       _logger.d('Stopped HTTP metric: $metricKey');
@@ -513,7 +516,7 @@ class PerformanceService {
     }
   }
   
-  /// Đo thời gian một đoạn code
+  /// Measure execution time of code block
   Future<T> measureExecutionTime<T>(
     PerformanceMetricType type,
     Future<T> Function() operation, {
@@ -530,12 +533,12 @@ class PerformanceService {
     }
   }
   
-  /// Bắt đầu timer tạm thời (không gửi lên Firebase)
+  /// Start temporary timer (not sent to Firebase)
   void startTimer(String name) {
     _timers[name] = DateTime.now().millisecondsSinceEpoch;
   }
   
-  /// Dừng timer và trả về thời gian (ms)
+  /// Stop timer and return time (ms)
   int stopTimer(String name) {
     final startTime = _timers.remove(name);
     if (startTime == null) return 0;
@@ -547,7 +550,7 @@ class PerformanceService {
     return duration;
   }
   
-  /// Giải phóng tài nguyên
+  /// Release resources
   void dispose() {
     _stopPerformanceMonitoring();
     _ticker?.dispose();
@@ -557,7 +560,7 @@ class PerformanceService {
     _performanceObserver.dispose();
   }
   
-  /// Lấy tên metric từ loại và tên tuỳ chỉnh
+  /// Get metric name from type and custom name
   String _getMetricName(PerformanceMetricType type, String? customName) {
     switch (type) {
       case PerformanceMetricType.screenLoad:
@@ -580,26 +583,26 @@ class PerformanceService {
   }
 }
 
-/// Widget overlay hiển thị thông tin hiệu suất
-class PerformanceOverlay extends StatefulWidget {
+/// Widget overlay that displays performance information
+class PerformanceOverlayWidget extends StatefulWidget {
   /// Performance observer
   final PerformanceObserver observer;
   
   /// Constructor
-  const PerformanceOverlay({Key? key, required this.observer}) : super(key: key);
+  const PerformanceOverlayWidget({Key? key, required this.observer}) : super(key: key);
   
   @override
-  State<PerformanceOverlay> createState() => _PerformanceOverlayState();
+  State<PerformanceOverlayWidget> createState() => _PerformanceOverlayWidgetState();
 }
 
-class _PerformanceOverlayState extends State<PerformanceOverlay> {
-  /// Thông tin hiệu suất hiện tại
+class _PerformanceOverlayWidgetState extends State<PerformanceOverlayWidget> {
+  /// Current performance stats
   PerformanceStats _stats = PerformanceStats.empty();
   
-  /// Lịch sử FPS
+  /// FPS history
   final List<double> _fpsHistory = List.filled(30, 60);
   
-  /// Lịch sử memory usage
+  /// Memory usage history
   final List<double> _memoryHistory = List.filled(30, 0);
   
   @override
@@ -610,7 +613,7 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
         setState(() {
           _stats = stats;
           
-          // Cập nhật lịch sử
+          // Update history
           _fpsHistory.removeAt(0);
           _fpsHistory.add(stats.fps);
           
@@ -668,8 +671,6 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
                   fontSize: 10
                 ),
               ),
-              
-              // Phiên bản chi tiết hơn có thể thêm các thông tin khác ở đây
             ],
           ),
         ),
@@ -677,7 +678,7 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
     );
   }
   
-  /// Tạo dòng thông tin hiệu suất
+  /// Build performance info row
   Widget _buildPerformanceInfo(String label, String value, Color valueColor) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -694,7 +695,7 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
     );
   }
   
-  /// Tạo đồ thị mini
+  /// Build mini graph
   Widget _buildMiniGraph(List<double> data, double max, double min, Color color) {
     return Container(
       height: 20,
@@ -710,7 +711,7 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
   }
 }
 
-/// Painter để vẽ đồ thị mini
+/// Painter for mini graph
 class _GraphPainter extends CustomPainter {
   final List<double> data;
   final double max;

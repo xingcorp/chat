@@ -42,10 +42,7 @@ class ChatSyncService {
   Future<void> initialize() async {
     // Listen to connectivity changes
     _connectivitySubscription = _connectivityService.onConnectivityChanged
-        .listen((result) {
-          final isConnected = result.any((status) => status != ConnectivityResult.none);
-          _handleConnectivityChanged(isConnected);
-        });
+        .listen(_handleConnectivityChanged);
     
     // Set up background channel for receiving messages when app is not in foreground
     final receivePort = ReceivePort();
@@ -64,7 +61,7 @@ class ChatSyncService {
     });
     
     // Restore last sync time from storage
-    final lastSyncTimeStr = _localStorageService.getString('last_sync_time');
+    final lastSyncTimeStr = await _localStorageService.getString('last_sync_time');
     if (lastSyncTimeStr != null) {
       _lastSyncTime = DateTime.parse(lastSyncTimeStr);
     }
@@ -78,77 +75,91 @@ class ChatSyncService {
 
   /// Set up GraphQL subscription for real-time message updates
   void _setupMessageSubscription() {
-    final options = SubscriptionOptions(
-      document: gql(r'''
-        subscription OnNewMessage {
-          messageCreated {
-            id
-            content
-            contentType
-            sender {
+    try {
+      final options = SubscriptionOptions(
+        document: gql(r'''
+          subscription OnNewMessage {
+            messageCreated {
               id
-              username
-              email
-              fullName
-              avatar
-              isOnline
-              lastSeen
+              content
+              contentType
+              sender {
+                id
+                username
+                email
+                fullName
+                avatar
+                isOnline
+                lastSeen
+              }
+              readBy {
+                id
+              }
+              attachments {
+                id
+                fileName
+                size
+                mimeType
+                url
+              }
+              createdAt
+              updatedAt
             }
-            readBy {
-              id
-            }
-            attachments {
-              id
-              fileName
-              size
-              mimeType
-              url
-            }
-            createdAt
-            updatedAt
           }
-        }
-      '''),
-    );
+        '''),
+      );
 
-    _messageSubscription = _chatRepository.client.subscribe(options).listen(
-      (QueryResult result) {
-        if (!result.hasException && result.data != null) {
-          final messageData = result.data?['messageCreated'];
-          if (messageData != null) {
-            final message = ChatMessage.fromJson(messageData);
-            _handleNewMessage(message);
+      _messageSubscription = _chatRepository.client.subscribe(options).listen(
+        (QueryResult result) {
+          if (!result.hasException && result.data != null) {
+            final messageData = result.data?['messageCreated'];
+            if (messageData != null) {
+              final message = ChatMessage.fromJson(messageData);
+              _handleNewMessage(message);
+            }
           }
-        }
-      },
-      onError: (error) {
-        debugPrint('Subscription error: $error');
-        // Attempt to reconnect after delay
-        Future.delayed(const Duration(seconds: 5), _setupMessageSubscription);
-      },
-    );
+        },
+        onError: (error) {
+          debugPrint('Subscription error: $error');
+          // Attempt to reconnect after delay
+          Future.delayed(const Duration(seconds: 5), () {
+            _setupMessageSubscription();
+          });
+        },
+      );
+    } catch (e) {
+      debugPrint('Error setting up message subscription: $e');
+      // Try again after delay
+      Future.delayed(const Duration(seconds: 10), () {
+        _setupMessageSubscription();
+      });
+    }
   }
   
   /// Handle new messages from real-time subscription
-  void _handleNewMessage(ChatMessage message) async {
-    // Save message to local storage
-    await _messageRepository.saveMessageLocally(message);
-    
-    // Check if we need to update chat's last message
-    final chatList = await _chatRepository.getChatsFromLocalStorage();
-    for (final chat in chatList) {
-      if (chat.lastMessage == null || 
-          message.createdAt.isAfter(chat.lastMessage!.createdAt)) {
-        final updatedChat = chat.copyWith(
-          lastMessage: message,
-          updatedAt: message.createdAt,
-        );
-        await _chatRepository.saveChatLocally(updatedChat);
+  Future<void> _handleNewMessage(ChatMessage message) async {
+    try {
+      // Save message to local storage
+      await _messageRepository.saveMessageLocally(message);
+      
+      // Check if we need to update chat's last message
+      final chatList = await _chatRepository.getChatsFromLocalStorage();
+      for (final chat in chatList) {
+        if (chat.id == message.chatId && 
+            (chat.lastMessage == null || message.createdAt.isAfter(chat.lastMessage!.createdAt))) {
+          final updatedChat = chat.copyWith(
+            lastMessage: message,
+            updatedAt: message.createdAt,
+          );
+          await _chatRepository.saveChatLocally(updatedChat);
+        }
       }
+      
+      // Notify listeners about the new message
+      _messageRepository.notifyNewMessage(message);
+    } catch (e) {
+      debugPrint('Error handling new message: $e');
     }
-    
-    // Notify listeners about the new message
-    _messageRepository.notifyNewMessage(message);
   }
   
   /// Start periodic synchronization timer
@@ -161,10 +172,15 @@ class ChatSyncService {
   }
   
   /// Handle connectivity changes
-  Future<void> _handleConnectivityChanged(bool isConnected) async {
+  void _handleConnectivityChanged(bool isConnected) {
     if (isConnected) {
       // When connection is restored, sync data
-      await syncAllChats();
+      syncAllChats();
+      
+      // Also try to restart periodic sync if needed
+      if (_syncTimer == null || !_syncTimer!.isActive) {
+        _startPeriodicSync();
+      }
     } else {
       // Cancel timer when offline
       _syncTimer?.cancel();
@@ -173,12 +189,17 @@ class ChatSyncService {
   
   /// Sync all chats with the server
   Future<void> syncAllChats() async {
-    if (_isSyncing || !_connectivityService.isConnected) {
+    if (_isSyncing || !_connectivityService.hasConnection) {
       return;
     }
     
     try {
       _isSyncing = true;
+      
+      // Sync pending chats first
+      if (_pendingChatsToSync.isNotEmpty) {
+        await syncPendingChats();
+      }
       
       // Fetch fresh chats from server
       final chats = await _chatRepository.getChats();
@@ -208,7 +229,7 @@ class ChatSyncService {
   
   /// Sync messages for a specific chat
   Future<void> syncChatMessages(String chatId) async {
-    if (!_connectivityService.isConnected) {
+    if (!_connectivityService.hasConnection) {
       // Save for later sync when offline
       if (!_pendingChatsToSync.contains(chatId)) {
         _pendingChatsToSync.add(chatId);
@@ -241,7 +262,7 @@ class ChatSyncService {
   
   /// Sync pending chats
   Future<void> syncPendingChats() async {
-    if (!_connectivityService.isConnected) {
+    if (!_connectivityService.hasConnection) {
       return;
     }
     
@@ -275,6 +296,10 @@ class ChatSyncService {
     _syncTimer?.cancel();
     _connectivitySubscription?.cancel();
     _messageSubscription?.cancel();
-    IsolateNameServer.removePortNameMapping(_backgroundChannelPort);
+    
+    final sendPort = IsolateNameServer.lookupPortByName(_backgroundChannelPort);
+    if (sendPort != null) {
+      IsolateNameServer.removePortNameMapping(_backgroundChannelPort);
+    }
   }
 } 

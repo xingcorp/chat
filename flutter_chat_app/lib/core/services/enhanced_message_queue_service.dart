@@ -561,7 +561,7 @@ class EnhancedMessageQueueService {
     await _restoreQueue();
     
     // Theo dõi thay đổi kết nối
-    _connectivitySubscription = _connectivityService.onConnectivityChanged
+    _connectivitySubscription = _connectivityService.onStatusChanged
         .listen((status) => _handleConnectivityChange(status.isNotEmpty));
     
     // Theo dõi thay đổi kết nối realtime
@@ -959,7 +959,7 @@ class EnhancedMessageQueueService {
     
     try {
       // Kiểm tra kết nối mạng
-      final isConnected = await _connectivityService.checkNetworkStatus();
+      final isConnected = await _connectivityService.isConnected();
       if (!isConnected) {
         debugPrint('Không có kết nối mạng, bỏ qua xử lý hàng đợi');
         return;

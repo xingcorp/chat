@@ -4,6 +4,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
+import 'package:get_it/get_it.dart';
 import 'package:image/image.dart' as img;
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
@@ -137,6 +138,7 @@ abstract class BaseMediaProcessingService implements IMediaProcessingService {
 class MobileMediaProcessingService extends BaseMediaProcessingService {
   /// Thư mục tạm để lưu các tệp xử lý
   late final Directory _tempDir;
+  late final IsolateManager _isolateManager;
 
   @override
   Future<void> initialize() async {
@@ -144,6 +146,7 @@ class MobileMediaProcessingService extends BaseMediaProcessingService {
       _tempDir = await getTemporaryDirectory();
       debugPrint('MobileMediaProcessingService đã khởi tạo thành công');
       debugPrint('Thư mục tạm: ${_tempDir.path}');
+      _isolateManager = GetIt.I<IsolateManager>();
     } catch (e) {
       debugPrint('Lỗi khởi tạo MobileMediaProcessingService: $e');
       rethrow;
@@ -534,6 +537,7 @@ class WebMediaProcessingService extends BaseMediaProcessingService {
 class DesktopMediaProcessingService extends BaseMediaProcessingService {
   /// Thư mục tạm để lưu các tệp xử lý
   late final Directory _tempDir;
+  late final IsolateManager _isolateManager;
   
   @override
   Future<void> initialize() async {
@@ -541,6 +545,7 @@ class DesktopMediaProcessingService extends BaseMediaProcessingService {
       _tempDir = await getTemporaryDirectory();
       debugPrint('DesktopMediaProcessingService đã khởi tạo thành công');
       debugPrint('Thư mục tạm: ${_tempDir.path}');
+      _isolateManager = GetIt.I<IsolateManager>();
     } catch (e) {
       debugPrint('Lỗi khởi tạo DesktopMediaProcessingService: $e');
       rethrow;
