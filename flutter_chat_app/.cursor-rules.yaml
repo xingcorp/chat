@@ -1,0 +1,61 @@
+# .cursor-rules.yaml
+# Rules for maintaining a clean, performant, and robust Flutter codebase
+
+file_level_rules:
+  # Encourage modularity by limiting file length. Adjust the number as needed for your team's standards.
+  - rule_id: max_lines
+    max_lines: 400
+    level: warning
+    message: "File exceeds 400 lines. Consider refactoring into smaller, more focused components/classes."
+
+rules:
+  # Discourage leaving debug print statements in the codebase. Use a proper logger instead.
+  - rule_id: no-print
+    match: '\bprint\('
+    level: warning
+    message: "Avoid using print(). Use a dedicated logging package for better control and performance."
+    glob: "lib/**/*.dart"
+
+  # Avoid the null assertion operator (!) as it can lead to runtime crashes. Handle nulls safely.
+  - rule_id: no-bang-operator
+    # Matches an identifier, ], or ) followed by !
+    match: '([a-zA-Z0-9_\]\)]+)\!'
+    level: warning
+    message: "Avoid using the null assertion operator (!). Prefer null-aware operators (?, ??) or explicit null checks for robustness."
+    glob: "lib/**/*.dart"
+
+  # Avoid the 'as' operator for type casting where possible, as it can cause runtime errors.
+  - rule_id: no-as-operator
+    match: '\bas\b'
+    level: warning
+    message: "Avoid using the 'as' operator for type casting. Prefer 'is' checks with smart casting or tryCast methods."
+    glob: "lib/**/*.dart"
+
+  # Encourage standardized TODO comments for better tracking.
+  - rule_id: standardize-todos
+    # Matches // TODO followed by anything except (username):
+    match: '\/\/\s*TODO([^(].*)?$'
+    level: info
+    message: "Consider adding context to TODO comments, e.g., '// TODO(your_username): Explain the task briefly' or '// TODO(#issue_number): Description'."
+    glob: "lib/**/*.dart"
+
+# --- Additional Potential Rules (Consider adding based on project specifics) ---
+#
+# - rule_id: enforce-const
+#   description: Encourage using const constructors for performance. (Note: Often better handled by Dart linters)
+#   match: ... (Regex might be complex/unreliable)
+#   level: info
+#
+# - rule_id: discourage-setstate-in-ui
+#   description: Encourage using dedicated state management instead of setState in complex widgets.
+#   match: 'setState\('
+#   level: warning
+#   message: "Consider using the project's state management solution (e.g., BLoC, Provider, Riverpod) instead of setState directly in potentially complex UI components."
+#   glob: "lib/presentation/ui/**/*.dart" # Adjust glob pattern based on your project structure
+#
+# - rule_id: prefer-final-locals
+#   description: Prefer 'final' for local variables that are not reassigned.
+#   match: '^\s*var\s+\w+\s*=' # Matches local 'var' with initializer
+#   level: info
+#   message: "Consider using 'final' instead of 'var' for local variables if they are not reassigned."
+#   glob: "lib/**/*.dart" 
