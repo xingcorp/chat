@@ -4,7 +4,7 @@
 file_level_rules:
   # Encourage modularity by limiting file length. Adjust the number as needed for your team's standards.
   - rule_id: max_lines
-    max_lines: 400
+    max_lines: 400 # Adjust as needed
     level: warning
     message: "File exceeds 400 lines. Consider refactoring into smaller, more focused components/classes."
 
@@ -39,23 +39,60 @@ rules:
     message: "Consider adding context to TODO comments, e.g., '// TODO(your_username): Explain the task briefly' or '// TODO(#issue_number): Description'."
     glob: "lib/**/*.dart"
 
-# --- Additional Potential Rules (Consider adding based on project specifics) ---
+  # Encourage using BLoC instead of setState in UI components.
+  - rule_id: discourage-setstate-in-ui
+    description: Encourage using BLoC instead of setState in UI components.
+    match: 'setState\('
+    level: warning
+    message: "Prefer using BLoC widgets (BlocBuilder, BlocListener, etc.) for state management instead of calling setState() directly in UI components. Reserve setState for local, ephemeral UI state if necessary."
+    glob: "lib/presentation/**/*.dart" # Target files within the presentation layer
+
+# --- Clean Architecture Enforcement Rules ---
+
+# Prevent direct usage of DataSources in the Presentation layer.
+- rule_id: no-direct-datasource-in-presentation
+  description: Prevent direct usage of DataSources in the Presentation layer.
+  match: 'import.*package:.*/data/datasources/.*'
+  level: error
+  message: "Presentation layer (UI, Blocs) must not import directly from DataSources (data/datasources). Use Domain UseCases or Repositories instead."
+  glob: "lib/presentation/**/*.dart"
+
+# Prevent direct usage of Data Models (DTOs) in the Presentation layer.
+- rule_id: no-direct-model-in-presentation
+  description: Prevent direct usage of Data Models (DTOs) in the Presentation layer.
+  match: 'import.*package:.*/data/models/.*'
+  level: error
+  message: "Presentation layer (UI, Blocs) must not import directly from Data Models (data/models). Use Domain Entities instead."
+  glob: "lib/presentation/**/*.dart"
+
+# Ensure Domain layer remains independent of UI and Infrastructure frameworks.
+- rule_id: no-framework-in-domain
+  description: Ensure Domain layer remains independent of UI and Infrastructure frameworks.
+  match: 'import.*package:(flutter|http|sqflite|shared_preferences)/.*' # Add other infra packages if needed
+  level: error
+  message: "Domain layer (domain/) must not import Flutter framework (package:flutter/...) or infrastructure packages (e.g., http, sqflite). Depend only on Dart core and domain interfaces."
+  glob: "lib/domain/**/*.dart"
+
+# --- General Code Style Rules ---
+
+# Prefer 'final' for local variables that are not reassigned.
+- rule_id: prefer-final-locals
+  description: Prefer 'final' for local variables that are not reassigned.
+  match: '^\s*var\s+\w+\s*=' # Matches local 'var' with initializer
+  level: info
+  message: "Consider using 'final' instead of 'var' for local variables if they are not reassigned."
+  glob: "lib/**/*.dart"
+
+# --- Potential Future Rules (Commented Out) ---
 #
 # - rule_id: enforce-const
 #   description: Encourage using const constructors for performance. (Note: Often better handled by Dart linters)
 #   match: ... (Regex might be complex/unreliable)
 #   level: info
 #
-# - rule_id: discourage-setstate-in-ui
-#   description: Encourage using dedicated state management instead of setState in complex widgets.
-#   match: 'setState\('
+# - rule_id: prefer-usecase-in-bloc
+#   description: Encourage calling UseCases from BLoCs instead of Repositories directly.
+#   match: ... # Needs careful regex
 #   level: warning
-#   message: "Consider using the project's state management solution (e.g., BLoC, Provider, Riverpod) instead of setState directly in potentially complex UI components."
-#   glob: "lib/presentation/ui/**/*.dart" # Adjust glob pattern based on your project structure
-#
-# - rule_id: prefer-final-locals
-#   description: Prefer 'final' for local variables that are not reassigned.
-#   match: '^\s*var\s+\w+\s*=' # Matches local 'var' with initializer
-#   level: info
-#   message: "Consider using 'final' instead of 'var' for local variables if they are not reassigned."
-#   glob: "lib/**/*.dart" 
+#   message: "Consider calling UseCases from BLoCs for complex business logic instead of accessing Repositories directly."
+#   glob: "lib/presentation/blocs/**/*.dart" 
