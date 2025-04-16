@@ -2,58 +2,70 @@ import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/utils/animation_config.dart';
 import 'package:flutter_chat_app/core/utils/device_performance_tier.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:flutter_chat_app/core/services/device_capability_service.dart';
+import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
 import 'package:get_it/get_it.dart';
+
+/// Tipos de transição de página
+enum PageTransitionType {
+  /// Fade e slide da direita
+  fadeAndSlideFromRight,
+  
+  /// Fade e slide da esquerda
+  fadeAndSlideFromLeft,
+
+  fadeAndSlideFromBottom,
+  
+  /// Scale e fade do centro
+  scaleAndFade,
+  
+  /// Fade simples
+  fade,
+
+  scale,
+  
+  /// Slide de baixo para cima
+  slideFromBottom,
+  
+  /// Slide simples da direita
+  slideFromRight,
+  
+  /// Transição material padrão
+  material,
+  
+  /// Transição cupertino padrão
+  cupertino,
+  
+  /// Sem animação
+  none,
+}
+
+/// Níveis de animação para configurar a experiência do usuário
+enum AnimationLevel {
+  /// Animações mínimas (dispositivos de baixo desempenho)
+  low,
+  
+  /// Animações padrão (dispositivos de médio desempenho)
+  medium,
+  
+  /// Animações ricas (dispositivos de alto desempenho)
+  high,
+}
 
 /// Service quản lý animation trong ứng dụng
 @singleton
 class AnimationService {
+  /// Service đánh giá khả năng thiết bị
+  final DeviceCapabilityService? _deviceCapabilityService;
+  
+  /// Monitor de desempenho
+  final PerformanceMonitor? _performanceMonitor;
+  
   /// Cấp hiệu năng thiết bị hiện tại
   late DevicePerformanceTier _currentPerformanceTier;
-  
-  /// Cấu hình animation hiện tại
-  late AnimationConfig _config;
-  
-  /// Getter cho cấu hình animation
-  AnimationConfig get config => _config;
-  
-  /// Constructor
-  AnimationService();
-  
-  /// Khởi tạo service
-  Future<void> initialize() async {
-    // Phát hiện khả năng thiết bị
-    _currentPerformanceTier = await DeviceCapabilityDetector.detectCapabilities();
-    
-    // Tạo cấu hình animation dựa trên khả năng thiết bị
-    _config = AnimationConfig(_currentPerformanceTier);
-    
-    print('Animation Service initialized with tier: $_currentPerformanceTier');
-  }
-  
-  /// Reset cấu hình sau khi thay đổi cài đặt
-  Future<void> resetConfig() async {
-    _currentPerformanceTier = await DeviceCapabilityDetector.detectCapabilities();
-    _config = AnimationConfig(_currentPerformanceTier);
-  }
-  
-  /// Ghi đè cấp hiệu năng (hữu ích cho kiểm thử)
-  void overridePerformanceTier(DevicePerformanceTier tier) {
-    _currentPerformanceTier = tier;
-    _config = AnimationConfig(tier);
-    
-    // Cập nhật vào SharedPreferences (không đợi kết quả)
-    DeviceCapabilityDetector.overridePerformanceTier(tier);
-  }
-}
-
-/// Service quản lý cấu hình animation toàn ứng dụng
-/// Dựa trên khả năng thiết bị để tối ưu hiệu suất
-class AnimationService {
-  /// Service đánh giá khả năng thiết bị
-  final DeviceCapabilityService _deviceCapabilityService;
   
   /// Cấu hình animation hiện tại
   late AnimationConfig _config;
@@ -61,31 +73,137 @@ class AnimationService {
   /// Có đang trong chế độ tiết kiệm điện không
   bool _isLowPowerMode = false;
   
-  /// Constructor
-  AnimationService(this._deviceCapabilityService) {
-    // Khởi tạo cấu hình mặc định
-    _config = _createConfig(_deviceCapabilityService.currentLevel);
-    
-    // Lắng nghe thay đổi cấp độ
-    _deviceCapabilityService.onLevelChange.listen(_handleLevelChange);
-  }
+  /// Should preload images for optimized transitions
+  bool _shouldPreloadImages = true;
   
-  /// Getter cho cấu hình hiện tại
+  /// Current animation frame rate (for adaptive timing)
+  double _currentFrameRate = 60.0;
+  
+  /// Contador de frames para monitorar o desempenho
+  int _frameCount = 0;
+  
+  /// Timestamp do último check de taxa de quadros
+  DateTime _lastFrameRateCheck = DateTime.now();
+  
+  /// Metric collection
+  bool _collectMetrics = true;
+  
+  /// Map of animation durations for performance analysis
+  final Map<String, List<Duration>> _animationMetrics = {};
+  
+  /// Getter cho cấu hình animation
   AnimationConfig get config => _config;
   
-  /// Xử lý khi cấp độ animation thay đổi
-  void _handleLevelChange(AnimationLevel level) {
-    _config = _createConfig(level);
+  /// Get the current animation level based on performance tier
+  AnimationLevel get currentLevel {
+    switch (_currentPerformanceTier) {
+      case DevicePerformanceTier.low:
+        return AnimationLevel.low;
+      case DevicePerformanceTier.medium:
+        return AnimationLevel.medium;
+      case DevicePerformanceTier.high:
+        return AnimationLevel.high;
+    }
+  }
+  
+  /// Should preload images for smoother transitions
+  bool get shouldPreloadImages => _shouldPreloadImages;
+  
+  /// Constructor
+  AnimationService([this._deviceCapabilityService, this._performanceMonitor]);
+  
+  /// Khởi tạo service
+  Future<void> initialize() async {
+    // Phát hiện khả năng thiết bị
+    _currentPerformanceTier = await DeviceCapabilityDetector.detectCapabilities();
+    
+    // Tạo cấu hình animation dựa trên khả năng thiết bị
+    _config = _createConfig(currentLevel);
+    
+    // Start frame monitoring
+    _startFrameMonitoring();
+    
+    print('Animation Service initialized with tier: $_currentPerformanceTier');
+  }
+  
+  /// Start monitoring frame rate to adapt animations
+  void _startFrameMonitoring() {
+    // Use SchedulerBinding to monitor frame callbacks
+    SchedulerBinding.instance.addPostFrameCallback(_monitorFrameRate);
+  }
+  
+  /// Monitor frame rate to adjust animations
+  void _monitorFrameRate(Duration timeStamp) {
+    _frameCount++;
+    
+    final now = DateTime.now();
+    final elapsed = now.difference(_lastFrameRateCheck);
+    
+    // Calculate frame rate every second
+    if (elapsed.inMilliseconds >= 1000) {
+      final newFrameRate = _frameCount * 1000 / elapsed.inMilliseconds;
+      
+      // Use exponential moving average for smoother transitions
+      _currentFrameRate = _currentFrameRate * 0.7 + newFrameRate * 0.3;
+      
+      // Reset counters
+      _frameCount = 0;
+      _lastFrameRateCheck = now;
+      
+      // Adapt animations if framerate drops
+      _adaptToFrameRate();
+    }
+    
+    // Continue monitoring
+    SchedulerBinding.instance.addPostFrameCallback(_monitorFrameRate);
+  }
+  
+  /// Adapt animations to current frame rate
+  void _adaptToFrameRate() {
+    // If frame rate drops below 40fps, adjust animation settings
+    if (_currentFrameRate < 40 && currentLevel != AnimationLevel.low) {
+      // Temporarily downgrade animations
+      _config = _createConfig(AnimationLevel.low);
+      
+      // Record metric
+      if (_performanceMonitor != null) {
+        _performanceMonitor!.addTraceMetric(
+          TraceType.custom,
+          customTraceName: 'animation_performance',
+          metricName: 'framerate_drop',
+          value: _currentFrameRate.toInt(),
+        );
+      }
+    } 
+    // If frame rate improves, restore original settings
+    else if (_currentFrameRate > 55 && !_isLowPowerMode) {
+      _config = _createConfig(currentLevel);
+    }
+  }
+  
+  /// Reset cấu hình sau khi thay đổi cài đặt
+  Future<void> resetConfig() async {
+    _currentPerformanceTier = await DeviceCapabilityDetector.detectCapabilities();
+    _config = _createConfig(currentLevel);
+  }
+  
+  /// Ghi đè cấp hiệu năng (hữu ích cho kiểm thử)
+  void overridePerformanceTier(DevicePerformanceTier tier) {
+    _currentPerformanceTier = tier;
+    _config = _createConfig(currentLevel);
+    
+    // Cập nhật vào SharedPreferences (không đợi kết quả)
+    DeviceCapabilityDetector.overridePerformanceTier(tier);
   }
   
   /// Tạo cấu hình dựa trên cấp độ animation
   AnimationConfig _createConfig(AnimationLevel level) {
     switch (level) {
       case AnimationLevel.low:
-        return AnimationConfig(
-          defaultDuration: const Duration(milliseconds: 150),
-          longDuration: const Duration(milliseconds: 300),
-          fastDuration: const Duration(milliseconds: 100),
+        return const AnimationConfig(
+          defaultDuration: Duration(milliseconds: 150),
+          longDuration: Duration(milliseconds: 300),
+          fastDuration: Duration(milliseconds: 100),
           useHeroAnimations: false,
           useExtendedTransitions: false,
           useMicroAnimations: false,
@@ -95,10 +213,10 @@ class AnimationService {
         );
         
       case AnimationLevel.medium:
-        return AnimationConfig(
-          defaultDuration: const Duration(milliseconds: 250),
-          longDuration: const Duration(milliseconds: 400),
-          fastDuration: const Duration(milliseconds: 150),
+        return const AnimationConfig(
+          defaultDuration: Duration(milliseconds: 250),
+          longDuration: Duration(milliseconds: 400),
+          fastDuration: Duration(milliseconds: 150),
           useHeroAnimations: true,
           useExtendedTransitions: true,
           useMicroAnimations: true,
@@ -108,10 +226,10 @@ class AnimationService {
         );
         
       case AnimationLevel.high:
-        return AnimationConfig(
-          defaultDuration: const Duration(milliseconds: 300),
-          longDuration: const Duration(milliseconds: 500),
-          fastDuration: const Duration(milliseconds: 200),
+        return const AnimationConfig(
+          defaultDuration: Duration(milliseconds: 300),
+          longDuration: Duration(milliseconds: 500),
+          fastDuration: Duration(milliseconds: 200),
           useHeroAnimations: true,
           useExtendedTransitions: true,
           useMicroAnimations: true,
@@ -132,9 +250,14 @@ class AnimationService {
         _config = _createConfig(AnimationLevel.low);
       } else {
         // Khôi phục về cấp độ ban đầu
-        _config = _createConfig(_deviceCapabilityService.currentLevel);
+        _config = _createConfig(currentLevel);
       }
     }
+  }
+  
+  /// Toggle image preloading
+  void setImagePreloading(bool enabled) {
+    _shouldPreloadImages = enabled;
   }
   
   /// Tạo PageRoute với animation phù hợp
@@ -144,11 +267,31 @@ class AnimationService {
     bool fullscreenDialog = false,
     PageTransitionType transitionType = PageTransitionType.fadeAndSlideFromRight,
   }) {
-    // Nếu thiết bị yếu, luôn dùng transition đơn giản
-    if (_deviceCapabilityService.currentLevel == AnimationLevel.low || 
+    final type = _currentFrameRate < 30 ? PageTransitionType.none : transitionType;
+    
+    // Measure performance if enabled
+    final String routeName = settings?.name ?? 'unknown_route';
+    final startTime = _collectMetrics ? DateTime.now() : null;
+    
+    // Log transition start
+    if (_performanceMonitor != null) {
+      _performanceMonitor!.startTrace(
+        TraceType.navigation,
+        attributes: {'route': routeName},
+      );
+    }
+    
+    // Nếu thiết bị yếu hoặc cấu hình không dùng transition nâng cao
+    if (type == PageTransitionType.none || 
+        currentLevel == AnimationLevel.low || 
         !_config.useExtendedTransitions) {
       return MaterialPageRoute<T>(
-        builder: builder,
+        builder: (context) {
+          if (startTime != null) {
+            _recordTransitionCompletion(routeName, startTime);
+          }
+          return builder(context);
+        },
         settings: settings,
         fullscreenDialog: fullscreenDialog,
       );
@@ -157,18 +300,51 @@ class AnimationService {
     // Sử dụng custom transition theo loại
     return PageRouteBuilder<T>(
       settings: settings,
-      pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        if (startTime != null) {
+          _recordTransitionCompletion(routeName, startTime);
+        }
+        return builder(context);
+      },
       transitionDuration: _config.defaultDuration,
       fullscreenDialog: fullscreenDialog,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         return _buildTransition(
-          transitionType,
+          type,
           animation.drive(CurveTween(curve: _config.defaultCurve)),
           secondaryAnimation.drive(CurveTween(curve: _config.defaultCurve)),
           child,
         );
       },
     );
+  }
+  
+  /// Record transition completion for performance analysis
+  void _recordTransitionCompletion(String routeName, DateTime startTime) {
+    // Complete performance trace
+    if (_performanceMonitor != null) {
+      _performanceMonitor!.stopTrace(TraceType.navigation);
+    }
+    
+    if (_collectMetrics) {
+      final duration = DateTime.now().difference(startTime);
+      
+      if (!_animationMetrics.containsKey(routeName)) {
+        _animationMetrics[routeName] = [];
+      }
+      
+      // Keep last 5 measurements
+      final metrics = _animationMetrics[routeName]!;
+      metrics.add(duration);
+      if (metrics.length > 5) {
+        metrics.removeAt(0);
+      }
+      
+      // Report metrics if slow
+      if (duration.inMilliseconds > 500) {
+        _logger('Slow page transition to $routeName: ${duration.inMilliseconds}ms');
+      }
+    }
   }
   
   /// Tạo transition widget theo loại
@@ -202,39 +378,48 @@ class AnimationService {
             child: child,
           ),
         );
-        
-      case PageTransitionType.fadeAndSlideFromBottom:
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0.0, 0.25),
-            end: Offset.zero,
-          ).animate(animation),
+      
+      case PageTransitionType.scaleAndFade:
+        return ScaleTransition(
+          scale: Tween<double>(begin: 0.9, end: 1.0).animate(animation),
           child: FadeTransition(
             opacity: animation,
             child: child,
           ),
         );
-        
+      
       case PageTransitionType.fade:
         return FadeTransition(
           opacity: animation,
           child: child,
         );
-        
-      case PageTransitionType.scale:
-        return ScaleTransition(
-          scale: Tween<double>(
-            begin: 0.95,
-            end: 1.0,
+      
+      case PageTransitionType.slideFromBottom:
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.0, 0.25),
+            end: Offset.zero,
           ).animate(animation),
-          child: FadeTransition(
-            opacity: animation,
-            child: child,
-          ),
+          child: child,
         );
-        
+      
+      case PageTransitionType.slideFromRight:
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1.0, 0.0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        );
+      
+      case PageTransitionType.material:
+      case PageTransitionType.cupertino:
       case PageTransitionType.none:
-        return child;
+      default:
+        return FadeTransition(
+          opacity: animation,
+          child: child,
+        );
     }
   }
   
@@ -286,7 +471,15 @@ class AnimationService {
       case HapticFeedbackType.vibrate:
         await HapticFeedback.vibrate();
         break;
+      case HapticFeedbackType.error:
+        await HapticFeedback.vibrate();
+        break;
     }
+  }
+  
+  /// Simple logger
+  void _logger(String message) {
+    print('AnimationService: $message');
   }
 }
 
@@ -333,43 +526,46 @@ class AnimationConfig {
   });
 }
 
-/// Kiểu chuyển trang
-enum PageTransitionType {
-  /// Fade và trượt từ phải sang
-  fadeAndSlideFromRight,
-  
-  /// Fade và trượt từ trái sang
-  fadeAndSlideFromLeft,
-  
-  /// Fade và trượt từ dưới lên
-  fadeAndSlideFromBottom,
-  
-  /// Chỉ fade
-  fade,
-  
-  /// Hiệu ứng phóng to
-  scale,
-  
-  /// Không có hiệu ứng
-  none,
-}
-
 /// Kiểu haptic feedback
 enum HapticFeedbackType {
-  /// Nhẹ
+  /// Phản hồi nhẹ
   light,
   
-  /// Vừa
+  /// Phản hồi trung bình
   medium,
   
-  /// Mạnh
+  /// Phản hồi nặng
   heavy,
   
-  /// Selection
+  /// Phản hồi khi chọn
   selection,
   
-  /// Rung
+  /// Phản hồi khi có lỗi
+  error,
+  
+  /// Phản hồi rung
   vibrate,
+}
+
+/// Trạng thái animation cho components
+enum AnimationState {
+  /// Đang hiển thị bình thường
+  normal,
+  
+  /// Đang hiển thị loading
+  loading,
+  
+  /// Đang disabled
+  disabled,
+  
+  /// Đang chọn
+  selected,
+  
+  /// Đang rung lắc
+  wobble,
+  
+  /// Đang pulse để thu hút sự chú ý
+  pulse,
 }
 
 /// Utility class cho page transitions
@@ -463,6 +659,37 @@ class PageTransitions {
         
       case PageTransitionType.none:
         return child;
+
+      case PageTransitionType.slideFromBottom:
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.0, 0.25),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        );
+
+      case PageTransitionType.slideFromRight:
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1.0, 0.0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        );
+
+      case PageTransitionType.scaleAndFade:
+        // TODO: Handle this case.
+      case PageTransitionType.material:
+        // TODO: Handle this case.
+      case PageTransitionType.cupertino:
+
+
+      default:
+        return FadeTransition(
+          opacity: animation,
+          child: child,
+        );
     }
   }
 } 

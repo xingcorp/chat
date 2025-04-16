@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
@@ -9,8 +10,11 @@ import 'package:logger/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:video_compress/video_compress.dart';
+import 'package:get_it/get_it.dart';
 
 import 'app_cache_manager.dart';
+import '../utils/isolate_manager.dart';
+import '../utils/device_performance_tier.dart';
 
 /// Manager quản lý cache cho file media (hình ảnh, video...)
 class MediaCacheManager {
@@ -26,6 +30,21 @@ class MediaCacheManager {
   /// AppCacheManager instance
   final AppCacheManager _cacheManager = AppCacheManager();
   
+  /// IsolateManager for background processing
+  late final IsolateManager _isolateManager;
+  
+  /// Device performance tier for adaptive behavior
+  DevicePerformanceTier _performanceTier = DevicePerformanceTier.medium;
+  
+  /// Số lượng tối đa các ảnh được tiền tải cùng lúc
+  int _maxConcurrentPreloads = 3;
+  
+  /// Hàng đợi tiền tải
+  final List<String> _preloadQueue = [];
+  
+  /// Đang tiền tải
+  final Set<String> _currentlyPreloading = {};
+  
   /// Sizes tối ưu cho thumbnails
   static const int THUMBNAIL_SIZE_SMALL = 100;
   static const int THUMBNAIL_SIZE_MEDIUM = 300;
@@ -38,10 +57,50 @@ class MediaCacheManager {
   static const int MAX_OPTIMIZE_WIDTH = 1920;
   
   /// Private constructor
-  MediaCacheManager._internal();
+  MediaCacheManager._internal() {
+    _initializeDependencies();
+  }
+  
+  /// Khởi tạo các dependencies
+  Future<void> _initializeDependencies() async {
+    try {
+      // Lấy IsolateManager từ DI container
+      _isolateManager = GetIt.I<IsolateManager>();
+      
+      // Xác định performance tier
+      _performanceTier = await DeviceCapabilityDetector.detectCapabilities();
+      
+      // Điều chỉnh cấu hình dựa trên performance tier
+      _adjustSettings();
+      
+      _logger.i('MediaCacheManager đã khởi tạo: Performance tier = $_performanceTier');
+    } catch (e) {
+      _logger.e('Lỗi khi khởi tạo MediaCacheManager: $e');
+    }
+  }
+  
+  /// Điều chỉnh cấu hình dựa trên khả năng thiết bị
+  void _adjustSettings() {
+    switch (_performanceTier) {
+      case DevicePerformanceTier.low:
+        _maxConcurrentPreloads = 1;
+        break;
+      case DevicePerformanceTier.medium:
+        _maxConcurrentPreloads = 3;
+        break;
+      case DevicePerformanceTier.high:
+        _maxConcurrentPreloads = 5;
+        break;
+    }
+  }
   
   /// Lấy hình ảnh với kích thước tối ưu
-  Future<File> getOptimizedImage(String url, {int? width, int? height}) async {
+  Future<File> getOptimizedImage(
+    String url, {
+    int? width,
+    int? height,
+    bool useIsolate = true,
+  }) async {
     // Tạo key dựa vào URL và kích thước yêu cầu
     final cacheKey = _generateCacheKey(url, width, height);
     
@@ -54,25 +113,82 @@ class MediaCacheManager {
       
       // Nếu không có trong cache, tải và tối ưu
       final originalFile = await _cacheManager.getMediaFile(url);
-      final optimizedFile = await _optimizeImage(
-        originalFile,
-        width: width,
-        height: height,
-      );
       
-      // Lưu phiên bản tối ưu vào cache
-      final optimizedBytes = await optimizedFile.readAsBytes();
-      await _cacheManager.cacheFile(cacheKey, optimizedBytes);
-      
-      return optimizedFile;
+      if (useIsolate && _isolateManager != null) {
+        // Xử lý trong isolate để không block main thread
+        final optimizedBytes = await _processImageInIsolate(
+          originalFile.path,
+          width: width,
+          height: height,
+        );
+        
+        // Lưu vào file tạm
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/${path.basename(cacheKey)}');
+        await tempFile.writeAsBytes(optimizedBytes);
+        
+        // Lưu vào cache
+        await _cacheManager.cacheFile(cacheKey, optimizedBytes);
+        
+        return tempFile;
+      } else {
+        // Xử lý trong main thread nếu không dùng isolate
+        final optimizedFile = await _optimizeImage(
+          originalFile,
+          width: width,
+          height: height,
+        );
+        
+        // Lưu phiên bản tối ưu vào cache
+        final optimizedBytes = await optimizedFile.readAsBytes();
+        await _cacheManager.cacheFile(cacheKey, optimizedBytes);
+        
+        return optimizedFile;
+      }
     } catch (e) {
       _logger.e('Lỗi khi lấy hình ảnh tối ưu: $e');
       rethrow;
     }
   }
   
+  /// Xử lý ảnh trong isolate
+  Future<Uint8List> _processImageInIsolate(
+    String imagePath, {
+    int? width,
+    int? height,
+  }) async {
+    // Tạo một task ID duy nhất
+    final taskId = 'img_optimize_${DateTime.now().millisecondsSinceEpoch}';
+    
+    // Chuẩn bị dữ liệu cho isolate
+    final params = {
+      'width': width,
+      'height': height,
+      'quality': DEFAULT_COMPRESS_QUALITY,
+    };
+    
+    // Thực thi trong isolate
+    final result = await _isolateManager.processInBackground(
+      taskType: IsolateTaskType.imageProcessing,
+      taskId: taskId,
+      data: imagePath,
+      params: params,
+      priority: TaskPriority.medium,
+    );
+    
+    if (result.error != null) {
+      throw Exception('Lỗi khi xử lý ảnh trong isolate: ${result.error}');
+    }
+    
+    return result.result as Uint8List;
+  }
+  
   /// Tạo và lấy thumbnail cho một hình ảnh
-  Future<File> getImageThumbnail(String imageUrl, {int size = THUMBNAIL_SIZE_MEDIUM}) async {
+  Future<File> getImageThumbnail(
+    String imageUrl, {
+    int size = THUMBNAIL_SIZE_MEDIUM,
+    bool useIsolate = true,
+  }) async {
     final thumbnailCacheKey = '${imageUrl}_thumb_$size';
     
     try {
@@ -82,45 +198,132 @@ class MediaCacheManager {
         return await _cacheManager.getMediaFile(thumbnailCacheKey, thumbnail: true);
       }
       
-      // Nếu không có, tải ảnh gốc và tạo thumbnail
+      // Nếu không có, tải ảnh gốc
       final originalFile = await _cacheManager.getMediaFile(imageUrl);
-      final thumbnailFile = await _generateImageThumbnail(originalFile.path, size);
       
-      // Lưu thumbnail vào cache
-      final thumbnailBytes = await thumbnailFile.readAsBytes();
-      await _cacheManager.cacheFile(thumbnailCacheKey, thumbnailBytes, thumbnail: true);
-      
-      return thumbnailFile;
+      if (useIsolate && _isolateManager != null) {
+        // Xử lý trong isolate 
+        final thumbnailBytes = await _generateThumbnailInIsolate(
+          originalFile.path,
+          size: size,
+        );
+        
+        // Lưu vào file tạm
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/${path.basename(thumbnailCacheKey)}');
+        await tempFile.writeAsBytes(thumbnailBytes);
+        
+        // Lưu thumbnail vào cache
+        await _cacheManager.cacheFile(thumbnailCacheKey, thumbnailBytes, thumbnail: true);
+        
+        return tempFile;
+      } else {
+        // Xử lý trong main thread
+        final thumbnailFile = await _generateImageThumbnail(originalFile.path, size);
+        
+        // Lưu thumbnail vào cache
+        final thumbnailBytes = await thumbnailFile.readAsBytes();
+        await _cacheManager.cacheFile(thumbnailCacheKey, thumbnailBytes, thumbnail: true);
+        
+        return thumbnailFile;
+      }
     } catch (e) {
       _logger.e('Lỗi khi tạo thumbnail hình ảnh: $e');
       rethrow;
     }
   }
   
-  /// Lấy thumbnail cho video
-  Future<File> getVideoThumbnail(String videoUrl, {int quality = 50}) async {
-    final thumbnailCacheKey = '${videoUrl}_video_thumb';
+  /// Tạo thumbnail trong isolate
+  Future<Uint8List> _generateThumbnailInIsolate(
+    String imagePath, {
+    required int size,
+  }) async {
+    // Tạo task ID duy nhất
+    final taskId = 'thumb_gen_${DateTime.now().millisecondsSinceEpoch}';
     
-    try {
-      // Kiểm tra xem thumbnail đã có trong cache chưa
-      if (await _cacheManager.isMediaCached(thumbnailCacheKey, thumbnail: true)) {
-        _logger.v('Lấy thumbnail video từ cache: $thumbnailCacheKey');
-        return await _cacheManager.getMediaFile(thumbnailCacheKey, thumbnail: true);
-      }
-      
-      // Nếu không có, tải video và tạo thumbnail
-      final videoFile = await _cacheManager.getMediaFile(videoUrl);
-      final thumbnailFile = await _generateVideoThumbnail(videoFile.path, quality);
-      
-      // Lưu thumbnail vào cache
-      final thumbnailBytes = await thumbnailFile.readAsBytes();
-      await _cacheManager.cacheFile(thumbnailCacheKey, thumbnailBytes, thumbnail: true);
-      
-      return thumbnailFile;
-    } catch (e) {
-      _logger.e('Lỗi khi tạo thumbnail video: $e');
-      rethrow;
+    // Chuẩn bị tham số
+    final params = {
+      'size': size,
+      'quality': 80, // Chất lượng cho thumbnail
+    };
+    
+    // Thực thi trong isolate
+    final result = await _isolateManager.processInBackground(
+      taskType: IsolateTaskType.imageProcessing,
+      taskId: taskId,
+      data: imagePath,
+      params: params,
+      priority: TaskPriority.low, // Thumbnail là ưu tiên thấp
+    );
+    
+    if (result.error != null) {
+      throw Exception('Lỗi khi tạo thumbnail trong isolate: ${result.error}');
     }
+    
+    return result.result as Uint8List;
+  }
+  
+  /// Tiền tải các ảnh và thumbnail dựa trên danh sách URL
+  Future<void> preloadImages(
+    List<String> imageUrls, {
+    int thumbnailSize = THUMBNAIL_SIZE_SMALL,
+    bool preloadFullImages = false,
+  }) async {
+    if (imageUrls.isEmpty) return;
+    
+    // Thêm vào hàng đợi tiền tải
+    for (final url in imageUrls) {
+      if (!_preloadQueue.contains(url) && !_currentlyPreloading.contains(url)) {
+        _preloadQueue.add(url);
+      }
+    }
+    
+    // Bắt đầu tiền tải nếu chưa đạt số lượng tối đa
+    _processPreloadQueue(thumbnailSize, preloadFullImages);
+  }
+  
+  /// Xử lý hàng đợi tiền tải
+  void _processPreloadQueue(int thumbnailSize, bool preloadFullImages) {
+    if (_preloadQueue.isEmpty || _currentlyPreloading.length >= _maxConcurrentPreloads) {
+      return;
+    }
+    
+    // Lấy URL tiếp theo từ hàng đợi
+    final url = _preloadQueue.removeAt(0);
+    _currentlyPreloading.add(url);
+    
+    // Tiền tải bất đồng bộ
+    () async {
+      try {
+        // Tiền tải thumbnail
+        await getImageThumbnail(url, size: thumbnailSize, useIsolate: true);
+        
+        // Tiền tải ảnh đầy đủ nếu được yêu cầu
+        if (preloadFullImages) {
+          await getOptimizedImage(url, useIsolate: true);
+        }
+      } catch (e) {
+        _logger.w('Lỗi khi tiền tải ảnh $url: $e');
+      } finally {
+        _currentlyPreloading.remove(url);
+        
+        // Xử lý URL tiếp theo trong hàng đợi
+        _processPreloadQueue(thumbnailSize, preloadFullImages);
+      }
+    }();
+    
+    // Nếu vẫn có thể xử lý thêm, tiếp tục lấy từ hàng đợi
+    if (_currentlyPreloading.length < _maxConcurrentPreloads) {
+      _processPreloadQueue(thumbnailSize, preloadFullImages);
+    }
+  }
+  
+  /// Tạo key cho cache dựa trên URL và kích thước
+  String _generateCacheKey(String url, int? width, int? height) {
+    if (width == null && height == null) {
+      return url;
+    }
+    return '${url}_w${width ?? 0}_h${height ?? 0}';
   }
   
   /// Tối ưu hình ảnh trước khi tải lên
@@ -245,12 +448,53 @@ class MediaCacheManager {
     // Nhưng vẫn giữ active URLs
   }
   
-  /// Tạo key cho cache dựa vào URL và kích thước
-  String _generateCacheKey(String url, int? width, int? height) {
-    if (width != null || height != null) {
-      return '${url}_w${width ?? 0}_h${height ?? 0}';
+  /// Tạo đường dẫn file tạm
+  Future<String> _getTemporaryFilePath(String extension) async {
+    final tempDir = await getTemporaryDirectory();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return path.join(tempDir.path, 'media_$timestamp$extension');
+  }
+  
+  /// Lấy thumbnail cho video
+  Future<File> getVideoThumbnail(String videoUrl, {int quality = 50}) async {
+    final thumbnailCacheKey = '${videoUrl}_video_thumb';
+    
+    try {
+      // Kiểm tra xem thumbnail đã có trong cache chưa
+      if (await _cacheManager.isMediaCached(thumbnailCacheKey, thumbnail: true)) {
+        _logger.v('Lấy thumbnail video từ cache: $thumbnailCacheKey');
+        return await _cacheManager.getMediaFile(thumbnailCacheKey, thumbnail: true);
+      }
+      
+      // Nếu không có, tải video và tạo thumbnail
+      final videoFile = await _cacheManager.getMediaFile(videoUrl);
+      final thumbnailFile = await _generateVideoThumbnail(videoFile.path, quality);
+      
+      // Lưu thumbnail vào cache
+      final thumbnailBytes = await thumbnailFile.readAsBytes();
+      await _cacheManager.cacheFile(thumbnailCacheKey, thumbnailBytes, thumbnail: true);
+      
+      return thumbnailFile;
+    } catch (e) {
+      _logger.e('Lỗi khi tạo thumbnail video: $e');
+      rethrow;
     }
-    return url;
+  }
+  
+  /// Tạo thumbnail cho video
+  Future<File> _generateVideoThumbnail(String videoPath, int quality) async {
+    try {
+      final thumbnailFile = await VideoCompress.getFileThumbnail(
+        videoPath,
+        quality: quality,
+        position: -1, // -1 lấy frame ở giữa video
+      );
+      
+      return thumbnailFile;
+    } catch (e) {
+      _logger.e('Lỗi khi tạo thumbnail cho video: $e');
+      rethrow;
+    }
   }
   
   /// Phương thức tối ưu hình ảnh
@@ -311,29 +555,6 @@ class MediaCacheManager {
       _logger.e('Lỗi khi tạo thumbnail hình ảnh: $e');
       rethrow;
     }
-  }
-  
-  /// Tạo thumbnail cho video
-  Future<File> _generateVideoThumbnail(String videoPath, int quality) async {
-    try {
-      final thumbnailFile = await VideoCompress.getFileThumbnail(
-        videoPath,
-        quality: quality,
-        position: -1, // -1 lấy frame ở giữa video
-      );
-      
-      return thumbnailFile;
-    } catch (e) {
-      _logger.e('Lỗi khi tạo thumbnail cho video: $e');
-      rethrow;
-    }
-  }
-  
-  /// Tạo đường dẫn file tạm
-  Future<String> _getTemporaryFilePath(String extension) async {
-    final tempDir = await getTemporaryDirectory();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    return path.join(tempDir.path, 'media_$timestamp$extension');
   }
 }
 

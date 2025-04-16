@@ -53,19 +53,23 @@ class VirtualScrollController {
   /// ID of the oldest message in the buffer
   String? get oldestBufferedMessageId {
     if (_bufferZoneMessageIds.isEmpty) return null;
-    return _allMessageIds.firstWhere(
-      (id) => _bufferZoneMessageIds.contains(id), 
-      orElse: () => '',
-    );
+    for (final id in _allMessageIds) {
+      if (_bufferZoneMessageIds.contains(id)) {
+        return id;
+      }
+    }
+    return null;
   }
   
   /// ID of the newest message in the buffer
   String? get newestBufferedMessageId {
     if (_bufferZoneMessageIds.isEmpty) return null;
-    return _allMessageIds.lastWhere(
-      (id) => _bufferZoneMessageIds.contains(id), 
-      orElse: () => '',
-    );
+    for (int i = _allMessageIds.length - 1; i >= 0; i--) {
+      if (_bufferZoneMessageIds.contains(_allMessageIds[i])) {
+        return _allMessageIds[i];
+      }
+    }
+    return null;
   }
   
   /// Total number of messages (including those not in memory)
@@ -79,20 +83,28 @@ class VirtualScrollController {
   
   /// Currently visible messages (sorted newest to oldest)
   List<ChatMessage> get visibleMessages {
-    return _visibleMessageIds
-        .map((id) => _messageCache[id])
-        .whereType<ChatMessage>()
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final result = <ChatMessage>[];
+    for (final id in _visibleMessageIds) {
+      final message = _messageCache[id];
+      if (message != null) {
+        result.add(message);
+      }
+    }
+    result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return result;
   }
   
   /// All currently buffered messages (sorted newest to oldest)
   List<ChatMessage> get bufferedMessages {
-    return _bufferZoneMessageIds
-        .map((id) => _messageCache[id])
-        .whereType<ChatMessage>()
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final result = <ChatMessage>[];
+    for (final id in _bufferZoneMessageIds) {
+      final message = _messageCache[id];
+      if (message != null) {
+        result.add(message);
+      }
+    }
+    result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return result;
   }
   
   VirtualScrollController({
@@ -106,9 +118,15 @@ class VirtualScrollController {
   
   /// Initialize with a list of messages
   void initialize(List<ChatMessage> initialMessages) {
-    _performance.startTrace('virtual_scroll_init');
+    _performance.startTrace(TraceType.custom, customTraceName: 'virtual_scroll_init');
     
-    // Sort newest to oldest
+    // Clear existing data
+    _messageCache.clear();
+    _allMessageIds.clear();
+    _bufferZoneMessageIds.clear();
+    _visibleMessageIds.clear();
+    
+    // Sort newest to oldest for initialization
     initialMessages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     
     // Add to cache and IDs list
@@ -128,7 +146,7 @@ class VirtualScrollController {
     // Initialize buffer zone
     _updateBufferZone();
     
-    _performance.stopTrace('virtual_scroll_init');
+    _performance.stopTrace(TraceType.custom, customTraceName: 'virtual_scroll_init');
   }
   
   /// Update which messages are visible
@@ -193,21 +211,56 @@ class VirtualScrollController {
     }
     
     _isLoadingEarlier = true;
-    _performance.startTrace('load_earlier_messages');
+    _performance.startTrace(TraceType.loadMessages);
     
     try {
       final beforeId = _allMessageIds.isNotEmpty ? _allMessageIds.first : null;
       final messages = await onLoadMessages!(beforeId, bufferZoneSize);
       
-      // If no messages returned, we've reached the end
       if (messages.isEmpty) {
         _hasReachedEnd = true;
-        return;
+      } else {
+        // Add to cache
+        for (final message in messages) {
+          _messageCache[message.id] = message;
+          
+          // Add to IDs if new
+          if (!_allMessageIds.contains(message.id)) {
+            _allMessageIds.insert(0, message.id);
+          }
+        }
+        
+        // Update buffer zone
+        _updateBufferZone();
       }
+    } catch (e) {
+      debugPrint('Error loading earlier messages: $e');
+    } finally {
+      _isLoadingEarlier = false;
+      _performance.stopTrace(TraceType.loadMessages);
+    }
+  }
+  
+  /// Load newer messages
+  Future<void> loadNewerMessages() async {
+    if (_isLoadingEarlier || onLoadMessages == null) {
+      return;
+    }
+    
+    _isLoadingEarlier = true;
+    _performance.startTrace(TraceType.loadMessages);
+    
+    try {
+      final afterId = _allMessageIds.isNotEmpty ? _allMessageIds.last : null;
+      // Implementation would need to be adjusted to support fetching newer messages
+      // This is just a placeholder that would need server support
+      final messages = await onLoadMessages!(null, bufferZoneSize);
       
-      // Add messages to cache and ID list
+      // Add to cache
       for (final message in messages) {
         _messageCache[message.id] = message;
+        
+        // Add to IDs if new
         if (!_allMessageIds.contains(message.id)) {
           _allMessageIds.add(message.id);
         }
@@ -223,171 +276,110 @@ class VirtualScrollController {
       
       // Update buffer zone
       _updateBufferZone();
+    } catch (e) {
+      debugPrint('Error loading newer messages: $e');
     } finally {
       _isLoadingEarlier = false;
-      _performance.stopTrace('load_earlier_messages');
+      _performance.stopTrace(TraceType.loadMessages);
     }
   }
   
-  /// Scroll to a specific message by ID
-  Future<bool> scrollToMessage(String messageId, {bool animated = true}) async {
-    // Check if we have this message ID
-    final index = _allMessageIds.indexOf(messageId);
-    if (index == -1) return false;
-    
-    // Make sure the message is in the buffer zone
-    if (!_bufferZoneMessageIds.contains(messageId)) {
-      // TODO: Implement smarter scrolling for messages far outside buffer
-      return false;
-    }
-    
-    // Find the index in the visible list
-    final visibleIndex = bufferedMessages.indexWhere((m) => m.id == messageId);
-    if (visibleIndex == -1) return false;
-    
-    // Calculate position to scroll to
-    final itemHeight = 60.0; // Estimated height, could be improved
-    final position = visibleIndex * itemHeight;
-    
-    // Scroll to the position
-    if (animated) {
-      await scrollController.animateTo(
-        position,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-      );
-    } else {
-      scrollController.jumpTo(position);
-    }
-    
-    return true;
-  }
-  
-  /// Handle scroll events
+  /// Handle scroll events to load more messages
   void _handleScroll() {
-    // Check if we need to load more messages
-    if (scrollController.position.pixels <= scrollController.position.minScrollExtent + 200) {
-      if (!_isLoadingEarlier && !_hasReachedEnd) {
+    if (!scrollController.hasClients) return;
+    
+    // If we're near the top and have more to load, load earlier messages
+    if (scrollController.position.pixels < 500 && hasMoreToLoad && !_isLoadingEarlier) {
+      // Use debounce to avoid multiple calls
+      SchedulerBinding.instance.addPostFrameCallback((_) {
         loadEarlierMessages();
-      }
+      });
     }
-    
-    // Schedule a check of the buffer zone
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (!_isLoadingEarlier) {
-        _updateBufferZone();
-      }
-    });
   }
   
-  /// Update which messages are in the buffer zone
+  /// Update the buffer zone with messages around visible messages
   void _updateBufferZone() {
-    // Always keep the visible messages in the buffer
-    final Set<String> newBufferZone = Set.from(_visibleMessageIds);
+    if (_visibleMessageIds.isEmpty && _allMessageIds.isEmpty) return;
     
-    // Get the first and last visible message indices
-    int? firstVisibleIndex;
-    int? lastVisibleIndex;
-    
-    if (_visibleMessageIds.isNotEmpty) {
-      // Find the min and max indices of visible messages
-      for (final id in _visibleMessageIds) {
-        final index = _allMessageIds.indexOf(id);
-        if (index != -1) {
-          firstVisibleIndex = firstVisibleIndex == null ? index : math.min(firstVisibleIndex, index);
-          lastVisibleIndex = lastVisibleIndex == null ? index : math.max(lastVisibleIndex, index);
-        }
-      }
-    } else {
-      // Default to the newest messages if nothing is visible
-      lastVisibleIndex = _allMessageIds.length - 1;
-      firstVisibleIndex = math.max(0, lastVisibleIndex - bufferZoneSize);
-    }
-    
-    // If we have valid indices, add buffer around them
-    if (firstVisibleIndex != null && lastVisibleIndex != null) {
-      // Calculate buffer zone boundaries
-      final startIndex = math.max(0, firstVisibleIndex - bufferZoneSize);
-      final endIndex = math.min(_allMessageIds.length - 1, lastVisibleIndex + bufferZoneSize);
-      
-      // Add messages in buffer zone to the set
-      for (int i = startIndex; i <= endIndex; i++) {
-        final id = _allMessageIds[i];
-        if (_messageCache.containsKey(id)) {
-          newBufferZone.add(id);
-        }
+    // Get indices of visible messages
+    final visibleIndices = <int>[];
+    for (final id in _visibleMessageIds) {
+      final index = _allMessageIds.indexOf(id);
+      if (index >= 0) {
+        visibleIndices.add(index);
       }
     }
     
-    // Cap to max buffer size if needed
-    if (newBufferZone.length > maxMessageBuffer) {
-      // Get sorted list of IDs by recency
-      final List<String> sortedIds = newBufferZone.toList()
-        ..sort((a, b) {
-          final msgA = _messageCache[a];
-          final msgB = _messageCache[b];
-          if (msgA == null || msgB == null) return 0;
-          
-          // Sort newer messages first
-          return msgB.createdAt.compareTo(msgA.createdAt);
-        });
-      
-      // Keep visible messages and up to maxBuffer - visibleCount other messages
-      final keptIds = <String>{};
-      
-      // Always keep visible messages
-      keptIds.addAll(_visibleMessageIds);
-      
-      // Fill remaining buffer with most recent messages
-      int remaining = maxMessageBuffer - keptIds.length;
-      
-      for (final id in sortedIds) {
-        if (remaining <= 0) break;
-        if (!keptIds.contains(id)) {
-          keptIds.add(id);
-          remaining--;
-        }
-      }
-      
-      newBufferZone = keptIds;
+    // If no visible messages, use the most recent ones
+    if (visibleIndices.isEmpty) {
+      final startIndex = math.max(0, _allMessageIds.length - 1 - bufferZoneSize);
+      visibleIndices.add(startIndex);
     }
     
-    // Check if buffer zone has changed
-    final hasChanged = !setEquals(_bufferZoneMessageIds, newBufferZone);
+    // Calculate buffer zone boundaries
+    final minVisibleIndex = visibleIndices.reduce(math.min);
+    final maxVisibleIndex = visibleIndices.reduce(math.max);
     
-    if (hasChanged) {
-      // Find messages to evict from cache
-      final toEvict = <String>{};
-      for (final id in _bufferZoneMessageIds) {
-        if (!newBufferZone.contains(id)) {
-          toEvict.add(id);
-        }
+    final startBufferIndex = math.max(0, minVisibleIndex - bufferZoneSize);
+    final endBufferIndex = math.min(_allMessageIds.length - 1, maxVisibleIndex + bufferZoneSize);
+    
+    // Create a new buffer zone
+    final newBufferZone = <String>{};
+    for (int i = startBufferIndex; i <= endBufferIndex; i++) {
+      newBufferZone.add(_allMessageIds[i]);
+    }
+    
+    // Update buffer zone
+    _bufferZoneMessageIds.clear();
+    _bufferZoneMessageIds.addAll(newBufferZone);
+    
+    // Cleanup cache if we're over the limit
+    _cleanupCache();
+    
+    // Notify listeners
+    _notifyBufferUpdated();
+  }
+  
+  /// Clean up memory by removing messages outside the buffer zone
+  void _cleanupCache() {
+    if (_messageCache.length <= maxMessageBuffer) return;
+    
+    // Only keep messages that are in the buffer zone
+    final idsToRemove = <String>[];
+    
+    for (final id in _messageCache.keys) {
+      if (!_bufferZoneMessageIds.contains(id)) {
+        idsToRemove.add(id);
       }
       
-      // Update buffer zone
-      _bufferZoneMessageIds.clear();
-      _bufferZoneMessageIds.addAll(newBufferZone);
-      
-      // Notify listeners of buffer update
-      _notifyBufferUpdated();
+      // Break if we've removed enough
+      if (_messageCache.length - idsToRemove.length <= maxMessageBuffer) {
+        break;
+      }
+    }
+    
+    // Remove from cache
+    for (final id in idsToRemove) {
+      _messageCache.remove(id);
     }
   }
   
-  /// Notify listeners that the buffer has been updated
+  /// Notify listeners of buffer zone update
   void _notifyBufferUpdated() {
-    _bufferUpdateController.add(bufferedMessages);
+    if (!_bufferUpdateController.isClosed) {
+      _bufferUpdateController.add(bufferedMessages);
+    }
   }
   
-  /// Dispose the controller
+  /// Dispose resources
   void dispose() {
     scrollController.removeListener(_handleScroll);
     _bufferUpdateController.close();
+    
+    // Consider not disposing the ScrollController here if it was passed in
+    // by the user, but let them handle disposal
+    if (!scrollController.hasClients) {
+      scrollController.dispose();
+    }
   }
-}
-
-/// Helper function to check if two Sets are equal
-bool setEquals<T>(Set<T>? a, Set<T>? b) {
-  if (a == null) return b == null;
-  if (b == null || a.length != b.length) return false;
-  return a.containsAll(b);
 } 

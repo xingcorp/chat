@@ -1,63 +1,103 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:flutter_chat_app/core/services/animation_service.dart';
+import 'package:flutter_chat_app/core/utils/animation_config.dart';
+import 'package:flutter_chat_app/core/utils/device_performance_tier.dart';
 
-/// Các loại chuyển tiếp trang
+/// Types of page transitions
 enum PageTransitionType {
-  /// Fade + slide từ phải sang
+  /// Fade + slide from right
   fadeAndSlideFromRight,
   
-  /// Fade + slide từ trái sang
+  /// Fade + slide from left
   fadeAndSlideFromLeft,
   
-  /// Fade + slide từ dưới lên
+  /// Fade + slide from bottom
   fadeAndSlideFromBottom,
   
   /// Fade in/out
   fade,
   
-  /// Scale từ trung tâm
+  /// Scale from center
   scale,
   
-  /// Không có animation
+  /// No animation
   none,
 }
 
-/// Lớp quản lý chuyển tiếp trang
+/// Page transition manager
 class PageTransitions {
-  /// Service quản lý animation
-  static final AnimationService _animationService = GetIt.I<AnimationService>();
+  /// Get the animation configuration
+  static AnimationConfig get _animConfig {
+    try {
+      return GetIt.I<AnimationConfig>();
+    } catch (e) {
+      // Fallback to default if not registered
+      return AnimationConfig(DevicePerformanceTier.medium);
+    }
+  }
   
-  /// Tạo route với animation tùy chỉnh
+  /// Create a route with custom animation
   static Route<T> createRoute<T>({
     required Widget page,
     PageTransitionType type = PageTransitionType.fadeAndSlideFromRight,
     RouteSettings? settings,
     bool fullscreenDialog = false,
+    Duration? duration,
+    Curve? curve,
   }) {
+    // Get transition duration from config or use provided one
+    final transitionDuration = duration ?? _animConfig.pageTransitionDuration;
+    
+    // Use default curve from config or provided one
+    final animationCurve = curve ?? _animConfig.defaultCurve;
+    
+    // For low-end devices or when animations are turned off, use simpler transitions
+    if (!_animConfig.useExtendedTransitions) {
+      if (type != PageTransitionType.none) {
+        type = PageTransitionType.fade; // Simplify to just fade
+      }
+    }
+    
     return PageRouteBuilder<T>(
       settings: settings,
       fullscreenDialog: fullscreenDialog,
       pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionDuration: _animationService.config.pageTransitionDuration,
-      reverseTransitionDuration: _animationService.config.pageTransitionDuration,
+      transitionDuration: transitionDuration,
+      reverseTransitionDuration: transitionDuration,
+      maintainState: true,
+      opaque: true,
+      barrierDismissible: false,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return _buildTransition(type, animation, child);
+        return _buildTransition(type, animation, secondaryAnimation, child, animationCurve);
       },
     );
   }
   
-  /// Tạo animation chuyển tiếp
+  /// Build transition animation
   static Widget _buildTransition(
     PageTransitionType type,
     Animation<double> animation,
+    Animation<double> secondaryAnimation,
     Widget child,
+    Curve curve,
   ) {
-    const begin = 0.0;
-    const end = 1.0;
-    final curve = _animationService.config.defaultCurve;
-    final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-    final offsetAnimation = animation.drive(tween);
+    // Create a curved animation
+    final curvedAnimation = CurvedAnimation(
+      parent: animation,
+      curve: curve,
+      reverseCurve: curve.flipped,
+    );
+    
+    // Handle secondary animation (for exit transitions)
+    final Widget secondaryTransition = FadeTransition(
+      opacity: Tween<double>(begin: 1.0, end: 0.5).animate(
+        CurvedAnimation(
+          parent: secondaryAnimation,
+          curve: Curves.easeOut,
+        ),
+      ),
+      child: child,
+    );
     
     switch (type) {
       case PageTransitionType.fadeAndSlideFromRight:
@@ -65,10 +105,10 @@ class PageTransitions {
           position: Tween<Offset>(
             begin: const Offset(0.25, 0.0),
             end: Offset.zero,
-          ).animate(animation),
+          ).animate(curvedAnimation),
           child: FadeTransition(
-            opacity: offsetAnimation,
-            child: child,
+            opacity: curvedAnimation,
+            child: secondaryTransition,
           ),
         );
         
@@ -77,10 +117,10 @@ class PageTransitions {
           position: Tween<Offset>(
             begin: const Offset(-0.25, 0.0),
             end: Offset.zero,
-          ).animate(animation),
+          ).animate(curvedAnimation),
           child: FadeTransition(
-            opacity: offsetAnimation,
-            child: child,
+            opacity: curvedAnimation,
+            child: secondaryTransition,
           ),
         );
         
@@ -89,28 +129,28 @@ class PageTransitions {
           position: Tween<Offset>(
             begin: const Offset(0.0, 0.25),
             end: Offset.zero,
-          ).animate(animation),
+          ).animate(curvedAnimation),
           child: FadeTransition(
-            opacity: offsetAnimation,
-            child: child,
+            opacity: curvedAnimation,
+            child: secondaryTransition,
           ),
         );
         
       case PageTransitionType.fade:
         return FadeTransition(
-          opacity: offsetAnimation,
-          child: child,
+          opacity: curvedAnimation,
+          child: secondaryTransition,
         );
         
       case PageTransitionType.scale:
         return ScaleTransition(
           scale: Tween<double>(
-            begin: 0.85,
+            begin: 0.9,
             end: 1.0,
-          ).animate(animation),
+          ).animate(curvedAnimation),
           child: FadeTransition(
-            opacity: offsetAnimation,
-            child: child,
+            opacity: curvedAnimation,
+            child: secondaryTransition,
           ),
         );
         
@@ -120,18 +160,47 @@ class PageTransitions {
     }
   }
   
-  /// Extension cho Context
+  /// Extension method for BuildContext
   static Route<T> createAnimatedRoute<T>(
     BuildContext context,
     Widget page, {
     PageTransitionType type = PageTransitionType.fadeAndSlideFromRight,
     RouteSettings? settings,
     bool fullscreenDialog = false,
+    Duration? duration,
+    Curve? curve,
   }) {
+    // Consider device orientation and screen size for transition type
+    if (type == PageTransitionType.fadeAndSlideFromRight) {
+      final size = MediaQuery.of(context).size;
+      
+      // For wide screens (landscape), slide from bottom might be more natural
+      if (size.width > size.height * 1.2) {
+        type = PageTransitionType.fadeAndSlideFromBottom;
+      }
+    }
+    
     return createRoute<T>(
       page: page,
       type: type,
       settings: settings,
+      fullscreenDialog: fullscreenDialog,
+      duration: duration,
+      curve: curve,
+    );
+  }
+  
+  /// Create a material-style route with optimized transitions
+  static MaterialPageRoute<T> createMaterialRoute<T>({
+    required WidgetBuilder builder,
+    RouteSettings? settings,
+    bool maintainState = true,
+    bool fullscreenDialog = false,
+  }) {
+    return MaterialPageRoute<T>(
+      builder: builder,
+      settings: settings,
+      maintainState: maintainState,
       fullscreenDialog: fullscreenDialog,
     );
   }

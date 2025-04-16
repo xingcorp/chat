@@ -4,6 +4,23 @@ import 'package:flutter_chat_app/core/theme/app_colors.dart';
 
 /// Các text style chuẩn hóa cho toàn bộ ứng dụng
 class AppTextStyles {
+  /// Cache commonly used text styles
+  static final Map<String, TextStyle> _styleCache = {};
+
+  /// Default font family
+  static const String fontFamily = 'Roboto';
+
+  /// Base font size
+  static const double baseFontSize = 14.0;
+  
+  /// Default text height
+  static const double defaultHeight = 1.5;
+
+  /// Clear cache
+  static void clearCache() {
+    _styleCache.clear();
+  }
+
   /// Heading lớn nhất - H1
   static TextStyle heading1({
     Color? color,
@@ -277,28 +294,42 @@ class AppTextStyles {
 
   // Chuyển đổi màu sắc dựa vào light/dark mode
   static TextStyle getTextStyle(
+    bool isDarkMode,
     TextStyle style, {
-    required bool isDarkMode,
-    bool isInverted = false,
+    Color? darkModeColor,
+    Color? lightModeColor,
   }) {
-    final shouldUseDarkStyle = isInverted ? !isDarkMode : isDarkMode;
+    final Color textColor = isDarkMode 
+        ? (darkModeColor ?? AppColors.textPrimaryDarkMode)
+        : (lightModeColor ?? AppColors.textPrimary);
     
-    Color textColor;
-    if (style.color == AppColors.textPrimary) {
-      textColor = shouldUseDarkStyle
-          ? AppColors.textPrimaryDarkMode
-          : AppColors.textPrimary;
-    } else if (style.color == AppColors.textSecondary) {
-      textColor = shouldUseDarkStyle
-          ? AppColors.textSecondaryDarkMode
-          : AppColors.textSecondary;
-    } else {
-      textColor = style.color ?? 
-          (shouldUseDarkStyle 
-              ? AppColors.textPrimaryDarkMode 
-              : AppColors.textPrimary);
-    }
-
     return style.copyWith(color: textColor);
+  }
+
+  /// Returns a text style scaled for the specified device type
+  /// 
+  /// Adjusts font sizes for different device types while maintaining readability
+  static TextStyle getScaledTextStyle(
+    TextStyle baseStyle,
+    BuildContext context, {
+    bool isTablet = false,
+    bool isDesktop = false,
+  }) {
+    double scaleFactor = 1.0;
+    
+    if (isTablet) {
+      scaleFactor = 1.1;
+    } else if (isDesktop) {
+      scaleFactor = 1.15;
+    }
+    
+    final bool shouldScale = isTablet || isDesktop;
+    if (!shouldScale) return baseStyle;
+    
+    return baseStyle.copyWith(
+      fontSize: baseStyle.fontSize != null 
+          ? baseStyle.fontSize! * scaleFactor
+          : null,
+    );
   }
 } 

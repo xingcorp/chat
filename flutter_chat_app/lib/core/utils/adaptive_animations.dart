@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/utils/device_performance_tier.dart';
 import 'package:get_it/get_it.dart';
 
 /// Types of animation in the application
@@ -67,13 +68,21 @@ class AdaptiveAnimationManager {
   /// Current frame time target (in milliseconds)
   double get _frameTimeTarget => 1000.0 / _currentFrameRate;
   
+  /// Whether the device's info has been queried
+  bool _hasQueriedDeviceInfo = false;
+  
   /// Creates an adaptive animation manager
   AdaptiveAnimationManager(this._performanceMonitor) {
+    _initializeManager();
+  }
+  
+  /// Initialize the animation manager
+  Future<void> _initializeManager() async {
     // Start monitoring frame rate
     _startFrameRateMonitoring();
     
     // Set initial quality based on device
-    _determineOptimalQuality();
+    await _determineOptimalQuality();
   }
   
   /// Get the current animation quality
@@ -81,11 +90,19 @@ class AdaptiveAnimationManager {
   
   /// Set the animation quality
   set quality(AnimationQuality newQuality) {
-    _quality = newQuality;
-    _performanceMonitor.recordCustomMetric(
-      'animation_quality_set',
-      _quality.index.toDouble(),
-    );
+    if (_quality != newQuality) {
+      _quality = newQuality;
+      _performanceMonitor.recordCustomMetric(
+        'animation_quality_set',
+        _quality.index.toDouble(),
+      );
+      
+      // Log the quality change
+      _performanceMonitor.recordEvent(
+        'animation_quality_changed',
+        parameters: {'quality': newQuality.toString()},
+      );
+    }
   }
   
   /// Enable or disable frame rate adaptation
@@ -100,7 +117,7 @@ class AdaptiveAnimationManager {
     // If adapting to frame rate and we're below target, shorten durations
     if (_adaptToFrameRate && _currentFrameRate < 45) {
       final factor = _currentFrameRate / 60.0;
-      return Duration(milliseconds: (base.inMilliseconds * factor).round());
+      return Duration(milliseconds: (base.inMilliseconds * factor).clamp(50, base.inMilliseconds).round());
     }
     
     return base;
@@ -155,7 +172,7 @@ class AdaptiveAnimationManager {
     return AnimationController(
       vsync: vsync,
       duration: duration ?? getDuration(type),
-      reverseDuration: reverseDuration,
+      reverseDuration: reverseDuration ?? (duration ?? getDuration(type)),
     );
   }
   
@@ -167,6 +184,15 @@ class AdaptiveAnimationManager {
     required double endInterval,
   }) {
     final animations = <Animation<double>>[];
+    
+    // Safety check for valid parameters
+    if (itemCount <= 0 || startInterval >= endInterval) {
+      // Return default animations if parameters are invalid
+      for (int i = 0; i < itemCount.clamp(0, 100); i++) {
+        animations.add(controller);
+      }
+      return animations;
+    }
     
     // Skip staggering for minimal quality or during performance issues
     if (quality == AnimationQuality.minimal || (_adaptToFrameRate && _currentFrameRate < 30)) {
@@ -188,7 +214,7 @@ class AdaptiveAnimationManager {
       animations.add(
         CurvedAnimation(
           parent: controller,
-          curve: Interval(start, end, curve: Curves.easeOutCubic),
+          curve: Interval(start.clamp(0.0, 1.0), end.clamp(0.0, 1.0), curve: Curves.easeOutCubic),
         ),
       );
     }
@@ -224,14 +250,14 @@ class AdaptiveAnimationManager {
         }
         
         // Full hero animation for high frame rates
-        final Widget toHero = toHeroContext.widget as Hero;
+        final Hero toHeroWidget = toHeroContext.widget as Hero;
         return ScaleTransition(
           scale: animation.drive(
             Tween<double>(begin: 0.8, end: 1.0).chain(
               CurveTween(curve: Curves.easeOutQuad),
             ),
           ),
-          child: toHero.child,
+          child: toHeroWidget.child,
         );
       },
     );
@@ -239,7 +265,7 @@ class AdaptiveAnimationManager {
   
   /// Start monitoring frame rate
   void _startFrameRateMonitoring() {
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    void _frameCallback(Duration timeStamp) {
       _frameCount++;
       
       final now = DateTime.now();
@@ -247,7 +273,20 @@ class AdaptiveAnimationManager {
       
       // Update frame rate every second
       if (elapsed >= 1000) {
-        _currentFrameRate = (_frameCount * 1000 / elapsed).clamp(1, 120);
+        final newFrameRate = (_frameCount * 1000 / elapsed).clamp(1.0, 120.0);
+        
+        // Check if frame rate changed significantly
+        if ((_currentFrameRate - newFrameRate).abs() > 5) {
+          // If frame rate drops significantly, adjust quality
+          if (newFrameRate < 30 && _currentFrameRate >= 45 && quality != AnimationQuality.minimal) {
+            quality = AnimationQuality.minimal;
+          } else if (newFrameRate >= 55 && _currentFrameRate < 40 && quality == AnimationQuality.minimal) {
+            // If frame rate increases significantly, consider improving quality
+            quality = AnimationQuality.standard;
+          }
+        }
+        
+        _currentFrameRate = newFrameRate;
         
         _performanceMonitor.recordCustomMetric(
           'current_frame_rate',
@@ -259,31 +298,54 @@ class AdaptiveAnimationManager {
       }
       
       // Continue monitoring
-      _startFrameRateMonitoring();
-    });
+      SchedulerBinding.instance.scheduleFrameCallback(_frameCallback);
+    }
+    
+    // Start the monitoring loop
+    SchedulerBinding.instance.scheduleFrameCallback(_frameCallback);
   }
   
   /// Determine the optimal animation quality for the device
-  void _determineOptimalQuality() {
-    // Check device capabilities
-    final deviceInfo = window.physicalSize;
-    final refreshRate = window.refreshRate;
-    final devicePixelRatio = window.devicePixelRatio;
+  Future<void> _determineOptimalQuality() async {
+    if (_hasQueriedDeviceInfo) return;
     
-    // High-end device check
-    if (refreshRate >= 90 && devicePixelRatio >= 2.5) {
-      quality = AnimationQuality.rich;
-      return;
+    try {
+      // Get device performance tier from device detector
+      final deviceTier = await DeviceCapabilityDetector.detectCapabilities();
+      
+      // Set animation quality based on performance tier
+      switch (deviceTier) {
+        case DevicePerformanceTier.low:
+          quality = AnimationQuality.minimal;
+          break;
+        case DevicePerformanceTier.medium:
+          quality = AnimationQuality.standard;
+          break;
+        case DevicePerformanceTier.high:
+          quality = AnimationQuality.rich;
+          break;
+      }
+      
+      _hasQueriedDeviceInfo = true;
+    } catch (e) {
+      // If device detection fails, fallback to window properties
+      final pixelRatio = window.devicePixelRatio;
+      
+      // High-end device check for high pixel density devices
+      if (pixelRatio >= 2.5) {
+        quality = AnimationQuality.rich;
+      } 
+      // Low-end device check
+      else if (pixelRatio <= 1.5) {
+        quality = AnimationQuality.minimal;
+      } 
+      // Default to standard
+      else {
+        quality = AnimationQuality.standard;
+      }
+      
+      _hasQueriedDeviceInfo = true;
     }
-    
-    // Low-end device check
-    if (devicePixelRatio <= 1.5 || refreshRate <= 30) {
-      quality = AnimationQuality.minimal;
-      return;
-    }
-    
-    // Default to standard
-    quality = AnimationQuality.standard;
   }
   
   /// Get base duration for animation based on quality and type
@@ -395,23 +457,44 @@ class AdaptiveAnimationManager {
       case AnimationType.reaction:
         return Curves.elasticOut;
       case AnimationType.complex:
-        return Curves.easeInOutCubicEmphasized;
+        return const Cubic(0.66, 0.0, 0.34, 1.0); // Custom smooth curve
     }
   }
 }
 
 /// A widget that applies adaptive animations based on the current device capability
 class AdaptiveAnimatedContainer extends StatelessWidget {
+  /// Child widget
   final Widget child;
+  
+  /// Custom duration override
   final Duration? duration;
+  
+  /// Custom reverse duration override
   final Duration? reverseDuration;
+  
+  /// Type of animation for context-appropriate timing
   final AnimationType animationType;
+  
+  /// Custom curve override
   final Curve? curve;
+  
+  /// Alignment of the container
   final AlignmentGeometry? alignment;
+  
+  /// Padding inside the container
   final EdgeInsetsGeometry? padding;
+  
+  /// Background color
   final Color? color;
+  
+  /// Decoration (e.g., border, gradient)
   final Decoration? decoration;
+  
+  /// Size constraints
   final BoxConstraints? constraints;
+  
+  /// Transform matrix
   final Matrix4? transform;
   
   const AdaptiveAnimatedContainer({
@@ -446,8 +529,10 @@ class AdaptiveAnimatedContainer extends StatelessWidget {
       );
     }
     
+    final animDuration = duration ?? animationManager.getDuration(animationType);
+    
     return AnimatedContainer(
-      duration: duration ?? animationManager.getDuration(animationType),
+      duration: animDuration,
       curve: curve ?? animationManager.getCurve(animationType),
       alignment: alignment,
       padding: padding,

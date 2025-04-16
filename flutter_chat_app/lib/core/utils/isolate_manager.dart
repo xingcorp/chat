@@ -574,7 +574,7 @@ class IsolateManager {
     final id = taskId ?? 'task_${DateTime.now().millisecondsSinceEpoch}_${_pendingTasks.length}';
     
     // Start performance trace
-    _performance.startTrace('isolate_task_$id');
+    _performance.startTrace(TraceType.custom, customTraceName: 'isolate_task_$id');
     
     try {
       // Create a progress port if progress reporting is requested
@@ -609,7 +609,7 @@ class IsolateManager {
         await progressSubscription?.cancel();
         progressPort?.close();
         
-        _performance.stopTrace('isolate_task_$id');
+        _performance.stopTrace(TraceType.custom, customTraceName: 'isolate_task_$id');
         return result;
       }
       
@@ -649,10 +649,10 @@ class IsolateManager {
       await progressSubscription?.cancel();
       progressPort?.close();
       
-      _performance.stopTrace('isolate_task_$id');
+      _performance.stopTrace(TraceType.custom, customTraceName: 'isolate_task_$id');
       return result;
     } catch (e) {
-      _performance.stopTrace('isolate_task_$id');
+      _performance.stopTrace(TraceType.custom, customTraceName: 'isolate_task_$id');
       
       // Return error result
       return IsolateResult(
@@ -1187,29 +1187,29 @@ Future<dynamic> _processImage(Map<String, dynamic> args) async {
   final reportProgress = args['reportProgress'] as Function?;
   final isCancelled = args['isCancelled'] as Function?;
   
-  // Báo cáo bắt đầu
-  reportProgress?.call(0.0, 'Khởi tạo xử lý hình ảnh');
+  // Report start
+  reportProgress?.call(0.0, 'Initializing image processing');
   
-  // Trích xuất thông tin từ params
+  // Extract information from params
   final operation = params?['operation'] as String? ?? 'resize';
   final quality = params?['quality'] as int? ?? 80;
   
-  // Giả lập xử lý nhiều bước có thể hủy bỏ
+  // Simulate multi-step processing that can be cancelled
   for (int i = 0; i < 10; i++) {
-    // Kiểm tra hủy bỏ
+    // Check for cancellation
     if (isCancelled?.call() == true) {
       return {'cancelled': true};
     }
     
-    // Giả lập xử lý
+    // Simulate processing
     await Future.delayed(const Duration(milliseconds: 50));
     
-    // Báo cáo tiến trình
-    reportProgress?.call((i + 1) / 10, 'Xử lý phần ${i + 1}/10');
+    // Report progress
+    reportProgress?.call((i + 1) / 10, 'Processing part ${i + 1}/10');
   }
   
-  // Báo cáo hoàn thành
-  reportProgress?.call(1.0, 'Xử lý hình ảnh hoàn tất');
+  // Report completion
+  reportProgress?.call(1.0, 'Image processing complete');
   
   Map<String, dynamic> result = {
     'processed': true,
@@ -1220,13 +1220,13 @@ Future<dynamic> _processImage(Map<String, dynamic> args) async {
     final originalSize = data['size'] as num;
     result['original_size'] = originalSize;
     
-    // Giả lập kết quả nén
+    // Simulate compression result
     if (operation == 'compress') {
-      // Kích thước mới phụ thuộc vào chất lượng
+      // New size depends on quality
       result['new_size'] = originalSize * (quality / 100);
       result['compression_ratio'] = (100 - quality) / 100;
     } 
-    // Giả lập kết quả resize
+    // Simulate resize result
     else if (operation == 'resize') {
       final scale = params?['scale'] as double? ?? 0.8;
       result['new_size'] = originalSize * scale * scale; // Area reduces by scale²
@@ -1244,7 +1244,7 @@ Future<dynamic> _processFile(Map<String, dynamic> args) async {
   final reportProgress = args['reportProgress'] as Function?;
   final isCancelled = args['isCancelled'] as Function?;
   
-  reportProgress?.call(0.0, 'Bắt đầu xử lý tệp');
+  reportProgress?.call(0.0, 'Starting file processing');
   
   // Implementation for file operations
   // For example, copying, moving, or renaming files
@@ -1257,10 +1257,10 @@ Future<dynamic> _processFile(Map<String, dynamic> args) async {
     }
     
     await Future.delayed(const Duration(milliseconds: 100));
-    reportProgress?.call((i + 1) / steps, 'Xử lý tệp: ${(i + 1) / steps * 100}%');
+    reportProgress?.call((i + 1) / steps, 'Processing file: ${(i + 1) / steps * 100}%');
   }
   
-  reportProgress?.call(1.0, 'Hoàn thành xử lý tệp');
+  reportProgress?.call(1.0, 'File processing complete');
   
   return {
     'success': true,
@@ -1275,28 +1275,30 @@ Future<dynamic> _processData(Map<String, dynamic> args) async {
   final reportProgress = args['reportProgress'] as Function?;
   final isCancelled = args['isCancelled'] as Function?;
   
-  reportProgress?.call(0.0, 'Bắt đầu xử lý dữ liệu');
+  reportProgress?.call(0.0, 'Starting data processing');
   
-  // Phân tích dữ liệu theo số lượng phần tử
+  // Analyze data based on number of elements
   if (data is List) {
     final total = data.length;
-    for (int i = 0; i < total; i += max(1, total ~/ 10)) {
+    final increment = max(1, total ~/ 10);
+    
+    for (int i = 0; i < total; i += increment) {
       if (isCancelled?.call() == true) {
         return {'cancelled': true};
       }
       
       await Future.delayed(const Duration(milliseconds: 20));
-      reportProgress?.call(i / total, 'Xử lý phần tử ${i + 1}/$total');
+      reportProgress?.call(i / total, 'Processing element ${i + 1}/$total');
     }
     
-    reportProgress?.call(1.0, 'Hoàn thành xử lý dữ liệu');
+    reportProgress?.call(1.0, 'Data processing complete');
     return {
       'processed': true,
       'count': total,
-      'summary': 'Đã xử lý $total phần tử',
+      'summary': 'Processed $total elements',
     };
   } 
-  // Phân tích dữ liệu đơn lẻ
+  // Process single data item
   else {
     for (int i = 0; i < 5; i++) {
       if (isCancelled?.call() == true) {
@@ -1304,10 +1306,10 @@ Future<dynamic> _processData(Map<String, dynamic> args) async {
       }
       
       await Future.delayed(const Duration(milliseconds: 50));
-      reportProgress?.call((i + 1) / 5, 'Xử lý dữ liệu ${(i + 1) * 20}%');
+      reportProgress?.call((i + 1) / 5, 'Processing data ${(i + 1) * 20}%');
     }
     
-    reportProgress?.call(1.0, 'Hoàn thành xử lý dữ liệu');
+    reportProgress?.call(1.0, 'Data processing complete');
     return {
       'processed': true,
       'type': data?.runtimeType.toString() ?? 'null',
@@ -1325,9 +1327,9 @@ Future<dynamic> _processCrypto(Map<String, dynamic> args) async {
   final operation = params?['operation'] as String? ?? 'encrypt';
   final algorithm = params?['algorithm'] as String? ?? 'AES';
   
-  reportProgress?.call(0.0, 'Khởi tạo $operation với $algorithm');
+  reportProgress?.call(0.0, 'Initializing $operation with $algorithm');
   
-  // Giả lập các bước của thao tác mã hóa
+  // Simulate steps of crypto operation
   final totalSteps = operation == 'hash' ? 3 : 5;
   
   for (int i = 0; i < totalSteps; i++) {
@@ -1335,13 +1337,13 @@ Future<dynamic> _processCrypto(Map<String, dynamic> args) async {
       return {'cancelled': true};
     }
     
-    // Giả lập thời gian xử lý
+    // Simulate processing time
     await Future.delayed(const Duration(milliseconds: 80));
     reportProgress?.call((i + 1) / totalSteps, 
-      'Đang $operation: bước ${i + 1}/$totalSteps');
+      'Performing $operation: step ${i + 1}/$totalSteps');
   }
   
-  reportProgress?.call(1.0, 'Hoàn thành $operation');
+  reportProgress?.call(1.0, 'Completed $operation');
   
   return {
     'processed': true,
@@ -1357,22 +1359,22 @@ Future<dynamic> _processSearch(Map<String, dynamic> args) async {
   final reportProgress = args['reportProgress'] as Function?;
   final isCancelled = args['isCancelled'] as Function?;
   
-  reportProgress?.call(0.0, 'Chuẩn bị tìm kiếm');
+  reportProgress?.call(0.0, 'Preparing search');
   
   final query = params?['query'] as String? ?? '';
   final caseSensitive = params?['caseSensitive'] as bool? ?? false;
   
-  // Giả lập chuẩn bị index/dữ liệu cho tìm kiếm
+  // Simulate preparing index/data for search
   await Future.delayed(const Duration(milliseconds: 100));
-  reportProgress?.call(0.2, 'Đã chuẩn bị dữ liệu tìm kiếm');
+  reportProgress?.call(0.2, 'Search data prepared');
   
   if (isCancelled?.call() == true) {
     return {'cancelled': true};
   }
   
-  // Giả lập quá trình tìm kiếm
+  // Simulate search process
   final searchSteps = data is List ? data.length : 5;
-  final maxSteps = min(20, searchSteps); // Giới hạn số bước để tránh quá nhiều
+  final maxSteps = min(20, searchSteps); // Limit steps to avoid too many
   
   for (int i = 0; i < maxSteps; i++) {
     if (isCancelled?.call() == true) {
@@ -1381,17 +1383,17 @@ Future<dynamic> _processSearch(Map<String, dynamic> args) async {
     
     await Future.delayed(const Duration(milliseconds: 30));
     reportProgress?.call(0.2 + 0.8 * (i + 1) / maxSteps, 
-      'Đang tìm kiếm: ${((i + 1) / maxSteps * 100).toStringAsFixed(0)}%');
+      'Searching: ${((i + 1) / maxSteps * 100).toStringAsFixed(0)}%');
   }
   
-  reportProgress?.call(1.0, 'Tìm kiếm hoàn tất');
+  reportProgress?.call(1.0, 'Search complete');
   
-  // Trả về kết quả giả lập
+  // Return simulated results
   return {
     'processed': true,
     'query': query,
     'caseSensitive': caseSensitive,
-    'resultsCount': 5, // Giả lập tìm thấy 5 kết quả
+    'resultsCount': 5, // Simulate finding 5 results
   };
 }
 
@@ -1402,11 +1404,11 @@ Future<dynamic> _processText(Map<String, dynamic> args) async {
   final reportProgress = args['reportProgress'] as Function?;
   final isCancelled = args['isCancelled'] as Function?;
   
-  reportProgress?.call(0.0, 'Khởi tạo xử lý văn bản');
+  reportProgress?.call(0.0, 'Starting text processing');
   
   final operation = params?['operation'] as String? ?? 'analyze';
   
-  // Xác định số lượng bước dựa trên loại thao tác
+  // Determine number of steps based on task type
   int steps;
   switch (operation) {
     case 'analyze':
@@ -1422,7 +1424,7 @@ Future<dynamic> _processText(Map<String, dynamic> args) async {
       steps = 5;
   }
   
-  // Giả lập xử lý văn bản
+  // Simulate text processing
   for (int i = 0; i < steps; i++) {
     if (isCancelled?.call() == true) {
       return {'cancelled': true};
@@ -1433,7 +1435,7 @@ Future<dynamic> _processText(Map<String, dynamic> args) async {
       '${_getTextOperationDescription(operation)}: ${((i + 1) / steps * 100).toStringAsFixed(0)}%');
   }
   
-  reportProgress?.call(1.0, 'Xử lý văn bản hoàn tất');
+  reportProgress?.call(1.0, 'Text processing complete');
   
   return {
     'processed': true,
@@ -1445,13 +1447,13 @@ Future<dynamic> _processText(Map<String, dynamic> args) async {
 String _getTextOperationDescription(String operation) {
   switch (operation) {
     case 'analyze':
-      return 'Phân tích văn bản';
+      return 'Analyzing text';
     case 'format':
-      return 'Định dạng văn bản';
+      return 'Formatting text';
     case 'translate':
-      return 'Dịch văn bản';
+      return 'Translating text';
     default:
-      return 'Xử lý văn bản';
+      return 'Processing text';
   }
 }
 
@@ -1464,19 +1466,19 @@ Future<dynamic> _processAI(Map<String, dynamic> args) async {
   
   final model = params?['model'] as String? ?? 'default';
   
-  reportProgress?.call(0.0, 'Chuẩn bị mô hình $model');
+  reportProgress?.call(0.0, 'Initializing model $model');
   
-  // Giả lập tải mô hình
+  // Simulate loading model
   for (int i = 0; i < 3; i++) {
     if (isCancelled?.call() == true) {
       return {'cancelled': true};
     }
     
     await Future.delayed(const Duration(milliseconds: 200));
-    reportProgress?.call((i + 1) / 10, 'Đang tải mô hình: ${(i + 1) * 10}%');
+    reportProgress?.call((i + 1) / 10, 'Loading model: ${(i + 1) * 10}%');
   }
   
-  // Giả lập xử lý dữ liệu
+  // Simulate processing data
   for (int i = 0; i < 7; i++) {
     if (isCancelled?.call() == true) {
       return {'cancelled': true};
@@ -1484,10 +1486,10 @@ Future<dynamic> _processAI(Map<String, dynamic> args) async {
     
     await Future.delayed(const Duration(milliseconds: 100));
     final progressPercent = 30 + ((i + 1) / 7 * 70);
-    reportProgress?.call(0.3 + 0.7 * (i + 1) / 7, 'Đang xử lý: ${progressPercent.toStringAsFixed(0)}%');
+    reportProgress?.call(0.3 + 0.7 * (i + 1) / 7, 'Processing: ${progressPercent.toStringAsFixed(0)}%');
   }
   
-  reportProgress?.call(1.0, 'Xử lý AI hoàn tất');
+  reportProgress?.call(1.0, 'AI processing complete');
   
   return {
     'processed': true,
@@ -1506,33 +1508,33 @@ Future<dynamic> _processFuzzySearch(Map<String, dynamic> args) async {
   final query = params?['query'] as String? ?? '';
   final threshold = params?['threshold'] as double? ?? 0.7;
   
-  reportProgress?.call(0.0, 'Chuẩn bị tìm kiếm mờ');
+  reportProgress?.call(0.0, 'Starting fuzzy search');
   
-  // Giả lập chuẩn bị dữ liệu
+  // Simulate preparing data
   await Future.delayed(const Duration(milliseconds: 100));
-  reportProgress?.call(0.1, 'Đã chuẩn bị dữ liệu');
+  reportProgress?.call(0.1, 'Data prepared');
   
   if (isCancelled?.call() == true) {
     return {'cancelled': true};
   }
   
-  // Giả lập tìm kiếm mờ
+  // Simulate fuzzy search
   for (int i = 0; i < 9; i++) {
     if (isCancelled?.call() == true) {
       return {'cancelled': true};
     }
     
     await Future.delayed(const Duration(milliseconds: 50));
-    reportProgress?.call(0.1 + 0.9 * (i + 1) / 9, 'Đang tìm kiếm mờ: ${(10 + (i + 1) / 9 * 90).toStringAsFixed(0)}%');
+    reportProgress?.call(0.1 + 0.9 * (i + 1) / 9, 'Searching: ${(10 + (i + 1) / 9 * 90).toStringAsFixed(0)}%');
   }
   
-  reportProgress?.call(1.0, 'Tìm kiếm mờ hoàn tất');
+  reportProgress?.call(1.0, 'Fuzzy search complete');
   
   return {
     'processed': true,
     'query': query,
     'threshold': threshold,
-    'matches': 3, // Giả lập số kết quả phù hợp
+    'matches': 3, // Simulate finding 3 matches
   };
 }
 
@@ -1545,19 +1547,19 @@ Future<dynamic> _processCustom(Map<String, dynamic> args) async {
   
   final customOperation = params?['customOperation'] as String? ?? 'unknown';
   
-  reportProgress?.call(0.0, 'Bắt đầu xử lý tuỳ chỉnh: $customOperation');
+  reportProgress?.call(0.0, 'Starting custom operation: $customOperation');
   
-  // Giả lập xử lý tuỳ chỉnh
+  // Simulate custom operation
   for (int i = 0; i < 5; i++) {
     if (isCancelled?.call() == true) {
       return {'cancelled': true};
     }
     
     await Future.delayed(const Duration(milliseconds: 100));
-    reportProgress?.call((i + 1) / 5, 'Xử lý tuỳ chỉnh: ${(i + 1) * 20}%');
+    reportProgress?.call((i + 1) / 5, 'Processing custom operation: ${(i + 1) * 20}%');
   }
   
-  reportProgress?.call(1.0, 'Xử lý tuỳ chỉnh hoàn tất');
+  reportProgress?.call(1.0, 'Custom operation complete');
   
   return {
     'processed': true,

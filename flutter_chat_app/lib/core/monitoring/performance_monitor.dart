@@ -5,40 +5,40 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
-/// Các loại trace hiệu suất được theo dõi
+/// Performance trace types
 enum TraceType {
-  /// Khởi động ứng dụng
+  /// App startup
   appStartup,
   
-  /// Tải danh sách chat
+  /// Loading chat list
   loadChats,
   
-  /// Tải tin nhắn
+  /// Loading messages
   loadMessages,
   
-  /// Gửi tin nhắn
+  /// Sending messages
   sendMessage,
   
-  /// Upload media
+  /// Media uploads
   uploadMedia,
   
-  /// Tải thông tin người dùng
+  /// Loading user profile
   loadUserProfile,
   
-  /// Đồng bộ dữ liệu nền
+  /// Background data sync
   backgroundSync,
   
-  /// Tải trang
+  /// Page loading
   pageLoad,
   
-  /// Chuyển màn hình
+  /// Screen navigation
   navigation,
   
   /// Custom trace
   custom,
 }
 
-/// Tên của các trace
+/// Names of traces
 const Map<TraceType, String> _traceNames = {
   TraceType.appStartup: 'app_startup',
   TraceType.loadChats: 'load_chats',
@@ -52,7 +52,7 @@ const Map<TraceType, String> _traceNames = {
   TraceType.custom: 'custom',
 };
 
-/// Class quản lý theo dõi hiệu suất
+/// Performance monitoring management class
 @singleton
 class PerformanceMonitor {
   /// Logger
@@ -61,36 +61,36 @@ class PerformanceMonitor {
   /// Firebase Performance instance
   final FirebasePerformance _performance;
   
-  /// Các trace đang hoạt động
+  /// Active traces
   final Map<String, Trace> _activeTraces = {};
   
-  /// Các HTTP metrics đang hoạt động
+  /// Active HTTP metrics
   final Map<String, HttpMetric> _activeHttpMetrics = {};
   
-  /// Có đang thu thập performance data hay không
+  /// Whether performance data collection is enabled
   bool _isPerformanceCollectionEnabled = true;
   
   /// Constructor
   PerformanceMonitor(this._performance);
   
-  /// Khởi tạo performance monitor
+  /// Initialize performance monitor
   Future<void> initialize() async {
     try {
-      _logger.i('Khởi tạo Performance Monitor');
+      _logger.i('Initializing Performance Monitor');
       
-      // Disable trong chế độ debug
+      // Disable in debug mode
       _isPerformanceCollectionEnabled = !kDebugMode;
       
-      // Cấu hình Firebase Performance
+      // Configure Firebase Performance
       await _performance.setPerformanceCollectionEnabled(_isPerformanceCollectionEnabled);
       
-      _logger.i('Performance Monitor đã được khởi tạo. Bật thu thập: $_isPerformanceCollectionEnabled');
+      _logger.i('Performance Monitor initialized. Collection enabled: $_isPerformanceCollectionEnabled');
     } catch (e) {
-      _logger.e('Lỗi khi khởi tạo Performance Monitor: $e');
+      _logger.e('Error initializing Performance Monitor: $e');
     }
   }
   
-  /// Bắt đầu trace một hoạt động
+  /// Start tracing an activity
   Future<void> startTrace(
     TraceType type, {
     String? customTraceName,
@@ -103,33 +103,33 @@ class PerformanceMonitor {
           ? customTraceName
           : _traceNames[type] ?? 'unknown';
       
-      // Nếu trace đang tồn tại, dừng trace đó trước
+      // If trace already exists, stop it before starting a new one
       if (_activeTraces.containsKey(traceName)) {
-        _logger.w('Trace $traceName đang hoạt động, dừng trước khi bắt đầu mới');
+        _logger.w('Trace $traceName is already active, stopping before starting a new one');
         await stopTrace(type, customTraceName: customTraceName);
       }
       
-      // Tạo trace mới
+      // Create new trace
       final trace = _performance.newTrace(traceName);
       await trace.start();
       
-      // Thêm attributes nếu có
+      // Add attributes if available
       if (attributes != null) {
         attributes.forEach((key, value) {
           trace.putAttribute(key, value);
         });
       }
       
-      // Lưu vào danh sách đang hoạt động
+      // Save to active traces list
       _activeTraces[traceName] = trace;
       
-      _logger.v('Bắt đầu trace: $traceName');
+      _logger.v('Started trace: $traceName');
     } catch (e) {
-      _logger.e('Lỗi khi bắt đầu trace: $e');
+      _logger.e('Error starting trace: $e');
     }
   }
   
-  /// Kết thúc trace
+  /// Stop a trace
   Future<void> stopTrace(
     TraceType type, {
     String? customTraceName,
@@ -144,27 +144,27 @@ class PerformanceMonitor {
       
       final trace = _activeTraces.remove(traceName);
       if (trace == null) {
-        _logger.w('Không tìm thấy trace $traceName để dừng');
+        _logger.w('Trace $traceName not found to stop');
         return;
       }
       
-      // Thêm metrics nếu có
+      // Add metrics if available
       if (metrics != null) {
         metrics.forEach((key, value) {
           trace.setMetric(key, value);
         });
       }
       
-      // Dừng trace
+      // Stop trace
       await trace.stop();
       
-      _logger.v('Dừng trace: $traceName');
+      _logger.v('Stopped trace: $traceName');
     } catch (e) {
-      _logger.e('Lỗi khi dừng trace: $e');
+      _logger.e('Error stopping trace: $e');
     }
   }
   
-  /// Thêm metric vào trace đang hoạt động
+  /// Add metric to active trace
   Future<void> addTraceMetric(
     TraceType type, {
     String? customTraceName,
@@ -180,20 +180,20 @@ class PerformanceMonitor {
       
       final trace = _activeTraces[traceName];
       if (trace == null) {
-        _logger.w('Không tìm thấy trace $traceName để thêm metric');
+        _logger.w('Trace $traceName not found to add metric');
         return;
       }
       
-      // Thêm metric
+      // Add metric
       trace.setMetric(metricName, value);
       
-      _logger.v('Thêm metric $metricName = $value cho trace $traceName');
+      _logger.v('Added metric $metricName = $value for trace $traceName');
     } catch (e) {
-      _logger.e('Lỗi khi thêm metric cho trace: $e');
+      _logger.e('Error adding metric to trace: $e');
     }
   }
   
-  /// Thêm attribute vào trace đang hoạt động
+  /// Add attribute to active trace
   Future<void> addTraceAttribute(
     TraceType type, {
     String? customTraceName,
@@ -209,20 +209,20 @@ class PerformanceMonitor {
       
       final trace = _activeTraces[traceName];
       if (trace == null) {
-        _logger.w('Không tìm thấy trace $traceName để thêm attribute');
+        _logger.w('Trace $traceName not found to add attribute');
         return;
       }
       
-      // Thêm attribute
+      // Add attribute
       trace.putAttribute(attributeName, value);
       
-      _logger.v('Thêm attribute $attributeName = $value cho trace $traceName');
+      _logger.v('Added attribute $attributeName = $value for trace $traceName');
     } catch (e) {
-      _logger.e('Lỗi khi thêm attribute cho trace: $e');
+      _logger.e('Error adding attribute to trace: $e');
     }
   }
   
-  /// Bắt đầu theo dõi HTTP request
+  /// Start tracking HTTP metric
   Future<void> startHttpMetric(
     String url,
     HttpMethod method, {
@@ -231,35 +231,36 @@ class PerformanceMonitor {
     if (!_isPerformanceCollectionEnabled) return;
     
     try {
+      // Create a unique key for this HTTP request
       final key = '${method.toString()}_$url';
       
-      // Nếu metric đã tồn tại, dừng lại trước
+      // If metric already exists, stop it first
       if (_activeHttpMetrics.containsKey(key)) {
-        _logger.w('HTTP metric $key đang hoạt động, dừng trước khi bắt đầu mới');
+        _logger.w('HTTP Metric for $key already exists, stopping first');
         await stopHttpMetric(url, method);
       }
       
-      // Tạo HTTP metric mới
-      final httpMetric = _performance.newHttpMetric(url, method);
-      await httpMetric.start();
+      // Start new metric
+      final metric = _performance.newHttpMetric(url, method);
+      await metric.start();
       
-      // Thêm attributes nếu có
+      // Add attributes if available
       if (attributes != null) {
-        attributes.forEach((key, value) {
-          httpMetric.putAttribute(key, value);
+        attributes.forEach((attrKey, value) {
+          metric.putAttribute(attrKey, value);
         });
       }
       
-      // Lưu vào danh sách đang hoạt động
-      _activeHttpMetrics[key] = httpMetric;
+      // Save to active metrics
+      _activeHttpMetrics[key] = metric;
       
-      _logger.v('Bắt đầu HTTP metric: $key');
+      _logger.v('Started HTTP metric: $key');
     } catch (e) {
-      _logger.e('Lỗi khi bắt đầu HTTP metric: $e');
+      _logger.e('Error starting HTTP metric: $e');
     }
   }
   
-  /// Kết thúc theo dõi HTTP request
+  /// Stop tracking HTTP metric
   Future<void> stopHttpMetric(
     String url,
     HttpMethod method, {
@@ -273,105 +274,59 @@ class PerformanceMonitor {
     try {
       final key = '${method.toString()}_$url';
       
-      final httpMetric = _activeHttpMetrics.remove(key);
-      if (httpMetric == null) {
-        _logger.w('Không tìm thấy HTTP metric $key để dừng');
+      final metric = _activeHttpMetrics.remove(key);
+      if (metric == null) {
+        _logger.w('HTTP Metric for $key not found to stop');
         return;
       }
       
-      // Thêm thông tin bổ sung
+      // Set additional info if available
       if (responseCode != null) {
-        httpMetric.httpResponseCode = responseCode;
+        metric.httpResponseCode = responseCode;
       }
       
       if (requestPayloadSize != null) {
-        httpMetric.requestPayloadSize = requestPayloadSize;
+        metric.requestPayloadSize = requestPayloadSize;
       }
       
       if (responsePayloadSize != null) {
-        httpMetric.responsePayloadSize = responsePayloadSize;
+        metric.responsePayloadSize = responsePayloadSize;
       }
       
       if (contentType != null) {
-        httpMetric.putAttribute('content_type', contentType);
+        metric.putAttribute('content_type', contentType);
       }
       
-      // Dừng HTTP metric
-      await httpMetric.stop();
+      // Stop metric
+      await metric.stop();
       
-      _logger.v('Dừng HTTP metric: $key');
+      _logger.v('Stopped HTTP metric: $key');
     } catch (e) {
-      _logger.e('Lỗi khi dừng HTTP metric: $e');
+      _logger.e('Error stopping HTTP metric: $e');
     }
   }
   
-  /// Tạo và thực thi trace trong một hàm
-  Future<T> traceFunction<T>(
-    TraceType type,
-    Future<T> Function() function, {
-    String? customTraceName,
-    Map<String, String>? attributes,
-  }) async {
-    // Bắt đầu trace
-    await startTrace(type, customTraceName: customTraceName, attributes: attributes);
+  /// Record custom metric (outside of a trace)
+  void recordCustomMetric(String name, double value) {
+    if (!_isPerformanceCollectionEnabled) return;
     
     try {
-      // Thực thi hàm
-      final result = await function();
-      return result;
-    } finally {
-      // Đảm bảo dừng trace ngay cả khi có lỗi
-      await stopTrace(type, customTraceName: customTraceName);
+      _logger.v('Recorded custom metric: $name = $value');
+      // Implementation depends on analytics system
+    } catch (e) {
+      _logger.e('Error recording custom metric: $e');
     }
   }
   
-  /// Tạo và thực thi HTTP trace trong một hàm
-  Future<T> traceHttpFunction<T>(
-    String url,
-    HttpMethod method,
-    Future<T> Function() function, {
-    Map<String, String>? attributes,
-    void Function(T result)? onResult,
-  }) async {
-    // Bắt đầu HTTP metric
-    await startHttpMetric(url, method, attributes: attributes);
+  /// Record custom event
+  void recordEvent(String name, {Map<String, dynamic>? parameters}) {
+    if (!_isPerformanceCollectionEnabled) return;
     
     try {
-      // Thực thi hàm
-      final result = await function();
-      
-      // Gọi callback nếu có
-      onResult?.call(result);
-      
-      return result;
+      _logger.v('Recorded event: $name with params: $parameters');
+      // Implementation depends on analytics system
     } catch (e) {
-      // Ghi lại lỗi
-      _activeHttpMetrics['${method.toString()}_$url']?.putAttribute('error', e.toString());
-      rethrow;
-    } finally {
-      // Đảm bảo dừng HTTP metric ngay cả khi có lỗi
-      await stopHttpMetric(url, method);
-    }
-  }
-  
-  /// Đặt thuộc tính chung sẽ được thêm vào tất cả các trace và HTTP metric
-  Future<void> setGlobalAttributes(Map<String, String> attributes) async {
-    try {
-      // Thêm cho tất cả các trace đang hoạt động
-      for (final trace in _activeTraces.values) {
-        attributes.forEach((key, value) {
-          trace.putAttribute(key, value);
-        });
-      }
-      
-      // Thêm cho tất cả các HTTP metric đang hoạt động
-      for (final httpMetric in _activeHttpMetrics.values) {
-        attributes.forEach((key, value) {
-          httpMetric.putAttribute(key, value);
-        });
-      }
-    } catch (e) {
-      _logger.e('Lỗi khi đặt global attributes: $e');
+      _logger.e('Error recording event: $e');
     }
   }
 } 

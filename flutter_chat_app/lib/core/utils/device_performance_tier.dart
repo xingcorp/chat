@@ -1,110 +1,228 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Các cấp độ hiệu năng thiết bị
+/// Device performance capability levels
 enum DevicePerformanceTier {
-  /// Thiết bị cấu hình thấp, cần giảm độ phức tạp animation
+  /// Low-end devices, need to reduce animation complexity
   low,
   
-  /// Thiết bị cấu hình trung bình, sử dụng animation tiêu chuẩn
+  /// Medium-end devices, use standard animations
   medium,
   
-  /// Thiết bị cấu hình cao, có thể sử dụng animation phức tạp
+  /// High-end devices, can use complex animations
   high
 }
 
-/// Lớp quản lý phát hiện và xác định khả năng thiết bị
+/// Class for detecting and determining device capabilities
 class DeviceCapabilityDetector {
   static const String _prefsKey = 'device_performance_tier';
+  static const String _lastDetectionTimeKey = 'last_performance_detection_time';
   static DevicePerformanceTier? _cachedTier;
   
-  /// Phát hiện khả năng thiết bị
+  /// Validity duration for performance assessment (7 days)
+  static const Duration _tierValidityDuration = Duration(days: 7);
+  
+  /// Detect device capabilities
   static Future<DevicePerformanceTier> detectCapabilities() async {
-    // Nếu đã có cache, trả về giá trị cache
+    // Return cached value if available
     if (_cachedTier != null) {
       return _cachedTier!;
     }
     
-    // Kiểm tra xem đã có thông tin từ lần chạy trước không
+    // Check if we have info from previous run
     final prefs = await SharedPreferences.getInstance();
     final savedTier = prefs.getString(_prefsKey);
-    if (savedTier != null) {
+    final lastDetectionTimeStr = prefs.getString(_lastDetectionTimeKey);
+    
+    // Check validity of previous assessment
+    bool isValid = false;
+    if (lastDetectionTimeStr != null) {
+      try {
+        final lastDetectionTime = DateTime.parse(lastDetectionTimeStr);
+        final currentTime = DateTime.now();
+        isValid = currentTime.difference(lastDetectionTime) < _tierValidityDuration;
+      } catch (_) {
+        // Format error, consider invalid
+      }
+    }
+    
+    if (savedTier != null && isValid) {
       try {
         _cachedTier = DevicePerformanceTier.values.firstWhere(
           (e) => e.toString() == savedTier
         );
         return _cachedTier!;
       } catch (_) {
-        // Nếu có lỗi, tiếp tục với phát hiện mới
+        // If error, continue with new detection
       }
     }
     
-    // Phát hiện dựa trên nền tảng
+    // Detect based on platform
     DevicePerformanceTier detectedTier;
     
     if (kIsWeb) {
-      // Trên web, mặc định là medium vì khó phát hiện cấu hình chính xác
-      detectedTier = DevicePerformanceTier.medium;
-    } else if (Platform.isAndroid || Platform.isIOS) {
-      // Đối với thiết bị di động, thực hiện đánh giá đơn giản dựa trên RAM
-      detectedTier = await _detectMobileCapabilities();
+      // Check performance on web
+      detectedTier = await _detectWebCapabilities();
+    } else if (Platform.isAndroid) {
+      // For Android, check device specs
+      detectedTier = await _detectAndroidCapabilities();
+    } else if (Platform.isIOS) {
+      // For iOS, check model
+      detectedTier = await _detectIOSCapabilities();
     } else {
-      // Desktop mặc định là high
+      // Desktop defaults to high
       detectedTier = DevicePerformanceTier.high;
     }
     
-    // Lưu lại kết quả để lần sau sử dụng
+    // Save result for future use
     await prefs.setString(_prefsKey, detectedTier.toString());
+    await prefs.setString(_lastDetectionTimeKey, DateTime.now().toIso8601String());
     _cachedTier = detectedTier;
     
     return detectedTier;
   }
   
-  /// Đánh giá khả năng thiết bị di động
-  static Future<DevicePerformanceTier> _detectMobileCapabilities() async {
-    // Thực hiện một kiểm tra đơn giản
-    // Trong triển khai thực tế, cần sử dụng các package như device_info_plus
-    // để lấy thông tin chi tiết hơn về thiết bị
-    
+  /// Assess Android device capabilities
+  static Future<DevicePerformanceTier> _detectAndroidCapabilities() async {
     try {
-      // Một micro-benchmark đơn giản để kiểm tra hiệu năng
-      final startTime = DateTime.now();
-      int sum = 0;
+      final deviceInfo = DeviceInfoPlugin();
+      final androidInfo = await deviceInfo.androidInfo;
       
-      // Thực hiện một số phép tính đơn giản để kiểm tra tốc độ
-      for (int i = 0; i < 100000; i++) {
-        sum += i;
+      // Get RAM info - Use available properties
+      final int? sdkVersion = androidInfo.version.sdkInt;
+      
+      // Estimate configuration based on model, cores and SDK version
+      final bool isEmulator = androidInfo.isPhysicalDevice == false;
+      final int processorCount = androidInfo.supportedAbis?.length ?? 0;
+      
+      // Determine performance based on device info
+      if (isEmulator) {
+        // Emulators typically have lower performance than real devices
+        return DevicePerformanceTier.medium;
       }
       
-      final endTime = DateTime.now();
-      final duration = endTime.difference(startTime).inMilliseconds;
+      // Newer SDK versions (Android 9+) typically have better performance
+      if (sdkVersion != null) {
+        if (sdkVersion >= 29 && processorCount >= 6) { // Android 10+ with many cores
+          return DevicePerformanceTier.high;
+        } else if (sdkVersion >= 26) { // Android 8.0+
+          return DevicePerformanceTier.medium;
+        } else {
+          return DevicePerformanceTier.low;
+        }
+      }
       
-      // Thời gian xử lý ngắn = thiết bị nhanh hơn
-      if (duration < 30) {
+      // Fallback based on CPU cores
+      if (processorCount >= 6) {
         return DevicePerformanceTier.high;
-      } else if (duration < 100) {
+      } else if (processorCount >= 4) {
         return DevicePerformanceTier.medium;
       } else {
         return DevicePerformanceTier.low;
       }
     } catch (_) {
-      // Nếu có lỗi, mặc định là medium để an toàn
+      // If unable to get information, perform micro-benchmark
+      return _fallbackPerformanceDetection();
+    }
+  }
+  
+  /// Assess iOS device capabilities
+  static Future<DevicePerformanceTier> _detectIOSCapabilities() async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      final iosInfo = await deviceInfo.iosInfo;
+      
+      // Get model name (e.g. iPhone10,1)
+      final modelName = iosInfo.utsname.machine;
+      
+      // iOS version
+      final systemVersion = double.tryParse(iosInfo.systemVersion.split('.').first) ?? 0;
+      
+      // Categorize device by model name
+      // iPhone 8 and above considered medium or higher
+      if (modelName.contains('iPhone')) {
+        int? modelNumber;
+        try {
+          // Extract model number (iPhone10,1 -> 10)
+          modelNumber = int.tryParse(modelName.replaceAll('iPhone', '').split(',').first);
+        } catch (_) {}
+        
+        if (modelNumber != null) {
+          if (modelNumber >= 12 || systemVersion >= 15) {
+            return DevicePerformanceTier.high;
+          } else if (modelNumber >= 8) {
+            return DevicePerformanceTier.medium;
+          }
+        }
+      }
+      
+      // iPad Pro considered high
+      if (modelName.contains('iPad') && modelName.contains('Pro')) {
+        return DevicePerformanceTier.high;
+      }
+      
+      // Regular iPads considered medium
+      if (modelName.contains('iPad') && systemVersion >= 13) {
+        return DevicePerformanceTier.medium;
+      }
+      
+      // Default for older iOS devices
+      return DevicePerformanceTier.low;
+    } catch (_) {
+      // Fallback
+      return _fallbackPerformanceDetection();
+    }
+  }
+  
+  /// Assess web capabilities
+  static Future<DevicePerformanceTier> _detectWebCapabilities() async {
+    return _fallbackPerformanceDetection();
+  }
+  
+  /// Fallback method when device specs can't be read
+  static Future<DevicePerformanceTier> _fallbackPerformanceDetection() async {
+    try {
+      // A simple micro-benchmark to check performance
+      final startTime = DateTime.now();
+      int sum = 0;
+      
+      // Perform some simple calculations to measure speed
+      for (int i = 0; i < 500000; i++) {
+        sum += i % 1000;
+      }
+      
+      final endTime = DateTime.now();
+      final duration = endTime.difference(startTime).inMilliseconds;
+      
+      // Shorter processing time = faster device
+      if (duration < 100) {
+        return DevicePerformanceTier.high;
+      } else if (duration < 300) {
+        return DevicePerformanceTier.medium;
+      } else {
+        return DevicePerformanceTier.low;
+      }
+    } catch (_) {
+      // Default to medium if benchmark fails
       return DevicePerformanceTier.medium;
     }
   }
   
-  /// Ghi đè cấp hiệu năng thiết bị (hữu ích cho kiểm thử)
+  /// Override device performance tier (useful for testing)
   static Future<void> overridePerformanceTier(DevicePerformanceTier tier) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsKey, tier.toString());
+    await prefs.setString(_lastDetectionTimeKey, DateTime.now().toIso8601String());
     _cachedTier = tier;
   }
   
-  /// Xóa cấp hiệu năng đã lưu
+  /// Clear saved performance tier
   static Future<void> clearSavedPerformanceTier() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefsKey);
+    await prefs.remove(_lastDetectionTimeKey);
     _cachedTier = null;
   }
 } 

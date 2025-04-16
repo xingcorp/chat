@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_chat_app/core/base/base_state.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/utils/optimized_repaint_boundary.dart';
 
 /// Widget hiển thị trước media (hình ảnh, video)
 class MediaPreview extends BaseStatefulWidget {
@@ -41,7 +41,7 @@ class MediaPreview extends BaseStatefulWidget {
   }) : super(key: key);
 
   @override
-  _MediaPreviewState createState() => _MediaPreviewState();
+  State<MediaPreview> createState() => _MediaPreviewState();
 }
 
 class _MediaPreviewState extends BaseState<MediaPreview> {
@@ -59,18 +59,22 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
     const defaultWidth = 200.0;
     const defaultHeight = 150.0;
     
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
-        width: widget.width ?? defaultWidth,
-        height: widget.height ?? defaultHeight,
-        decoration: BoxDecoration(
-          color: AppColors.greyLight,
-          borderRadius: BorderRadius.circular(
-            widget.borderRadius ?? AppConstants.kDefaultBorderRadius,
+    return OptimizedRepaintBoundary(
+      perfTag: 'media_preview_${widget.isImage ? 'image' : 'video'}',
+      trackPerformance: true,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          width: widget.width ?? defaultWidth,
+          height: widget.height ?? defaultHeight,
+          decoration: BoxDecoration(
+            color: AppColors.greyLight,
+            borderRadius: BorderRadius.circular(
+              widget.borderRadius ?? AppConstants.kDefaultBorderRadius,
+            ),
           ),
+          child: _buildMedia(),
         ),
-        child: _buildMedia(),
       ),
     );
   }

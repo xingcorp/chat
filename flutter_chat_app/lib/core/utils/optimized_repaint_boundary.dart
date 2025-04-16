@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:get_it/get_it.dart';
 
 /// A wrapper around [RepaintBoundary] that conditionally applies the boundary
 /// and tracks painting performance.
@@ -31,14 +32,22 @@ class OptimizedRepaintBoundary extends StatefulWidget {
 }
 
 class _OptimizedRepaintBoundaryState extends State<OptimizedRepaintBoundary> {
-  late PerformanceMonitor? _performanceMonitor;
+  late final PerformanceMonitor? _performanceMonitor;
   final GlobalKey _paintKey = GlobalKey();
   
   @override
   void initState() {
     super.initState();
+    // Get the performance monitor from the service locator if tracking is enabled
     if (widget.trackPerformance) {
-      _performanceMonitor = PerformanceMonitor();
+      try {
+        _performanceMonitor = GetIt.I<PerformanceMonitor>();
+      } catch (e) {
+        debugPrint('Failed to get PerformanceMonitor: $e');
+        // Continue without performance monitoring
+      }
+    } else {
+      _performanceMonitor = null;
     }
   }
   
@@ -59,17 +68,28 @@ class _OptimizedRepaintBoundaryState extends State<OptimizedRepaintBoundary> {
   }
   
   void _trackPaintPerformance(Duration duration) {
-    if (widget.trackPerformance && widget.perfTag != null) {
-      _performanceMonitor?.recordCustomMetric(
+    if (widget.trackPerformance && widget.perfTag != null && _performanceMonitor != null) {
+      // Record the paint time as a custom metric
+      _performanceMonitor!.recordCustomMetric(
         'paint_time_${widget.perfTag}',
         duration.inMicroseconds.toDouble(),
       );
       
-      // If the paint time is too high, log it
-      if (duration.inMilliseconds > 16) { // Aiming for 60fps (16.6ms per frame)
-        _performanceMonitor?.logWarning(
-          'High paint time for ${widget.perfTag}: ${duration.inMilliseconds}ms',
-        );
+      // If the paint time is too high, log a warning
+      // 16ms is the threshold for 60fps rendering
+      if (duration.inMilliseconds > 16) {
+        debugPrint('⚠️ High paint time for ${widget.perfTag}: ${duration.inMilliseconds}ms');
+        
+        // Record as an event when we have a significant performance issue
+        if (duration.inMilliseconds > 32) { // More than 2 frames worth of time
+          _performanceMonitor!.recordEvent(
+            'high_paint_time',
+            parameters: {
+              'tag': widget.perfTag!,
+              'duration_ms': duration.inMilliseconds,
+            },
+          );
+        }
       }
     }
   }
@@ -77,6 +97,7 @@ class _OptimizedRepaintBoundaryState extends State<OptimizedRepaintBoundary> {
 
 /// A widget that tracks paint time
 class _PaintTimeTracker extends SingleChildRenderObjectWidget {
+  /// Callback when paint completes, with the duration it took
   final void Function(Duration duration)? onPaint;
   
   const _PaintTimeTracker({
@@ -96,7 +117,9 @@ class _PaintTimeTracker extends SingleChildRenderObjectWidget {
   }
 }
 
+/// A render object that measures paint time
 class _PaintTimeTrackerRenderObject extends RenderProxyBox {
+  /// Callback for paint duration
   void Function(Duration duration)? onPaint;
   
   _PaintTimeTrackerRenderObject({this.onPaint});
@@ -104,12 +127,19 @@ class _PaintTimeTrackerRenderObject extends RenderProxyBox {
   @override
   void paint(PaintingContext context, Offset offset) {
     if (onPaint != null) {
-      final Stopwatch stopwatch = Stopwatch()..start();
-      super.paint(context, offset);
-      stopwatch.stop();
-      onPaint!(stopwatch.elapsed);
+      final stopwatch = Stopwatch()..start();
+      
+      try {
+        super.paint(context, offset);
+      } finally {
+        stopwatch.stop();
+        onPaint!(stopwatch.elapsed);
+      }
     } else {
       super.paint(context, offset);
     }
   }
+  
+  @override
+  bool get isRepaintBoundary => true;
 } 

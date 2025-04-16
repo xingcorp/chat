@@ -6,6 +6,9 @@ import 'package:flutter_chat_app/core/utils/logger.dart';
 /// Tích hợp tối ưu hiệu suất và debugging
 abstract class BaseStatefulWidget extends StatefulWidget {
   const BaseStatefulWidget({Key? key}) : super(key: key);
+  
+  /// Allow widgets to control when they should rebuild for optimization
+  bool shouldRebuild(covariant BaseStatefulWidget oldWidget) => true;
 }
 
 /// Base class cho tất cả các StatefulWidget State
@@ -55,8 +58,32 @@ abstract class BaseState<T extends BaseStatefulWidget> extends State<T> with Wid
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     LogUtils.d(_tag, 'didChangeAppLifecycleState: $state');
+    
+    // Handle app lifecycle state changes
+    if (state == AppLifecycleState.resumed) {
+      onAppResumed();
+    } else if (state == AppLifecycleState.paused) {
+      onAppPaused();
+    } else if (state == AppLifecycleState.inactive) {
+      onAppInactive();
+    } else if (state == AppLifecycleState.detached) {
+      onAppDetached();
+    }
+    
     super.didChangeAppLifecycleState(state);
   }
+  
+  /// Called when the app is resumed
+  void onAppResumed() {}
+  
+  /// Called when the app is paused
+  void onAppPaused() {}
+  
+  /// Called when the app is inactive
+  void onAppInactive() {}
+  
+  /// Called when the app is detached
+  void onAppDetached() {}
   
   /// Phương thức kiểm tra trạng thái widget trước khi setState
   /// Giúp tránh gọi setState trên widget đã dispose
