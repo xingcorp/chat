@@ -56,6 +56,9 @@ abstract class IConnectivityService {
   /// Stream thông báo thay đổi chất lượng kết nối
   Stream<ConnectionQuality> get qualityStream;
   
+  /// Stream phát ra true/false khi có/mất kết nối
+  Stream<bool> get onConnectivityChanged;
+  
   /// Các loại kết nối hiện tại
   List<ConnectionType> get currentConnectivity;
   
@@ -133,6 +136,10 @@ class ConnectivityServiceImpl implements IConnectivityService {
   
   @override
   Stream<ConnectionQuality> get qualityStream => _qualitySubject.stream;
+  
+  @override
+  Stream<bool> get onConnectivityChanged => _connectivitySubject.stream.map((types) => 
+      types.isNotEmpty && !types.contains(ConnectionType.none));
   
   @override
   List<ConnectionType> get currentConnectivity => _currentConnectivity;

@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart' as dio;
 import 'package:dio/dio.dart' hide RequestOptions;
+import 'package:dio/io.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
@@ -57,6 +58,9 @@ class DioHttpClient implements IHttpClient {
   /// Max pending request
   static const int _maxPendingRequests = 50;
   
+  /// Subscription for connectivity changes
+  StreamSubscription? _connectivitySubscription;
+  
   /// Constructor
   @factoryMethod
   DioHttpClient(
@@ -81,8 +85,8 @@ class DioHttpClient implements IHttpClient {
     // Thiết lập trạng thái kết nối hiện tại
     _isConnected = await _connectivityService.isConnected();
     
-    // Lắng nghe sự thay đổi kết nối
-    _connectivityService.onConnectivityChanged.listen(_handleConnectivityChange);
+    // Lắng nghe sự thay đổi kết nối - use subscription instead of stream
+    _connectivitySubscription = _connectivityService.onConnectivityChanged.listen(_handleConnectivityChange);
     
     _isInitialized = true;
   }
@@ -116,13 +120,17 @@ class DioHttpClient implements IHttpClient {
       listFormat: dio.ListFormat.multiCompatible,
     );
     
-    // Socket configuration for connection pooling
-    (dioInstance.httpClientAdapter as dio.DefaultHttpClientAdapter).onHttpClientCreate = (client) {
-      client.idleTimeout = const Duration(seconds: 30);
-      client.connectionTimeout = const Duration(seconds: 30);
-      client.maxConnectionsPerHost = 8; // Limit connection per host for better performance
-      return client;
-    };
+    // Configure HTTP client adapter
+    final httpClientAdapter = dioInstance.httpClientAdapter;
+    if (httpClientAdapter is IOHttpClientAdapter) {
+      httpClientAdapter.createHttpClient = () {
+        final client = HttpClient();
+        client.idleTimeout = const Duration(seconds: 30);
+        client.connectionTimeout = const Duration(seconds: 30);
+        client.maxConnectionsPerHost = 8; // Limit connection per host for better performance
+        return client;
+      };
+    }
     
     // Custom retry interceptor với backoff strategy
     dioInstance.interceptors.add(
@@ -136,10 +144,7 @@ class DioHttpClient implements IHttpClient {
           Duration(seconds: 3),
         ],
         retryableExtraStatuses: {401},
-        retryEvaluator: (error, attempt) {
-          // Retry khi lỗi network hoặc timeout, nhưng không retry với lỗi client
-          return _shouldRetryRequest(error, attempt);
-        },
+        retryEvaluator: _shouldRetryRequest,
       ),
     );
     
@@ -527,7 +532,7 @@ class DioHttpClient implements IHttpClient {
             endpoint,
             queryParameters: queryParams,
             options: _buildDioOptions(headers, customOptions),
-            cancelToken: cancelToken != null ? cancelToken.asDioCancelToken : null,
+            cancelToken: cancelToken?.asDioCancelToken,
           );
           
           // Cache lại response
@@ -547,7 +552,7 @@ class DioHttpClient implements IHttpClient {
               endpoint,
               queryParameters: queryParams,
               options: _buildDioOptions(headers, customOptions),
-              cancelToken: cancelToken != null ? cancelToken.asDioCancelToken : null,
+              cancelToken: cancelToken?.asDioCancelToken,
             );
             
             // Cache lại response
@@ -579,7 +584,7 @@ class DioHttpClient implements IHttpClient {
             endpoint,
             queryParameters: queryParams,
             options: _buildDioOptions(headers, customOptions),
-            cancelToken: cancelToken != null ? cancelToken.asDioCancelToken : null,
+            cancelToken: cancelToken?.asDioCancelToken,
           ).then((response) async {
             // Cache lại response mới
             await _cacheManager.cacheResponse<T>(
@@ -603,7 +608,7 @@ class DioHttpClient implements IHttpClient {
             endpoint,
             queryParameters: queryParams,
             options: _buildDioOptions(headers, customOptions),
-            cancelToken: cancelToken != null ? cancelToken.asDioCancelToken : null,
+            cancelToken: cancelToken?.asDioCancelToken,
           );
           
           // Cache lại response
@@ -631,7 +636,7 @@ class DioHttpClient implements IHttpClient {
             endpoint,
             queryParameters: queryParams,
             options: _buildDioOptions(headers, customOptions),
-            cancelToken: cancelToken != null ? cancelToken.asDioCancelToken : null,
+            cancelToken: cancelToken?.asDioCancelToken,
           );
           
           // Cache lại response
@@ -650,7 +655,7 @@ class DioHttpClient implements IHttpClient {
         endpoint,
         queryParameters: queryParams,
         options: _buildDioOptions(headers, customOptions),
-        cancelToken: cancelToken != null ? cancelToken.asDioCancelToken : null,
+        cancelToken: cancelToken?.asDioCancelToken,
       );
       
       return response.data as T;
@@ -705,7 +710,7 @@ class DioHttpClient implements IHttpClient {
         data: data,
         queryParameters: queryParams,
         options: _buildDioOptions(headers, options),
-        cancelToken: cancelToken != null ? cancelToken.asDioCancelToken : null,
+        cancelToken: cancelToken?.asDioCancelToken,
       );
       
       // Invalidate cache nếu cần
@@ -742,7 +747,7 @@ class DioHttpClient implements IHttpClient {
         data: data,
         queryParameters: queryParams,
         options: _buildDioOptions(headers, options),
-        cancelToken: cancelToken != null ? cancelToken.asDioCancelToken : null,
+        cancelToken: cancelToken?.asDioCancelToken,
       );
       
       // Invalidate cache nếu cần
@@ -779,7 +784,7 @@ class DioHttpClient implements IHttpClient {
         data: data,
         queryParameters: queryParams,
         options: _buildDioOptions(headers, options),
-        cancelToken: cancelToken != null ? cancelToken.asDioCancelToken : null,
+        cancelToken: cancelToken?.asDioCancelToken,
       );
       
       // Invalidate cache nếu cần
@@ -814,7 +819,7 @@ class DioHttpClient implements IHttpClient {
         endpoint,
         queryParameters: queryParams,
         options: _buildDioOptions(headers, options),
-        cancelToken: cancelToken != null ? cancelToken.asDioCancelToken : null,
+        cancelToken: cancelToken?.asDioCancelToken,
       );
       
       // Invalidate cache nếu cần
@@ -857,7 +862,7 @@ class DioHttpClient implements IHttpClient {
         queryParameters: queryParams,
         options: dio.Options(headers: headers),
         onReceiveProgress: onReceiveProgress,
-        cancelToken: cancelToken != null ? cancelToken.asDioCancelToken : null,
+        cancelToken: cancelToken?.asDioCancelToken,
         deleteOnError: true, // Xóa file nếu có lỗi
       );
       
@@ -904,8 +909,7 @@ class DioHttpClient implements IHttpClient {
               dio.MultipartFile.fromBytes(
                 file.bytes!,
                 filename: file.fileName,
-                contentType: file.contentType != null ? 
-                  dio.MediaType(file.contentType!.type, file.contentType!.subtype) : null,
+                // Don't explicitly set contentType, let Dio handle it based on filename
               ),
             ),
           );
@@ -923,8 +927,7 @@ class DioHttpClient implements IHttpClient {
               await dio.MultipartFile.fromFile(
                 file.filePath!,
                 filename: file.fileName,
-                contentType: file.contentType != null ? 
-                  dio.MediaType(file.contentType!.type, file.contentType!.subtype) : null,
+                // Don't explicitly set contentType, let Dio handle it based on filename
               ),
             ),
           );
@@ -938,7 +941,7 @@ class DioHttpClient implements IHttpClient {
         queryParameters: queryParams,
         options: dio.Options(headers: headers),
         onSendProgress: onSendProgress,
-        cancelToken: cancelToken != null ? cancelToken.asDioCancelToken : null,
+        cancelToken: cancelToken?.asDioCancelToken,
       );
       
       return response.data as T;
@@ -1005,6 +1008,7 @@ class DioHttpClient implements IHttpClient {
     _uploadDio.close(force: true);
     _pendingRequests.clear();
     _connectionFailures.clear();
+    _connectivitySubscription?.cancel();
     _isInitialized = false;
   }
 }
@@ -1070,7 +1074,7 @@ extension CancelTokenExtension on CancelToken {
     final dioCancelToken = dio.CancelToken();
     
     // Link our cancel token to Dio's
-    this.whenCancel.then((_) {
+    whenCancel.then((_) {
       if (!dioCancelToken.isCancelled) {
         dioCancelToken.cancel('Request cancelled');
       }
