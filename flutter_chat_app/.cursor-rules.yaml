@@ -47,41 +47,61 @@ rules:
     message: "Prefer using BLoC widgets (BlocBuilder, BlocListener, etc.) for state management instead of calling setState() directly in UI components. Reserve setState for local, ephemeral UI state if necessary."
     glob: "lib/presentation/**/*.dart" # Target files within the presentation layer
 
-# --- Clean Architecture Enforcement Rules ---
+  # --- Clean Architecture Enforcement Rules ---
 
-# Prevent direct usage of DataSources in the Presentation layer.
-- rule_id: no-direct-datasource-in-presentation
-  description: Prevent direct usage of DataSources in the Presentation layer.
-  match: 'import.*package:.*/data/datasources/.*'
-  level: error
-  message: "Presentation layer (UI, Blocs) must not import directly from DataSources (data/datasources). Use Domain UseCases or Repositories instead."
-  glob: "lib/presentation/**/*.dart"
+  # Prevent direct usage of DataSources in the Presentation layer.
+  - rule_id: no-direct-datasource-in-presentation
+    description: Prevent direct usage of DataSources in the Presentation layer.
+    match: 'import.*package:.*/data/datasources/.*'
+    level: error
+    message: "Presentation layer (UI, Blocs) must not import directly from DataSources (data/datasources). Use Domain UseCases or Repositories instead."
+    glob: "lib/presentation/**/*.dart"
 
-# Prevent direct usage of Data Models (DTOs) in the Presentation layer.
-- rule_id: no-direct-model-in-presentation
-  description: Prevent direct usage of Data Models (DTOs) in the Presentation layer.
-  match: 'import.*package:.*/data/models/.*'
-  level: error
-  message: "Presentation layer (UI, Blocs) must not import directly from Data Models (data/models). Use Domain Entities instead."
-  glob: "lib/presentation/**/*.dart"
+  # Prevent direct usage of Data Models (DTOs) in the Presentation layer.
+  - rule_id: no-direct-model-in-presentation
+    description: Prevent direct usage of Data Models (DTOs) in the Presentation layer.
+    match: 'import.*package:.*/data/models/.*'
+    level: error
+    message: "Presentation layer (UI, Blocs) must not import directly from Data Models (data/models). Use Domain Entities instead."
+    glob: "lib/presentation/**/*.dart"
 
-# Ensure Domain layer remains independent of UI and Infrastructure frameworks.
-- rule_id: no-framework-in-domain
-  description: Ensure Domain layer remains independent of UI and Infrastructure frameworks.
-  match: 'import.*package:(flutter|http|sqflite|shared_preferences)/.*' # Add other infra packages if needed
-  level: error
-  message: "Domain layer (domain/) must not import Flutter framework (package:flutter/...) or infrastructure packages (e.g., http, sqflite). Depend only on Dart core and domain interfaces."
-  glob: "lib/domain/**/*.dart"
+  # Ensure Domain layer remains independent of UI and Infrastructure frameworks.
+  - rule_id: no-framework-in-domain
+    description: Ensure Domain layer remains independent of UI and Infrastructure frameworks.
+    match: 'import.*package:(flutter|http|sqflite|shared_preferences)/.*' # Add other infra packages if needed
+    level: error
+    message: "Domain layer (domain/) must not import Flutter framework (package:flutter/...) or infrastructure packages (e.g., http, sqflite). Depend only on Dart core and domain interfaces."
+    glob: "lib/domain/**/*.dart"
 
-# --- General Code Style Rules ---
+  # --- General Code Style & Quality Rules ---
 
-# Prefer 'final' for local variables that are not reassigned.
-- rule_id: prefer-final-locals
-  description: Prefer 'final' for local variables that are not reassigned.
-  match: '^\s*var\s+\w+\s*=' # Matches local 'var' with initializer
-  level: info
-  message: "Consider using 'final' instead of 'var' for local variables if they are not reassigned."
-  glob: "lib/**/*.dart"
+  # Prefer 'final' for local variables that are not reassigned.
+  - rule_id: prefer-final-locals
+    description: Prefer 'final' for local variables that are not reassigned.
+    match: '^\s*var\s+\w+\s*=' # Matches local 'var' with initializer
+    level: info
+    message: "Consider using 'final' instead of 'var' for local variables if they are not reassigned."
+    glob: "lib/**/*.dart"
+
+  # Encourage documentation comments for public top-level APIs.
+  - rule_id: require-doc-comments
+    description: Encourage documentation comments (///) for public top-level APIs.
+    # Matches top-level class/enum/mixin/extension/typedef/function declarations not preceded by ///
+    # Note: This regex is approximate and might have limitations.
+    match: '^(?!///\\s)(?:class |enum |mixin |extension |typedef |\\w+[<\\w,\\s>]*\\s+\\w+\\s*\\()'
+    level: info
+    message: "Consider adding documentation comments (///) for public top-level declarations (classes, functions, enums, etc.)."
+    glob: "lib/**/*.dart"
+
+  # Avoid catching broad exception types like Object or Exception.
+  - rule_id: no-broad-exception-catch
+    description: Avoid catching broad exception types like Object or Exception.
+    # Matches `catch(e)` or `catch(e,s)` without specific type, or catching Object/Exception directly.
+    match: '\\bcatch\\s*\\(\\s*(?:final\\s+)?(e|err|error|exception|_)(?:,\\s*(?:final\\s+)?(s|st|stack|_))?\\s*\\)|\\bcatch\\s*\\(\\s*(?:final\\s+)?(Object|Exception)\\b'
+    level: warning
+    message: "Avoid catching generic 'Exception' or 'Object'. Catch specific exceptions whenever possible for better error handling."
+    glob: "lib/**/*.dart"
+
 
 # --- Potential Future Rules (Commented Out) ---
 #
@@ -95,4 +115,18 @@ rules:
 #   match: ... # Needs careful regex
 #   level: warning
 #   message: "Consider calling UseCases from BLoCs for complex business logic instead of accessing Repositories directly."
-#   glob: "lib/presentation/blocs/**/*.dart" 
+#   glob: "lib/presentation/blocs/**/*.dart"
+#
+# - rule_id: require-valuekey-in-listview-builder
+#   description: Encourage using ValueKey in ListView.builder items for performance.
+#   match: ... # Regex is complex/unreliable for this
+#   level: warning
+#   message: "Consider adding a 'key: ValueKey(...)' to items returned by ListView.builder's itemBuilder for better performance."
+#   glob: "lib/**/*.dart"
+#
+# - rule_id: prefer-bloc-buildwhen
+#   description: Encourage using buildWhen/listenWhen with BlocBuilder/BlocListener.
+#   match: ... # Regex is complex/unreliable for this
+#   level: info
+#   message: "Consider adding 'buildWhen'/'listenWhen' to BlocBuilder/BlocListener to prevent unnecessary rebuilds."
+#   glob: "lib/presentation/**/*.dart"
