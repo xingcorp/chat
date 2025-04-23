@@ -1,7 +1,6 @@
 import 'package:flutter_chat_app/core/network/graphql_client.dart';
-import 'package:flutter_chat_app/core/network/socket_manager.dart';
+import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
 
 /// Interface for remote message data source operations
 abstract class MessageRemoteDataSource {
@@ -27,10 +26,10 @@ abstract class MessageRemoteDataSource {
 /// Implementation of [MessageRemoteDataSource]
 class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
   final GraphQLClientWrapper _client;
-  final SocketManager _socketManager;
+  final EnhancedSocketManager _enhancedSocketManager;
   
   /// Constructor
-  MessageRemoteDataSourceImpl(this._client, this._socketManager);
+  MessageRemoteDataSourceImpl(this._client, this._enhancedSocketManager);
   
   @override
   Future<List<MessageModel>> getChatMessages(String chatId, {int limit = 20, String? cursor}) async {
@@ -135,7 +134,7 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
         'chatId': message.chatId,
         'content': message.content,
         'type': message.type.toString().split('.').last.toUpperCase(),
-        'attachments': message.attachments?.map((a) => a.toMap()).toList(),
+        'attachments': null, // TODO: Handle attachment upload separately
       },
     );
     
@@ -185,30 +184,30 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
   
   @override
   Stream<MessageModel> subscribeToMessages(String chatId) {
-    // Đảm bảo socket được kết nối
-    _socketManager.connect();
+    // Đảm bảo socket được kết nối (Có thể không cần nếu AppBloc quản lý)
+    _enhancedSocketManager.connect();
     
     // Tham gia vào chat room
-    _socketManager.emit('join_chat', {'chatId': chatId});
+    _enhancedSocketManager.emit('join_chat', {'chatId': chatId});
     
     // Lắng nghe sự kiện 'new_message' cho chat cụ thể
-    return _socketManager
+    return _enhancedSocketManager
         .on<Map<String, dynamic>>('new_message')
-        .where((data) => data['chatId'] == chatId)
+        .where((data) => data.containsKey('chatId') && data['chatId'] == chatId)
         .map((data) => MessageModel.fromMap(data));
   }
   
   @override
   Stream<Map<String, dynamic>> subscribeToTypingIndicators(String chatId) {
-    // Đảm bảo socket được kết nối
-    _socketManager.connect();
+    // Đảm bảo socket được kết nối (Có thể không cần nếu AppBloc quản lý)
+    _enhancedSocketManager.connect();
     
     // Tham gia vào chat room
-    _socketManager.emit('join_chat', {'chatId': chatId});
+    _enhancedSocketManager.emit('join_chat', {'chatId': chatId});
     
     // Lắng nghe sự kiện 'typing' cho chat cụ thể
-    return _socketManager
+    return _enhancedSocketManager
         .on<Map<String, dynamic>>('typing')
-        .where((data) => data['chatId'] == chatId);
+        .where((data) => data.containsKey('chatId') && data['chatId'] == chatId);
   }
 } 

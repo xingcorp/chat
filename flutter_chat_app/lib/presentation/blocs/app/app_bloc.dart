@@ -4,18 +4,19 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/theme/app_theme.dart';
-import 'package:flutter_chat_app/core/network/socket_manager.dart';
+import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';
+import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
 
 part 'app_event.dart';
 part 'app_state.dart';
 
 /// Manages application-wide state
 class AppBloc extends Bloc<AppEvent, AppState> {
-  final SocketManager _socketManager;
+  final EnhancedSocketManager _enhancedSocketManager;
   StreamSubscription<SocketConnectionState>? _socketConnectionSubscription;
 
-  AppBloc({required SocketManager socketManager}) 
-      : _socketManager = socketManager,
+  AppBloc({required EnhancedSocketManager enhancedSocketManager}) 
+      : _enhancedSocketManager = enhancedSocketManager,
         super(const AppState()) {
     on<AppInitialized>(_onAppInitialized);
     on<ThemeChanged>(_onThemeChanged);
@@ -27,7 +28,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     on<SocketConnectionStateChanged>(_onSocketConnectionStateChanged);
     
     // Lắng nghe sự thay đổi trạng thái socket
-    _socketConnectionSubscription = _socketManager.connectionState.listen((socketState) {
+    _socketConnectionSubscription = _enhancedSocketManager.connectionState.listen((socketState) {
       add(SocketConnectionStateChanged(socketState));
     });
   }
@@ -52,27 +53,25 @@ class AppBloc extends Bloc<AppEvent, AppState> {
   
   /// App entered foreground
   void _onAppEnteredForeground(AppEnteredForeground event, Emitter<AppState> emit) {
-    _socketManager.enterForegroundMode();
     if (state.isAuthenticated) {
-      _socketManager.connect();
+      _enhancedSocketManager.connect();
     }
     emit(state.copyWith(isInBackground: false));
   }
   
   /// App entered background
   void _onAppEnteredBackground(AppEnteredBackground event, Emitter<AppState> emit) {
-    _socketManager.enterBackgroundMode();
     emit(state.copyWith(isInBackground: true));
   }
   
   /// Socket connection was requested
   void _onSocketConnectionRequested(SocketConnectionRequested event, Emitter<AppState> emit) {
-    _socketManager.connect();
+    _enhancedSocketManager.connect();
   }
   
   /// Socket connection was closed
   void _onSocketConnectionClosed(SocketConnectionClosed event, Emitter<AppState> emit) {
-    _socketManager.disconnect();
+    _enhancedSocketManager.disconnect();
   }
   
   /// Socket connection state changed

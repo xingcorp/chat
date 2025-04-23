@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
 import 'package:flutter_chat_app/core/services/local_storage_service.dart';
 import 'package:flutter_chat_app/core/services/connectivity_analyzer_service.dart';
 import 'package:flutter_chat_app/core/services/media_processing_service.dart';
@@ -22,6 +23,11 @@ import 'package:flutter_chat_app/core/services/animation_service.dart';
 import 'package:flutter_chat_app/core/services/device_capability_service.dart';
 import 'package:flutter_chat_app/core/services/media_cache.dart';
 import 'package:connectivity/connectivity.dart';
+import 'package:flutter_chat_app/core/network/socket_manager.dart';
+import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';
+import 'package:flutter_chat_app/core/network/socket_analytics.dart';
+import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
+import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
 
 /// GetIt instance for dependency injection
 final GetIt getIt = GetIt.instance;
@@ -139,6 +145,83 @@ Future<void> configureInjection() async {
   
   // Đăng ký và khởi tạo Animation Service
   await configureAnimationServices();
+
+  // --- Đăng ký Hệ thống Socket.IO ---
+
+  // Đăng ký Logger nếu chưa có (hoặc dùng instance chung nếu có)
+  if (!getIt.isRegistered<Logger>()) {
+    getIt.registerSingleton<Logger>(Logger(
+      // Cấu hình Logger tại đây nếu muốn
+      // Ví dụ: level: kDebugMode ? Level.verbose : Level.info,
+      printer: PrettyPrinter(
+          methodCount: 1, // number of method calls to be displayed
+          errorMethodCount: 8, // number of method calls if stacktrace is provided
+          lineLength: 120, // width of the output
+          colors: true, // Colorful log messages
+          printEmojis: true, // Print an emoji for each log message
+          printTime: true // Should each log print contain a timestamp
+          ),
+    ));
+  }
+  final logger = getIt<Logger>();
+
+  // Lấy AnalyticsService (đã được đăng ký bởi monitoring_module.dart hoặc tương tự)
+  // Lưu ý: Cần đảm bảo module đó chạy trước khi configureInjection cần AnalyticsService
+  final analyticsService = getIt<AnalyticsService>();
+
+  // Đăng ký SocketAnalytics
+  getIt.registerSingleton<SocketAnalytics>(SocketAnalytics(
+    analyticsService: analyticsService,
+    logger: logger,
+  ));
+
+  // Đăng ký SocketRateLimiter
+  getIt.registerSingleton<SocketRateLimiter>(SocketRateLimiter(
+    logger: logger,
+    // Có thể cấu hình defaultLimit, defaultWindowMs, defaultBackoffMs ở đây nếu muốn
+    // defaultLimit: 15,
+    // defaultWindowMs: 1000,
+  ));
+
+  // Đăng ký SocketManager (lớp dùng socket_io_client)
+  // !! Lưu ý: Xác nhận AppConfig.webSocketUrl là URL đúng cho Socket.IO server !!
+  getIt.registerSingleton<SocketManager>(SocketManager(
+    serverUrl: AppConfig.webSocketUrl,
+    logger: logger,
+    analytics: analyticsService,
+    options: {
+      // Thêm các options kết nối Socket.IO cần thiết ở đây
+      'transports': ['websocket'], // Thường dùng websocket cho mobile
+      'autoConnect': false, // EnhancedSocketManager sẽ quản lý việc kết nối
+      'reconnection': false, // EnhancedSocketManager sẽ quản lý việc kết nối lại
+      // 'forceNew': true, // Cân nhắc nếu cần kết nối mới mỗi lần
+      // Cần thêm logic để lấy token và đưa vào query hoặc extraHeaders
+      // Ví dụ sử dụng hàm _getAuthToken() đã có:
+      // 'query': {
+      //   'token': await _getAuthToken(),
+      //   'EIO': '4', // Thường cần cho Socket.IO v3/v4
+      // },
+       'auth': {
+         'token': await _getAuthToken()
+       },
+      // 'extraHeaders': {
+      //  'Authorization': 'Bearer ${await _getAuthToken()}'
+      // }
+    },
+  ));
+
+  // Đăng ký EnhancedSocketManager
+  getIt.registerSingleton<EnhancedSocketManager>(EnhancedSocketManager(
+    getIt<SocketManager>(),
+    getIt<SocketAnalytics>(),
+    getIt<SocketRateLimiter>(),
+    // Logger được tạo bên trong EnhancedSocketManager, không cần inject lại
+  ));
+
+  // --- Kết thúc đăng ký Hệ thống Socket.IO ---
+
+  // !!! Quan trọng: Đảm bảo KHÔNG có đăng ký nào cho SocketConnectionService
+  // (Đã kiểm tra, không có)
 }
 
 /// Tạo repository tin nhắn
