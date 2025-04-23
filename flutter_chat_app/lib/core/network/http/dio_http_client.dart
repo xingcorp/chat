@@ -1,39 +1,35 @@
+import 'dart:async';
+import 'dart:core';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:convert';
+import 'dart:collection';
 
-import 'package:dio/dio.dart';
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../monitoring/logger.dart';
 import '../monitoring/api_request_tracker.dart';
 import '../cache/api_cache_manager.dart';
-import 'http_client_interface.dart' hide RequestOptions;
+import 'http_client_interface.dart';
 
-// Khai báo lại class để tránh xung đột
-import 'http_client_interface.dart' as http_options;
-
-/// Triển khai IHttpClient sử dụng Dio, tối ưu cho hiệu suất cao và độ tin cậy
+/// Triển khai IHttpClient sử dụng thư viện Dio
+/// Tối ưu cho hiệu suất cao, độ tin cậy, và hỗ trợ các tính năng như caching, retry
 @LazySingleton(as: IHttpClient)
 class DioHttpClient implements IHttpClient {
-  static const Duration _defaultConnectTimeout = Duration(milliseconds: 30000);
-  static const Duration _defaultReceiveTimeout = Duration(milliseconds: 30000);
-  static const Duration _defaultSendTimeout = Duration(milliseconds: 30000);
-  
-  final Dio _dio = Dio();
+  final dio.Dio _dio = dio.Dio();
   final AppLogger _logger;
   final ApiRequestTracker _requestTracker;
   final ApiCacheManager _cacheManager;
   
-  // Theo dõi kết nối và trạng thái
   bool _isDisposed = false;
   String? _authToken;
   
   @override
-  Dio get dioInstance => _dio;
+  dio.Dio get dioInstance => _dio;
   
-  /// Constructor inject dependencies
+  /// Constructor injection
   DioHttpClient(
     this._logger,
     this._requestTracker,
@@ -45,22 +41,22 @@ class DioHttpClient implements IHttpClient {
   /// Thiết lập các interceptors mặc định
   void _setupInterceptors() {
     // Log interceptor trong chế độ debug
-    if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(
-        requestHeader: true,
-        requestBody: true,
-        responseHeader: true,
-        responseBody: true,
+      if (kDebugMode) {
+      _dio.interceptors.add(dio.LogInterceptor(
+            requestHeader: true,
+            requestBody: true,
+            responseHeader: true,
+            responseBody: true,
         error: true,
         logPrint: (obj) => _logger.debug('[HTTP] $obj'),
       ));
     }
     
-    // Retry interceptor
-    _dio.interceptors.add(_createRetryInterceptor());
-    
     // Cache interceptor
     _dio.interceptors.add(_createCacheInterceptor());
+    
+    // Retry interceptor
+    _dio.interceptors.add(_createRetryInterceptor());
     
     _logger.debug('DioHttpClient: Đã thiết lập interceptors');
   }
@@ -73,7 +69,7 @@ class DioHttpClient implements IHttpClient {
     int receiveTimeout = 30000,
     int sendTimeout = 30000,
   }) async {
-    _dio.options = BaseOptions(
+    _dio.options = dio.BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: Duration(milliseconds: connectTimeout),
       receiveTimeout: Duration(milliseconds: receiveTimeout),
@@ -85,7 +81,7 @@ class DioHttpClient implements IHttpClient {
   }
   
   @override
-  void addInterceptor(Interceptor interceptor) {
+  void addInterceptor(dio.Interceptor interceptor) {
     _dio.interceptors.add(interceptor);
   }
   
@@ -108,26 +104,26 @@ class DioHttpClient implements IHttpClient {
   }
   
   @override
-  Future<Response<T>> get<T>(
+  Future<dio.Response<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? headers,
-    CancelToken? cancelToken,
-    ProgressCallback? onReceiveProgress,
-    Options? options,
+    dio.CancelToken? cancelToken,
+    dio.ProgressCallback? onReceiveProgress,
+    dio.Options? options,
     bool requiresAuth = true,
   }) async {
     final requestId = _requestTracker.startRequest('GET', path, params: queryParameters);
     
     try {
-      final response = await _dio.get<T>(
+        final response = await _dio.get<T>(
         path,
         queryParameters: queryParameters,
         options: _mergeOptions(options, headers, requiresAuth),
-        cancelToken: cancelToken,
+          cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
-      );
-      
+        );
+        
       _requestTracker.completeRequest(requestId, response.statusCode ?? 200, response: response.data);
       return response;
     } catch (e) {
@@ -137,15 +133,15 @@ class DioHttpClient implements IHttpClient {
   }
   
   @override
-  Future<Response<T>> post<T>(
+  Future<dio.Response<T>> post<T>(
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? headers,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-    Options? options,
+    dio.CancelToken? cancelToken,
+    dio.ProgressCallback? onSendProgress,
+    dio.ProgressCallback? onReceiveProgress,
+    dio.Options? options,
     bool requiresAuth = true,
   }) async {
     final requestId = _requestTracker.startRequest('POST', path, params: queryParameters);
@@ -170,15 +166,15 @@ class DioHttpClient implements IHttpClient {
   }
   
   @override
-  Future<Response<T>> put<T>(
+  Future<dio.Response<T>> put<T>(
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? headers,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-    Options? options,
+    dio.CancelToken? cancelToken,
+    dio.ProgressCallback? onSendProgress,
+    dio.ProgressCallback? onReceiveProgress,
+    dio.Options? options,
     bool requiresAuth = true,
   }) async {
     final requestId = _requestTracker.startRequest('PUT', path, params: queryParameters);
@@ -203,15 +199,15 @@ class DioHttpClient implements IHttpClient {
   }
   
   @override
-  Future<Response<T>> patch<T>(
+  Future<dio.Response<T>> patch<T>(
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? headers,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-    Options? options,
+    dio.CancelToken? cancelToken,
+    dio.ProgressCallback? onSendProgress,
+    dio.ProgressCallback? onReceiveProgress,
+    dio.Options? options,
     bool requiresAuth = true,
   }) async {
     final requestId = _requestTracker.startRequest('PATCH', path, params: queryParameters);
@@ -236,13 +232,13 @@ class DioHttpClient implements IHttpClient {
   }
   
   @override
-  Future<Response<T>> delete<T>(
+  Future<dio.Response<T>> delete<T>(
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? headers,
-    CancelToken? cancelToken,
-    Options? options,
+    dio.CancelToken? cancelToken,
+    dio.Options? options,
     bool requiresAuth = true,
   }) async {
     final requestId = _requestTracker.startRequest('DELETE', path, params: queryParameters);
@@ -265,7 +261,7 @@ class DioHttpClient implements IHttpClient {
   }
   
   @override
-  Future<Response> uploadFile(
+  Future<dio.Response> uploadFile(
     String path, {
     required File file,
     required String fileName,
@@ -273,18 +269,18 @@ class DioHttpClient implements IHttpClient {
     Map<String, dynamic>? data,
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? headers,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-    Options? options,
+    dio.CancelToken? cancelToken,
+    dio.ProgressCallback? onSendProgress,
+    dio.ProgressCallback? onReceiveProgress,
+    dio.Options? options,
     bool requiresAuth = true,
   }) async {
-    final formData = FormData();
+    final formData = dio.FormData();
     
     // Thêm file
     formData.files.add(MapEntry(
       fileKey,
-      await MultipartFile.fromFile(
+      await dio.MultipartFile.fromFile(
         file.path,
         filename: fileName,
       ),
@@ -297,7 +293,7 @@ class DioHttpClient implements IHttpClient {
       });
     }
     
-    // Sử dụng phương thức POST của chính class này
+    // Sử dụng phương thức POST
     return post(
       path,
       data: formData,
@@ -305,15 +301,15 @@ class DioHttpClient implements IHttpClient {
       headers: headers,
       cancelToken: cancelToken,
       onSendProgress: onSendProgress,
-      onReceiveProgress: onReceiveProgress,
-      options: options?.copyWith(contentType: Headers.multipartFormDataContentType) ?? 
-          Options(contentType: Headers.multipartFormDataContentType),
+        onReceiveProgress: onReceiveProgress,
+      options: options?.copyWith(contentType: dio.Headers.multipartFormDataContentType) ?? 
+          dio.Options(contentType: dio.Headers.multipartFormDataContentType),
       requiresAuth: requiresAuth,
-    );
+      );
   }
   
   @override
-  Future<Response> uploadFiles(
+  Future<dio.Response> uploadFiles(
     String path, {
     required List<File> files,
     required List<String> fileNames,
@@ -321,23 +317,23 @@ class DioHttpClient implements IHttpClient {
     Map<String, dynamic>? data,
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? headers,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-    Options? options,
+    dio.CancelToken? cancelToken,
+    dio.ProgressCallback? onSendProgress,
+    dio.ProgressCallback? onReceiveProgress,
+    dio.Options? options,
     bool requiresAuth = true,
   }) async {
     if (files.length != fileNames.length) {
       throw ArgumentError('Số lượng files và fileNames phải bằng nhau');
     }
     
-    final formData = FormData();
+    final formData = dio.FormData();
     
     // Thêm các files
     for (int i = 0; i < files.length; i++) {
       formData.files.add(MapEntry(
         fileKey,
-        await MultipartFile.fromFile(
+        await dio.MultipartFile.fromFile(
           files[i].path,
           filename: fileNames[i],
         ),
@@ -345,13 +341,13 @@ class DioHttpClient implements IHttpClient {
     }
     
     // Thêm các dữ liệu khác nếu có
-    if (data != null) {
-      data.forEach((key, value) {
-        formData.fields.add(MapEntry(key, value.toString()));
-      });
-    }
-    
-    // Sử dụng phương thức POST của chính class này
+      if (data != null) {
+        data.forEach((key, value) {
+          formData.fields.add(MapEntry(key, value.toString()));
+        });
+      }
+      
+    // Sử dụng phương thức POST
     return post(
       path,
       data: formData,
@@ -360,14 +356,14 @@ class DioHttpClient implements IHttpClient {
       cancelToken: cancelToken,
       onSendProgress: onSendProgress,
       onReceiveProgress: onReceiveProgress,
-      options: options?.copyWith(contentType: Headers.multipartFormDataContentType) ?? 
-          Options(contentType: Headers.multipartFormDataContentType),
+      options: options?.copyWith(contentType: dio.Headers.multipartFormDataContentType) ?? 
+          dio.Options(contentType: dio.Headers.multipartFormDataContentType),
       requiresAuth: requiresAuth,
     );
   }
   
   @override
-  Future<Response> uploadBytes(
+  Future<dio.Response> uploadBytes(
     String path, {
     required Uint8List bytes,
     required String fileName,
@@ -376,18 +372,18 @@ class DioHttpClient implements IHttpClient {
     Map<String, dynamic>? data,
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? headers,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-    Options? options,
+    dio.CancelToken? cancelToken,
+    dio.ProgressCallback? onSendProgress,
+    dio.ProgressCallback? onReceiveProgress,
+    dio.Options? options,
     bool requiresAuth = true,
   }) async {
-    final formData = FormData();
+    final formData = dio.FormData();
     
     // Thêm bytes
     formData.files.add(MapEntry(
       fileKey,
-      MultipartFile.fromBytes(
+      dio.MultipartFile.fromBytes(
         bytes,
         filename: fileName,
       ),
@@ -400,33 +396,33 @@ class DioHttpClient implements IHttpClient {
       });
     }
     
-    // Sử dụng phương thức POST của chính class này
+    // Sử dụng phương thức POST
     return post(
       path,
-      data: formData,
+        data: formData,
       queryParameters: queryParameters,
       headers: headers,
       cancelToken: cancelToken,
-      onSendProgress: onSendProgress,
+        onSendProgress: onSendProgress,
       onReceiveProgress: onReceiveProgress,
-      options: options?.copyWith(contentType: Headers.multipartFormDataContentType) ?? 
-          Options(contentType: Headers.multipartFormDataContentType),
+      options: options?.copyWith(contentType: dio.Headers.multipartFormDataContentType) ?? 
+          dio.Options(contentType: dio.Headers.multipartFormDataContentType),
       requiresAuth: requiresAuth,
     );
   }
   
   @override
-  Future<Response> downloadFile(
+  Future<dio.Response> downloadFile(
     String url,
     String savePath, {
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? headers,
-    CancelToken? cancelToken,
-    ProgressCallback? onReceiveProgress,
-    Options? options,
+    dio.CancelToken? cancelToken,
+    dio.ProgressCallback? onReceiveProgress,
+    dio.Options? options,
     bool requiresAuth = true,
     bool deleteOnError = true,
-    String lengthHeader = Headers.contentLengthHeader,
+    String lengthHeader = dio.Headers.contentLengthHeader,
   }) async {
     final requestId = _requestTracker.startRequest('GET', url, params: queryParameters);
     
@@ -450,8 +446,8 @@ class DioHttpClient implements IHttpClient {
   }
   
   /// Tạo interceptor cho cache
-  Interceptor _createCacheInterceptor() {
-    return InterceptorsWrapper(
+  dio.Interceptor _createCacheInterceptor() {
+    return dio.InterceptorsWrapper(
       onRequest: (options, handler) async {
         // Kiểm tra xem request có dùng cache không
         final useCache = options.extra['useCache'] == true;
@@ -469,11 +465,11 @@ class DioHttpClient implements IHttpClient {
           
           // Tạo response từ cache
           return handler.resolve(
-            Response(
+            dio.Response(
               requestOptions: options,
               data: cachedData['data'],
               statusCode: 200,
-              headers: Headers.fromMap(cachedData['headers'] ?? {}),
+              headers: dio.Headers.fromMap(cachedData['headers'] ?? {}),
             ),
           );
         }
@@ -520,8 +516,8 @@ class DioHttpClient implements IHttpClient {
   }
   
   /// Tạo interceptor cho retry
-  Interceptor _createRetryInterceptor() {
-    return InterceptorsWrapper(
+  dio.Interceptor _createRetryInterceptor() {
+    return dio.InterceptorsWrapper(
       onError: (error, handler) async {
         final requestOptions = error.requestOptions;
         
@@ -532,10 +528,10 @@ class DioHttpClient implements IHttpClient {
             const Duration(seconds: 1);
         
         // Kiểm tra xem error có thể retry không
-        final canRetry = error.type == DioExceptionType.connectionTimeout ||
-                         error.type == DioExceptionType.sendTimeout ||
-                         error.type == DioExceptionType.receiveTimeout ||
-                         (error.type == DioExceptionType.badResponse && 
+        final canRetry = error.type == dio.DioExceptionType.connectionTimeout ||
+                         error.type == dio.DioExceptionType.sendTimeout ||
+                         error.type == dio.DioExceptionType.receiveTimeout ||
+                         (error.type == dio.DioExceptionType.badResponse && 
                           (error.response?.statusCode == 408 || error.response?.statusCode == 429));
         
         // Lấy số lần đã retry
@@ -550,7 +546,7 @@ class DioHttpClient implements IHttpClient {
           await Future.delayed(retryDelay * (attemptCount + 1));
           
           // Tạo request options mới với attemptCount tăng lên
-          final newOptions = Options(
+          final newOptions = dio.Options(
             method: requestOptions.method,
             headers: requestOptions.headers,
             contentType: requestOptions.contentType,
@@ -570,7 +566,7 @@ class DioHttpClient implements IHttpClient {
             
             return handler.resolve(response);
           } catch (e) {
-            return handler.reject(e is DioException ? e : error);
+            return handler.reject(e is dio.DioException ? e : error);
           }
         }
         
@@ -579,13 +575,33 @@ class DioHttpClient implements IHttpClient {
     );
   }
   
+  /// Tạo cache key từ request options của Dio
+  String _createCacheKey(dio.RequestOptions options) {
+    final buffer = StringBuffer('${options.method}_${options.path}');
+    
+    if (options.queryParameters.isNotEmpty) {
+      // Sắp xếp các tham số theo key để đảm bảo tính nhất quán
+      final sortedParams = Map.fromEntries(
+        options.queryParameters.entries.toList()
+          ..sort((a, b) => a.key.compareTo(b.key))
+      );
+      
+      buffer.write('_params:');
+      sortedParams.forEach((key, value) {
+        buffer.write('_$key=$value');
+      });
+    }
+    
+    return buffer.toString();
+  }
+  
   /// Kết hợp các options và headers, thêm authorization nếu cần
-  Options _mergeOptions(
-    Options? options,
+  dio.Options _mergeOptions(
+    dio.Options? options,
     Map<String, dynamic>? headers,
     bool requiresAuth,
   ) {
-    final mergedOptions = options ?? Options();
+    final mergedOptions = options ?? dio.Options();
     final mergedHeaders = Map<String, dynamic>.from(mergedOptions.headers ?? {});
     
     // Thêm headers mới
@@ -601,54 +617,23 @@ class DioHttpClient implements IHttpClient {
     return mergedOptions.copyWith(headers: mergedHeaders);
   }
   
-  /// Tạo cache key từ request options
-  String _createCacheKey(dynamic options) {
-    // Xử lý cho RequestOptions của Dio
-    if (options is RequestOptions) {
-      final buffer = StringBuffer('${options.method}_${options.path}');
-      
-      if (options.queryParameters.isNotEmpty) {
-        // Sắp xếp các tham số theo key để đảm bảo tính nhất quán
-        final sortedParams = Map.fromEntries(
-          options.queryParameters.entries.toList()
-            ..sort((a, b) => a.key.compareTo(b.key))
-        );
-        
-        buffer.write('_params:');
-        sortedParams.forEach((key, value) {
-          buffer.write('_$key=$value');
-        });
-      }
-      
-      return buffer.toString();
-    } 
-    // Xử lý cho RequestOptions trong http_client_interface
-    else if (options is http_client_interface.RequestOptions) {
-      final buffer = StringBuffer('GET_${options.connectTimeout}');
-      return buffer.toString();
-    }
-    
-    // Fallback
-    return DateTime.now().millisecondsSinceEpoch.toString();
-  }
-  
   /// Xử lý lỗi request
   void _handleError(dynamic error, String requestId) {
-    if (error is DioException) {
+    if (error is dio.DioException) {
       final statusCode = error.response?.statusCode ?? 0;
       final method = error.requestOptions.method;
       final path = error.requestOptions.path;
       
       switch (error.type) {
-        case DioExceptionType.connectionTimeout:
-        case DioExceptionType.sendTimeout:
-        case DioExceptionType.receiveTimeout:
+        case dio.DioExceptionType.connectionTimeout:
+        case dio.DioExceptionType.sendTimeout:
+        case dio.DioExceptionType.receiveTimeout:
           _logger.warn('DioHttpClient: Timeout [${method}] ${path}');
           break;
-        case DioExceptionType.badResponse:
+        case dio.DioExceptionType.badResponse:
           _logger.warn('DioHttpClient: Bad response [${method}] ${path}: ${statusCode}');
           break;
-        case DioExceptionType.cancel:
+        case dio.DioExceptionType.cancel:
           _logger.debug('DioHttpClient: Request cancelled [${method}] ${path}');
           break;
         default:
