@@ -4,10 +4,16 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import '../monitoring/logger.dart';
-import 'socket_analytics.dart';
+import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
+
 import '../monitoring/analytics_service.dart';
 import '../services/auth_service.dart';
+import 'models/socket_connection_state.dart';
+import 'models/socket_error.dart';
+import 'monitoring/socket_metrics.dart';
 
 /// Cấu hình cho WebSocketManager
 class WebSocketConfig {
@@ -373,5 +379,294 @@ class WebSocketManager {
     _onMessageController.close();
     _onConnectionStateController.close();
     _onErrorController.close();
+  }
+}
+
+/// Base Socket Manager that handles Socket.IO connections
+@injectable
+class SocketManager {
+  /// Socket.IO client instance
+  io.Socket? _socket;
+  
+  /// Server URL for WebSocket connection
+  final String _serverUrl;
+  
+  /// Connection options for Socket.IO
+  final Map<String, dynamic> _options;
+
+  /// Logger instance
+  final Logger _logger;
+  
+  /// Analytics service for tracking performance
+  final AnalyticsService? _analytics;
+  
+  /// Current connection state
+  final BehaviorSubject<SocketConnectionState> _connectionStateController = 
+      BehaviorSubject<SocketConnectionState>.seeded(SocketConnectionState.disconnected);
+  
+  /// Stream of connection state changes
+  Stream<SocketConnectionState> get connectionState => _connectionStateController.stream;
+  
+  /// Stream của trạng thái kết nối để tương thích ngược
+  Stream<SocketConnectionState> get connectionStateStream => connectionState;
+  
+  /// Current connection state
+  SocketConnectionState get currentState => _connectionStateController.value;
+  
+  /// Whether the socket is connected
+  bool get isConnected => currentState == SocketConnectionState.connected;
+  
+  /// Whether the socket is connecting
+  bool get isConnecting => currentState == SocketConnectionState.connecting;
+  
+  /// Whether the socket is disconnected
+  bool get isDisconnected => 
+      currentState == SocketConnectionState.disconnected || 
+      currentState == SocketConnectionState.disconnectedByUser || 
+      currentState == SocketConnectionState.disconnectedByServer || 
+      currentState == SocketConnectionState.error;
+
+  /// Connected getter for backwards compatibility
+  bool get connected => isConnected;
+  
+  /// Constructor
+  SocketManager({
+    required String serverUrl,
+    Map<String, dynamic> options = const {},
+    Logger? logger,
+    this._analytics,
+  }) : _serverUrl = serverUrl,
+       _options = options,
+       _logger = logger ?? Logger();
+  
+  /// Connect to the WebSocket server
+  Future<void> connect() async {
+    if (_socket != null) {
+      _logger.d('Socket already exists, disconnecting first');
+      await disconnect();
+    }
+    
+    _updateConnectionState(SocketConnectionState.connecting);
+    
+    try {
+      // Default connection options
+      final defaultOptions = {
+        'transports': ['websocket'],
+        'autoConnect': true,
+        'reconnection': true,
+        'reconnectionAttempts': 5,
+        'reconnectionDelay': 1000,
+        'reconnectionDelayMax': 5000,
+        'timeout': 10000,
+      };
+      
+      // Merge with custom options
+      final mergedOptions = {...defaultOptions, ..._options};
+      
+      // Create Socket.IO instance
+      _socket = io.io(_serverUrl, mergedOptions);
+      
+      // Set up event handlers
+      _setupEventHandlers();
+      
+      // Connect
+      _socket!.connect();
+
+      _logger.i('Socket.IO connecting to $_serverUrl');
+      
+      if (_analytics != null) {
+        _analytics!.logEvent(
+          AnalyticsEvent.custom, 
+          {'type': 'socket_connect_attempt', 'url': _serverUrl}
+        );
+      }
+    } catch (e, stackTrace) {
+      _logger.e('Error connecting to socket: $e', stackTrace);
+      _updateConnectionState(SocketConnectionState.error);
+      
+      if (_analytics != null) {
+        _analytics!.logError(
+          'socket_connect_error',
+          {'error': e.toString(), 'url': _serverUrl}
+        );
+      }
+      
+      rethrow;
+    }
+  }
+  
+  /// Disconnect from the WebSocket server
+  Future<void> disconnect() async {
+    if (_socket != null) {
+      _logger.d('Disconnecting socket');
+      _socket!.disconnect();
+      _socket!.dispose();
+      _socket = null;
+      _updateConnectionState(SocketConnectionState.disconnectedByUser);
+      
+      if (_analytics != null) {
+        _analytics!.logEvent(
+          AnalyticsEvent.custom,
+          {'type': 'socket_disconnect', 'reason': 'user_request'}
+        );
+      }
+    }
+  }
+  
+  /// Set up Socket.IO event handlers
+  void _setupEventHandlers() {
+    _socket?.onConnect((_) {
+      _logger.i('Socket connected');
+      _updateConnectionState(SocketConnectionState.connected);
+      
+      if (_analytics != null) {
+        _analytics!.logEvent(
+          AnalyticsEvent.custom,
+          {'type': 'socket_connected', 'url': _serverUrl}
+        );
+      }
+    });
+    
+    _socket?.onDisconnect((_) {
+      _logger.i('Socket disconnected');
+      if (currentState != SocketConnectionState.disconnectedByUser) {
+        _updateConnectionState(SocketConnectionState.disconnectedByServer);
+        
+        if (_analytics != null) {
+          _analytics!.logEvent(
+            AnalyticsEvent.custom,
+            {'type': 'socket_disconnected', 'reason': 'server_disconnect'}
+          );
+        }
+      }
+    });
+    
+    _socket?.onConnectError((error) {
+      _logger.e('Socket connect error: $error');
+      _updateConnectionState(SocketConnectionState.error);
+      
+      if (_analytics != null) {
+        _analytics!.logError(
+          'socket_connect_error',
+          {'error': error.toString(), 'url': _serverUrl}
+        );
+      }
+    });
+    
+    _socket?.onError((error) {
+      _logger.e('Socket error: $error');
+      _updateConnectionState(SocketConnectionState.error);
+      
+      if (_analytics != null) {
+        _analytics!.logError(
+          'socket_error',
+          {'error': error.toString()}
+        );
+      }
+    });
+    
+    _socket?.onReconnect((_) {
+      _logger.i('Socket reconnected');
+      _updateConnectionState(SocketConnectionState.connected);
+      
+      if (_analytics != null) {
+        _analytics!.logEvent(
+          AnalyticsEvent.custom,
+          {'type': 'socket_reconnected'}
+        );
+      }
+    });
+    
+    _socket?.onReconnecting((_) {
+      _logger.i('Socket reconnecting');
+      _updateConnectionState(SocketConnectionState.reconnecting);
+      
+      if (_analytics != null) {
+        _analytics!.logEvent(
+          AnalyticsEvent.custom,
+          {'type': 'socket_reconnecting'}
+        );
+      }
+    });
+    
+    _socket?.onReconnectFailed((_) {
+      _logger.e('Socket reconnect failed');
+      _updateConnectionState(SocketConnectionState.error);
+      
+      if (_analytics != null) {
+        _analytics!.logEvent(
+          AnalyticsEvent.custom,
+          {'type': 'socket_reconnect_failed'}
+        );
+      }
+    });
+  }
+  
+  /// Update connection state
+  void _updateConnectionState(SocketConnectionState state) {
+    if (!_connectionStateController.isClosed && currentState != state) {
+      _logger.d('Socket state changed: $state');
+      _connectionStateController.add(state);
+    }
+  }
+  
+  /// Register a listener for socket events
+  Stream<T> on<T>(String event) {
+    final controller = StreamController<T>.broadcast();
+    
+    if (_socket != null) {
+      _socket!.on(event, (data) {
+        if (!controller.isClosed) {
+          controller.add(data as T);
+        }
+      });
+    }
+    
+    controller.onCancel = () {
+      _socket?.off(event);
+    };
+    
+    return controller.stream;
+  }
+  
+  /// Emit an event to the server
+  void emit(String event, [dynamic data]) {
+    if (_socket != null && isConnected) {
+      _logger.d('Emitting event: $event');
+      _socket!.emit(event, data);
+    } else {
+      _logger.w('Cannot emit event: $event - Socket not connected');
+    }
+  }
+  
+  /// Emit an event and wait for an acknowledgment
+  void emitWithAck(String event, dynamic data, {Function? ack}) {
+    if (_socket != null && isConnected) {
+      _logger.d('Emitting event with ack: $event');
+      _socket!.emitWithAck(event, data, ack: ack);
+    } else {
+      _logger.w('Cannot emit event with ack: $event - Socket not connected');
+    }
+  }
+  
+  /// Enter background mode to reduce resource usage
+  void enterBackgroundMode() {
+    _logger.d('Entering background mode');
+    // Implement background mode behavior if needed
+    // Có thể giảm tần suất ping, ngắt kết nối, hoặc chuyển sang chế độ tiết kiệm năng lượng
+  }
+  
+  /// Enter foreground mode to restore normal operation
+  void enterForegroundMode() {
+    _logger.d('Entering foreground mode');
+    // Implement foreground mode behavior if needed
+    // Phục hồi tần suất ping bình thường, kết nối lại nếu cần thiết
+  }
+  
+  /// Dispose resources
+  void dispose() {
+    _logger.d('Disposing SocketManager');
+    disconnect();
+    _connectionStateController.close();
   }
 } 
