@@ -10,6 +10,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../monitoring/analytics_service.dart';
+import '../monitoring/logger.dart';
 import '../services/auth_service.dart';
 import 'models/socket_connection_state.dart';
 import 'models/socket_error.dart';
@@ -114,7 +115,7 @@ class WebSocketManager {
   /// Gửi tin nhắn qua WebSocket
   Future<bool> send(Map<String, dynamic> message) async {
     if (_state != ConnectionState.connected || _socket == null) {
-      _logger.warning('WebSocket: Không thể gửi tin nhắn - không kết nối.');
+      _logger.warn('WebSocket: Không thể gửi tin nhắn - không kết nối.');
       _metrics.recordDroppedMessage();
       return false;
     }
@@ -173,7 +174,7 @@ class WebSocketManager {
 
         _onMessageController.add(message);
       } else if (data != null) {
-        _logger.warning('WebSocket: Nhận được dữ liệu không phải chuỗi: $data');
+        _logger.warn('WebSocket: Nhận được dữ liệu không phải chuỗi: $data');
       }
     } catch (e) {
       _logger.error('WebSocket: Lỗi khi xử lý tin nhắn: $e');
@@ -251,7 +252,7 @@ class WebSocketManager {
     _metrics.recordReconnectAttempt();
     
     if (_reconnectAttempts > _config.maxReconnectAttempts) {
-      _logger.warning('WebSocket: Đã vượt quá số lần thử kết nối lại tối đa');
+      _logger.warn('WebSocket: Đã vượt quá số lần thử kết nối lại tối đa');
       _analytics.logEvent(AnalyticsEvent.socketMaxReconnectExceeded, {});
       return;
     }
@@ -434,10 +435,11 @@ class SocketManager {
     required String serverUrl,
     Map<String, dynamic> options = const {},
     Logger? logger,
-    this._analytics,
+    AnalyticsService? analytics,
   }) : _serverUrl = serverUrl,
        _options = options,
-       _logger = logger ?? Logger();
+       _logger = logger ?? Logger(),
+      _analytics = analytics;
   
   /// Connect to the WebSocket server
   Future<void> connect() async {
