@@ -214,13 +214,25 @@ class WebSocketManager {
       // Ghi nhận sự kiện phân tích
       switch (_state) {
         case ConnectionState.connected:
-          _analytics.logEvent(AnalyticsEvent.socketConnected, {});
+          _analytics.logEvent(
+            AnalyticsEvent.custom,
+            customEventName: 'socket_connected',
+            parameters: {},
+          );
           break;
         case ConnectionState.disconnected:
-          _analytics.logEvent(AnalyticsEvent.socketDisconnected, {});
+          _analytics.logEvent(
+            AnalyticsEvent.custom,
+            customEventName: 'socket_disconnected',
+            parameters: {},
+          );
           break;
         case ConnectionState.error:
-          _analytics.logEvent(AnalyticsEvent.socketError, {});
+          _analytics.logEvent(
+            AnalyticsEvent.custom,
+            customEventName: 'socket_error',
+            parameters: {},
+          );
           break;
         default:
           break;
@@ -253,7 +265,11 @@ class WebSocketManager {
     
     if (_reconnectAttempts > _config.maxReconnectAttempts) {
       _logger.warn('WebSocket: Đã vượt quá số lần thử kết nối lại tối đa');
-      _analytics.logEvent(AnalyticsEvent.socketMaxReconnectExceeded, {});
+      _analytics.logEvent(
+        AnalyticsEvent.custom,
+        customEventName: 'socket_max_reconnect_exceeded',
+        parameters: {},
+      );
       return;
     }
 
@@ -478,18 +494,20 @@ class SocketManager {
       
       if (_analytics != null) {
         _analytics!.logEvent(
-          AnalyticsEvent.custom, 
-          {'type': 'socket_connect_attempt', 'url': _serverUrl}
+          AnalyticsEvent.custom,
+          customEventName: 'socket_connect_attempt',
+          parameters: {'url': _serverUrl}
         );
       }
     } catch (e, stackTrace) {
-      _logger.e('Error connecting to socket: $e', stackTrace);
+      _logger.e('Error connecting to socket: $e', stackTrace: stackTrace);
       _updateConnectionState(SocketConnectionState.error);
       
       if (_analytics != null) {
         _analytics!.logError(
-          'socket_connect_error',
-          {'error': e.toString(), 'url': _serverUrl}
+          errorType: 'socket_connect_error',
+          errorMessage: e.toString(),
+          errorDetails: 'URL: $_serverUrl'
         );
       }
       
@@ -509,7 +527,8 @@ class SocketManager {
       if (_analytics != null) {
         _analytics!.logEvent(
           AnalyticsEvent.custom,
-          {'type': 'socket_disconnect', 'reason': 'user_request'}
+          customEventName: 'socket_disconnect',
+          parameters: {'reason': 'user_request'}
         );
       }
     }
@@ -524,7 +543,8 @@ class SocketManager {
       if (_analytics != null) {
         _analytics!.logEvent(
           AnalyticsEvent.custom,
-          {'type': 'socket_connected', 'url': _serverUrl}
+          customEventName: 'socket_connected',
+          parameters: {'url': _serverUrl}
         );
       }
     });
@@ -537,7 +557,8 @@ class SocketManager {
         if (_analytics != null) {
           _analytics!.logEvent(
             AnalyticsEvent.custom,
-            {'type': 'socket_disconnected', 'reason': 'server_disconnect'}
+            customEventName: 'socket_disconnected',
+            parameters: {'reason': 'server_disconnect'}
           );
         }
       }
@@ -549,8 +570,9 @@ class SocketManager {
       
       if (_analytics != null) {
         _analytics!.logError(
-          'socket_connect_error',
-          {'error': error.toString(), 'url': _serverUrl}
+          errorType: 'socket_connect_error',
+          errorMessage: error.toString(),
+          errorDetails: 'URL: $_serverUrl'
         );
       }
     });
@@ -561,8 +583,8 @@ class SocketManager {
       
       if (_analytics != null) {
         _analytics!.logError(
-          'socket_error',
-          {'error': error.toString()}
+          errorType: 'socket_error',
+          errorMessage: error.toString()
         );
       }
     });
@@ -574,19 +596,23 @@ class SocketManager {
       if (_analytics != null) {
         _analytics!.logEvent(
           AnalyticsEvent.custom,
-          {'type': 'socket_reconnected'}
+          customEventName: 'socket_reconnected',
+          parameters: {}
         );
       }
     });
     
-    _socket?.onReconnecting((_) {
-      _logger.i('Socket reconnecting');
+    // Removing onReconnecting as it doesn't exist in Socket.IO client
+    // Adding custom handler for reconnection attempts using onReconnectAttempt
+    _socket?.on('reconnect_attempt', (attempt) {
+      _logger.i('Socket reconnecting (attempt: $attempt)');
       _updateConnectionState(SocketConnectionState.reconnecting);
       
       if (_analytics != null) {
         _analytics!.logEvent(
           AnalyticsEvent.custom,
-          {'type': 'socket_reconnecting'}
+          customEventName: 'socket_reconnecting',
+          parameters: {'attempt': attempt}
         );
       }
     });
@@ -598,7 +624,8 @@ class SocketManager {
       if (_analytics != null) {
         _analytics!.logEvent(
           AnalyticsEvent.custom,
-          {'type': 'socket_reconnect_failed'}
+          customEventName: 'socket_reconnect_failed',
+          parameters: {}
         );
       }
     });

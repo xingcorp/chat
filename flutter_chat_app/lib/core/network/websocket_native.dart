@@ -10,8 +10,9 @@ import 'package:logger/logger.dart';
 import '../monitoring/analytics_service.dart';
 import '../services/auth_service.dart';
 import 'monitoring/socket_metrics.dart';
+import 'models/socket_connection_state.dart';
 
-/// Cấu hình cho WebSocketManager
+/// Cấu hình cho WebSocketNative
 class WebSocketConfig {
   /// URL của WebSocket server
   final String url;
@@ -66,7 +67,7 @@ enum ConnectionState {
 
 /// Quản lý kết nối và truyền tin qua WebSocket native
 @injectable
-class WebSocketManager {
+class WebSocketNative {
   /// Cấu hình WebSocket
   final WebSocketConfig _config;
   
@@ -124,7 +125,7 @@ class WebSocketManager {
   Stream<dynamic> get onError => _onErrorController.stream;
 
   /// Constructor
-  WebSocketManager({
+  WebSocketNative({
     required WebSocketConfig config,
     required Logger logger,
     required AnalyticsService analytics,

@@ -57,7 +57,8 @@ class WebSocketMetrics {
     }
     
     _analytics.logEvent(
-      name: 'socket_connection_time',
+      AnalyticsEvent.custom,
+      customEventName: 'socket_connection_time',
       parameters: {
         'connection_time_ms': milliseconds,
         'avg_connection_time_ms': averageConnectionTime,
@@ -78,7 +79,8 @@ class WebSocketMetrics {
     
     if (size != null && size > 0) {
       _analytics.logEvent(
-        name: 'socket_data_received',
+        AnalyticsEvent.custom,
+        customEventName: 'socket_data_received',
         parameters: {
           'size_bytes': size
         },
@@ -95,7 +97,8 @@ class WebSocketMetrics {
     
     if (milliseconds > 1000) {
       _analytics.logEvent(
-        name: 'socket_high_latency',
+        AnalyticsEvent.custom,
+        customEventName: 'socket_high_latency',
         parameters: {
           'latency_ms': milliseconds
         },
@@ -108,7 +111,8 @@ class WebSocketMetrics {
     _errors++;
     _logger.e('WebSocket error: $error');
     _analytics.logEvent(
-      name: 'socket_error',
+      AnalyticsEvent.custom,
+      customEventName: 'socket_error',
       parameters: {
         'error_message': error
       },
@@ -119,7 +123,8 @@ class WebSocketMetrics {
   void recordReconnectAttempt() {
     _reconnectAttempts++;
     _analytics.logEvent(
-      name: 'socket_reconnect_attempt',
+      AnalyticsEvent.custom,
+      customEventName: 'socket_reconnect_attempt',
       parameters: {
         'attempt_count': _reconnectAttempts
       },
@@ -189,7 +194,8 @@ class WebSocketMetrics {
     }
     
     _analytics.logEvent(
-      name: 'socket_performance_stats',
+      AnalyticsEvent.custom,
+      customEventName: 'socket_performance_stats',
       parameters: {
         'messages_sent': _messagesSent,
         'messages_received': _messagesReceived,
