@@ -205,6 +205,121 @@ class _PendingMessage {
       : createdAt = DateTime.now();
 }
 
+/// Cấu hình kết nối thời gian thực
+class RealtimeConfig {
+  final Duration connectTimeout;
+  final Duration pingInterval;
+  final Duration pongTimeout;
+  final int maxReconnectAttempts;
+  final int baseReconnectDelayMs;
+  final int maxReconnectDelayMs;
+  final bool useMessageAcknowledgement;
+  final int maxQueueSize;
+  final int queueBatchSize;
+  final int queueProcessInterval;
+  final int defaultRateLimitRetry;
+  final int maxMessagesPerSecond;
+
+  const RealtimeConfig({
+    this.connectTimeout = const Duration(seconds: 10),
+    this.pingInterval = const Duration(seconds: 30),
+    this.pongTimeout = const Duration(seconds: 10),
+    this.maxReconnectAttempts = 10,
+    this.baseReconnectDelayMs = 1000,
+    this.maxReconnectDelayMs = 30000,
+    this.useMessageAcknowledgement = true,
+    this.maxQueueSize = 100,
+    this.queueBatchSize = 10,
+    this.queueProcessInterval = 500,
+    this.defaultRateLimitRetry = 5000,
+    this.maxMessagesPerSecond = 20,
+  });
+}
+
+/// Metrics cho kết nối thời gian thực
+class RealtimeMetrics {
+  int messagesReceived = 0;
+  int messagesSent = 0;
+  int reconnectAttempts = 0;
+  int parseErrors = 0;
+  int messageErrors = 0;
+  int queueOverflows = 0;
+  int messagesQueued = 0;
+  
+  List<int> processingTimes = [];
+  final _analytics;
+
+  RealtimeMetrics(this._analytics);
+
+  void recordMessageReceived(int processingTimeMs) {
+    messagesReceived++;
+    processingTimes.add(processingTimeMs);
+    if (processingTimes.length > 100) {
+      processingTimes.removeAt(0);
+    }
+  }
+
+  void recordMessageSent() {
+    messagesSent++;
+  }
+
+  void recordReconnectAttempt() {
+    reconnectAttempts++;
+    _analytics?.logEvent('websocket_reconnect_attempt', {'count': reconnectAttempts});
+  }
+
+  void recordMessageParseError() {
+    parseErrors++;
+    _analytics?.logEvent('websocket_parse_error', {'count': parseErrors});
+  }
+
+  void recordMessageError() {
+    messageErrors++;
+    _analytics?.logEvent('websocket_message_error', {'count': messageErrors});
+  }
+
+  void recordQueueOverflow() {
+    queueOverflows++;
+    _analytics?.logEvent('websocket_queue_overflow', {'count': queueOverflows});
+  }
+
+  void recordMessageQueued() {
+    messagesQueued++;
+  }
+  
+  double get averageProcessingTime {
+    if (processingTimes.isEmpty) return 0.0;
+    final sum = processingTimes.reduce((a, b) => a + b);
+    return sum / processingTimes.length;
+  }
+  
+  Map<String, dynamic> toJson() {
+    return {
+      'messagesReceived': messagesReceived,
+      'messagesSent': messagesSent,
+      'reconnectAttempts': reconnectAttempts,
+      'parseErrors': parseErrors,
+      'messageErrors': messageErrors,
+      'queueOverflows': queueOverflows,
+      'messagesQueued': messagesQueued,
+      'averageProcessingTime': averageProcessingTime,
+    };
+  }
+}
+
+/// Thông tin về rate limit
+class _RateLimitInfo {
+  final DateTime limitedUntil;
+  final int retryAfter;
+
+  _RateLimitInfo({
+    required this.limitedUntil,
+    required this.retryAfter,
+  });
+  
+  bool get isActive => DateTime.now().isBefore(limitedUntil);
+}
+
 /// Implementation của IRealtimeConnectionService
 @LazySingleton(as: IRealtimeConnectionService)
 class RealtimeConnectionService implements IRealtimeConnectionService {
@@ -298,12 +413,29 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
   /// Timestamp gửi tin nhắn gần nhất
   final List<DateTime> _messageTimestamps = [];
   
+  /// Cấu hình kết nối thời gian thực
+  final RealtimeConfig _realtimeConfig;
+  
+  /// Metrics cho kết nối thời gian thực
+  final RealtimeMetrics _realtimeMetrics;
+  
+  /// Queue để lưu trữ tin nhắn
+  final Queue<Map<String, dynamic>> _messageQueue = Queue();
+  
+  /// Timer để xử lý queue
+  Timer? _queueTimer;
+  
+  /// Lưu trữ thời gian nhận tin nhắn để kiểm soát tốc độ
+  final List<DateTime> _messageTimes = [];
+  
   /// Constructor
   @factoryMethod
   RealtimeConnectionService(
     this._httpClient,
     this._connectivityService,
     @Named('realtimeConfig') this._config,
+    this._realtimeConfig,
+    this._realtimeMetrics,
   ) {
     // Lắng nghe sự thay đổi kết nối
     _connectivitySubscription = _connectivityService.connectivityStream
@@ -387,8 +519,12 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
     _reconnectAttempts = 0;
     
     try {
-      // Thử kết nối WebSocket
-      final success = await _connectWebSocket();
+      // Thử kết nối WebSocket với timeout
+      final connectTask = _connectWebSocket();
+      final timeoutTask = Future.delayed(Duration(milliseconds: _config.connectionTimeout), () => false);
+      
+      // Chọn kết quả từ task hoàn thành trước
+      final success = await Future.any([connectTask, timeoutTask]);
       
       // Nếu không thành công, thử long polling
       if (!success && _connectionType != RealtimeConnectionType.longPolling) {
@@ -681,186 +817,25 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
     debugPrint('Disposed realtime connection service');
   }
   
-  /// Kết nối WebSocket
-  Future<bool> _connectWebSocket() async {
-    try {
-      // Đóng WebSocket hiện tại nếu có
+  @override
+  Future<bool> reconnect() async {
+    // Xóa bỏ các timer hiện tại
+    _cancelTimers();
+    
+    // Đảm bảo trạng thái phù hợp
+    _updateConnectionState(RealtimeConnectionState.reconnecting);
+    
+    // Đặt lại số lần thử 
+    _reconnectAttempts = 0;
+    
+    // Đóng kết nối hiện tại nếu cần
+    if (_connectionType != RealtimeConnectionType.none) {
       await _closeWebSocket();
-      
-      // Tạo URL WebSocket
-      final url = _buildWebSocketUrl();
-      debugPrint('Connecting to WebSocket: $url');
-      
-      // Tạo WebSocket mới
-      _webSocketChannel = WebSocketChannel.connect(Uri.parse(url));
-      
-      // Đợi kết nối
-      final connectCompleter = Completer<bool>();
-      
-      // Thiết lập timeout
-      final timeoutTimer = Timer(
-        Duration(milliseconds: _config.connectionTimeout),
-        () {
-          if (!connectCompleter.isCompleted) {
-            final error = RealtimeError(
-              type: RealtimeErrorType.timeout,
-              message: 'WebSocket connection timeout after ${_config.connectionTimeout}ms',
-            );
-            _handleError(error);
-            connectCompleter.complete(false);
-          }
-        },
-      );
-      
-      // Lắng nghe sự kiện từ WebSocket
-      _webSocketSubscription = _webSocketChannel!.stream.listen(
-        (data) {
-          // Hoàn thành kết nối nếu chưa
-          if (!connectCompleter.isCompleted) {
-            debugPrint('WebSocket connected');
-            connectCompleter.complete(true);
-            timeoutTimer.cancel();
-          }
-          
-          // Xử lý dữ liệu
-          _processWebSocketMessage(data);
-        },
-        onError: (error) {
-          debugPrint('WebSocket error: $error');
-          
-          // Hoàn thành kết nối với lỗi nếu chưa
-          if (!connectCompleter.isCompleted) {
-            connectCompleter.complete(false);
-            timeoutTimer.cancel();
-          }
-          
-          _updateConnectionState(RealtimeConnectionState.error);
-          _tryReconnect();
-        },
-        onDone: () {
-          debugPrint('WebSocket connection closed');
-          
-          // Hoàn thành kết nối nếu chưa
-          if (!connectCompleter.isCompleted) {
-            connectCompleter.complete(false);
-            timeoutTimer.cancel();
-          }
-          
-          _updateConnectionState(RealtimeConnectionState.closed);
-          
-          // Thử kết nối lại nếu cần
-          if (_autoReconnect) {
-            _tryReconnect();
-          }
-        },
-      );
-      
-      // Đợi kết quả
-      final success = await connectCompleter.future;
-      
-      if (success) {
-        _updateConnectionState(RealtimeConnectionState.connected);
-        _updateConnectionType(RealtimeConnectionType.webSocket);
-        
-        // Khởi động timer keep-alive
-        _startKeepAliveTimer();
-        
-        return true;
-      }
-      
-      return false;
-    } catch (e) {
-      final error = RealtimeError.fromException(e, type: RealtimeErrorType.webSocketError);
-      _handleError(error);
-      return false;
-    }
-  }
-  
-  /// Khởi động long polling
-  Future<bool> _startLongPolling() async {
-    try {
-      debugPrint('Starting long polling');
-      
-      // Cập nhật loại kết nối
-      _updateConnectionType(RealtimeConnectionType.longPolling);
-      _updateConnectionState(RealtimeConnectionState.connected);
-      
-      // Thiết lập timer poll định kỳ
-      _longPollingTimer?.cancel();
-      _longPollingTimer = Timer.periodic(
-        Duration(milliseconds: _config.longPollingInterval),
-        (_) => _poll(),
-      );
-      
-      // Tạo session
-      await _createLongPollingSession();
-      
-      return true;
-    } catch (e) {
-      debugPrint('Error starting long polling: $e');
-      _updateConnectionState(RealtimeConnectionState.error);
-      return false;
-    }
-  }
-  
-  /// Tạo phiên long polling
-  Future<void> _createLongPollingSession() async {
-    try {
-      final response = await _httpClient.post<Map<String, dynamic>>(
-        '${_config.httpUrl}/session',
-        data: {
-          'sessionId': _sessionId,
-          'clientInfo': {
-            'type': 'flutter',
-            'version': '1.0.0',
-            'platform': defaultTargetPlatform.toString(),
-          },
-        },
-        headers: {
-          'Authorization': 'Bearer ${_config.authToken}',
-          ..._config.additionalHeaders ?? {},
-        },
-      );
-      
-      debugPrint('Long polling session created');
-    } catch (e) {
-      debugPrint('Error creating long polling session: $e');
-      throw e;
-    }
-  }
-  
-  /// Thực hiện long polling
-  Future<void> _poll() async {
-    if (_connectionType != RealtimeConnectionType.longPolling || 
-        _connectionState != RealtimeConnectionState.connected) {
-      return;
+      _updateConnectionType(RealtimeConnectionType.none);
     }
     
-    try {
-      final response = await _httpClient.get<List<dynamic>>(
-        '${_config.httpUrl}/poll',
-        queryParams: {'sessionId': _sessionId},
-        headers: {
-          'Authorization': 'Bearer ${_config.authToken}',
-          ..._config.additionalHeaders ?? {},
-        },
-      );
-      
-      // Xử lý các tin nhắn nhận được
-      if (response != null) {
-        for (final item in response) {
-          if (item is Map<String, dynamic>) {
-            final message = RealtimeMessage.fromJson(item);
-            _handleMessage(message);
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('Error polling: $e');
-      
-      // Nếu lỗi liên tục, thử kết nối lại
-      _tryReconnect();
-    }
+    // Thử kết nối lại
+    return await connect();
   }
   
   /// Thử kết nối lại
@@ -886,33 +861,60 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
     _updateConnectionState(RealtimeConnectionState.reconnecting);
     _metrics.recordReconnectAttempt();
     
-    // Tính thời gian đợi
+    // Tính thời gian đợi với jitter để tránh thundering herd
     final delay = _calculateReconnectDelay();
-    debugPrint('Reconnecting in $delay ms (attempt $_reconnectAttempts)');
+    debugPrint('Reconnecting in $delay ms (attempt $_reconnectAttempts of ${_config.maxReconnectAttempts})');
     
     // Thiết lập timer
     _reconnectTimer = Timer(Duration(milliseconds: delay), () async {
       _reconnectTimer = null;
       
-      // Kiểm tra kết nối mạng
+      // Kiểm tra kết nối mạng trước khi thử
       final hasNetwork = await _connectivityService.isConnected();
       if (!hasNetwork) {
         debugPrint('Cannot reconnect: no network connection');
+        
+        // Thử lại sau với khoảng thời gian lâu hơn
         _updateConnectionState(RealtimeConnectionState.error);
+        
+        if (_autoReconnect && _reconnectAttempts < _config.maxReconnectAttempts) {
+          final nextDelay = _calculateReconnectDelay() * 2; // Đợi lâu hơn khi không có mạng
+          _reconnectTimer = Timer(Duration(milliseconds: nextDelay), () {
+            _reconnectTimer = null;
+            _tryReconnect();
+          });
+        }
         return;
       }
       
       // Thử kết nối WebSocket
-      final success = await _connectWebSocket();
+      bool success = false;
+      
+      try {
+        success = await _connectWebSocket();
+      } catch (e) {
+        debugPrint('Error during WebSocket reconnect: $e');
+        success = false;
+      }
       
       // Nếu không thành công, thử long polling
       if (!success && _connectionType != RealtimeConnectionType.longPolling) {
-        await _startLongPolling();
+        try {
+          success = await _startLongPolling();
+        } catch (e) {
+          debugPrint('Error during long polling fallback: $e');
+          success = false;
+        }
       }
       
       // Xử lý tin nhắn đang chờ
       if (isConnected && _pendingMessages.isNotEmpty) {
         _processPendingMessages();
+      }
+      
+      // Nếu vẫn không thành công, thử lại
+      if (!success && _autoReconnect) {
+        _tryReconnect();
       }
     });
   }
@@ -922,11 +924,15 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
     final baseDelay = _config.initialReconnectDelay;
     final factor = _config.reconnectBackoffFactor;
     
-    // Tăng theo hàm mũ với một chút nhiễu ngẫu nhiên
+    // Tăng theo hàm mũ với một chút nhiễu ngẫu nhiên để tránh thundering herd
     final exponentialDelay = baseDelay * pow(factor, _reconnectAttempts - 1);
-    final jitter = Random().nextDouble() * 0.3 * exponentialDelay;
     
-    return (exponentialDelay + jitter).toInt();
+    // Thêm jitter ±30%
+    final jitterFactor = 0.7 + (Random().nextDouble() * 0.6); // 0.7-1.3
+    final jitteredDelay = exponentialDelay * jitterFactor;
+    
+    // Giới hạn tối đa là 2 phút
+    return min(jitteredDelay.toInt(), 120000);
   }
   
   /// Cập nhật cấu hình
@@ -1012,165 +1018,117 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
   }
   
   /// Xử lý tin nhắn từ WebSocket
-  void _processWebSocketMessage(dynamic data) {
+  void _handleMessage(dynamic data) {
     try {
+      if (data == null) {
+        return;
+      }
+      
+      // Đo thời gian xử lý
+      final stopwatch = Stopwatch()..start();
+      
+      // Chuyển đổi dữ liệu thành JSON
+      Map<String, dynamic> jsonData;
       if (data is String) {
-        final json = jsonDecode(data) as Map<String, dynamic>;
-        final message = RealtimeMessage.fromJson(json);
-        
-        // Xử lý ping/pong
-        if (message.type == 'pong') {
-          _handlePong();
-          return;
-        } else if (message.type == 'latency_pong') {
-          _handleLatencyPong(message);
+        try {
+          jsonData = json.decode(data);
+        } catch (e) {
+          debugPrint('Error decoding WebSocket message: $e');
+          _metrics.recordMessageParseError();
           return;
         }
-        
-        // Xử lý tin nhắn thông thường
-        _handleMessage(message);
+      } else if (data is Map<String, dynamic>) {
+        jsonData = data;
+      } else {
+        debugPrint('Unknown WebSocket message format: ${data.runtimeType}');
+        _metrics.recordMessageParseError();
+        return;
       }
-    } catch (e) {
-      debugPrint('Error processing WebSocket message: $e');
-    }
-  }
-  
-  /// Xử lý tin nhắn
-  void _handleMessage(RealtimeMessage message) {
-    _messageController.add(message);
-    _metrics.recordMessageReceived();
-  }
-  
-  /// Xử lý pong
-  void _handlePong() {
-    _lastPongReceived = DateTime.now();
-  }
-  
-  /// Xử lý latency pong
-  void _handleLatencyPong(RealtimeMessage message) {
-    if (_latencyPingSentTime != null && _latencyCompleter != null && !_latencyCompleter!.isCompleted) {
-      // Tính toán độ trễ
-      final now = DateTime.now();
-      final latency = now.difference(_latencyPingSentTime!).inMilliseconds;
-      
-      _lastMeasuredLatency = latency;
-      _latencyCompleter!.complete(latency);
-      
-      _latencyPingSentTime = null;
-      _latencyCompleter = null;
-    }
-  }
-  
-  /// Tạo URL WebSocket
-  String _buildWebSocketUrl() {
-    final uri = Uri.parse(_config.webSocketUrl);
-    final queryParams = Map<String, String>.from(uri.queryParameters);
-    
-    // Thêm thông tin session
-    queryParams['session_id'] = _sessionId ?? '';
-    queryParams['client'] = 'flutter';
-    queryParams['version'] = '1.0.0';
-    queryParams['platform'] = defaultTargetPlatform.toString();
-    
-    // Tạo URI mới với query parameters
-    final newUri = uri.replace(queryParameters: queryParams);
-    
-    // Thêm token vào URL
-    return newUri.toString() + '&token=${_config.authToken}';
-  }
-  
-  /// Khởi động timer keep-alive
-  void _startKeepAliveTimer() {
-    // Hủy timer hiện tại nếu có
-    _keepAliveTimer?.cancel();
-    _pingPongTimer?.cancel();
-    
-    // Thiết lập thời gian ban đầu
-    _lastPingSent = DateTime.now();
-    _lastPongReceived = DateTime.now();
-    
-    // Tạo timer mới
-    _keepAliveTimer = Timer.periodic(
-      Duration(milliseconds: _config.pingInterval),
-      (_) => _sendPing(),
-    );
-  }
-  
-  /// Gửi ping
-  void _sendPing() {
-    if (_connectionType != RealtimeConnectionType.webSocket || 
-        _connectionState != RealtimeConnectionState.connected) return;
-    
-    try {
-      // Gửi ping
-      _webSocketChannel?.sink.add(jsonEncode({
-        'type': 'ping',
-        'id': 'ping_${DateTime.now().millisecondsSinceEpoch}',
-      }));
-      
-      _lastPingSent = DateTime.now();
-      
-      // Kiểm tra timeout
-      _checkPingPongTimeout();
-    } catch (e) {
-      debugPrint('Error sending ping: $e');
-    }
-  }
-  
-  /// Kiểm tra timeout ping/pong
-  void _checkPingPongTimeout() {
-    // Hủy timer hiện tại nếu có
-    _pingPongTimer?.cancel();
-    
-    // Tạo timer mới
-    _pingPongTimer = Timer(Duration(milliseconds: _config.pingTimeout), () {
-      if (_lastPingSent != null && _lastPongReceived != null) {
-        final pingDuration = DateTime.now().difference(_lastPingSent!).inMilliseconds;
-        final pongAge = DateTime.now().difference(_lastPongReceived!).inMilliseconds;
+
+      // Kiểm tra rate limit
+      if (_checkRateLimit()) {
+        // Parse tin nhắn
+        final message = RealtimeMessage.fromJson(jsonData);
         
-        // Nếu quá thời gian timeout, thử kết nối lại
-        if (pingDuration > _config.pingTimeout && pongAge > _config.pingTimeout) {
-          debugPrint('Ping/Pong timeout: reconnecting...');
-          _tryReconnect();
+        // Đánh dấu đã nhận
+        _acknowledgeMessage(message.id);
+        
+        // Gửi sự kiện tin nhắn
+        _messageController.add(message);
+        
+        // Cập nhật metrics
+        final processingTime = stopwatch.elapsedMilliseconds;
+        _metrics.recordMessageReceived(processingTime);
+        
+        if (processingTime > 100) {
+          debugPrint('Warning: Message processing took $processingTime ms');
         }
+      } else {
+        _queueMessage(jsonData);
       }
-    });
+    } catch (e, stackTrace) {
+      debugPrint('Error handling WebSocket message: $e');
+      _errorController.add(RealtimeError.fromException(e, type: RealtimeErrorType.messageError));
+      _metrics.recordMessageError();
+    }
   }
   
-  /// Xử lý tin nhắn đang chờ
-  Future<void> _processPendingMessages() async {
-    if (_pendingMessages.isEmpty || !isConnected) return;
-    
-    final messagesToSend = List<_PendingMessage>.from(_pendingMessages);
-    _pendingMessages.clear();
-    
-    debugPrint('Processing ${messagesToSend.length} pending messages');
-    
-    for (final pendingMsg in messagesToSend) {
+  /// Đánh dấu tin nhắn đã nhận nếu cần
+  void _acknowledgeMessage(String messageId) {
+    if (_config.useMessageAcknowledgement && messageId.isNotEmpty) {
       try {
-        final success = await sendMessage(
-          pendingMsg.type,
-          pendingMsg.data,
-          metadata: pendingMsg.metadata,
-        );
-        
-        if (!success) {
-          // Thêm lại vào hàng đợi nếu không thành công
-          pendingMsg.retryCount++;
-          
-          // Chỉ thêm lại nếu số lần thử chưa quá giới hạn
-          if (pendingMsg.retryCount < 3) {
-            _pendingMessages.add(pendingMsg);
-          } else {
-            debugPrint('Dropping message after ${pendingMsg.retryCount} retries: ${pendingMsg.type}');
-          }
-        }
+        final ackMessage = {
+          'type': 'ack',
+          'messageId': messageId,
+          'timestamp': DateTime.now().millisecondsSinceEpoch
+        };
+        _sendRaw(json.encode(ackMessage));
       } catch (e) {
-        debugPrint('Error processing pending message: $e');
+        debugPrint('Error acknowledging message: $e');
+      }
+    }
+  }
+  
+  /// Xếp hàng đợi tin nhắn khi rate limited
+  void _queueMessage(Map<String, dynamic> message) {
+    if (_pendingMessages.length >= _config.maxConnectionPoolSize) {
+      // Xóa tin nhắn cũ nhất nếu hàng đợi đầy
+      _pendingMessages.removeAt(0);
+      _metrics.recordQueueOverflow();
+    }
+    
+    _pendingMessages.add(_PendingMessage(message['type'], message['data'], metadata: message['metadata']));
+    _metrics.recordMessageQueued();
+    
+    // Đặt lịch xử lý hàng đợi nếu chưa có
+    if (_connectionCheckTimer == null) {
+      final delay = _rateLimitInfo?.retryAfter ?? _config.rateLimitBackoffMs;
+      _connectionCheckTimer = Timer(Duration(milliseconds: delay), _processMessageQueue);
+    }
+  }
+  
+  /// Xử lý hàng đợi tin nhắn
+  void _processMessageQueue() {
+    _connectionCheckTimer = null;
+    
+    if (_pendingMessages.isEmpty || !isConnected) {
+      return;
+    }
+    
+    // Xử lý một số tin nhắn trong hàng đợi
+    final batchSize = min(_pendingMessages.length, _config.maxConnectionPoolSize);
+    for (var i = 0; i < batchSize; i++) {
+      if (_checkRateLimit()) {
+        break;
       }
       
-      // Đợi một chút giữa các tin nhắn để tránh quá tải
-      await Future.delayed(const Duration(milliseconds: 50));
+      final pendingMsg = _pendingMessages.removeAt(0);
+      _handleMessage(pendingMsg.data);
+    }
+    
+    // Nếu vẫn còn tin nhắn, đặt lịch xử lý tiếp
+    if (_pendingMessages.isNotEmpty && _connectionCheckTimer == null) {
+      _connectionCheckTimer = Timer(Duration(milliseconds: _config.rateLimitBackoffMs), _processMessageQueue);
     }
   }
   
@@ -1282,5 +1240,193 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
         debugPrint('Rate limit info: $_rateLimitInfo');
       }
     }
+  }
+  
+  /// Kiểm tra xem có đang bị rate limit không
+  bool _isRateLimited() {
+    // Kiểm tra nếu đã có thông tin rate limit và vẫn còn hiệu lực
+    if (_rateLimitInfo != null && _rateLimitInfo!.isActive) {
+      return true;
+    }
+    
+    // Kiểm tra tốc độ tin nhắn hiện tại
+    final now = DateTime.now();
+    final oneSecondAgo = now.subtract(const Duration(seconds: 1));
+    
+    // Đếm số tin nhắn trong giây vừa qua
+    final recentMessages = _messageTimestamps.where((time) => time.isAfter(oneSecondAgo)).length;
+    
+    if (recentMessages >= _config.maxMessagesPerSecond) {
+      // Tạo rate limit mới
+      _rateLimitInfo = _RateLimitInfo(
+        limitedUntil: now.add(const Duration(seconds: 1)),
+        retryAfter: 1000,
+      );
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /// Cập nhật thời gian tin nhắn
+  void _updateMessageTimes() {
+    final now = DateTime.now();
+    _messageTimestamps.add(now);
+    
+    // Giữ danh sách thời gian trong khoảng 5 giây gần đây
+    _messageTimestamps.removeWhere((time) => 
+      now.difference(time).inSeconds > 5
+    );
+  }
+
+  /// Tạo một WebSocket mới với logic thử lại
+  Future<void> _createNewSocket() async {
+    if (_isReconnecting) {
+      return;
+    }
+
+    _isReconnecting = true;
+    int attempts = 0;
+    
+    while (attempts < _config.maxReconnectAttempts) {
+      try {
+        // Tạo chuỗi kết nối WebSocket
+        final uri = _buildSocketUri();
+        if (uri == null) {
+          _logger.severe('Invalid WebSocket URI');
+          break;
+        }
+
+        // Bắt đầu theo dõi thời gian kết nối
+        final connectionStartTime = DateTime.now().millisecondsSinceEpoch;
+        
+        // Thử kết nối WebSocket với timeout
+        _socket = await WebSocket.connect(
+          uri.toString(),
+          headers: await _getAuthHeaders(),
+        ).timeout(Duration(milliseconds: _config.connectTimeout));
+        
+        // Ghi nhận thời gian kết nối
+        final connectionTime = DateTime.now().millisecondsSinceEpoch - connectionStartTime;
+        _metrics.recordConnectionTime(connectionTime);
+        
+        // Cấu hình WebSocket listeners
+        _socket!.listen(
+          _handleWebSocketMessage,
+          onError: _handleWebSocketError,
+          onDone: _handleWebSocketDone,
+        );
+        
+        // Khởi tạo ping timer
+        _startPingTimer();
+        
+        // Cập nhật trạng thái
+        _setConnectionState(RealtimeConnectionState.connected);
+        _isReconnecting = false;
+        _reconnectAttempts = 0;
+        
+        _logger.info('WebSocket connection established');
+        return;
+      } catch (e) {
+        attempts++;
+        _reconnectAttempts++;
+        _metrics.recordReconnectAttempt();
+        
+        _logger.warning(
+          'WebSocket connection attempt $attempts failed: $e. '
+          'Retrying in ${_getBackoffDuration(attempts)}ms',
+        );
+        
+        await Future.delayed(Duration(milliseconds: _getBackoffDuration(attempts)));
+      }
+    }
+    
+    // Nếu đã vượt quá số lần thử lại tối đa
+    _isReconnecting = false;
+    _setConnectionState(RealtimeConnectionState.disconnected);
+    _logger.severe('Failed to establish WebSocket connection after $attempts attempts');
+  }
+  
+  /// Tính toán thời gian chờ dựa trên exponential backoff
+  int _getBackoffDuration(int attempt) {
+    final baseDelay = _config.reconnectBaseDelay;
+    final maxDelay = _config.reconnectMaxDelay;
+    final jitter = Random().nextInt(_config.reconnectJitter);
+    
+    // Tính toán backoff với công thức: min(maxDelay, baseDelay * 2^attempt) + jitter
+    final delay = min(maxDelay, baseDelay * pow(2, min(attempt, 6)).toInt()) + jitter;
+    return delay;
+  }
+  
+  /// Khởi tạo URI WebSocket với các tham số cần thiết
+  Uri? _buildSocketUri() {
+    try {
+      final baseUrl = _config.wsEndpoint;
+      if (baseUrl.isEmpty) {
+        _logger.severe('WebSocket endpoint is not configured');
+        return null;
+      }
+      
+      // Thêm các tham số truy vấn vào URI
+      final queryParams = <String, dynamic>{
+        'client': Platform.isIOS ? 'ios' : Platform.isAndroid ? 'android' : 'web',
+        'v': _config.protocolVersion,
+        'device_id': _deviceId,
+      };
+      
+      if (_userId != null && _userId!.isNotEmpty) {
+        queryParams['user_id'] = _userId;
+      }
+      
+      // Xây dựng URI
+      return Uri.parse(baseUrl).replace(queryParameters: queryParams);
+    } catch (e) {
+      _logger.severe('Failed to build WebSocket URI: $e');
+      return null;
+    }
+  }
+  
+  /// Bắt đầu timer để gửi tin nhắn ping định kỳ
+  void _startPingTimer() {
+    _pingTimer?.cancel();
+    _pingTimer = Timer.periodic(
+      Duration(milliseconds: _config.pingInterval),
+      (_) => _sendPing(),
+    );
+  }
+  
+  /// Gửi tin nhắn ping để kiểm tra kết nối
+  void _sendPing() {
+    if (_connectionState != RealtimeConnectionState.connected || _socket == null) {
+      return;
+    }
+    
+    try {
+      final ping = {
+        'type': 'ping',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      };
+      
+      _socket!.add(jsonEncode(ping));
+      _metrics.recordMessageSent();
+    } catch (e) {
+      _logger.warning('Failed to send ping: $e');
+    }
+  }
+  
+  /// Lấy header xác thực cho kết nối WebSocket
+  Future<Map<String, String>> _getAuthHeaders() async {
+    final headers = <String, String>{};
+    
+    try {
+      final token = await _authService.getToken();
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+    } catch (e) {
+      _logger.warning('Failed to get auth token: $e');
+    }
+    
+    return headers;
   }
 } 

@@ -7,15 +7,14 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="chore: downgrade Flutter SDK version to 3.24.5; update dependencies in pubspec.lock and package_config.json">
-      <change beforePath="$PROJECT_DIR$/.idea/flutter_chat_app.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/flutter_chat_app.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/flutter_chat_app_android.iml" beforeDir="false" afterPath="$PROJECT_DIR$/android/flutter_chat_app_android.iml" afterDir="false" />
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat: update cursor rules to enforce clean architecture and improve code quality">
+      <change beforePath="$PROJECT_DIR$/lib/core/network/api_client.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/api_client.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/http/dio_http_client.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/http/dio_http_client.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/http/http_client_interface.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/http/http_client_interface.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/http/media_type.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/http/media_type.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/realtime/realtime_connection_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/realtime/realtime_connection_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/socket_analytics.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/socket_analytics.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/socket_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/socket_manager.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,24 +106,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Flutter.main_web.executor&quot;: &quot;Debug&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;io.flutter.reload.alreadyRun&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/NestJS/s-office/flutter_chat_app&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;flutter.settings&quot;,
-    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Flutter.main_web.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "doanbh/feature/fix__bug__v2",
+    "io.flutter.reload.alreadyRun": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Volumes/DoanBHSST9/FlutterGithubOXII/chat/flutter_chat_app",
+    "settings.editor.selected.configurable": "flutter.settings",
+    "show.migrate.to.gradle.popup": "false"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Flutter.main_web">
     <configuration name="&lt;template&gt;" type="Applet" default="true" selected="false">
       <option name="MAIN_CLASS_NAME" />
@@ -264,17 +263,107 @@
       <option name="project" value="LOCAL" />
       <updated>1743591016643</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="fix: update version number and improve code consistency across various files">
+      <option name="closed" value="true" />
+      <created>1744788984788</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1744788984788</updated>
+    </task>
+    <task id="LOCAL-00011" summary="feat: enhance performance monitoring and animation handling with new configurations and optimizations">
+      <option name="closed" value="true" />
+      <created>1744796326029</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1744796326029</updated>
+    </task>
+    <task id="LOCAL-00012" summary="refactor: update connectivity handling and improve performance monitoring across services">
+      <option name="closed" value="true" />
+      <created>1744797366930</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1744797366930</updated>
+    </task>
+    <task id="LOCAL-00013" summary="refactor: improve connectivity handling and enhance cache management across services">
+      <option name="closed" value="true" />
+      <created>1744802456934</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1744802456934</updated>
+    </task>
+    <task id="LOCAL-00014" summary="feat: add connectivity change stream and improve HTTP client configuration">
+      <option name="closed" value="true" />
+      <created>1744806922345</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1744806922345</updated>
+    </task>
+    <task id="LOCAL-00015" summary="feat: add cursor rules for maintaining a clean and robust Flutter codebase">
+      <option name="closed" value="true" />
+      <created>1744807197594</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1744807197594</updated>
+    </task>
+    <task id="LOCAL-00016" summary="feat: enhance cursor rules to enforce clean architecture principles and improve code quality">
+      <option name="closed" value="true" />
+      <created>1744807605691</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1744807605691</updated>
+    </task>
+    <task id="LOCAL-00017" summary="feat: update cursor rules to enforce clean architecture and improve code quality">
+      <option name="closed" value="true" />
+      <created>1744808081951</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1744808081951</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="OPEN_GENERIC_TABS">
       <map>
         <entry key="fa96ce9f-2aa7-4dcc-a68f-92371b339f1a" value="TOOL_WINDOW" />
+        <entry key="4a34bef5-e306-4d10-af30-c61144bf832d" value="TOOL_WINDOW" />
       </map>
     </option>
     <option name="TAB_STATES">
       <map>
+        <entry key="4a34bef5-e306-4d10-af30-c61144bf832d">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="structure">
+                    <value>
+                      <list>
+                        <option value="dir:/Volumes/DoanBHSST9/FlutterGithubOXII/chat/flutter_chat_app" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+            </State>
+          </value>
+        </entry>
         <entry key="fa96ce9f-2aa7-4dcc-a68f-92371b339f1a">
           <value>
             <State>
@@ -311,6 +400,14 @@
     <MESSAGE value="chore: update Flutter SDK version and dependencies; adjust package configurations and clean up code" />
     <MESSAGE value="chore: update version to 3.27.4; refactor message handling and connectivity services; enhance chat repository interface" />
     <MESSAGE value="refactor: enhance GraphQL client and subscription handling; improve message processing and service initialization" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor: enhance GraphQL client and subscription handling; improve message processing and service initialization" />
+    <MESSAGE value="fix: update version number and improve code consistency across various files" />
+    <MESSAGE value="feat: enhance performance monitoring and animation handling with new configurations and optimizations" />
+    <MESSAGE value="refactor: update connectivity handling and improve performance monitoring across services" />
+    <MESSAGE value="refactor: improve connectivity handling and enhance cache management across services" />
+    <MESSAGE value="feat: add connectivity change stream and improve HTTP client configuration" />
+    <MESSAGE value="feat: add cursor rules for maintaining a clean and robust Flutter codebase" />
+    <MESSAGE value="feat: enhance cursor rules to enforce clean architecture principles and improve code quality" />
+    <MESSAGE value="feat: update cursor rules to enforce clean architecture and improve code quality" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: update cursor rules to enforce clean architecture and improve code quality" />
   </component>
 </project>

@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:injectable/injectable.dart';
 
 import 'socket_manager.dart';
+import '../monitoring/analytics_service.dart';
 
 /// Loại metric theo dõi hiệu suất Socket.IO
 enum SocketMetricType {
@@ -109,9 +111,15 @@ class SocketAnalytics {
   /// Số lượng record latency tối đa lưu trữ
   static const int _maxLatencyHistorySize = 50;
   
+  final AnalyticsService _analytics;
+  
+  /// Lớp theo dõi và đo lường hiệu suất kết nối WebSocket
+  WebSocketMetrics _webSocketMetrics;
+  
   /// Constructor
-  SocketAnalytics(this._socketManager) {
+  SocketAnalytics(this._socketManager, this._analytics) {
     _setupListeners();
+    _webSocketMetrics = WebSocketMetrics(this._analytics);
   }
   
   /// Thiết lập các listeners
@@ -182,16 +190,19 @@ class SocketAnalytics {
   /// Ghi nhận một tin nhắn đã gửi
   void recordMessageSent() {
     _messagesSent++;
+    _webSocketMetrics.recordMessageSent();
   }
   
   /// Ghi nhận một tin nhắn đã nhận
   void recordMessageReceived() {
     _messagesReceived++;
+    _webSocketMetrics.recordMessageReceived();
   }
   
   /// Ghi nhận một lỗi
   void recordError(SocketErrorType errorType) {
     _errorCounts[errorType] = (_errorCounts[errorType] ?? 0) + 1;
+    _webSocketMetrics.recordError(errorType.toString());
   }
   
   /// Ghi nhận độ trễ
@@ -361,6 +372,7 @@ class SocketAnalytics {
     _messagesReceived = 0;
     _errorCounts.clear();
     _latencyHistory.clear();
+    _webSocketMetrics.reset();
   }
   
   /// Dispose
@@ -382,4 +394,171 @@ class _LatencyRecord {
     required this.timestamp,
     required this.latencyMs,
   });
+}
+
+/// Lớp theo dõi và đo lường hiệu suất kết nối WebSocket
+class WebSocketMetrics {
+  final AnalyticsService _analytics;
+  
+  // Các chỉ số theo dõi
+  int _messagesSent = 0;
+  int _messagesReceived = 0;
+  int _reconnectAttempts = 0;
+  int _errors = 0;
+  int _droppedMessages = 0;
+  
+  // Thời gian kết nối
+  final List<int> _connectionTimes = [];
+  
+  // Độ trễ tin nhắn
+  final List<int> _messageLagTimes = [];
+  
+  // Thời điểm hoạt động cuối cùng
+  int _lastActivityTime = 0;
+  
+  WebSocketMetrics(this._analytics);
+  
+  /// Ghi nhận thời gian kết nối WebSocket
+  void recordConnectionTime(int milliseconds) {
+    _connectionTimes.add(milliseconds);
+    if (_connectionTimes.length > 10) {
+      _connectionTimes.removeAt(0);
+    }
+    
+    _analytics.logEvent(
+      AnalyticsEvent.socketConnection, 
+      {
+        'connection_time_ms': milliseconds,
+        'avg_connection_time_ms': averageConnectionTime,
+      },
+    );
+  }
+  
+  /// Ghi nhận tin nhắn đã gửi
+  void recordMessageSent() {
+    _messagesSent++;
+    _lastActivityTime = DateTime.now().millisecondsSinceEpoch;
+  }
+  
+  /// Ghi nhận tin nhắn đã nhận
+  void recordMessageReceived({int? size}) {
+    _messagesReceived++;
+    _lastActivityTime = DateTime.now().millisecondsSinceEpoch;
+    
+    if (size != null && size > 0) {
+      _analytics.logEvent(
+        AnalyticsEvent.socketDataReceived,
+        {'size_bytes': size},
+      );
+    }
+  }
+  
+  /// Ghi nhận độ trễ tin nhắn (ping/pong)
+  void recordMessageLag(int milliseconds) {
+    _messageLagTimes.add(milliseconds);
+    if (_messageLagTimes.length > 50) {
+      _messageLagTimes.removeAt(0);
+    }
+    
+    if (milliseconds > 1000) {
+      _analytics.logEvent(
+        AnalyticsEvent.socketHighLatency,
+        {'latency_ms': milliseconds},
+      );
+    }
+  }
+  
+  /// Ghi nhận lỗi WebSocket
+  void recordError(String error) {
+    _errors++;
+    _analytics.logEvent(
+      AnalyticsEvent.socketError,
+      {'error_message': error},
+    );
+  }
+  
+  /// Ghi nhận nỗ lực kết nối lại
+  void recordReconnectAttempt() {
+    _reconnectAttempts++;
+    _analytics.logEvent(
+      AnalyticsEvent.socketReconnect,
+      {'attempt_count': _reconnectAttempts},
+    );
+  }
+  
+  /// Ghi nhận tin nhắn bị hủy
+  void recordDroppedMessage() {
+    _droppedMessages++;
+  }
+  
+  /// Thời gian trung bình để kết nối
+  int get averageConnectionTime {
+    if (_connectionTimes.isEmpty) {
+      return 0;
+    }
+    return _connectionTimes.reduce((a, b) => a + b) ~/ _connectionTimes.length;
+  }
+  
+  /// Độ trễ tin nhắn trung bình
+  int get averageMessageLag {
+    if (_messageLagTimes.isEmpty) {
+      return 0;
+    }
+    return _messageLagTimes.reduce((a, b) => a + b) ~/ _messageLagTimes.length;
+  }
+  
+  /// Kiểm tra xem kết nối có ổn định không
+  bool get isConnectionStable {
+    // Kết nối được coi là ổn định nếu độ trễ trung bình < 300ms
+    return averageMessageLag < 300 && _errors == 0;
+  }
+  
+  /// Lấy thời gian kể từ hoạt động cuối cùng
+  int get timeSinceLastActivity {
+    if (_lastActivityTime == 0) {
+      return 0;
+    }
+    return DateTime.now().millisecondsSinceEpoch - _lastActivityTime;
+  }
+  
+  /// Tính phần trăm tin nhắn bị mất
+  double get packetLossPercentage {
+    if (_messagesSent == 0) {
+      return 0.0;
+    }
+    return (_droppedMessages / _messagesSent) * 100;
+  }
+  
+  /// Đặt lại tất cả các chỉ số
+  void reset() {
+    _messagesSent = 0;
+    _messagesReceived = 0;
+    _reconnectAttempts = 0;
+    _errors = 0;
+    _droppedMessages = 0;
+    _connectionTimes.clear();
+    _messageLagTimes.clear();
+    _lastActivityTime = 0;
+  }
+  
+  /// Gửi báo cáo về chỉ số hiệu suất
+  void reportMetrics() {
+    if (!kReleaseMode) {
+      return;
+    }
+    
+    _analytics.logEvent(
+      AnalyticsEvent.socketStats,
+      {
+        'messages_sent': _messagesSent,
+        'messages_received': _messagesReceived,
+        'reconnect_attempts': _reconnectAttempts,
+        'errors': _errors,
+        'dropped_messages': _droppedMessages,
+        'avg_connection_time_ms': averageConnectionTime,
+        'avg_message_lag_ms': averageMessageLag,
+        'packet_loss_pct': packetLossPercentage,
+      },
+    );
+  }
 } 

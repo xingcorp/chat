@@ -18,6 +18,9 @@ import '../connectivity/connectivity_service.dart';
 import '../error/network_exceptions.dart';
 import 'http_client_interface.dart';
 import 'media_type.dart';
+import '../../monitoring/logger.dart';
+import '../monitoring/api_request_tracker.dart';
+import '../cache/api_cache_manager.dart';
 
 /// Implementation của IHttpClient sử dụng Dio với tối ưu performance
 @LazySingleton(as: IHttpClient)
@@ -61,6 +64,15 @@ class DioHttpClient implements IHttpClient {
   /// Subscription for connectivity changes
   StreamSubscription? _connectivitySubscription;
   
+  final AppLogger _logger;
+  final ApiRequestTracker _tracker;
+  
+  String? _authToken;
+  bool _isDisposed = false;
+  
+  @override
+  dio.Dio get dioInstance => _dio;
+  
   /// Constructor
   @factoryMethod
   DioHttpClient(
@@ -68,6 +80,8 @@ class DioHttpClient implements IHttpClient {
     this._tokenManager,
     this._connectivityService,
     @Named('apiBaseUrl') String baseUrl,
+    this._logger,
+    this._tracker,
   ) : _dio = dio.Dio(),
       _uploadDio = dio.Dio(),
       _baseUrl = baseUrl {
@@ -1004,12 +1018,14 @@ class DioHttpClient implements IHttpClient {
   
   @override
   void dispose() {
+    _isDisposed = true;
     _dio.close(force: true);
     _uploadDio.close(force: true);
     _pendingRequests.clear();
     _connectionFailures.clear();
     _connectivitySubscription?.cancel();
     _isInitialized = false;
+    _logger.debug('DioHttpClient: Đã hủy');
   }
 }
 

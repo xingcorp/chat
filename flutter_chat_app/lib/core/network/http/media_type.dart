@@ -1,4 +1,5 @@
 import 'package:mime/mime.dart';
+import 'package:dio/dio.dart';
 
 /// Class MediaType đại diện cho một MIME type, có thể được sử dụng
 /// cho các header `Content-Type` và `Accept`.
@@ -19,8 +20,7 @@ class MediaType {
   static final Map<String, MediaType?> _extensionCache = {};
   
   /// Constructor mặc định
-  const MediaType(this.type, this.subtype, [Map<String, String>? parameters])
-      : parameters = parameters ?? const {};
+  const MediaType(this.type, this.subtype, [this.parameters = const {}]);
   
   /// Tạo MediaType từ một chuỗi MIME type (ví dụ: "application/json; charset=utf-8")
   factory MediaType.parse(String mimeTypeString) {
@@ -30,25 +30,32 @@ class MediaType {
     }
     
     final parts = mimeTypeString.split(';');
-    final mimeType = parts[0].trim().toLowerCase();
-    final parameters = <String, String>{};
+    final mainType = parts.first.trim().toLowerCase();
     
-    // Phân tích các tham số
-    for (int i = 1; i < parts.length; i++) {
-      final paramParts = parts[i].split('=');
-      if (paramParts.length == 2) {
-        parameters[paramParts[0].trim().toLowerCase()] = paramParts[1].trim();
+    final parameters = <String, String>{};
+    for (var i = 1; i < parts.length; i++) {
+      final param = parts[i].trim();
+      if (param.contains('=')) {
+        final paramParts = param.split('=');
+        final key = paramParts[0].trim().toLowerCase();
+        final value = paramParts[1].trim();
+        parameters[key] = value.startsWith('"') && value.endsWith('"')
+            ? value.substring(1, value.length - 1)
+            : value;
       }
     }
     
-    // Phân tích type và subtype
-    final typeParts = mimeType.split('/');
-    if (typeParts.length != 2) {
-      throw FormatException('Invalid MIME type: $mimeTypeString');
+    final typeSubtypeParts = mainType.split('/');
+    if (typeSubtypeParts.length != 2) {
+      throw FormatException('Invalid media type format: $mimeTypeString');
     }
     
     // Tạo và cache instance
-    final mediaType = MediaType(typeParts[0], typeParts[1], parameters);
+    final mediaType = MediaType(
+      typeSubtypeParts[0],
+      typeSubtypeParts[1],
+      parameters,
+    );
     
     // Giới hạn kích thước cache
     if (_parseCache.length > 100) {
@@ -142,6 +149,11 @@ class MediaType {
   static void clearCache() {
     _parseCache.clear();
     _extensionCache.clear();
+  }
+  
+  /// Chuyển đổi sang đối tượng ContentType của Dio
+  DioContentType toDioContentType() {
+    return DioContentType.parse('$type/$subtype');
   }
   
   @override

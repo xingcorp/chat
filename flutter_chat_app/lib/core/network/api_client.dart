@@ -9,6 +9,15 @@ import 'package:flutter_chat_app/core/network/http/performance_monitor.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:injectable/injectable.dart';
+import '../monitoring/logger.dart';
+import '../monitoring/analytics_service.dart';
+import 'http/dio_http_client.dart';
+import 'http/http_client_interface.dart';
+import 'http/media_type.dart';
+import 'error/api_error.dart';
+import 'auth/auth_interceptor.dart';
+import 'connectivity/connectivity_manager.dart';
+import 'cache/api_cache_manager.dart';
 
 /// Abstract interface for API communication
 abstract class ApiClient {
@@ -103,10 +112,29 @@ class ApiClientImpl implements ApiClient {
   // Maximum cache size
   static const int _maxCacheEntries = 100;
 
+  final HttpClientInterface _httpClient;
+  final AppLogger _logger;
+  final AnalyticsService _analytics;
+  final ConnectivityManager _connectivityManager;
+  final ApiCacheManager _cacheManager;
+  
+  final Map<String, int> _endpointLatency = {};
+  final Map<String, int> _endpointErrorCount = {};
+  final Map<String, int> _endpointCallCount = {};
+  
+  /// Singleton instance
+  static ApiClientImpl? _instance;
+  static ApiClientImpl get instance => _instance!;
+  
   /// Constructor
   ApiClientImpl(
     this._dio, 
     this._networkInfo,
+    this._httpClient,
+    this._logger,
+    this._analytics,
+    this._connectivityManager,
+    this._cacheManager,
   ) : _performanceMonitor = NetworkPerformanceMonitor() {
     _setupDio();
   }
