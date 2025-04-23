@@ -1,20 +1,17 @@
-/// Represents the quality of the network connection
+/// Enum định nghĩa chất lượng mạng
 enum NetworkQuality {
-  /// Excellent network quality with low latency (< 100ms)
+  /// Chất lượng rất tốt (độ trễ < 100ms)
   excellent,
   
-  /// Good network quality with moderate latency (< 300ms)
+  /// Chất lượng tốt (độ trễ < 200ms)
   good,
   
-  /// Fair network quality with higher latency (< 1000ms)
+  /// Chất lượng trung bình (độ trễ < 500ms)
   fair,
   
-  /// Poor network quality with high latency (< 3000ms)
+  /// Chất lượng kém (độ trễ >= 500ms)
   poor,
   
-  /// Very poor network quality with very high latency (>= 3000ms)
-  veryPoor,
-  
-  /// Network is disconnected
-  offline
+  /// Không xác định
+  unknown,
 } 

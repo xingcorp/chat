@@ -4,20 +4,21 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
 
+import 'handlers/offline_message_handler.dart';
+import 'monitoring/network_quality_monitor.dart';
+import 'models/network_quality.dart' as models;
+import 'models/socket_error.dart';
+import 'models/socket_connection_state.dart';
 import 'socket_analytics.dart';
 import 'socket_manager.dart';
 import 'socket_rate_limiter.dart';
-import 'models/network_quality.dart';
-import 'models/socket_error.dart';
-import 'models/offline_message.dart';
 
 /// Manager nâng cao cho Socket.IO với các tính năng mở rộng
 @singleton
 class EnhancedSocketManager {
   /// Logger
-  final Logger _logger = Logger();
+  final Logger _logger;
   
   /// Socket Manager gốc
   final SocketManager _socketManager;
@@ -28,24 +29,21 @@ class EnhancedSocketManager {
   /// Rate Limiter
   final SocketRateLimiter _rateLimiter;
   
+  /// Handler xử lý tin nhắn offline
+  late final OfflineMessageHandler _offlineHandler;
+  
+  /// Network Quality Monitor
+  late final NetworkQualityMonitor _qualityMonitor;
+  
   /// Danh sách subscription cần dọn dẹp
   final List<StreamSubscription> _subscriptions = [];
   
   /// Controller theo dõi chất lượng mạng
-  final BehaviorSubject<NetworkQuality> _networkQualityController = 
-      BehaviorSubject<NetworkQuality>.seeded(NetworkQuality.unknown);
+  final BehaviorSubject<models.NetworkQuality> _networkQualityController = 
+      BehaviorSubject<models.NetworkQuality>.seeded(models.NetworkQuality.unknown);
   
   /// Controller theo dõi các lỗi
   final PublishSubject<SocketError> _errorController = PublishSubject<SocketError>();
-  
-  /// Timer kiểm tra chất lượng kết nối định kỳ
-  Timer? _qualityCheckTimer;
-  
-  /// Timer cho việc sync offline message
-  Timer? _offlineSyncTimer;
-  
-  /// Danh sách tin nhắn đã gửi trong khi offline
-  final List<OfflineMessage> _offlineMessages = [];
   
   /// Có đang ở chế độ offline-first không
   bool _offlineFirstMode = false;
@@ -55,8 +53,31 @@ class EnhancedSocketManager {
     this._socketManager,
     this._analytics,
     this._rateLimiter,
-  ) {
+  ) : _logger = Logger() {
     _initialize();
+  }
+  
+  /// Khởi tạo
+  void _initialize() {
+    // Khởi tạo các handlers
+    _offlineHandler = OfflineMessageHandler(
+      sendFunction: _sendOfflineMessage,
+      logger: _logger,
+    );
+    
+    _qualityMonitor = NetworkQualityMonitor(
+      analytics: _analytics,
+      onQualityChanged: _handleQualityChange,
+      logger: _logger,
+    );
+    
+    // Lắng nghe sự thay đổi trạng thái kết nối
+    _subscriptions.add(
+      _socketManager.connectionState.listen(_handleConnectionStateChange)
+    );
+    
+    // Khởi động quality monitor
+    _qualityMonitor.start();
   }
   
   /// Trả về stream theo dõi trạng thái kết nối
@@ -66,89 +87,27 @@ class EnhancedSocketManager {
   SocketConnectionState get currentState => _socketManager.currentState;
   
   /// Trả về stream theo dõi chất lượng mạng
-  Stream<NetworkQuality> get networkQuality => _networkQualityController.stream;
+  Stream<models.NetworkQuality> get networkQuality => _networkQualityController.stream;
   
   /// Trả về chất lượng mạng hiện tại
-  NetworkQuality get currentNetworkQuality => _networkQualityController.value;
+  models.NetworkQuality get currentNetworkQuality => _networkQualityController.value;
   
   /// Trả về stream theo dõi lỗi
   Stream<SocketError> get errors => _errorController.stream;
-  
-  /// Khởi tạo
-  void _initialize() {
-    // Lắng nghe sự thay đổi trạng thái kết nối
-    _subscriptions.add(
-      _socketManager.connectionState.listen(_handleConnectionStateChange)
-    );
-    
-    // Khởi động timer kiểm tra chất lượng kết nối
-    _startQualityCheck();
-  }
   
   /// Xử lý thay đổi trạng thái kết nối
   void _handleConnectionStateChange(SocketConnectionState state) {
     if (state == SocketConnectionState.connected) {
       // Nếu kết nối lại sau khi disconnect, thử sync tin nhắn offline
-      _syncOfflineMessages();
-    }
-  }
-  
-  /// Khởi động timer kiểm tra chất lượng kết nối
-  void _startQualityCheck() {
-    _qualityCheckTimer?.cancel();
-    
-    // Kiểm tra mỗi 30 giây
-    _qualityCheckTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
-      try {
-        final health = await _analytics.checkConnectionHealth();
-        
-        // Cập nhật chất lượng mạng
-        final quality = _mapQualityFromHealth(health);
-        if (quality != _networkQualityController.value) {
-          _networkQualityController.add(quality);
-          
-          _logger.i('Chất lượng mạng: $quality (latency: ${health['latency']['current']}ms)');
-        }
-      } catch (e) {
-        _logger.e('Lỗi khi kiểm tra chất lượng kết nối: $e');
+      if (_offlineHandler.hasPendingMessages) {
+        _syncOfflineMessages();
       }
-    });
-    
-    // Thực hiện kiểm tra ngay lập tức
-    _checkNetworkQuality();
-  }
-  
-  /// Kiểm tra chất lượng mạng
-  Future<void> _checkNetworkQuality() async {
-    try {
-      final health = await _analytics.checkConnectionHealth();
-      
-      // Cập nhật chất lượng mạng
-      final quality = _mapQualityFromHealth(health);
-      _networkQualityController.add(quality);
-      
-      _logger.i('Chất lượng mạng: $quality (latency: ${health['latency']['current']}ms)');
-    } catch (e) {
-      _logger.e('Lỗi khi kiểm tra chất lượng kết nối: $e');
     }
   }
   
-  /// Chuyển đổi từ health data sang NetworkQuality
-  NetworkQuality _mapQualityFromHealth(Map<String, dynamic> health) {
-    final quality = health['quality'] as String;
-    
-    switch (quality) {
-      case 'excellent':
-        return NetworkQuality.excellent;
-      case 'good':
-        return NetworkQuality.good;
-      case 'fair':
-        return NetworkQuality.fair;
-      case 'poor':
-        return NetworkQuality.poor;
-      default:
-        return NetworkQuality.unknown;
-    }
+  /// Xử lý thay đổi chất lượng mạng
+  void _handleQualityChange(models.NetworkQuality quality) {
+    _networkQualityController.add(quality);
   }
   
   /// Kết nối socket
@@ -187,13 +146,7 @@ class EnhancedSocketManager {
     if (_socketManager.currentState != SocketConnectionState.connected) {
       if (_offlineFirstMode) {
         // Lưu tin nhắn để gửi sau
-        _offlineMessages.add(OfflineMessage(
-          event: event,
-          data: data,
-          timestamp: DateTime.now(),
-        ));
-        
-        _logger.i('Đã lưu tin nhắn $event để gửi khi online');
+        _offlineHandler.enqueueEvent(event, data);
       } else {
         _logger.w('Socket không được kết nối, bỏ qua sự kiện: $event');
       }
@@ -253,8 +206,10 @@ class EnhancedSocketManager {
     // Tạo một ID duy nhất cho ack này
     final ackId = 'ack_${DateTime.now().millisecondsSinceEpoch}_${(data ?? '').hashCode}';
     
+    late StreamSubscription subscription;
+    
     // Lắng nghe sự kiện ack
-    final subscription = _socketManager.on<Map<String, dynamic>>('${event}_ack').listen((response) {
+    subscription = _socketManager.on<Map<String, dynamic>>('${event}_ack').listen((response) {
       if (response['id'] == ackId && !completer.isCompleted) {
         completer.complete(response['data'] as T?);
         subscription.cancel();
@@ -312,35 +267,32 @@ class EnhancedSocketManager {
     _logger.i('Đã tắt chế độ offline-first');
   }
   
+  /// Hàm callback để gửi tin nhắn offline
+  Future<bool> _sendOfflineMessage(String event, dynamic data) async {
+    if (_socketManager.currentState != SocketConnectionState.connected) {
+      return false;
+    }
+    
+    try {
+      emit(event, data);
+      return true;
+    } catch (e) {
+      _logger.e('Lỗi khi gửi tin nhắn offline: $e');
+      return false;
+    }
+  }
+  
   /// Đồng bộ tin nhắn đã gửi khi offline
   void _syncOfflineMessages() {
-    if (_offlineMessages.isEmpty) return;
-    
-    _logger.i('Bắt đầu đồng bộ ${_offlineMessages.length} tin nhắn offline');
-    
-    _offlineSyncTimer?.cancel();
-    _offlineSyncTimer = Timer.periodic(const Duration(milliseconds: 300), (timer) {
-      if (_offlineMessages.isEmpty) {
-        timer.cancel();
-        _logger.i('Đã đồng bộ xong tin nhắn offline');
-        return;
-      }
-      
-      if (_socketManager.currentState == SocketConnectionState.connected) {
-        final message = _offlineMessages.removeAt(0);
-        
-        _logger.d('Đồng bộ tin nhắn offline: ${message.event} (${_offlineMessages.length} còn lại)');
-        
-        try {
-          emit(message.event, message.data);
-        } catch (e) {
-          _logger.e('Lỗi khi đồng bộ tin nhắn offline: $e');
-        }
-      } else {
-        timer.cancel();
-        _logger.w('Kết nối bị mất, dừng đồng bộ tin nhắn offline');
-      }
-    });
+    _offlineHandler.syncMessages(
+      isConnected: () => _socketManager.currentState == SocketConnectionState.connected,
+      onProgress: (progress) {
+        _logger.d('Tiến độ đồng bộ tin nhắn: $progress');
+      },
+      onComplete: (total) {
+        _logger.i('Hoàn thành đồng bộ $total tin nhắn offline');
+      },
+    );
   }
   
   /// Kiểm tra hiệu suất kết nối
@@ -367,23 +319,25 @@ class EnhancedSocketManager {
   void enterBackgroundMode() {
     _socketManager.enterBackgroundMode();
     
-    // Dừng các timer không cần thiết khi ở background
-    _qualityCheckTimer?.cancel();
+    // Dừng các monitor không cần thiết khi ở background
+    _qualityMonitor.stop();
   }
   
   /// Chuyển sang chế độ foreground
   void enterForegroundMode() {
     _socketManager.enterForegroundMode();
     
-    // Khởi động lại các timer
-    _startQualityCheck();
+    // Khởi động lại các monitor
+    _qualityMonitor.start();
   }
   
   /// Giải phóng tài nguyên
   void dispose() {
-    // Hủy các timer
-    _qualityCheckTimer?.cancel();
-    _offlineSyncTimer?.cancel();
+    // Dừng các monitor
+    _qualityMonitor.stop();
+    
+    // Hủy đồng bộ offline
+    _offlineHandler.dispose();
     
     // Hủy các subscription
     for (final subscription in _subscriptions) {
@@ -397,24 +351,6 @@ class EnhancedSocketManager {
     
     _logger.i('Enhanced Socket Manager đã được giải phóng');
   }
-}
-
-/// Enum định nghĩa chất lượng mạng
-enum NetworkQuality {
-  /// Chất lượng rất tốt (độ trễ < 100ms)
-  excellent,
-  
-  /// Chất lượng tốt (độ trễ < 200ms)
-  good,
-  
-  /// Chất lượng trung bình (độ trễ < 500ms)
-  fair,
-  
-  /// Chất lượng kém (độ trễ >= 500ms)
-  poor,
-  
-  /// Không xác định
-  unknown,
 }
 
 /// Class mô tả lỗi Socket.IO
@@ -461,23 +397,4 @@ enum SocketErrorType {
   
   /// Lỗi không xác định
   unknown,
-}
-
-/// Class lưu trữ tin nhắn để gửi khi offline
-class OfflineMessage {
-  /// Loại sự kiện
-  final String event;
-  
-  /// Dữ liệu sự kiện
-  final dynamic data;
-  
-  /// Thời gian tạo
-  final DateTime timestamp;
-  
-  /// Constructor
-  OfflineMessage({
-    required this.event,
-    required this.data,
-    required this.timestamp,
-  });
 } 

@@ -429,6 +429,9 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
   /// Lưu trữ thời gian nhận tin nhắn để kiểm soát tốc độ
   final List<DateTime> _messageTimes = [];
   
+  /// Track last connection attempt time
+  DateTime? _lastConnectionAttemptTime;
+  
   /// Constructor
   @factoryMethod
   RealtimeConnectionService(
@@ -496,62 +499,58 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
   
   @override
   Future<bool> connect() async {
-    if (_connectionState == RealtimeConnectionState.connected || 
+    // Nếu đã kết nối, không làm gì
+    if (_connectionState == RealtimeConnectionState.connected ||
         _connectionState == RealtimeConnectionState.connecting) {
-      return isConnected;
+      debugPrint('Already connected or connecting');
+      return true;
     }
     
+    // Cập nhật trạng thái kết nối
     _updateConnectionState(RealtimeConnectionState.connecting);
+    
+    // Ghi nhận sự kiện bắt đầu kết nối
     _metrics.recordConnectionStart();
+    _lastConnectionAttemptTime = DateTime.now();
     
-    // Kiểm tra kết nối mạng
-    final isNetworkConnected = await _connectivityService.isConnected();
-    if (!isNetworkConnected) {
-      final error = RealtimeError(
-        type: RealtimeErrorType.networkError,
-        message: 'Cannot connect: no network connection',
-      );
-      _handleError(error);
-      _metrics.recordConnectionFailure();
-      return false;
-    }
-    
-    // Đặt lại số lần thử kết nối
+    // Đặt lại số lần thử kết nối và lỗi
     _reconnectAttempts = 0;
+    
+    // Hủy bỏ timers nếu có
+    _cancelTimers();
+    
+    // Khởi tạo session ID mới nếu chưa có
+    _sessionId ??= _generateSessionId();
     
     try {
       // Thử kết nối WebSocket với timeout
       final connectTask = _connectWebSocket();
-      final timeoutTask = Future.delayed(Duration(milliseconds: _config.connectionTimeout), () => false);
       
-      // Chọn kết quả từ task hoàn thành trước
-      final success = await Future.any([connectTask, timeoutTask]);
+      // Đặt timeout cho kết nối
+      final result = await connectTask.timeout(
+        Duration(milliseconds: _config.connectionTimeout),
+        onTimeout: () {
+          debugPrint('WebSocket connection timed out');
+          // Nếu thất bại, thử long polling (nếu được hỗ trợ)
+          if (_httpClient != null) {
+            debugPrint('WebSocket connection failed, falling back to long polling');
+            return _startLongPolling();
+          }
+          return false;
+        },
+      );
       
-      // Nếu không thành công, thử long polling
-      if (!success && _connectionType != RealtimeConnectionType.longPolling) {
-        debugPrint('WebSocket connection failed, falling back to long polling');
-        await _startLongPolling();
-      }
-      
-      // Xử lý tin nhắn đang chờ
-      if (isConnected && _pendingMessages.isNotEmpty) {
-        _processPendingMessages();
-      }
-      
-      // Khởi động timer kiểm tra kết nối
-      _startConnectionChecker();
-      
-      if (isConnected) {
-        _metrics.recordConnectionSuccess();
-      } else {
-        _metrics.recordConnectionFailure();
-      }
-      
-      return isConnected;
+      return result;
     } catch (e) {
-      final error = RealtimeError.fromException(e, type: RealtimeErrorType.webSocketError);
+      final error = RealtimeError.fromException(e, type: RealtimeErrorType.networkError);
       _handleError(error);
+      
+      // Ghi nhận kết nối thất bại
       _metrics.recordConnectionFailure();
+      
+      // Đặt trạng thái kết nối về disconnected
+      _updateConnectionState(RealtimeConnectionState.disconnected);
+      
       return false;
     }
   }
@@ -1002,17 +1001,47 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
     final hasConnection = connectionTypes.isNotEmpty && !connectionTypes.contains(ConnectionType.none);
     
     if (hasConnection) {
-      // Có kết nối mạng, thử kết nối lại nếu cần
-      if ((_connectionState == RealtimeConnectionState.error || _connectionState == RealtimeConnectionState.disconnected) && _autoReconnect) {
-        debugPrint('Network connection restored, trying to reconnect');
-        _reconnectAttempts = 0;
-        connect();
+      // Có kết nối mạng, thử kết nối lại nếu đang trong trạng thái lỗi hoặc ngắt kết nối
+      if (_connectionState == RealtimeConnectionState.error || 
+          _connectionState == RealtimeConnectionState.disconnected || 
+          _connectionState == RealtimeConnectionState.closed) {
+        
+        if (_autoReconnect) {
+          debugPrint('Network connection restored, attempting to reconnect');
+          _reconnectAttempts = 0;
+          
+          // Ghi nhận sự kiện khôi phục kết nối vào metrics
+          _metrics.recordConnectionStart();
+          
+          // Đặt trạng thái kết nối về reconnecting trước khi kết nối lại
+          _updateConnectionState(RealtimeConnectionState.reconnecting);
+          
+          // Thử kết nối lại
+          connect();
+        }
       }
     } else {
       // Không có kết nối mạng, cập nhật trạng thái
-      if (_connectionState == RealtimeConnectionState.connected) {
+      if (_connectionState == RealtimeConnectionState.connected || 
+          _connectionState == RealtimeConnectionState.connecting) {
         debugPrint('Network connection lost');
-        _updateConnectionState(RealtimeConnectionState.error);
+        
+        // Ghi nhận sự kiện mất kết nối vào metrics
+        _metrics.recordDisconnect();
+        
+        // Hủy WebSocket hiện tại nếu có
+        _closeWebSocket();
+        
+        // Cập nhật trạng thái
+        _updateConnectionState(RealtimeConnectionState.disconnected);
+        
+        // Thông báo lỗi
+        final error = RealtimeError(
+          code: 'NETWORK_DISCONNECTED',
+          message: 'Network connection lost',
+          type: RealtimeErrorType.networkError,
+        );
+        _errorController.add(error);
       }
     }
   }
@@ -1289,6 +1318,9 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
     }
 
     try {
+      // Cập nhật thời gian thử kết nối mới nhất
+      _lastConnectionAttemptTime = DateTime.now();
+      
       // Khởi tạo WebSocket
       final wsUrl = Uri.parse('${_config.webSocketUrl}?token=${_config.authToken}&sessionId=$_sessionId');
       _webSocketChannel = WebSocketChannel.connect(wsUrl);
@@ -1320,20 +1352,36 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
 
   /// Xử lý lỗi WebSocket
   void _handleWebSocketError(dynamic error) {
+    // Đo thời gian đến khi có lỗi
+    final connectionTime = _lastConnectionAttemptTime != null 
+        ? DateTime.now().difference(_lastConnectionAttemptTime!).inMilliseconds 
+        : null;
+    
     final realtimeError = RealtimeError.fromException(
       error,
       type: RealtimeErrorType.webSocketError
     );
     
     debugPrint('WebSocket error: ${realtimeError.message}');
+    
+    // Ghi nhận lỗi vào metrics
     _metrics.recordError(realtimeError.type.toString());
+    if (connectionTime != null) {
+      _metrics.recordConnectionFailure();
+    }
     
     // Gửi lỗi qua stream
     if (!_errorController.isClosed) {
       _errorController.add(realtimeError);
     }
     
-    // Thử kết nối lại nếu được cấu hình
+    // Hủy kết nối WebSocket hiện tại
+    _closeWebSocket();
+    
+    // Cập nhật trạng thái
+    _updateConnectionState(RealtimeConnectionState.error);
+    
+    // Thử kết nối lại nếu được cấu hình và không đang trong quá trình kết nối lại
     if (_autoReconnect && _connectionState != RealtimeConnectionState.reconnecting) {
       _tryReconnect();
     }
@@ -1343,14 +1391,35 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
   void _handleWebSocketDone() {
     debugPrint('WebSocket connection closed');
     
-    // Nếu đang trong trạng thái connected, cập nhật trạng thái và thử kết nối lại
+    // Kiểm tra xem đây có phải là ngắt kết nối do người dùng không
+    final isUserInitiated = _connectionState == RealtimeConnectionState.connecting;
+    
+    // Nếu đang trong trạng thái connected, cập nhật trạng thái
     if (_connectionState == RealtimeConnectionState.connected) {
+      // Ghi nhận vào metrics
+      _metrics.recordDisconnect();
+      
+      // Cập nhật trạng thái
       _updateConnectionState(RealtimeConnectionState.closed);
       
-      // Thử kết nối lại nếu được cấu hình
-      if (_autoReconnect) {
+      // Hủy timer
+      _cancelTimers();
+      
+      // Hủy WebSocket channel nếu còn
+      _closeWebSocket();
+      
+      // Thử kết nối lại nếu được cấu hình và không phải người dùng chủ động ngắt kết nối
+      if (_autoReconnect && !isUserInitiated) {
+        // Đặt trạng thái kết nối về reconnecting trước khi kết nối lại
+        _updateConnectionState(RealtimeConnectionState.reconnecting);
         _tryReconnect();
       }
+    } else if (isUserInitiated) {
+      // Nếu là ngắt kết nối do người dùng, cập nhật trạng thái thành disconnected
+      _updateConnectionState(RealtimeConnectionState.disconnected);
+      
+      // Ghi nhận vào metrics
+      _metrics.recordDisconnect();
     }
   }
 
@@ -1586,5 +1655,12 @@ class RealtimeConnectionService implements IRealtimeConnectionService {
     };
     
     return healthData;
+  }
+
+  /// Tạo một session ID ngẫu nhiên
+  String _generateSessionId() {
+    final random = Random();
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    return List.generate(16, (_) => chars[random.nextInt(chars.length)]).join();
   }
 } 

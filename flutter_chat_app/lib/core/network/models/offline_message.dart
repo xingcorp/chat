@@ -1,58 +1,70 @@
 import 'dart:convert';
 
-/// Represents a message that was sent while offline and needs to be delivered
-/// when the connection is restored
+/// Class lưu trữ tin nhắn để gửi khi offline
 class OfflineMessage {
-  /// Unique identifier for this offline message
+  /// ID duy nhất của tin nhắn
   final String id;
   
-  /// The event name/type of the message
+  /// Loại sự kiện
   final String event;
   
-  /// The payload data for the message
-  final Map<String, dynamic> data;
+  /// Dữ liệu sự kiện
+  final dynamic data;
   
-  /// The timestamp when this message was created
+  /// Thời gian tạo
   final DateTime timestamp;
   
-  /// Whether this message requires an acknowledgment
-  final bool requiresAck;
+  /// Số lần thử gửi lại
+  int retryCount = 0;
   
-  /// The number of times we've attempted to send this message
-  int retryCount;
-  
-  /// Creates a new offline message
+  /// Constructor
   OfflineMessage({
-    required this.id,
     required this.event,
     required this.data,
     required this.timestamp,
-    this.requiresAck = true,
-    this.retryCount = 0,
-  });
+    String? id,
+  }) : id = id ?? '${DateTime.now().millisecondsSinceEpoch}_${event.hashCode}';
   
-  /// Creates an offline message from JSON
-  factory OfflineMessage.fromJson(Map<String, dynamic> json) {
-    return OfflineMessage(
-      id: json['id'] as String,
-      event: json['event'] as String,
-      data: json['data'] as Map<String, dynamic>,
-      timestamp: DateTime.parse(json['timestamp'] as String),
-      requiresAck: json['requiresAck'] as bool? ?? true,
-      retryCount: json['retryCount'] as int? ?? 0,
+  /// Sao chép với dữ liệu mới
+  OfflineMessage copyWith({
+    String? event,
+    dynamic data,
+    DateTime? timestamp,
+    int? retryCount,
+  }) {
+    final result = OfflineMessage(
+      event: event ?? this.event,
+      data: data ?? this.data,
+      timestamp: timestamp ?? this.timestamp,
+      id: id,
     );
+    
+    result.retryCount = retryCount ?? this.retryCount;
+    return result;
   }
   
-  /// Converts this offline message to JSON
+  /// Chuyển đổi sang Map
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'event': event,
       'data': data,
       'timestamp': timestamp.toIso8601String(),
-      'requiresAck': requiresAck,
       'retryCount': retryCount,
     };
+  }
+  
+  /// Tạo từ Map
+  factory OfflineMessage.fromJson(Map<String, dynamic> json) {
+    final result = OfflineMessage(
+      event: json['event'] as String,
+      data: json['data'],
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      id: json['id'] as String,
+    );
+    
+    result.retryCount = json['retryCount'] as int? ?? 0;
+    return result;
   }
   
   /// Serializes this offline message to a string
@@ -71,9 +83,7 @@ class OfflineMessage {
   }
   
   @override
-  String toString() {
-    return 'OfflineMessage(id: $id, event: $event, retryCount: $retryCount)';
-  }
+  String toString() => 'OfflineMessage(event: $event, retryCount: $retryCount)';
   
   @override
   bool operator ==(Object other) {

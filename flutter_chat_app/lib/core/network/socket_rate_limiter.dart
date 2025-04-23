@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:math';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
@@ -12,325 +12,239 @@ class RateLimitResult {
   final bool allowed;
   
   /// Información adicional sobre el límite
-  final Map<String, dynamic> info;
+  final RateLimitInfo info;
   
-  /// Constructor para resultado permitido
-  RateLimitResult.allowed()
-      : allowed = true,
-        info = {'status': 'allowed'};
-  
-  /// Constructor para resultado limitado
-  RateLimitResult.limited(int currentCount, int maxAllowed, int timeWindowMs)
-      : allowed = false,
-        info = {
-          'status': 'limited',
-          'current_count': currentCount,
-          'max_allowed': maxAllowed,
-          'time_window_ms': timeWindowMs,
-          'retry_after_ms': timeWindowMs,
-        };
-  
-  /// Constructor para evento bloqueado
-  RateLimitResult.blocked()
-      : allowed = false,
-        info = {'status': 'blocked'};
+  /// Constructor
+  const RateLimitResult({
+    required this.allowed,
+    required this.info,
+  });
 }
 
 /// Información sobre el límite de tasa para un tipo de evento
 class RateLimitInfo {
-  /// Número máximo permitido
-  final int maxEvents;
+  /// Giới hạn số tin nhắn trong khoảng thời gian
+  final int limit;
   
-  /// Ventana de tiempo (ms)
-  final int timeWindowMs;
+  /// Số tin nhắn đã gửi trong khoảng thời gian
+  final int used;
   
-  /// Conteo actual
-  final int currentCount;
-  
-  /// Marca de tiempo del próximo restablecimiento
-  final int nextResetTimestamp;
+  /// Thời gian còn lại trước khi reset (ms)
+  final int resetInMs;
   
   /// Constructor
-  RateLimitInfo({
-    required this.maxEvents,
-    required this.timeWindowMs,
-    required this.currentCount,
-    required this.nextResetTimestamp,
+  const RateLimitInfo({
+    required this.limit,
+    required this.used,
+    required this.resetInMs,
   });
   
-  /// Convierte a Map para serialización
-  Map<String, dynamic> toMap() {
-    return {
-      'max_events': maxEvents,
-      'time_window_ms': timeWindowMs,
-      'current_count': currentCount,
-      'next_reset_ms': nextResetTimestamp - DateTime.now().millisecondsSinceEpoch,
-      'limit_percent': (currentCount / maxEvents * 100).round(),
-    };
-  }
+  /// Số tin nhắn còn lại có thể gửi
+  int get remaining => limit - used;
+  
+  /// Có bị rate limit không
+  bool get isLimited => used >= limit;
 }
 
 /// Implementación de limitador de tasa para eventos de socket
 class SocketRateLimiter {
-  /// Máximo de eventos por período predeterminado
-  final int _defaultMaxEvents;
+  /// Logger
+  final Logger _logger;
   
-  /// Ventana de tiempo predeterminada (ms)
-  final int _defaultTimeWindowMs;
+  /// Giới hạn tin nhắn mặc định cho mỗi loại
+  final int _defaultLimit;
   
-  /// Historial de eventos por tipo
-  final Map<String, Queue<int>> _eventHistory = {};
+  /// Thời gian window (ms) mặc định
+  final int _defaultWindowMs;
   
-  /// Límites personalizados por tipo de evento
-  final Map<String, _RateLimit> _customLimits = {};
+  /// Thời gian chờ backoff (ms) mặc định
+  final int _defaultBackoffMs;
   
-  /// Eventos bloqueados explícitamente
-  final Set<String> _blockedEvents = {};
+  /// Queue lưu trữ các tin nhắn bị rate limit
+  final _messageQueue = Queue<_QueuedMessage>();
   
-  /// Cola de mensajes por tipo de evento
-  final Map<String, Queue<_QueuedMessage>> _messageQueues = {};
+  /// Map lưu trữ giới hạn tùy chỉnh cho từng loại sự kiện
+  final Map<String, int> _customLimits = {};
   
-  /// Temporizadores para procesar colas
-  final Map<String, DateTime> _queueProcessingTimers = {};
+  /// Map lưu trữ lịch sử gửi tin nhắn
+  final Map<String, List<int>> _messageHistory = {};
+  
+  /// Timer xử lý hàng đợi
+  Timer? _queueProcessingTimer;
   
   /// Constructor
   SocketRateLimiter({
-    int maxEvents = 30,
-    int timeWindowMs = 1000,
-  })  : _defaultMaxEvents = maxEvents,
-        _defaultTimeWindowMs = timeWindowMs;
+    Logger? logger,
+    int defaultLimit = 10,
+    int defaultWindowMs = 1000,
+    int defaultBackoffMs = 50,
+  }) : 
+    _logger = logger ?? Logger(),
+    _defaultLimit = defaultLimit,
+    _defaultWindowMs = defaultWindowMs,
+    _defaultBackoffMs = defaultBackoffMs;
   
-  /// Verificar si un evento debe ser limitado
+  /// Kiểm tra có vượt quá rate limit không
   RateLimitResult checkRateLimit(String eventType) {
-    // Verificar si está bloqueado
-    if (_blockedEvents.contains(eventType)) {
-      return RateLimitResult.blocked();
-    }
+    // Lấy giới hạn cho loại sự kiện này
+    final limit = _customLimits[eventType] ?? _defaultLimit;
     
-    // Limpiar eventos antiguos
-    _cleanupOldEvents(eventType);
+    // Lấy lịch sử gửi
+    final history = _getMessageHistory(eventType);
     
-    // Obtener límite para este tipo
-    final rateLimit = _getLimitForEventType(eventType);
-    
-    // Verificar conteo actual
-    final currentCount = _getCurrentCount(eventType);
-    
-    if (currentCount >= rateLimit.maxEvents) {
-      return RateLimitResult.limited(
-        currentCount,
-        rateLimit.maxEvents,
-        rateLimit.timeWindowMs,
-      );
-    }
-    
-    return RateLimitResult.allowed();
-  }
-  
-  /// Registrar un evento
-  void recordEvent(String eventType) {
-    if (!_eventHistory.containsKey(eventType)) {
-      _eventHistory[eventType] = Queue<int>();
-    }
-    
-    _eventHistory[eventType]!.add(DateTime.now().millisecondsSinceEpoch);
-  }
-  
-  /// Registrar un mensaje (para estadísticas)
-  void recordMessage(String eventType) {
-    recordEvent(eventType);
-  }
-  
-  /// Poner en cola un mensaje para enviarlo más tarde si está limitado
-  void enqueueMessage(String eventType, dynamic data, Function(dynamic) sendCallback) {
-    if (!_messageQueues.containsKey(eventType)) {
-      _messageQueues[eventType] = Queue<_QueuedMessage>();
-    }
-    
-    final message = _QueuedMessage(
-      data: data,
-      timestamp: DateTime.now().millisecondsSinceEpoch,
-      sendCallback: sendCallback,
-    );
-    
-    _messageQueues[eventType]!.add(message);
-    
-    // Programar procesamiento de cola
-    _scheduleQueueProcessing(eventType);
-  }
-  
-  /// Programar procesamiento de cola
-  void _scheduleQueueProcessing(String eventType) {
-    // Si ya hay un temporizador programado y aún no ha vencido, no hacer nada
-    final now = DateTime.now();
-    if (_queueProcessingTimers.containsKey(eventType) && 
-        _queueProcessingTimers[eventType]!.isAfter(now)) {
-      return;
-    }
-    
-    // Calcular tiempo para procesar el siguiente mensaje
-    final rateLimit = _getLimitForEventType(eventType);
-    final currentCount = _getCurrentCount(eventType);
-    
-    if (currentCount < rateLimit.maxEvents) {
-      // Podemos procesar inmediatamente
-      _processQueue(eventType);
-      return;
-    }
-    
-    // Calcular tiempo para el próximo procesamiento
-    final oldestTimestamp = _getOldestEventTimestamp(eventType);
-    final nextProcessTime = oldestTimestamp + rateLimit.timeWindowMs;
-    
-    // Actualizar el temporizador
-    _queueProcessingTimers[eventType] = DateTime.fromMillisecondsSinceEpoch(nextProcessTime);
-    
-    // Programar el procesamiento
-    Future.delayed(
-      Duration(milliseconds: nextProcessTime - now.millisecondsSinceEpoch + 10),
-      () => _processQueue(eventType),
-    );
-  }
-  
-  /// Procesar cola de mensajes
-  void _processQueue(String eventType) {
-    if (!_messageQueues.containsKey(eventType) || 
-        _messageQueues[eventType]!.isEmpty) {
-      return;
-    }
-    
-    final queue = _messageQueues[eventType]!;
-    
-    // Intentar enviar mensajes de la cola mientras esté permitido
-    while (queue.isNotEmpty) {
-      if (checkRateLimit(eventType).allowed) {
-        final message = queue.removeFirst();
-        recordEvent(eventType);
-        message.sendCallback(message.data);
-      } else {
-        break;
-      }
-    }
-    
-    // Si aún quedan mensajes, reprogramar
-    if (queue.isNotEmpty) {
-      _scheduleQueueProcessing(eventType);
-    }
-  }
-  
-  /// Establecer un límite de tasa personalizado para un tipo de evento
-  void setCustomRateLimit(String eventType, int maxEvents, int timeWindowMs) {
-    _customLimits[eventType] = _RateLimit(
-      maxEvents: maxEvents, 
-      timeWindowMs: timeWindowMs
-    );
-    
-    // Limpiar historial existente
-    if (_eventHistory.containsKey(eventType)) {
-      _eventHistory[eventType]!.clear();
-    }
-  }
-  
-  /// Bloquear un tipo de evento específico
-  void blockEvent(String eventType) {
-    _blockedEvents.add(eventType);
-  }
-  
-  /// Desbloquear un tipo de evento
-  void unblockEvent(String eventType) {
-    _blockedEvents.remove(eventType);
-  }
-  
-  /// Obtener información sobre el límite de tasa actual
-  RateLimitInfo getRateLimitInfo(String eventType) {
-    _cleanupOldEvents(eventType);
-    
-    final rateLimit = _getLimitForEventType(eventType);
-    final currentCount = _getCurrentCount(eventType);
+    // Lọc các tin nhắn trong window hiện tại
     final now = DateTime.now().millisecondsSinceEpoch;
+    final windowStartTime = now - _defaultWindowMs;
     
-    // Calcular cuándo se restablecerá el límite
-    int nextResetTimestamp = now + rateLimit.timeWindowMs;
+    // Chỉ giữ lại lịch sử gửi trong window hiện tại
+    history.removeWhere((timestamp) => timestamp < windowStartTime);
     
-    if (_eventHistory.containsKey(eventType) && _eventHistory[eventType]!.isNotEmpty) {
-      final oldestTimestamp = _eventHistory[eventType]!.first;
-      nextResetTimestamp = oldestTimestamp + rateLimit.timeWindowMs;
+    // Đếm số tin nhắn đã gửi trong window
+    final used = history.length;
+    
+    // Tính thời gian còn lại trước khi reset
+    final oldestTimestamp = history.isEmpty ? now : history.first;
+    final resetInMs = math.max(0, _defaultWindowMs - (now - oldestTimestamp));
+    
+    // Tạo thông tin rate limit
+    final info = RateLimitInfo(
+      limit: limit,
+      used: used,
+      resetInMs: resetInMs,
+    );
+    
+    // Kiểm tra có cho phép gửi không
+    final allowed = used < limit;
+    
+    return RateLimitResult(allowed: allowed, info: info);
+  }
+  
+  /// Lấy lịch sử gửi tin nhắn cho một loại sự kiện
+  List<int> _getMessageHistory(String eventType) {
+    if (!_messageHistory.containsKey(eventType)) {
+      _messageHistory[eventType] = [];
+    }
+    return _messageHistory[eventType]!;
+  }
+  
+  /// Ghi nhận tin nhắn đã gửi
+  void recordMessage(String eventType) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    _getMessageHistory(eventType).add(now);
+  }
+  
+  /// Thêm tin nhắn vào hàng đợi để gửi sau
+  void enqueueMessage(String eventType, dynamic data, Function(dynamic) sendCallback) {
+    // Thêm vào hàng đợi
+    _messageQueue.add(_QueuedMessage(
+      eventType: eventType,
+      data: data,
+      sendCallback: sendCallback,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+    ));
+    
+    _logger.d('Đã thêm vào hàng đợi: $eventType (độ dài hàng đợi: ${_messageQueue.length})');
+    
+    // Bắt đầu xử lý hàng đợi nếu chưa chạy
+    _startQueueProcessing();
+  }
+  
+  /// Bắt đầu xử lý hàng đợi
+  void _startQueueProcessing() {
+    if (_queueProcessingTimer != null) {
+      return; // Đã chạy rồi
     }
     
-    return RateLimitInfo(
-      maxEvents: rateLimit.maxEvents,
-      timeWindowMs: rateLimit.timeWindowMs,
-      currentCount: currentCount,
-      nextResetTimestamp: nextResetTimestamp,
+    _queueProcessingTimer = Timer.periodic(
+      Duration(milliseconds: _defaultBackoffMs),
+      (_) => _processQueue(),
     );
   }
   
-  /// Comprobar si se debe limitar
-  bool shouldLimit(String eventType) {
-    return !checkRateLimit(eventType).allowed;
-  }
-  
-  /// Obtener el límite configurado para un tipo de evento
-  _RateLimit _getLimitForEventType(String eventType) {
-    return _customLimits[eventType] ?? 
-           _RateLimit(maxEvents: _defaultMaxEvents, timeWindowMs: _defaultTimeWindowMs);
-  }
-  
-  /// Obtener el conteo actual para un tipo de evento
-  int _getCurrentCount(String eventType) {
-    return _eventHistory[eventType]?.length ?? 0;
-  }
-  
-  /// Obtener el timestamp del evento más antiguo
-  int _getOldestEventTimestamp(String eventType) {
-    if (!_eventHistory.containsKey(eventType) || _eventHistory[eventType]!.isEmpty) {
-      return 0;
+  /// Xử lý hàng đợi
+  void _processQueue() {
+    if (_messageQueue.isEmpty) {
+      _queueProcessingTimer?.cancel();
+      _queueProcessingTimer = null;
+      return;
     }
-    return _eventHistory[eventType]!.first;
-  }
-  
-  /// Limpiar eventos antiguos fuera de la ventana de tiempo
-  void _cleanupOldEvents(String eventType) {
-    if (!_eventHistory.containsKey(eventType)) return;
     
-    final queue = _eventHistory[eventType]!;
-    if (queue.isEmpty) return;
+    // Lấy tin nhắn đầu tiên
+    final message = _messageQueue.first;
     
-    final rateLimit = _getLimitForEventType(eventType);
-    final cutoffTime = DateTime.now().millisecondsSinceEpoch - rateLimit.timeWindowMs;
+    // Kiểm tra rate limit
+    final result = checkRateLimit(message.eventType);
     
-    // Eliminar eventos antiguos
-    while (queue.isNotEmpty && queue.first < cutoffTime) {
-      queue.removeFirst();
+    if (result.allowed) {
+      // Gửi tin nhắn
+      _messageQueue.removeFirst();
+      
+      // Gửi tin nhắn
+      message.sendCallback(message.data);
+      
+      // Ghi nhận đã gửi
+      recordMessage(message.eventType);
+      
+      _logger.d('Đã gửi tin nhắn từ hàng đợi: ${message.eventType}');
     }
   }
   
-  /// Reiniciar todos los contadores
-  void reset() {
-    _eventHistory.clear();
-    _queueProcessingTimers.clear();
-    
-    // Mantener los límites personalizados y bloqueos
+  /// Lấy thông tin rate limit cho một sự kiện
+  RateLimitInfo getRateLimitInfo(String eventType) {
+    final result = checkRateLimit(eventType);
+    return result.info;
   }
-}
-
-/// Clase interna para definir un límite de tasa
-class _RateLimit {
-  final int maxEvents;
-  final int timeWindowMs;
   
-  _RateLimit({required this.maxEvents, required this.timeWindowMs});
+  /// Thiết lập giới hạn tùy chỉnh cho một sự kiện
+  void setEventRateLimit(String eventType, int limit) {
+    if (limit <= 0) {
+      _customLimits.remove(eventType);
+    } else {
+      _customLimits[eventType] = limit;
+    }
+    
+    _logger.d('Đã thiết lập rate limit cho $eventType: $limit');
+  }
+  
+  /// Xóa tất cả lịch sử gửi tin nhắn
+  void clearHistory() {
+    _messageHistory.clear();
+  }
+  
+  /// Xóa hàng đợi tin nhắn
+  void clearQueue() {
+    _messageQueue.clear();
+    _queueProcessingTimer?.cancel();
+    _queueProcessingTimer = null;
+  }
+  
+  /// Giải phóng tài nguyên
+  void dispose() {
+    _queueProcessingTimer?.cancel();
+    _messageQueue.clear();
+    _messageHistory.clear();
+  }
 }
 
 /// Clase interna para mensajes en cola
 class _QueuedMessage {
+  /// Loại sự kiện
+  final String eventType;
+  
+  /// Dữ liệu tin nhắn
   final dynamic data;
-  final int timestamp;
+  
+  /// Callback để gửi tin nhắn
   final Function(dynamic) sendCallback;
   
+  /// Thời gian tạo
+  final int timestamp;
+  
+  /// Constructor
   _QueuedMessage({
-    required this.data, 
-    required this.timestamp, 
-    required this.sendCallback
+    required this.eventType,
+    required this.data,
+    required this.sendCallback,
+    required this.timestamp,
   });
 } 
