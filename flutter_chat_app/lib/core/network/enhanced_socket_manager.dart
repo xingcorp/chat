@@ -9,6 +9,9 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'socket_analytics.dart';
 import 'socket_manager.dart';
 import 'socket_rate_limiter.dart';
+import 'models/network_quality.dart';
+import 'models/socket_error.dart';
+import 'models/offline_message.dart';
 
 /// Manager nâng cao cho Socket.IO với các tính năng mở rộng
 @singleton
@@ -42,7 +45,7 @@ class EnhancedSocketManager {
   Timer? _offlineSyncTimer;
   
   /// Danh sách tin nhắn đã gửi trong khi offline
-  final List<_OfflineMessage> _offlineMessages = [];
+  final List<OfflineMessage> _offlineMessages = [];
   
   /// Có đang ở chế độ offline-first không
   bool _offlineFirstMode = false;
@@ -184,7 +187,7 @@ class EnhancedSocketManager {
     if (_socketManager.currentState != SocketConnectionState.connected) {
       if (_offlineFirstMode) {
         // Lưu tin nhắn để gửi sau
-        _offlineMessages.add(_OfflineMessage(
+        _offlineMessages.add(OfflineMessage(
           event: event,
           data: data,
           timestamp: DateTime.now(),
@@ -461,7 +464,7 @@ enum SocketErrorType {
 }
 
 /// Class lưu trữ tin nhắn để gửi khi offline
-class _OfflineMessage {
+class OfflineMessage {
   /// Loại sự kiện
   final String event;
   
@@ -472,7 +475,7 @@ class _OfflineMessage {
   final DateTime timestamp;
   
   /// Constructor
-  _OfflineMessage({
+  OfflineMessage({
     required this.event,
     required this.data,
     required this.timestamp,

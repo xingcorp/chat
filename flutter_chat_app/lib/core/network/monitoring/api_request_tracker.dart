@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:get_it/get_it.dart';
 import '../../monitoring/logger.dart';
 import '../../monitoring/analytics_service.dart';
 
@@ -146,28 +147,15 @@ class ApiRequestStats {
 }
 
 /// API request tracker for monitoring performance and errors
+@singleton
 class ApiRequestTracker {
   // Singleton instance
   static final ApiRequestTracker _instance = ApiRequestTracker._internal();
   static ApiRequestTracker get instance => _instance;
   
-  // Private constructor
-  ApiRequestTracker._internal() {
-    _startCleanupTimer();
-  }
-  
-  // For dependency injection in tests
-  @visibleForTesting
-  factory ApiRequestTracker({AppLogger? logger, AnalyticsService? analytics}) {
-    final instance = ApiRequestTracker._internal();
-    if (logger != null) instance._logger = logger;
-    if (analytics != null) instance._analytics = analytics;
-    return instance;
-  }
-  
   // Dependencies
-  late final AppLogger _logger = AppLogger();
-  late final AnalyticsService _analytics = AnalyticsService.instance;
+  late AppLogger _logger;
+  late AnalyticsService _analytics;
   
   // Storage for requests
   final LinkedHashMap<String, ApiRequestInfo> _recentRequests = LinkedHashMap();
@@ -193,6 +181,26 @@ class ApiRequestTracker {
   Map<String, List<int>> _hourlyRequestCounts = {};
   Map<String, Map<int, int>> _statusCodeDistribution = {};
   int _apdexThreshold = 500; // ms - target response time
+  
+  // Private constructor
+  ApiRequestTracker._internal() {
+    try {
+      _logger = AppLogger.instance;
+      _analytics = GetIt.instance<AnalyticsService>();
+      _startCleanupTimer();
+    } catch (e) {
+      // Fallback for when DI is not available (like tests)
+      print('Warning: Could not create ApiRequestTracker dependencies: $e');
+    }
+  }
+  
+  // For dependency injection in tests
+  @visibleForTesting
+  ApiRequestTracker.forTesting({AppLogger? logger, AnalyticsService? analytics}) {
+    _logger = logger ?? AppLogger.instance;
+    _analytics = analytics ?? GetIt.instance<AnalyticsService>();
+    _startCleanupTimer();
+  }
   
   /// Start tracking a request
   String startRequest(String method, String endpoint, {Map<String, dynamic>? params}) {
@@ -259,7 +267,8 @@ class ApiRequestTracker {
         );
         
         _analytics.logEvent(
-          AnalyticsEvent.apiPerformanceIssue,
+          AnalyticsEvent.custom,
+          customEventName: 'api_performance_issue',
           parameters: {
             'endpoint': request.endpoint,
             'method': request.method,
@@ -278,7 +287,8 @@ class ApiRequestTracker {
       );
       
       _analytics.logEvent(
-        AnalyticsEvent.apiError,
+        AnalyticsEvent.custom,
+        customEventName: 'api_error',
         parameters: {
           'endpoint': request.endpoint,
           'method': request.method,
@@ -402,8 +412,8 @@ class ApiRequestTracker {
       failedRequests: _failedRequestsCount,
       activeRequests: _activeRequests.length,
       averageResponseTime: avgResponseTime.toDouble(),
-      fastestResponseTime: _fastestResponseTime ?? 0,
-      slowestResponseTime: _slowestResponseTime ?? 0,
+      fastestResponseTime: (_fastestResponseTime ?? 0).toDouble(),
+      slowestResponseTime: (_slowestResponseTime ?? 0).toDouble(),
       successRate: successRate.toDouble(),
       slowestEndpoints: slowestEndpoints,
       errorProneEndpoints: errorProneEndpoints,
