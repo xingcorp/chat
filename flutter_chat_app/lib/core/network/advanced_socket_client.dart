@@ -2,225 +2,378 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:injectable/injectable.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
 import '../monitoring/analytics_service.dart';
 import '../monitoring/logger_service.dart';
-import 'socket_connection_quality.dart';
-import 'socket_event_rate_limiter.dart';
+import 'models/socket_connection_state.dart';
+import 'socket_quality_monitor.dart';
+import 'socket_rate_limiter.dart';
 
-/// Advanced WebSocket client with performance monitoring, auto-reconnect,
-/// quality monitoring, rate limiting, and efficient event handling
+/// Opciones de configuración para el cliente socket avanzado
+class AdvancedSocketOptions {
+  /// URL del servidor
+  final String serverUrl;
+  
+  /// Opciones personalizadas para Socket.IO
+  final Map<String, dynamic> socketOptions;
+  
+  /// Máximo de eventos por segundo (rate limiting)
+  final int maxEventsPerSecond;
+  
+  /// Intervalo de comprobación de calidad (ms)
+  final int qualityCheckIntervalMs;
+  
+  /// Tiempo de reconexión base (ms)
+  final int reconnectionDelayMs;
+  
+  /// Intentos máximos de reconexión
+  final int maxReconnectionAttempts;
+  
+  /// Tiempo de espera para ack (ms)
+  final int ackTimeoutMs;
+  
+  const AdvancedSocketOptions({
+    required this.serverUrl,
+    this.socketOptions = const {},
+    this.maxEventsPerSecond = 50,
+    this.qualityCheckIntervalMs = 5000,
+    this.reconnectionDelayMs = 1000,
+    this.maxReconnectionAttempts = 10,
+    this.ackTimeoutMs = 10000,
+  });
+}
+
+/// Resultado de una operación de emisión con ack
+class SocketResponse<T> {
+  /// Datos de respuesta
+  final T? data;
+  
+  /// Error (si ocurrió)
+  final SocketError? error;
+  
+  /// Tiempo de respuesta (ms)
+  final int responseTimeMs;
+  
+  /// Constructor para respuesta exitosa
+  SocketResponse.success(this.data, this.responseTimeMs) : error = null;
+  
+  /// Constructor para respuesta con error
+  SocketResponse.error(this.error, this.responseTimeMs) : data = null;
+  
+  /// Verifica si la respuesta fue exitosa
+  bool get isSuccess => error == null;
+}
+
+/// Cliente WebSocket avanzado con monitoreo de rendimiento, reconexión automática,
+/// monitoreo de calidad, limitación de tasa, y manejo eficiente de eventos
+@injectable
 class AdvancedSocketClient {
-  /// Socket.io client instance
+  /// Instancia Socket.io
   Socket? _socket;
   
-  /// Server URL for socket connection
-  final String _serverUrl;
+  /// Opciones de configuración
+  final AdvancedSocketOptions _options;
   
-  /// Socket options configuration
-  final Map<String, dynamic> _options;
-  
-  /// Logger instance for debug and error information
+  /// Servicio de registro
   final LoggerService _logger;
   
-  /// Analytics service for tracking socket performance
+  /// Servicio de analytics
   final AnalyticsService _analytics;
   
-  /// Connection quality monitor
-  late final SocketConnectionQualityMonitor _qualityMonitor;
+  /// Monitor de calidad de conexión
+  late final SocketQualityMonitor _qualityMonitor;
   
-  /// Rate limiter for outgoing events
-  late final SocketEventRateLimiter _rateLimiter;
+  /// Limitador de tasa para eventos salientes
+  late final SocketRateLimiter _rateLimiter;
   
-  /// Current connection state
-  bool _isConnected = false;
+  /// Estado actual de conexión
+  SocketConnectionState _connectionState = SocketConnectionState.disconnected;
   
-  /// Pending events to be sent when connection is established
+  /// Eventos pendientes a enviar cuando se establezca la conexión
   final List<_PendingEvent> _pendingEvents = [];
   
-  /// Callback for quality change events
-  Function(SocketConnectionQuality)? onQualityChange;
+  /// Suscripciones activas para eventos
+  final Map<String, List<StreamSubscription>> _eventSubscriptions = {};
   
-  /// Stream controller for connection state changes
-  final StreamController<bool> _connectionStateController = 
-      StreamController<bool>.broadcast();
+  /// Cronómetros activos
+  final List<Timer> _timers = [];
   
-  /// Stream of connection state changes (true = connected, false = disconnected)
-  Stream<bool> get connectionState => _connectionStateController.stream;
+  /// Controlador para cambios de estado de conexión
+  final StreamController<SocketConnectionState> _connectionStateController = 
+      StreamController<SocketConnectionState>.broadcast();
   
-  /// Connection quality monitor instance
-  SocketConnectionQualityMonitor get qualityMonitor => _qualityMonitor;
+  /// Stream de cambios en el estado de conexión
+  Stream<SocketConnectionState> get connectionState => _connectionStateController.stream;
   
-  /// Creates an advanced socket client
+  /// Controlador para cambios de calidad de conexión
+  final StreamController<SocketQuality> _qualityController = 
+      StreamController<SocketQuality>.broadcast();
+      
+  /// Stream de cambios en la calidad de conexión
+  Stream<SocketQuality> get qualityStream => _qualityController.stream;
+  
+  /// Controlador para errores
+  final StreamController<SocketError> _errorController = 
+      StreamController<SocketError>.broadcast();
+      
+  /// Stream de errores
+  Stream<SocketError> get errorStream => _errorController.stream;
+  
+  /// Constructor del cliente socket avanzado
   AdvancedSocketClient({
-    required String serverUrl,
+    required AdvancedSocketOptions options,
     required LoggerService logger,
     required AnalyticsService analytics,
-    Map<String, dynamic> options = const {},
-    int maxEventsPerSecond = 50,
-    int qualityCheckIntervalMs = 5000,
-  }) : _serverUrl = serverUrl,
-       _options = options,
+  }) : _options = options,
        _logger = logger,
        _analytics = analytics {
-    // Initialize quality monitor
-    _qualityMonitor = SocketConnectionQualityMonitor();
+    // Inicializar el monitor de calidad
+    _qualityMonitor = SocketQualityMonitor();
     
-    // Initialize rate limiter (50 events per second by default)
-    _rateLimiter = SocketEventRateLimiter(
-      maxEvents: maxEventsPerSecond,
-      timeWindowMs: 1000, // 1 second window
+    // Inicializar el limitador de tasa
+    _rateLimiter = SocketRateLimiter(
+      maxEvents: options.maxEventsPerSecond,
+      timeWindowMs: 1000, // 1 segundo
     );
     
-    // Start periodic quality check
-    Timer.periodic(Duration(milliseconds: qualityCheckIntervalMs), (_) {
-      _checkConnectionQuality();
-    });
+    // Iniciar comprobación periódica de calidad
+    _startQualityCheck();
   }
   
-  /// Connect to the socket server
-  Future<void> connect() async {
+  /// Conectar al servidor socket
+  Future<bool> connect() async {
     if (_socket != null) {
       _logger.debug('Socket already exists, disconnecting first');
       disconnect();
     }
     
+    _updateConnectionState(SocketConnectionState.connecting);
+    
     try {
-      _logger.info('Connecting to socket server: $_serverUrl');
+      _logger.info('Connecting to socket server: ${_options.serverUrl}');
       
-      // Default options
+      // Opciones predeterminadas
       final defaultOptions = {
         'transports': ['websocket'],
         'autoConnect': true,
         'reconnection': true,
-        'reconnectionAttempts': 10,
-        'reconnectionDelay': 1000,
-        'reconnectionDelayMax': 5000,
-        'timeout': 20000,
+        'reconnectionAttempts': _options.maxReconnectionAttempts,
+        'reconnectionDelay': _options.reconnectionDelayMs,
+        'reconnectionDelayMax': _options.reconnectionDelayMs * 5,
+        'timeout': _options.ackTimeoutMs,
       };
       
-      // Merge with user options
-      final mergedOptions = {...defaultOptions, ..._options};
+      // Fusionar con opciones de usuario
+      final mergedOptions = {...defaultOptions, ..._options.socketOptions};
       
-      // Create and connect socket
-      _socket = io(_serverUrl, mergedOptions);
+      // Crear y conectar socket
+      _socket = io(_options.serverUrl, mergedOptions);
       
-      // Set up event handlers
+      // Configurar manejadores de eventos
       _setupEventHandlers();
       
-      // Start performance monitoring
+      // Iniciar monitoreo de rendimiento
       _startPerformanceMonitoring();
       
+      return true;
     } catch (e, stackTrace) {
       _logger.error('Error connecting to socket server', e, stackTrace);
       _analytics.logError(
-        'socket_connection_error',
-        {'error': e.toString(), 'url': _serverUrl}
+        errorType: 'socket_connection_error',
+        errorMessage: e.toString(),
+        errorDetails: 'URL: ${_options.serverUrl}'
       );
-      rethrow;
+      
+      _updateConnectionState(SocketConnectionState.error);
+      _notifyError(
+        SocketErrorType.networkError,
+        'Failed to connect: $e'
+      );
+      
+      return false;
     }
   }
   
-  /// Disconnect from the socket server
+  /// Desconectar del servidor socket
   void disconnect() {
     _socket?.disconnect();
     _socket?.dispose();
     _socket = null;
-    _setConnected(false);
+    _updateConnectionState(SocketConnectionState.disconnectedByUser);
     _logger.info('Disconnected from socket server');
   }
   
-  /// Set up socket event handlers
+  /// Configurar manejadores de eventos socket
   void _setupEventHandlers() {
     _socket?.onConnect((_) {
       _logger.info('Socket connected');
-      _setConnected(true);
+      _updateConnectionState(SocketConnectionState.connected);
       _processPendingEvents();
       
-      // Send ping to measure initial latency
+      // Enviar ping para medir latencia inicial
       _measureLatency();
+      
+      _analytics.logEvent(
+        AnalyticsEvent.custom,
+        customEventName: 'socket_connected',
+        parameters: {'url': _options.serverUrl}
+      );
     });
     
     _socket?.onDisconnect((_) {
       _logger.info('Socket disconnected');
-      _setConnected(false);
-      _qualityMonitor.updateQuality(SocketConnectionQuality.none);
+      if (_connectionState != SocketConnectionState.disconnectedByUser) {
+        _updateConnectionState(SocketConnectionState.disconnectedByServer);
+        
+        _analytics.logEvent(
+          AnalyticsEvent.custom,
+          customEventName: 'socket_disconnected',
+          parameters: {'reason': 'server_disconnect'}
+        );
+      }
     });
     
     _socket?.onConnectError((error) {
       _logger.error('Socket connection error', error);
+      _updateConnectionState(SocketConnectionState.error);
+      
+      _notifyError(
+        SocketErrorType.networkError,
+        'Connection error: $error'
+      );
+      
       _analytics.logError(
-        'socket_connection_error',
-        {'error': error.toString(), 'url': _serverUrl}
+        errorType: 'socket_connection_error',
+        errorMessage: error.toString(),
+        errorDetails: 'URL: ${_options.serverUrl}'
       );
     });
     
     _socket?.onError((error) {
       _logger.error('Socket error', error);
+      
+      _notifyError(
+        SocketErrorType.unknown,
+        'Socket error: $error'
+      );
+      
       _analytics.logError(
-        'socket_error',
-        {'error': error.toString()}
+        errorType: 'socket_error',
+        errorMessage: error.toString()
+      );
+    });
+    
+    // Usar el evento 'reconnect_attempt' en lugar de onReconnecting
+    _socket?.on('reconnect_attempt', (attempt) {
+      _logger.info('Socket reconnecting (attempt: $attempt)');
+      _updateConnectionState(SocketConnectionState.reconnecting);
+      
+      _analytics.logEvent(
+        AnalyticsEvent.custom,
+        customEventName: 'socket_reconnecting',
+        parameters: {'attempt': attempt}
+      );
+    });
+    
+    _socket?.onReconnect((_) {
+      _logger.info('Socket reconnected');
+      _updateConnectionState(SocketConnectionState.connected);
+      _processPendingEvents();
+      
+      _analytics.logEvent(
+        AnalyticsEvent.custom,
+        customEventName: 'socket_reconnected',
+        parameters: {}
+      );
+    });
+    
+    _socket?.onReconnectFailed((_) {
+      _logger.error('Socket reconnect failed');
+      _updateConnectionState(SocketConnectionState.error);
+      
+      _notifyError(
+        SocketErrorType.networkError,
+        'Reconnection attempts failed'
+      );
+      
+      _analytics.logEvent(
+        AnalyticsEvent.custom,
+        customEventName: 'socket_reconnect_failed',
+        parameters: {}
       );
     });
   }
   
-  /// Start monitoring socket performance
+  /// Iniciar monitoreo de rendimiento
   void _startPerformanceMonitoring() {
-    // Periodically measure latency
-    Timer.periodic(const Duration(seconds: 10), (_) {
-      if (_isConnected) {
+    final timer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (_connectionState == SocketConnectionState.connected) {
         _measureLatency();
       }
     });
+    
+    _timers.add(timer);
   }
   
-  /// Measure current latency
+  /// Iniciar comprobación periódica de calidad
+  void _startQualityCheck() {
+    final timer = Timer.periodic(
+      Duration(milliseconds: _options.qualityCheckIntervalMs), 
+      (_) => _checkConnectionQuality()
+    );
+    
+    _timers.add(timer);
+  }
+  
+  /// Medir latencia actual
   void _measureLatency() {
-    if (!_isConnected || _socket == null) return;
+    if (_connectionState != SocketConnectionState.connected || _socket == null) return;
     
     final startTime = DateTime.now().millisecondsSinceEpoch;
     
-    // Use socket.io ping feature
+    // Usar característica de ping de socket.io
     _socket!.emit('ping', (_) {
       final endTime = DateTime.now().millisecondsSinceEpoch;
       final latency = endTime - startTime;
       
       _qualityMonitor.addLatencyMeasurement(latency);
       
-      // Track very high latency
+      // Registrar latencia muy alta
       if (latency > 500) {
         _analytics.logEvent(
           AnalyticsEvent.custom,
-          {'type': 'high_socket_latency', 'value': latency}
+          customEventName: 'socket_high_latency',
+          parameters: {'value': latency}
         );
       }
     });
   }
   
-  /// Check connection quality and trigger callbacks if needed
+  /// Comprobar calidad de conexión y notificar cambios
   void _checkConnectionQuality() {
-    if (!_isConnected) return;
+    if (_connectionState != SocketConnectionState.connected) return;
     
-    // Get current quality
+    // Obtener calidad actual
     final oldQuality = _qualityMonitor.currentQuality;
     
-    // Update quality (this will recalculate based on recent measurements)
+    // Actualizar calidad (recalculará según mediciones recientes)
     _qualityMonitor.updateMetrics();
     
-    // Get new quality
+    // Obtener nueva calidad
     final newQuality = _qualityMonitor.currentQuality;
     
-    // If quality changed, notify listeners
+    // Si cambió la calidad, notificar
     if (oldQuality != newQuality) {
-      onQualityChange?.call(newQuality);
+      _qualityController.add(newQuality);
       
-      // Log quality changes (except initial connection)
-      if (oldQuality != SocketConnectionQuality.none) {
+      // Registrar cambios de calidad (excepto conexión inicial)
+      if (oldQuality != SocketQuality.unknown) {
         _analytics.logEvent(
           AnalyticsEvent.custom,
-          {
-            'type': 'socket_quality_change',
+          customEventName: 'socket_quality_change',
+          parameters: {
             'from': oldQuality.toString(),
             'to': newQuality.toString(),
             'metrics': _qualityMonitor.getSummary(),
@@ -230,115 +383,210 @@ class AdvancedSocketClient {
     }
   }
   
-  /// Register a listener for socket events
-  void on(String event, Function(dynamic) callback) {
-    _socket?.on(event, (data) {
+  /// Registrar un listener para eventos socket
+  StreamSubscription<T> on<T>(String event, void Function(T data) callback) {
+    final controller = StreamController<T>.broadcast();
+    
+    // Suscribirse al evento socket
+    if (_socket != null) {
+      _socket!.on(event, (data) {
+        try {
+          if (!controller.isClosed) {
+            controller.add(data as T);
+          }
+        } catch (e, stackTrace) {
+          _logger.error('Error in socket event handler: $event', e, stackTrace);
+        }
+      });
+    }
+    
+    // Crear suscripción
+    final subscription = controller.stream.listen((data) {
       try {
         callback(data);
       } catch (e, stackTrace) {
-        _logger.error('Error in socket event handler: $event', e, stackTrace);
+        _logger.error('Error in event callback: $event', e, stackTrace);
       }
     });
+    
+    // Guardar suscripción para limpieza
+    _eventSubscriptions[event] = [...(_eventSubscriptions[event] ?? []), subscription];
+    
+    // Configurar limpieza al cancelar
+    subscription.onDone(() {
+      controller.close();
+      _eventSubscriptions[event]?.remove(subscription);
+    });
+    
+    return subscription;
   }
   
-  /// Remove a listener for socket events
+  /// Quitar un listener para eventos socket
   void off(String event) {
     _socket?.off(event);
+    
+    // Cancelar todas las suscripciones
+    _eventSubscriptions[event]?.forEach((subscription) {
+      subscription.cancel();
+    });
+    
+    _eventSubscriptions.remove(event);
   }
   
-  /// Emit an event to the server
-  void emit(String event, dynamic data) {
-    if (!_isConnected) {
+  /// Emitir un evento al servidor
+  bool emit(String event, dynamic data) {
+    if (_connectionState != SocketConnectionState.connected) {
       _logger.debug('Socket not connected, adding event to pending list: $event');
       _pendingEvents.add(_PendingEvent(event, data));
-      return;
+      return false;
     }
     
-    // Check rate limiting
+    // Comprobar limitación de tasa
     if (_rateLimiter.shouldLimit(event)) {
       _logger.warning('Rate limiting socket event: $event');
       
-      // Track rate limited events
-      _analytics.logEvent(
-        AnalyticsEvent.custom,
-        {'type': 'socket_rate_limited', 'event': event}
+      _notifyError(
+        SocketErrorType.rateLimited,
+        'Rate limit exceeded for event: $event'
       );
       
-      return;
+      // Registrar eventos limitados
+      _analytics.logEvent(
+        AnalyticsEvent.custom,
+        customEventName: 'socket_rate_limited',
+        parameters: {'event': event}
+      );
+      
+      return false;
     }
     
     try {
-      // Record the event for rate limiting
+      // Registrar el evento para limitación de tasa
       _rateLimiter.recordEvent(event);
       
-      // Emit the event
+      // Emitir el evento
       _socket?.emit(event, data);
-      
+      return true;
     } catch (e, stackTrace) {
       _logger.error('Error emitting socket event: $event', e, stackTrace);
+      
+      _notifyError(
+        SocketErrorType.messagingError,
+        'Failed to emit event: $e'
+      );
+      
+      return false;
     }
   }
   
-  /// Emit an event and get a response
-  Future<T> emitWithAck<T>(String event, dynamic data, {Duration timeout = const Duration(seconds: 10)}) {
-    final completer = Completer<T>();
+  /// Emitir un evento y obtener una respuesta
+  Future<SocketResponse<T>> emitWithAck<T>(
+    String event,
+    dynamic data, {
+    Duration? timeout
+  }) async {
+    final startTime = DateTime.now().millisecondsSinceEpoch;
     
-    if (!_isConnected) {
-      completer.completeError('Socket not connected');
-      return completer.future;
+    if (_connectionState != SocketConnectionState.connected) {
+      return SocketResponse<T>.error(
+        SocketError(
+          type: SocketErrorType.networkError,
+          message: 'Socket not connected',
+        ),
+        0
+      );
     }
     
-    // Check rate limiting
+    // Comprobar limitación de tasa
     if (_rateLimiter.shouldLimit(event)) {
       _logger.warning('Rate limiting socket event with ack: $event');
-      completer.completeError('Rate limited');
-      return completer.future;
+      
+      return SocketResponse<T>.error(
+        SocketError(
+          type: SocketErrorType.rateLimited,
+          message: 'Rate limit exceeded for event: $event',
+        ),
+        0
+      );
     }
     
     try {
-      // Record the event for rate limiting
+      // Registrar el evento para limitación de tasa
       _rateLimiter.recordEvent(event);
       
-      // Set timeout
-      Timer(timeout, () {
+      final timeoutDuration = timeout ?? Duration(milliseconds: _options.ackTimeoutMs);
+      final completer = Completer<SocketResponse<T>>();
+      
+      // Configurar timeout
+      final timeoutTimer = Timer(timeoutDuration, () {
         if (!completer.isCompleted) {
-          completer.completeError('Timeout');
+          final responseTime = DateTime.now().millisecondsSinceEpoch - startTime;
           
-          // Log timeouts for analysis
+          completer.complete(SocketResponse<T>.error(
+            SocketError(
+              type: SocketErrorType.timeout,
+              message: 'Timeout waiting for response',
+            ),
+            responseTime
+          ));
+          
+          // Registrar timeouts para análisis
           _analytics.logEvent(
             AnalyticsEvent.custom,
-            {'type': 'socket_ack_timeout', 'event': event}
+            customEventName: 'socket_ack_timeout',
+            parameters: {'event': event}
           );
           
-          // Increment packet loss counter
+          // Incrementar contador de pérdida de paquetes
           _qualityMonitor.incrementPacketLoss();
         }
       });
       
-      // Emit with acknowledgement
+      // Emitir con reconocimiento
       _socket?.emitWithAck(event, data, ack: (response) {
         if (!completer.isCompleted) {
-          completer.complete(response as T);
+          final responseTime = DateTime.now().millisecondsSinceEpoch - startTime;
+          timeoutTimer.cancel();
+          
+          if (response is Map && response.containsKey('error')) {
+            final error = SocketError(
+              type: SocketErrorType.serverError,
+              message: response['error'] is String 
+                ? response['error'] 
+                : 'Server error',
+              details: response['error']
+            );
+            
+            completer.complete(SocketResponse<T>.error(error, responseTime));
+          } else {
+            completer.complete(SocketResponse<T>.success(response as T, responseTime));
+          }
         }
       });
       
+      return await completer.future;
     } catch (e, stackTrace) {
+      final responseTime = DateTime.now().millisecondsSinceEpoch - startTime;
+      
       _logger.error('Error emitting socket event with ack: $event', e, stackTrace);
-      if (!completer.isCompleted) {
-        completer.completeError(e);
-      }
+      
+      return SocketResponse<T>.error(
+        SocketError(
+          type: SocketErrorType.unknown,
+          message: 'Error: $e',
+        ),
+        responseTime
+      );
     }
-    
-    return completer.future;
   }
   
-  /// Process any events that were emitted while disconnected
+  /// Procesar eventos pendientes de envío durante desconexión
   void _processPendingEvents() {
     if (_pendingEvents.isEmpty) return;
     
     _logger.debug('Processing ${_pendingEvents.length} pending events');
     
-    // Process all pending events
+    // Procesar todos los eventos pendientes
     final events = List<_PendingEvent>.from(_pendingEvents);
     _pendingEvents.clear();
     
@@ -347,43 +595,170 @@ class AdvancedSocketClient {
     }
   }
   
-  /// Set the connection state and notify listeners
-  void _setConnected(bool connected) {
-    if (_isConnected == connected) return;
+  /// Actualizar estado de conexión y notificar
+  void _updateConnectionState(SocketConnectionState state) {
+    if (_connectionState == state) return;
     
-    _isConnected = connected;
-    _connectionStateController.add(connected);
+    _connectionState = state;
+    _connectionStateController.add(state);
+    
+    // Si se desconectó, actualizar calidad
+    if (state == SocketConnectionState.disconnected || 
+        state == SocketConnectionState.disconnectedByServer ||
+        state == SocketConnectionState.disconnectedByUser) {
+      _qualityMonitor.resetMetrics();
+      _qualityController.add(SocketQuality.unknown);
+    }
   }
   
-  /// Get the current connection state
-  bool get isConnected => _isConnected;
+  /// Notificar un error
+  void _notifyError(SocketErrorType type, String message, {dynamic details}) {
+    final error = SocketError(
+      type: type,
+      message: message,
+      details: details,
+    );
+    
+    _errorController.add(error);
+  }
   
-  /// Set a custom rate limit for a specific event
+  /// Obtener el estado actual de conexión
+  SocketConnectionState get currentState => _connectionState;
+  
+  /// Verificar si el socket está conectado
+  bool get isConnected => 
+      _connectionState == SocketConnectionState.connected;
+  
+  /// Obtener la calidad actual de conexión
+  SocketQuality get currentQuality => _qualityMonitor.currentQuality;
+  
+  /// Establecer límite de tasa para un evento específico
   void setEventRateLimit(String event, int maxPerSecond) {
     _rateLimiter.setCustomRateLimit(event, maxPerSecond, 1000);
   }
   
-  /// Block a specific event from being emitted
+  /// Bloquear un evento específico
   void blockEvent(String event) {
     _rateLimiter.blockEvent(event);
   }
   
-  /// Unblock a previously blocked event
+  /// Desbloquear un evento previamente bloqueado
   void unblockEvent(String event) {
     _rateLimiter.unblockEvent(event);
   }
   
-  /// Dispose the client and release resources
+  /// Entrar en modo de fondo (ahorra batería)
+  void enterBackgroundMode() {
+    _logger.debug('Entering background mode');
+    
+    // Cancelar timers
+    for (final timer in _timers) {
+      timer.cancel();
+    }
+    _timers.clear();
+    
+    // Desconectar para ahorrar batería (opcional)
+    if (isConnected) {
+      disconnect();
+    }
+  }
+  
+  /// Salir del modo de fondo
+  void enterForegroundMode() {
+    _logger.debug('Entering foreground mode');
+    
+    // Reactivar timers
+    _startQualityCheck();
+    _startPerformanceMonitoring();
+    
+    // Reconectar si es necesario
+    if (_connectionState != SocketConnectionState.connected &&
+        _connectionState != SocketConnectionState.connecting) {
+      connect();
+    }
+  }
+  
+  /// Liberar recursos
   void dispose() {
+    _logger.debug('Disposing AdvancedSocketClient');
+    
+    // Desconectar socket
     disconnect();
+    
+    // Cancelar todos los timers
+    for (final timer in _timers) {
+      timer.cancel();
+    }
+    _timers.clear();
+    
+    // Cancelar todas las suscripciones de eventos
+    for (final subscriptions in _eventSubscriptions.values) {
+      for (final subscription in subscriptions) {
+        subscription.cancel();
+      }
+    }
+    _eventSubscriptions.clear();
+    
+    // Cerrar controladores
     _connectionStateController.close();
+    _qualityController.close();
+    _errorController.close();
   }
 }
 
-/// Represents a pending event to be sent when connection is established
+/// Representa un evento pendiente para enviar cuando se establezca la conexión
 class _PendingEvent {
   final String name;
   final dynamic data;
   
   _PendingEvent(this.name, this.data);
+}
+
+/// Error relacionado con el socket
+class SocketError {
+  /// Tipo de error
+  final SocketErrorType type;
+  
+  /// Mensaje de error
+  final String message;
+  
+  /// Detalles adicionales
+  final dynamic details;
+  
+  /// Marca de tiempo cuando ocurrió
+  final DateTime timestamp;
+  
+  /// Constructor
+  SocketError({
+    required this.type,
+    required this.message,
+    this.details,
+  }) : timestamp = DateTime.now();
+  
+  @override
+  String toString() => 'SocketError($type): $message';
+}
+
+/// Tipos de errores socket
+enum SocketErrorType {
+  /// Error de red
+  networkError,
+  
+  /// Timeout
+  timeout,
+  
+  /// Error de autenticación
+  authError,
+  
+  /// Limitación de tasa
+  rateLimited,
+  
+  /// Error desde el servidor
+  serverError,
+  
+  /// Error al enviar mensaje
+  messagingError,
+  
+  /// Error desconocido
+  unknown,
 } 

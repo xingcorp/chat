@@ -57,368 +57,340 @@ enum SocketErrorType {
   unknown,
 }
 
-/// Class lưu trữ và phân tích dữ liệu về hiệu suất kết nối Socket.IO
-@singleton
+/// Service for tracking socket analytics data
+@injectable
 class SocketAnalytics {
-  /// Logger
-  final Logger _logger = Logger();
+  final AnalyticsService _analyticsService;
+  final Logger _logger;
+
+  // Performance tracking
+  final Map<String, int> _eventCounts = {};
+  final Map<String, List<int>> _eventLatencies = {};
+  final Map<String, int> _failedEvents = {};
   
-  /// SocketManager
-  final SocketManager _socketManager;
-  
-  /// Thời gian bắt đầu kết nối gần nhất
-  DateTime? _lastConnectionStartTime;
-  
-  /// Thời gian gián đoạn gần nhất
-  DateTime? _lastDisconnectTime;
-  
-  /// Thời gian kết nối (ms)
-  int _totalConnectionTime = 0;
-  
-  /// Thời gian gián đoạn (ms)
-  int _totalDowntime = 0;
-  
-  /// Số lượng kết nối thành công
-  int _successfulConnections = 0;
-  
-  /// Số lượng kết nối thất bại
-  int _failedConnections = 0;
-  
-  /// Số lượng kết nối lại
+  // Connection tracking
+  int _disconnectionCount = 0;
   int _reconnectionCount = 0;
+  int _connectionsInitiated = 0;
+  DateTime? _lastDisconnection;
+  DateTime? _lastConnection;
   
-  /// Số lượng tin nhắn đã gửi
+  // Errors and metrics
+  final List<String> _recentErrors = [];
   int _messagesSent = 0;
-  
-  /// Số lượng tin nhắn đã nhận
   int _messagesReceived = 0;
+  int _bytesSent = 0;
+  int _bytesReceived = 0;
   
-  /// Số lượng lỗi
-  final Map<SocketErrorType, int> _errorCounts = {};
-  
-  /// Lịch sử độ trễ (ms)
-  final Queue<_LatencyRecord> _latencyHistory = Queue<_LatencyRecord>();
-  
-  /// Subscription theo dõi trạng thái kết nối
-  StreamSubscription? _connectionStateSubscription;
-  
-  /// Thời gian của lần ping gần nhất
-  DateTime? _lastPingSent;
-  
-  /// Thời gian ping-pong timeout (ms)
-  static const int _pingPongTimeout = 5000;
-  
-  /// Số lượng record latency tối đa lưu trữ
-  static const int _maxLatencyHistorySize = 50;
-  
-  final AnalyticsService _analytics;
-  
-  /// Lớp theo dõi và đo lường hiệu suất kết nối WebSocket
-  WebSocketMetrics _webSocketMetrics;
-  
+  // Rate limiting analytics
+  final Map<String, int> _rateLimitedEvents = {};
+  final Map<String, int> _queuedEvents = {};
+
   /// Constructor
-  SocketAnalytics(this._socketManager, this._analytics) {
-    _setupListeners();
-    _webSocketMetrics = WebSocketMetrics(this._analytics);
+  SocketAnalytics({
+    required AnalyticsService analyticsService,
+    Logger? logger,
+  }) : 
+    _analyticsService = analyticsService,
+    _logger = logger ?? Logger();
+
+  /// Track a new socket connection attempt
+  void trackConnectionAttempt() {
+    _connectionsInitiated++;
+    _logger.d('Socket connection attempt initiated (total: $_connectionsInitiated)');
   }
-  
-  /// Thiết lập các listeners
-  void _setupListeners() {
-    // Theo dõi trạng thái kết nối
-    _connectionStateSubscription = _socketManager.connectionState.listen(_handleConnectionStateChange);
+
+  /// Track successful socket connection
+  void trackConnection() {
+    _lastConnection = DateTime.now();
+    _logger.d('Socket connected successfully');
     
-    // Đăng ký ping-pong
-    _setupPingPongMonitoring();
-  }
-  
-  /// Thiết lập theo dõi độ trễ qua ping-pong
-  void _setupPingPongMonitoring() {
-    // Đăng ký lắng nghe pong
-    _socketManager.on<Map<String, dynamic>>('pong').listen((data) {
-      if (_lastPingSent != null) {
-        final now = DateTime.now();
-        final latencyMs = now.difference(_lastPingSent!).inMilliseconds;
-        recordLatency(latencyMs);
-        _lastPingSent = null;
+    // Only log reconnection if we had a previous disconnection
+    if (_lastDisconnection != null) {
+      _reconnectionCount++;
+      
+      // Calculate time between disconnection and reconnection
+      final downtime = _lastConnection!.difference(_lastDisconnection!);
+      
+      _logger.d('Socket reconnected after ${downtime.inMilliseconds}ms (count: $_reconnectionCount)');
+      
+      // Log reconnection to analytics if downtime was significant (> 1 second)
+      if (downtime.inSeconds > 1) {
+        _analyticsService.logEvent(
+          AnalyticsEvent.custom,
+          customEventName: 'socket_reconnected',
+          parameters: {
+            'downtime_ms': downtime.inMilliseconds,
+            'reconnection_count': _reconnectionCount,
+          },
+        );
       }
-    });
-  }
-  
-  /// Xử lý thay đổi trạng thái kết nối
-  void _handleConnectionStateChange(SocketConnectionState state) {
-    switch (state) {
-      case SocketConnectionState.connecting:
-        _lastConnectionStartTime = DateTime.now();
-        break;
-        
-      case SocketConnectionState.connected:
-        _successfulConnections++;
-        if (_lastDisconnectTime != null) {
-          final downtime = DateTime.now().difference(_lastDisconnectTime!).inMilliseconds;
-          _totalDowntime += downtime;
-          _lastDisconnectTime = null;
-        }
-        break;
-        
-      case SocketConnectionState.disconnected:
-      case SocketConnectionState.error:
-        if (state == SocketConnectionState.error) {
-          _failedConnections++;
-          recordError(SocketErrorType.unknown);
-        }
-        
-        if (_lastConnectionStartTime != null) {
-          final connectionTime = DateTime.now().difference(_lastConnectionStartTime!).inMilliseconds;
-          _totalConnectionTime += connectionTime;
-          _lastConnectionStartTime = null;
-        }
-        
-        _lastDisconnectTime = DateTime.now();
-        break;
-        
-      case SocketConnectionState.reconnecting:
-        _reconnectionCount++;
-        if (_lastConnectionStartTime != null) {
-          final connectionTime = DateTime.now().difference(_lastConnectionStartTime!).inMilliseconds;
-          _totalConnectionTime += connectionTime;
-        }
-        _lastConnectionStartTime = DateTime.now();
-        break;
     }
   }
-  
-  /// Ghi nhận một tin nhắn đã gửi
-  void recordMessageSent() {
-    _messagesSent++;
-    _webSocketMetrics.recordMessageSent();
-  }
-  
-  /// Ghi nhận một tin nhắn đã nhận
-  void recordMessageReceived() {
-    _messagesReceived++;
-    _webSocketMetrics.recordMessageReceived();
-  }
-  
-  /// Ghi nhận một lỗi
-  void recordError(SocketErrorType errorType) {
-    _errorCounts[errorType] = (_errorCounts[errorType] ?? 0) + 1;
-    _webSocketMetrics.recordError(errorType.toString());
-  }
-  
-  /// Ghi nhận độ trễ
-  void recordLatency(int latencyMs) {
-    final record = _LatencyRecord(
-      timestamp: DateTime.now(),
-      latencyMs: latencyMs,
+
+  /// Track socket disconnection
+  void trackDisconnection({String? reason}) {
+    _lastDisconnection = DateTime.now();
+    _disconnectionCount++;
+    
+    _logger.d('Socket disconnected (count: $_disconnectionCount, reason: $reason)');
+    
+    // Log disconnection to analytics
+    _analyticsService.logEvent(
+      AnalyticsEvent.custom,
+      customEventName: 'socket_disconnected',
+      parameters: {
+        'disconnection_count': _disconnectionCount,
+        'reason': reason ?? 'unknown',
+        'uptime': _lastConnection != null 
+            ? DateTime.now().difference(_lastConnection!).inSeconds 
+            : 0,
+      },
     );
-    
-    _latencyHistory.add(record);
-    
-    // Giới hạn kích thước lịch sử
-    if (_latencyHistory.length > _maxLatencyHistorySize) {
-      _latencyHistory.removeFirst();
+  }
+
+  /// Track a socket event being sent
+  void trackEventSent(String eventName, {int? byteSize}) {
+    _messagesSent++;
+    if (byteSize != null) {
+      _bytesSent += byteSize;
     }
     
-    _logger.d('Socket latency: ${latencyMs}ms');
+    _eventCounts[eventName] = (_eventCounts[eventName] ?? 0) + 1;
+    
+    // Only log detailed analytics for every 100th message to reduce overhead
+    if (_messagesSent % 100 == 0) {
+      _analyticsService.logEvent(
+        AnalyticsEvent.custom,
+        customEventName: 'socket_messages_sent_milestone',
+        parameters: {
+          'count': _messagesSent,
+          'bytes_sent': _bytesSent,
+        },
+      );
+    }
   }
-  
-  /// Kiểm tra độ trễ bằng cách gửi ping
-  Future<int?> checkLatency() async {
-    if (_socketManager.currentState != SocketConnectionState.connected) {
-      return null;
+
+  /// Track a socket event being received
+  void trackEventReceived(String eventName, {int? byteSize}) {
+    _messagesReceived++;
+    if (byteSize != null) {
+      _bytesReceived += byteSize;
     }
     
-    _lastPingSent = DateTime.now();
+    // Only log detailed analytics for every 100th message to reduce overhead
+    if (_messagesReceived % 100 == 0) {
+      _analyticsService.logEvent(
+        AnalyticsEvent.custom,
+        customEventName: 'socket_messages_received_milestone',
+        parameters: {
+          'count': _messagesReceived,
+          'bytes_received': _bytesReceived,
+        },
+      );
+    }
+  }
+
+  /// Track latency for a socket event
+  void trackEventLatency(String eventName, int latencyMs) {
+    if (!_eventLatencies.containsKey(eventName)) {
+      _eventLatencies[eventName] = [];
+    }
     
-    final completer = Completer<int?>();
+    // Keep only last 100 latency measurements per event to save memory
+    final latencies = _eventLatencies[eventName]!;
+    if (latencies.length >= 100) {
+      latencies.removeAt(0);
+    }
     
-    // Thiết lập timeout
-    final timeoutTimer = Timer(_pingPongTimeout, () {
-      if (!completer.isCompleted) {
-        _logger.w('Ping timeout sau ${_pingPongTimeout}ms');
-        completer.complete(null);
-        recordError(SocketErrorType.timeout);
-      }
-    });
+    latencies.add(latencyMs);
     
-    // Đăng ký one-time handler cho pong
-    final subscription = _socketManager.on<Map<String, dynamic>>('pong').listen((data) {
-      if (!completer.isCompleted && _lastPingSent != null) {
-        final now = DateTime.now();
-        final latencyMs = now.difference(_lastPingSent!).inMilliseconds;
-        
-        timeoutTimer.cancel();
-        recordLatency(latencyMs);
-        completer.complete(latencyMs);
-        
-        // Hủy subscription này
-        subscription.cancel();
-      }
-    });
+    // Log high latency events to analytics
+    if (latencyMs > 1000) {
+      _analyticsService.logEvent(
+        AnalyticsEvent.custom,
+        customEventName: 'socket_high_latency',
+        parameters: {
+          'event_type': eventName,
+          'latency_ms': latencyMs,
+        },
+      );
+    }
+  }
+
+  /// Track a failed socket event
+  void trackEventFailure(String eventName, {String? errorMessage}) {
+    _failedEvents[eventName] = (_failedEvents[eventName] ?? 0) + 1;
     
-    // Gửi ping
-    _socketManager.emit('ping', {'timestamp': DateTime.now().millisecondsSinceEpoch});
+    // Keep a limited list of recent errors
+    if (_recentErrors.length >= 20) {
+      _recentErrors.removeAt(0);
+    }
+    _recentErrors.add('$eventName: ${errorMessage ?? 'unknown error'}');
     
-    return completer.future;
+    // Log error to analytics
+    _analyticsService.logEvent(
+      AnalyticsEvent.custom,
+      customEventName: 'socket_event_failure',
+      parameters: {
+        'event_type': eventName,
+        'error': errorMessage ?? 'unknown error',
+        'failure_count': _failedEvents[eventName],
+      },
+    );
   }
-  
-  /// Lấy độ trễ trung bình (ms)
-  double get averageLatency {
-    if (_latencyHistory.isEmpty) return 0;
-    final sum = _latencyHistory.fold<int>(0, (sum, record) => sum + record.latencyMs);
-    return sum / _latencyHistory.length;
+
+  /// Track rate limited events
+  void trackRateLimited(String eventName) {
+    _rateLimitedEvents[eventName] = (_rateLimitedEvents[eventName] ?? 0) + 1;
+    
+    // Log rate limiting to analytics when significant
+    if (_rateLimitedEvents[eventName]! % 10 == 0) {
+      _analyticsService.logEvent(
+        AnalyticsEvent.custom,
+        customEventName: 'socket_rate_limited',
+        parameters: {
+          'event_type': eventName,
+          'count': _rateLimitedEvents[eventName],
+        },
+      );
+    }
   }
-  
-  /// Lấy độ trễ thấp nhất (ms)
-  int get minLatency {
-    if (_latencyHistory.isEmpty) return 0;
-    return _latencyHistory.map((record) => record.latencyMs).reduce((min, value) => min < value ? min : value);
+
+  /// Track queued event
+  void trackQueuedEvent(String eventName) {
+    _queuedEvents[eventName] = (_queuedEvents[eventName] ?? 0) + 1;
   }
-  
-  /// Lấy độ trễ cao nhất (ms)
-  int get maxLatency {
-    if (_latencyHistory.isEmpty) return 0;
-    return _latencyHistory.map((record) => record.latencyMs).reduce((max, value) => max > value ? max : value);
+
+  /// Track queue processed
+  void trackQueueProcessed(String eventName, int count) {
+    if (count > 0) {
+      _analyticsService.logEvent(
+        AnalyticsEvent.custom,
+        customEventName: 'socket_queue_processed',
+        parameters: {
+          'event_type': eventName,
+          'count': count,
+        },
+      );
+    }
   }
-  
-  /// Lấy tỷ lệ uptime (%)
-  double get uptimePercentage {
-    final totalTime = _totalConnectionTime + _totalDowntime;
-    if (totalTime == 0) return 0;
-    return (_totalConnectionTime / totalTime) * 100;
-  }
-  
-  /// Lấy tổng số lỗi
-  int get totalErrors => _errorCounts.values.fold(0, (sum, count) => sum + count);
-  
-  /// Lấy tỷ lệ kết nối thành công
-  double get connectionSuccessRate {
-    final totalConnections = _successfulConnections + _failedConnections;
-    if (totalConnections == 0) return 1.0;
-    return _successfulConnections / totalConnections;
-  }
-  
-  /// Kiểm tra sức khỏe kết nối
+
+  /// Check connection health
   Future<Map<String, dynamic>> checkConnectionHealth() async {
-    // Kiểm tra độ trễ
-    final latency = await checkLatency();
-    
-    // Đánh giá chất lượng kết nối
-    String quality = 'unknown';
-    if (latency != null) {
-      if (latency < 100) {
-        quality = 'excellent';
-      } else if (latency < 200) {
-        quality = 'good';
-      } else if (latency < 500) {
-        quality = 'fair';
-      } else {
-        quality = 'poor';
+    // Calculate average latencies
+    final Map<String, double> avgLatencies = {};
+    _eventLatencies.forEach((event, latencies) {
+      if (latencies.isNotEmpty) {
+        avgLatencies[event] = latencies.reduce((a, b) => a + b) / latencies.length;
       }
-    }
+    });
     
-    // Cập nhật thời gian kết nối và gián đoạn
-    int currentConnectionTime = _totalConnectionTime;
-    if (_lastConnectionStartTime != null) {
-      currentConnectionTime += DateTime.now().difference(_lastConnectionStartTime!).inMilliseconds;
-    }
+    // Calculate overall quality based on latency
+    final avgLatency = avgLatencies.isEmpty 
+        ? 0.0 
+        : avgLatencies.values.reduce((a, b) => a + b) / avgLatencies.length;
     
-    int currentDowntime = _totalDowntime;
-    if (_lastDisconnectTime != null) {
-      currentDowntime += DateTime.now().difference(_lastDisconnectTime!).inMilliseconds;
+    String quality;
+    if (avgLatency < 100) {
+      quality = 'excellent';
+    } else if (avgLatency < 250) {
+      quality = 'good';
+    } else if (avgLatency < 500) {
+      quality = 'fair';
+    } else if (avgLatency < 1000) {
+      quality = 'poor';
+    } else {
+      quality = 'critical';
     }
     
     return {
-      'connectionState': _socketManager.currentState.toString(),
-      'latency': {
-        'current': latency,
-        'average': averageLatency,
-        'min': minLatency,
-        'max': maxLatency,
-      },
       'quality': quality,
-      'connections': {
-        'successful': _successfulConnections,
-        'failed': _failedConnections,
-        'reconnections': _reconnectionCount,
-        'successRate': connectionSuccessRate,
+      'latency': {
+        'current': avgLatency.round(),
+        'details': avgLatencies,
       },
       'messages': {
         'sent': _messagesSent,
         'received': _messagesReceived,
-      },
-      'uptime': {
-        'connectionTimeMs': currentConnectionTime,
-        'downtimeMs': currentDowntime,
-        'uptimePercentage': uptimePercentage,
+        'ratio': _messagesSent > 0 ? _messagesReceived / _messagesSent : 0,
       },
       'errors': {
-        'total': totalErrors,
-        'byType': _errorCounts,
+        'count': _recentErrors.length,
+        'rate': _messagesSent > 0 ? _recentErrors.length / _messagesSent : 0,
       },
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
     };
   }
-  
+
+  /// Get socket metrics
+  Map<String, dynamic> getMetrics() {
+    // Calculate average latencies
+    final Map<String, double> avgLatencies = {};
+    _eventLatencies.forEach((event, latencies) {
+      if (latencies.isNotEmpty) {
+        avgLatencies[event] = latencies.reduce((a, b) => a + b) / latencies.length;
+      }
+    });
+    
+    return {
+      'messages_sent': _messagesSent,
+      'messages_received': _messagesReceived,
+      'bytes_sent': _bytesSent,
+      'bytes_received': _bytesReceived,
+      'disconnection_count': _disconnectionCount,
+      'reconnection_count': _reconnectionCount,
+      'last_disconnection': _lastDisconnection?.toIso8601String(),
+      'last_connection': _lastConnection?.toIso8601String(),
+      'event_counts': _eventCounts,
+      'failed_events': _failedEvents,
+      'average_latencies': avgLatencies,
+      'rate_limited_events': _rateLimitedEvents,
+      'queued_events': _queuedEvents,
+      'recent_errors': _recentErrors,
+    };
+  }
+
   /// Reset metrics
-  void reset() {
-    _lastConnectionStartTime = null;
-    _lastDisconnectTime = null;
-    _totalConnectionTime = 0;
-    _totalDowntime = 0;
-    _successfulConnections = 0;
-    _failedConnections = 0;
-    _reconnectionCount = 0;
+  void resetMetrics() {
+    _eventCounts.clear();
+    _eventLatencies.clear();
+    _failedEvents.clear();
+    _recentErrors.clear();
+    _rateLimitedEvents.clear();
+    _queuedEvents.clear();
     _messagesSent = 0;
     _messagesReceived = 0;
-    _errorCounts.clear();
-    _latencyHistory.clear();
-    _webSocketMetrics.reset();
-  }
-  
-  /// Dispose
-  void dispose() {
-    _connectionStateSubscription?.cancel();
+    _bytesSent = 0;
+    _bytesReceived = 0;
+    // We don't reset connection counts as they are valuable for long-term statistics
   }
 }
 
-/// Class lưu thông tin về một lần đo độ trễ
-class _LatencyRecord {
-  /// Thời gian đo
-  final DateTime timestamp;
-  
-  /// Độ trễ (ms)
-  final int latencyMs;
-  
-  /// Constructor
-  _LatencyRecord({
-    required this.timestamp,
-    required this.latencyMs,
-  });
-}
-
-/// Lớp theo dõi và đo lường hiệu suất kết nối WebSocket
+/// Optimized WebSocket metrics tracking with minimal overhead
+@injectable
 class WebSocketMetrics {
   final AnalyticsService _analytics;
   
-  // Các chỉ số theo dõi
+  // Tracking metrics
   int _messagesSent = 0;
   int _messagesReceived = 0;
   int _reconnectAttempts = 0;
   int _errors = 0;
   int _droppedMessages = 0;
   
-  // Thời gian kết nối
+  // Connection times
   final List<int> _connectionTimes = [];
   
-  // Độ trễ tin nhắn
+  // Message lag times
   final List<int> _messageLagTimes = [];
   
-  // Thời điểm hoạt động cuối cùng
+  // Last activity timestamp
   int _lastActivityTime = 0;
   
   WebSocketMetrics(this._analytics);
   
-  /// Ghi nhận thời gian kết nối WebSocket
+  /// Record WebSocket connection time
   void recordConnectionTime(int milliseconds) {
     _connectionTimes.add(milliseconds);
     if (_connectionTimes.length > 10) {
@@ -426,34 +398,36 @@ class WebSocketMetrics {
     }
     
     _analytics.logEvent(
-      AnalyticsEvent.socketConnection, 
-      {
+      AnalyticsEvent.custom,
+      customEventName: 'socket_connection',
+      parameters: {
         'connection_time_ms': milliseconds,
         'avg_connection_time_ms': averageConnectionTime,
       },
     );
   }
   
-  /// Ghi nhận tin nhắn đã gửi
+  /// Record message sent
   void recordMessageSent() {
     _messagesSent++;
     _lastActivityTime = DateTime.now().millisecondsSinceEpoch;
   }
   
-  /// Ghi nhận tin nhắn đã nhận
+  /// Record message received
   void recordMessageReceived({int? size}) {
     _messagesReceived++;
     _lastActivityTime = DateTime.now().millisecondsSinceEpoch;
     
     if (size != null && size > 0) {
       _analytics.logEvent(
-        AnalyticsEvent.socketDataReceived,
-        {'size_bytes': size},
+        AnalyticsEvent.custom,
+        customEventName: 'socket_data_received',
+        parameters: {'size_bytes': size},
       );
     }
   }
   
-  /// Ghi nhận độ trễ tin nhắn (ping/pong)
+  /// Record message lag (ping/pong)
   void recordMessageLag(int milliseconds) {
     _messageLagTimes.add(milliseconds);
     if (_messageLagTimes.length > 50) {
@@ -462,36 +436,39 @@ class WebSocketMetrics {
     
     if (milliseconds > 1000) {
       _analytics.logEvent(
-        AnalyticsEvent.socketHighLatency,
-        {'latency_ms': milliseconds},
+        AnalyticsEvent.custom,
+        customEventName: 'socket_high_latency',
+        parameters: {'latency_ms': milliseconds},
       );
     }
   }
   
-  /// Ghi nhận lỗi WebSocket
+  /// Record WebSocket error
   void recordError(String error) {
     _errors++;
     _analytics.logEvent(
-      AnalyticsEvent.socketError,
-      {'error_message': error},
+      AnalyticsEvent.custom,
+      customEventName: 'socket_error',
+      parameters: {'error_message': error},
     );
   }
   
-  /// Ghi nhận nỗ lực kết nối lại
+  /// Record reconnect attempt
   void recordReconnectAttempt() {
     _reconnectAttempts++;
     _analytics.logEvent(
-      AnalyticsEvent.socketReconnect,
-      {'attempt_count': _reconnectAttempts},
+      AnalyticsEvent.custom,
+      customEventName: 'socket_reconnect',
+      parameters: {'attempt_count': _reconnectAttempts},
     );
   }
   
-  /// Ghi nhận tin nhắn bị hủy
+  /// Record dropped message
   void recordDroppedMessage() {
     _droppedMessages++;
   }
   
-  /// Thời gian trung bình để kết nối
+  /// Get average connection time
   int get averageConnectionTime {
     if (_connectionTimes.isEmpty) {
       return 0;
@@ -499,7 +476,7 @@ class WebSocketMetrics {
     return _connectionTimes.reduce((a, b) => a + b) ~/ _connectionTimes.length;
   }
   
-  /// Độ trễ tin nhắn trung bình
+  /// Get average message lag
   int get averageMessageLag {
     if (_messageLagTimes.isEmpty) {
       return 0;
@@ -507,13 +484,13 @@ class WebSocketMetrics {
     return _messageLagTimes.reduce((a, b) => a + b) ~/ _messageLagTimes.length;
   }
   
-  /// Kiểm tra xem kết nối có ổn định không
+  /// Check if connection is stable
   bool get isConnectionStable {
-    // Kết nối được coi là ổn định nếu độ trễ trung bình < 300ms
+    // Connection is considered stable if average lag < 300ms
     return averageMessageLag < 300 && _errors == 0;
   }
   
-  /// Lấy thời gian kể từ hoạt động cuối cùng
+  /// Get time since last activity
   int get timeSinceLastActivity {
     if (_lastActivityTime == 0) {
       return 0;
@@ -521,7 +498,7 @@ class WebSocketMetrics {
     return DateTime.now().millisecondsSinceEpoch - _lastActivityTime;
   }
   
-  /// Tính phần trăm tin nhắn bị mất
+  /// Calculate packet loss percentage
   double get packetLossPercentage {
     if (_messagesSent == 0) {
       return 0.0;
@@ -529,7 +506,7 @@ class WebSocketMetrics {
     return (_droppedMessages / _messagesSent) * 100;
   }
   
-  /// Đặt lại tất cả các chỉ số
+  /// Reset all metrics
   void reset() {
     _messagesSent = 0;
     _messagesReceived = 0;
@@ -541,15 +518,16 @@ class WebSocketMetrics {
     _lastActivityTime = 0;
   }
   
-  /// Gửi báo cáo về chỉ số hiệu suất
+  /// Report metrics to analytics
   void reportMetrics() {
     if (!kReleaseMode) {
       return;
     }
     
     _analytics.logEvent(
-      AnalyticsEvent.socketStats,
-      {
+      AnalyticsEvent.custom,
+      customEventName: 'socket_stats',
+      parameters: {
         'messages_sent': _messagesSent,
         'messages_received': _messagesReceived,
         'reconnect_attempts': _reconnectAttempts,
