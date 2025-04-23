@@ -326,9 +326,6 @@ extension Uint8ListFormDataExtension on Uint8List {
       fieldName: MultipartFile.fromBytes(
         this,
         filename: fileName,
-        contentType: mimeType != null 
-            ? MediaType.parse(mimeType) 
-            : null,
       ),
     });
   }

@@ -1,8 +1,8 @@
 import 'package:mime/mime.dart';
 import 'package:dio/dio.dart';
 
-/// Class MediaType đại diện cho một MIME type, có thể được sử dụng
-/// cho các header `Content-Type` và `Accept`.
+/// Lớp MediaType đại diện cho một MIME type, được sử dụng
+/// cho các header `Content-Type` và `Accept` trong HTTP requests.
 class MediaType {
   /// Phần type chính (ví dụ: "application", "image", "text")
   final String type;
@@ -151,9 +151,9 @@ class MediaType {
     _extensionCache.clear();
   }
   
-  /// Chuyển đổi sang đối tượng ContentType của Dio
-  DioContentType toDioContentType() {
-    return DioContentType.parse('$type/$subtype');
+  /// Chuyển đổi thành string header Content-Type cho Dio
+  String toHeaderValue() {
+    return toString();
   }
   
   @override
