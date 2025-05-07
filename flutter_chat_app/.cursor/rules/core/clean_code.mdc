@@ -1,0 +1,73 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: "Guide writing clean, maintainable, and readable code across the entire project"
+globs: ["lib/**/*.dart", "test/**/*.dart"]
+alwaysApply: true
+---
+
+# Clean Code Guidelines
+
+## Scope / Flexibility Notice
+These guidelines promote writing clean, maintainable, and readable code throughout the project. While domain-specific implementations may vary, these core principles should be consistently applied.
+
+## Best Practices
+- Follow the Single Responsibility Principle - each class and method should do one thing well
+- Keep functions and methods small and focused (ideally < 30 lines)
+- Use intention-revealing names for variables, functions, and classes
+- Avoid deep nesting of code blocks (limit to 2-3 levels when possible)
+- Minimize the use of comments - prefer self-documenting code
+- Don't repeat yourself (DRY) - extract repetitive code into reusable functions
+- Avoid long parameter lists (>3 parameters) - use parameter objects when needed
+- Fail fast - validate inputs early in functions
+- Avoid global state and side effects
+- Write code for humans first, machines second
+
+## File / Project Structure Guidelines
+- Organize related code into cohesive files and classes
+- Keep files reasonably sized (usually < 300-400 lines)
+- Group related functions and methods together
+- Organize imports in a consistent order:
+  ```dart
+  // Dart imports
+  import 'dart:async';
+  
+  // Package imports
+  import 'package:flutter/material.dart';
+  
+  // Project imports (relative)
+  import '../models/user.dart';
+  ```
+- Separate interface from implementation when appropriate
+
+## Coding & Styling Conventions
+- Use consistent and descriptive naming:
+  - Variables/parameters: `lowerCamelCase`
+  - Classes/Types: `UpperCamelCase`
+  - Constants: `kConstantName` or `SCREAMING_CAPS` for truly fixed values
+- Avoid abbreviations and acronyms unless universally understood
+- Prefix boolean variables with verbs like `is`, `has`, `should`, etc.
+- Keep line length reasonable (ideally < 80 characters)
+- Use trailing commas for improved formatting in multi-line structures
+- Use dartfmt/flutter format for consistent styling
+- Prefer named parameters for better readability in complex method calls
+
+## Performance & Optimization Tips
+- Avoid premature optimization - focus on clean, correct code first
+- Identify bottlenecks through profiling before optimizing
+- Consider readability impacts when making performance optimizations
+- Document performance-sensitive code sections with benchmark results
+- Avoid expensive computations in build() methods or constructors
+- Prefer const constructors when creating immutable widgets
+
+## Testing & Validation Guidelines
+- Write tests for complex logic and edge cases
+- Test behavior, not implementation details
+- Structure tests with clear Arrange-Act-Assert sections
+- Use descriptive test names that explain the behavior being tested
+- Write tests that fail when the code is broken
+- Keep tests independent of each other
+- Use mocks judiciously for dependencies outside your control

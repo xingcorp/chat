@@ -1,0 +1,71 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Isolate Management Guidelines
+
+## Scope / Flexibility Notice
+These guidelines establish patterns for implementing robust isolate management to handle heavy tasks without affecting UI responsiveness. These principles apply to all background processing operations.
+
+## Best Practices
+- Implement self-healing isolates that recover from errors
+- Design real-time progress reporting for long-running tasks
+- Support task cancellation for user-initiated operations
+- Implement automatic fallback to main thread for critical tasks
+- Optimize data transfer between isolates
+- Implement proper isolate lifecycle management
+- Design prioritization mechanisms for concurrent tasks
+- Track and report task metrics for performance analysis
+- Implement proper error propagation from isolates
+
+## File / Project Structure Guidelines
+- Organize isolate management components:
+  ```
+  lib/
+    core/
+      isolates/
+        isolate_manager.dart
+        isolate_task.dart
+        isolate_worker.dart
+        isolate_progress.dart
+        task_result.dart
+        task_priority.dart
+        isolate_exception.dart
+      utils/
+        isolate_data_converter.dart
+    domain/
+      usecases/
+        process_in_background_usecase.dart
+  ```
+
+## Coding & Styling Conventions
+- Use descriptive task types: `IsolateTaskType.imageProcessing`
+- Implement standardized result wrapper: `TaskResult<T>`
+- Use enum for task priorities: `TaskPriority.critical`
+- Implement proper progress reporting: `IsolateProgress(0.5, "Processing image")`
+- Track task states with enums: `TaskState.queued`, `TaskState.processing`
+- Use consistent naming conventions for isolate-related components
+- Document memory usage expectations for different task types
+
+## Performance & Optimization Tips
+- Use `Uint8List` for efficient transfer of large binary data
+- Optimize serialization for complex objects
+- Reuse isolates instead of creating new ones for each task
+- Limit maximum concurrent isolates based on device capability
+- Use SendPort/ReceivePort for efficient message passing
+- Implement object pooling for frequent task types
+- Schedule non-critical tasks during idle periods
+- Monitor and log isolate performance metrics
+- Implement Isolate Groups for related tasks when appropriate
+
+## Testing & Validation Guidelines
+- Test recovery from isolate crashes
+- Verify progress reporting accuracy
+- Test task cancellation at different stages
+- Validate memory usage during heavy processing
+- Test concurrent execution of multiple isolates
+- Verify proper resource cleanup after task completion
+- Test with different data sizes to ensure robustness
+- Benchmark performance with various task configurations
+- Test fallback mechanism to main thread

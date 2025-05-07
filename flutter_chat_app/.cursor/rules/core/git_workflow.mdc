@@ -1,0 +1,80 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: "Define Git workflow, branching strategy, and collaboration guidelines"
+globs: [".git/**", "**/*.dart", "**/*.md"]
+alwaysApply: true
+---
+
+# Git Workflow Guidelines
+
+## Scope / Flexibility Notice
+These guidelines establish a consistent Git workflow for collaboration, branching, and version control. They apply to all team members and should be followed to maintain repository health and team coordination.
+
+## Best Practices
+- Use feature branches for all new work
+- Keep commits focused on a single logical change
+- Write meaningful commit messages following the conventions below
+- Rebase feature branches on main before creating pull requests
+- Squash commits before merging when appropriate
+- Delete branches after merging
+- Never commit sensitive information, credentials, or large binary files
+- Use .gitignore to exclude build artifacts, dependencies, and local configuration
+- Regularly pull from the main branch to minimize merge conflicts
+- Resolve conflicts promptly when they occur
+
+## Branching Strategy
+- **main/master**: Stable, production-ready code
+- **develop**: Integration branch for features (if using GitFlow)
+- **feature/[feature-name]**: New features and non-emergency bugfixes
+- **bugfix/[issue-number]**: Bug fixes
+- **hotfix/[issue-number]**: Critical fixes for production
+- **release/[version]**: Release preparation (if using GitFlow)
+
+## Commit Message Conventions
+- Format: `[type]: [subject]` (e.g., `feat: add user authentication`)
+- First line is a summary, keep it under 50 characters
+- Use present tense ("add feature" not "added feature")
+- Types:
+  - `feat`: New feature
+  - `fix`: Bug fix
+  - `docs`: Documentation changes
+  - `style`: Formatting, missing semicolons, etc.
+  - `refactor`: Code change that neither fixes a bug nor adds a feature
+  - `perf`: Performance improvements
+  - `test`: Adding or correcting tests
+  - `chore`: Maintenance tasks, dependency updates, etc.
+- For longer explanations, add a blank line after the summary and then provide details
+
+## Pull Request Process
+1. Create a feature branch from the latest main/develop
+2. Implement changes with appropriate commits
+3. Write tests for new functionality
+4. Ensure all tests pass and code meets style guidelines
+5. Rebase on main/develop to resolve any conflicts
+6. Create a pull request with a clear description:
+   - What changes were made
+   - Why these changes were needed
+   - How to test the changes
+   - Screenshots (for UI changes)
+7. Request reviews from appropriate team members
+8. Address review feedback
+9. Merge when approved (using squash merge if appropriate)
+10. Delete the branch after merging
+
+## Release Process
+1. Create a release branch from develop (if using GitFlow)
+2. Bump version numbers in appropriate files
+3. Update CHANGELOG.md with all notable changes
+4. Create a tagged release when merged to main/master
+5. Use semantic versioning (MAJOR.MINOR.PATCH)
+
+## Issue Tracking Integration
+- Reference issue numbers in commit messages and branch names
+- Use keywords to automatically close issues:
+  - "Fixes #123", "Closes #123", "Resolves #123"
+- Link commits to issues in the project management system
+- Update issue status as work progresses

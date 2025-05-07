@@ -1,0 +1,72 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: "Define consistent coding standards, formatting, and style guidelines"
+globs: ["lib/**/*.dart", "test/**/*.dart"]
+alwaysApply: true
+---
+
+# Coding Standards Guidelines
+
+## Scope / Flexibility Notice
+These standards establish consistent formatting, style, and code organization across the codebase. They apply to all Dart and Flutter code, ensuring consistency and maintainability.
+
+## Best Practices
+- Follow the official Dart style guide (effective_dart)
+- Use the project's linting rules defined in analysis_options.yaml
+- Run formatter (flutter format) before committing code
+- Fix all linter warnings except where explicitly suppressed with comments
+- Use static analysis to maintain code quality
+- Keep all imports organized and sorted
+- Remove unused code, imports, and dependencies
+- Follow naming conventions consistently
+- Document public APIs with dartdoc comments
+
+## File / Project Structure Guidelines
+- Name files using snake_case
+- One class per file for primary classes
+- Organize files by feature and layer rather than by type
+- Group related files in appropriate directories
+- Maximum file length: 400-500 lines (consider refactoring larger files)
+- Organize code within files in a consistent order:
+  1. Imports
+  2. Constants/Configuration
+  3. Class definition
+  4. Properties and fields
+  5. Constructors
+  6. Public methods
+  7. Private methods
+  8. Overridden methods (e.g., build(), dispose())
+
+## Coding & Styling Conventions
+- Indentation: 2 spaces (no tabs)
+- Line length: 80 characters preferred, 100 maximum
+- Use trailing commas for multi-line parameter lists
+- Avoid single-line functions except for very simple expressions
+- Use braces for all control structures, even single-line statements
+- Prefer final for all variables when possible
+- Use const constructors when the widget is immutable
+- Place closing parentheses on a new line for long method chains
+- Use explicit types for public APIs, return values, and complex expressions
+- Use meaningful variable names that express intent
+- Avoid Hungarian notation (e.g., prefixing types)
+
+## Performance & Optimization Tips
+- Prefer lazy initialization for expensive objects
+- Use const constructors for immutable widgets to improve rendering performance
+- Avoid unnecessary widget rebuilds
+- Use linting rules to catch common performance issues
+- Consider adding performance-specific comments for critical code sections
+- Document performance expectations for complex operations
+
+## Testing & Validation Guidelines
+- Run static analysis before committing (flutter analyze)
+- Ensure all tests pass before committing (flutter test)
+- Format code before committing (flutter format)
+- Review changes for adherence to project coding standards
+- Validate UI changes on multiple device sizes where appropriate
+- Check for internationalization compliance when applicable
+- Verify accessibility standards are met

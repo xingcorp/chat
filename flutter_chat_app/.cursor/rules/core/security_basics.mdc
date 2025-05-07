@@ -1,0 +1,5 @@
+---
+description: "Guide implementation of core security practices and data protection throughout the app"
+globs: ["lib/**/*.dart", "lib/**/security/**/*.dart", "lib/**/auth/**/*.dart", "lib/**/*credential*.dart"]
+alwaysApply: true
+---

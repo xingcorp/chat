@@ -1,0 +1,5 @@
+---
+description: "Guide robust error handling and exception management across all application layers"
+globs: ["lib/**/*.dart", "lib/**/error/**/*.dart", "lib/**/exception/**/*.dart", "lib/**/failure*.dart"]
+alwaysApply: true
+---

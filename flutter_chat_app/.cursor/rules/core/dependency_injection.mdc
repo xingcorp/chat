@@ -1,0 +1,62 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Dependency Injection Guidelines
+
+## Scope / Flexibility Notice
+These guidelines ensure consistent dependency management across the application using GetIt service locator. Adapt as needed for complex scenarios while maintaining core principles.
+
+## Best Practices
+- Register all dependencies in dedicated DI modules
+- Use lazy loading for resource-heavy services
+- Implement the IoC (Inversion of Control) principle
+- Keep service registration and resolution separate
+- Create factory functions for complex object creation
+- Use environment-based configuration for different builds
+- Leverage factory vs singleton registration appropriately
+
+## File / Project Structure Guidelines
+- Organize DI code in `lib/di/` directory
+- Separate modules by domain or layer: `auth_module.dart`, `network_module.dart`
+- Keep registration code in dedicated files, not scattered across the app
+- Prefer modular registration with functions like `setupDataDependencies()`
+- Follow module structure:
+  ```dart
+  void setupRepositories(GetIt locator) {
+    locator.registerLazySingleton<MessageRepository>(
+      () => MessageRepositoryImpl(
+        remoteDataSource: locator<MessageRemoteDataSource>(),
+        localDataSource: locator<MessageLocalDataSource>(),
+        networkInfo: locator<NetworkInfo>(),
+      ),
+    );
+    // Other repositories...
+  }
+  ```
+
+## Coding & Styling Conventions
+- Register interfaces, not implementations
+- Use factory registration for BLoCs/ViewModels
+- Use singleton registration for services/repositories
+- Name module functions semantically: `setupUseCases()`, `setupBlocs()`
+- Order dependencies from low-level to high-level
+- Initialize async dependencies in a controlled manner
+- Document dependencies with clear comments
+
+## Performance & Optimization Tips
+- Use `registerLazySingleton()` for expensive services
+- Avoid circular dependencies
+- Consider scoped dependencies for feature isolation
+- Implement cleanup for disposable resources
+- Utilize async factories for resources that require initialization
+- Measure and optimize DI resolution time for critical paths
+
+## Testing & Validation Guidelines
+- Create test-specific DI configurations
+- Mock dependencies for unit tests
+- Implement a test DI module that overrides production dependencies
+- Verify dependency registration with integration tests
+- Test dependency resolution errors and recovery
+- Use `registerFactoryParam()` for parameterized test dependencies

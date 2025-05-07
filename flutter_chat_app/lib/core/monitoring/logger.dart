@@ -225,6 +225,8 @@ class _MemoryOutput extends LogOutput {
         return LogLevel.critical;
       default:
         return LogLevel.debug;
+
+
     }
   }
 } 

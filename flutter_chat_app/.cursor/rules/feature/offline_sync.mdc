@@ -1,0 +1,5 @@
+---
+description: "Guide implementation of robust offline-first data synchronization capabilities"
+globs: ["lib/**/*sync*.dart", "lib/**/*offline*.dart", "lib/**/local/**/*.dart", "lib/**/repository/**/impl/**/*.dart"]
+alwaysApply: false
+---

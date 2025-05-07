@@ -1,0 +1,5 @@
+---
+description: "Guide implementation of smooth, performant animations with consistent UX patterns"
+globs: ["lib/**/*animation*.dart", "lib/**/*transition*.dart", "lib/**/widgets/**/*.dart", "lib/**/*effect*.dart"]
+alwaysApply: false
+---

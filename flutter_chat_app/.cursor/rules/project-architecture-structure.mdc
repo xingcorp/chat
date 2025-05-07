@@ -1,0 +1,292 @@
+---
+description: "Comprehensive guide for maintaining consistent project architecture and structure across all features"
+globs: ["lib/**/*.dart", "assets/**/*", "test/**/*.dart", "pubspec.yaml", "analysis_options.yaml"]
+alwaysApply: true
+---
+---
+description: "Guidelines for project and feature structure, naming conventions, and asset management."
+globs: ["lib/**/*.dart", "assets/**", "pubspec.yaml"]
+alwaysApply: true
+---
+# Project Architecture & Structure Guidelines
+
+## Scope / Flexibility Notice
+These guidelines establish consistent patterns for feature development, asset management, and widget creation while adhering to Clean Architecture principles. They provide a standard structure to follow, though minor adaptations may be necessary for special cases.
+
+## Feature Flow Guidelines
+
+### 1. Feature Organization
+- Each feature should be organized according to Clean Architecture layers:
+  ```
+  lib/
+    ├── core/           # Shared core utilities and services
+    ├── domain/         # Business logic and entities
+    │   ├── entities/
+    │   ├── repositories/ (interfaces)
+    │   └── usecases/
+    ├── data/           # Data sources and repository implementations
+    │   ├── datasources/
+    │   │   ├── local/
+    │   │   └── remote/
+    │   ├── models/
+    │   └── repositories/
+    └── presentation/   # UI layer
+        ├── blocs/
+        ├── pages/
+        └── widgets/
+  ```
+
+### 2. Adding a New Feature Process
+1. **Step 1: Define Domain Layer**
+   - Create entity classes in `lib/domain/entities/feature_name/`
+   - Define repository interfaces in `lib/domain/repositories/feature_name_repository.dart`
+   - Implement use cases in `lib/domain/usecases/feature_name/`
+
+2. **Step 2: Implement Data Layer**
+   - Create data models in `lib/data/models/feature_name/`
+   - Implement data sources in:
+     - `lib/data/datasources/remote/feature_name_remote_datasource.dart`
+     - `lib/data/datasources/local/feature_name_local_datasource.dart`
+   - Implement repository in `lib/data/repositories/feature_name_repository_impl.dart`
+
+3. **Step 3: Create Presentation Layer**
+   - Implement BLoCs/Cubits in `lib/presentation/blocs/feature_name/`
+   - Create pages in `lib/presentation/pages/feature_name/`
+   - Create reusable widgets in `lib/presentation/widgets/feature_name/`
+
+4. **Step 4: Register Dependencies**
+   - Update `lib/di/injection_container.dart` with new dependencies
+
+### 3. Naming Conventions
+- **Files**: snake_case for all files (e.g., `user_repository.dart`, `login_page.dart`)
+- **Classes**: PascalCase for all classes
+  - Repository interfaces: `FeatureNameRepository`
+  - Repository implementations: `FeatureNameRepositoryImpl`
+  - Use cases: Action verb + noun (e.g., `GetUserMessages`, `SendMessage`)
+  - BLoCs/Cubits: `FeatureNameBloc`, `FeatureNameCubit`
+  - States: `FeatureNameState`
+  - Events: `FeatureNameEvent`
+- **Methods**:
+  - Repository methods: Verb + noun (e.g., `getMessages()`, `sendMessage()`)
+  - Use case methods: `execute()` or `call()`
+
+## Asset Guidelines
+
+### 1. Asset Organization
+- Place all assets in the `assets/` directory, organized by type:
+  ```
+  assets/
+  ├── images/
+  │   ├── logos/
+  │   ├── icons/
+  │   └── backgrounds/
+  ├── fonts/
+  ├── animations/ (for Lottie files)
+  └── audio/
+  ```
+
+### 2. Asset Naming Conventions
+- Use snake_case for all asset files
+- Include screen or feature name as prefix when appropriate
+- Use appropriate suffixes for different resolutions (e.g., `logo_2x.png`, `logo_3x.png`)
+
+### 3. Updating pubspec.yaml
+- Add new assets to the `pubspec.yaml` file using pattern matching when possible:
+  ```yaml
+  flutter:
+    assets:
+      - assets/images/
+      - assets/images/logos/
+      - assets/fonts/
+      - assets/animations/
+  ```
+- Declare font families explicitly:
+  ```yaml
+  flutter:
+    fonts:
+      - family: Roboto
+        fonts:
+          - asset: assets/fonts/Roboto-Regular.ttf
+          - asset: assets/fonts/Roboto-Bold.ttf
+            weight: 700
+  ```
+
+### 4. Loading Best Practices
+- Use constants for asset paths:
+  ```dart
+  class AppAssets {
+    static const String logo = 'assets/images/logos/app_logo.png';
+    static const String defaultAvatar = 'assets/images/default_avatar.png';
+  }
+  ```
+- Use cached network image for remote assets:
+  ```dart
+  CachedNetworkImage(
+    imageUrl: imageUrl,
+    placeholder: (context, url) => CircularProgressIndicator(),
+    errorWidget: (context, url, error) => Image.asset(AppAssets.defaultAvatar),
+  )
+  ```
+- Preload critical assets during app initialization:
+  ```dart
+  Future<void> precacheAppImages(BuildContext context) async {
+    await precacheImage(const AssetImage(AppAssets.logo), context);
+  }
+  ```
+
+## Widget & Page Guidelines
+
+### 1. Widget Organization
+- **Common/Reusable Widgets**: Place in `lib/presentation/widgets/common/`
+- **Feature-specific Widgets**: Place in `lib/presentation/widgets/feature_name/`
+- **Pages**: Place in `lib/presentation/pages/feature_name/`
+
+### 2. Widget Naming and Structure
+- Name widgets with PascalCase (no "Widget" suffix):
+  - `MessageBubble` (not `MessageBubbleWidget`)
+  - `UserAvatar` (not `UserAvatarWidget`)
+- Name pages with PascalCase and "Page" suffix:
+  - `ChatDetailPage` (not just `ChatDetail`)
+  - `ProfileSettingsPage`
+
+### 3. Widget Boilerplate
+- Use this standard format for widget constructors:
+  ```dart
+  class CustomWidget extends StatelessWidget {
+    final String requiredParam;
+    final int? optionalParam;
+    
+    const CustomWidget({
+      Key? key,
+      required this.requiredParam,
+      this.optionalParam,
+    }) : super(key: key);
+    
+    @override
+    Widget build(BuildContext context) {
+      // Implementation
+    }
+  }
+  ```
+
+### 4. Page Boilerplate
+- Standard format for pages:
+  ```dart
+  class FeatureNamePage extends StatelessWidget {
+    final String paramId;
+    
+    const FeatureNamePage({
+      Key? key,
+      required this.paramId,
+    }) : super(key: key);
+    
+    @override
+    Widget build(BuildContext context) {
+      return BlocProvider(
+        create: (context) => getIt<FeatureNameBloc>()
+          ..add(FeatureNameEvent.initial(paramId)),
+        child: Scaffold(
+          appBar: AppBar(title: const Text('Feature Name')),
+          body: const FeatureNameView(),
+        ),
+      );
+    }
+  }
+  
+  class FeatureNameView extends StatelessWidget {
+    const FeatureNameView({Key? key}) : super(key: key);
+    
+    @override
+    Widget build(BuildContext context) {
+      return BlocBuilder<FeatureNameBloc, FeatureNameState>(
+        builder: (context, state) {
+          return state.when(
+            initial: () => const LoadingIndicator(),
+            loading: () => const LoadingIndicator(),
+            loaded: (data) => FeatureNameContent(data: data),
+            error: (message) => ErrorView(message: message),
+          );
+        },
+      );
+    }
+  }
+  ```
+
+### 5. Navigation
+- Use the established routing system:
+  - For GoRouter, add routes in `lib/core/navigation/app_router.dart`
+  - For AutoRoute, update the `@AutoRouterConfig` class
+
+## Testing & Validation Guidelines
+
+### 1. Test Organization
+- Mirror the app structure in the test directory:
+  ```
+  test/
+  ├── core/
+  ├── domain/
+  │   ├── entities/
+  │   ├── repositories/
+  │   └── usecases/
+  ├── data/
+  │   ├── datasources/
+  │   ├── models/
+  │   └── repositories/
+  └── presentation/
+      ├── blocs/
+      ├── pages/
+      └── widgets/
+  ```
+
+### 2. Testing Conventions
+- Name test files with `_test.dart` suffix (e.g., `user_repository_test.dart`)
+- Use the format `test('should <expected behavior> when <condition>', () {})` for test cases
+- Group related tests together using the `group` function
+
+### 3. Test Boilerplate
+- Standard unit test format:
+  ```dart
+  void main() {
+    late FeatureDependency mockDependency;
+    late FeatureUnderTest featureUnderTest;
+    
+    setUp(() {
+      mockDependency = MockFeatureDependency();
+      featureUnderTest = FeatureUnderTest(dependency: mockDependency);
+    });
+    
+    group('SomeOperation', () {
+      test('should return success when valid input is provided', () async {
+        // Arrange
+        when(() => mockDependency.someMethod(any())).thenAnswer((_) async => Right(successValue));
+        
+        // Act
+        final result = await featureUnderTest.execute(validInput);
+        
+        // Assert
+        expect(result, Right(expectedOutput));
+        verify(() => mockDependency.someMethod(validInput)).called(1);
+      });
+    });
+  }
+  ```
+
+### 4. Widget Test Boilerplate
+- Standard widget test format:
+  ```dart
+  void main() {
+    testWidgets('CustomWidget should display correct text', (WidgetTester tester) async {
+      // Arrange
+      await tester.pumpWidget(
+        MaterialApp(
+          home: CustomWidget(requiredParam: 'test'),
+        ),
+      );
+      
+      // Act & Assert
+      expect(find.text('test'), findsOneWidget);
+    });
+  }
+  ```
+
+These architecture and structure guidelines provide a comprehensive framework for maintaining consistency throughout the Flutter messaging app, ensuring new features, assets, widgets, and pages seamlessly integrate with the existing Clean Architecture pattern.

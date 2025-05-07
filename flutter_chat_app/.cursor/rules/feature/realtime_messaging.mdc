@@ -1,0 +1,5 @@
+---
+description: "Guide implementation of real-time messaging features with optimized performance patterns"
+globs: ["lib/**/messaging/**/*.dart", "lib/**/chat/**/*.dart", "lib/**/*message*.dart", "lib/**/*conversation*.dart"]
+alwaysApply: false
+---

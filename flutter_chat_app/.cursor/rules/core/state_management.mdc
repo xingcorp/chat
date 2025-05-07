@@ -1,0 +1,5 @@
+---
+description: "Guide implementation of consistent state management using BLoC and Riverpod patterns"
+globs: ["lib/**/bloc/**/*.dart", "lib/**/cubit/**/*.dart", "lib/**/*provider*.dart", "lib/**/*state*.dart", "lib/**/presentation/**/*.dart"]
+alwaysApply: true
+---

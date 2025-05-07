@@ -1,0 +1,5 @@
+---
+description: "Guide implementation of efficient media handling and processing with optimized patterns"
+globs: ["lib/**/*media*.dart", "lib/**/*image*.dart", "lib/**/*video*.dart", "lib/**/*audio*.dart", "lib/**/*file*.dart", "lib/**/attachment/**/*.dart"]
+alwaysApply: false
+---

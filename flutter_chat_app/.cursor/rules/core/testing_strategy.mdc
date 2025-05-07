@@ -1,0 +1,72 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Testing Strategy Guidelines
+
+## Scope / Flexibility Notice
+These guidelines establish testing practices for all application layers. While testing approaches may vary by component type, core testing principles remain consistent.
+
+## Best Practices
+- Follow the Testing Pyramid: unit > integration > UI
+- Write tests before implementing features (TDD)
+- Test both success and failure cases
+- Keep tests independent and isolated
+- Mock external dependencies and services
+- Use descriptive test names following "should_when_given" pattern
+- Focus on testing behavior, not implementation
+- Test edge cases and boundary conditions
+- Maintain test data separate from test logic
+
+## File / Project Structure Guidelines
+- Organize test files to mirror source structure
+- Name test files with `_test.dart` suffix
+- Group related tests with descriptive block names
+- Structure test files as:
+  ```
+  test/
+    unit/
+      domain/
+        usecases/
+        repositories/
+      data/
+        repositories/
+        datasources/
+    integration/
+      repositories/
+      services/
+    widget/
+      screens/
+      components/
+    goldens/
+      screens/
+  ```
+
+## Coding & Styling Conventions
+- Use AAA pattern (Arrange-Act-Assert)
+- Implement helper methods for common setup
+- Follow naming convention: `test('should <expected behavior> when <condition>')`
+- Use mocks for dependencies with `mockito` or `mocktail`
+- Keep test files focused on a single class/component
+- Use `setUp` and `tearDown` for common initialization
+- Prefer `expect` over `assert` statements
+
+## Performance & Optimization Tips
+- Group related tests to reduce setup/teardown overhead
+- Mock heavy dependencies for unit tests
+- Use test fakes for complex systems
+- Implement benchmarking tests for performance-critical paths
+- Use parameterized tests for testing multiple inputs
+- Keep unit tests fast (milliseconds, not seconds)
+- Avoid unnecessary widget rebuilds in UI tests
+
+## Testing & Validation Guidelines
+- Test repositories with mock data sources
+- Test BLoCs with mock repositories
+- Test widgets with mock BLoCs
+- Use golden tests for UI verification
+- Implement integration tests for critical user flows
+- Test offline behavior and error recovery
+- Verify analytics and logging implementations
+- Test localization and accessibility compliance

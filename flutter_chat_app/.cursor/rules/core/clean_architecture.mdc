@@ -1,0 +1,55 @@
+---
+description: "Enforce Clean Architecture principles with proper layer separation and dependency flow"
+globs: ["lib/domain/**/*.dart", "lib/data/**/*.dart", "lib/presentation/**/*.dart", "lib/core/**/*.dart"]
+alwaysApply: true
+---
+---
+description: "Enforces Clean Architecture principles across the project, focusing on separation of concerns and dependency rules."
+globs: ["lib/**/*.dart"]
+alwaysApply: true
+---
+# Clean Architecture Guidelines
+
+## Scope / Flexibility Notice
+These guidelines enforce strict Clean Architecture principles but may be adapted for edge cases when necessary. The core dependency flow must always point inward: presentation → domain ← data.
+
+## Best Practices
+- Keep all dependencies pointing inward (outer layers depend on inner layers)
+- Ensure Domain layer is independent of any external frameworks or libraries
+- Use abstractions (interfaces) for all repositories in the Domain layer
+- Implement Use Cases for each business operation
+- Keep entities pure and free of UI or database concerns
+- Use mappers to convert between domain entities and data models
+
+## File / Project Structure Guidelines
+- Maintain clear layer separation:
+  - `lib/domain/`: Entities, repositories (interfaces), use cases, value objects
+  - `lib/data/`: Repository implementations, data sources, models, mappers
+  - `lib/presentation/`: UI components, screens, widgets, state management
+  - `lib/core/`: Shared utilities, constants, services
+- Restrict imports to follow the dependency rule:
+  - Domain should not import from data or presentation
+  - Data can import from domain but not presentation
+  - Presentation can import from domain and data
+
+## Coding & Styling Conventions
+- Name repository interfaces without suffix: `MessageRepository`
+- Name implementations with `Impl` suffix: `MessageRepositoryImpl`
+- Name use cases as imperative actions: `SendMessageUseCase`
+- Prefer composition over inheritance for reuse
+- Use abstract classes for interfaces (not Dart's `abstract interface class`)
+- Mark domain entities as `@immutable` or make them immutable by design
+
+## Performance & Optimization Tips
+- Keep domain entities lightweight
+- Avoid deep object hierarchies that may cause serialization bottlenecks
+- Cache repository results when appropriate
+- Consider using value objects for validated primitives
+- Perform heavy operations in the data layer, not in the domain layer
+
+## Testing & Validation Guidelines
+- Unit test each layer independently
+- Mock dependencies at layer boundaries
+- Test domain use cases without any dependencies on external frameworks
+- Test repository implementations with mocked data sources
+- Use Test-Driven Development (TDD) when implementing new features

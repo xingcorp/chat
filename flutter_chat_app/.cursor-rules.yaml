@@ -9,6 +9,50 @@ file_level_rules:
     message: "File exceeds 400 lines. Consider refactoring into smaller, more focused components/classes."
 
 rules:
+  # Core layer rules (always apply)
+  - name: clean_architecture
+    path: .cursor/rules/core/clean_architecture.mdc
+    
+  - name: state_management
+    path: .cursor/rules/core/state_management.mdc
+    
+  - name: error_handling
+    path: .cursor/rules/core/error_handling.mdc
+    
+  - name: dependency_injection
+    path: .cursor/rules/core/dependency_injection.mdc
+    
+  - name: testing_strategy
+    path: .cursor/rules/core/testing_strategy.mdc
+    
+  - name: security_basics
+    path: .cursor/rules/core/security_basics.mdc
+    
+  # Feature layer rules (apply to specific domains)
+  - name: realtime_messaging
+    path: .cursor/rules/feature/realtime_messaging.mdc
+    
+  - name: offline_sync
+    path: .cursor/rules/feature/offline_sync.mdc
+    
+  - name: worker_pool_scaling
+    path: .cursor/rules/feature/worker_pool_scaling.mdc
+    
+  - name: media_handling
+    path: .cursor/rules/feature/media_handling.mdc
+    
+  - name: animation_patterns
+    path: .cursor/rules/feature/animation_patterns.mdc
+    
+  - name: isolate_management
+    path: .cursor/rules/feature/isolate_management.mdc
+    
+  - name: notification_system
+    path: .cursor/rules/feature/notification_system.mdc
+    
+  - name: ai_readiness
+    path: .cursor/rules/feature/ai_readiness.mdc
+
   # Discourage leaving debug print statements in the codebase. Use a proper logger instead.
   - rule_id: no-print
     match: '\bprint\('

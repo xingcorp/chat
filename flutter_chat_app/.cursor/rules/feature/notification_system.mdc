@@ -1,0 +1,91 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Notification System Guidelines
+
+## Scope / Flexibility Notice
+These guidelines establish patterns for implementing a reliable notification system across all platforms. While specific implementations may vary by platform, the core principles should be consistent.
+
+## Best Practices
+- Implement platform-specific notification handling
+- Design proper notification grouping and categorization
+- Support deep linking from notifications to specific app content
+- Implement proper notification permission handling
+- Design user-configurable notification settings
+- Support different notification types (message, group, system)
+- Implement notification action buttons where appropriate
+- Design proper notification persistence and retrieval
+- Support notification read/unread status tracking
+- Implement proper notification analytics
+- Design battery-efficient background notification handling
+
+## File / Project Structure Guidelines
+- Organize notification-related components:
+  ```
+  lib/
+    core/
+      notifications/
+        notification_manager.dart
+        notification_handler.dart
+        notification_channel.dart
+        notification_payload.dart
+        platform/
+          android_notification_service.dart
+          ios_notification_service.dart
+          web_notification_service.dart
+    data/
+      repositories/
+        notification_repository_impl.dart
+      datasources/
+        notification_local_datasource.dart
+        notification_remote_datasource.dart
+    domain/
+      repositories/
+        notification_repository.dart
+      entities/
+        app_notification.dart
+      usecases/
+        handle_notification_usecase.dart
+        update_notification_settings_usecase.dart
+    presentation/
+      screens/
+        notification_settings_screen.dart
+      widgets/
+        notification_list_item.dart
+  ```
+
+## Coding & Styling Conventions
+- Use enum for notification types: `NotificationType.message`, `NotificationType.system`
+- Implement standardized notification payload structure
+- Use factory methods for creating platform-specific handlers
+- Follow consistent naming for notification operations
+- Define clear notification priority levels
+- Implement proper error handling for notification operations
+- Document platform-specific limitations
+
+## Performance & Optimization Tips
+- Implement selective notification loading and pagination
+- Batch notification operations when possible
+- Optimize notification payload size
+- Implement efficient background notification processing
+- Use proper notification channels/categories by platform
+- Implement notification throttling for high-frequency events
+- Design efficient notification storage and retrieval
+- Minimize wake-ups for background notification processing
+- Implement proper cleanup for old notifications
+- Use Firebase FCM best practices for push notifications
+
+## Testing & Validation Guidelines
+- Test notifications across all supported platforms
+- Verify deep linking functionality
+- Test notification actions and responses
+- Validate notification appearance and styling
+- Test notifications with different permission settings
+- Verify notification grouping and categorization
+- Test notification behavior in different app states (foreground, background, terminated)
+- Validate notification throttling and batching
+- Test notification performance with high volumes
+- Implement notification delivery monitoring
+- Test notification storage and retrieval efficiency

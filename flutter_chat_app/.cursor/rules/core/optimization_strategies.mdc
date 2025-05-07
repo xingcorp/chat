@@ -1,0 +1,87 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: "Guide implementation of performance optimization strategies throughout the application"
+globs: ["lib/**/*.dart", "test/**/*_performance_test.dart"]
+alwaysApply: true
+---
+
+# Optimization Strategies Guidelines
+
+## Scope / Flexibility Notice
+These guidelines establish patterns for optimizing application performance across all layers. While specific optimization techniques may vary by feature, these core principles should guide all optimization efforts.
+
+## Best Practices
+- Always measure before optimizing - use Flutter DevTools to identify bottlenecks
+- Focus on user-perceived performance first (UI responsiveness)
+- Optimize critical paths that impact user experience
+- Balance code readability with performance - document complex optimizations
+- Avoid premature optimization
+- Implement performance monitoring in production
+- Set performance budgets for key metrics (startup time, memory usage, frame rate)
+- Profile on low-end devices
+- Document performance requirements and test results
+- Implement performance regression tests for critical features
+
+## Layer-Specific Optimization Strategies
+
+### UI/Widget Optimization
+- Minimize widget rebuilds using `const` constructors
+- Use `RepaintBoundary` to isolate frequently changing widgets
+- Implement widget caching for expensive build operations
+- Utilize `ListView.builder` instead of Column for long lists
+- Employ lazy loading for off-screen content
+- Use appropriate image formats and resolutions
+- Minimize shader compilation jank with shader warming
+- Avoid expensive operations in build() methods
+- Optimize state management to prevent unnecessary rebuilds
+- Use `computeAsync` for expensive UI calculations
+
+### Data Layer Optimization
+- Implement efficient caching strategies
+- Use pagination for large data sets
+- Optimize database queries and index critical fields
+- Batch network requests when possible
+- Implement efficient serialization/deserialization
+- Use appropriate data structures for different access patterns
+- Compress data when appropriate
+- Implement delta updates for large data sets
+- Optimize JSON parsing with code generation tools
+- Minimize deep object copying
+
+### Asset Optimization
+- Compress images appropriately
+- Use vector graphics (SVG) when possible
+- Implement asset preloading for critical resources
+- Implement proper image caching
+- Optimize font loading and usage
+- Use appropriate asset resolutions for different devices
+- Consider using sprite sheets for multiple small images
+- Lazy load non-critical assets
+
+## Performance Monitoring
+- Implement custom performance traces for critical operations
+- Track key performance metrics:
+  - Application startup time
+  - Time to first meaningful paint
+  - Frame rendering time
+  - Memory usage
+  - Network request latency
+  - Battery consumption
+- Set up alerting for performance regressions
+- Regularly review performance dashboards
+- Document performance improvements and regressions
+
+## Testing & Validation Guidelines
+- Implement automated performance tests for critical features
+- Benchmark against previous versions to prevent regressions
+- Test on a range of devices, especially low-end ones
+- Validate optimizations with real-world usage patterns
+- Test under various network conditions
+- Verify memory usage patterns over extended usage
+- Use Flutter DevTools to identify and resolve performance issues
+- Document baseline performance metrics for key operations
+- Run performance tests as part of CI/CD pipeline when feasible
