@@ -1,5 +1,5 @@
 ---
-description: "Guide implementation of core security practices and data protection throughout the app"
-globs: ["lib/**/*.dart", "lib/**/security/**/*.dart", "lib/**/auth/**/*.dart", "lib/**/*credential*.dart"]
+description: "Ensure application security best practices for authentication, data storage, and communication"
+globs: ["lib/**/*.dart", "lib/**/security/**/*.dart", "lib/**/auth/**/*.dart", "lib/**/*security*.dart"]
 alwaysApply: true
 ---

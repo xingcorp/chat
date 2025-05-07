@@ -89,3 +89,9 @@ These guidelines establish patterns for implementing a reliable notification sys
 - Test notification performance with high volumes
 - Implement notification delivery monitoring
 - Test notification storage and retrieval efficiency
+
+---
+description: "Guide implementation of robust notification systems for local and remote notifications"
+globs: ["lib/**/*notification*.dart", "lib/**/*alert*.dart", "lib/**/messaging/**/*.dart", "lib/**/push/**/*.dart"]
+alwaysApply: false
+---

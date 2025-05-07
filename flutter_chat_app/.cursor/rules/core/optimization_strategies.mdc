@@ -1,11 +1,6 @@
 ---
-description: 
-globs: 
-alwaysApply: false
----
----
-description: "Guide implementation of performance optimization strategies throughout the application"
-globs: ["lib/**/*.dart", "test/**/*_performance_test.dart"]
+description: "Guide performance optimization techniques and strategies across the application"
+globs: ["lib/**/*.dart"]
 alwaysApply: true
 ---
 

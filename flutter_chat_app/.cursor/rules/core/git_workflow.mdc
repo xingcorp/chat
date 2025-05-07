@@ -1,11 +1,6 @@
 ---
-description: 
-globs: 
-alwaysApply: false
----
----
-description: "Define Git workflow, branching strategy, and collaboration guidelines"
-globs: [".git/**", "**/*.dart", "**/*.md"]
+description: "Guide proper Git workflow, branching strategy, and commit message structure"
+globs: [".git/**/*", ".github/**/*", ".gitignore"]
 alwaysApply: true
 ---
 

@@ -1,8 +1,9 @@
 ---
-description: 
-globs: 
-alwaysApply: false
+description: "Guide consistent dependency management and service locator implementation across the application"
+globs: ["lib/**/*.dart", "lib/di/**/*.dart", "lib/**/injection*.dart"]
+alwaysApply: true
 ---
+
 # Dependency Injection Guidelines
 
 ## Scope / Flexibility Notice

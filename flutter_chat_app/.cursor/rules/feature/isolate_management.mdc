@@ -69,3 +69,9 @@ These guidelines establish patterns for implementing robust isolate management t
 - Test with different data sizes to ensure robustness
 - Benchmark performance with various task configurations
 - Test fallback mechanism to main thread
+
+---
+description: "Guide proper implementation of isolates for concurrent processing and background tasks"
+globs: ["lib/**/*isolate*.dart", "lib/**/*concurrent*.dart", "lib/**/*background*.dart", "lib/**/compute/**/*.dart"]
+alwaysApply: false
+---

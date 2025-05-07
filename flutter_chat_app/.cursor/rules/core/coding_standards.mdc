@@ -1,9 +1,4 @@
 ---
-description: 
-globs: 
-alwaysApply: false
----
----
 description: "Define consistent coding standards, formatting, and style guidelines"
 globs: ["lib/**/*.dart", "test/**/*.dart"]
 alwaysApply: true

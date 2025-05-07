@@ -1,9 +1,4 @@
 ---
-description: 
-globs: 
-alwaysApply: false
----
----
 description: "Guide writing clean, maintainable, and readable code across the entire project"
 globs: ["lib/**/*.dart", "test/**/*.dart"]
 alwaysApply: true
