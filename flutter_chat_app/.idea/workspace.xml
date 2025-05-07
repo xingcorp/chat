@@ -7,15 +7,18 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="chore: downgrade Flutter SDK version to 3.24.5; update dependencies in pubspec.lock and package_config.json">
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat: add various response and entity classes for improved data handling and structure">
       <change beforePath="$PROJECT_DIR$/.idea/flutter_chat_app.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/flutter_chat_app.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/flutter_chat_app_android.iml" beforeDir="false" afterPath="$PROJECT_DIR$/android/flutter_chat_app_android.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/datasources/chat/chat_remote_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/chat/chat_remote_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/datasources/message/message_remote_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/message/message_remote_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/di/service_locator.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/di/service_locator.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/domain/entities/chat.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/domain/entities/chat.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/app/app_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/app/app_bloc.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/app/app_event.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/app/app_event.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/app/app_state.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/app/app_state.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/chat/chat_event.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/chat/chat_event.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,7 +31,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$/.." value="doanbh/feature/fix_bug" />
+        <entry key="$PROJECT_DIR$/.." value="main" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
@@ -98,6 +101,9 @@
       </map>
     </option>
   </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 4
 }</component>
@@ -117,7 +123,8 @@
     &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;doanbh/feature/fix__bug&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;io.flutter.reload.alreadyRun&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;D:/NestJS/s-office/flutter_chat_app&quot;,
@@ -264,17 +271,189 @@
       <option name="project" value="LOCAL" />
       <updated>1743591016643</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="chore: update version to 3.27.4; adjust dependencies and improve connectivity handling">
+      <option name="closed" value="true" />
+      <created>1743758410180</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1743758410180</updated>
+    </task>
+    <task id="LOCAL-00011" summary="chore: update Java version to 17; add flutter_keyboard_visibility plugin and update dependencies">
+      <option name="closed" value="true" />
+      <created>1743759644307</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1743759644307</updated>
+    </task>
+    <task id="LOCAL-00012" summary="refactor: streamline chat repository implementation; enhance network connectivity checks and error handling">
+      <option name="closed" value="true" />
+      <created>1743761258233</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1743761258233</updated>
+    </task>
+    <task id="LOCAL-00013" summary="feat: enhance chat and message handling; add socket connection management and lifecycle events">
+      <option name="closed" value="true" />
+      <created>1743762654636</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1743762654636</updated>
+    </task>
+    <task id="LOCAL-00014" summary="feat: implement caching and preload management; initialize cache stats and background sync worker">
+      <option name="closed" value="true" />
+      <created>1743763184322</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1743763184322</updated>
+    </task>
+    <task id="LOCAL-00015" summary="feat: integrate Firebase and monitoring services; initialize crash reporter, performance monitor, and analytics manager">
+      <option name="closed" value="true" />
+      <created>1743764258353</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1743764258353</updated>
+    </task>
+    <task id="LOCAL-00016" summary="feat: add message status management; implement enums and status getters for message handling">
+      <option name="closed" value="true" />
+      <created>1743764704876</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1743764704876</updated>
+    </task>
+    <task id="LOCAL-00017" summary="chore: update Flutter SDK to version 3.29.2; refresh dependencies and package configurations">
+      <option name="closed" value="true" />
+      <created>1743764998892</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1743764998892</updated>
+    </task>
+    <task id="LOCAL-00018" summary="chore: downgrade Flutter SDK to version 3.24.5; update package configurations and dependencies">
+      <option name="closed" value="true" />
+      <created>1743765968744</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1743765968744</updated>
+    </task>
+    <task id="LOCAL-00019" summary="feat: implement attachment queue management; add enums for attachment status and error types, and create attachment queue service">
+      <option name="closed" value="true" />
+      <created>1743769072997</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1743769072997</updated>
+    </task>
+    <task id="LOCAL-00020" summary="feat: enhance message queue service; add content type and message priority enums, improve message handling and duplicate detection">
+      <option name="closed" value="true" />
+      <created>1743770093214</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1743770093214</updated>
+    </task>
+    <task id="LOCAL-00021" summary="feat: enhance message queue service; add server ID and attachment IDs to message model, implement attachment cancellation and status retrieval">
+      <option name="closed" value="true" />
+      <created>1743773383628</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1743773383628</updated>
+    </task>
+    <task id="LOCAL-00022" summary="feat: enhance service locator; add socket analytics, rate limiter, and enhanced socket manager">
+      <option name="closed" value="true" />
+      <created>1743774781719</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1743774781719</updated>
+    </task>
+    <task id="LOCAL-00023" summary="feat: add pubspec.yaml for flutter_chat_app with dependencies and configurations">
+      <option name="closed" value="true" />
+      <created>1744114475592</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1744114475592</updated>
+    </task>
+    <task id="LOCAL-00024" summary="feat: add various response and entity classes for improved data handling and structure">
+      <option name="closed" value="true" />
+      <created>1744114719685</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1744114719685</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="OPEN_GENERIC_TABS">
       <map>
         <entry key="fa96ce9f-2aa7-4dcc-a68f-92371b339f1a" value="TOOL_WINDOW" />
+        <entry key="adf916dd-2796-4bc0-9960-4b963fe1cd36" value="TOOL_WINDOW" />
+        <entry key="befc710c-230e-459a-8aa7-5d9edc5b9ad0" value="TOOL_WINDOW" />
       </map>
     </option>
     <option name="TAB_STATES">
       <map>
+        <entry key="adf916dd-2796-4bc0-9960-4b963fe1cd36">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="structure">
+                    <value>
+                      <list>
+                        <option value="dir:D:/NestJS/s-office/flutter_chat_app" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+            </State>
+          </value>
+        </entry>
+        <entry key="befc710c-230e-459a-8aa7-5d9edc5b9ad0">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="structure">
+                    <value>
+                      <list>
+                        <option value="dir:D:/NestJS/s-office/flutter_chat_app" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+            </State>
+          </value>
+        </entry>
         <entry key="fa96ce9f-2aa7-4dcc-a68f-92371b339f1a">
           <value>
             <State>
@@ -311,6 +490,20 @@
     <MESSAGE value="chore: update Flutter SDK version and dependencies; adjust package configurations and clean up code" />
     <MESSAGE value="chore: update version to 3.27.4; refactor message handling and connectivity services; enhance chat repository interface" />
     <MESSAGE value="refactor: enhance GraphQL client and subscription handling; improve message processing and service initialization" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor: enhance GraphQL client and subscription handling; improve message processing and service initialization" />
+    <MESSAGE value="chore: update version to 3.27.4; adjust dependencies and improve connectivity handling" />
+    <MESSAGE value="chore: update Java version to 17; add flutter_keyboard_visibility plugin and update dependencies" />
+    <MESSAGE value="refactor: streamline chat repository implementation; enhance network connectivity checks and error handling" />
+    <MESSAGE value="feat: enhance chat and message handling; add socket connection management and lifecycle events" />
+    <MESSAGE value="feat: implement caching and preload management; initialize cache stats and background sync worker" />
+    <MESSAGE value="feat: integrate Firebase and monitoring services; initialize crash reporter, performance monitor, and analytics manager" />
+    <MESSAGE value="feat: add message status management; implement enums and status getters for message handling" />
+    <MESSAGE value="chore: update Flutter SDK to version 3.29.2; refresh dependencies and package configurations" />
+    <MESSAGE value="chore: downgrade Flutter SDK to version 3.24.5; update package configurations and dependencies" />
+    <MESSAGE value="feat: implement attachment queue management; add enums for attachment status and error types, and create attachment queue service" />
+    <MESSAGE value="feat: enhance message queue service; add content type and message priority enums, improve message handling and duplicate detection" />
+    <MESSAGE value="feat: enhance message queue service; add server ID and attachment IDs to message model, implement attachment cancellation and status retrieval" />
+    <MESSAGE value="feat: enhance service locator; add socket analytics, rate limiter, and enhanced socket manager" />
+    <MESSAGE value="feat: add various response and entity classes for improved data handling and structure" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: add various response and entity classes for improved data handling and structure" />
   </component>
 </project>
