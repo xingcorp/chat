@@ -3,3 +3,82 @@ description: "Guide implementation of real-time messaging features with optimize
 globs: ["lib/**/messaging/**/*.dart", "lib/**/chat/**/*.dart", "lib/**/*message*.dart", "lib/**/*conversation*.dart"]
 alwaysApply: false
 ---
+# Real-time Messaging Guidelines
+
+## Scope / Flexibility Notice
+These guidelines apply to all real-time chat and messaging components. While specific implementations may vary based on messaging protocol (WebSockets, MQTT, etc.), the core principles remain consistent.
+
+## Best Practices
+- Implement proper connection state management
+- Design for message delivery state tracking (sending, sent, delivered, read)
+- Handle reconnection logic with exponential backoff
+- Support offline message queueing and sync
+- Implement proper message ordering with timestamps
+- Use separate channels for different conversation types
+- Handle concurrent message edits and deletes
+- Implement typing indicators with debouncing
+- Support incremental message history loading
+
+## File / Project Structure Guidelines
+- Organize real-time components by responsibility:
+  ```
+  lib/
+    data/
+      datasources/
+        remote/
+          messaging_socket_service.dart
+          messaging_api_service.dart
+        local/
+          message_cache_service.dart
+    domain/
+      entities/
+        message.dart
+        conversation.dart
+      repositories/
+        message_repository.dart
+      usecases/
+        send_message_usecase.dart
+        receive_message_usecase.dart
+    presentation/
+      blocs/
+        messaging/
+          messaging_bloc.dart
+          messaging_event.dart
+          messaging_state.dart
+      screens/
+        chat_screen.dart
+      widgets/
+        message_list.dart
+        message_input.dart
+  ```
+
+## Coding & Styling Conventions
+- Use enum for message states: `MessageStatus.sent`, `MessageStatus.delivered`
+- Format timestamps consistently using UTC
+- Implement proper pagination for message history
+- Use optimistic UI updates for message sending
+- Handle multipart messages properly
+- Use consistent message metadata schema
+- Name WebSocket events descriptively: `message_received`, `message_read`
+
+## Performance & Optimization Tips
+- Implement message batching for bulk operations
+- Use pagination for message history loading
+- Optimize images and media before transmission
+- Implement efficient local caching strategy
+- Use compression for large messages or media
+- Prioritize UI responsiveness over background operations
+- Implement proper connection pooling
+- Use efficient serialization formats
+- Consider binary protocols for high-throughput systems
+
+## Testing & Validation Guidelines
+- Test connection state transitions thoroughly
+- Simulate poor network conditions
+- Verify message ordering under various conditions
+- Test concurrent message operations
+- Validate offline functionality
+- Test reconnection logic with various failure modes
+- Verify proper cleanup of socket resources
+- Test memory usage with large message histories
+- Implement load testing for high-volume scenarios

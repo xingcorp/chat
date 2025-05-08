@@ -3,3 +3,73 @@ description: "Guide implementation of dynamic worker pool scaling for optimal re
 globs: ["lib/**/*worker*.dart", "lib/**/*isolate*.dart", "lib/**/*pool*.dart", "lib/**/concurrency/**/*.dart"]
 alwaysApply: false
 ---
+# Worker Pool Scaling Guidelines
+
+## Scope / Flexibility Notice
+These guidelines define patterns for implementing a dynamic worker pool that automatically adjusts based on system load and processing needs. While specific thresholds may be tuned per device class, the core scaling mechanism should remain consistent.
+
+## Best Practices
+- Implement continuous monitoring of system resources (CPU, memory, UI lag)
+- Design auto-scaling based on combined load score and pending task count
+- Implement "cool down" periods to prevent thrashing
+- Set appropriate worker count limits based on device capabilities
+- Implement health checks for workers to detect and restart unresponsive ones
+- Design graceful worker shutdown that preserves in-progress tasks
+- Prioritize tasks in the queue when workers are limited
+- Track and log scaling operations for performance analysis
+- Tune initial worker count based on device capabilities
+
+## File / Project Structure Guidelines
+- Organize worker pool components:
+  ```
+  lib/
+    core/
+      concurrency/
+        worker_pool.dart
+        system_resource_monitor.dart
+        worker_manager.dart
+        task_queue.dart
+        task_priority.dart
+        worker_health_monitor.dart
+        worker_pool_metrics.dart
+    domain/
+      usecases/
+        schedule_task_usecase.dart
+    data/
+      services/
+        background_processor_service.dart
+  ```
+
+## Coding & Styling Conventions
+- Use enum for task priorities: `TaskPriority.critical`, `TaskPriority.low`
+- Implement well-defined task interface: `WorkerTask<T>`
+- Use descriptive logging: "Scaling up worker pool from 2 to 3 workers"
+- Track worker states with enums: `WorkerState.idle`, `WorkerState.busy`
+- Implement factory methods for creating appropriate tasks
+- Use consistent naming for worker-related components
+- Document service level agreements for task processing
+
+## Performance & Optimization Tips
+- Implement load score calculation combining CPU, memory, and pending task count
+- Scale up when: load score > 60 or pending tasks > 3x current workers
+- Scale down when: load score < 30 and pending tasks < current workers
+- Set minimum cool down period of 30 seconds between scaling operations
+- Limit worker count: min = 1, max = (CPU cores - 1 or 6, whichever is smaller)
+- Initialize worker count based on device capability:
+  - 2 cores: 1 worker
+  - 4 cores: 2 workers
+  - 6+ cores: 3 workers
+- Monitor resource usage every 10 seconds
+- Restart workers that are unresponsive for 5+ minutes
+- Queue failed tasks for retry
+
+## Testing & Validation Guidelines
+- Test auto-scaling under various load conditions
+- Verify worker health monitoring and recovery
+- Test cool down period enforcement
+- Validate resource utilization improvements
+- Test with simulated device constraints
+- Benchmark performance with varying worker counts
+- Verify proper cleanup of worker resources
+- Test recovery from worker crashes
+- Validate memory usage with long-running operations

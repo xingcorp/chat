@@ -3,3 +3,83 @@ description: "Guide implementation of efficient media handling and processing wi
 globs: ["lib/**/*media*.dart", "lib/**/*image*.dart", "lib/**/*video*.dart", "lib/**/*audio*.dart", "lib/**/*file*.dart", "lib/**/attachment/**/*.dart"]
 alwaysApply: false
 ---
+# Media Handling Guidelines
+
+## Scope / Flexibility Notice
+These guidelines establish patterns for efficient media handling including images, videos, audio, and files in messaging contexts. These principles apply to all media-related operations.
+
+## Best Practices
+- Implement progressive loading for all media types
+- Design proper caching strategies for different media types
+- Support media compression before transmission
+- Implement background upload/download with progress reporting
+- Design fallback rendering for unsupported media types
+- Support pause/resume for large media transfers
+- Implement proper media validation before processing
+- Design efficient media thumbnail generation
+- Support multiple media formats with graceful degradation
+- Implement proper media access permissions handling
+
+## File / Project Structure Guidelines
+- Organize media-related components:
+  ```
+  lib/
+    core/
+      media/
+        media_manager.dart
+        media_cache.dart
+        media_converter.dart
+        media_validator.dart
+      utils/
+        image_processor.dart
+        video_processor.dart
+        audio_processor.dart
+    data/
+      repositories/
+        media_repository_impl.dart
+      datasources/
+        media_local_datasource.dart
+        media_remote_datasource.dart
+    domain/
+      repositories/
+        media_repository.dart
+      entities/
+        media_item.dart
+        media_attachment.dart
+      usecases/
+        upload_media_usecase.dart
+        process_media_usecase.dart
+  ```
+
+## Coding & Styling Conventions
+- Use enum for media types: `MediaType.image`, `MediaType.video`
+- Implement standardized metadata for media: `MediaMetadata`
+- Use factory methods for creating media handlers: `MediaProcessor.forType()`
+- Follow consistent naming for media operations: `processImage()`, `processVideo()`
+- Define clear interfaces for media processors
+- Implement proper error types for media operations
+- Document supported formats and limitations
+
+## Performance & Optimization Tips
+- Process media in background isolates
+- Implement adaptive media quality based on network conditions
+- Use efficient compression algorithms appropriate for each media type
+- Implement multi-step thumbnailing (quick blur, then actual thumbnail)
+- Cache processed media results to avoid reprocessing
+- Use memory-efficient media handling libraries
+- Implement lazy loading for media galleries
+- Pre-process images when appropriate (resize before upload)
+- Use hardware acceleration when available
+- Implement proper memory management for large media files
+
+## Testing & Validation Guidelines
+- Test media processing with various input formats
+- Verify memory consumption during media operations
+- Test progressive loading behavior
+- Validate cache efficiency and eviction policies
+- Test media operations under poor network conditions
+- Verify proper handling of corrupted media files
+- Test concurrent media operations
+- Validate proper cleanup of temporary media files
+- Test permissions handling
+- Implement performance benchmarks for media operations

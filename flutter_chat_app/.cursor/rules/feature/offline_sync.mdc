@@ -3,3 +3,73 @@ description: "Guide implementation of robust offline-first data synchronization 
 globs: ["lib/**/*sync*.dart", "lib/**/*offline*.dart", "lib/**/local/**/*.dart", "lib/**/repository/**/impl/**/*.dart"]
 alwaysApply: false
 ---
+# Offline Sync Guidelines
+
+## Scope / Flexibility Notice
+These guidelines establish patterns for implementing offline-first capabilities with reliable data synchronization. While specific sync strategies may vary by data type, the core principles remain consistent.
+
+## Best Practices
+- Implement local-first data operations with remote sync
+- Design conflict resolution strategies for each data type
+- Use optimistic UI updates with rollback capability
+- Track sync status for all offline-stored entities
+- Implement proper queue management for pending operations
+- Use logical timestamps or vector clocks for ordering
+- Implement delta syncing when possible
+- Design efficient batch operations for sync
+- Implement proper error recovery for interrupted syncs
+
+## File / Project Structure Guidelines
+- Organize sync-related components:
+  ```
+  lib/
+    core/
+      sync/
+        sync_manager.dart
+        sync_worker.dart
+        conflict_resolver.dart
+    data/
+      datasources/
+        local/
+          sync_queue_store.dart
+          entity_changelog.dart
+      repositories/
+        base_syncing_repository.dart
+    domain/
+      entities/
+        sync_status.dart
+        entity_change_record.dart
+      usecases/
+        trigger_sync_usecase.dart
+  ```
+
+## Coding & Styling Conventions
+- Use enum for sync states: `SyncStatus.pending`, `SyncStatus.completed`
+- Implement metadata for tracking changes: `lastModified`, `syncVersion`
+- Implement repository methods like `getLocal`, `getRemote`, `sync`
+- Prefix sync-specific events: `EntitySyncStarted`, `EntitySyncCompleted`
+- Use consistent change tracking across entities
+- Implement proper retry policies for all network operations
+- Document sync conflict resolution strategies
+
+## Performance & Optimization Tips
+- Implement selective sync for large datasets
+- Use batching for sync operations
+- Implement efficient diff algorithms
+- Use binary formats for local storage
+- Compress data for sync operations when appropriate
+- Schedule syncs based on data priority and network conditions
+- Avoid blocking UI during sync operations
+- Implement background sync workers
+- Use change tracking to minimize sync payload sizes
+
+## Testing & Validation Guidelines
+- Test sync operations under various network conditions
+- Simulate conflicts and verify resolution
+- Test recovery from interrupted sync operations
+- Verify data consistency after sync completion
+- Test batch sync operations with large datasets
+- Validate offline capability during airplane mode
+- Test sync queue persistence across app restarts
+- Implement stress testing for sync operations
+- Verify memory usage during large sync operations

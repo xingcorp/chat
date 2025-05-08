@@ -3,3 +3,75 @@ description: "Guide implementation of smooth, performant animations with consist
 globs: ["lib/**/*animation*.dart", "lib/**/*transition*.dart", "lib/**/widgets/**/*.dart", "lib/**/*effect*.dart"]
 alwaysApply: false
 ---
+# Animation Patterns Guidelines
+
+## Scope / Flexibility Notice
+These guidelines establish patterns for implementing consistent, performant animations throughout the app. While specific animation styles may vary by context, the core principles should be followed.
+
+## Best Practices
+- Follow Material Design motion principles
+- Implement animations that enhance usability, not distract
+- Use implicit animations for simple state changes
+- Use explicit animations for complex, coordinated animations
+- Keep animations short (150-500ms) and purposeful
+- Ensure animations work consistently across device capabilities
+- Support animation disabling for accessibility
+- Maintain consistent animation timings across similar interactions
+- Implement proper entrance/exit animations for all elements
+- Use staggered animations for related elements
+
+## File / Project Structure Guidelines
+- Organize animation-related components:
+  ```
+  lib/
+    core/
+      animations/
+        animation_constants.dart
+        custom_animations.dart
+        animation_controller_mixin.dart
+        transitions/
+          fade_scale_transition.dart
+          slide_transition.dart
+        curves/
+          custom_curves.dart
+    presentation/
+      widgets/
+        animated/
+          animated_message_bubble.dart
+          animated_list_item.dart
+          animated_loading_indicator.dart
+  ```
+
+## Coding & Styling Conventions
+- Define animation durations in a central constants file
+- Use semantic naming for animations: `fadeInTransition`, `slideOutAnimation`
+- Implement reusable animation widgets
+- Use composition for complex animations
+- Extract animation logic into dedicated classes/mixins
+- Implement proper disposal of animation controllers
+- Document animation parameters and behaviors
+- Use consistent curve types for similar animations
+
+## Performance & Optimization Tips
+- Limit animations during critical user interactions
+- Use repaint boundaries to isolate frequently animating widgets
+- Avoid animating properties that trigger layout (prefer opacity, transform)
+- Profile animations with Flutter DevTools
+- Implement frame throttling for low-end devices
+- Reduce or disable animations based on device capabilities
+- Use hardware acceleration when appropriate
+- Batch animations that occur simultaneously
+- Implement lazy rendering for animated lists
+- Cache pre-computed animation values when possible
+
+## Testing & Validation Guidelines
+- Test animations on low-end devices
+- Verify animations respect reduced motion settings
+- Test animation performance with Flutter performance overlay
+- Validate proper animation controller disposal
+- Test animations with different screen sizes and orientations
+- Verify animations complete properly when interrupted
+- Ensure animations don't interfere with user interactions
+- Test animations with different frame rates
+- Implement visual regression tests for critical animations
+- Benchmark complex animations for performance impact

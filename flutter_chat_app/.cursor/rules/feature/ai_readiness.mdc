@@ -3,3 +3,91 @@ description: "Guide implementation of AI-ready architecture and integration poin
 globs: ["lib/**/*ai*.dart", "lib/**/*ml*.dart", "lib/**/*smart*.dart", "lib/**/*intelligence*.dart", "lib/**/recommendation/**/*.dart"]
 alwaysApply: false
 ---
+# AI Readiness Guidelines
+
+## Scope / Flexibility Notice
+These guidelines establish patterns for implementing AI-ready architecture and integration points. While specific AI capabilities will evolve, these foundational principles should guide development.
+
+## Best Practices
+- Design pluggable AI service architecture
+- Implement proper model versioning and updates
+- Support both on-device and cloud AI processing
+- Design fallbacks for when AI features are unavailable
+- Implement proper user consent for AI features
+- Design explainable AI interfaces for transparent user experience
+- Support incremental AI feature adoption
+- Implement proper telemetry for AI feature performance
+- Design privacy-preserving AI features
+- Implement energy-efficient AI processing strategies
+- Support model personalization when appropriate
+
+## File / Project Structure Guidelines
+- Organize AI-related components:
+  ```
+  lib/
+    core/
+      ai/
+        ai_service.dart
+        ai_manager.dart
+        model_loader.dart
+        inference_engine.dart
+        providers/
+          on_device_provider.dart
+          cloud_provider.dart
+        models/
+          model_metadata.dart
+          model_version.dart
+    data/
+      repositories/
+        ai_repository_impl.dart
+      datasources/
+        ai_local_datasource.dart
+        ai_remote_datasource.dart
+    domain/
+      repositories/
+        ai_repository.dart
+      entities/
+        inference_result.dart
+        model_config.dart
+      usecases/
+        text_suggestion_usecase.dart
+        smart_reply_usecase.dart
+        content_moderation_usecase.dart
+    presentation/
+      widgets/
+        smart_reply_suggestions.dart
+        ai_powered_input.dart
+  ```
+
+## Coding & Styling Conventions
+- Use descriptive naming for AI features: `SmartReplySuggestions`, `ContentDetection`
+- Implement clear interfaces for AI services: `AIServiceProvider`
+- Design feature flags for AI capabilities: `config.enableSmartReplies`
+- Use consistent naming for AI operations: `generateSuggestions()`, `moderateContent()`
+- Document model requirements and limitations
+- Implement proper error states for AI feature failures
+- Use analytics tagging for AI-powered features
+
+## Performance & Optimization Tips
+- Implement model quantization for on-device processing
+- Use isolates for CPU-intensive inference
+- Implement proper caching of inference results
+- Support incremental model loading and unloading
+- Design batch processing for related inferences
+- Balance response time vs accuracy based on context
+- Implement model warm-up for frequently used features
+- Support model switching based on device capabilities
+- Optimize tensor operations for specific hardware
+- Implement proper memory management for large models
+
+## Testing & Validation Guidelines
+- Test AI features with diverse inputs
+- Implement A/B testing for AI features
+- Validate AI feature performance on low-end devices
+- Test AI features with different model versions
+- Verify graceful degradation when AI services unavailable
+- Test privacy compliance for AI features
+- Implement evaluation metrics for AI model quality
+- Test battery impact of AI features
+- Verify accuracy across different user scenarios
+- Implement sandbox testing for new AI models
