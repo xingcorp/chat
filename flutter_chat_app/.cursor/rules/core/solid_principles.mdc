@@ -1,7 +1,7 @@
 ---
-description:
-globs:
-alwaysApply: false
+description: "Guidelines for implementing SOLID principles in Flutter development, focusing on maintainable and extensible code architecture"
+globs: ["lib/**/*.dart"]
+alwaysApply: true
 ---
 # SOLID Principles Guidelines
 

@@ -1,5 +1,5 @@
 ---
-description: "Defines patterns for state management across presentation layers, primarily using BLoC and Riverpod."
+description: "Defines patterns for state management across presentation layers, primarily using BLoC and Riverpod"
 globs: ["lib/presentation/blocs/**/*.dart", "lib/presentation/cubits/**/*.dart", "lib/presentation/providers/**/*.dart", "lib/presentation/**/*.dart"]
 alwaysApply: true
 ---

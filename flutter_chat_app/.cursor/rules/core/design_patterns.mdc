@@ -1,7 +1,7 @@
 ---
-description:
-globs:
-alwaysApply: false
+description: "Guidelines for implementing effective design patterns in Flutter to create flexible, maintainable, and extensible code"
+globs: ["lib/**/*.dart"]
+alwaysApply: true
 ---
 # Design Patterns Guidelines
 
