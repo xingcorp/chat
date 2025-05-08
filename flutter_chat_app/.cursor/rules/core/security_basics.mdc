@@ -3,3 +3,64 @@ description: "Ensure application security best practices for authentication, dat
 globs: ["lib/**/*.dart", "lib/**/security/**/*.dart", "lib/**/auth/**/*.dart", "lib/**/*security*.dart"]
 alwaysApply: true
 ---
+# Security Guidelines
+
+## Scope / Flexibility Notice
+These guidelines define core security practices for protecting user data and application integrity. All team members must adhere to these principles with no exceptions.
+
+## Best Practices
+- Never store sensitive data (passwords, tokens) in plain text
+- Implement proper authentication and authorization flows
+- Use secure communication channels (HTTPS, TLS)
+- Apply the principle of least privilege
+- Sanitize all user inputs to prevent injection attacks
+- Implement proper session management
+- Use platform-specific secure storage for sensitive data
+- Keep dependencies updated to avoid known vulnerabilities
+- Remove debug logs in production
+- Implement certificate pinning for high-security features
+
+## File / Project Structure Guidelines
+- Organize security-related code in dedicated files/directories
+- Use `.env` files (excluded from git) for environment-specific secrets
+- Implement security services in `lib/core/security/`
+- Structure:
+  ```
+  lib/
+    core/
+      security/
+        encryption_service.dart
+        secure_storage.dart
+        auth_utils.dart
+      constants/
+        api_endpoints.dart (no secrets)
+  ```
+
+## Coding & Styling Conventions
+- Use named constructors for secure object creation
+- Implement secure disposal methods for sensitive data
+- Mark sensitive fields as `@protected` or private
+- Use strong typing for security-critical parameters
+- Avoid security-related string literals in code
+- Implement toString() methods that hide sensitive data
+- Document security assumptions and requirements
+
+## Performance & Optimization Tips
+- Use appropriate encryption strength (balance security vs performance)
+- Cache authentication state carefully
+- Implement lazy loading for security services
+- Avoid blocking the main thread with crypto operations
+- Balance security measures against performance requirements
+- Consider using platform channels for critical security operations
+- Benchmark security operations to identify bottlenecks
+
+## Testing & Validation Guidelines
+- Test authentication flows comprehensively
+- Implement security-focused integration tests
+- Verify secure storage implementations
+- Test token refresh and session expiration
+- Validate input sanitization functions
+- Test offline security measures
+- Verify proper cleanup of sensitive data
+- Conduct regular security code reviews
+- Implement penetration testing for critical features

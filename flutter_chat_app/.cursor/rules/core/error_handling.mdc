@@ -3,3 +3,61 @@ description: "Guide robust error handling and exception management across all ap
 globs: ["lib/**/*.dart", "lib/**/error/**/*.dart", "lib/**/exception/**/*.dart", "lib/**/failure*.dart"]
 alwaysApply: true
 ---
+# Error Handling Guidelines
+
+## Scope / Flexibility Notice
+These guidelines establish consistent error handling patterns across the application. While specific error types may vary by domain, the core principles remain unchanged.
+
+## Best Practices
+- Never silently catch errors
+- Use custom exception types for domain-specific errors
+- Implement graceful degradation when services fail
+- Log errors with appropriate severity levels
+- Convert platform/framework exceptions into app-specific exceptions
+- Return Result/Either types to make error handling explicit
+- Implement retry mechanisms for transient failures
+- Use error codes for tracking and analytics
+
+## File / Project Structure Guidelines
+- Define custom exceptions in `lib/core/error/exceptions.dart`
+- Define custom failures in `lib/core/error/failures.dart`
+- Implement error transformers in `lib/core/error/transformers/`
+- Keep error handling logic separate from business logic
+- Structure:
+  ```
+  lib/
+    core/
+      error/
+        exceptions.dart
+        failures.dart
+        mappers/
+          network_error_mapper.dart
+        transformers/
+          error_transformer.dart
+  ```
+
+## Coding & Styling Conventions
+- Use failure classes instead of exceptions for domain layer
+- Implement toString() for all error types
+- Include error codes in exception constructors
+- Use sealed classes for error hierarchies
+- Format error messages consistently
+- Differentiate between user-facing and technical errors
+- Maintain exception inheritance hierarchies
+
+## Performance & Optimization Tips
+- Avoid expensive operations in exception constructors
+- Don't create new exception instances for common errors
+- Minimize stack trace capture for expected errors
+- Use async error zones for error propagation when appropriate
+- Implement circuit breaker pattern for external services
+- Batch error reporting to avoid network overhead
+
+## Testing & Validation Guidelines
+- Test both success and failure paths
+- Verify error transformation logic
+- Mock external systems to trigger error conditions
+- Test retry mechanisms and backoff strategies
+- Verify error reporting/analytics integration
+- Unit test custom exceptions and error handling logic
+- Implement integration tests that verify error recovery

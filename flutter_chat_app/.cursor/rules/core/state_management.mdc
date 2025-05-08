@@ -3,3 +3,48 @@ description: "Guide consistent application state management patterns and impleme
 globs: ["lib/presentation/**/*.dart", "lib/**/bloc/**/*.dart", "lib/**/cubit/**/*.dart", "lib/**/provider/**/*.dart", "lib/**/state/**/*.dart"]
 alwaysApply: true
 ---
+# State Management Guidelines
+
+## Scope / Flexibility Notice
+These guidelines apply to application state management with preference for BLoC and Riverpod patterns. Choose the appropriate pattern based on feature complexity and team familiarity.
+
+## Best Practices
+- Keep presentation layer free of business logic
+- Maintain unidirectional data flow (state → UI → events → state)
+- Design states as immutable objects with equality comparisons
+- Minimize state rebuilds by using selective state consumption
+- Separate UI rendering logic from state management code
+- Use extension methods to add domain-specific functionality to state objects
+
+## File / Project Structure Guidelines
+- For BLoC pattern:
+  - Place bloc files in `lib/presentation/blocs/` or feature-specific directories
+  - Follow naming convention: `feature_bloc.dart`, `feature_event.dart`, `feature_state.dart`
+  - Group related BLoCs in subdirectories by feature
+- For Riverpod:
+  - Place providers in `lib/presentation/providers/` or feature-specific directories
+  - Follow naming convention: `feature_provider.dart`, `feature_state.dart`
+  - Keep provider definitions separate from their implementations
+
+## Coding & Styling Conventions
+- Use sealed classes/enums for events in BLoC pattern
+- Implement copyWith methods for all state classes
+- Make state classes @immutable
+- Prefer state extension methods over helper methods
+- Use freezed or equatable for state equality
+- Keep BLoC/provider files focused on a single responsibility
+- Use descriptive state class names: `LoadingState`, `LoadedState`, `ErrorState`
+
+## Performance & Optimization Tips
+- Implement equality comparison for all state classes to prevent unnecessary rebuilds
+- Use selective state consumption (BlocSelector/select) to limit widget rebuilds
+- Cache expensive computations within state objects
+- Avoid deep object nesting in state to simplify equality checks
+- Implement state combination strategically for related states
+
+## Testing & Validation Guidelines
+- Unit test all state transitions
+- Mock dependencies in BLoC/provider tests
+- Test initialization, events, and state transitions separately
+- Verify correct state emissions using bloc_test
+- Use Golden tests for complex widget state combinations
