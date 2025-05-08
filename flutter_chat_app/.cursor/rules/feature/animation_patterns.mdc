@@ -1,8 +1,9 @@
 ---
-description: "Guide implementation of smooth, performant animations with consistent UX patterns"
-globs: ["lib/**/*animation*.dart", "lib/**/*transition*.dart", "lib/**/widgets/**/*.dart", "lib/**/*effect*.dart"]
+description: "Guide implementation of smooth, performant animations with consistent UX patterns."
+globs: ["lib/features/animation/**/*.dart", "lib/core/animations/**/*.dart", "lib/presentation/widgets/animated/**/*.dart"]
 alwaysApply: false
 ---
+
 # Animation Patterns Guidelines
 
 ## Scope / Flexibility Notice

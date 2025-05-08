@@ -1,8 +1,9 @@
 ---
-description: "Guide implementation of real-time messaging features with optimized performance patterns"
-globs: ["lib/**/messaging/**/*.dart", "lib/**/chat/**/*.dart", "lib/**/*message*.dart", "lib/**/*conversation*.dart"]
+description: "Guide implementation of real-time messaging features with optimized performance patterns, including connection management and message state tracking."
+globs: ["lib/features/messaging/**/*.dart", "lib/features/chat/**/*.dart", "lib/data/datasources/remote/*messaging*.dart", "lib/presentation/blocs/messaging/**/*.dart"]
 alwaysApply: false
 ---
+
 # Real-time Messaging Guidelines
 
 ## Scope / Flexibility Notice

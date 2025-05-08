@@ -1,8 +1,9 @@
 ---
-description: 
-globs: 
+description: "Guidelines for implementing a robust and user-friendly notification system, covering multi-platform support, deep linking, and user settings."
+globs: ["lib/features/notifications/**/*.dart", "lib/core/notifications/**/*.dart"]
 alwaysApply: false
 ---
+
 # Notification System Guidelines
 
 ## Scope / Flexibility Notice
@@ -89,9 +90,3 @@ These guidelines establish patterns for implementing a reliable notification sys
 - Test notification performance with high volumes
 - Implement notification delivery monitoring
 - Test notification storage and retrieval efficiency
-
----
-description: "Guide implementation of robust notification systems for local and remote notifications"
-globs: ["lib/**/*notification*.dart", "lib/**/*alert*.dart", "lib/**/messaging/**/*.dart", "lib/**/push/**/*.dart"]
-alwaysApply: false
----

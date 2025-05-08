@@ -1,8 +1,9 @@
 ---
-description: "Guide implementation of AI-ready architecture and integration points for future AI capabilities"
-globs: ["lib/**/*ai*.dart", "lib/**/*ml*.dart", "lib/**/*smart*.dart", "lib/**/*intelligence*.dart", "lib/**/recommendation/**/*.dart"]
+description: "Guide implementation of AI-ready architecture and integration points for future AI capabilities."
+globs: ["lib/features/ai_readiness/**/*.dart", "lib/core/ai/**/*.dart"]
 alwaysApply: false
 ---
+
 # AI Readiness Guidelines
 
 ## Scope / Flexibility Notice

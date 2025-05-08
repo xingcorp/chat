@@ -1,8 +1,9 @@
 ---
-description: "Guide implementation of dynamic worker pool scaling for optimal resource utilization"
-globs: ["lib/**/*worker*.dart", "lib/**/*isolate*.dart", "lib/**/*pool*.dart", "lib/**/concurrency/**/*.dart"]
+description: "Guide implementation of dynamic worker pool scaling for optimal resource utilization, including system monitoring and task prioritization."
+globs: ["lib/features/worker_pool/**/*.dart", "lib/core/concurrency/**/*.dart"]
 alwaysApply: false
 ---
+
 # Worker Pool Scaling Guidelines
 
 ## Scope / Flexibility Notice

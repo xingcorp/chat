@@ -1,8 +1,9 @@
 ---
-description: "Guide implementation of efficient media handling and processing with optimized patterns"
-globs: ["lib/**/*media*.dart", "lib/**/*image*.dart", "lib/**/*video*.dart", "lib/**/*audio*.dart", "lib/**/*file*.dart", "lib/**/attachment/**/*.dart"]
+description: "Guide implementation of efficient media handling and processing with optimized patterns for images, videos, and other media types."
+globs: ["lib/features/media/**/*.dart", "lib/core/media/**/*.dart"]
 alwaysApply: false
 ---
+
 # Media Handling Guidelines
 
 ## Scope / Flexibility Notice

@@ -1,8 +1,9 @@
 ---
-description: "Guide implementation of robust offline-first data synchronization capabilities"
-globs: ["lib/**/*sync*.dart", "lib/**/*offline*.dart", "lib/**/local/**/*.dart", "lib/**/repository/**/impl/**/*.dart"]
+description: "Guide implementation of robust offline-first data synchronization capabilities, including conflict resolution and background sync."
+globs: ["lib/features/offline_sync/**/*.dart", "lib/core/sync/**/*.dart", "lib/data/datasources/local/**/*.dart"]
 alwaysApply: false
 ---
+
 # Offline Sync Guidelines
 
 ## Scope / Flexibility Notice

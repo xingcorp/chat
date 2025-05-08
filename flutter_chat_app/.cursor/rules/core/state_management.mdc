@@ -1,8 +1,9 @@
 ---
-description: "Guide consistent application state management patterns and implementation"
-globs: ["lib/presentation/**/*.dart", "lib/**/bloc/**/*.dart", "lib/**/cubit/**/*.dart", "lib/**/provider/**/*.dart", "lib/**/state/**/*.dart"]
+description: "Defines patterns for state management across presentation layers, primarily using BLoC and Riverpod."
+globs: ["lib/presentation/blocs/**/*.dart", "lib/presentation/cubits/**/*.dart", "lib/presentation/providers/**/*.dart", "lib/presentation/**/*.dart"]
 alwaysApply: true
 ---
+
 # State Management Guidelines
 
 ## Scope / Flexibility Notice
