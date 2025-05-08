@@ -3,7 +3,6 @@ description: "Guide writing clean, maintainable, and readable code across the en
 globs: ["lib/**/*.dart", "test/**/*.dart"]
 alwaysApply: true
 ---
-
 # Clean Code Guidelines
 
 ## Scope / Flexibility Notice
@@ -20,6 +19,12 @@ These guidelines promote writing clean, maintainable, and readable code througho
 - Fail fast - validate inputs early in functions
 - Avoid global state and side effects
 - Write code for humans first, machines second
+- Use early returns to reduce nesting and complexity
+- Extract complex conditional logic into named functions or variables
+- Follow verb phrases for functions (e.g., `fetchUser()`, `calculateTotal()`)
+- Prefix booleans with verbs (e.g., `isEnabled`, `hasPermission`)
+- Break down complex classes into smaller, focused ones
+- Use named parameters for clarity and self-documentation
 
 ## File / Project Structure Guidelines
 - Organize related code into cohesive files and classes
@@ -37,6 +42,23 @@ These guidelines promote writing clean, maintainable, and readable code througho
   import '../models/user.dart';
   ```
 - Separate interface from implementation when appropriate
+- One class per file as a general rule (with exceptions for tightly coupled classes)
+- Group code by feature rather than by type
+- Create dedicated directories for reusable components
+- Structure feature directories consistently:
+  ```
+  lib/
+    features/
+      auth/
+        domain/
+          models/
+          repositories/
+        presentation/
+          screens/
+          widgets/
+        application/
+          cubits/
+  ```
 
 ## Coding & Styling Conventions
 - Use consistent and descriptive naming:
@@ -49,6 +71,49 @@ These guidelines promote writing clean, maintainable, and readable code througho
 - Use trailing commas for improved formatting in multi-line structures
 - Use dartfmt/flutter format for consistent styling
 - Prefer named parameters for better readability in complex method calls
+- Make fields private unless they need external access
+- Use getters and setters for controlled property access
+- Group related properties and methods within classes
+- Implement proper error handling patterns:
+  - Use typed exceptions
+  - Avoid swallowing exceptions silently
+  - Handle errors at appropriate levels
+
+## Code Comments and Documentation
+- Write self-documenting code with clear names and structure
+- Add comments only when necessary to explain "why" not "what"
+- Document public APIs with dartdoc comments
+- Use code comments for:
+  - Explaining complex algorithms
+  - Documenting non-obvious decisions
+  - Flagging potential issues or edge cases
+  - Explaining temporary workarounds
+- Examples:
+  ```dart
+  /// Authenticates a user with email and password.
+  ///
+  /// Returns a [User] object if authentication is successful.
+  /// Throws [AuthException] if authentication fails.
+  /// 
+  /// Parameters:
+  /// - [email]: The user's email address
+  /// - [password]: The user's password (min 8 characters)
+  Future<User> authenticate(String email, String password) async {
+    // Implementation
+  }
+  
+  // GOOD: Comment explains WHY, not just WHAT
+  double calculateDiscount(double total, String userType) {
+    // Premium users get 20% off their entire order,
+    // while regular users get 10% off only when total exceeds $100
+    if (userType == 'premium') {
+      return total * 0.2;
+    } else if (total > 100) {
+      return total * 0.1;
+    }
+    return 0;
+  }
+  ```
 
 ## Performance & Optimization Tips
 - Avoid premature optimization - focus on clean, correct code first
@@ -57,6 +122,49 @@ These guidelines promote writing clean, maintainable, and readable code througho
 - Document performance-sensitive code sections with benchmark results
 - Avoid expensive computations in build() methods or constructors
 - Prefer const constructors when creating immutable widgets
+- Extract complex widget methods to improve readability:
+  ```dart
+  // BAD: Deeply nested conditional logic
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: isLoading 
+          ? Center(child: CircularProgressIndicator())
+          : hasError
+              ? Center(child: Text('An error occurred'))
+              : data.isEmpty
+                  ? Center(child: Text('No items found'))
+                  : ListView.builder(
+                      itemCount: data.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(title: Text(data[index].name));
+                      },
+                    ),
+    );
+  }
+  
+  // GOOD: Extracted widget methods for clarity
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _buildBody(context),
+    );
+  }
+  
+  Widget _buildBody(BuildContext context) {
+    if (isLoading) {
+      return _buildLoadingIndicator();
+    }
+    
+    if (hasError) {
+      return _buildErrorMessage();
+    }
+    
+    if (data.isEmpty) {
+      return _buildEmptyState();
+    }
+    
+    return _buildDataList();
+  }
+  ```
 
 ## Testing & Validation Guidelines
 - Write tests for complex logic and edge cases
@@ -66,3 +174,9 @@ These guidelines promote writing clean, maintainable, and readable code througho
 - Write tests that fail when the code is broken
 - Keep tests independent of each other
 - Use mocks judiciously for dependencies outside your control
+- Write testable code:
+  - Use dependency injection
+  - Avoid global state
+  - Separate business logic from UI
+- Test edge cases and error conditions
+- Maintain high test coverage for critical paths

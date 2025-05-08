@@ -1,0 +1,330 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# SOLID Principles Guidelines
+
+## Scope / Flexibility Notice
+These guidelines promote the application of SOLID principles in Flutter development. While implementations may vary based on feature complexity, these core principles should guide all code design decisions to create maintainable, testable, and scalable applications.
+
+## Best Practices
+
+### Single Responsibility Principle (SRP)
+- Ensure each class has only one reason to change
+- Split large, multi-purpose widgets into smaller, focused components
+- Separate UI rendering from business logic and state management
+- Extract reusable functionality into dedicated service classes
+- Create specialized repositories for different data domains
+- Examples:
+  ```dart
+  // GOOD: Single responsibility - just formats currency
+  class CurrencyFormatter {
+    String format(double amount, String currencyCode) {
+      // Implementation
+    }
+  }
+
+  // GOOD: Single responsibility - just handles network calls
+  class ApiClient {
+    Future<Response> get(String endpoint) {
+      // Implementation
+    }
+  }
+
+  // BAD: Multiple responsibilities mixed together
+  class UserWidget extends StatelessWidget {
+    final User user;
+    final ApiClient apiClient;
+
+    UserWidget(this.user, this.apiClient);
+
+    Future<void> updateUserProfile() async {
+      // Network logic inside a widget class
+      await apiClient.post('/users/${user.id}', body: user.toJson());
+    }
+
+    String formatUserJoinDate() {
+      // Formatting logic inside a widget class
+      final formatter = DateFormat('MMM d, yyyy');
+      return formatter.format(user.joinDate);
+    }
+
+    @override
+    Widget build(BuildContext context) {
+      return Column(
+        children: [
+          Text(user.name),
+          Text(formatUserJoinDate()),
+          ElevatedButton(
+            onPressed: updateUserProfile,
+            child: Text('Update Profile'),
+          ),
+        ],
+      );
+    }
+  }
+  ```
+
+### Open/Closed Principle (OCP)
+- Design classes that are open for extension but closed for modification
+- Use inheritance and interfaces for extensible components
+- Implement strategy pattern for varying behaviors
+- Create abstract base classes that define core functionality
+- Use mixins to add capabilities without modifying existing classes
+- Examples:
+  ```dart
+  // BAD: Will require modification for each new shape
+  class AreaCalculator {
+    double calculateArea(String shape, Map<String, double> dimensions) {
+      if (shape == 'rectangle') {
+        return dimensions['width']! * dimensions['height']!;
+      } else if (shape == 'circle') {
+        return 3.14 * dimensions['radius']! * dimensions['radius']!;
+      }
+      return 0;
+    }
+  }
+
+  // GOOD: Open for extension, closed for modification
+  abstract class Shape {
+    double calculateArea();
+  }
+
+  class Rectangle implements Shape {
+    final double width;
+    final double height;
+
+    Rectangle(this.width, this.height);
+
+    @override
+    double calculateArea() => width * height;
+  }
+
+  class Circle implements Shape {
+    final double radius;
+
+    Circle(this.radius);
+
+    @override
+    double calculateArea() => 3.14 * radius * radius;
+  }
+
+  // New shape can be added without modifying existing code
+  class Triangle implements Shape {
+    final double base;
+    final double height;
+
+    Triangle(this.base, this.height);
+
+    @override
+    double calculateArea() => 0.5 * base * height;
+  }
+  ```
+
+### Liskov Substitution Principle (LSP)
+- Ensure derived classes can substitute their base classes without affecting behavior
+- Override methods without changing their core contract
+- Don't throw exceptions in subclass methods where base classes don't
+- Don't add stricter preconditions in subclasses
+- Use covariant return types when overriding methods
+- Examples:
+  ```dart
+  // GOOD: Derived class can substitute base class
+  abstract class AuthenticationService {
+    Future<User?> authenticate(String username, String password);
+  }
+
+  class EmailAuthService implements AuthenticationService {
+    @override
+    Future<User?> authenticate(String username, String password) {
+      // Email-specific authentication
+      return _authenticateWithEmail(username, password);
+    }
+
+    Future<User?> _authenticateWithEmail(String email, String password) async {
+      // Implementation
+    }
+  }
+
+  class GoogleAuthService implements AuthenticationService {
+    @override
+    Future<User?> authenticate(String username, String password) {
+      // Google-specific authentication
+      return _authenticateWithGoogle(username, password);
+    }
+
+    Future<User?> _authenticateWithGoogle(String email, String password) async {
+      // Implementation
+    }
+  }
+
+  // BAD: Violates LSP by changing method behavior
+  class AdminAuthService implements AuthenticationService {
+    @override
+    Future<User?> authenticate(String username, String password) async {
+      if (!username.endsWith('@admin.com')) {
+        throw Exception('Only admin emails allowed'); // Changes contract behavior
+      }
+      // Authentication logic
+    }
+  }
+  ```
+
+### Interface Segregation Principle (ISP)
+- Create focused, minimal interfaces rather than large, general-purpose ones
+- Split large interfaces into smaller, more specific ones
+- Don't force classes to implement methods they don't need
+- Use abstract classes with minimal method requirements
+- Consider mixins for optional, reusable functionality
+- Examples:
+  ```dart
+  // BAD: Forces classes to implement methods they might not need
+  abstract class MediaPlayer {
+    void playAudio();
+    void playVideo();
+    void displaySubtitles();
+    void adjustBrightness();
+  }
+
+  // GOOD: Segregated interfaces
+  abstract class AudioPlayer {
+    void playAudio();
+  }
+
+  abstract class VideoPlayer {
+    void playVideo();
+    void adjustBrightness();
+  }
+
+  abstract class SubtitleCapable {
+    void displaySubtitles();
+  }
+
+  // Classes implement only what they need
+  class MusicPlayer implements AudioPlayer {
+    @override
+    void playAudio() {
+      // Implementation
+    }
+  }
+
+  class MoviePlayer implements AudioPlayer, VideoPlayer, SubtitleCapable {
+    @override
+    void playAudio() {
+      // Implementation
+    }
+
+    @override
+    void playVideo() {
+      // Implementation
+    }
+
+    @override
+    void adjustBrightness() {
+      // Implementation
+    }
+
+    @override
+    void displaySubtitles() {
+      // Implementation
+    }
+  }
+  ```
+
+### Dependency Inversion Principle (DIP)
+- Depend on abstractions, not concrete implementations
+- Use interfaces (abstract classes) for defining contracts
+- Implement dependency injection for providing concrete implementations
+- Hide implementation details behind interfaces
+- Use factories or service locators to resolve dependencies at runtime
+- Examples:
+  ```dart
+  // BAD: High-level module depends on low-level module
+  class UserService {
+    final FirebaseAuth _auth = FirebaseAuth.instance;
+
+    Future<User?> login(String email, String password) {
+      return _auth.signInWithEmailAndPassword(email: email, password: password);
+    }
+  }
+
+  // GOOD: Both depend on abstraction
+  abstract class AuthProvider {
+    Future<User?> signIn(String email, String password);
+  }
+
+  class FirebaseAuthProvider implements AuthProvider {
+    final FirebaseAuth _auth = FirebaseAuth.instance;
+
+    @override
+    Future<User?> signIn(String email, String password) {
+      return _auth.signInWithEmailAndPassword(email: email, password: password);
+    }
+  }
+
+  class UserService {
+    final AuthProvider _authProvider;
+
+    UserService(this._authProvider);
+
+    Future<User?> login(String email, String password) {
+      return _authProvider.signIn(email, password);
+    }
+  }
+
+  // Usage with dependency injection
+  final serviceLocator = GetIt.instance;
+
+  void setupDependencies() {
+    serviceLocator.registerLazySingleton<AuthProvider>(() => FirebaseAuthProvider());
+    serviceLocator.registerLazySingleton<UserService>(
+      () => UserService(serviceLocator<AuthProvider>())
+    );
+  }
+  ```
+
+## File / Project Structure Guidelines
+- Place interfaces/abstract classes in dedicated files
+- Group related interfaces in the domain layer
+- Keep implementations in separate files from interfaces
+- Organize by feature rather than by type for better cohesion
+- Structure directories to reflect separation of concerns:
+  ```
+  lib/
+    domain/
+      interfaces/
+        auth_provider.dart
+        user_repository.dart
+    data/
+      implementations/
+        firebase_auth_provider.dart
+        api_user_repository.dart
+  ```
+
+## Coding & Styling Conventions
+- Prefix interfaces with `I` only when necessary for clarity
+- Use descriptive names reflecting the responsibility of the class
+- Name method parameters clearly to document their purpose
+- Use named parameters for greater clarity when appropriate
+- Follow consistent naming for interface implementations
+- Document interface contracts with comments
+- Name abstract base classes with "Base" prefix when appropriate
+
+## Performance & Optimization Tips
+- Use factory constructors for creating instances based on runtime conditions
+- Implement lazy loading patterns to initialize expensive objects only when needed
+- Cache instances that implement interfaces when appropriate
+- Consider using Singleton or Factory patterns for service instantiation
+- Minimize memory usage by keeping classes focused and lean
+- Balance abstraction against performance needs
+
+## Testing & Validation Guidelines
+- Mock interfaces for unit testing, not implementations
+- Test implementations in isolation with mocked dependencies
+- Verify inherited behavior conforms to base class expectations
+- Test interface substitutability across implementations
+- Validate that derived classes don't violate LSP
+- Test each class for adherence to its single responsibility
+- Use dependency injection to facilitate easier testing
+- Create comprehensive test cases for abstract interfaces

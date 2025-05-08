@@ -3,7 +3,6 @@ description: "Guide performance optimization techniques and strategies across th
 globs: ["lib/**/*.dart"]
 alwaysApply: true
 ---
-
 # Optimization Strategies Guidelines
 
 ## Scope / Flexibility Notice
@@ -34,6 +33,54 @@ These guidelines establish patterns for optimizing application performance acros
 - Avoid expensive operations in build() methods
 - Optimize state management to prevent unnecessary rebuilds
 - Use `computeAsync` for expensive UI calculations
+- Implement `shouldRepaint` in custom painters to avoid unnecessary repaints
+- Override `operator ==` and `hashCode` for custom widget equality comparison
+- Reduce build method complexity by extracting methods
+- Use `SizedBox` instead of `Container` when only dimensions are needed
+- Consider using `AnimationBuilder` for custom animations to localize rebuilds
+- Implement `FittedBox` for responsive layout adaptations
+- Example of optimized list:
+  ```dart
+  // GOOD: Optimized list with builder and fixed item extent
+  ListView.builder(
+    itemCount: items.length,
+    itemExtent: 60.0, // Fixed item height improves performance
+    itemBuilder: (context, index) {
+      return ListTile(
+        key: ValueKey(items[index].id),
+        title: Text(items[index].title),
+      );
+    },
+  );
+  ```
+
+### State Management Optimization
+- Use selective rebuilds with state management solutions:
+  - `Provider.select()` to listen to specific state changes
+  - `BlocBuilder` with conditional rebuild parameters
+  - `Selector` widgets to optimize rebuilds
+- Implement `ValueNotifier` for simple state that requires minimal rebuilds
+- Use `InheritedWidget` efficiently for passing data down widget tree
+- Consider state immutability to improve comparison performance
+- Examples:
+  ```dart
+  // GOOD: Selective rebuilds with Provider
+  Consumer<UserState>(
+    builder: (context, userState, child) {
+      return Text(userState.username);
+    },
+    // Only rebuild when username changes
+    selector: (context, userState) => userState.username,
+  );
+  
+  // GOOD: Conditional rebuilds with BlocBuilder
+  BlocBuilder<CounterBloc, CounterState>(
+    buildWhen: (previous, current) => previous.count != current.count,
+    builder: (context, state) {
+      return Text('${state.count}');
+    },
+  );
+  ```
 
 ### Data Layer Optimization
 - Implement efficient caching strategies
@@ -46,6 +93,27 @@ These guidelines establish patterns for optimizing application performance acros
 - Implement delta updates for large data sets
 - Optimize JSON parsing with code generation tools
 - Minimize deep object copying
+- Use `isolate_handler` or `compute` for heavy operations
+- Implement data prefetching for anticipated user actions
+- Example of optimized data access:
+  ```dart
+  // GOOD: Using compute for CPU-intensive operations
+  Future<List<FilteredItem>> filterItems(List<Item> items, Filter filter) async {
+    return compute(_filterItems, {
+      'items': items,
+      'filter': filter,
+    });
+  }
+  
+  // Pure function for compute
+  List<FilteredItem> _filterItems(Map<String, dynamic> params) {
+    final items = params['items'] as List<Item>;
+    final filter = params['filter'] as Filter;
+    
+    // CPU-intensive filtering
+    return items.where((item) => filter.matches(item)).toList();
+  }
+  ```
 
 ### Asset Optimization
 - Compress images appropriately
@@ -56,6 +124,63 @@ These guidelines establish patterns for optimizing application performance acros
 - Use appropriate asset resolutions for different devices
 - Consider using sprite sheets for multiple small images
 - Lazy load non-critical assets
+- Use `CachedNetworkImage` for efficient network image caching
+- Implement placeholders for images during loading
+- Consider custom image loading strategies for critical paths
+- Example:
+  ```dart
+  // GOOD: Optimized image loading with placeholder and error handling
+  CachedNetworkImage(
+    imageUrl: imageUrl,
+    placeholder: (context, url) => Container(
+      color: Colors.grey[300],
+      child: Center(child: CircularProgressIndicator()),
+    ),
+    errorWidget: (context, url, error) => Icon(Icons.error),
+    fadeInDuration: Duration(milliseconds: 300),
+    fit: BoxFit.cover,
+  )
+  ```
+
+### Memory Management
+- Properly dispose controllers, animations, and streams
+- Implement lazy initialization for expensive resources
+- Use weak references for caching objects that might be garbage collected
+- Release resources when navigating away from screens
+- Monitor memory usage during development
+- Avoid memory leaks from closures and callbacks
+- Example of proper resource management:
+  ```dart
+  class MyWidget extends StatefulWidget {
+    @override
+    _MyWidgetState createState() => _MyWidgetState();
+  }
+  
+  class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin {
+    late AnimationController _controller;
+    StreamSubscription? _subscription;
+    
+    @override
+    void initState() {
+      super.initState();
+      _controller = AnimationController(vsync: this);
+      _subscription = stream.listen((_) {});
+    }
+    
+    @override
+    void dispose() {
+      // GOOD: Proper resource cleanup
+      _controller.dispose();
+      _subscription?.cancel();
+      super.dispose();
+    }
+    
+    @override
+    Widget build(BuildContext context) {
+      return Container();
+    }
+  }
+  ```
 
 ## Performance Monitoring
 - Implement custom performance traces for critical operations
@@ -69,6 +194,21 @@ These guidelines establish patterns for optimizing application performance acros
 - Set up alerting for performance regressions
 - Regularly review performance dashboards
 - Document performance improvements and regressions
+- Use Flutter Performance overlay during development
+- Implement custom instrumentation for critical user journeys
+- Add trace markers for performance debugging:
+  ```dart
+  import 'dart:developer' as developer;
+  
+  Future<void> performExpensiveOperation() async {
+    developer.Timeline.startSync('ExpensiveOperation');
+    try {
+      // Expensive operation code
+    } finally {
+      developer.Timeline.finishSync();
+    }
+  }
+  ```
 
 ## Testing & Validation Guidelines
 - Implement automated performance tests for critical features
@@ -80,3 +220,25 @@ These guidelines establish patterns for optimizing application performance acros
 - Use Flutter DevTools to identify and resolve performance issues
 - Document baseline performance metrics for key operations
 - Run performance tests as part of CI/CD pipeline when feasible
+- Create specific tests for rendering performance:
+  ```dart
+  testWidgets('List scrolling maintains 60fps', (WidgetTester tester) async {
+    await tester.pumpWidget(MyApp());
+    await tester.pumpAndSettle();
+    
+    final listFinder = find.byType(ListView);
+    final startTime = DateTime.now();
+    
+    // Scroll multiple times
+    for (int i = 0; i < 20; i++) {
+      await tester.drag(listFinder, Offset(0, -300));
+      await tester.pump(Duration(milliseconds: 16)); // ~60fps
+    }
+    
+    final endTime = DateTime.now();
+    final duration = endTime.difference(startTime);
+    
+    // Verify scrolling was smooth (approximately 60fps)
+    expect(duration.inMilliseconds, lessThan(20 * 20)); // 20 frames at max 20ms each
+  });
+  ```
