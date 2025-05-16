@@ -1,6 +1,6 @@
 ---
-description: 
-globs: 
+description: "Guidelines for implementing behavioral design patterns (Observer, Strategy, Command, State, Template, Iterator, etc.) in Flutter apps"
+globs: ["lib/**/*.dart", "lib/**/blocs/*.dart", "lib/**/states/*.dart", "lib/**/*_command.dart"]
 alwaysApply: false
 ---
 # Behavioral Design Patterns Guidelines

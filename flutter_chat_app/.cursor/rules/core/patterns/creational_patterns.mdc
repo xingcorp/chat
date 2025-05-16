@@ -3,11 +3,6 @@ description: "Guidelines for implementing creational design patterns (Factory, A
 globs: ["lib/**/*.dart", "lib/**/*_factory.dart", "lib/**/di/*.dart"]
 alwaysApply: false
 ---
----
-description: 
-globs: 
-alwaysApply: false
----
 # Creational Design Patterns Guidelines
 
 ## Scope / Flexibility Notice

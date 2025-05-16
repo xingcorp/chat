@@ -1,6 +1,6 @@
 ---
-description: 
-globs: 
+description: "Guidelines for implementing structural design patterns (Adapter, Decorator, Bridge, Composite, Facade, Proxy, Flyweight) in Flutter apps"
+globs: ["lib/**/*.dart", "lib/**/adapters/*.dart", "lib/**/*_adapter.dart"]
 alwaysApply: false
 ---
 # Structural Design Patterns Guidelines
