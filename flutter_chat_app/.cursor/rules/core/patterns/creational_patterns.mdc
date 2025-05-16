@@ -1,0 +1,487 @@
+---
+description: "Guidelines for implementing creational design patterns (Factory, Abstract Factory, Singleton, Builder, Prototype, DI) in Flutter apps"
+globs: ["lib/**/*.dart", "lib/**/*_factory.dart", "lib/**/di/*.dart"]
+alwaysApply: false
+---
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Creational Design Patterns Guidelines
+
+## Scope / Flexibility Notice
+These guidelines focus on object creation patterns for Flutter applications. Creational patterns abstract the instantiation process, making systems independent of how objects are created, composed and represented. Apply these patterns selectively based on your application's needs.
+
+## Factory Pattern
+- Use for creating objects without specifying their concrete classes
+- Implement when object creation logic should be separated from usage
+- Apply when you need family of related objects
+- Examples:
+  ```dart
+  // Factory pattern for creating platform-specific widgets
+  abstract class PlatformButton {
+    Widget build(BuildContext context, String label, VoidCallback onPressed);
+    
+    factory PlatformButton() {
+      if (Platform.isIOS) {
+        return IOSButton();
+      } else {
+        return AndroidButton();
+      }
+    }
+  }
+  
+  class IOSButton implements PlatformButton {
+    @override
+    Widget build(BuildContext context, String label, VoidCallback onPressed) {
+      return CupertinoButton(
+        onPressed: onPressed,
+        child: Text(label),
+      );
+    }
+  }
+  
+  class AndroidButton implements PlatformButton {
+    @override
+    Widget build(BuildContext context, String label, VoidCallback onPressed) {
+      return ElevatedButton(
+        onPressed: onPressed,
+        child: Text(label),
+      );
+    }
+  }
+  
+  // Usage
+  Widget buildButton(BuildContext context) {
+    final button = PlatformButton();
+    return button.build(context, 'Click me', () {
+      print('Button clicked');
+    });
+  }
+  ```
+
+## Abstract Factory Pattern
+- Use when you need families of related objects without specifying concrete classes
+- Implement when your system needs to be independent of how products are created
+- Apply when you have multiple families of objects to work with
+- Examples:
+  ```dart
+  // Abstract Factory for theme-specific UI components
+  abstract class ThemeFactory {
+    AppBar createAppBar(String title);
+    Button createButton(String label, VoidCallback onPressed);
+    TextField createTextField(String hint);
+    
+    factory ThemeFactory({required ThemeMode mode}) {
+      if (mode == ThemeMode.dark) {
+        return DarkThemeFactory();
+      } else {
+        return LightThemeFactory();
+      }
+    }
+  }
+  
+  class LightThemeFactory implements ThemeFactory {
+    @override
+    AppBar createAppBar(String title) {
+      return AppBar(
+        title: Text(title),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+      );
+    }
+    
+    @override
+    Widget createButton(String label, VoidCallback onPressed) {
+      return ElevatedButton(
+        onPressed: onPressed,
+        child: Text(label),
+        style: ElevatedButton.styleFrom(
+          primary: Colors.blue,
+          onPrimary: Colors.white,
+        ),
+      );
+    }
+    
+    @override
+    Widget createTextField(String hint) {
+      return TextField(
+        decoration: InputDecoration(
+          hintText: hint,
+          fillColor: Colors.grey[200],
+          filled: true,
+        ),
+      );
+    }
+  }
+  
+  class DarkThemeFactory implements ThemeFactory {
+    @override
+    AppBar createAppBar(String title) {
+      return AppBar(
+        title: Text(title),
+        backgroundColor: Colors.grey[900],
+        foregroundColor: Colors.white,
+      );
+    }
+    
+    @override
+    Widget createButton(String label, VoidCallback onPressed) {
+      return ElevatedButton(
+        onPressed: onPressed,
+        child: Text(label),
+        style: ElevatedButton.styleFrom(
+          primary: Colors.blueGrey[800],
+          onPrimary: Colors.white,
+        ),
+      );
+    }
+    
+    @override
+    Widget createTextField(String hint) {
+      return TextField(
+        decoration: InputDecoration(
+          hintText: hint,
+          fillColor: Colors.grey[800],
+          filled: true,
+          hintStyle: TextStyle(color: Colors.grey[400]),
+        ),
+        style: TextStyle(color: Colors.white),
+      );
+    }
+  }
+  
+  // Usage
+  Widget buildUI(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final factory = ThemeFactory(
+      mode: isDarkMode ? ThemeMode.dark : ThemeMode.light
+    );
+    
+    return Scaffold(
+      appBar: factory.createAppBar('My App'),
+      body: Column(
+        children: [
+          factory.createTextField('Enter your name'),
+          factory.createButton('Submit', () {}),
+        ],
+      ),
+    );
+  }
+  ```
+
+## Singleton Pattern
+- Use for managing global state or resources that should have only one instance
+- Implement for services that should be instantiated only once
+- Apply for shared resources like database connections, API clients, or app configurations
+- Use with caution as it can introduce global state and testing challenges
+- Examples:
+  ```dart
+  // Singleton using factory constructor
+  class DatabaseService {
+    static final DatabaseService _instance = DatabaseService._internal();
+    late final Database _database;
+    
+    // Factory constructor returns the same instance each time
+    factory DatabaseService() {
+      return _instance;
+    }
+    
+    // Private constructor for internal use
+    DatabaseService._internal();
+    
+    // Initialize the database
+    Future<void> initialize() async {
+      _database = await openDatabase('app_database.db');
+    }
+    
+    // Database operations
+    Future<List<Map<String, dynamic>>> query(String table) {
+      return _database.query(table);
+    }
+  }
+  
+  // Usage
+  final dbService = DatabaseService();
+  await dbService.initialize();
+  final users = await dbService.query('users');
+  
+  // Alternative implementation with GetIt dependency injection
+  final getIt = GetIt.instance;
+  
+  void setupSingletons() {
+    getIt.registerLazySingleton<DatabaseService>(() => DatabaseService());
+  }
+  ```
+
+## Builder Pattern
+- Use for constructing complex objects step by step
+- Implement for objects with many optional parameters
+- Apply when object creation involves multiple steps
+- Useful for creating immutable objects with many properties
+- Examples:
+  ```dart
+  // Builder pattern for a complex query
+  class QueryBuilder {
+    String? _table;
+    List<String> _columns = [];
+    String? _whereClause;
+    List<String> _orderBy = [];
+    int? _limit;
+    
+    QueryBuilder table(String table) {
+      _table = table;
+      return this;
+    }
+    
+    QueryBuilder select(List<String> columns) {
+      _columns = columns;
+      return this;
+    }
+    
+    QueryBuilder where(String whereClause) {
+      _whereClause = whereClause;
+      return this;
+    }
+    
+    QueryBuilder orderBy(List<String> orderBy) {
+      _orderBy = orderBy;
+      return this;
+    }
+    
+    QueryBuilder limit(int limit) {
+      _limit = limit;
+      return this;
+    }
+    
+    Query build() {
+      if (_table == null) {
+        throw Exception('Table name is required');
+      }
+      
+      return Query(
+        table: _table!,
+        columns: _columns,
+        whereClause: _whereClause,
+        orderBy: _orderBy,
+        limit: _limit,
+      );
+    }
+  }
+  
+  class Query {
+    final String table;
+    final List<String> columns;
+    final String? whereClause;
+    final List<String> orderBy;
+    final int? limit;
+    
+    Query({
+      required this.table,
+      this.columns = const [],
+      this.whereClause,
+      this.orderBy = const [],
+      this.limit,
+    });
+    
+    String toSql() {
+      // Generate SQL from query parameters
+      final columnsClause = columns.isEmpty ? '*' : columns.join(', ');
+      var sql = 'SELECT $columnsClause FROM $table';
+      
+      if (whereClause != null) {
+        sql += ' WHERE $whereClause';
+      }
+      
+      if (orderBy.isNotEmpty) {
+        sql += ' ORDER BY ${orderBy.join(', ')}';
+      }
+      
+      if (limit != null) {
+        sql += ' LIMIT $limit';
+      }
+      
+      return sql;
+    }
+  }
+  
+  // Usage
+  final query = QueryBuilder()
+    .table('users')
+    .select(['id', 'name', 'email'])
+    .where('age > 18')
+    .orderBy(['name ASC'])
+    .limit(10)
+    .build();
+    
+  final sql = query.toSql();
+  // SQL: "SELECT id, name, email FROM users WHERE age > 18 ORDER BY name ASC LIMIT 10"
+  ```
+
+## Prototype Pattern
+- Use when object creation is costly and you need to create similar objects
+- Implement when objects have many shared configurations
+- Apply to reduce the number of subclasses
+- Examples:
+  ```dart
+  // Prototype pattern for creating copies of widgets with similar properties
+  abstract class WidgetPrototype {
+    WidgetPrototype clone();
+  }
+  
+  class CustomCardWidget implements WidgetPrototype {
+    final double elevation;
+    final Color backgroundColor;
+    final BorderRadius borderRadius;
+    final EdgeInsets padding;
+    Widget? child;
+    
+    CustomCardWidget({
+      this.elevation = 2.0,
+      this.backgroundColor = Colors.white,
+      this.borderRadius = const BorderRadius.all(Radius.circular(8.0)),
+      this.padding = const EdgeInsets.all(16.0),
+      this.child,
+    });
+    
+    @override
+    CustomCardWidget clone() {
+      return CustomCardWidget(
+        elevation: this.elevation,
+        backgroundColor: this.backgroundColor,
+        borderRadius: this.borderRadius,
+        padding: this.padding,
+        // Note: child is not cloned, must be set separately
+      );
+    }
+    
+    Widget build() {
+      return Card(
+        elevation: elevation,
+        color: backgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: borderRadius),
+        child: Padding(
+          padding: padding,
+          child: child ?? Container(),
+        ),
+      );
+    }
+  }
+  
+  // Usage
+  // Create a prototype
+  final cardPrototype = CustomCardWidget(
+    elevation: 4.0,
+    backgroundColor: Colors.blue[50]!,
+    borderRadius: BorderRadius.circular(12.0),
+  );
+  
+  // Clone and customize
+  final userCard = cardPrototype.clone()
+    ..child = UserInfoWidget();
+    
+  final settingsCard = cardPrototype.clone()
+    ..backgroundColor = Colors.grey[100]!
+    ..child = SettingsWidget();
+    
+  // Use in UI
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        userCard.build(),
+        settingsCard.build(),
+      ],
+    );
+  }
+  ```
+
+## Dependency Injection Pattern
+- Use for providing dependencies to a class instead of creating them internally
+- Implement for better testability and decoupling
+- Apply with service locators or dedicated DI frameworks
+- Examples:
+  ```dart
+  // Simple manual dependency injection
+  class UserRepository {
+    final ApiClient apiClient;
+    final DatabaseHelper dbHelper;
+    
+    UserRepository({required this.apiClient, required this.dbHelper});
+    
+    Future<User?> getUser(String id) async {
+      // Implementation using injected dependencies
+    }
+  }
+  
+  // Usage with GetIt service locator
+  void setupDependencies() {
+    final getIt = GetIt.instance;
+    
+    // Register dependencies
+    getIt.registerLazySingleton<ApiClient>(() => ApiClient('https://api.example.com'));
+    getIt.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper());
+    
+    // Register repositories with dependencies
+    getIt.registerLazySingleton<UserRepository>(() => UserRepository(
+      apiClient: getIt<ApiClient>(),
+      dbHelper: getIt<DatabaseHelper>(),
+    ));
+  }
+  
+  // Usage in widget
+  Widget build(BuildContext context) {
+    final userRepository = GetIt.instance<UserRepository>();
+    
+    return FutureBuilder<User?>(
+      future: userRepository.getUser('123'),
+      builder: (context, snapshot) {
+        // UI rendering
+      },
+    );
+  }
+  ```
+
+## File Structure Best Practices
+- Organize factories by feature and responsibility
+- Group related factories and builders in dedicated directories
+- Example file organization:
+  ```
+  lib/
+    core/
+      factories/
+        theme_factory.dart
+        widget_factory.dart
+      builders/
+        form_builder.dart
+        query_builder.dart
+    di/
+      injection_container.dart
+      app_module.dart
+    features/
+      auth/
+        data/
+          models/
+            user_model.dart
+          factories/
+            user_factory.dart
+    utils/
+      singletons/
+        app_config.dart
+  ```
+
+## Performance & Optimization Tips
+- Use lazy initialization for singletons to defer expensive creation
+- Cache factory and builder outputs when creation is expensive
+- Avoid heavy operations in constructors
+- Use dependency injection for better testability and component swapping
+- Use the builder pattern for complex objects with many optional parameters
+- Consider memory implications when using prototypes for large objects
+
+## Testing & Validation Guidelines
+- Use dependency injection to replace real implementations with test doubles
+- Test each factory implementation separately
+- Verify singleton instances are properly shared
+- Test builder output with various configurations
+- Use test factories to generate test data
+- Mock dependencies in unit tests

@@ -7,11 +7,8 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat: update design patterns, SOLID principles, and state management guidelines with improved descriptions and ensure alwaysApply is set to true">
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/clean_architecture.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/clean_architecture.mdc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/state_management.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/state_management.mdc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/testing_strategy.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/testing_strategy.mdc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/project-architecture-structure.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/project-architecture-structure.mdc" afterDir="false" />
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat: refine architecture guidelines with enhanced descriptions, multi-platform structure, and state management best practices">
+      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/design_patterns.mdc" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -381,7 +378,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746674555331</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="feat: refine architecture guidelines with enhanced descriptions, multi-platform structure, and state management best practices">
+      <option name="closed" value="true" />
+      <created>1747388611223</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1747388611223</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -468,6 +473,7 @@
     <MESSAGE value="feat: add comprehensive error handling and security guidelines to improve code quality and consistency" />
     <MESSAGE value="feat: add comprehensive guidelines for AI readiness, media handling, offline sync, real-time messaging, and worker pool scaling" />
     <MESSAGE value="feat: update design patterns, SOLID principles, and state management guidelines with improved descriptions and ensure alwaysApply is set to true" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: update design patterns, SOLID principles, and state management guidelines with improved descriptions and ensure alwaysApply is set to true" />
+    <MESSAGE value="feat: refine architecture guidelines with enhanced descriptions, multi-platform structure, and state management best practices" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: refine architecture guidelines with enhanced descriptions, multi-platform structure, and state management best practices" />
   </component>
 </project>

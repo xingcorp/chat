@@ -1,0 +1,1160 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Behavioral Design Patterns Guidelines
+
+## Scope / Flexibility Notice
+These guidelines focus on behavioral patterns that define how objects interact and communicate with each other. Behavioral patterns help manage algorithms, relationships, and responsibilities between objects, making complex behavior more manageable and systems more flexible. Apply these patterns when you need to define clear communication protocols between components.
+
+## Observer Pattern
+- Use for defining a one-to-many dependency between objects
+- Implement when an object's state changes need to be communicated to dependent objects
+- Apply when you need to maintain consistency across objects
+- Examples:
+  ```dart
+  // Observer interface
+  abstract class Observer {
+    void update(String message);
+  }
+  
+  // Subject interface
+  abstract class Subject {
+    void addObserver(Observer observer);
+    void removeObserver(Observer observer);
+    void notifyObservers();
+  }
+  
+  // Concrete subject
+  class MessagePublisher implements Subject {
+    final List<Observer> _observers = [];
+    String _message = '';
+    
+    void setMessage(String message) {
+      _message = message;
+      notifyObservers();
+    }
+    
+    @override
+    void addObserver(Observer observer) {
+      _observers.add(observer);
+    }
+    
+    @override
+    void removeObserver(Observer observer) {
+      _observers.remove(observer);
+    }
+    
+    @override
+    void notifyObservers() {
+      for (final observer in _observers) {
+        observer.update(_message);
+      }
+    }
+  }
+  
+  // Concrete observers
+  class MessageDisplay implements Observer {
+    final String name;
+    
+    MessageDisplay(this.name);
+    
+    @override
+    void update(String message) {
+      print('$name received: $message');
+    }
+  }
+  
+  // Flutter-specific implementation with ChangeNotifier
+  class DataModel extends ChangeNotifier {
+    String _data = '';
+    
+    String get data => _data;
+    
+    void updateData(String newData) {
+      _data = newData;
+      notifyListeners();
+    }
+  }
+  
+  // Usage
+  Widget buildWithProvider() {
+    return ChangeNotifierProvider(
+      create: (_) => DataModel(),
+      child: Consumer<DataModel>(
+        builder: (context, model, child) {
+          return Text('Current data: ${model.data}');
+        },
+      ),
+    );
+  }
+  ```
+
+## Strategy Pattern
+- Use for defining a family of algorithms, encapsulating each one
+- Implement when you need to switch between algorithms at runtime
+- Apply when you have multiple ways to accomplish the same task
+- Examples:
+  ```dart
+  // Strategy interface
+  abstract class SortStrategy<T> {
+    List<T> sort(List<T> data);
+  }
+  
+  // Concrete strategies
+  class AscendingSortStrategy<T extends Comparable> implements SortStrategy<T> {
+    @override
+    List<T> sort(List<T> data) {
+      final result = List<T>.from(data);
+      result.sort((a, b) => a.compareTo(b));
+      return result;
+    }
+  }
+  
+  class DescendingSortStrategy<T extends Comparable> implements SortStrategy<T> {
+    @override
+    List<T> sort(List<T> data) {
+      final result = List<T>.from(data);
+      result.sort((a, b) => b.compareTo(a));
+      return result;
+    }
+  }
+  
+  class RandomSortStrategy<T> implements SortStrategy<T> {
+    @override
+    List<T> sort(List<T> data) {
+      final result = List<T>.from(data);
+      result.shuffle();
+      return result;
+    }
+  }
+  
+  // Context
+  class DataSorter<T extends Comparable> {
+    SortStrategy<T>? _strategy;
+    
+    void setStrategy(SortStrategy<T> strategy) {
+      _strategy = strategy;
+    }
+    
+    List<T> sort(List<T> data) {
+      if (_strategy == null) {
+        throw Exception('Sort strategy not set');
+      }
+      return _strategy!.sort(data);
+    }
+  }
+  
+  // Usage
+  void main() {
+    final numbers = [5, 2, 8, 1, 9, 3];
+    final sorter = DataSorter<int>();
+    
+    // Use ascending strategy
+    sorter.setStrategy(AscendingSortStrategy<int>());
+    print(sorter.sort(numbers)); // [1, 2, 3, 5, 8, 9]
+    
+    // Switch to descending strategy
+    sorter.setStrategy(DescendingSortStrategy<int>());
+    print(sorter.sort(numbers)); // [9, 8, 5, 3, 2, 1]
+    
+    // Switch to random strategy
+    sorter.setStrategy(RandomSortStrategy<int>());
+    print(sorter.sort(numbers)); // [Random order]
+  }
+  ```
+
+## Command Pattern
+- Use for encapsulating a request as an object
+- Implement when you need to parameterize objects with operations
+- Apply when you need to queue, log, or undo operations
+- Examples:
+  ```dart
+  // Command interface
+  abstract class Command {
+    void execute();
+    void undo();
+  }
+  
+  // Receiver
+  class Document {
+    final List<String> lines = [];
+    
+    void addLine(String line) {
+      print('Adding line: $line');
+      lines.add(line);
+    }
+    
+    void removeLine(int index) {
+      if (index >= 0 && index < lines.length) {
+        print('Removing line: ${lines[index]}');
+        lines.removeAt(index);
+      }
+    }
+    
+    void display() {
+      print('Document content:');
+      for (int i = 0; i < lines.length; i++) {
+        print('${i + 1}: ${lines[i]}');
+      }
+    }
+  }
+  
+  // Concrete commands
+  class AddLineCommand implements Command {
+    final Document document;
+    final String line;
+    
+    AddLineCommand(this.document, this.line);
+    
+    @override
+    void execute() {
+      document.addLine(line);
+    }
+    
+    @override
+    void undo() {
+      document.removeLine(document.lines.length - 1);
+    }
+  }
+  
+  class RemoveLineCommand implements Command {
+    final Document document;
+    final int index;
+    String? _removedLine;
+    
+    RemoveLineCommand(this.document, this.index);
+    
+    @override
+    void execute() {
+      if (index >= 0 && index < document.lines.length) {
+        _removedLine = document.lines[index];
+        document.removeLine(index);
+      }
+    }
+    
+    @override
+    void undo() {
+      if (_removedLine != null) {
+        document.lines.insert(index, _removedLine!);
+        print('Restored line: $_removedLine');
+      }
+    }
+  }
+  
+  // Invoker
+  class DocumentEditor {
+    final Document document = Document();
+    final List<Command> _history = [];
+    int _currentIndex = -1;
+    
+    void executeCommand(Command command) {
+      // Remove any commands that were undone
+      if (_currentIndex < _history.length - 1) {
+        _history.removeRange(_currentIndex + 1, _history.length);
+      }
+      
+      _history.add(command);
+      command.execute();
+      _currentIndex++;
+    }
+    
+    void undo() {
+      if (_currentIndex >= 0) {
+        _history[_currentIndex].undo();
+        _currentIndex--;
+      } else {
+        print('Nothing to undo');
+      }
+    }
+    
+    void redo() {
+      if (_currentIndex < _history.length - 1) {
+        _currentIndex++;
+        _history[_currentIndex].execute();
+      } else {
+        print('Nothing to redo');
+      }
+    }
+  }
+  
+  // Usage
+  void main() {
+    final editor = DocumentEditor();
+    
+    // Execute commands
+    editor.executeCommand(AddLineCommand(editor.document, 'First line'));
+    editor.executeCommand(AddLineCommand(editor.document, 'Second line'));
+    editor.executeCommand(AddLineCommand(editor.document, 'Third line'));
+    editor.document.display();
+    
+    // Undo last command
+    editor.undo();
+    editor.document.display();
+    
+    // Redo the command
+    editor.redo();
+    editor.document.display();
+    
+    // Execute a new command
+    editor.executeCommand(RemoveLineCommand(editor.document, 1));
+    editor.document.display();
+    
+    // Undo and redo
+    editor.undo();
+    editor.document.display();
+  }
+  ```
+
+## State Pattern
+- Use for allowing an object to alter its behavior when its internal state changes
+- Implement when an object's behavior depends on its state
+- Apply when you want to avoid large conditional statements
+- Examples:
+  ```dart
+  // State interface
+  abstract class PlayerState {
+    void play(AudioPlayer player);
+    void pause(AudioPlayer player);
+    void stop(AudioPlayer player);
+    String get name;
+  }
+  
+  // Context
+  class AudioPlayer {
+    PlayerState _state = StoppedState();
+    
+    void setState(PlayerState state) {
+      print('Changing state from ${_state.name} to ${state.name}');
+      _state = state;
+    }
+    
+    void play() {
+      _state.play(this);
+    }
+    
+    void pause() {
+      _state.pause(this);
+    }
+    
+    void stop() {
+      _state.stop(this);
+    }
+  }
+  
+  // Concrete states
+  class PlayingState implements PlayerState {
+    @override
+    void play(AudioPlayer player) {
+      print('Already playing');
+    }
+    
+    @override
+    void pause(AudioPlayer player) {
+      print('Pausing playback');
+      player.setState(PausedState());
+    }
+    
+    @override
+    void stop(AudioPlayer player) {
+      print('Stopping playback');
+      player.setState(StoppedState());
+    }
+    
+    @override
+    String get name => 'Playing';
+  }
+  
+  class PausedState implements PlayerState {
+    @override
+    void play(AudioPlayer player) {
+      print('Resuming playback');
+      player.setState(PlayingState());
+    }
+    
+    @override
+    void pause(AudioPlayer player) {
+      print('Already paused');
+    }
+    
+    @override
+    void stop(AudioPlayer player) {
+      print('Stopping playback');
+      player.setState(StoppedState());
+    }
+    
+    @override
+    String get name => 'Paused';
+  }
+  
+  class StoppedState implements PlayerState {
+    @override
+    void play(AudioPlayer player) {
+      print('Starting playback');
+      player.setState(PlayingState());
+    }
+    
+    @override
+    void pause(AudioPlayer player) {
+      print('Can\'t pause when stopped');
+    }
+    
+    @override
+    void stop(AudioPlayer player) {
+      print('Already stopped');
+    }
+    
+    @override
+    String get name => 'Stopped';
+  }
+  
+  // Usage with Flutter UI
+  class AudioPlayerWidget extends StatefulWidget {
+    @override
+    _AudioPlayerWidgetState createState() => _AudioPlayerWidgetState();
+  }
+  
+  class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
+    final AudioPlayer _player = AudioPlayer();
+    String _stateText = 'Stopped';
+    
+    void _updateStateText() {
+      setState(() {
+        _stateText = _player._state.name;
+      });
+    }
+    
+    @override
+    Widget build(BuildContext context) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton(
+            onPressed: () {
+              _player.play();
+              _updateStateText();
+            },
+            child: Icon(Icons.play_arrow),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _player.pause();
+              _updateStateText();
+            },
+            child: Icon(Icons.pause),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _player.stop();
+              _updateStateText();
+            },
+            child: Icon(Icons.stop),
+          ),
+          SizedBox(width: 16),
+          Text('Player state: $_stateText'),
+        ],
+      );
+    }
+  }
+  ```
+
+## Template Method Pattern
+- Use for defining the skeleton of an algorithm, deferring some steps to subclasses
+- Implement when you have an algorithm with variant and invariant parts
+- Apply when you want to avoid code duplication across similar algorithms
+- Examples:
+  ```dart
+  // Abstract class with template method
+  abstract class DataProcessor {
+    // Template method
+    Future<void> processData() async {
+      await loadData();
+      transformData();
+      validateData();
+      await saveData();
+      notifyCompletion();
+    }
+    
+    // Abstract methods to be overridden
+    Future<void> loadData();
+    void transformData();
+    
+    // Optional hook methods with default implementation
+    void validateData() {
+      print('Default data validation');
+    }
+    
+    // Concrete methods
+    Future<void> saveData() async {
+      print('Saving data to database');
+      await Future.delayed(Duration(seconds: 1));
+    }
+    
+    void notifyCompletion() {
+      print('Data processing completed');
+    }
+  }
+  
+  // Concrete implementation
+  class ImageProcessor extends DataProcessor {
+    @override
+    Future<void> loadData() async {
+      print('Loading image data');
+      await Future.delayed(Duration(seconds: 1));
+    }
+    
+    @override
+    void transformData() {
+      print('Applying image filters');
+    }
+    
+    @override
+    void validateData() {
+      print('Validating image dimensions and format');
+    }
+  }
+  
+  // Another concrete implementation
+  class TextProcessor extends DataProcessor {
+    @override
+    Future<void> loadData() async {
+      print('Loading text data');
+      await Future.delayed(Duration(milliseconds: 500));
+    }
+    
+    @override
+    void transformData() {
+      print('Formatting and spell-checking text');
+    }
+  }
+  
+  // Usage
+  Future<void> main() async {
+    final imageProcessor = ImageProcessor();
+    final textProcessor = TextProcessor();
+    
+    print('Processing image:');
+    await imageProcessor.processData();
+    
+    print('\nProcessing text:');
+    await textProcessor.processData();
+  }
+  ```
+
+## Chain of Responsibility Pattern
+- Use for passing a request along a chain of handlers
+- Implement when more than one object may handle a request
+- Apply when you want to decouple request senders from receivers
+- Examples:
+  ```dart
+  // Handler interface
+  abstract class RequestHandler {
+    RequestHandler? _nextHandler;
+    
+    RequestHandler setNext(RequestHandler handler) {
+      _nextHandler = handler;
+      return handler;
+    }
+    
+    Future<String?> handle(Request request);
+    
+    Future<String?> handleNext(Request request) async {
+      if (_nextHandler != null) {
+        return _nextHandler!.handle(request);
+      }
+      return null;
+    }
+  }
+  
+  // Request class
+  class Request {
+    final String type;
+    final Map<String, dynamic> data;
+    
+    Request(this.type, this.data);
+  }
+  
+  // Concrete handlers
+  class AuthenticationHandler extends RequestHandler {
+    @override
+    Future<String?> handle(Request request) async {
+      print('AuthenticationHandler checking request...');
+      
+      if (request.type == 'auth') {
+        if (request.data['username'] == 'admin' && request.data['password'] == 'password') {
+          return 'Authentication successful';
+        } else {
+          return 'Authentication failed';
+        }
+      }
+      
+      // Pass to next handler
+      return handleNext(request);
+    }
+  }
+  
+  class DataValidationHandler extends RequestHandler {
+    @override
+    Future<String?> handle(Request request) async {
+      print('DataValidationHandler checking request...');
+      
+      if (!request.data.containsKey('id')) {
+        return 'Validation failed: Missing ID';
+      }
+      
+      // Pass to next handler
+      return handleNext(request);
+    }
+  }
+  
+  class DatabaseHandler extends RequestHandler {
+    @override
+    Future<String?> handle(Request request) async {
+      print('DatabaseHandler processing request...');
+      
+      if (request.type == 'data') {
+        return 'Data processed and saved to database';
+      }
+      
+      // Pass to next handler
+      return handleNext(request);
+    }
+  }
+  
+  class LoggingHandler extends RequestHandler {
+    @override
+    Future<String?> handle(Request request) async {
+      print('LoggingHandler logging request of type: ${request.type}');
+      
+      // Always continue to next handler
+      final result = await handleNext(request);
+      
+      print('Request processed with result: $result');
+      return result;
+    }
+  }
+  
+  // Usage
+  Future<void> main() async {
+    // Create chain of responsibility
+    final logHandler = LoggingHandler();
+    final authHandler = AuthenticationHandler();
+    final validationHandler = DataValidationHandler();
+    final dbHandler = DatabaseHandler();
+    
+    logHandler.setNext(authHandler).setNext(validationHandler).setNext(dbHandler);
+    
+    // Process authentication request
+    final authRequest = Request('auth', {
+      'username': 'admin',
+      'password': 'password',
+      'id': '123'
+    });
+    final authResult = await logHandler.handle(authRequest);
+    print('Final result: $authResult\n');
+    
+    // Process data request
+    final dataRequest = Request('data', {
+      'id': '456',
+      'value': 'test data'
+    });
+    final dataResult = await logHandler.handle(dataRequest);
+    print('Final result: $dataResult\n');
+    
+    // Process invalid request
+    final invalidRequest = Request('data', {
+      'value': 'missing ID'
+    });
+    final invalidResult = await logHandler.handle(invalidRequest);
+    print('Final result: $invalidResult');
+  }
+  ```
+
+## Mediator Pattern
+- Use for defining an object that encapsulates how a set of objects interact
+- Implement when objects communicate in complex ways
+- Apply when you want to reduce dependencies between objects
+- Examples:
+  ```dart
+  // Mediator interface
+  abstract class ChatMediator {
+    void sendMessage(String message, User sender);
+    void addUser(User user);
+  }
+  
+  // Colleague class
+  abstract class User {
+    final String name;
+    ChatMediator? mediator;
+    
+    User(this.name);
+    
+    void send(String message) {
+      print('$name sending: $message');
+      mediator?.sendMessage(message, this);
+    }
+    
+    void receive(String message) {
+      print('$name received: $message');
+    }
+  }
+  
+  // Concrete colleague
+  class ChatUser extends User {
+    ChatUser(String name) : super(name);
+  }
+  
+  // Concrete mediator
+  class ChatRoom implements ChatMediator {
+    final List<User> users = [];
+    
+    @override
+    void sendMessage(String message, User sender) {
+      print('\n${sender.name} sent message to chat room: "$message"');
+      
+      // Send message to all users except the sender
+      for (var user in users) {
+        if (user != sender) {
+          user.receive(message);
+        }
+      }
+    }
+    
+    @override
+    void addUser(User user) {
+      print('${user.name} joined the chat room');
+      user.mediator = this;
+      users.add(user);
+    }
+  }
+  
+  // Flutter UI example
+  class ChatRoomWidget extends StatefulWidget {
+    @override
+    _ChatRoomWidgetState createState() => _ChatRoomWidgetState();
+  }
+  
+  class _ChatRoomWidgetState extends State<ChatRoomWidget> {
+    final ChatRoom _chatRoom = ChatRoom();
+    final List<String> _messages = [];
+    final TextEditingController _controller = TextEditingController();
+    late ChatUser _currentUser;
+    
+    @override
+    void initState() {
+      super.initState();
+      
+      // Create users
+      _currentUser = ChatUser('You');
+      final user1 = ChatUser('Alice');
+      final user2 = ChatUser('Bob');
+      
+      // Add users to chat room
+      _chatRoom.addUser(_currentUser);
+      _chatRoom.addUser(user1);
+      _chatRoom.addUser(user2);
+      
+      // Override receive to update UI
+      _currentUser.receive = (message) {
+        setState(() {
+          _messages.add('You received: $message');
+        });
+      };
+    }
+    
+    void _sendMessage() {
+      if (_controller.text.isNotEmpty) {
+        setState(() {
+          _messages.add('You sent: ${_controller.text}');
+        });
+        _currentUser.send(_controller.text);
+        _controller.clear();
+      }
+    }
+    
+    @override
+    Widget build(BuildContext context) {
+      return Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(_messages[index]),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: 'Enter message',
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.send),
+                  onPressed: _sendMessage,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+  }
+  ```
+
+## Memento Pattern
+- Use for capturing and externalizing an object's internal state
+- Implement when you need to restore an object to a previous state
+- Apply when direct access to an object's fields violates encapsulation
+- Examples:
+  ```dart
+  // Memento class
+  class EditorState {
+    final String _text;
+    final int _cursorPosition;
+    final TextSelection? _selection;
+    
+    EditorState(this._text, this._cursorPosition, this._selection);
+    
+    String get text => _text;
+    int get cursorPosition => _cursorPosition;
+    TextSelection? get selection => _selection;
+  }
+  
+  // Originator
+  class TextEditor {
+    String _text = '';
+    int _cursorPosition = 0;
+    TextSelection? _selection;
+    
+    String getText() => _text;
+    
+    void setText(String text) {
+      _text = text;
+      _cursorPosition = text.length;
+      _selection = null;
+    }
+    
+    void setCursorPosition(int position) {
+      if (position >= 0 && position <= _text.length) {
+        _cursorPosition = position;
+        _selection = null;
+      }
+    }
+    
+    void setSelection(int start, int end) {
+      if (start >= 0 && end <= _text.length && start <= end) {
+        _selection = TextSelection(baseOffset: start, extentOffset: end);
+      }
+    }
+    
+    // Create a memento
+    EditorState save() {
+      return EditorState(_text, _cursorPosition, _selection);
+    }
+    
+    // Restore from memento
+    void restore(EditorState state) {
+      _text = state.text;
+      _cursorPosition = state.cursorPosition;
+      _selection = state.selection;
+    }
+    
+    @override
+    String toString() {
+      return 'Text: "$_text", Cursor: $_cursorPosition, Selection: $_selection';
+    }
+  }
+  
+  // Caretaker
+  class History {
+    final List<EditorState> _states = [];
+    int _currentStateIndex = -1;
+    
+    void save(TextEditor editor) {
+      // Remove any forward history if we're not at the end
+      if (_currentStateIndex < _states.length - 1) {
+        _states.removeRange(_currentStateIndex + 1, _states.length);
+      }
+      
+      // Save current state
+      _states.add(editor.save());
+      _currentStateIndex++;
+      
+      print('Saved state $_currentStateIndex: ${editor.toString()}');
+    }
+    
+    bool canUndo() => _currentStateIndex >= 0;
+    
+    bool canRedo() => _currentStateIndex < _states.length - 1;
+    
+    void undo(TextEditor editor) {
+      if (canUndo()) {
+        _currentStateIndex--;
+        editor.restore(_states[_currentStateIndex]);
+        print('Undo to state $_currentStateIndex: ${editor.toString()}');
+      } else {
+        print('Cannot undo, at earliest state');
+      }
+    }
+    
+    void redo(TextEditor editor) {
+      if (canRedo()) {
+        _currentStateIndex++;
+        editor.restore(_states[_currentStateIndex]);
+        print('Redo to state $_currentStateIndex: ${editor.toString()}');
+      } else {
+        print('Cannot redo, at latest state');
+      }
+    }
+  }
+  
+  // Usage
+  void main() {
+    final editor = TextEditor();
+    final history = History();
+    
+    // Initial state
+    editor.setText('Hello');
+    history.save(editor);
+    
+    // Make changes
+    editor.setText('Hello, World');
+    history.save(editor);
+    
+    editor.setText('Hello, World!');
+    editor.setSelection(7, 12);
+    history.save(editor);
+    
+    // Undo changes
+    history.undo(editor);
+    history.undo(editor);
+    
+    // Redo changes
+    history.redo(editor);
+    
+    // Make new change, which discards forward history
+    editor.setText('New direction');
+    history.save(editor);
+    
+    // Try to redo (should fail)
+    history.redo(editor);
+  }
+  ```
+
+## Visitor Pattern
+- Use for representing operations to be performed on elements of an object structure
+- Implement when you need to separate algorithms from the objects they operate on
+- Apply when you need to add new operations to existing objects without modifying them
+- Examples:
+  ```dart
+  // Element interface
+  abstract class UIElement {
+    void accept(UIVisitor visitor);
+  }
+  
+  // Visitor interface
+  abstract class UIVisitor {
+    void visitButton(Button element);
+    void visitTextField(TextField element);
+    void visitCheckbox(Checkbox element);
+  }
+  
+  // Concrete elements
+  class Button implements UIElement {
+    final String text;
+    
+    Button(this.text);
+    
+    @override
+    void accept(UIVisitor visitor) {
+      visitor.visitButton(this);
+    }
+  }
+  
+  class TextField implements UIElement {
+    final String hint;
+    String value = '';
+    
+    TextField(this.hint);
+    
+    @override
+    void accept(UIVisitor visitor) {
+      visitor.visitTextField(this);
+    }
+  }
+  
+  class Checkbox implements UIElement {
+    final String label;
+    bool checked = false;
+    
+    Checkbox(this.label);
+    
+    @override
+    void accept(UIVisitor visitor) {
+      visitor.visitCheckbox(this);
+    }
+  }
+  
+  // Concrete visitors
+  class RenderVisitor implements UIVisitor {
+    @override
+    void visitButton(Button element) {
+      print('Rendering Button with text: ${element.text}');
+    }
+    
+    @override
+    void visitTextField(TextField element) {
+      print('Rendering TextField with hint: ${element.hint}, value: ${element.value}');
+    }
+    
+    @override
+    void visitCheckbox(Checkbox element) {
+      print('Rendering Checkbox with label: ${element.label}, checked: ${element.checked}');
+    }
+  }
+  
+  class AccessibilityVisitor implements UIVisitor {
+    @override
+    void visitButton(Button element) {
+      print('Accessibility for Button: Adding role="button" and label="${element.text}"');
+    }
+    
+    @override
+    void visitTextField(TextField element) {
+      print('Accessibility for TextField: Adding role="textbox" and placeholder="${element.hint}"');
+    }
+    
+    @override
+    void visitCheckbox(Checkbox element) {
+      print('Accessibility for Checkbox: Adding role="checkbox", label="${element.label}", checked=${element.checked}');
+    }
+  }
+  
+  class ValidationVisitor implements UIVisitor {
+    @override
+    void visitButton(Button element) {
+      if (element.text.isEmpty) {
+        print('Validation error: Button text cannot be empty');
+      }
+    }
+    
+    @override
+    void visitTextField(TextField element) {
+      // Example validation for email field
+      if (element.hint.contains('email') && element.value.isNotEmpty) {
+        if (!element.value.contains('@')) {
+          print('Validation error: Invalid email format');
+        }
+      }
+    }
+    
+    @override
+    void visitCheckbox(Checkbox element) {
+      // No validation needed for checkbox
+    }
+  }
+  
+  // Object structure
+  class Form {
+    final List<UIElement> elements = [];
+    
+    void addElement(UIElement element) {
+      elements.add(element);
+    }
+    
+    void accept(UIVisitor visitor) {
+      for (var element in elements) {
+        element.accept(visitor);
+      }
+    }
+  }
+  
+  // Usage
+  void main() {
+    // Create elements
+    final submitButton = Button('Submit');
+    final emailField = TextField('Enter email');
+    emailField.value = 'test.example.com'; // Invalid email
+    final termsCheckbox = Checkbox('I agree to terms');
+    termsCheckbox.checked = true;
+    
+    // Create form with elements
+    final form = Form();
+    form.addElement(emailField);
+    form.addElement(termsCheckbox);
+    form.addElement(submitButton);
+    
+    // Apply different visitors
+    print('=== Rendering UI ===');
+    form.accept(RenderVisitor());
+    
+    print('\n=== Adding Accessibility ===');
+    form.accept(AccessibilityVisitor());
+    
+    print('\n=== Validating Form ===');
+    form.accept(ValidationVisitor());
+  }
+  ```
+
+## File Structure Best Practices
+- Group related behavioral patterns by feature area
+- Place interfaces and base classes in separate files
+- Example file organization:
+  ```
+  lib/
+    core/
+      behaviors/
+        observers/
+          observer_base.dart
+        commands/
+          command_base.dart
+        states/
+          state_machine.dart
+    domain/
+      usecases/
+        template_methods/
+          data_processing.dart
+    features/
+      editor/
+        memento/
+          editor_history.dart
+        commands/
+          text_commands.dart
+      messaging/
+        mediator/
+          chat_room.dart
+      forms/
+        visitors/
+          form_validation.dart
+  ```
+
+## Performance & Optimization Tips
+- Use command pattern for undo/redo operations but limit history size
+- Implement flyweight for shared state in the state pattern
+- Optimize mediator to avoid unnecessary notifications
+- Cache visitor results when appropriate
+- Use lazy initialization in chain of responsibility handlers
+- Batch updates in observer pattern to avoid frequent UI rebuilds
+- Control recursion depth in composite-visitor combinations
+- Consider using weak references for observers to avoid memory leaks
+
+## Testing & Validation Guidelines
+- Test each pattern implementation independently
+- Verify state transitions in state pattern
+- Test undo/redo functionality in command pattern
+- Verify that all handlers in chain of responsibility work correctly
+- Test visitor implementations with different element combinations
+- Verify that observers are properly notified of changes
+- Test mediator with different communication scenarios
+- Check that template method steps are called in the correct order

@@ -1,0 +1,742 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Structural Design Patterns Guidelines
+
+## Scope / Flexibility Notice
+These guidelines focus on structural patterns that compose objects into larger structures or adapt incompatible interfaces. Structural patterns help organize classes and objects to form larger structures while keeping these structures flexible and efficient. Apply these patterns when organizing complex systems that need flexibility in composition.
+
+## Adapter Pattern
+- Use for making incompatible interfaces work together
+- Implement when integrating third-party libraries with different interfaces
+- Apply when existing code needs to work with new interfaces
+- Examples:
+  ```dart
+  // Existing interface
+  abstract class LocalNotification {
+    void show(int id, String title, String body);
+    void cancel(int id);
+  }
+  
+  // Third-party library with a different interface
+  class FlutterLocalNotificationsPlugin {
+    Future<void> show(
+      int id, 
+      String? title, 
+      String? body, 
+      NotificationDetails notificationDetails
+    ) async {
+      // Implementation
+    }
+    
+    Future<void> cancel(int id) async {
+      // Implementation
+    }
+  }
+  
+  // Adapter to make third-party library work with existing interface
+  class FlutterLocalNotificationsAdapter implements LocalNotification {
+    final FlutterLocalNotificationsPlugin _plugin;
+    final NotificationDetails _defaultDetails;
+    
+    FlutterLocalNotificationsAdapter(this._plugin, this._defaultDetails);
+    
+    @override
+    void show(int id, String title, String body) {
+      _plugin.show(id, title, body, _defaultDetails);
+    }
+    
+    @override
+    void cancel(int id) {
+      _plugin.cancel(id);
+    }
+  }
+  
+  // Usage
+  void main() {
+    final plugin = FlutterLocalNotificationsPlugin();
+    final defaultDetails = NotificationDetails(
+      android: AndroidNotificationDetails('channel_id', 'channel_name'),
+      iOS: IOSNotificationDetails(),
+    );
+    
+    // Using the adapter
+    final notifications = FlutterLocalNotificationsAdapter(plugin, defaultDetails);
+    
+    // Now we can use our standard interface
+    notifications.show(1, 'Hello', 'World');
+    notifications.cancel(1);
+  }
+  ```
+
+## Decorator Pattern
+- Use for adding responsibilities to objects dynamically
+- Implement when you need to extend functionality without subclassing
+- Apply when you want to add features to individual objects without affecting others
+- Examples:
+  ```dart
+  // Component interface
+  abstract class Widget {
+    Widget build(BuildContext context);
+  }
+  
+  // Concrete component
+  class BasicButton implements Widget {
+    final String text;
+    final VoidCallback onPressed;
+    
+    BasicButton(this.text, this.onPressed);
+    
+    @override
+    Widget build(BuildContext context) {
+      return ElevatedButton(
+        onPressed: onPressed,
+        child: Text(text),
+      );
+    }
+  }
+  
+  // Decorator base class
+  abstract class ButtonDecorator implements Widget {
+    final Widget _widget;
+    
+    ButtonDecorator(this._widget);
+    
+    @override
+    Widget build(BuildContext context) {
+      return _widget.build(context);
+    }
+  }
+  
+  // Concrete decorators
+  class LoadingButtonDecorator extends ButtonDecorator {
+    final bool isLoading;
+    
+    LoadingButtonDecorator(Widget widget, {required this.isLoading}) : super(widget);
+    
+    @override
+    Widget build(BuildContext context) {
+      if (!isLoading) {
+        return super.build(context);
+      }
+      
+      return ElevatedButton(
+        onPressed: null, // Disabled when loading
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            strokeWidth: 2.0,
+          ),
+        ),
+      );
+    }
+  }
+  
+  class IconButtonDecorator extends ButtonDecorator {
+    final IconData icon;
+    
+    IconButtonDecorator(Widget widget, {required this.icon}) : super(widget);
+    
+    @override
+    Widget build(BuildContext context) {
+      final originalButton = super.build(context) as ElevatedButton;
+      
+      return ElevatedButton(
+        onPressed: originalButton.onPressed,
+        style: originalButton.style,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16),
+            SizedBox(width: 8),
+            originalButton.child!,
+          ],
+        ),
+      );
+    }
+  }
+  
+  // Usage
+  Widget buildButton(bool isLoading) {
+    Widget button = BasicButton('Submit', () {
+      // Handle tap
+    });
+    
+    // Apply decorators
+    button = IconButtonDecorator(button, icon: Icons.send);
+    button = LoadingButtonDecorator(button, isLoading: isLoading);
+    
+    return button.build(context);
+  }
+  ```
+
+## Bridge Pattern
+- Use to separate abstraction from implementation
+- Implement when you need to extend both abstractions and implementations independently
+- Apply when you want to avoid a permanent binding between abstraction and implementation
+- Examples:
+  ```dart
+  // Implementation interface
+  abstract class ThemeImplementation {
+    Color backgroundColor();
+    Color textColor();
+    Color primaryColor();
+    double cornerRadius();
+  }
+  
+  // Concrete implementations
+  class LightThemeImpl implements ThemeImplementation {
+    @override
+    Color backgroundColor() => Colors.white;
+    
+    @override
+    Color textColor() => Colors.black87;
+    
+    @override
+    Color primaryColor() => Colors.blue;
+    
+    @override
+    double cornerRadius() => 8.0;
+  }
+  
+  class DarkThemeImpl implements ThemeImplementation {
+    @override
+    Color backgroundColor() => Color(0xFF121212);
+    
+    @override
+    Color textColor() => Colors.white;
+    
+    @override
+    Color primaryColor() => Colors.tealAccent;
+    
+    @override
+    double cornerRadius() => 8.0;
+  }
+  
+  // Abstraction
+  abstract class Component {
+    final ThemeImplementation theme;
+    
+    Component(this.theme);
+    
+    Widget build(BuildContext context);
+  }
+  
+  // Refined Abstractions
+  class Card extends Component {
+    final Widget child;
+    final double? elevation;
+    
+    Card({required this.child, this.elevation, required ThemeImplementation theme}) 
+      : super(theme);
+    
+    @override
+    Widget build(BuildContext context) {
+      return Container(
+        decoration: BoxDecoration(
+          color: theme.backgroundColor(),
+          borderRadius: BorderRadius.circular(theme.cornerRadius()),
+          boxShadow: elevation != null ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: elevation!,
+              spreadRadius: elevation! / 2,
+            )
+          ] : null,
+        ),
+        child: child,
+      );
+    }
+  }
+  
+  class Button extends Component {
+    final String text;
+    final VoidCallback onPressed;
+    
+    Button({
+      required this.text, 
+      required this.onPressed, 
+      required ThemeImplementation theme
+    }) : super(theme);
+    
+    @override
+    Widget build(BuildContext context) {
+      return ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          primary: theme.primaryColor(),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(theme.cornerRadius()),
+          ),
+        ),
+        child: Text(text, style: TextStyle(color: theme.textColor())),
+      );
+    }
+  }
+  
+  // Usage
+  Widget buildUI(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = isDark ? DarkThemeImpl() : LightThemeImpl();
+    
+    return Column(
+      children: [
+        Card(
+          theme: theme,
+          elevation: 4.0,
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('Hello World', style: TextStyle(color: theme.textColor())),
+          ),
+        ),
+        SizedBox(height: 16),
+        Button(
+          theme: theme,
+          text: 'Click Me',
+          onPressed: () {},
+        ),
+      ],
+    );
+  }
+  ```
+
+## Composite Pattern
+- Use for representing part-whole hierarchies of objects
+- Implement when clients should treat individual objects and compositions uniformly
+- Apply when you need tree structures to represent hierarchies
+- Examples:
+  ```dart
+  // Component interface
+  abstract class FileSystemComponent {
+    String getName();
+    int getSize();
+    void display(String indent);
+  }
+  
+  // Leaf
+  class File implements FileSystemComponent {
+    final String name;
+    final int size;
+    
+    File(this.name, this.size);
+    
+    @override
+    String getName() => name;
+    
+    @override
+    int getSize() => size;
+    
+    @override
+    void display(String indent) {
+      print('$indent- File: $name ($size bytes)');
+    }
+  }
+  
+  // Composite
+  class Directory implements FileSystemComponent {
+    final String name;
+    final List<FileSystemComponent> children = [];
+    
+    Directory(this.name);
+    
+    void addComponent(FileSystemComponent component) {
+      children.add(component);
+    }
+    
+    void removeComponent(FileSystemComponent component) {
+      children.remove(component);
+    }
+    
+    @override
+    String getName() => name;
+    
+    @override
+    int getSize() {
+      return children.fold(0, (total, child) => total + child.getSize());
+    }
+    
+    @override
+    void display(String indent) {
+      print('$indent+ Directory: $name (${getSize()} bytes)');
+      
+      for (final child in children) {
+        child.display('$indent  ');
+      }
+    }
+  }
+  
+  // Usage
+  void main() {
+    final root = Directory('root');
+    
+    final docs = Directory('documents');
+    docs.addComponent(File('resume.pdf', 1024));
+    docs.addComponent(File('cover_letter.docx', 2048));
+    
+    final images = Directory('images');
+    images.addComponent(File('photo.jpg', 4096));
+    
+    root.addComponent(docs);
+    root.addComponent(images);
+    root.addComponent(File('notes.txt', 512));
+    
+    // Client uses the component interface without caring about concrete classes
+    root.display('');
+    print('Total size: ${root.getSize()} bytes');
+  }
+  ```
+
+## Facade Pattern
+- Use for providing a simplified interface to a complex subsystem
+- Implement when you want to hide implementation details
+- Apply when you need to decouple subsystems from clients
+- Examples:
+  ```dart
+  // Complex subsystem classes
+  class AudioPlayer {
+    void loadAudio(String url) {
+      print('Loading audio from $url');
+    }
+    
+    void playAudio() {
+      print('Playing audio');
+    }
+    
+    void stopAudio() {
+      print('Stopping audio');
+    }
+  }
+  
+  class VideoPlayer {
+    void loadVideo(String url) {
+      print('Loading video from $url');
+    }
+    
+    void playVideo() {
+      print('Playing video');
+    }
+    
+    void stopVideo() {
+      print('Stopping video');
+    }
+  }
+  
+  class SubtitleManager {
+    void loadSubtitles(String url) {
+      print('Loading subtitles from $url');
+    }
+    
+    void displaySubtitles() {
+      print('Displaying subtitles');
+    }
+    
+    void hideSubtitles() {
+      print('Hiding subtitles');
+    }
+  }
+  
+  // Facade
+  class MediaPlayerFacade {
+    final AudioPlayer _audioPlayer = AudioPlayer();
+    final VideoPlayer _videoPlayer = VideoPlayer();
+    final SubtitleManager _subtitleManager = SubtitleManager();
+    
+    void playMedia(String videoUrl, String audioUrl, String? subtitleUrl) {
+      print('--- Starting media playback ---');
+      _videoPlayer.loadVideo(videoUrl);
+      _audioPlayer.loadAudio(audioUrl);
+      
+      if (subtitleUrl != null) {
+        _subtitleManager.loadSubtitles(subtitleUrl);
+        _subtitleManager.displaySubtitles();
+      }
+      
+      _videoPlayer.playVideo();
+      _audioPlayer.playAudio();
+      print('--- Media playback started ---');
+    }
+    
+    void stopMedia() {
+      print('--- Stopping media playback ---');
+      _videoPlayer.stopVideo();
+      _audioPlayer.stopAudio();
+      _subtitleManager.hideSubtitles();
+      print('--- Media playback stopped ---');
+    }
+  }
+  
+  // Client
+  void main() {
+    final mediaPlayer = MediaPlayerFacade();
+    
+    // Client uses the simple facade interface without dealing with subsystems
+    mediaPlayer.playMedia(
+      'https://example.com/video.mp4',
+      'https://example.com/audio.mp3',
+      'https://example.com/subtitles.srt'
+    );
+    
+    // Later...
+    mediaPlayer.stopMedia();
+  }
+  ```
+
+## Proxy Pattern
+- Use for controlling access to an object
+- Implement when you need to add functionality when accessing an object
+- Apply to lazy loading, access control, logging, caching, etc.
+- Examples:
+  ```dart
+  // Subject interface
+  abstract class Image {
+    Future<void> display();
+    bool get isLoaded;
+  }
+  
+  // Real subject
+  class RealImage implements Image {
+    final String fileName;
+    bool _isLoaded = false;
+    
+    RealImage(this.fileName);
+    
+    Future<void> _loadImageFromDisk() async {
+      print('Loading image from disk: $fileName');
+      await Future.delayed(Duration(seconds: 1)); // Simulate loading
+      _isLoaded = true;
+    }
+    
+    @override
+    Future<void> display() async {
+      if (!_isLoaded) {
+        await _loadImageFromDisk();
+      }
+      print('Displaying image: $fileName');
+    }
+    
+    @override
+    bool get isLoaded => _isLoaded;
+  }
+  
+  // Proxy
+  class ProxyImage implements Image {
+    final String fileName;
+    RealImage? _realImage;
+    
+    ProxyImage(this.fileName);
+    
+    @override
+    Future<void> display() async {
+      // Lazy loading
+      _realImage ??= RealImage(fileName);
+      await _realImage!.display();
+    }
+    
+    @override
+    bool get isLoaded => _realImage?.isLoaded ?? false;
+  }
+  
+  // Usage
+  Future<void> main() async {
+    // Using proxy for lazy loading
+    final image1 = ProxyImage('image1.jpg');
+    final image2 = ProxyImage('image2.jpg');
+    
+    // Image will only be loaded when display is called
+    await image1.display(); // Will load and display image1
+    await image1.display(); // Will just display image1 (already loaded)
+    
+    // image2 is never displayed, so it's never loaded
+    print('Image2 loaded: ${image2.isLoaded}');  // Will print false
+  }
+  ```
+
+## Flyweight Pattern
+- Use for minimizing memory usage by sharing common parts between objects
+- Implement for large numbers of similar objects
+- Apply when memory consumption is a critical concern
+- Examples:
+  ```dart
+  // Flyweight interface
+  abstract class TreeType {
+    Widget render(BuildContext context, double x, double y);
+  }
+  
+  // Concrete flyweight
+  class TreeTypeImpl implements TreeType {
+    final String name;
+    final Color color;
+    final ImageProvider image;
+    
+    // Intrinsic state stored in flyweight
+    const TreeTypeImpl({
+      required this.name,
+      required this.color,
+      required this.image,
+    });
+    
+    @override
+    Widget render(BuildContext context, double x, double y) {
+      return Positioned(
+        left: x,
+        top: y,
+        child: Image(
+          image: image,
+          color: color,
+          width: 50,
+          height: 100,
+        ),
+      );
+    }
+  }
+  
+  // Flyweight factory
+  class TreeTypeFactory {
+    final Map<String, TreeType> _treeTypes = {};
+    
+    TreeType getTreeType(String name, Color color, ImageProvider image) {
+      // Create the key from the intrinsic state
+      final key = '$name-${color.value}';
+      
+      // Return existing instance if available
+      if (_treeTypes.containsKey(key)) {
+        return _treeTypes[key]!;
+      }
+      
+      // Create new instance if needed
+      final treeType = TreeTypeImpl(
+        name: name,
+        color: color,
+        image: image,
+      );
+      _treeTypes[key] = treeType;
+      
+      return treeType;
+    }
+    
+    int get totalTypes => _treeTypes.length;
+  }
+  
+  // Context that uses flyweights
+  class Tree {
+    final TreeType type;
+    final double x;
+    final double y;
+    
+    // Extrinsic state passed to flyweight
+    Tree(this.type, this.x, this.y);
+    
+    Widget render(BuildContext context) {
+      return type.render(context, x, y);
+    }
+  }
+  
+  // Forest manages multiple trees
+  class Forest extends StatelessWidget {
+    final List<Tree> trees = [];
+    final TreeTypeFactory factory = TreeTypeFactory();
+    
+    void plantTree(double x, double y, String name, Color color, ImageProvider image) {
+      final type = factory.getTreeType(name, color, image);
+      final tree = Tree(type, x, y);
+      trees.add(tree);
+    }
+    
+    @override
+    Widget build(BuildContext context) {
+      return Stack(
+        children: [
+          // Background
+          Container(color: Colors.green[100]),
+          
+          // Render all trees
+          ...trees.map((tree) => tree.render(context)).toList(),
+          
+          // Display stats
+          Positioned(
+            bottom: 10,
+            right: 10,
+            child: Text('Trees: ${trees.length}, Tree types: ${factory.totalTypes}'),
+          ),
+        ],
+      );
+    }
+  }
+  
+  // Usage
+  void main() {
+    final forest = Forest();
+    
+    // Plant 1000 trees with only 3 tree types
+    final random = Random();
+    final treeImages = [
+      AssetImage('assets/pine.png'),
+      AssetImage('assets/oak.png'),
+      AssetImage('assets/maple.png'),
+    ];
+    final treeNames = ['Pine', 'Oak', 'Maple'];
+    final treeColors = [
+      Colors.green.shade900,
+      Colors.green.shade700,
+      Colors.green.shade500,
+    ];
+    
+    for (int i = 0; i < 1000; i++) {
+      final typeIndex = random.nextInt(3);
+      forest.plantTree(
+        random.nextDouble() * 1000, // x
+        random.nextDouble() * 1000, // y
+        treeNames[typeIndex],
+        treeColors[typeIndex],
+        treeImages[typeIndex],
+      );
+    }
+    
+    // The forest has 1000 trees but only 3 TreeType objects
+  }
+  ```
+
+## File Structure Best Practices
+- Group adapters, decorators, and facades by functionality
+- Separate interfaces from implementations
+- Example file organization:
+  ```
+  lib/
+    core/
+      adapters/
+        notification_adapters.dart
+        payment_adapters.dart
+      decorators/
+        widget_decorators.dart
+      facades/
+        media_facade.dart
+    features/
+      file_explorer/
+        composite/
+          file_system_components.dart
+    utils/
+      proxies/
+        image_proxy.dart
+  ```
+
+## Performance & Optimization Tips
+- Use flyweight for sharing immutable objects
+- Implement proxies for lazy loading heavy resources
+- Use facades to simplify complex subsystem integration
+- Compose decorators carefully to avoid excessive nesting
+- Consider memory usage when implementing composite pattern with large hierarchies
+- Cache adapter conversion results when possible
+- Optimize bridge implementations for frequently used features
+
+## Testing & Validation Guidelines
+- Test each adapter separately to ensure correct interface mapping
+- Verify composite structures work at different depths and complexities
+- Test decorator chains with multiple combinations
+- Validate that flyweight instances are properly shared
+- Verify memory performance with proxies and large data sets
+- Ensure facade methods correctly orchestrate subsystems
+- Test bridge implementations with different abstraction combinations
