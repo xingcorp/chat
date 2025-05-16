@@ -1,0 +1,283 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Utilities & Helper Functions Guidelines
+
+## Scope / Flexibility Notice
+These guidelines define standards for creating and organizing utility functions and helper classes across the Flutter Chat Application. They apply to all reusable code snippets, extension methods, and helper classes that provide common functionality across features. Following these guidelines ensures code reusability, maintainability, and consistency.
+
+## Types of Utilities
+
+### 1. Extension Methods
+Extension methods extend existing classes with new functionality without modifying the original class.
+
+#### Organization
+- Group related extension methods by type in separate files
+- Place extensions in `lib/utils/extensions/` directory
+- Name files using the pattern: `[type]_extensions.dart` (e.g., `string_extensions.dart`, `datetime_extensions.dart`)
+
+#### Implementation
+```dart
+// lib/utils/extensions/string_extensions.dart
+extension StringExtensions on String {
+  /// Capitalizes the first letter of the string
+  String capitalize() {
+    if (isEmpty) return this;
+    return this[0].toUpperCase() + substring(1);
+  }
+  
+  /// Checks if string is a valid email using regex
+  bool isValidEmail() {
+    return RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+').hasMatch(this);
+  }
+  
+  /// Truncates string to specified length with ellipsis
+  String truncate(int maxLength) {
+    if (length <= maxLength) return this;
+    return '${substring(0, maxLength)}...';
+  }
+}
+```
+
+#### Usage
+```dart
+import 'package:flutter_chat_app/utils/extensions/string_extensions.dart';
+
+final displayName = username.capitalize();
+final isValid = email.isValidEmail();
+final shortDescription = description.truncate(100);
+```
+
+### 2. Pure Utility Functions
+
+#### Organization
+- Group related utility functions by domain in separate files
+- Place utilities in `lib/utils/` directory
+- Name files using the pattern: `[domain]_utils.dart` (e.g., `format_utils.dart`, `validation_utils.dart`)
+
+#### Implementation
+```dart
+// lib/utils/validation_utils.dart
+class ValidationUtils {
+  ValidationUtils._(); // Private constructor to prevent instantiation
+  
+  /// Validates password strength
+  static bool isStrongPassword(String password) {
+    return password.length >= 8 && 
+           RegExp(r'[A-Z]').hasMatch(password) &&
+           RegExp(r'[0-9]').hasMatch(password) &&
+           RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password);
+  }
+  
+  /// Validates phone number format
+  static bool isValidPhoneNumber(String phone, {String countryCode = '+1'}) {
+    // Implementation...
+    return true;
+  }
+}
+
+// lib/utils/format_utils.dart
+class FormatUtils {
+  FormatUtils._(); // Private constructor to prevent instantiation
+  
+  /// Formats file size into human-readable string
+  static String formatFileSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
+  }
+  
+  /// Formats phone number with proper separators
+  static String formatPhoneNumber(String phoneNumber) {
+    // Implementation...
+    return phoneNumber;
+  }
+}
+```
+
+#### Usage
+```dart
+import 'package:flutter_chat_app/utils/validation_utils.dart';
+import 'package:flutter_chat_app/utils/format_utils.dart';
+
+final isPasswordStrong = ValidationUtils.isStrongPassword(password);
+final formattedSize = FormatUtils.formatFileSize(fileSize);
+```
+
+### 3. Helper Classes
+
+#### Organization
+- Create helper classes for complex operations that require state or configuration
+- Place helpers in `lib/utils/helpers/` directory
+- Name files using the pattern: `[domain]_helper.dart` (e.g., `navigation_helper.dart`, `permission_helper.dart`)
+
+#### Implementation
+```dart
+// lib/utils/helpers/permission_helper.dart
+class PermissionHelper {
+  final PermissionHandler _permissionHandler;
+  
+  PermissionHelper(this._permissionHandler);
+  
+  /// Request camera and microphone permissions
+  Future<bool> requestMediaPermissions() async {
+    final cameraStatus = await _permissionHandler.request(Permission.camera);
+    final microphoneStatus = await _permissionHandler.request(Permission.microphone);
+    
+    return cameraStatus.isGranted && microphoneStatus.isGranted;
+  }
+  
+  /// Check if all required permissions are granted
+  Future<bool> hasRequiredPermissions() async {
+    // Implementation...
+    return true;
+  }
+}
+```
+
+#### Usage
+```dart
+final permissionHelper = GetIt.I<PermissionHelper>();
+final hasPermissions = await permissionHelper.requestMediaPermissions();
+
+if (hasPermissions) {
+  // Proceed with camera/microphone usage
+} else {
+  // Show permission denied message
+}
+```
+
+## Adding New Utilities
+
+### Step 1: Determine the Best Approach
+- Use **extension methods** for adding functionality to existing types
+- Use **utility classes** with static methods for stateless, domain-specific operations
+- Use **helper classes** for operations requiring state or dependencies
+
+### Step 2: Proper Organization
+- Place the utility in the appropriate directory
+- Follow the naming conventions for utility files
+- Group related functionalities together
+
+### Step 3: Implementation
+- Make utility functions pure (no side effects) whenever possible
+- Add descriptive documentation comments for each utility function
+- Include examples in documentation when appropriate
+- Consider edge cases and provide appropriate error handling
+- Keep functions focused on a single responsibility
+
+### Step 4: Testing
+- Write unit tests for all utility functions
+- Test edge cases and error conditions
+- Ensure consistent behavior across different inputs
+
+## Testing Utilities
+
+### Extension Methods Testing
+```dart
+group('StringExtensions', () {
+  test('capitalize should uppercase first letter only', () {
+    expect('hello'.capitalize(), equals('Hello'));
+    expect('Hello'.capitalize(), equals('Hello'));
+    expect(''.capitalize(), equals(''));
+  });
+  
+  test('isValidEmail should correctly validate email formats', () {
+    expect('user@example.com'.isValidEmail(), isTrue);
+    expect('invalid.email'.isValidEmail(), isFalse);
+    expect(''.isValidEmail(), isFalse);
+  });
+});
+```
+
+### Utility Functions Testing
+```dart
+group('ValidationUtils', () {
+  test('isStrongPassword should validate password strength', () {
+    expect(ValidationUtils.isStrongPassword('Abc123!@#'), isTrue);
+    expect(ValidationUtils.isStrongPassword('password'), isFalse);
+    expect(ValidationUtils.isStrongPassword('Password'), isFalse);
+    expect(ValidationUtils.isStrongPassword('12345678'), isFalse);
+  });
+});
+
+group('FormatUtils', () {
+  test('formatFileSize should format sizes correctly', () {
+    expect(FormatUtils.formatFileSize(500), equals('500 B'));
+    expect(FormatUtils.formatFileSize(1500), equals('1.5 KB'));
+    expect(FormatUtils.formatFileSize(1500000), equals('1.4 MB'));
+  });
+});
+```
+
+### Helper Classes Testing
+```dart
+group('PermissionHelper', () {
+  late MockPermissionHandler mockPermissionHandler;
+  late PermissionHelper permissionHelper;
+  
+  setUp(() {
+    mockPermissionHandler = MockPermissionHandler();
+    permissionHelper = PermissionHelper(mockPermissionHandler);
+  });
+  
+  test('requestMediaPermissions should return true when all permissions granted', () async {
+    when(() => mockPermissionHandler.request(Permission.camera))
+        .thenAnswer((_) async => PermissionStatus.granted);
+    when(() => mockPermissionHandler.request(Permission.microphone))
+        .thenAnswer((_) async => PermissionStatus.granted);
+    
+    final result = await permissionHelper.requestMediaPermissions();
+    
+    expect(result, isTrue);
+    verify(() => mockPermissionHandler.request(Permission.camera)).called(1);
+    verify(() => mockPermissionHandler.request(Permission.microphone)).called(1);
+  });
+});
+```
+
+## Common Utility Categories
+
+### String Manipulation
+- Case conversion (capitalize, camelCase, snake_case)
+- Validation (email, phone, URL)
+- Formatting (truncate, mask)
+
+### Date & Time
+- Formatting (relative time, custom formats)
+- Comparison (isToday, isSameDay, isAfter)
+- Manipulation (addDays, startOfWeek, endOfMonth)
+
+### Collection Operations
+- Filtering, mapping, grouping
+- Finding items with complex conditions
+- Safe access and manipulation
+
+### Math & Number Formatting
+- Currency formatting
+- Percentage calculations
+- Unit conversions
+
+### Device & Platform Utilities
+- Screen size and density helpers
+- Platform detection and capability checking
+- Device information retrieval
+
+### File & Path Operations
+- Path manipulation
+- MIME type detection
+- File size formatting
+
+## Best Practices
+
+1. **Keep utilities pure**: Avoid side effects and dependencies on global state
+2. **Document with examples**: Include usage examples in documentation
+3. **Use meaningful names**: Functions should be descriptively named
+4. **Test edge cases**: Ensure utilities handle unusual inputs correctly
+5. **Prevent instantiation**: Use private constructors for utility classes
+6. **Separate concerns**: Split large utility files into domain-specific ones
+7. **Avoid duplicating framework functionality**: Don't recreate what Flutter/Dart already provides
+8. **Consider performance**: Optimize utilities that are used frequently

@@ -1,9 +1,8 @@
 ---
-description: "Defines patterns for state management across presentation layers, primarily using BLoC and Riverpod"
-globs: ["lib/presentation/blocs/**/*.dart", "lib/presentation/cubits/**/*.dart", "lib/presentation/providers/**/*.dart", "lib/presentation/**/*.dart"]
-alwaysApply: true
----
-# State Management Guidelines
+description: "Defines patterns for state management across presentation layers, primarily using BLoC and Cubit"
+globs: ["lib/**/blocs/*.dart", "lib/**/cubits/*.dart"]
+alwaysApply: false
+--- # State Management Guidelines
 
 ## Scope / Flexibility Notice
 These guidelines establish standards for application state management, with the BLoC Pattern as the primary method. These principles ensure unidirectional data flow, high testability, and clear separation between UI and business logic.
@@ -212,7 +211,135 @@ These guidelines establish standards for application state management, with the 
   );
   ```
 
-## Testing & Validation Guidelines
+## Cubit Integration
+- Cubit is a simplified version of BLoC that doesn't require events
+- Use Cubit for simpler features alongside BLoC for complex ones
+- Directory structure for Cubits:
+  ```
+  lib/
+    presentation/
+      cubits/
+        feature_name/
+          feature_cubit.dart        # Cubit class definition
+          feature_state.dart        # States as sealed class (if needed)
+  ```
+
+- Example of Cubit file structure:
+  ```dart
+  // counter_cubit.dart
+  class CounterCubit extends Cubit<int> {
+    CounterCubit() : super(0);
+    
+    void increment() => emit(state + 1);
+    void decrement() => emit(state - 1);
+    void reset() => emit(0);
+  }
+  ```
+
+- Example with complex state:
+  ```dart
+  // todo_cubit.dart
+  class TodoCubit extends Cubit<TodoState> {
+    final GetTodos _getTodos;
+    final AddTodo _addTodo;
+    
+    TodoCubit({
+      required GetTodos getTodos,
+      required AddTodo addTodo,
+    }) : _getTodos = getTodos,
+         _addTodo = addTodo,
+         super(const TodoState.initial());
+    
+    Future<void> loadTodos() async {
+      emit(state.copyWith(isLoading: true, errorMessage: null));
+      
+      final result = await _getTodos();
+      result.fold(
+        (failure) => emit(state.copyWith(
+          isLoading: false, 
+          errorMessage: failure.message
+        )),
+        (todos) => emit(state.copyWith(
+          todos: todos, 
+          isLoading: false
+        )),
+      );
+    }
+    
+    Future<void> addNewTodo(String title, String description) async {
+      emit(state.copyWith(isSubmitting: true));
+      
+      final todo = Todo(
+        id: DateTime.now().toString(),
+        title: title,
+        description: description,
+        isCompleted: false,
+      );
+      
+      final result = await _addTodo(todo);
+      result.fold(
+        (failure) => emit(state.copyWith(
+          isSubmitting: false, 
+          errorMessage: failure.message
+        )),
+        (_) {
+          final updatedTodos = [...state.todos, todo];
+          emit(state.copyWith(
+            todos: updatedTodos,
+            isSubmitting: false,
+          ));
+        },
+      );
+    }
+  }
+  ```
+  
+- Using Cubits with widgets:
+  ```dart
+  BlocProvider(
+    create: (context) => getIt<TodoCubit>()..loadTodos(),
+    child: BlocConsumer<TodoCubit, TodoState>(
+      listener: (context, state) {
+        if (state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.errorMessage!)),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        return TodoList(todos: state.todos);
+      },
+    ),
+  );
+  ```
+
+## Choosing Between BLoC and Cubit
+
+### Use Cubit When:
+- State changes are direct and simple
+- You don't need explicit events
+- You prefer less boilerplate code
+- For simpler features or components
+- When team members are newer to reactive patterns
+
+### Use BLoC When:
+- You need to track or transform events
+- Multiple events can lead to the same state
+- The feature has complex business logic
+- When you need more structured state transitions
+- For application-wide state with multi-screen impact
+
+### Hybrid Approach Best Practices
+- Use consistent dependency injection for both
+- Follow the same naming patterns
+- Place in similarly structured directories
+- Test with the same level of coverage
+- Document why you chose Cubit or BLoC for each feature
+- Maintain consistent error handling approaches ## Testing & Validation Guidelines
 - Test each event handler in the BLoC individually
 - Use bloc_test to test state sequences:
   ```dart

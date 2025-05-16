@@ -39,6 +39,10 @@ import 'package:flutter_chat_app/presentation/widgets/app_wrapper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_chat_app/core/upgrade_services.dart';
 import 'package:flutter_chat_app/core/services/enhanced_message_queue_service.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 
 // Import home screens from respective platform files
 import 'main_mobile.dart' show MobileHomeScreen;
@@ -244,15 +248,33 @@ class MyApp extends StatelessWidget {
         BlocProvider<AuthBloc>(
           create: (context) => GetIt.I<AuthBloc>(),
         ),
+        BlocProvider<LocaleCubit>(
+          create: (context) => GetIt.I<LocaleCubit>(),
+        ),
       ],
-      child: MaterialApp(
-        title: 'Flutter Chat App',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        // ... rest of your app configuration
-        home: _buildHomeScreen(),
+      child: BlocBuilder<LocaleCubit, LocaleState>(
+        builder: (context, localeState) {
+          return MaterialApp(
+            title: 'Flutter Chat App',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.system,
+
+            // Localization
+            locale: localeState.locale,
+            supportedLocales: L10n.all,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+
+            // ... rest of your app configuration
+            home: _buildHomeScreen(),
+          );
+        },
       ),
     );
   }

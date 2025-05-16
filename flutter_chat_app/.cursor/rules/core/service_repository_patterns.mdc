@@ -1,0 +1,332 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Service & Repository Patterns Guidelines
+
+## Scope / Flexibility Notice
+These guidelines define standards for implementing Services and Repositories across the Flutter Chat Application. They apply to all data access and business logic layers. These patterns ensure separation of concerns, testability, and proper abstraction of data sources.
+
+## Service Pattern Best Practices
+
+### Definition & Purpose
+- **Services** encapsulate complex business logic, external API interactions, or utility functions
+- Services should be stateless whenever possible
+- Each service should have a clear, focused responsibility
+- Services operate at a higher level than repositories and may orchestrate multiple repositories
+
+### Service Organization
+- Place services in `lib/core/services/` for app-wide services
+- Place feature-specific services in `lib/domain/services/feature_name/`
+- Group related services together (e.g., `AuthenticationService`, `UserProfileService`)
+- Name services using the pattern: `[Feature/Domain]Service` (e.g., `ChatMessageService`)
+
+### Service Implementation
+- Always define an interface (abstract class) for each service:
+  ```dart
+  abstract class AuthenticationService {
+    Future<User?> getCurrentUser();
+    Future<Result<User>> signInWithEmailAndPassword(String email, String password);
+    Future<Result<void>> signOut();
+  }
+  ```
+- Implement services with proper dependency injection:
+  ```dart
+  @Injectable(as: AuthenticationService)
+  class FirebaseAuthenticationService implements AuthenticationService {
+    final FirebaseAuth _firebaseAuth;
+    final UserRepository _userRepository;
+
+    FirebaseAuthenticationService(
+      this._firebaseAuth, 
+      this._userRepository,
+    );
+    
+    @override
+    Future<User?> getCurrentUser() async {
+      // Implementation...
+    }
+    
+    // Other methods...
+  }
+  ```
+- Use `Result` or `Either` type to handle success/failure cases:
+  ```dart
+  Future<Result<List<Message>>> fetchMessages(String chatId) async {
+    try {
+      final messages = await _messageRepository.getMessages(chatId);
+      return Result.success(messages);
+    } on NetworkException catch (e) {
+      return Result.failure(NetworkFailure(e.message));
+    } on CacheException catch (e) {
+      return Result.failure(CacheFailure(e.message));
+    } catch (e) {
+      return Result.failure(UnexpectedFailure(e.toString()));
+    }
+  }
+  ```
+
+### Adding a New Service
+1. Define the service interface in `lib/domain/services/feature_name_service.dart`
+2. Implement the service in `lib/data/services/feature_name_service_impl.dart`
+3. Register the service in the dependency injection container:
+   ```dart
+   getIt.registerLazySingleton<FeatureNameService>(
+     () => FeatureNameServiceImpl(
+       getIt<FeatureNameRepository>(),
+       getIt<AnotherDependency>(),
+     ),
+   );
+   ```
+4. Inject and use the service in use cases or other components
+
+## Repository Pattern Best Practices
+
+### Definition & Purpose
+- **Repositories** abstract data sources (API, local database, cache)
+- They provide a clean, domain-specific API for data operations
+- Repositories hide implementation details of data retrieval/storage
+- They ensure data consistency between different sources
+
+### Repository Organization
+- Place repository interfaces in `lib/domain/repositories/`
+- Place implementations in `lib/data/repositories/`
+- Follow naming conventions:
+  - Interface: `FeatureRepository` (e.g., `UserRepository`)
+  - Implementation: `FeatureRepositoryImpl` (e.g., `UserRepositoryImpl`)
+
+### Repository Implementation
+- Always define an interface first:
+  ```dart
+  abstract class MessageRepository {
+    Future<List<Message>> getMessages(String chatId);
+    Future<Message> sendMessage(MessageRequest message);
+    Stream<List<Message>> watchMessages(String chatId);
+  }
+  ```
+- Implementations should handle data source coordination:
+  ```dart
+  @Injectable(as: MessageRepository)
+  class MessageRepositoryImpl implements MessageRepository {
+    final MessageRemoteDataSource _remoteDataSource;
+    final MessageLocalDataSource _localDataSource;
+    final NetworkInfo _networkInfo;
+    
+    MessageRepositoryImpl(
+      this._remoteDataSource,
+      this._localDataSource,
+      this._networkInfo,
+    );
+    
+    @override
+    Future<List<Message>> getMessages(String chatId) async {
+      if (await _networkInfo.isConnected) {
+        try {
+          final remoteMessages = await _remoteDataSource.getMessages(chatId);
+          await _localDataSource.cacheMessages(remoteMessages);
+          return remoteMessages.map((model) => model.toDomain()).toList();
+        } catch (e) {
+          return _getLocalMessages(chatId);
+        }
+      } else {
+        return _getLocalMessages(chatId);
+      }
+    }
+    
+    Future<List<Message>> _getLocalMessages(String chatId) async {
+      try {
+        final localMessages = await _localDataSource.getMessages(chatId);
+        return localMessages.map((model) => model.toDomain()).toList();
+      } on CacheException {
+        throw CacheFailure();
+      }
+    }
+    
+    // Other methods...
+  }
+  ```
+  
+### Adding a New Repository
+1. Define the repository interface in `lib/domain/repositories/feature_repository.dart`
+2. Define data sources in:
+   - `lib/data/datasources/remote/feature_remote_data_source.dart`
+   - `lib/data/datasources/local/feature_local_data_source.dart`
+3. Implement the repository in `lib/data/repositories/feature_repository_impl.dart`
+4. Register in dependency injection:
+   ```dart
+   getIt.registerLazySingleton<FeatureRepository>(
+     () => FeatureRepositoryImpl(
+       getIt<FeatureRemoteDataSource>(),
+       getIt<FeatureLocalDataSource>(),
+       getIt<NetworkInfo>(),
+     ),
+   );
+   ```
+
+## DataSource Pattern Best Practices
+
+### Definition & Purpose
+- **DataSources** represent specific storage or API endpoints
+- Remote data sources handle API requests
+- Local data sources handle database/cache operations
+- They map between raw data and data models
+
+### DataSource Organization
+- Place in `lib/data/datasources/[remote|local]/`
+- Follow naming conventions:
+  - `FeatureRemoteDataSource`
+  - `FeatureLocalDataSource`
+
+### DataSource Implementation
+- Define interfaces for both remote and local sources:
+  ```dart
+  abstract class MessageRemoteDataSource {
+    Future<List<MessageModel>> getMessages(String chatId);
+    Future<MessageModel> sendMessage(MessageRequestModel message);
+  }
+  
+  abstract class MessageLocalDataSource {
+    Future<List<MessageModel>> getMessages(String chatId);
+    Future<void> cacheMessages(List<MessageModel> messages);
+  }
+  ```
+- Implementations for remote sources:
+  ```dart
+  @Injectable(as: MessageRemoteDataSource)
+  class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
+    final HttpClient _client;
+    
+    MessageRemoteDataSourceImpl(this._client);
+    
+    @override
+    Future<List<MessageModel>> getMessages(String chatId) async {
+      final response = await _client.get(
+        'messages/$chatId',
+        headers: {'Content-Type': 'application/json'},
+      );
+      
+      if (response.statusCode == 200) {
+        return (response.data['messages'] as List)
+            .map((json) => MessageModel.fromJson(json))
+            .toList();
+      } else {
+        throw ServerException();
+      }
+    }
+    
+    // Other methods...
+  }
+  ```
+- Implementations for local sources:
+  ```dart
+  @Injectable(as: MessageLocalDataSource)
+  class MessageLocalDataSourceImpl implements MessageLocalDataSource {
+    final IsarDatabase _database;
+    
+    MessageLocalDataSourceImpl(this._database);
+    
+    @override
+    Future<List<MessageModel>> getMessages(String chatId) async {
+      try {
+        final messages = await _database.messages
+            .filter()
+            .chatIdEqualTo(chatId)
+            .sortByCreatedAtDesc()
+            .findAll();
+        return messages.map((entity) => MessageModel.fromEntity(entity)).toList();
+      } catch (e) {
+        throw CacheException();
+      }
+    }
+    
+    // Other methods...
+  }
+  ```
+
+## Testing Services & Repositories
+
+### Service Testing
+- Mock all dependencies (repositories, external services)
+- Test all business logic paths
+- Verify proper error handling and result propagation:
+  ```dart
+  group('ChatService', () {
+    late MockMessageRepository messageRepository;
+    late MockUserRepository userRepository;
+    late ChatService chatService;
+    
+    setUp(() {
+      messageRepository = MockMessageRepository();
+      userRepository = MockUserRepository();
+      chatService = ChatServiceImpl(messageRepository, userRepository);
+    });
+    
+    test('should return combined data when both repositories return successfully', () async {
+      // Arrange
+      when(() => messageRepository.getMessages(any()))
+          .thenAnswer((_) async => [testMessage]);
+      when(() => userRepository.getUser(any()))
+          .thenAnswer((_) async => testUser);
+      
+      // Act
+      final result = await chatService.getChatWithMessages('chat_id');
+      
+      // Assert
+      expect(result.isSuccess, true);
+      expect(result.getOrNull()?.messages.length, 1);
+      verify(() => messageRepository.getMessages('chat_id')).called(1);
+    });
+    
+    // Error cases...
+  });
+  ```
+
+### Repository Testing
+- Mock data sources and network info
+- Test various combinations of online/offline scenarios
+- Verify proper mapping between data models and domain entities:
+  ```dart
+  group('MessageRepository', () {
+    late MockMessageRemoteDataSource remoteDataSource;
+    late MockMessageLocalDataSource localDataSource;
+    late MockNetworkInfo networkInfo;
+    late MessageRepository repository;
+    
+    setUp(() {
+      remoteDataSource = MockMessageRemoteDataSource();
+      localDataSource = MockMessageLocalDataSource();
+      networkInfo = MockNetworkInfo();
+      repository = MessageRepositoryImpl(
+        remoteDataSource,
+        localDataSource,
+        networkInfo,
+      );
+    });
+    
+    group('device is online', () {
+      setUp(() {
+        when(() => networkInfo.isConnected).thenAnswer((_) async => true);
+      });
+      
+      test('should return remote data when remote data source is successful', () async {
+        // Arrange
+        when(() => remoteDataSource.getMessages(any()))
+            .thenAnswer((_) async => [testMessageModel]);
+        
+        // Act
+        final result = await repository.getMessages('chat_id');
+        
+        // Assert
+        verify(() => remoteDataSource.getMessages('chat_id')).called(1);
+        expect(result.first.id, equals(testMessage.id));
+      });
+      
+      // Other online cases...
+    });
+    
+    group('device is offline', () {
+      // Offline tests...
+    });
+  });
+  ```

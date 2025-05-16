@@ -1,0 +1,226 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Internationalization Guidelines
+
+## Scope / Flexibility Notice
+These guidelines define patterns for implementing and maintaining internationalization across the Flutter Chat Application. They apply to all modules and features of the application where user-facing text is displayed. Compliance is mandatory for:
+- All UI components across all supported platforms (mobile, web, desktop)
+- All error messages and notifications
+- All dynamic content including dates, numbers, and currency values
+- All RTL/LTR layout considerations
+
+Limited exceptions may be made for:
+- Debug-only text that users never see
+- Specialized content like code snippets or fixed format data
+- Third-party widget libraries that cannot be modified
+
+## Best Practices
+- Use ARB files for all translations (instead of JSON files)
+- Never hardcode user-visible strings
+- Always provide descriptive comments for translators in ARB files
+- Use the `context.l10n` extension for accessing translations
+- Implement proper pluralization with ICU message syntax
+- Structure translation keys in a logical hierarchy
+- Test UI with various language string lengths
+- Use the LocaleCubit for managing language state
+- Support bidirectionality for languages like Arabic, Hebrew
+- Avoid string concatenation for forming sentences
+- Use string templates with placeholders for dynamic content
+- Implement flexible UI layouts that accommodate text expansion
+- Handle gracefully missing translations with fallbacks
+- Use dedicated widgets for language selection and indication
+- Make date/time formats consistent across the application
+- Create separate implementations for platform-specific UI elements
+
+## File / Project Structure Guidelines
+- Place all ARB files in `lib/l10n/` directory
+- Name ARB files according to language code: `app_en.arb`, `app_vi.arb`, etc.
+- Define supported locales in `lib/l10n/l10n.dart`
+- Implement locale management Cubit in `lib/presentation/blocs/locale/`
+- Store locale persistence logic in `lib/core/services/localization_service.dart`
+- Place language selection UI components in `lib/presentation/widgets/settings/`
+- Keep generated localization files in `.dart_tool/flutter_gen/` directory
+- Register LocaleCubit and LocalizationService in DI container
+- Document localization procedures in `lib/l10n/README.md`
+- Store detailed guidelines in `docs/internationalization_best_practices.md`
+- Include example usage in code documentation
+
+## Coding & Styling Conventions
+- Use camelCase for translation keys
+- Group related keys with dot notation: `category.subcategory.keyName`
+- Format ARB files with consistent indentation
+- Always include description metadata for each key
+- Provide placeholder examples in ARB metadata
+- Use standard ICU message syntax for parameters and plurals
+- Avoid string concatenation; use parameterized messages instead
+- Create extension methods for commonly used formatting patterns
+- Add trailing commas to improve ARB file diffs
+- Define semantic grouping with empty line separators between logical sections
+- Follow consistent naming conventions for locale-related classes and variables
+- Use proper annotation types for generated code (e.g., `@immutable` for state classes)
+
+## Implementation Example
+```dart
+// Good: Using localization extension with proper context
+Text(context.l10n.chatMessageCount(count)),
+
+// Bad: Hardcoded string
+Text("$count messages"),
+
+// Good: Using ICU parameter with placeholders
+"userPostedMessage": "{username} posted: {message}",
+"@userPostedMessage": {
+  "description": "Shows who posted a message and what they wrote",
+  "placeholders": {
+    "username": {
+      "type": "String",
+      "example": "John"
+    },
+    "message": {
+      "type": "String",
+      "example": "Hello everyone!"
+    }
+  }
+}
+
+// Good: Complete widget implementation with localization
+class LocalizedGreeting extends StatelessWidget {
+  final String username;
+  
+  const LocalizedGreeting({super.key, required this.username});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      context.l10n.greeting(username),
+      style: Theme.of(context).textTheme.bodyLarge,
+    );
+  }
+}
+```
+
+## Parameter Handling
+- Use named placeholders: `"hello": "Hello, {name}"`
+- Document all placeholders in metadata
+- Format parameters appropriately: dates, numbers, etc.
+- Use selective parameters for gender/context variations
+- Example:
+  ```json
+  "greeting": "Hello, {name}",
+  "@greeting": {
+    "description": "Greeting with user's name",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "John"
+      }
+    }
+  }
+  ```
+
+## Pluralization
+- Always handle quantity variations with plurals
+- Implement at least three forms: zero, one, and other
+- Example:
+  ```json
+  "messageCount": "{count, plural, =0{No messages} =1{1 message} other{{count} messages}}",
+  "@messageCount": {
+    "description": "Number of messages with pluralization",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "compact"
+      }
+    }
+  }
+  ```
+
+## Date, Time and Number Formatting
+- Use ICU date/time formats for consistent localization
+- Define standard date/time formats in the L10n helper class
+- Use appropriate number formats for different locales
+- Examples:
+  ```json
+  "lastUpdateTime": "Last updated: {time}",
+  "@lastUpdateTime": {
+    "description": "Time when content was last updated",
+    "placeholders": {
+      "time": {
+        "type": "DateTime", 
+        "format": "Hm"
+      }
+    }
+  }
+  ```
+
+## Language Selection Components
+- Use `LanguageSelectorScreen` for full language selection UI
+- Use `LanguageToggleButton` for quick language switching
+- Use `LanguageIndicator` for displaying current language
+- Always provide visual confirmation when language changes
+- Support both system default and specific language selection
+- Example:
+  ```dart
+  // Change to a specific language
+  context.read<LocaleCubit>().changeLocale(const Locale('vi'));
+  
+  // Reset to system default
+  context.read<LocaleCubit>().changeLocale(null);
+  
+  // Toggle between available languages
+  context.read<LocaleCubit>().toggleLocale();
+  ```
+
+## RTL Support Guidelines
+- Use start/end instead of left/right for positioning
+- Implement mirrored layouts for RTL languages
+- Test layouts in both RTL and LTR modes
+- Consider using `Directionality` widget for local direction changes
+- Example:
+  ```dart
+  // Good: Using directional-aware properties
+  Padding(
+    padding: const EdgeInsets.only(start: 16, end: 8),
+    child: Text(context.l10n.greeting),
+  ),
+  
+  // Bad: Using left/right which don't adapt to RTL
+  Padding(
+    padding: const EdgeInsets.only(left: 16, right: 8),
+    child: Text("Hello"),
+  ),
+  ```
+
+## Performance & Optimization Tips
+- Use the `generate: true` flag in pubspec.yaml
+- Access translations via context extension for optimal performance
+- Lazy-load translations when appropriate
+- Optimize image assets and other resources for different locales
+- Consider text length variations in UI design
+- Use conditional widgets for dramatically different layouts between languages
+- Avoid rebuilding widgets unnecessarily due to locale changes
+- Use const constructors where possible for better performance
+- Cache frequently used formatted values (dates, numbers) to avoid repeated formatting
+- Pre-load critical translations during app initialization
+
+## Testing & Validation Guidelines
+- Test UI in all supported languages
+- Verify text doesn't overflow containers
+- Ensure all strings are translated
+- Check parameter substitution is correct
+- Verify pluralization works for all quantity ranges
+- Test RTL layout if supporting RTL languages
+- Simulate missing translations to verify fallbacks
+- Validate translation bundle size doesn't grow excessively
+- Write tests that validate all translations are loaded correctly
+- Create automated checks for missing translations
+- Test language switching at runtime
+- Verify proper handling of system locale changes
+
+## Additional Resources
+- [Flutter Internationalization Guide](mdc:https:/docs.flutter.dev/development/accessibility-and-localization/internationalization)
+- [ICU Message Format](mdc:http:/userguide.icu-project.org/formatparse/messages)
+- [ARB Format Specification](mdc:https:/github.com/google/app-resource-bundle/wiki/ApplicationResourceBundleSpecification)

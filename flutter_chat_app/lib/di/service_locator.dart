@@ -60,6 +60,8 @@ import 'package:flutter_chat_app/core/cache/background_sync_worker.dart';
 import 'package:flutter_chat_app/core/network/socket_analytics.dart';
 import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
 import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';
+import 'package:flutter_chat_app/core/services/localization_service.dart';
+import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -218,6 +220,16 @@ Future<void> setupServiceLocator() async {
     maxMessageBuffer: 100,
     bufferZoneSize: 30,
   ));
+  
+  // Register localization service
+  getIt.registerLazySingleton<LocalizationService>(
+    () => LocalizationService(getIt<LocalStorage>()),
+  );
+  
+  // Register the LocaleCubit
+  getIt.registerFactory<LocaleCubit>(
+    () => LocaleCubit(getIt<LocalStorage>()),
+  );
   
   // Initialize all services that need it
   await getIt<AppCacheManager>().initialize();

@@ -1,0 +1,128 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Internationalization Error Handling Guidelines
+
+## Scope / Flexibility Notice
+These guidelines define standardized approaches for handling errors related to internationalization in the Flutter Chat Application. They apply to all error cases including missing translations, formatting errors, and locale-specific issues. Following these rules ensures a consistent user experience across different languages and regions.
+
+## Best Practices
+- Always provide fallback translations for critical UI elements
+- Handle missing translations gracefully with fallback to default language
+- Log missing translations but don't crash the application
+- Validate translation parameters at runtime where feasible
+- Use try-catch blocks around complex ICU message formatting
+- Implement graceful degradation for unsupported locales
+- Document expected behavior for missing translations
+
+## Handling Missing Translations
+- Implement a fallback chain: requested locale → default locale → hardcoded string
+- Show the key name only as a last resort in development builds
+- In production, never show translation keys to end users
+- Consider visual indicators for untranslated strings in debug mode
+- Record metrics on missing translations for later analysis
+- Example:
+  ```dart
+  String getTranslatedText(BuildContext context, String key, {Map<String, dynamic>? args}) {
+    try {
+      // Try to get the translation using the generated code
+      final translation = args == null 
+          ? getTranslation(context, key) 
+          : getTranslationWithArgs(context, key, args);
+      return translation;
+    } catch (e) {
+      // Log the error and provide fallback
+      logMissingTranslation(key, e);
+      return getFallbackTranslation(key) ?? 'Missing translation';
+    }
+  }
+  ```
+
+## Parameter Validation
+- Validate parameter types before formatting messages
+- Handle null or invalid parameters with sensible defaults
+- Use conditional formatting based on parameter values
+- Example:
+  ```dart
+  String userStatusMessage(BuildContext context, DateTime? lastSeen) {
+    if (lastSeen == null) {
+      return context.l10n.userStatusUnknown;
+    }
+    
+    final now = DateTime.now();
+    final difference = now.difference(lastSeen);
+    
+    if (difference.inMinutes < 1) {
+      return context.l10n.userStatusJustNow;
+    } else if (difference.inHours < 1) {
+      return context.l10n.userStatusMinutesAgo(difference.inMinutes);
+    } else {
+      return context.l10n.userStatusWithTime(lastSeen);
+    }
+  }
+  ```
+
+## RTL/LTR Handling
+- Use Directionality widgets when mixing text directions
+- Test UI layout in both RTL and LTR modes
+- Ensure icons and directional elements respect text direction
+- Handle bidirectional text correctly with Unicode control characters when needed
+- Example:
+  ```dart
+  Widget buildMessage(BuildContext context, String message, bool isRTL) {
+    return Directionality(
+      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+      child: Text(
+        message,
+        textAlign: isRTL ? TextAlign.right : TextAlign.left,
+      ),
+    );
+  }
+  ```
+
+## Format-Specific Errors
+- Handle date/time format errors with fallback formats
+- Provide sensible defaults for number formatting issues
+- Implement custom formatters for complex formatting needs
+- Document expected behavior for each format type
+- Example:
+  ```dart
+  String formatCurrency(BuildContext context, double? amount, String currencyCode) {
+    if (amount == null) {
+      return context.l10n.notAvailable;
+    }
+    
+    try {
+      return context.l10n.currencyFormat(amount, currencyCode);
+    } catch (e) {
+      // Fallback to basic formatting
+      return '$currencyCode ${amount.toStringAsFixed(2)}';
+    }
+  }
+  ```
+
+## Testing & Validation
+- Write unit tests for all error handling code
+- Simulate missing translations during testing
+- Test with invalid parameters and edge cases
+- Verify fallback behavior works as expected
+- Test RTL/LTR switching and mixed directional content
+- Validate all plural forms are handled correctly
+- Create visual regression tests for layout issues
+
+## Monitoring & Analysis
+- Track missing translation rate in analytics
+- Implement detection for repeated fallback usage
+- Create a dashboard for translation coverage and errors
+- Set alerts for sudden increases in translation errors
+- Monitor performance impact of complex formatting
+- Regularly audit logs for internationalization issues
+
+## Documentation for Translators
+- Document all special formatting constructs
+- Provide context and visual examples for each string
+- Highlight variable length content and UI constraints
+- Document plural rules specific to each language
+- Create guidelines for maintaining consistent terminology

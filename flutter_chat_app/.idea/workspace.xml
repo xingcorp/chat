@@ -7,9 +7,16 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat: refine architecture guidelines with enhanced descriptions, multi-platform structure, and state management best practices">
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/design_patterns.mdc" beforeDir="false" />
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat: enhance design pattern guidelines with detailed descriptions for behavioral and structural patterns in Flutter apps">
+      <change beforePath="$PROJECT_DIR$/.cursor-rules.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor-rules.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/patterns/behavioral_patterns.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/patterns/behavioral_patterns.mdc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/state_management.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/state_management.mdc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/di/service_locator.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/di/service_locator.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -386,7 +393,23 @@
       <option name="project" value="LOCAL" />
       <updated>1747388611223</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="feat: update workspace configuration to refine architecture guidelines with enhanced descriptions and multi-platform structure">
+      <option name="closed" value="true" />
+      <created>1747390987281</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1747390987281</updated>
+    </task>
+    <task id="LOCAL-00027" summary="feat: enhance design pattern guidelines with detailed descriptions for behavioral and structural patterns in Flutter apps">
+      <option name="closed" value="true" />
+      <created>1747392058922</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1747392058922</updated>
+    </task>
+    <option name="localTasksCounter" value="28" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -474,6 +497,8 @@
     <MESSAGE value="feat: add comprehensive guidelines for AI readiness, media handling, offline sync, real-time messaging, and worker pool scaling" />
     <MESSAGE value="feat: update design patterns, SOLID principles, and state management guidelines with improved descriptions and ensure alwaysApply is set to true" />
     <MESSAGE value="feat: refine architecture guidelines with enhanced descriptions, multi-platform structure, and state management best practices" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: refine architecture guidelines with enhanced descriptions, multi-platform structure, and state management best practices" />
+    <MESSAGE value="feat: update workspace configuration to refine architecture guidelines with enhanced descriptions and multi-platform structure" />
+    <MESSAGE value="feat: enhance design pattern guidelines with detailed descriptions for behavioral and structural patterns in Flutter apps" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance design pattern guidelines with detailed descriptions for behavioral and structural patterns in Flutter apps" />
   </component>
 </project>

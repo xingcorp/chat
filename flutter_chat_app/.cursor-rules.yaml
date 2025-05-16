@@ -28,6 +28,9 @@ rules:
   - name: security_basics
     path: .cursor/rules/core/security_basics.mdc
     
+  - name: internationalization_error_handling
+    path: .cursor/rules/core/internationalization_error_handling.mdc
+    
   # Feature layer rules (apply to specific domains)
   - name: realtime_messaging
     path: .cursor/rules/feature/realtime_messaging.mdc
@@ -52,6 +55,9 @@ rules:
     
   - name: ai_readiness
     path: .cursor/rules/feature/ai_readiness.mdc
+
+  - name: internationalization
+    path: .cursor/rules/feature/internationalization.mdc
 
   # Discourage leaving debug print statements in the codebase. Use a proper logger instead.
   - rule_id: no-print
@@ -116,6 +122,22 @@ rules:
     level: error
     message: "Domain layer (domain/) must not import Flutter framework (package:flutter/...) or infrastructure packages (e.g., http, sqflite). Depend only on Dart core and domain interfaces."
     glob: "lib/domain/**/*.dart"
+
+  # Prevent hardcoded strings in UI for internationalization
+  - rule_id: no-hardcoded-strings
+    description: Prevent hardcoded user-visible strings in the UI
+    match: '(Text|TextSpan|AppBar|AlertDialog|ElevatedButton|TextButton|OutlinedButton)\s*\(\s*["''][^"''$]+["'']'
+    level: warning
+    message: "Avoid hardcoded strings in UI components. Use localized strings (context.l10n.keyName) for better internationalization support."
+    glob: "lib/presentation/**/*.dart"
+
+  # Ensure proper RTL support for internationalization
+  - rule_id: ensure-rtl-support
+    description: Ensure proper RTL (Right-to-Left) support in UI layouts
+    match: '(Padding|EdgeInsets)\.(only|symmetric)\(\s*left:'
+    level: info
+    message: "Consider using start/end instead of left/right for proper RTL language support. Use EdgeInsets.only(start: X) instead of EdgeInsets.only(left: X)."
+    glob: "lib/presentation/**/*.dart"
 
   # --- General Code Style & Quality Rules ---
 

@@ -1,0 +1,63 @@
+{
+  "app": {
+    "title": "Flutter Chat App"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "send": "Send",
+    "close": "Close"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "forgotPassword": "Forgot Password",
+    "username": "Username",
+    "password": "Password",
+    "email": "Email",
+    "confirmPassword": "Confirm Password"
+  },
+  "chat": {
+    "newMessage": "New Message",
+    "typeMessage": "Type a message...",
+    "noMessages": "No messages yet",
+    "loadMore": "Load More",
+    "yesterday": "Yesterday",
+    "today": "Today"
+  },
+  "connection": {
+    "online": "Online",
+    "offline": "Offline",
+    "connecting": "Connecting...",
+    "reconnecting": "Reconnecting...",
+    "poor": "Poor connection",
+    "good": "Good connection",
+    "excellent": "Excellent connection"
+  },
+  "database": {
+    "testData": "Test Data",
+    "createTestData": "Create Test Data",
+    "clearData": "Clear Data",
+    "dataCleared": "Data cleared",
+    "users": "Users",
+    "chats": "Chats",
+    "messages": "Messages",
+    "noUsers": "No users yet",
+    "noChats": "No chats yet",
+    "noMessages": "No messages yet"
+  },
+  "errors": {
+    "connectionError": "Connection error",
+    "databaseError": "Database error",
+    "syncError": "Sync error",
+    "uploadError": "Upload error",
+    "downloadError": "Download error"
+  }
+} 

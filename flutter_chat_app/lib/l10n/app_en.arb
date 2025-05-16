@@ -1,0 +1,299 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Flutter Chat App",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+
+  "ok": "OK",
+  "@ok": {
+    "description": "OK button text"
+  },
+
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+
+  "save": "Save",
+  "@save": {
+    "description": "Save button text"
+  },
+
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button text"
+  },
+
+  "edit": "Edit",
+  "@edit": {
+    "description": "Edit button text"
+  },
+
+  "loading": "Loading...",
+  "@loading": {
+    "description": "Loading indicator text"
+  },
+
+  "errorOccurred": "An error occurred",
+  "@errorOccurred": {
+    "description": "Generic error message"
+  },
+
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry button text"
+  },
+
+  "send": "Send",
+  "@send": {
+    "description": "Send button text"
+  },
+
+  "close": "Close",
+  "@close": {
+    "description": "Close button text"
+  },
+
+  "login": "Login",
+  "@login": {
+    "description": "Login button text"
+  },
+
+  "logout": "Logout",
+  "@logout": {
+    "description": "Logout button text"
+  },
+
+  "register": "Register",
+  "@register": {
+    "description": "Register button text"
+  },
+
+  "forgotPassword": "Forgot Password",
+  "@forgotPassword": {
+    "description": "Forgot password button text"
+  },
+
+  "username": "Username",
+  "@username": {
+    "description": "Username field label"
+  },
+
+  "password": "Password",
+  "@password": {
+    "description": "Password field label"
+  },
+
+  "email": "Email",
+  "@email": {
+    "description": "Email field label"
+  },
+
+  "confirmPassword": "Confirm Password",
+  "@confirmPassword": {
+    "description": "Confirm password field label"
+  },
+
+  "newMessage": "New Message",
+  "@newMessage": {
+    "description": "New message title"
+  },
+
+  "typeMessage": "Type a message...",
+  "@typeMessage": {
+    "description": "Placeholder text for message input"
+  },
+
+  "noMessages": "No messages yet",
+  "@noMessages": {
+    "description": "Text shown when there are no messages"
+  },
+
+  "loadMore": "Load More",
+  "@loadMore": {
+    "description": "Load more button text"
+  },
+
+  "yesterday": "Yesterday",
+  "@yesterday": {
+    "description": "Yesterday text"
+  },
+
+  "today": "Today",
+  "@today": {
+    "description": "Today text"
+  },
+
+  "online": "Online",
+  "@online": {
+    "description": "Online status"
+  },
+
+  "offline": "Offline",
+  "@offline": {
+    "description": "Offline status"
+  },
+
+  "connecting": "Connecting...",
+  "@connecting": {
+    "description": "Connecting status"
+  },
+
+  "reconnecting": "Reconnecting...",
+  "@reconnecting": {
+    "description": "Reconnecting status"
+  },
+
+  "messageCount": "{count, plural, =0{No messages} =1{1 message} other{{count} messages}}",
+  "@messageCount": {
+    "description": "Message count with pluralization",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "compact"
+      }
+    }
+  },
+
+  "lastSeen": "Last seen {time}",
+  "@lastSeen": {
+    "description": "Last seen with time",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Settings page title"
+  },
+
+  "profileSettings": "Profile",
+  "@profileSettings": {
+    "description": "Profile settings option"
+  },
+
+  "chatSettings": "Chat Settings",
+  "@chatSettings": {
+    "description": "Chat settings option"
+  },
+
+  "notificationSettings": "Notifications",
+  "@notificationSettings": {
+    "description": "Notification settings option"
+  },
+
+  "languageSettings": "Language",
+  "@languageSettings": {
+    "description": "Language settings option"
+  },
+
+  "aboutSettings": "About",
+  "@aboutSettings": {
+    "description": "About settings option"
+  },
+
+  "systemDefault": "System Default",
+  "@systemDefault": {
+    "description": "System default language option"
+  },
+
+  "selectLanguage": "Select Language",
+  "@selectLanguage": {
+    "description": "Language selection title"
+  },
+
+  "languageChanged": "Language changed successfully",
+  "@languageChanged": {
+    "description": "Message shown when language is changed"
+  },
+
+  "poorConnection": "Poor connection",
+  "@poorConnection": {
+    "description": "Poor connection status"
+  },
+
+  "goodConnection": "Good connection",
+  "@goodConnection": {
+    "description": "Good connection status"
+  },
+
+  "excellentConnection": "Excellent connection",
+  "@excellentConnection": {
+    "description": "Excellent connection status"
+  },
+
+  "testData": "Test Data",
+  "@testData": {
+    "description": "Test data title"
+  },
+
+  "createTestData": "Create Test Data",
+  "@createTestData": {
+    "description": "Create test data button text"
+  },
+
+  "clearData": "Clear Data",
+  "@clearData": {
+    "description": "Clear data button text"
+  },
+
+  "dataCleared": "Data cleared",
+  "@dataCleared": {
+    "description": "Message shown when data is cleared"
+  },
+
+  "users": "Users",
+  "@users": {
+    "description": "Users title"
+  },
+
+  "chats": "Chats",
+  "@chats": {
+    "description": "Chats title"
+  },
+
+  "messages": "Messages",
+  "@messages": {
+    "description": "Messages title"
+  },
+
+  "noUsers": "No users yet",
+  "@noUsers": {
+    "description": "No users message"
+  },
+
+  "noChats": "No chats yet",
+  "@noChats": {
+    "description": "No chats message"
+  },
+
+  "connectionError": "Connection error",
+  "@connectionError": {
+    "description": "Connection error message"
+  },
+
+  "databaseError": "Database error",
+  "@databaseError": {
+    "description": "Database error message"
+  },
+
+  "syncError": "Sync error",
+  "@syncError": {
+    "description": "Sync error message"
+  },
+
+  "uploadError": "Upload error",
+  "@uploadError": {
+    "description": "Upload error message"
+  },
+
+  "downloadError": "Download error",
+  "@downloadError": {
+    "description": "Download error message"
+  }
+} 
