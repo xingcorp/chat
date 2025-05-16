@@ -1,0 +1,396 @@
+---
+description: "Guidelines for using and optimizing Isar Database for offline storage, synchronization and efficient querying"
+globs: ["lib/data/datasources/local/**/*.dart", "lib/core/database/**/*.dart"]
+alwaysApply: false
+---
+# Isar Database Guidelines
+
+## Scope / Flexibility Notice
+These guidelines apply to the design and usage of Isar Database in the project, aimed at optimizing performance, ensuring scalability, and providing the best offline-first experience for users.
+
+## Best Practices
+- Define collections with clear and consistent schemas
+- Use indexes to optimize frequently used queries
+- Implement transactions for complex read-write operations
+- Use migrations to safely manage schema changes
+- Avoid deep object nesting in schemas to reduce complexity
+- Design schemas optimized for querying rather than data normalization
+- Use meaningful IDs instead of relying on auto-increment
+- Leverage advanced features: full-text search, spatial indexes
+- Design data access layer separate from business logic
+- Use correct data types to optimize storage and queries
+
+## File / Project Structure Guidelines
+- Organize Isar-related directory structure:
+  ```
+  lib/
+    ├── data/
+    │   ├── datasources/
+    │   │   ├── local/
+    │   │   │   ├── isar_service.dart           # Initialize Isar and manage connections
+    │   │   │   ├── daos/                       # Data Access Objects
+    │   │   │   │   ├── message_dao.dart        
+    │   │   │   │   └── user_dao.dart
+    │   │   │   └── mappers/                    # Mappers between models and entities
+    │   │   │       └── message_mapper.dart
+    │   ├── models/
+    │   │   ├── local/                          # Isar collection models
+    │   │   │   ├── message_model.dart
+    │   │   │   └── user_model.dart
+    └── core/
+        ├── database/
+            ├── isar_config.dart                # Isar configuration
+            ├── migrations/                     # Migrations
+            └── constants/                      # Schema versions & constants
+  ```
+
+- Collection model template:
+  ```dart
+  @collection
+  class MessageModel {
+    Id id = Isar.autoIncrement;
+    
+    @Index(type: IndexType.value)
+    late String remoteId;
+    
+    @Index(type: IndexType.value)
+    late String chatId;
+    
+    late String content;
+    
+    @Index(type: IndexType.value)
+    late DateTime timestamp;
+    
+    @Index(type: IndexType.value)
+    late MessageStatus status;
+    
+    // Define enum converter
+    @enumerated
+    late MessageType type;
+  }
+
+  // Type converter extension
+  extension MessageStatusConverter on MessageStatus {
+    int toIsarValue() => index;
+    static MessageStatus fromIsarValue(int value) => MessageStatus.values[value];
+  }
+  ```
+
+## Initialization & Configuration
+- Initializing Isar in the app:
+  ```dart
+  Future<Isar> initializeDatabase() async {
+    final dir = await getApplicationDocumentsDirectory();
+    
+    // Register schemas
+    return Isar.open(
+      [MessageModelSchema, UserModelSchema],
+      directory: dir.path,
+      inspector: kDebugMode, // Enable Isar Inspector in debug mode
+    );
+  }
+  ```
+
+- Dependency injection:
+  ```dart
+  void setupDatabase(GetIt getIt) {
+    // Register Isar instance
+    getIt.registerSingletonAsync<Isar>(() => initializeDatabase());
+    
+    // Register DAOs
+    getIt.registerSingletonWithDependencies<MessageDao>(
+      () => MessageDao(getIt<Isar>()),
+      dependsOn: [Isar],
+    );
+  }
+  ```
+
+## Query & Transaction Patterns
+- Data Access Object pattern:
+  ```dart
+  class MessageDao {
+    final Isar _isar;
+    
+    MessageDao(this._isar);
+    
+    // Create
+    Future<int> saveMessage(MessageModel message) async {
+      return _isar.writeTxn(() => _isar.messageModels.put(message));
+    }
+    
+    // Read with streaming for reactive UI
+    Stream<List<MessageModel>> watchMessages(String chatId) {
+      return _isar.messageModels
+          .filter()
+          .chatIdEqualTo(chatId)
+          .sortByTimestampDesc()
+          .watch(fireImmediately: true);
+    }
+    
+    // Update
+    Future<void> updateMessageStatus(String remoteId, MessageStatus status) async {
+      await _isar.writeTxn(() async {
+        final message = await _isar.messageModels
+            .filter()
+            .remoteIdEqualTo(remoteId)
+            .findFirst();
+            
+        if (message != null) {
+          message.status = status;
+          await _isar.messageModels.put(message);
+        }
+      });
+    }
+    
+    // Delete
+    Future<void> deleteMessage(String remoteId) async {
+      await _isar.writeTxn(() async {
+        final message = await _isar.messageModels
+            .filter()
+            .remoteIdEqualTo(remoteId)
+            .findFirst();
+            
+        if (message != null) {
+          await _isar.messageModels.delete(message.id);
+        }
+      });
+    }
+    
+    // Complex query
+    Future<List<MessageModel>> searchMessages(String query) async {
+      return _isar.messageModels
+          .filter()
+          .contentContains(query, caseSensitive: false)
+          .sortByTimestampDesc()
+          .limit(50)
+          .findAll();
+    }
+  }
+  ```
+
+## Migration Strategy
+- Managing schema versions and migrations:
+  ```dart
+  const int kCurrentSchemaVersion = 2;
+
+  Future<void> migrateIfNeeded(Isar isar) async {
+    final currentVersion = await getCurrentVersion(isar);
+    
+    if (currentVersion < kCurrentSchemaVersion) {
+      await isar.writeTxn(() async {
+        // Apply migrations sequentially
+        if (currentVersion < 1) {
+          await migrateV1ToV2(isar);
+        }
+        
+        // Update version
+        await saveCurrentVersion(isar, kCurrentSchemaVersion);
+      });
+    }
+  }
+  ```
+
+## Performance & Optimization Tips
+- Using appropriate indexes:
+  ```dart
+  // Composite index for frequent queries
+  @collection
+  class MessageModel {
+    // ...
+    
+    @Index(composite: [CompositeIndex('timestamp')])
+    late String chatId;
+    
+    late DateTime timestamp;
+  }
+  ```
+
+- Avoiding N+1 queries with links & backlinks:
+  ```dart
+  @collection
+  class ChatModel {
+    Id id = Isar.autoIncrement;
+    
+    late String title;
+    
+    // Define links to related collections
+    final participants = IsarLinks<UserModel>();
+    final messages = IsarLinks<MessageModel>();
+  }
+  
+  // Using links in queries
+  Future<ChatModel> getChatWithMessages(String chatId) async {
+    final chat = await isar.chatModels
+        .filter()
+        .remoteIdEqualTo(chatId)
+        .findFirst();
+        
+    // Load related collections in one go
+    await chat?.messages.load();
+    await chat?.participants.load();
+    
+    return chat!;
+  }
+  ```
+
+- Reading batch data for performance optimization:
+  ```dart
+  Future<List<MessageModel>> getMessagesByIds(List<String> remoteIds) async {
+    return isar.messageModels
+        .filter()
+        .anyOf(
+          remoteIds,
+          (q, id) => q.remoteIdEqualTo(id),
+        )
+        .findAll();
+  }
+  ```
+
+## Sync Strategies
+- Creating sync change tracker:
+  ```dart
+  @collection
+  class SyncQueueItem {
+    Id id = Isar.autoIncrement;
+    
+    late String entityId;
+    late String entityType;
+    late SyncAction action;
+    late DateTime createdAt;
+    
+    @enumerated
+    late SyncStatus status;
+  }
+  
+  enum SyncAction { create, update, delete }
+  enum SyncStatus { pending, inProgress, completed, failed }
+  ```
+
+- Service for syncing from local to server:
+  ```dart
+  Future<void> synchronizeChanges() async {
+    final pendingItems = await _isar.syncQueueItems
+        .filter()
+        .statusEqualTo(SyncStatus.pending)
+        .sortByCreatedAt()
+        .findAll();
+        
+    for (final item in pendingItems) {
+      try {
+        await _isar.writeTxn(() async {
+          item.status = SyncStatus.inProgress;
+          await _isar.syncQueueItems.put(item);
+        });
+        
+        bool success = false;
+        switch (item.entityType) {
+          case 'message':
+            success = await _syncMessage(item);
+            break;
+          // Other entity types...
+        }
+        
+        await _isar.writeTxn(() async {
+          item.status = success ? SyncStatus.completed : SyncStatus.failed;
+          await _isar.syncQueueItems.put(item);
+        });
+      } catch (e) {
+        await _isar.writeTxn(() async {
+          item.status = SyncStatus.failed;
+          await _isar.syncQueueItems.put(item);
+        });
+      }
+    }
+  }
+  ```
+
+## Testing & Validation Guidelines
+- Creating a separate test database instance:
+  ```dart
+  Future<Isar> getTestDatabase() async {
+    final dir = await Directory.systemTemp.createTemp('isar_test');
+    return Isar.open(
+      [MessageModelSchema, UserModelSchema],
+      directory: dir.path,
+    );
+  }
+  ```
+
+- Unit testing DAOs:
+  ```dart
+  void main() {
+    late Isar isar;
+    late MessageDao messageDao;
+    
+    setUp(() async {
+      isar = await getTestDatabase();
+      messageDao = MessageDao(isar);
+    });
+    
+    tearDown(() async {
+      await isar.close(deleteFromDisk: true);
+    });
+    
+    test('should save and retrieve message', () async {
+      // Arrange
+      final message = MessageModel()
+        ..remoteId = 'msg1'
+        ..chatId = 'chat1'
+        ..content = 'Hello'
+        ..timestamp = DateTime.now()
+        ..status = MessageStatus.sent
+        ..type = MessageType.text;
+        
+      // Act
+      final id = await messageDao.saveMessage(message);
+      final result = await messageDao.getMessageByRemoteId('msg1');
+      
+      // Assert
+      expect(result, isNotNull);
+      expect(result!.content, equals('Hello'));
+    });
+  }
+  ```
+
+## Error Handling Strategies
+- Database error handling:
+  ```dart
+  Future<Result<List<MessageModel>>> getMessages(String chatId) async {
+    try {
+      final messages = await _isar.messageModels
+          .filter()
+          .chatIdEqualTo(chatId)
+          .sortByTimestampDesc()
+          .findAll();
+          
+      return Result.success(messages);
+    } catch (e, stackTrace) {
+      _logger.error('Error fetching messages', e, stackTrace);
+      return Result.failure(DatabaseFailure('Failed to fetch messages'));
+    }
+  }
+  ```
+
+- Building repository layer using failure types:
+  ```dart
+  @injectable
+  class MessageRepositoryImpl implements MessageRepository {
+    final MessageDao _messageDao;
+    final MessageMapper _mapper;
+    
+    MessageRepositoryImpl(this._messageDao, this._mapper);
+    
+    @override
+    Future<Either<Failure, List<Message>>> getMessages(String chatId) async {
+      try {
+        final result = await _messageDao.getMessages(chatId);
+        return result.when(
+          success: (models) => Right(models.map(_mapper.toDomain).toList()),
+          failure: (error) => Left(error),
+        );
+      } catch (e) {
+        return Left(CacheFailure(e.toString()));
+      }
+    }
+  }
+  ```

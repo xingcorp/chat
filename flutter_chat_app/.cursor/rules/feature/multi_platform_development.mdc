@@ -1,0 +1,161 @@
+---
+description: "Guidelines for designing and developing multi-platform applications (mobile, web, desktop) with unified codebase"
+globs: ["lib/main*.dart", "lib/presentation/widgets/**/*.dart", "lib/core/platform/**/*.dart"]
+alwaysApply: false
+---
+# Multi-Platform Development Guidelines
+
+## Scope / Flexibility Notice
+These guidelines apply to multi-platform development, enabling maximum code sharing between mobile, web, and desktop while optimizing the user experience for each specific platform.
+
+## Best Practices
+- Use separate entry point structure: main_mobile.dart, main_web.dart, main_desktop.dart
+- Separate platform-specific logic using conditional imports
+- Implement responsive design rather than adaptive design where possible
+- Leverage LayoutBuilder and MediaQuery widgets for responsive UI
+- Use factory patterns to create platform-specific widgets and services
+- Prioritize shared code repositories, only separating when necessary
+- Use Flutter Platform Channels for platform-specific features
+- Maintain consistent APIs across platforms, even if implementations differ
+
+## File / Project Structure Guidelines
+- Organize entry point structure:
+  ```
+  lib/
+    ├── main.dart              # Common entry point or default mobile
+    ├── main_mobile.dart       # Mobile entry point
+    ├── main_web.dart          # Web entry point
+    ├── main_desktop.dart      # Desktop entry point
+    ├── presentation/
+    │   ├── widgets/
+    │   │   ├── common/        # Shared widgets across platforms
+    │   │   ├── mobile/        # Mobile-specific widgets
+    │   │   ├── web/           # Web-specific widgets
+    │   │   └── desktop/       # Desktop-specific widgets
+    └── core/
+        ├── platform/
+        │   ├── platform_info.dart      # Platform detection utilities
+        │   └── platform_widgets.dart   # Platform-specific widget factories
+  ```
+
+- Use factories for platform-specific widgets:
+  ```dart
+  abstract class PlatformButton {
+    factory PlatformButton() {
+      if (kIsWeb) return WebButton();
+      if (Platform.isAndroid || Platform.isIOS) return MobileButton();
+      return DesktopButton();
+    }
+    
+    Widget build(BuildContext context, String label, VoidCallback onPressed);
+  }
+  ```
+
+## Entry Point Structure
+- Organization of main.dart and platform-specific mains:
+  ```dart
+  // main.dart
+  void main() {
+    // Common initialization
+    WidgetsFlutterBinding.ensureInitialized();
+    // Platform detection and forwarding
+    if (kIsWeb) {
+      webMain();
+    } else if (Platform.isAndroid || Platform.isIOS) {
+      mobileMain();
+    } else {
+      desktopMain();
+    }
+  }
+  ```
+
+- Platform-specific mains:
+  ```dart
+  // main_mobile.dart
+  void mobileMain() {
+    // Mobile-specific initialization
+    initializeMobileServices();
+    runApp(const AppEntry(platform: PlatformType.mobile));
+  }
+  ```
+
+## Platform-Specific Configuration
+- Managing platform-specific dependencies:
+  ```yaml
+  # pubspec.yaml
+  dependencies:
+    # Common dependencies
+    flutter:
+      sdk: flutter
+    
+    # Mobile-specific
+    flutter_local_notifications: ^19.0.0
+    
+    # Web-specific
+    url_launcher_web: ^2.0.0
+    
+    # Desktop-specific
+    window_size:
+      git:
+        url: https://github.com/google/flutter-desktop-embedding.git
+        path: plugins/window_size
+  ```
+
+## Responsive Design Guidelines
+- Using LayoutBuilder and MediaQuery for responsive UI:
+  ```dart
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1200) {
+          return DesktopLayout(child: content);
+        } else if (constraints.maxWidth > 600) {
+          return TabletLayout(child: content);
+        } else {
+          return MobileLayout(child: content);
+        }
+      },
+    );
+  }
+  ```
+
+- Using FlexBuilder for adaptive widgets:
+  ```dart
+  Widget buildUserList() {
+    return FlexBuilder(
+      mobile: (context) => ListView.builder(/* mobile config */),
+      desktop: (context) => GridView.builder(/* desktop config */),
+      tablet: (context) => ListView.builder(/* tablet config */),
+    );
+  }
+  ```
+
+## Service Locator Configuration
+- Configuring dependency injection by platform:
+  ```dart
+  void configureDependencies(PlatformType platform) {
+    // Common dependencies
+    getIt.registerSingleton<NetworkService>(NetworkServiceImpl());
+    
+    // Platform specific dependencies
+    switch (platform) {
+      case PlatformType.mobile:
+        getIt.registerSingleton<NotificationService>(MobileNotificationService());
+        break;
+      case PlatformType.web:
+        getIt.registerSingleton<NotificationService>(WebNotificationService());
+        break;
+      case PlatformType.desktop:
+        getIt.registerSingleton<NotificationService>(DesktopNotificationService());
+        break;
+    }
+  }
+  ```
+
+## Testing & Validation Guidelines
+- Write platform-agnostic tests when possible
+- Use mocks for platform-specific services
+- Write golden tests for UI across different screen sizes
+- Test user experience on all target platforms
+- Use device lab or device farm for automated testing
+- Monitor and analyze performance metrics across platforms

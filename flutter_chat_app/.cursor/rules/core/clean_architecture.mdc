@@ -3,11 +3,6 @@ description: "Enforce Clean Architecture principles with proper layer separation
 globs: ["lib/domain/**/*.dart", "lib/data/**/*.dart", "lib/presentation/**/*.dart", "lib/core/**/*.dart"]
 alwaysApply: true
 ---
----
-description: "Enforces Clean Architecture principles across the project, focusing on separation of concerns and dependency rules."
-globs: ["lib/**/*.dart"]
-alwaysApply: true
----
 # Clean Architecture Guidelines
 
 ## Scope / Flexibility Notice

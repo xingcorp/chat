@@ -3,11 +3,6 @@ description: "Comprehensive guide for maintaining consistent project architectur
 globs: ["lib/**/*.dart", "assets/**/*", "test/**/*.dart", "pubspec.yaml", "analysis_options.yaml"]
 alwaysApply: true
 ---
----
-description: "Guidelines for project and feature structure, naming conventions, and asset management."
-globs: ["lib/**/*.dart", "assets/**", "pubspec.yaml"]
-alwaysApply: true
----
 # Project Architecture & Structure Guidelines
 
 ## Scope / Flexibility Notice
@@ -19,21 +14,37 @@ These guidelines establish consistent patterns for feature development, asset ma
 - Each feature should be organized according to Clean Architecture layers:
   ```
   lib/
-    ├── core/           # Shared core utilities and services
-    ├── domain/         # Business logic and entities
+    ├── main.dart              # Common entry point
+    ├── main_mobile.dart       # Mobile entry point
+    ├── main_web.dart          # Web entry point
+    ├── main_desktop.dart      # Desktop entry point
+    ├── core/                  # Shared core utilities and services
+    │   ├── navigation/
+    │   ├── network/
+    │   ├── theme/
+    │   └── utils/
+    ├── config/                # App configuration
+    ├── di/                    # Dependency injection
+    ├── proto/                 # Proto definitions for gRPC
+    ├── utils/                 # Utility functions and helpers
+    ├── domain/                # Business logic and entities
     │   ├── entities/
     │   ├── repositories/ (interfaces)
     │   └── usecases/
-    ├── data/           # Data sources and repository implementations
+    ├── data/                  # Data sources and repository implementations
     │   ├── datasources/
     │   │   ├── local/
     │   │   └── remote/
     │   ├── models/
     │   └── repositories/
-    └── presentation/   # UI layer
+    └── presentation/          # UI layer
         ├── blocs/
         ├── pages/
-        └── widgets/
+        ├── widgets/
+        │   ├── common/
+        │   ├── mobile/
+        │   ├── web/
+        │   └── desktop/
   ```
 
 ### 2. Adding a New Feature Process
@@ -50,7 +61,9 @@ These guidelines establish consistent patterns for feature development, asset ma
    - Implement repository in `lib/data/repositories/feature_name_repository_impl.dart`
 
 3. **Step 3: Create Presentation Layer**
-   - Implement BLoCs/Cubits in `lib/presentation/blocs/feature_name/`
+   - Implement BLoCs in `lib/presentation/blocs/feature_name/`
+     - Define events in `feature_bloc.dart` and `feature_event.dart`
+     - Define states in `feature_state.dart`
    - Create pages in `lib/presentation/pages/feature_name/`
    - Create reusable widgets in `lib/presentation/widgets/feature_name/`
 
@@ -63,12 +76,12 @@ These guidelines establish consistent patterns for feature development, asset ma
   - Repository interfaces: `FeatureNameRepository`
   - Repository implementations: `FeatureNameRepositoryImpl`
   - Use cases: Action verb + noun (e.g., `GetUserMessages`, `SendMessage`)
-  - BLoCs/Cubits: `FeatureNameBloc`, `FeatureNameCubit`
+  - BLoCs: `FeatureNameBloc`
   - States: `FeatureNameState`
   - Events: `FeatureNameEvent`
 - **Methods**:
   - Repository methods: Verb + noun (e.g., `getMessages()`, `sendMessage()`)
-  - Use case methods: `execute()` or `call()`
+  - Use case methods: `call()` for callable classes
 
 ## Asset Guidelines
 
@@ -78,8 +91,12 @@ These guidelines establish consistent patterns for feature development, asset ma
   assets/
   ├── images/
   │   ├── logos/
-  │   ├── icons/
-  │   └── backgrounds/
+  │   ├── backgrounds/
+  │   └── illustrations/
+  ├── icons/
+  │   ├── nav/
+  │   └── actions/
+  ├── translations/
   ├── fonts/
   ├── animations/ (for Lottie files)
   └── audio/
@@ -96,18 +113,22 @@ These guidelines establish consistent patterns for feature development, asset ma
   flutter:
     assets:
       - assets/images/
-      - assets/images/logos/
-      - assets/fonts/
-      - assets/animations/
+      - assets/icons/
+      - assets/translations/
+      - .env
   ```
-- Declare font families explicitly:
+- Declare font families explicitly when needed:
   ```yaml
   flutter:
     fonts:
-      - family: Roboto
+      - family: Poppins
         fonts:
-          - asset: assets/fonts/Roboto-Regular.ttf
-          - asset: assets/fonts/Roboto-Bold.ttf
+          - asset: assets/fonts/Poppins-Regular.ttf
+          - asset: assets/fonts/Poppins-Medium.ttf
+            weight: 500
+          - asset: assets/fonts/Poppins-SemiBold.ttf
+            weight: 600
+          - asset: assets/fonts/Poppins-Bold.ttf
             weight: 700
   ```
 
@@ -123,7 +144,7 @@ These guidelines establish consistent patterns for feature development, asset ma
   ```dart
   CachedNetworkImage(
     imageUrl: imageUrl,
-    placeholder: (context, url) => CircularProgressIndicator(),
+    placeholder: (context, url) => const ShimmerLoading(),
     errorWidget: (context, url, error) => Image.asset(AppAssets.defaultAvatar),
   )
   ```
@@ -133,6 +154,32 @@ These guidelines establish consistent patterns for feature development, asset ma
     await precacheImage(const AssetImage(AppAssets.logo), context);
   }
   ```
+
+## Multi-Platform Structure
+
+### 1. Entry Points Organization
+- Use separate entry points for different platforms:
+  - `main.dart`: Common or default entry point
+  - `main_mobile.dart`: Mobile-specific entry point
+  - `main_web.dart`: Web-specific entry point
+  - `main_desktop.dart`: Desktop-specific entry point
+
+### 2. Platform-Specific Components
+- Organize platform-specific widgets:
+  ```
+  lib/
+    presentation/
+      widgets/
+        common/        # Shared across all platforms
+        mobile/        # Mobile-specific widgets
+        web/           # Web-specific widgets
+        desktop/       # Desktop-specific widgets
+  ```
+
+### 3. Responsive Design
+- Use `LayoutBuilder` and `MediaQuery` for responsive UI
+- Implement adaptive layouts based on screen constraints
+- Use platform-specific factories when behaviors differ significantly
 
 ## Widget & Page Guidelines
 
@@ -157,10 +204,10 @@ These guidelines establish consistent patterns for feature development, asset ma
     final int? optionalParam;
     
     const CustomWidget({
-      Key? key,
+      super.key,
       required this.requiredParam,
       this.optionalParam,
-    }) : super(key: key);
+    });
     
     @override
     Widget build(BuildContext context) {
@@ -176,9 +223,9 @@ These guidelines establish consistent patterns for feature development, asset ma
     final String paramId;
     
     const FeatureNamePage({
-      Key? key,
+      super.key,
       required this.paramId,
-    }) : super(key: key);
+    });
     
     @override
     Widget build(BuildContext context) {
@@ -194,7 +241,7 @@ These guidelines establish consistent patterns for feature development, asset ma
   }
   
   class FeatureNameView extends StatelessWidget {
-    const FeatureNameView({Key? key}) : super(key: key);
+    const FeatureNameView({super.key});
     
     @override
     Widget build(BuildContext context) {
@@ -213,9 +260,54 @@ These guidelines establish consistent patterns for feature development, asset ma
   ```
 
 ### 5. Navigation
-- Use the established routing system:
-  - For GoRouter, add routes in `lib/core/navigation/app_router.dart`
-  - For AutoRoute, update the `@AutoRouterConfig` class
+- Use GoRouter for navigation:
+  - Define routes in `lib/core/navigation/app_router.dart`
+  - Use typed navigation with GoRouterState
+  - Implement deep linking support for all routes
+  - Use nested navigation when appropriate
+
+## Dependency Injection
+
+### 1. Injection Container
+- Use GetIt with Injectable for dependency injection
+- Keep all service registrations in `lib/di/injection_container.dart`
+- Split registrations into logical sections by feature and layer
+- Register interfaces, not implementations when possible
+- Use appropriate registration types:
+  - `registerLazySingleton` for services, repositories, and network clients
+  - `registerFactory` for BLoCs and use cases
+  - `registerSingletonAsync` for services requiring initialization
+
+### 2. Registration Process
+- Use feature-specific registration methods:
+  ```dart
+  @InjectableInit(
+    initializerName: 'init',
+    preferRelativeImports: true,
+    asExtension: true,
+  )
+  Future<void> configureDependencies() => getIt.init();
+  
+  @module
+  abstract class RegisterModule {
+    // Third-party service registrations
+    @lazySingleton
+    Dio get dio => createAndSetupDio();
+    
+    @preResolve
+    Future<SharedPreferences> get prefs => SharedPreferences.getInstance();
+  }
+  
+  void registerRepositories() {
+    // Register repositories
+    getIt.registerLazySingleton<MessageRepository>(
+      () => MessageRepositoryImpl(
+        remoteDataSource: getIt(),
+        localDataSource: getIt(),
+      ),
+    );
+  }
+  ```
 
 ## Testing & Validation Guidelines
 
@@ -261,7 +353,7 @@ These guidelines establish consistent patterns for feature development, asset ma
         when(() => mockDependency.someMethod(any())).thenAnswer((_) async => Right(successValue));
         
         // Act
-        final result = await featureUnderTest.execute(validInput);
+        final result = await featureUnderTest.call(validInput);
         
         // Assert
         expect(result, Right(expectedOutput));
@@ -271,22 +363,45 @@ These guidelines establish consistent patterns for feature development, asset ma
   }
   ```
 
-### 4. Widget Test Boilerplate
-- Standard widget test format:
+### 4. BLoC Testing
+- Use bloc_test package for testing BLoCs:
   ```dart
-  void main() {
-    testWidgets('CustomWidget should display correct text', (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        MaterialApp(
-          home: CustomWidget(requiredParam: 'test'),
-        ),
-      );
-      
-      // Act & Assert
-      expect(find.text('test'), findsOneWidget);
-    });
-  }
+  blocTest<FeatureBloc, FeatureState>(
+    'should emit [loading, loaded] when data is fetched successfully',
+    build: () {
+      when(() => mockUseCase(any()))
+          .thenAnswer((_) async => Right(testData));
+      return FeatureBloc(mockUseCase);
+    },
+    act: (bloc) => bloc.add(const FeatureEvent.fetchData()),
+    expect: () => [
+      const FeatureState.loading(),
+      FeatureState.loaded(testData),
+    ],
+    verify: (_) {
+      verify(() => mockUseCase(any())).called(1);
+    },
+  );
   ```
 
-These architecture and structure guidelines provide a comprehensive framework for maintaining consistency throughout the Flutter messaging app, ensuring new features, assets, widgets, and pages seamlessly integrate with the existing Clean Architecture pattern.
+### 5. Widget Testing
+- Standard widget test format with golden testing support:
+  ```dart
+  testWidgets('CustomWidget should display correct text', (WidgetTester tester) async {
+    // Arrange
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CustomWidget(requiredParam: 'test'),
+      ),
+    );
+    
+    // Act & Assert
+    expect(find.text('test'), findsOneWidget);
+    await expectLater(
+      find.byType(CustomWidget),
+      matchesGoldenFile('goldens/custom_widget.png'),
+    );
+  });
+  ```
+
+These architecture and structure guidelines provide a comprehensive framework for maintaining consistency throughout the Flutter app, ensuring new features, assets, widgets, and pages seamlessly integrate with the existing Clean Architecture pattern and work properly across all target platforms.

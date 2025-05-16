@@ -3,49 +3,268 @@ description: "Defines patterns for state management across presentation layers, 
 globs: ["lib/presentation/blocs/**/*.dart", "lib/presentation/cubits/**/*.dart", "lib/presentation/providers/**/*.dart", "lib/presentation/**/*.dart"]
 alwaysApply: true
 ---
-
 # State Management Guidelines
 
 ## Scope / Flexibility Notice
-These guidelines apply to application state management with preference for BLoC and Riverpod patterns. Choose the appropriate pattern based on feature complexity and team familiarity.
+These guidelines establish standards for application state management, with the BLoC Pattern as the primary method. These principles ensure unidirectional data flow, high testability, and clear separation between UI and business logic.
 
 ## Best Practices
+- Implement unidirectional data flow: State → UI → Events → State
 - Keep presentation layer free of business logic
-- Maintain unidirectional data flow (state → UI → events → state)
 - Design states as immutable objects with equality comparisons
-- Minimize state rebuilds by using selective state consumption
-- Separate UI rendering logic from state management code
-- Use extension methods to add domain-specific functionality to state objects
+- Use domain layer use cases as dependencies for BLoCs
+- Clearly define boundaries between state types (UI state vs Business state)
+- Avoid storing state in widgets; always use BLoC or other state management mechanisms
+- Optimize widget rebuilds using selective builders
+- Handle errors and loading states consistently throughout the application
+- Encapsulate business logic in use cases and repositories, not in BLoC
+- Provide debouncing and throttling for events that need it
 
 ## File / Project Structure Guidelines
-- For BLoC pattern:
-  - Place bloc files in `lib/presentation/blocs/` or feature-specific directories
-  - Follow naming convention: `feature_bloc.dart`, `feature_event.dart`, `feature_state.dart`
-  - Group related BLoCs in subdirectories by feature
-- For Riverpod:
-  - Place providers in `lib/presentation/providers/` or feature-specific directories
-  - Follow naming convention: `feature_provider.dart`, `feature_state.dart`
-  - Keep provider definitions separate from their implementations
+- BLoC directory structure:
+  ```
+  lib/
+    presentation/
+      blocs/
+        feature_name/
+          feature_bloc.dart        # BLoC class definition  
+          feature_event.dart       # Events as sealed class
+          feature_state.dart       # States as sealed class
+  ```
+
+- Example of BLoC file structure:
+  ```dart
+  // chat_bloc.dart
+  class ChatBloc extends Bloc<ChatEvent, ChatState> {
+    final GetMessages _getMessages;
+    final SendMessage _sendMessage;
+    
+    ChatBloc({
+      required GetMessages getMessages,
+      required SendMessage sendMessage,
+    }) : _getMessages = getMessages,
+         _sendMessage = sendMessage,
+         super(const ChatState.initial()) {
+      on<ChatLoadEvent>(_onChatLoad);
+      on<ChatSendMessageEvent>(_onChatSendMessage);
+    }
+    
+    Future<void> _onChatLoad(ChatLoadEvent event, Emitter<ChatState> emit) async {
+      // Implementation
+    }
+  }
+  ```
+
+## Event & State Design
+- Event design:
+  ```dart
+  @freezed
+  class ChatEvent with _$ChatEvent {
+    const factory ChatEvent.load({required String chatId}) = ChatLoadEvent;
+    const factory ChatEvent.sendMessage({
+      required String content,
+      required MessageType type,
+    }) = ChatSendMessageEvent;
+    const factory ChatEvent.messageReceived({required Message message}) = ChatMessageReceivedEvent;
+  }
+  ```
+
+- State design:
+  ```dart
+  @freezed
+  class ChatState with _$ChatState {
+    const factory ChatState.initial() = _Initial;
+    const factory ChatState.loading() = _Loading;
+    const factory ChatState.loaded({
+      required List<Message> messages,
+      required bool isTyping,
+    }) = _Loaded;
+    const factory ChatState.error({required String message}) = _Error;
+  }
+  ```
+
+## Clean Architecture Integration
+- BLoCs depend only on domain layer (use cases), never directly on data layer
+- Use cases return only domain entities, never data models
+- BLoCs transform domain entities into state objects when needed
+- Use Result or Either for error handling in use cases:
+  ```dart
+  class SendMessage {
+    final MessageRepository _repository;
+    
+    SendMessage(this._repository);
+    
+    Future<Either<Failure, Message>> call(String content, String chatId) async {
+      // Implementation
+    }
+  }
+  
+  // In BLoC:
+  final result = await _sendMessage(event.content, _chatId);
+  result.fold(
+    (failure) => emit(ChatState.error(message: failure.message)),
+    (message) => emit(ChatState.loaded(messages: [...state.messages, message], isTyping: false)),
+  );
+  ```
+
+## BLoC + Services Integration
+- Integration with background services:
+  ```dart
+  class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
+    final NotificationService _notificationService;
+    late final StreamSubscription<NotificationData> _subscription;
+    
+    NotificationBloc({required NotificationService notificationService})
+        : _notificationService = notificationService,
+          super(const NotificationState.initial()) {
+      _subscription = _notificationService.notifications.listen(_onNotificationReceived);
+      on<NotificationReceivedEvent>(_onNotificationEvent);
+    }
+    
+    void _onNotificationReceived(NotificationData data) {
+      add(NotificationEvent.received(data));
+    }
+    
+    @override
+    Future<void> close() {
+      _subscription.cancel();
+      return super.close();
+    }
+  }
+  ```
+
+- Integration with real-time messaging:
+  ```dart
+  class MessageBloc extends Bloc<MessageEvent, MessageState> {
+    final ChatService _chatService;
+    late final StreamSubscription<Message> _messageSubscription;
+    
+    MessageBloc({required ChatService chatService}) 
+        : _chatService = chatService,
+          super(const MessageState.initial()) {
+      _messageSubscription = _chatService.messageStream.listen(_onMessageReceived);
+      on<MessageReceivedEvent>(_onMessageEvent);
+    }
+    
+    void _onMessageReceived(Message message) {
+      add(MessageEvent.received(message));
+    }
+    
+    @override
+    Future<void> close() {
+      _messageSubscription.cancel();
+      return super.close();
+    }
+  }
+  ```
 
 ## Coding & Styling Conventions
-- Use sealed classes/enums for events in BLoC pattern
+- Use freezed to create sealed classes for events and states
 - Implement copyWith methods for all state classes
-- Make state classes @immutable
-- Prefer state extension methods over helper methods
-- Use freezed or equatable for state equality
-- Keep BLoC/provider files focused on a single responsibility
-- Use descriptive state class names: `LoadingState`, `LoadedState`, `ErrorState`
+- Mark state classes with @immutable
+- Use extension methods for state objects when utility methods are needed:
+  ```dart
+  extension ChatStateX on ChatState {
+    bool get isLoading => maybeMap(
+      loading: (_) => true,
+      orElse: () => false,
+    );
+    
+    List<Message> get messages => maybeMap(
+      loaded: (state) => state.messages,
+      orElse: () => [],
+    );
+  }
+  ```
+- Name BLoCs by related feature: `ChatBloc`, `AuthBloc`
+- Name Events with action phrases: `ChatLoadEvent`, `ChatSendMessageEvent`
+- Name States descriptively: `ChatLoadedState`, `ChatLoadingState`
 
 ## Performance & Optimization Tips
-- Implement equality comparison for all state classes to prevent unnecessary rebuilds
-- Use selective state consumption (BlocSelector/select) to limit widget rebuilds
-- Cache expensive computations within state objects
-- Avoid deep object nesting in state to simplify equality checks
-- Implement state combination strategically for related states
+- Use `equatable` or `freezed` for efficient state comparison
+- Use selective builders to limit rebuilds:
+  ```dart
+  BlocSelector<ChatBloc, ChatState, bool>(
+    selector: (state) => state.isLoading,
+    builder: (context, isLoading) {
+      return isLoading ? const LoadingIndicator() : const SizedBox();
+    },
+  );
+  ```
+- Use `buildWhen` in `BlocBuilder` to rebuild only when necessary:
+  ```dart
+  BlocBuilder<ChatBloc, ChatState>(
+    buildWhen: (prev, current) => prev.messages != current.messages,
+    builder: (context, state) => MessageList(messages: state.messages),
+  );
+  ```
+- Avoid emitting state when there's no change
+- Implement distinction to prevent duplicate emissions:
+  ```dart
+  on<ChatLoadEvent>(
+    (event, emit) async {
+      // Avoid emitting loading if already loading
+      if (state is! ChatLoadingState) {
+        emit(const ChatState.loading());
+      }
+    },
+    transformer: distinct(), // Prevent duplicate events
+  );
+  ```
 
 ## Testing & Validation Guidelines
-- Unit test all state transitions
-- Mock dependencies in BLoC/provider tests
-- Test initialization, events, and state transitions separately
-- Verify correct state emissions using bloc_test
-- Use Golden tests for complex widget state combinations
+- Test each event handler in the BLoC individually
+- Use bloc_test to test state sequences:
+  ```dart
+  blocTest<ChatBloc, ChatState>(
+    'emits [loading, loaded] when messages are loaded successfully',
+    build: () {
+      when(() => mockGetMessages(any()))
+          .thenAnswer((_) async => Right([testMessage]));
+      return ChatBloc(getMessages: mockGetMessages, sendMessage: mockSendMessage);
+    },
+    act: (bloc) => bloc.add(const ChatEvent.load(chatId: '123')),
+    expect: () => [
+      const ChatState.loading(),
+      ChatState.loaded(messages: [testMessage], isTyping: false),
+    ],
+    verify: (_) {
+      verify(() => mockGetMessages('123')).called(1);
+    },
+  );
+  ```
+- Test error handling in BLoCs:
+  ```dart
+  blocTest<ChatBloc, ChatState>(
+    'emits [loading, error] when message loading fails',
+    build: () {
+      when(() => mockGetMessages(any()))
+          .thenAnswer((_) async => Left(NetworkFailure('Connection error')));
+      return ChatBloc(getMessages: mockGetMessages, sendMessage: mockSendMessage);
+    },
+    act: (bloc) => bloc.add(const ChatEvent.load(chatId: '123')),
+    expect: () => [
+      const ChatState.loading(),
+      const ChatState.error(message: 'Connection error'),
+    ],
+  );
+  ```
+- Test integration with services and streams:
+  ```dart
+  test('subscribes to notification stream on creation', () {
+    // Arrange
+    final controller = StreamController<NotificationData>();
+    when(() => mockNotificationService.notifications).thenAnswer((_) => controller.stream);
+    
+    // Act
+    final bloc = NotificationBloc(notificationService: mockNotificationService);
+    controller.add(testNotification);
+    
+    // Assert
+    verify(() => mockNotificationService.notifications).called(1);
+    expectLater(
+      bloc.stream,
+      emits(NotificationState.received(notification: testNotification)),
+    );
+  });
+  ```

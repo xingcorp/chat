@@ -1,7 +1,7 @@
 ---
-description: 
-globs: 
-alwaysApply: false
+description: "Guide comprehensive testing practices across all application layers with proper test structure and organization"
+globs: ["test/**/*.dart"]
+alwaysApply: true
 ---
 # Testing Strategy Guidelines
 
@@ -71,8 +71,4 @@ These guidelines establish testing practices for all application layers. While t
 - Verify analytics and logging implementations
 - Test localization and accessibility compliance
 
----
-description: "Guide comprehensive testing practices across all application layers with proper test structure and organization"
-globs: ["lib/**/*.dart", "test/**/*.dart"]
-alwaysApply: true
----
+
