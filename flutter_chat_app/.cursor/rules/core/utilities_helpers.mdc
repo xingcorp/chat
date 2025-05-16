@@ -3,281 +3,334 @@ description:
 globs: 
 alwaysApply: false
 ---
-# Utilities & Helper Functions Guidelines
+# Utilities & Helpers Guidelines
 
 ## Scope / Flexibility Notice
-These guidelines define standards for creating and organizing utility functions and helper classes across the Flutter Chat Application. They apply to all reusable code snippets, extension methods, and helper classes that provide common functionality across features. Following these guidelines ensures code reusability, maintainability, and consistency.
-
-## Types of Utilities
-
-### 1. Extension Methods
-Extension methods extend existing classes with new functionality without modifying the original class.
-
-#### Organization
-- Group related extension methods by type in separate files
-- Place extensions in `lib/utils/extensions/` directory
-- Name files using the pattern: `[type]_extensions.dart` (e.g., `string_extensions.dart`, `datetime_extensions.dart`)
-
-#### Implementation
-```dart
-// lib/utils/extensions/string_extensions.dart
-extension StringExtensions on String {
-  /// Capitalizes the first letter of the string
-  String capitalize() {
-    if (isEmpty) return this;
-    return this[0].toUpperCase() + substring(1);
-  }
-  
-  /// Checks if string is a valid email using regex
-  bool isValidEmail() {
-    return RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+').hasMatch(this);
-  }
-  
-  /// Truncates string to specified length with ellipsis
-  String truncate(int maxLength) {
-    if (length <= maxLength) return this;
-    return '${substring(0, maxLength)}...';
-  }
-}
-```
-
-#### Usage
-```dart
-import 'package:flutter_chat_app/utils/extensions/string_extensions.dart';
-
-final displayName = username.capitalize();
-final isValid = email.isValidEmail();
-final shortDescription = description.truncate(100);
-```
-
-### 2. Pure Utility Functions
-
-#### Organization
-- Group related utility functions by domain in separate files
-- Place utilities in `lib/utils/` directory
-- Name files using the pattern: `[domain]_utils.dart` (e.g., `format_utils.dart`, `validation_utils.dart`)
-
-#### Implementation
-```dart
-// lib/utils/validation_utils.dart
-class ValidationUtils {
-  ValidationUtils._(); // Private constructor to prevent instantiation
-  
-  /// Validates password strength
-  static bool isStrongPassword(String password) {
-    return password.length >= 8 && 
-           RegExp(r'[A-Z]').hasMatch(password) &&
-           RegExp(r'[0-9]').hasMatch(password) &&
-           RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password);
-  }
-  
-  /// Validates phone number format
-  static bool isValidPhoneNumber(String phone, {String countryCode = '+1'}) {
-    // Implementation...
-    return true;
-  }
-}
-
-// lib/utils/format_utils.dart
-class FormatUtils {
-  FormatUtils._(); // Private constructor to prevent instantiation
-  
-  /// Formats file size into human-readable string
-  static String formatFileSize(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
-  }
-  
-  /// Formats phone number with proper separators
-  static String formatPhoneNumber(String phoneNumber) {
-    // Implementation...
-    return phoneNumber;
-  }
-}
-```
-
-#### Usage
-```dart
-import 'package:flutter_chat_app/utils/validation_utils.dart';
-import 'package:flutter_chat_app/utils/format_utils.dart';
-
-final isPasswordStrong = ValidationUtils.isStrongPassword(password);
-final formattedSize = FormatUtils.formatFileSize(fileSize);
-```
-
-### 3. Helper Classes
-
-#### Organization
-- Create helper classes for complex operations that require state or configuration
-- Place helpers in `lib/utils/helpers/` directory
-- Name files using the pattern: `[domain]_helper.dart` (e.g., `navigation_helper.dart`, `permission_helper.dart`)
-
-#### Implementation
-```dart
-// lib/utils/helpers/permission_helper.dart
-class PermissionHelper {
-  final PermissionHandler _permissionHandler;
-  
-  PermissionHelper(this._permissionHandler);
-  
-  /// Request camera and microphone permissions
-  Future<bool> requestMediaPermissions() async {
-    final cameraStatus = await _permissionHandler.request(Permission.camera);
-    final microphoneStatus = await _permissionHandler.request(Permission.microphone);
-    
-    return cameraStatus.isGranted && microphoneStatus.isGranted;
-  }
-  
-  /// Check if all required permissions are granted
-  Future<bool> hasRequiredPermissions() async {
-    // Implementation...
-    return true;
-  }
-}
-```
-
-#### Usage
-```dart
-final permissionHelper = GetIt.I<PermissionHelper>();
-final hasPermissions = await permissionHelper.requestMediaPermissions();
-
-if (hasPermissions) {
-  // Proceed with camera/microphone usage
-} else {
-  // Show permission denied message
-}
-```
-
-## Adding New Utilities
-
-### Step 1: Determine the Best Approach
-- Use **extension methods** for adding functionality to existing types
-- Use **utility classes** with static methods for stateless, domain-specific operations
-- Use **helper classes** for operations requiring state or dependencies
-
-### Step 2: Proper Organization
-- Place the utility in the appropriate directory
-- Follow the naming conventions for utility files
-- Group related functionalities together
-
-### Step 3: Implementation
-- Make utility functions pure (no side effects) whenever possible
-- Add descriptive documentation comments for each utility function
-- Include examples in documentation when appropriate
-- Consider edge cases and provide appropriate error handling
-- Keep functions focused on a single responsibility
-
-### Step 4: Testing
-- Write unit tests for all utility functions
-- Test edge cases and error conditions
-- Ensure consistent behavior across different inputs
-
-## Testing Utilities
-
-### Extension Methods Testing
-```dart
-group('StringExtensions', () {
-  test('capitalize should uppercase first letter only', () {
-    expect('hello'.capitalize(), equals('Hello'));
-    expect('Hello'.capitalize(), equals('Hello'));
-    expect(''.capitalize(), equals(''));
-  });
-  
-  test('isValidEmail should correctly validate email formats', () {
-    expect('user@example.com'.isValidEmail(), isTrue);
-    expect('invalid.email'.isValidEmail(), isFalse);
-    expect(''.isValidEmail(), isFalse);
-  });
-});
-```
-
-### Utility Functions Testing
-```dart
-group('ValidationUtils', () {
-  test('isStrongPassword should validate password strength', () {
-    expect(ValidationUtils.isStrongPassword('Abc123!@#'), isTrue);
-    expect(ValidationUtils.isStrongPassword('password'), isFalse);
-    expect(ValidationUtils.isStrongPassword('Password'), isFalse);
-    expect(ValidationUtils.isStrongPassword('12345678'), isFalse);
-  });
-});
-
-group('FormatUtils', () {
-  test('formatFileSize should format sizes correctly', () {
-    expect(FormatUtils.formatFileSize(500), equals('500 B'));
-    expect(FormatUtils.formatFileSize(1500), equals('1.5 KB'));
-    expect(FormatUtils.formatFileSize(1500000), equals('1.4 MB'));
-  });
-});
-```
-
-### Helper Classes Testing
-```dart
-group('PermissionHelper', () {
-  late MockPermissionHandler mockPermissionHandler;
-  late PermissionHelper permissionHelper;
-  
-  setUp(() {
-    mockPermissionHandler = MockPermissionHandler();
-    permissionHelper = PermissionHelper(mockPermissionHandler);
-  });
-  
-  test('requestMediaPermissions should return true when all permissions granted', () async {
-    when(() => mockPermissionHandler.request(Permission.camera))
-        .thenAnswer((_) async => PermissionStatus.granted);
-    when(() => mockPermissionHandler.request(Permission.microphone))
-        .thenAnswer((_) async => PermissionStatus.granted);
-    
-    final result = await permissionHelper.requestMediaPermissions();
-    
-    expect(result, isTrue);
-    verify(() => mockPermissionHandler.request(Permission.camera)).called(1);
-    verify(() => mockPermissionHandler.request(Permission.microphone)).called(1);
-  });
-});
-```
-
-## Common Utility Categories
-
-### String Manipulation
-- Case conversion (capitalize, camelCase, snake_case)
-- Validation (email, phone, URL)
-- Formatting (truncate, mask)
-
-### Date & Time
-- Formatting (relative time, custom formats)
-- Comparison (isToday, isSameDay, isAfter)
-- Manipulation (addDays, startOfWeek, endOfMonth)
-
-### Collection Operations
-- Filtering, mapping, grouping
-- Finding items with complex conditions
-- Safe access and manipulation
-
-### Math & Number Formatting
-- Currency formatting
-- Percentage calculations
-- Unit conversions
-
-### Device & Platform Utilities
-- Screen size and density helpers
-- Platform detection and capability checking
-- Device information retrieval
-
-### File & Path Operations
-- Path manipulation
-- MIME type detection
-- File size formatting
+These guidelines define patterns for implementing utility functions, helper classes, and extensions in the Flutter Chat App. They apply to all shared functionality that doesn't fit into the service or repository categories. Following these guidelines ensures code reusability, maintainability, and consistency throughout the codebase.
 
 ## Best Practices
 
-1. **Keep utilities pure**: Avoid side effects and dependencies on global state
-2. **Document with examples**: Include usage examples in documentation
-3. **Use meaningful names**: Functions should be descriptively named
-4. **Test edge cases**: Ensure utilities handle unusual inputs correctly
-5. **Prevent instantiation**: Use private constructors for utility classes
-6. **Separate concerns**: Split large utility files into domain-specific ones
-7. **Avoid duplicating framework functionality**: Don't recreate what Flutter/Dart already provides
-8. **Consider performance**: Optimize utilities that are used frequently
+### Utility Functions
+- Create pure, stateless utility functions for common operations
+- Group related functions in thematic utility classes
+- Prefer static methods for utility functions
+- Provide detailed documentation for complex utilities
+- Write comprehensive unit tests for all utilities
+- Handle edge cases and null values gracefully
+- Implement error handling for utilities that might fail
+- Keep utility functions focused on a single responsibility
+- Use generics to make utilities more flexible
+- Avoid side effects in utility functions
+
+### Extensions
+- Use extensions to add functionality to existing classes
+- Keep extensions focused on a specific theme or functionality
+- Document extensions clearly, especially for third-party classes
+- Implement extensions that feel natural to the extended class
+- Use extensions to improve code readability and reduce boilerplate
+- Name extension methods to clearly indicate their purpose
+- Avoid name conflicts with existing methods in extended classes
+- Group related extensions in a single file
+- Prefer extension methods over utility functions for class-specific operations
+- Test extensions thoroughly with different parameter values
+
+### Constants and Enums
+- Create dedicated files for related constants
+- Use meaningful names for constants and enums
+- Group related constants in classes or objects
+- Prefer enums over string constants for fixed sets of values
+- Add helper methods to enums for common operations
+- Document the purpose and valid values for constants
+- Make constants immutable (final/const) where appropriate
+- Use named constants instead of magic numbers or strings
+- Consider internationalization needs when creating string constants
+- Create extension methods for enums to add behavior
+
+## File / Project Structure Guidelines
+
+```
+lib/
+  ├── utils/              # Utility functions and helpers
+  │   ├── formatters/     # String, date, and number formatting utilities
+  │   ├── validators/     # Validation utilities
+  │   ├── extensions/     # Extension methods
+  │   └── constants/      # Constants and enums
+  │       ├── app_constants.dart
+  │       ├── date_formats.dart
+  │       └── regex_patterns.dart
+```
+
+## Coding & Styling Conventions
+
+### Utility Functions
+- Name utility classes with a clear purpose suffix (e.g., `StringUtils`, `DateUtils`)
+- Name utility methods with verb phrases that describe their action
+- Use proper parameter types rather than `dynamic`
+- Implement proper null safety for all parameters
+- Add appropriate default values for optional parameters
+- Use named parameters for methods with multiple optional arguments
+- Return sensible defaults for error cases
+- Add example usage in documentation comments
+- Keep methods focused and under 20 lines when possible
+
+### Extensions
+- Name extension files after the extended class (e.g., `string_extensions.dart`)
+- Name the extension using the pattern `${ClassName}Ext` (e.g., `StringExt`)
+- Group multiple extensions on the same class in a single file
+- Document expected behavior for edge cases
+- Keep extension methods short and focused
+- Make extension methods feel like natural additions to the class
+
+### Constants
+- Use `SCREAMING_SNAKE_CASE` for true constants
+- Use `kConstantName` for Flutter/Dart style constants
+- Use `PascalCase` for enum types and values
+- Group related constants in classes with a private constructor
+- Prefer typed constants over strings when possible
+
+## Implementation Examples
+
+### Utility Class Example
+```dart
+/// Utilities for string manipulation and formatting
+class StringUtils {
+  // Private constructor to prevent instantiation
+  StringUtils._();
+  
+  /// Truncates a string to a maximum length and adds an ellipsis if needed
+  ///
+  /// Example: `StringUtils.truncate("Hello World", 7)` returns "Hello..."
+  static String truncate(String text, int maxLength, {String ellipsis = '...'}) {
+    if (text.length <= maxLength) {
+      return text;
+    }
+    
+    return '${text.substring(0, maxLength - ellipsis.length)}$ellipsis';
+  }
+  
+  /// Capitalizes the first letter of a string
+  ///
+  /// Example: `StringUtils.capitalize("hello")` returns "Hello"
+  static String capitalize(String text) {
+    if (text.isEmpty) return text;
+    return '${text[0].toUpperCase()}${text.substring(1)}';
+  }
+  
+  /// Converts a string to title case (capitalizes first letter of each word)
+  ///
+  /// Example: `StringUtils.toTitleCase("hello world")` returns "Hello World"
+  static String toTitleCase(String text) {
+    if (text.isEmpty) return text;
+    
+    return text.split(' ')
+        .map((word) => capitalize(word))
+        .join(' ');
+  }
+  
+  /// Removes all HTML tags from a string
+  ///
+  /// Example: `StringUtils.stripHtml("<p>Hello</p>")` returns "Hello"
+  static String stripHtml(String htmlString) {
+    final regex = RegExp(r'<[^>]*>');
+    return htmlString.replaceAll(regex, '');
+  }
+}
+```
+
+### Extension Example
+```dart
+/// Extensions on DateTime for common date operations and formatting
+extension DateTimeExt on DateTime {
+  /// Check if date is today
+  bool get isToday {
+    final now = DateTime.now();
+    return year == now.year && month == now.month && day == now.day;
+  }
+  
+  /// Check if date is yesterday
+  bool get isYesterday {
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    return year == yesterday.year && month == yesterday.month && day == yesterday.day;
+  }
+  
+  /// Check if date is tomorrow
+  bool get isTomorrow {
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    return year == tomorrow.year && month == tomorrow.month && day == tomorrow.day;
+  }
+  
+  /// Format as relative date (Today, Yesterday, or date)
+  String toRelativeDate() {
+    if (isToday) {
+      return 'Today';
+    } else if (isYesterday) {
+      return 'Yesterday';
+    } else {
+      final formatter = DateFormat('MMM d, yyyy');
+      return formatter.format(this);
+    }
+  }
+  
+  /// Format time as 12-hour format with AM/PM
+  String to12HourTime() {
+    final formatter = DateFormat('h:mm a');
+    return formatter.format(this);
+  }
+  
+  /// Format time as 24-hour format
+  String to24HourTime() {
+    final formatter = DateFormat('HH:mm');
+    return formatter.format(this);
+  }
+  
+  /// Get start of day (midnight)
+  DateTime get startOfDay => DateTime(year, month, day);
+  
+  /// Get end of day (23:59:59.999)
+  DateTime get endOfDay => DateTime(year, month, day, 23, 59, 59, 999);
+  
+  /// Add days to date
+  DateTime addDays(int days) => add(Duration(days: days));
+  
+  /// Subtract days from date
+  DateTime subtractDays(int days) => subtract(Duration(days: days));
+}
+```
+
+### Constants Example
+```dart
+/// Application-wide constants
+class AppConstants {
+  // Private constructor to prevent instantiation
+  AppConstants._();
+  
+  // API endpoints
+  static const String apiBaseUrl = 'https://api.example.com/v1';
+  static const int apiTimeoutSeconds = 30;
+  static const int maxRetryAttempts = 3;
+  
+  // Cache configuration
+  static const Duration cacheValidDuration = Duration(hours: 24);
+  static const int maxCacheItems = 100;
+  
+  // File limits
+  static const int maxUploadSizeMB = 10;
+  static const List<String> supportedImageTypes = ['jpg', 'jpeg', 'png', 'gif'];
+  
+  // UI constants
+  static const double defaultPadding = 16.0;
+  static const double defaultBorderRadius = 8.0;
+  static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
+}
+```
+
+### Enum with Extension Example
+```dart
+/// Message status in the system
+enum MessageStatus {
+  sending,
+  sent,
+  delivered,
+  read,
+  failed,
+  deleted;
+}
+
+/// Extension to add functionality to MessageStatus enum
+extension MessageStatusExt on MessageStatus {
+  /// Whether the message is considered delivered to the recipient
+  bool get isDelivered => this == MessageStatus.delivered || this == MessageStatus.read;
+  
+  /// Whether the message has been successfully sent to the server
+  bool get isSent => this == MessageStatus.sent || isDelivered;
+  
+  /// Whether the message has failed to send
+  bool get hasFailed => this == MessageStatus.failed;
+  
+  /// Whether the message is in a terminal state
+  bool get isTerminalState => this == MessageStatus.read || 
+                              this == MessageStatus.failed || 
+                              this == MessageStatus.deleted;
+  
+  /// Get localized display string for this status
+  String getDisplayName(BuildContext context) {
+    switch (this) {
+      case MessageStatus.sending:
+        return context.l10n.messageSending;
+      case MessageStatus.sent:
+        return context.l10n.messageSent;
+      case MessageStatus.delivered:
+        return context.l10n.messageDelivered;
+      case MessageStatus.read:
+        return context.l10n.messageRead;
+      case MessageStatus.failed:
+        return context.l10n.messageFailed;
+      case MessageStatus.deleted:
+        return context.l10n.messageDeleted;
+    }
+  }
+  
+  /// Get icon for this status
+  IconData getIcon() {
+    switch (this) {
+      case MessageStatus.sending:
+        return Icons.access_time;
+      case MessageStatus.sent:
+        return Icons.check;
+      case MessageStatus.delivered:
+        return Icons.done_all;
+      case MessageStatus.read:
+        return Icons.done_all;
+      case MessageStatus.failed:
+        return Icons.error_outline;
+      case MessageStatus.deleted:
+        return Icons.delete_outline;
+    }
+  }
+  
+  /// Get color for this status
+  Color getColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    switch (this) {
+      case MessageStatus.sending:
+        return colorScheme.onSurface.withOpacity(0.5);
+      case MessageStatus.sent:
+        return colorScheme.onSurface.withOpacity(0.7);
+      case MessageStatus.delivered:
+        return colorScheme.primary;
+      case MessageStatus.read:
+        return colorScheme.primary;
+      case MessageStatus.failed:
+        return colorScheme.error;
+      case MessageStatus.deleted:
+        return colorScheme.onSurface.withOpacity(0.5);
+    }
+  }
+}
+```
+
+## Performance & Optimization Tips
+- Cache results of expensive utility operations
+- Use const constructors for static utility classes
+- Implement lazy initialization for resource-intensive helpers
+- Avoid creating unnecessary objects in frequently called utilities
+- Use memoization for pure functions with expensive calculations
+- Keep utility functions lightweight and focused
+- Use extension methods for better code organization and readability
+- Consider using isolates for CPU-intensive utility operations
+- Optimize string operations in heavily used utilities
+- Use efficient algorithms and data structures
+
+## Testing & Validation Guidelines
+- Write comprehensive unit tests for all utility functions
+- Test edge cases and boundary conditions
+- Verify handling of null and empty inputs
+- Test performance for utilities used in tight loops
+- Write tests for each extension method
+- Verify constants have expected values
+- Use parameterized tests for functions with different input variations
+- Test enum helper methods and extensions
+- Benchmark performance-critical utilities
+- Verify internationalization works with utilities that handle text
+- Test format utilities with various locale settings

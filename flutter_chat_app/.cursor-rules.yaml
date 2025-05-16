@@ -31,6 +31,27 @@ rules:
   - name: internationalization_error_handling
     path: .cursor/rules/core/internationalization_error_handling.mdc
     
+  - name: service_repository_patterns
+    path: .cursor/rules/core/service_repository_patterns.mdc
+    
+  - name: utilities_helpers
+    path: .cursor/rules/core/utilities_helpers.mdc
+    
+  - name: clean_code
+    path: .cursor/rules/core/clean_code.mdc
+    
+  - name: coding_standards
+    path: .cursor/rules/core/coding_standards.mdc
+    
+  - name: git_workflow
+    path: .cursor/rules/core/git_workflow.mdc
+    
+  - name: optimization_strategies
+    path: .cursor/rules/core/optimization_strategies.mdc
+    
+  - name: solid_principles
+    path: .cursor/rules/core/solid_principles.mdc
+    
   # Feature layer rules (apply to specific domains)
   - name: realtime_messaging
     path: .cursor/rules/feature/realtime_messaging.mdc
@@ -58,6 +79,9 @@ rules:
 
   - name: internationalization
     path: .cursor/rules/feature/internationalization.mdc
+    
+  - name: project_structure
+    path: .cursor/rules/project-architecture-structure.mdc
 
   # Discourage leaving debug print statements in the codebase. Use a proper logger instead.
   - rule_id: no-print

@@ -16,6 +16,11 @@ These guidelines define standardized approaches for handling errors related to i
 - Use try-catch blocks around complex ICU message formatting
 - Implement graceful degradation for unsupported locales
 - Document expected behavior for missing translations
+- Use a centralized error handler for translation issues
+- Monitor translation errors in analytics
+- Test error scenarios explicitly to verify recovery
+- Provide visual feedback for recoverable errors
+- Implement remote translation updates when possible
 
 ## Handling Missing Translations
 - Implement a fallback chain: requested locale → default locale → hardcoded string
@@ -31,12 +36,34 @@ These guidelines define standardized approaches for handling errors related to i
       final translation = args == null 
           ? getTranslation(context, key) 
           : getTranslationWithArgs(context, key, args);
+      
+      // If empty or null, use fallback
+      if (translation == null || translation.isEmpty) {
+        return _getFallbackTranslation(context, key, args);
+      }
       return translation;
     } catch (e) {
       // Log the error and provide fallback
-      logMissingTranslation(key, e);
-      return getFallbackTranslation(key) ?? 'Missing translation';
+      _logMissingTranslation(key, e);
+      return _getFallbackTranslation(context, key, args) ?? 'Missing translation';
     }
+  }
+  
+  String _getFallbackTranslation(BuildContext context, String key, Map<String, dynamic>? args) {
+    // Try English locale if current is different
+    if (Localizations.localeOf(context).languageCode != 'en') {
+      try {
+        final delegate = AppLocalizations.delegate;
+        final enLocalizations = delegate.load(const Locale('en'));
+        // Use reflection or a predefined mapping to find the method
+        return _getTranslationFromLocalizations(enLocalizations, key, args);
+      } catch (_) {
+        // Fall through to next fallback
+      }
+    }
+    
+    // Return hardcoded fallback or key name in debug mode
+    return kDebugMode ? '[$key]' : _hardcodedFallbacks[key] ?? key;
   }
   ```
 
@@ -46,20 +73,50 @@ These guidelines define standardized approaches for handling errors related to i
 - Use conditional formatting based on parameter values
 - Example:
   ```dart
-  String userStatusMessage(BuildContext context, DateTime? lastSeen) {
-    if (lastSeen == null) {
+  String formatUserStatus(BuildContext context, UserStatus? status, DateTime? lastSeen) {
+    // Handle null user status
+    if (status == null) {
       return context.l10n.userStatusUnknown;
     }
     
-    final now = DateTime.now();
-    final difference = now.difference(lastSeen);
-    
-    if (difference.inMinutes < 1) {
-      return context.l10n.userStatusJustNow;
-    } else if (difference.inHours < 1) {
-      return context.l10n.userStatusMinutesAgo(difference.inMinutes);
-    } else {
-      return context.l10n.userStatusWithTime(lastSeen);
+    // Switch based on status with proper null handling for lastSeen
+    switch (status) {
+      case UserStatus.online:
+        return context.l10n.userStatusOnline;
+      
+      case UserStatus.offline:
+        if (lastSeen == null) {
+          return context.l10n.userStatusOffline;
+        }
+        
+        final now = DateTime.now();
+        final difference = now.difference(lastSeen);
+        
+        // Format based on time difference with null checks
+        if (difference.inMinutes < 1) {
+          return context.l10n.userStatusJustNow;
+        } else if (difference.inHours < 1) {
+          return context.l10n.userStatusMinutesAgo(difference.inMinutes);
+        } else {
+          // Use a safe date formatter that won't crash with invalid dates
+          return context.l10n.userStatusWithTime(_safeFormatTime(lastSeen));
+        }
+      
+      case UserStatus.away:
+        return context.l10n.userStatusAway;
+        
+      default:
+        // Handle unknown status with fallback
+        return context.l10n.userStatusUnknown;
+    }
+  }
+  
+  // Safe date formatter that won't crash
+  String _safeFormatTime(DateTime dateTime) {
+    try {
+      return DateFormat.Hm().format(dateTime);
+    } catch (_) {
+      return "--:--";
     }
   }
   ```
@@ -71,14 +128,36 @@ These guidelines define standardized approaches for handling errors related to i
 - Handle bidirectional text correctly with Unicode control characters when needed
 - Example:
   ```dart
-  Widget buildMessage(BuildContext context, String message, bool isRTL) {
+  Widget buildMessageBubble(BuildContext context, Message message, bool isRTL) {
     return Directionality(
+      // Determine text direction based on message content or user preference
       textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-      child: Text(
-        message,
-        textAlign: isRTL ? TextAlign.right : TextAlign.left,
+      child: BidirectionalMessageContent(
+        message: message,
+        // Use start/end instead of left/right for RTL support
+        padding: const EdgeInsets.only(start: 12, end: 12, top: 8, bottom: 8),
+        // Adjust alignment based on direction
+        alignment: isRTL ? Alignment.centerRight : Alignment.centerLeft,
+        // Use safe text handling that preserves formatting
+        child: Text(
+          _getMessageWithEmbeddedDirectionMarkers(message.text, isRTL),
+          textAlign: isRTL ? TextAlign.right : TextAlign.left,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
       ),
     );
+  }
+  
+  // Add direction markers when needed for mixed content
+  String _getMessageWithEmbeddedDirectionMarkers(String text, bool isRTL) {
+    // Check if text contains mixed directions that need explicit markers
+    if (_containsMixedDirectionText(text)) {
+      // Add Unicode direction markers for proper rendering
+      return isRTL
+          ? '\u200F$text\u200F' // RLM (Right-to-Left Mark)
+          : '\u200E$text\u200E'; // LRM (Left-to-Right Mark)
+    }
+    return text;
   }
   ```
 
@@ -95,10 +174,85 @@ These guidelines define standardized approaches for handling errors related to i
     }
     
     try {
+      // Try using the generated formatter with error handling
       return context.l10n.currencyFormat(amount, currencyCode);
     } catch (e) {
-      // Fallback to basic formatting
-      return '$currencyCode ${amount.toStringAsFixed(2)}';
+      // Log the error
+      _logFormattingError('currencyFormat', e);
+      
+      try {
+        // First fallback: Try using NumberFormat directly
+        return NumberFormat.currency(
+          symbol: currencyCode,
+          decimalDigits: 2,
+        ).format(amount);
+      } catch (_) {
+        // Second fallback: Use basic string formatting
+        return '$currencyCode ${amount.toStringAsFixed(2)}';
+      }
+    }
+  }
+  
+  // Safe date formatter with multiple fallback options
+  String formatDate(BuildContext context, DateTime? dateTime) {
+    if (dateTime == null) {
+      return context.l10n.dateUnavailable;
+    }
+    
+    try {
+      // Try primary format
+      return context.l10n.dateFormat(dateTime);
+    } catch (e) {
+      _logFormattingError('dateFormat', e);
+      
+      // Fallback chain with multiple options
+      try {
+        return DateFormat.yMd().format(dateTime);
+      } catch (_) {
+        try {
+          return '${dateTime.year}-${dateTime.month}-${dateTime.day}';
+        } catch (_) {
+          return context.l10n.dateUnavailable;
+        }
+      }
+    }
+  }
+  ```
+
+## Error Recovery Strategies
+- Always have a defined fallback for each error scenario
+- Implement multi-level fallbacks for critical functionality
+- Cache last successful translations for offline recovery
+- Use static analysis to detect missing translations at build time
+- Create a runtime translation verification tool for testing
+- Consider user feedback mechanisms for reporting translation issues
+- Example recovery workflow:
+  ```dart
+  Future<void> initializeLocalizations() async {
+    try {
+      // Try loading saved locale
+      final savedLocale = await _localeStorage.getStoredLocale();
+      
+      // Verify the locale is available
+      if (savedLocale != null && !_isLocaleSupported(savedLocale)) {
+        // Log error and fall back to default
+        _logger.warning('Saved locale $savedLocale is not supported, using default');
+        await _localeStorage.resetToSystemLocale();
+        return;
+      }
+      
+      // Set the locale if valid
+      if (savedLocale != null) {
+        _localeController.add(savedLocale);
+      }
+    } catch (e) {
+      _logger.severe('Failed to initialize localizations: $e');
+      
+      // Recovery: Reset to system locale and notify analytics
+      await _localeStorage.resetToSystemLocale();
+      _analyticsService.logEvent('localization_init_error', {
+        'error_message': e.toString()
+      });
     }
   }
   ```
@@ -111,6 +265,60 @@ These guidelines define standardized approaches for handling errors related to i
 - Test RTL/LTR switching and mixed directional content
 - Validate all plural forms are handled correctly
 - Create visual regression tests for layout issues
+- Test with incomplete translation files
+- Verify localization errors are properly logged
+- Simulate formatting exceptions and validate recovery
+- Test with malformed locale data
+- Example test:
+  ```dart
+  group('Localization Error Handling Tests', () {
+    testWidgets('Should handle missing translation gracefully', 
+      (WidgetTester tester) async {
+      // Set up a test app with a modified delegate that's missing translations
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: [
+            MockAppLocalizationsDelegate(), // Missing some translations
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          locale: const Locale('en'),
+          home: const TestScreen(),
+        ),
+      );
+      
+      // Verify no exceptions are thrown
+      expect(tester.takeException(), isNull);
+      
+      // Verify fallback text is displayed
+      expect(find.text('Fallback Text'), findsOneWidget);
+    });
+    
+    testWidgets('Should handle parameter formatting errors gracefully', 
+      (WidgetTester tester) async {
+      // Test with invalid date parameter
+      final invalidDate = DateTime.fromMillisecondsSinceEpoch(0);
+      
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          home: ErrorTestScreen(invalidDate: invalidDate),
+        ),
+      );
+      
+      // Verify no exceptions are thrown
+      expect(tester.takeException(), isNull);
+      
+      // Verify fallback formatting is used
+      expect(find.textContaining('1970'), findsOneWidget);
+    });
+  });
+  ```
 
 ## Monitoring & Analysis
 - Track missing translation rate in analytics
@@ -119,6 +327,33 @@ These guidelines define standardized approaches for handling errors related to i
 - Set alerts for sudden increases in translation errors
 - Monitor performance impact of complex formatting
 - Regularly audit logs for internationalization issues
+- Implement automatic reporting of untranslated strings
+- Track user-reported translation issues
+- Monitor impact of locale changes on app stability
+- Create periodic reports on internationalization health
+- Example monitoring implementation:
+  ```dart
+  void _logMissingTranslation(String key, dynamic error) {
+    // Log locally
+    _logger.warning('Missing translation: $key, Error: $error');
+    
+    // Send to analytics if throttling allows
+    if (_shouldReportMissingTranslation(key)) {
+      _analytics.logEvent('missing_translation', {
+        'key': key,
+        'locale': Localizations.localeOf(context).toString(),
+        'error': error.toString(),
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+      
+      _recentlyReportedKeys.add(key);
+      // Clean up old reports after threshold
+      if (_recentlyReportedKeys.length > _maxRecentReports) {
+        _recentlyReportedKeys.removeFirst();
+      }
+    }
+  }
+  ```
 
 ## Documentation for Translators
 - Document all special formatting constructs
@@ -126,3 +361,8 @@ These guidelines define standardized approaches for handling errors related to i
 - Highlight variable length content and UI constraints
 - Document plural rules specific to each language
 - Create guidelines for maintaining consistent terminology
+- Include full context information in ARB descriptions
+- Provide screenshots of the UI for translators
+- Document specific character limits where applicable
+- Create test scripts to verify translation correctness
+- Maintain a terminology glossary for consistency

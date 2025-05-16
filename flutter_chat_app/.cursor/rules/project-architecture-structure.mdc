@@ -83,6 +83,110 @@ These guidelines establish consistent patterns for feature development, asset ma
   - Repository methods: Verb + noun (e.g., `getMessages()`, `sendMessage()`)
   - Use case methods: `call()` for callable classes
 
+## Internationalization Structure
+
+### 1. Components Organization
+- Implement internationalization using Flutter's built-in machinery:
+  ```
+  lib/
+    ├── l10n/                        # Localization directory
+    │   ├── app_en.arb              # English translations (source of truth)
+    │   ├── app_vi.arb              # Vietnamese translations
+    │   ├── l10n.dart               # Helper class with extension methods
+    │   └── README.md               # Documentation for localization
+    ├── core/
+    │   └── services/
+    │       └── localization_service.dart  # Service to manage locale preferences
+    └── presentation/
+        ├── blocs/
+        │   └── locale/             # State management for locale
+        │       ├── locale_cubit.dart
+        │       └── locale_state.dart
+        └── widgets/
+            └── settings/          # UI components for language selection
+                ├── language_selector.dart
+                └── language_toggle_button.dart
+  ```
+
+### 2. Key Components
+- **ARB Files**: Source of translations for all supported languages
+- **L10n Helper Class**: Utility functions for formatting and language features
+- **LocalizationService**: Service for managing locale preferences
+- **LocaleCubit**: State management for localization
+- **Language Selection UI**: Components for selecting and displaying languages
+
+### 3. Implementation Process
+1. **Setup in pubspec.yaml**:
+   ```yaml
+   flutter:
+     generate: true
+   
+   dependencies:
+     flutter_localizations:
+       sdk: flutter
+     intl: ^0.17.0
+   ```
+
+2. **Creating Translation Files**:
+   - Start with `app_en.arb` as the source of truth
+   - Add translations in other language files (e.g., `app_vi.arb`)
+   - Include descriptions and placeholders for translators:
+   ```json
+   {
+     "greeting": "Hello, {name}!",
+     "@greeting": {
+       "description": "A greeting message",
+       "placeholders": {
+         "name": {
+           "type": "String",
+           "example": "John"
+         }
+       }
+     }
+   }
+   ```
+
+3. **Generate Translation Code**:
+   ```bash
+   flutter gen-l10n
+   ```
+
+4. **Using Translations**:
+   - Access via context extension: `context.l10n.greeting('John')`
+   - Use helper methods for formatting: `L10n.formatRelativeDate(context, date)`
+   - Handle RTL languages with directional-aware widgets and properties
+
+5. **Changing Language**:
+   - Inject the LocaleCubit:
+   ```dart
+   BlocProvider<LocaleCubit>(
+     create: (context) => GetIt.I<LocaleCubit>(),
+   )
+   ```
+   - Use BlocBuilder to listen for locale changes:
+   ```dart
+   BlocBuilder<LocaleCubit, LocaleState>(
+     builder: (context, state) {
+       return MaterialApp(
+         locale: state.locale,
+         supportedLocales: L10n.all,
+         // ...
+       );
+     }
+   )
+   ```
+   - Change locale with: `context.read<LocaleCubit>().changeLocale(const Locale('vi'))`
+
+### 4. Best Practices
+- Keep translation keys descriptive and organized
+- Use placeholders instead of string concatenation
+- Store non-visible strings (like API error messages) as constants, not in ARB files
+- Implement proper error handling for missing translations
+- Design UI that accommodates text expansion/contraction between languages
+- Use start/end instead of left/right for proper RTL support
+- Test UI in all supported languages
+- Document translation process for non-developers
+
 ## Asset Guidelines
 
 ### 1. Asset Organization

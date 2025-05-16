@@ -6,327 +6,264 @@ alwaysApply: false
 # Service & Repository Patterns Guidelines
 
 ## Scope / Flexibility Notice
-These guidelines define standards for implementing Services and Repositories across the Flutter Chat Application. They apply to all data access and business logic layers. These patterns ensure separation of concerns, testability, and proper abstraction of data sources.
+These guidelines define patterns for implementing services and repositories across the Flutter Chat App. They ensure consistent data access, caching strategies, and separation between data sources and business logic. These guidelines apply to all data handling components but allow for adaptations based on specific feature requirements.
 
-## Service Pattern Best Practices
+## Best Practices
 
-### Definition & Purpose
-- **Services** encapsulate complex business logic, external API interactions, or utility functions
-- Services should be stateless whenever possible
-- Each service should have a clear, focused responsibility
-- Services operate at a higher level than repositories and may orchestrate multiple repositories
+### Repository Pattern
+- Implement the Repository Pattern to abstract data sources from business logic
+- Define repository interfaces in the domain layer
+- Create implementations in the data layer
+- Use repositories to coordinate between remote and local data sources
+- Apply the Offline-First approach through repositories
+- Handle data transformations between domain entities and data models
+- Include proper error handling and recovery mechanisms
+- Implement retry logic for network operations where appropriate
+- Cache results to improve performance and reduce network calls
+- Use typed failures instead of exceptions for predictable error handling
 
-### Service Organization
-- Place services in `lib/core/services/` for app-wide services
-- Place feature-specific services in `lib/domain/services/feature_name/`
-- Group related services together (e.g., `AuthenticationService`, `UserProfileService`)
-- Name services using the pattern: `[Feature/Domain]Service` (e.g., `ChatMessageService`)
+### Service Pattern
+- Create services for cross-cutting concerns and shared functionality
+- Inject dependencies rather than creating them inside services
+- Keep services focused on a single responsibility
+- Make services stateless when possible
+- Use dependency injection to provide services throughout the app
+- Document public methods and parameters clearly
+- Implement proper cleanup in disposable services
+- Handle async initialization properly
+- Log service errors for diagnosis
+- Make services testable through abstractions
 
-### Service Implementation
-- Always define an interface (abstract class) for each service:
-  ```dart
-  abstract class AuthenticationService {
-    Future<User?> getCurrentUser();
-    Future<Result<User>> signInWithEmailAndPassword(String email, String password);
-    Future<Result<void>> signOut();
-  }
-  ```
-- Implement services with proper dependency injection:
-  ```dart
-  @Injectable(as: AuthenticationService)
-  class FirebaseAuthenticationService implements AuthenticationService {
-    final FirebaseAuth _firebaseAuth;
-    final UserRepository _userRepository;
+## File / Project Structure Guidelines
 
-    FirebaseAuthenticationService(
-      this._firebaseAuth, 
-      this._userRepository,
-    );
-    
-    @override
-    Future<User?> getCurrentUser() async {
-      // Implementation...
-    }
-    
-    // Other methods...
-  }
-  ```
-- Use `Result` or `Either` type to handle success/failure cases:
-  ```dart
-  Future<Result<List<Message>>> fetchMessages(String chatId) async {
+### Repository Structure
+```
+lib/
+  ├── domain/
+  │   └── repositories/
+  │       └── message_repository.dart      # Repository interface
+  └── data/
+      ├── repositories/
+      │   └── message_repository_impl.dart  # Repository implementation
+      └── datasources/
+          ├── remote/
+          │   └── message_remote_datasource.dart
+          └── local/
+              └── message_local_datasource.dart
+```
+
+### Service Structure
+```
+lib/
+  └── core/
+      ├── services/
+      │   ├── connectivity_service.dart
+      │   ├── localization_service.dart
+      │   └── authentication_service.dart
+      └── interfaces/
+          └── storage_interface.dart
+```
+
+## Coding & Styling Conventions
+
+### Repositories
+- Name repository interfaces without suffix: `MessageRepository`
+- Name implementations with `Impl` suffix: `MessageRepositoryImpl`
+- Return domain entities from repository methods, not data models
+- Use `Either<Failure, T>` return type for operations that can fail
+- Use meaningful method names that describe the operation
+- Include timeout parameters for network operations
+- Handle pagination consistently
+- Document complex methods with examples
+
+### Services
+- Name services with the `Service` suffix
+- Use verbs for method names (e.g., `authenticate`, `fetchData`)
+- Return strongly typed results, not dynamic objects
+- Handle initialization in the constructor or dedicated init method
+- Implement proper state management for stateful services
+- Dispose resources properly when services are no longer needed
+
+### Example Repository Interface
+```dart
+abstract class MessageRepository {
+  /// Gets a message by its ID
+  /// 
+  /// Returns a [Message] entity if found, or a [Failure] if an error occurs
+  Future<Either<Failure, Message>> getMessageById(String id);
+  
+  /// Sends a new message
+  /// 
+  /// Returns the sent [Message] with server ID, or a [Failure] if sending fails
+  Future<Either<Failure, Message>> sendMessage(Message message);
+  
+  /// Gets a stream of messages for a specific chat
+  /// 
+  /// The stream emits an updated list whenever messages change
+  Stream<List<Message>> getMessagesForChat(String chatId);
+}
+```
+
+### Example Repository Implementation
+```dart
+class MessageRepositoryImpl implements MessageRepository {
+  final MessageRemoteDataSource remoteDataSource;
+  final MessageLocalDataSource localDataSource;
+  final NetworkInfo networkInfo;
+
+  MessageRepositoryImpl({
+    required this.remoteDataSource,
+    required this.localDataSource,
+    required this.networkInfo,
+  });
+
+  @override
+  Future<Either<Failure, Message>> getMessageById(String id) async {
     try {
-      final messages = await _messageRepository.getMessages(chatId);
-      return Result.success(messages);
-    } on NetworkException catch (e) {
-      return Result.failure(NetworkFailure(e.message));
-    } on CacheException catch (e) {
-      return Result.failure(CacheFailure(e.message));
-    } catch (e) {
-      return Result.failure(UnexpectedFailure(e.toString()));
-    }
-  }
-  ```
-
-### Adding a New Service
-1. Define the service interface in `lib/domain/services/feature_name_service.dart`
-2. Implement the service in `lib/data/services/feature_name_service_impl.dart`
-3. Register the service in the dependency injection container:
-   ```dart
-   getIt.registerLazySingleton<FeatureNameService>(
-     () => FeatureNameServiceImpl(
-       getIt<FeatureNameRepository>(),
-       getIt<AnotherDependency>(),
-     ),
-   );
-   ```
-4. Inject and use the service in use cases or other components
-
-## Repository Pattern Best Practices
-
-### Definition & Purpose
-- **Repositories** abstract data sources (API, local database, cache)
-- They provide a clean, domain-specific API for data operations
-- Repositories hide implementation details of data retrieval/storage
-- They ensure data consistency between different sources
-
-### Repository Organization
-- Place repository interfaces in `lib/domain/repositories/`
-- Place implementations in `lib/data/repositories/`
-- Follow naming conventions:
-  - Interface: `FeatureRepository` (e.g., `UserRepository`)
-  - Implementation: `FeatureRepositoryImpl` (e.g., `UserRepositoryImpl`)
-
-### Repository Implementation
-- Always define an interface first:
-  ```dart
-  abstract class MessageRepository {
-    Future<List<Message>> getMessages(String chatId);
-    Future<Message> sendMessage(MessageRequest message);
-    Stream<List<Message>> watchMessages(String chatId);
-  }
-  ```
-- Implementations should handle data source coordination:
-  ```dart
-  @Injectable(as: MessageRepository)
-  class MessageRepositoryImpl implements MessageRepository {
-    final MessageRemoteDataSource _remoteDataSource;
-    final MessageLocalDataSource _localDataSource;
-    final NetworkInfo _networkInfo;
-    
-    MessageRepositoryImpl(
-      this._remoteDataSource,
-      this._localDataSource,
-      this._networkInfo,
-    );
-    
-    @override
-    Future<List<Message>> getMessages(String chatId) async {
-      if (await _networkInfo.isConnected) {
+      // Try to get from local cache first
+      final localMessage = await localDataSource.getMessageById(id);
+      
+      // Check if we need to refresh from remote
+      if (networkInfo.isConnected && _needsRefresh(localMessage)) {
         try {
-          final remoteMessages = await _remoteDataSource.getMessages(chatId);
-          await _localDataSource.cacheMessages(remoteMessages);
-          return remoteMessages.map((model) => model.toDomain()).toList();
-        } catch (e) {
-          return _getLocalMessages(chatId);
+          final remoteMessage = await remoteDataSource.getMessageById(id);
+          await localDataSource.cacheMessage(remoteMessage);
+          return Right(remoteMessage.toDomain());
+        } on ServerException {
+          // If remote fails, return cached data with warning
+          return Right(localMessage.toDomain());
         }
-      } else {
-        return _getLocalMessages(chatId);
       }
-    }
-    
-    Future<List<Message>> _getLocalMessages(String chatId) async {
-      try {
-        final localMessages = await _localDataSource.getMessages(chatId);
-        return localMessages.map((model) => model.toDomain()).toList();
-      } on CacheException {
-        throw CacheFailure();
+      
+      return Right(localMessage.toDomain());
+    } on CacheException {
+      // If no cached data, try remote if connected
+      if (await networkInfo.isConnected) {
+        try {
+          final remoteMessage = await remoteDataSource.getMessageById(id);
+          await localDataSource.cacheMessage(remoteMessage);
+          return Right(remoteMessage.toDomain());
+        } on ServerException {
+          return Left(ServerFailure());
+        }
       }
+      return Left(CacheFailure());
     }
-    
-    // Other methods...
-  }
-  ```
-  
-### Adding a New Repository
-1. Define the repository interface in `lib/domain/repositories/feature_repository.dart`
-2. Define data sources in:
-   - `lib/data/datasources/remote/feature_remote_data_source.dart`
-   - `lib/data/datasources/local/feature_local_data_source.dart`
-3. Implement the repository in `lib/data/repositories/feature_repository_impl.dart`
-4. Register in dependency injection:
-   ```dart
-   getIt.registerLazySingleton<FeatureRepository>(
-     () => FeatureRepositoryImpl(
-       getIt<FeatureRemoteDataSource>(),
-       getIt<FeatureLocalDataSource>(),
-       getIt<NetworkInfo>(),
-     ),
-   );
-   ```
-
-## DataSource Pattern Best Practices
-
-### Definition & Purpose
-- **DataSources** represent specific storage or API endpoints
-- Remote data sources handle API requests
-- Local data sources handle database/cache operations
-- They map between raw data and data models
-
-### DataSource Organization
-- Place in `lib/data/datasources/[remote|local]/`
-- Follow naming conventions:
-  - `FeatureRemoteDataSource`
-  - `FeatureLocalDataSource`
-
-### DataSource Implementation
-- Define interfaces for both remote and local sources:
-  ```dart
-  abstract class MessageRemoteDataSource {
-    Future<List<MessageModel>> getMessages(String chatId);
-    Future<MessageModel> sendMessage(MessageRequestModel message);
   }
   
-  abstract class MessageLocalDataSource {
-    Future<List<MessageModel>> getMessages(String chatId);
-    Future<void> cacheMessages(List<MessageModel> messages);
-  }
-  ```
-- Implementations for remote sources:
-  ```dart
-  @Injectable(as: MessageRemoteDataSource)
-  class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
-    final HttpClient _client;
-    
-    MessageRemoteDataSourceImpl(this._client);
-    
-    @override
-    Future<List<MessageModel>> getMessages(String chatId) async {
-      final response = await _client.get(
-        'messages/$chatId',
-        headers: {'Content-Type': 'application/json'},
-      );
-      
-      if (response.statusCode == 200) {
-        return (response.data['messages'] as List)
-            .map((json) => MessageModel.fromJson(json))
-            .toList();
-      } else {
-        throw ServerException();
-      }
-    }
-    
-    // Other methods...
-  }
-  ```
-- Implementations for local sources:
-  ```dart
-  @Injectable(as: MessageLocalDataSource)
-  class MessageLocalDataSourceImpl implements MessageLocalDataSource {
-    final IsarDatabase _database;
-    
-    MessageLocalDataSourceImpl(this._database);
-    
-    @override
-    Future<List<MessageModel>> getMessages(String chatId) async {
+  @override
+  Future<Either<Failure, Message>> sendMessage(Message message) async {
+    if (await networkInfo.isConnected) {
       try {
-        final messages = await _database.messages
-            .filter()
-            .chatIdEqualTo(chatId)
-            .sortByCreatedAtDesc()
-            .findAll();
-        return messages.map((entity) => MessageModel.fromEntity(entity)).toList();
-      } catch (e) {
-        throw CacheException();
+        // Save to local storage with pending status
+        final messageModel = MessageModel.fromDomain(message, status: MessageStatus.sending);
+        await localDataSource.cacheMessage(messageModel);
+        
+        // Send to server
+        final remoteSavedMessage = await remoteDataSource.sendMessage(messageModel);
+        
+        // Update local cache with server response
+        await localDataSource.cacheMessage(remoteSavedMessage);
+        
+        return Right(remoteSavedMessage.toDomain());
+      } on ServerException {
+        // Mark as failed in local storage
+        final failedMessageModel = MessageModel.fromDomain(message, status: MessageStatus.failed);
+        await localDataSource.cacheMessage(failedMessageModel);
+        
+        return Left(ServerFailure());
       }
+    } else {
+      // Save locally for later sync when offline
+      final offlineMessageModel = MessageModel.fromDomain(message, status: MessageStatus.pending);
+      await localDataSource.cacheMessage(offlineMessageModel);
+      
+      // Queue for sync when online
+      await localDataSource.queueMessageForSync(offlineMessageModel);
+      
+      return Right(message);
     }
-    
-    // Other methods...
   }
-  ```
+  
+  @override
+  Stream<List<Message>> getMessagesForChat(String chatId) {
+    return localDataSource.getMessagesForChatStream(chatId)
+      .map((models) => models.map((model) => model.toDomain()).toList());
+  }
+  
+  bool _needsRefresh(MessageModel message) {
+    final lastRefresh = message.lastRefreshed ?? DateTime.fromMillisecondsSinceEpoch(0);
+    final refreshThreshold = const Duration(minutes: 5);
+    return DateTime.now().difference(lastRefresh) > refreshThreshold;
+  }
+}
+```
 
-## Testing Services & Repositories
+### Example Service
+```dart
+@lazySingleton
+class ConnectivityService {
+  final Connectivity _connectivity;
+  final StreamController<bool> _connectionStatusController;
+  StreamSubscription<ConnectivityResult>? _subscription;
+  
+  ConnectivityService(this._connectivity)
+      : _connectionStatusController = StreamController<bool>.broadcast() {
+    _initialize();
+  }
+  
+  /// Initialize the service and start listening to connectivity changes
+  Future<void> _initialize() async {
+    // Set initial value
+    _connectionStatusController.add(await isConnected());
+    
+    // Listen for changes
+    _subscription = _connectivity.onConnectivityChanged.listen((result) {
+      _connectionStatusController.add(result != ConnectivityResult.none);
+    });
+  }
+  
+  /// Stream of connectivity status changes (true = connected, false = disconnected)
+  Stream<bool> get connectionStatusStream => _connectionStatusController.stream;
+  
+  /// Check current connectivity status
+  Future<bool> isConnected() async {
+    final result = await _connectivity.checkConnectivity();
+    return result != ConnectivityResult.none;
+  }
+  
+  /// Dispose resources
+  void dispose() {
+    _subscription?.cancel();
+    _connectionStatusController.close();
+  }
+}
+```
 
-### Service Testing
-- Mock all dependencies (repositories, external services)
-- Test all business logic paths
-- Verify proper error handling and result propagation:
-  ```dart
-  group('ChatService', () {
-    late MockMessageRepository messageRepository;
-    late MockUserRepository userRepository;
-    late ChatService chatService;
-    
-    setUp(() {
-      messageRepository = MockMessageRepository();
-      userRepository = MockUserRepository();
-      chatService = ChatServiceImpl(messageRepository, userRepository);
-    });
-    
-    test('should return combined data when both repositories return successfully', () async {
-      // Arrange
-      when(() => messageRepository.getMessages(any()))
-          .thenAnswer((_) async => [testMessage]);
-      when(() => userRepository.getUser(any()))
-          .thenAnswer((_) async => testUser);
-      
-      // Act
-      final result = await chatService.getChatWithMessages('chat_id');
-      
-      // Assert
-      expect(result.isSuccess, true);
-      expect(result.getOrNull()?.messages.length, 1);
-      verify(() => messageRepository.getMessages('chat_id')).called(1);
-    });
-    
-    // Error cases...
-  });
-  ```
+## Performance & Optimization Tips
+- Cache repository results for frequently accessed data
+- Use batched updates to reduce database operations
+- Implement connection pooling for remote data sources
+- Apply lazy loading for large data sets
+- Use optimistic updates for better perceived performance
+- Schedule background syncs for non-critical updates
+- Implement query optimization for database operations
+- Use indexing for frequently queried fields
+- Monitor and optimize network request sizes
+- Cache transformed entities to avoid redundant mapping
+- Debounce rapid API calls to prevent overloading
+- Use appropriate isolation for CPU-intensive operations
 
-### Repository Testing
-- Mock data sources and network info
-- Test various combinations of online/offline scenarios
-- Verify proper mapping between data models and domain entities:
-  ```dart
-  group('MessageRepository', () {
-    late MockMessageRemoteDataSource remoteDataSource;
-    late MockMessageLocalDataSource localDataSource;
-    late MockNetworkInfo networkInfo;
-    late MessageRepository repository;
-    
-    setUp(() {
-      remoteDataSource = MockMessageRemoteDataSource();
-      localDataSource = MockMessageLocalDataSource();
-      networkInfo = MockNetworkInfo();
-      repository = MessageRepositoryImpl(
-        remoteDataSource,
-        localDataSource,
-        networkInfo,
-      );
-    });
-    
-    group('device is online', () {
-      setUp(() {
-        when(() => networkInfo.isConnected).thenAnswer((_) async => true);
-      });
-      
-      test('should return remote data when remote data source is successful', () async {
-        // Arrange
-        when(() => remoteDataSource.getMessages(any()))
-            .thenAnswer((_) async => [testMessageModel]);
-        
-        // Act
-        final result = await repository.getMessages('chat_id');
-        
-        // Assert
-        verify(() => remoteDataSource.getMessages('chat_id')).called(1);
-        expect(result.first.id, equals(testMessage.id));
-      });
-      
-      // Other online cases...
-    });
-    
-    group('device is offline', () {
-      // Offline tests...
-    });
-  });
-  ```
+## Testing & Validation Guidelines
+- Mock external dependencies for unit testing
+- Test repository implementations with fake data sources
+- Verify offline behavior works as expected
+- Test error handling and recovery scenarios
+- Include tests for edge cases and boundary conditions
+- Validate caching behavior and expiration logic
+- Test concurrency scenarios for race conditions
+- Verify retry logic works correctly
+- Include integration tests for repository and data source interaction
+- Test services in isolation from their dependencies
+- Verify proper cleanup and resource disposal
+- Test initialization and error recovery

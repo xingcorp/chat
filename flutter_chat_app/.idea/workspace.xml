@@ -7,16 +7,16 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat: enhance design pattern guidelines with detailed descriptions for behavioral and structural patterns in Flutter apps">
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat: add localization support with localization service and locale management in Flutter app">
       <change beforePath="$PROJECT_DIR$/.cursor-rules.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor-rules.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/patterns/behavioral_patterns.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/patterns/behavioral_patterns.mdc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/state_management.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/state_management.mdc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/internationalization_error_handling.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/internationalization_error_handling.mdc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/service_repository_patterns.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/service_repository_patterns.mdc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/utilities_helpers.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/utilities_helpers.mdc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.cursor/rules/project-architecture-structure.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/project-architecture-structure.mdc" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/di/service_locator.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/di/service_locator.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/localization_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/localization_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/l10n/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/l10n/l10n.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/l10n.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -409,7 +409,15 @@
       <option name="project" value="LOCAL" />
       <updated>1747392058922</updated>
     </task>
-    <option name="localTasksCounter" value="28" />
+    <task id="LOCAL-00028" summary="feat: add localization support with localization service and locale management in Flutter app">
+      <option name="closed" value="true" />
+      <created>1747397977288</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1747397977288</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -499,6 +507,7 @@
     <MESSAGE value="feat: refine architecture guidelines with enhanced descriptions, multi-platform structure, and state management best practices" />
     <MESSAGE value="feat: update workspace configuration to refine architecture guidelines with enhanced descriptions and multi-platform structure" />
     <MESSAGE value="feat: enhance design pattern guidelines with detailed descriptions for behavioral and structural patterns in Flutter apps" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance design pattern guidelines with detailed descriptions for behavioral and structural patterns in Flutter apps" />
+    <MESSAGE value="feat: add localization support with localization service and locale management in Flutter app" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: add localization support with localization service and locale management in Flutter app" />
   </component>
 </project>
