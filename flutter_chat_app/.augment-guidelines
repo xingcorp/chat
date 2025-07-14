@@ -1,0 +1,111 @@
+# Flutter Chat App - Workspace Guidelines
+
+## Project Overview
+Transform Flutter chat app into world-class messaging platform benchmarked against WhatsApp, Messenger, Zalo, Telegram standards.
+
+## Performance Targets
+- App startup time: <2 seconds
+- Message delivery: <100ms
+- Memory usage: <150MB average
+- Support: 10,000+ messages per conversation
+- Crash rate: <0.1%
+- Test coverage: >90%
+
+## Architecture Standards
+
+### Clean Architecture Implementation
+- Domain layer: Pure business logic, no external dependencies
+- Data layer: Repository implementations, data sources, models with proper API mapping
+- Presentation layer: UI components, BLoCs, widgets with Material Design 3
+- Dependency flow: Presentation → Domain ← Data
+
+### State Management with BLoC
+- Use BLoC pattern for all complex state management
+- Implement proper event/state separation with freezed
+- Handle loading, success, error states consistently
+- Use Cubit for simple local state management
+- Implement proper subscription disposal in BLoCs
+
+### API Integration Requirements
+- **CRITICAL**: Always sync Flutter models with NestJS backend entities
+- Map GraphQL schema types correctly to Dart models
+- Handle OfficeChatConversation → ChatModel mapping properly
+- Ensure OfficeChatMessage → MessageModel consistency
+- Implement proper error handling for API failures
+- Use proper authentication with JWT token management
+
+## Data Models Synchronization
+
+### User Model Mapping
+```dart
+// Flutter: UserModel ↔ Backend: OfficeUser
+- serverId ↔ id (UUID)
+- username ↔ username
+- displayName ↔ fullname
+- avatarUrl ↔ imageUrls[0]
+- isOnline ↔ status (Active/Inactive)
+- lastSeen ↔ updatedAt
+```
+
+### Chat Model Mapping
+```dart
+// Flutter: ChatModel ↔ Backend: OfficeChatConversation
+- serverId ↔ id (UUID)
+- name ↔ name
+- type ↔ type (Direct/Group)
+- participantIds ↔ members[].userId
+- createdAt ↔ createdAt
+- lastMessageAt ↔ lastMessageAt
+```
+
+### Message Model Mapping
+```dart
+// Flutter: MessageModel ↔ Backend: OfficeChatMessage
+- localId ↔ id
+- chatId ↔ conversationId
+- senderId ↔ senderId
+- content ↔ message
+- type ↔ type (Text/Image/File)
+- createdAt ↔ createdAt (timestamp)
+- readBy ↔ readerIds
+```
+
+## Code Quality Standards
+- Use freezed for all data classes and sealed unions
+- Implement proper equals/hashCode with Equatable
+- Use const constructors wherever possible
+- Follow naming conventions: classes PascalCase, methods camelCase
+- Add comprehensive documentation for public APIs
+- Implement proper error handling with custom exceptions
+
+## Testing Strategy
+- Unit tests: 95% coverage for domain layer
+- Widget tests: 85% coverage for presentation layer
+- Integration tests: 80% coverage for critical user flows
+- Use bloc_test for BLoC testing
+- Mock all external dependencies properly
+- Test error scenarios and edge cases
+
+## Performance Optimization
+- Use virtual scrolling for message lists
+- Implement efficient image caching with proper compression
+- Use isolates for heavy operations (encryption, file processing)
+- Optimize network requests with proper batching
+- Implement connection pooling for WebSocket management
+- Monitor memory usage and implement proper disposal patterns
+
+## Security Requirements
+- Implement input validation and sanitization
+- Use secure storage for sensitive data
+- Add proper authentication and authorization
+- Implement rate limiting for API calls
+- Add logging with structured data for debugging
+- Use HTTPS for all network communications
+
+## Development Workflow
+- Follow Git flow with feature branches
+- Require code review for all changes
+- Run automated tests before merging
+- Use semantic versioning for releases
+- Document all architectural decisions
+- Maintain changelog for all releases
