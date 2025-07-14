@@ -1,3 +1,7 @@
+---
+type: "always_apply"
+---
+
 # Clean Architecture Rules - Flutter Chat App
 
 **Type**: Always  
