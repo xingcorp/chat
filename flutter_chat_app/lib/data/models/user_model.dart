@@ -1,5 +1,5 @@
-import 'package:isar/isar.dart';
 import 'package:flutter_chat_app/domain/entities/user.dart';
+import 'package:isar/isar.dart';
 
 part 'user_model.g.dart';
 

@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:integration_test/integration_test.dart';
-import 'package:flutter_chat_app/main.dart' as app;
-import 'package:flutter_chat_app/core/services/performance_service.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+
 import 'package:flutter_chat_app/core/monitoring/message_delivery_tracker.dart';
+import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/services/performance_service.dart';
 import 'package:flutter_chat_app/core/utils/system_resources.dart';
+import 'package:flutter_chat_app/main.dart' as app;
 
 /// Enterprise-grade performance validation tests
 /// 

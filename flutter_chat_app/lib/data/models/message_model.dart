@@ -5,27 +5,6 @@ import 'package:isar/isar.dart';
 
 part 'message_model.g.dart';
 
-/// Status of a message in the queue
-enum MessageStatus {
-  /// Message is in the queue waiting to be sent
-  pending,
-  
-  /// Message is currently being sent
-  sending,
-  
-  /// Message has been sent to the server but not delivered to the recipient
-  sent,
-  
-  /// Message has been delivered to the recipient
-  delivered,
-  
-  /// Message has been read by the recipient
-  read,
-  
-  /// Failed to send the message
-  failed
-}
-
 /// Type of message content
 enum MessageType {
   /// Plain text message
@@ -520,7 +499,7 @@ class MessageModel {
 
   /// Convert MessageModel to domain ChatMessage entity
   ChatMessage toDomain() {
-    // Convert MessageType to ContentType
+    // Convert MessageType to ContentType (mapping data layer to domain layer)
     ContentType contentType;
     switch (type) {
       case MessageType.text:
@@ -541,11 +520,11 @@ class MessageModel {
       case MessageType.location:
         contentType = ContentType.location;
         break;
-      case MessageType.sticker:
-        contentType = ContentType.sticker;
+      case MessageType.contact:
+        contentType = ContentType.link; // Map contact to link in domain
         break;
-      case MessageType.gif:
-        contentType = ContentType.gif;
+      case MessageType.system:
+        contentType = ContentType.event; // Map system to event in domain
         break;
       default:
         contentType = ContentType.text;
@@ -563,11 +542,10 @@ class MessageModel {
     if (isMultimedia && mediaPath != null) {
       attachments.add(MessageAttachment(
         id: '$localId-attachment',
-        type: _getAttachmentType(type),
+        type: _getAttachmentTypeString(type),
         url: mediaPath!,
         name: 'attachment',
         size: fileSize ?? 0,
-        mimeType: fileMimeType,
       ));
     }
 
@@ -587,19 +565,23 @@ class MessageModel {
     );
   }
 
-  /// Helper method to convert MessageType to AttachmentType
-  AttachmentType _getAttachmentType(MessageType messageType) {
+  /// Helper method to convert MessageType to attachment type string
+  String _getAttachmentTypeString(MessageType messageType) {
     switch (messageType) {
       case MessageType.image:
-        return AttachmentType.image;
+        return 'image';
       case MessageType.video:
-        return AttachmentType.video;
+        return 'video';
       case MessageType.audio:
-        return AttachmentType.audio;
+        return 'audio';
       case MessageType.file:
-        return AttachmentType.document;
+        return 'document';
+      case MessageType.location:
+        return 'location';
+      case MessageType.contact:
+        return 'contact';
       default:
-        return AttachmentType.document;
+        return 'document';
     }
   }
 }

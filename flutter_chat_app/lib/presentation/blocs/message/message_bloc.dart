@@ -43,7 +43,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
   Future<void> _onLoadMessages(LoadMessages event, Emitter<MessageState> emit) async {
     _logger.i('Tải tin nhắn cho chat: ${event.chatId}');
     
-    if (state is MessageLoaded && (state as MessageLoaded).chatId == event.chatId) {
+    if (state is MessagesLoaded && (state as MessagesLoaded).chatId == event.chatId) {
       // Đã tải tin nhắn cho chat này rồi, chỉ emit lại nếu cần refresh
       if (!event.forceRefresh) {
         return;

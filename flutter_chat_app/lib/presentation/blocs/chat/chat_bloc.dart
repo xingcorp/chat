@@ -132,7 +132,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
       
       // Then try to fetch from server if online
-      if (await _connectivityService.checkConnected()) {
+      if (await _connectivityService.isConnected()) {
         final chat = await _chatRepository.getChatById(event.chatId);
         if (chat != null) {
           emit(ChatState.chatDetailsLoaded(chat: chat));
@@ -171,12 +171,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
       
       // Then try to fetch from server if online
-      if (await _connectivityService.checkConnected()) {
+      if (await _connectivityService.isConnected()) {
         final messages = await _messageRepository.getMessages(
           event.chatId,
           limit: event.limit,
         );
-        
+
         emit(ChatState.messagesLoaded(
           chats: currentChats,
           chatId: event.chatId,
@@ -373,7 +373,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     _SyncChats event,
     Emitter<ChatState> emit,
   ) async {
-    if (!await _connectivityService.checkConnected()) {
+    if (!await _connectivityService.isConnected()) {
       emit(const ChatState.offline());
       return;
     }
@@ -395,7 +395,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     _SyncMessages event,
     Emitter<ChatState> emit,
   ) async {
-    if (!await _connectivityService.checkConnected()) {
+    if (!await _connectivityService.isConnected()) {
       emit(const ChatState.offline());
       return;
     }

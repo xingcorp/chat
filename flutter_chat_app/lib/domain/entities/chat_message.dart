@@ -27,18 +27,21 @@ enum ContentType {
 
 /// Trạng thái tin nhắn
 enum MessageStatus {
+  /// Đang chờ gửi (offline queue)
+  pending,
+
   /// Đang gửi
   sending,
-  
+
   /// Đã gửi (đến server)
   sent,
-  
+
   /// Đã nhận (đến thiết bị người nhận)
   delivered,
-  
+
   /// Đã đọc (người nhận đã đọc)
   read,
-  
+
   /// Gửi thất bại
   failed,
 }

@@ -12,7 +12,7 @@
 library enterprise_injection;
 
 import 'dart:async';
-import 'dart:io';
+
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,7 +20,7 @@ import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/config/app_config.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
-import 'package:flutter_chat_app/core/network/graphql_client.dart';
+
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/network/socket_manager.dart';
 import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';

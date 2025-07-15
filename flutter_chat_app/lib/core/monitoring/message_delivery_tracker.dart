@@ -7,26 +7,26 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
 
-/// Status của việc gửi tin nhắn
-enum MessageStatus {
+/// Status của việc gửi tin nhắn trong monitoring
+enum MessageDeliveryStatus {
   /// Đang chuẩn bị gửi
   preparing,
-  
+
   /// Đang chờ kết nối
   waitingForConnection,
-  
+
   /// Đang gửi
   sending,
-  
+
   /// Đã gửi thành công lên server
   sent,
-  
+
   /// Đã nhận bởi người nhận
   delivered,
-  
+
   /// Đã đọc bởi người nhận
   read,
-  
+
   /// Thất bại khi gửi
   failed,
 }
@@ -90,7 +90,7 @@ class MessageDeliveryTracker {
   /// Cập nhật trạng thái của tin nhắn
   Future<void> updateMessageStatus(
     String messageId,
-    MessageStatus status, {
+    MessageDeliveryStatus status, {
     Map<String, dynamic>? additionalData,
   }) async {
     final deliveryInfo = _messageTraces[messageId];
@@ -103,26 +103,26 @@ class MessageDeliveryTracker {
       final now = DateTime.now();
       
       switch (status) {
-        case MessageStatus.preparing:
+        case MessageDeliveryStatus.preparing:
           deliveryInfo.preparingAt = now;
           break;
-        case MessageStatus.waitingForConnection:
+        case MessageDeliveryStatus.waitingForConnection:
           deliveryInfo.waitingForConnectionAt = now;
           break;
-        case MessageStatus.sending:
+        case MessageDeliveryStatus.sending:
           deliveryInfo.sendingAt = now;
           break;
-        case MessageStatus.sent:
+        case MessageDeliveryStatus.sent:
           deliveryInfo.sentAt = now;
           break;
-        case MessageStatus.delivered:
+        case MessageDeliveryStatus.delivered:
           deliveryInfo.deliveredAt = now;
           break;
-        case MessageStatus.read:
+        case MessageDeliveryStatus.read:
           deliveryInfo.readAt = now;
           _completeMessageDeliveryTrace(messageId);
           break;
-        case MessageStatus.failed:
+        case MessageDeliveryStatus.failed:
           deliveryInfo.failedAt = now;
           _completeMessageDeliveryTrace(messageId, isFailed: true);
           break;
@@ -225,8 +225,8 @@ class MessageDeliveryTracker {
       );
       
       // Restart trace để tiếp tục theo dõi
-      if (deliveryInfo.currentStatus != MessageStatus.read && 
-          deliveryInfo.currentStatus != MessageStatus.failed) {
+      if (deliveryInfo.currentStatus != MessageDeliveryStatus.read && 
+          deliveryInfo.currentStatus != MessageDeliveryStatus.failed) {
         await _performanceMonitor.startTrace(
           TraceType.custom,
           customTraceName: 'message_delivery_$messageId',
@@ -350,30 +350,30 @@ class MessageDeliveryTracker {
     _messageTraces[messageId] = deliveryInfo;
     
     // Cập nhật trạng thái hiện tại
-    MessageStatus status;
+    MessageDeliveryStatus status;
     switch (queuedMessage.status) {
       case MessageQueueStatus.pending:
-        status = MessageStatus.waitingForConnection;
+        status = MessageDeliveryStatus.waitingForConnection;
         deliveryInfo.waitingForConnectionAt = DateTime.now();
         break;
       case MessageQueueStatus.sending:
-        status = MessageStatus.sending;
+        status = MessageDeliveryStatus.sending;
         deliveryInfo.sendingAt = DateTime.now();
         break;
       case MessageQueueStatus.sent:
       case MessageQueueStatus.delivered:
       case MessageQueueStatus.read:
-        status = MessageStatus.sent;
+        status = MessageDeliveryStatus.sent;
         deliveryInfo.sentAt = DateTime.now();
         break;
       case MessageQueueStatus.failed:
       case MessageQueueStatus.cancelled:
       case MessageQueueStatus.conflicted:
-        status = MessageStatus.failed;
+        status = MessageDeliveryStatus.failed;
         deliveryInfo.failedAt = DateTime.now();
         break;
       default:
-        status = MessageStatus.preparing;
+        status = MessageDeliveryStatus.preparing;
     }
     
     deliveryInfo.currentStatus = status;
@@ -433,7 +433,7 @@ class MessageDeliveryInfo {
   String? connectionType;
   
   /// Trạng thái hiện tại
-  MessageStatus currentStatus = MessageStatus.preparing;
+  MessageDeliveryStatus currentStatus = MessageDeliveryStatus.preparing;
   
   /// Thông tin bổ sung
   final Map<String, dynamic> additionalData = {};
