@@ -5,8 +5,8 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
-import 'realtime_connection_service.dart';
-import 'realtime_error.dart';
+import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
+import 'package:flutter_chat_app/core/network/realtime/realtime_error.dart';
 
 /// Class quản lý connection pool cho các kết nối WebSocket
 /// Được cải tiến với cơ chế tự phục hồi, kiểm tra sức khỏe và quản lý bộ nhớ tối ưu

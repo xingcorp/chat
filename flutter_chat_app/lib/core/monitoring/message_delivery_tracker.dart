@@ -44,7 +44,7 @@ class MessageDeliveryTracker {
   final Map<String, MessageDeliveryInfo> _messageTraces = {};
   
   /// UUID generator
-  final _uuid = Uuid();
+  final _uuid = const Uuid();
   
   /// Constructor
   MessageDeliveryTracker(this._performanceMonitor);

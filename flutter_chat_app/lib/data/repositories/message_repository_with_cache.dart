@@ -43,7 +43,7 @@ class MessageRepositoryWithCache implements IMessageRepository {
       );
       
       if (cachedMessage != null) {
-        _logger.v('Lấy tin nhắn từ cache: $messageId');
+        _logger.t('Lấy tin nhắn từ cache: $messageId');
         return cachedMessage.toDomain();
       }
       
@@ -90,14 +90,14 @@ class MessageRepositoryWithCache implements IMessageRepository {
       // Thử lấy từ cache
       final cachedMessages = await _cacheManager.getApiResponse<List<MessageModel>>(
         cacheKey,
-        ttl: AppCacheManager.MESSAGE_TTL,
+        ttl: AppCacheManager.messageTtl,
         fromJsonList: (jsonList) => jsonList
             .map((json) => MessageModel.fromMap(json as Map<String, dynamic>))
             .toList(),
       );
       
       if (cachedMessages != null && cachedMessages.isNotEmpty) {
-        _logger.v('Lấy ${cachedMessages.length} tin nhắn từ cache cho chat $chatId');
+        _logger.t('Lấy ${cachedMessages.length} tin nhắn từ cache cho chat $chatId');
         
         // Tiền tải thumbnails cho attachments
         _prefetchAttachmentThumbnails(cachedMessages);
@@ -109,7 +109,7 @@ class MessageRepositoryWithCache implements IMessageRepository {
     // Không có trong cache hoặc cần làm mới
     if (await _networkInfo.isConnected) {
       try {
-        _logger.v('Lấy tin nhắn từ server cho chat $chatId');
+        _logger.t('Lấy tin nhắn từ server cho chat $chatId');
         // Lấy tin nhắn từ server
         final remoteMessages = await _remoteDataSource.getChatMessages(
           chatId,
@@ -124,7 +124,7 @@ class MessageRepositoryWithCache implements IMessageRepository {
         await _cacheManager.cacheApiResponse(
           cacheKey,
           remoteMessages,
-          ttl: AppCacheManager.MESSAGE_TTL,
+          ttl: AppCacheManager.messageTtl,
         );
         
         // Reset dirty flag vì đã làm mới cache
@@ -392,7 +392,7 @@ class MessageRepositoryWithCache implements IMessageRepository {
           );
           await _localDataSource.saveMessage(updatedMessage);
           
-          _logger.v('Đã gửi tin nhắn chờ: ${message.localId} -> ${sentMessage.serverId}');
+          _logger.t('Đã gửi tin nhắn chờ: ${message.localId} -> ${sentMessage.serverId}');
         } catch (e) {
           // Mark as failed if sending fails
           final failedMessage = message.copyWith(
@@ -463,7 +463,7 @@ class MessageRepositoryWithCache implements IMessageRepository {
       // TODO: Implement video thumbnail prefetching when needed
     } catch (e) {
       // Ignore prefetch errors, this is just an optimization
-      _logger.v('Lỗi khi prefetch thumbnails: $e');
+      _logger.t('Lỗi khi prefetch thumbnails: $e');
     }
   }
 } 

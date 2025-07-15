@@ -7,16 +7,9 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat: add localization support with localization service and locale management in Flutter app">
-      <change beforePath="$PROJECT_DIR$/.cursor-rules.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor-rules.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/internationalization_error_handling.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/internationalization_error_handling.mdc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/service_repository_patterns.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/service_repository_patterns.mdc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/utilities_helpers.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/utilities_helpers.mdc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/project-architecture-structure.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/project-architecture-structure.mdc" afterDir="false" />
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat: enhance localization support with new service patterns, utilities, and error handling guidelines">
+      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/patterns/structural_patterns.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/patterns/structural_patterns.mdc" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/localization_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/localization_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/l10n/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/l10n/l10n.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/l10n.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -417,7 +410,15 @@
       <option name="project" value="LOCAL" />
       <updated>1747397977288</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="feat: enhance localization support with new service patterns, utilities, and error handling guidelines">
+      <option name="closed" value="true" />
+      <created>1747407295802</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1747407295802</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -483,7 +484,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="update project configuration and dependencies for Isar database integration" />
     <MESSAGE value="update version and dependencies; refactor connectivity service and user/chat models" />
     <MESSAGE value="refactor: enhance message handling and connection services; add priority and conflict resolution for messages" />
     <MESSAGE value="refactor: improve realtime connection handling and message processing; enhance message repository interface" />
@@ -508,6 +508,7 @@
     <MESSAGE value="feat: update workspace configuration to refine architecture guidelines with enhanced descriptions and multi-platform structure" />
     <MESSAGE value="feat: enhance design pattern guidelines with detailed descriptions for behavioral and structural patterns in Flutter apps" />
     <MESSAGE value="feat: add localization support with localization service and locale management in Flutter app" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: add localization support with localization service and locale management in Flutter app" />
+    <MESSAGE value="feat: enhance localization support with new service patterns, utilities, and error handling guidelines" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance localization support with new service patterns, utilities, and error handling guidelines" />
   </component>
 </project>

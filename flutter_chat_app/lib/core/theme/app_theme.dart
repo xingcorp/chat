@@ -46,8 +46,6 @@ class AppTheme {
       onSecondary: Colors.white,
       error: AppColors.error,
       onError: Colors.white,
-      background: backgroundColor,
-      onBackground: isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary,
       surface: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
       onSurface: isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary,
     );
@@ -185,8 +183,8 @@ class AppTheme {
         space: 1,
       ),
       checkboxTheme: CheckboxThemeData(
-        fillColor: MaterialStateProperty.resolveWith<Color>((states) {
-          if (states.contains(MaterialState.selected)) {
+        fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryColor;
           }
           return isDark ? AppColors.inputBackgroundDarkMode : Colors.white;
@@ -196,22 +194,22 @@ class AppTheme {
         ),
       ),
       radioTheme: RadioThemeData(
-        fillColor: MaterialStateProperty.resolveWith<Color>((states) {
-          if (states.contains(MaterialState.selected)) {
+        fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryColor;
           }
           return isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
         }),
       ),
       switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.resolveWith<Color>((states) {
-          if (states.contains(MaterialState.selected)) {
+        thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryColor;
           }
           return isDark ? Colors.grey[400]! : Colors.grey[50]!;
         }),
-        trackColor: MaterialStateProperty.resolveWith<Color>((states) {
-          if (states.contains(MaterialState.selected)) {
+        trackColor: WidgetStateProperty.resolveWith<Color>((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryColor.withOpacity(0.4);
           }
           return isDark ? Colors.grey[700]! : Colors.grey[300]!;

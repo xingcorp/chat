@@ -78,7 +78,7 @@ class LogUtils {
     if (_enabledConsoleLog) {
       switch (level) {
         case LogLevel.verbose:
-          _logger.v(logMessage);
+          _logger.t(logMessage);
           break;
         case LogLevel.debug:
           _logger.d(logMessage);

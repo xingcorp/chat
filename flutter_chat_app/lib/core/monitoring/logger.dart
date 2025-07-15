@@ -36,7 +36,7 @@ class AppLogger {
         lineLength: 120,
         colors: true,
         printEmojis: true,
-        printTime: true,
+        dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
       ),
       filter: _CustomLogFilter(_currentLevel),
       output: _MultiOutput([
@@ -156,7 +156,7 @@ class _CustomLogFilter extends LogFilter {
   
   LogLevel _mapLevelToLogLevel(Level level) {
     switch (level) {
-      case Level.verbose:
+      case Level.trace:
         return LogLevel.verbose;
       case Level.debug:
         return LogLevel.debug;
@@ -211,7 +211,7 @@ class _MemoryOutput extends LogOutput {
   
   LogLevel _mapLevelToLogLevel(Level level) {
     switch (level) {
-      case Level.verbose:
+      case Level.trace:
         return LogLevel.verbose;
       case Level.debug:
         return LogLevel.debug;

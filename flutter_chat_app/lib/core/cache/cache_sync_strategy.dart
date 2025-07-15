@@ -1,8 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:logger/logger.dart';
-
-import 'app_cache_manager.dart';
 
 /// Manager quản lý chiến lược đồng bộ và invalidate cache
 class CacheSyncStrategy {
@@ -19,10 +18,10 @@ class CacheSyncStrategy {
   final AppCacheManager _cacheManager = AppCacheManager();
   
   /// Cache prefixes
-  static const String CHAT_LIST_PREFIX = 'chat_list';
-  static const String CHAT_DETAIL_PREFIX = 'chat_detail_';
-  static const String CHAT_MESSAGES_PREFIX = 'chat_messages_';
-  static const String USER_DATA_PREFIX = 'user_data_';
+  static const String chatListPrefix = 'chat_list';
+  static const String chatDetailPrefix = 'chat_detail_';
+  static const String chatMessagesPrefix = 'chat_messages_';
+  static const String userDataPrefix = 'user_data_';
   
   /// Flags để đánh dấu các loại dữ liệu đã bị thay đổi
   bool _chatListDirty = false;
@@ -39,25 +38,25 @@ class CacheSyncStrategy {
   /// Đánh dấu chat list đã thay đổi (khi có chat mới hoặc cập nhật)
   void markChatListDirty() {
     _chatListDirty = true;
-    _logger.v('Đánh dấu chat list đã thay đổi');
+    _logger.t('Đánh dấu chat list đã thay đổi');
   }
   
   /// Đánh dấu chi tiết của một chat đã thay đổi
   void markChatDetailsDirty(String chatId) {
     _chatDetailsDirty[chatId] = true;
-    _logger.v('Đánh dấu chi tiết chat $chatId đã thay đổi');
+    _logger.t('Đánh dấu chi tiết chat $chatId đã thay đổi');
   }
   
   /// Đánh dấu tin nhắn của một chat đã thay đổi
   void markChatMessagesDirty(String chatId) {
     _chatMessagesDirty[chatId] = true;
-    _logger.v('Đánh dấu tin nhắn của chat $chatId đã thay đổi');
+    _logger.t('Đánh dấu tin nhắn của chat $chatId đã thay đổi');
   }
   
   /// Đánh dấu dữ liệu người dùng đã thay đổi
   void markUserDataDirty() {
     _userDataDirty = true;
-    _logger.v('Đánh dấu dữ liệu người dùng đã thay đổi');
+    _logger.t('Đánh dấu dữ liệu người dùng đã thay đổi');
   }
   
   /// Đánh dấu tất cả cache đã thay đổi (thường gọi sau khi đăng nhập/đăng xuất)
@@ -81,7 +80,7 @@ class CacheSyncStrategy {
       final timeSinceLastUpdate = DateTime.now().difference(_lastChatListUpdate!);
       // Refresh nếu đã hơn 5 phút kể từ lần cập nhật cuối
       if (timeSinceLastUpdate > const Duration(minutes: 5)) {
-        _logger.v('Cần refresh chat list do đã quá 5 phút từ lần cập nhật cuối');
+        _logger.t('Cần refresh chat list do đã quá 5 phút từ lần cập nhật cuối');
         return true;
       }
     }
@@ -108,31 +107,31 @@ class CacheSyncStrategy {
   void resetChatListDirtyFlag() {
     _chatListDirty = false;
     _lastChatListUpdate = DateTime.now();
-    _logger.v('Reset dirty flag cho chat list');
+    _logger.t('Reset dirty flag cho chat list');
   }
   
   /// Reset dirty flag sau khi đã làm mới chi tiết chat
   void resetChatDetailsDirtyFlag(String chatId) {
     _chatDetailsDirty[chatId] = false;
-    _logger.v('Reset dirty flag cho chi tiết chat $chatId');
+    _logger.t('Reset dirty flag cho chi tiết chat $chatId');
   }
   
   /// Reset dirty flag sau khi đã làm mới tin nhắn chat
   void resetChatMessagesDirtyFlag(String chatId) {
     _chatMessagesDirty[chatId] = false;
-    _logger.v('Reset dirty flag cho tin nhắn chat $chatId');
+    _logger.t('Reset dirty flag cho tin nhắn chat $chatId');
   }
   
   /// Reset dirty flag sau khi đã làm mới dữ liệu người dùng
   void resetUserDataDirtyFlag() {
     _userDataDirty = false;
-    _logger.v('Reset dirty flag cho dữ liệu người dùng');
+    _logger.t('Reset dirty flag cho dữ liệu người dùng');
   }
   
   /// Xử lý sự kiện real-time và invalidate cache tương ứng
   /// [eventType] là loại sự kiện, [data] là dữ liệu của sự kiện
   void handleRealTimeEvent(String eventType, dynamic data) {
-    _logger.v('Xử lý sự kiện real-time: $eventType');
+    _logger.t('Xử lý sự kiện real-time: $eventType');
     
     switch (eventType) {
       case 'new_message':
@@ -189,21 +188,21 @@ class CacheSyncStrategy {
     _cacheManager.invalidateCache('message_$messageId');
     
     // Invalidate danh sách tin nhắn (với các prefix phổ biến)
-    _invalidateWithPrefix('${CHAT_MESSAGES_PREFIX}${chatId}');
+    _invalidateWithPrefix('${chatMessagesPrefix}${chatId}');
   }
   
   /// Invalidate cache liên quan đến một chat cụ thể
   void _invalidateChatCache(String chatId) {
     // Invalidate chi tiết chat
-    _cacheManager.invalidateCache('${CHAT_DETAIL_PREFIX}$chatId');
+    _cacheManager.invalidateCache('${chatDetailPrefix}$chatId');
     
     // Invalidate danh sách chat
-    _invalidateWithPrefix(CHAT_LIST_PREFIX);
+    _invalidateWithPrefix(chatListPrefix);
   }
   
   /// Invalidate cache liên quan đến một người dùng cụ thể
   void _invalidateUserCache(String userId) {
-    _cacheManager.invalidateCache('${USER_DATA_PREFIX}$userId');
+    _cacheManager.invalidateCache('${userDataPrefix}$userId');
   }
   
   /// Invalidate tất cả cache bắt đầu bằng một prefix
@@ -211,7 +210,7 @@ class CacheSyncStrategy {
     // Thực hiện invalidate
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       try {
-        _logger.v('Invalidate cache với prefix: $prefix');
+        _logger.t('Invalidate cache với prefix: $prefix');
         
         // Lấy tất cả key bắt đầu bằng prefix
         final allKeys = _cacheManager.isInitialized 
@@ -223,11 +222,11 @@ class CacheSyncStrategy {
             .toList();
         
         if (keysToInvalidate.isEmpty) {
-          _logger.v('Không tìm thấy key nào với prefix: $prefix');
+          _logger.t('Không tìm thấy key nào với prefix: $prefix');
           return;
         }
         
-        _logger.v('Tìm thấy ${keysToInvalidate.length} key với prefix: $prefix');
+        _logger.t('Tìm thấy ${keysToInvalidate.length} key với prefix: $prefix');
         
         // Invalidate từng key
         for (final key in keysToInvalidate) {

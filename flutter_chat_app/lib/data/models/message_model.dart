@@ -1,5 +1,7 @@
-import 'package:isar/isar.dart';
 import 'dart:convert';
+
+import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:isar/isar.dart';
 
 part 'message_model.g.dart';
 
@@ -515,4 +517,89 @@ class MessageModel {
     if (map == null) return null;
     return map['path'] as String?;
   }
-} 
+
+  /// Convert MessageModel to domain ChatMessage entity
+  ChatMessage toDomain() {
+    // Convert MessageType to ContentType
+    ContentType contentType;
+    switch (type) {
+      case MessageType.text:
+        contentType = ContentType.text;
+        break;
+      case MessageType.image:
+        contentType = ContentType.image;
+        break;
+      case MessageType.video:
+        contentType = ContentType.video;
+        break;
+      case MessageType.audio:
+        contentType = ContentType.audio;
+        break;
+      case MessageType.file:
+        contentType = ContentType.file;
+        break;
+      case MessageType.location:
+        contentType = ContentType.location;
+        break;
+      case MessageType.sticker:
+        contentType = ContentType.sticker;
+        break;
+      case MessageType.gif:
+        contentType = ContentType.gif;
+        break;
+      default:
+        contentType = ContentType.text;
+    }
+
+    // Create MessageSender from senderId
+    final sender = MessageSender(
+      id: senderId,
+      name: 'User $senderId', // This should be populated from user data
+      avatar: null, // This should be populated from user data
+    );
+
+    // Create attachments if this is a media message
+    final attachments = <MessageAttachment>[];
+    if (isMultimedia && mediaPath != null) {
+      attachments.add(MessageAttachment(
+        id: '$localId-attachment',
+        type: _getAttachmentType(type),
+        url: mediaPath!,
+        name: 'attachment',
+        size: fileSize ?? 0,
+        mimeType: fileMimeType,
+      ));
+    }
+
+    return ChatMessage(
+      id: serverId ?? localId,
+      chatId: chatId,
+      content: content,
+      contentType: contentType,
+      sender: sender,
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? createdAt,
+      readBy: readBy,
+      deliveredTo: status == MessageStatus.delivered || status == MessageStatus.read
+          ? [senderId]
+          : [],
+      attachments: attachments,
+    );
+  }
+
+  /// Helper method to convert MessageType to AttachmentType
+  AttachmentType _getAttachmentType(MessageType messageType) {
+    switch (messageType) {
+      case MessageType.image:
+        return AttachmentType.image;
+      case MessageType.video:
+        return AttachmentType.video;
+      case MessageType.audio:
+        return AttachmentType.audio;
+      case MessageType.file:
+        return AttachmentType.document;
+      default:
+        return AttachmentType.document;
+    }
+  }
+}

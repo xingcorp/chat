@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import 'package:flutter_chat_app/domain/entities/user.dart';
 
 part 'user_model.g.dart';
 
@@ -207,15 +208,33 @@ class UserModel {
     if (displayName.isEmpty) {
       return username.isNotEmpty ? username.substring(0, 1).toUpperCase() : '?';
     }
-    
+
     final nameParts = displayName.split(' ');
     if (nameParts.length >= 2) {
       return '${nameParts[0][0]}${nameParts[1][0]}'.toUpperCase();
     } else if (nameParts.isNotEmpty) {
       return nameParts[0][0].toUpperCase();
     }
-    
+
     return '?';
+  }
+
+  /// Convert UserModel to domain User entity
+  User toDomain() {
+    return User(
+      id: serverId,
+      username: username,
+      email: email ?? '',
+      fullName: displayName.isNotEmpty ? displayName : null,
+      avatar: avatarUrl,
+      isOnline: isOnline,
+      lastSeen: lastSeen,
+      metadata: {
+        'statusMessage': statusMessage,
+        'roles': roles,
+        'localId': id.toString(),
+      },
+    );
   }
 
   /// Get timestamp for "last seen" display

@@ -48,10 +48,10 @@ class PreloadManager {
   Stream<double> get preloadProgress => _progressController.stream;
   
   /// Hằng số cấu hình
-  static const int PRELOAD_CHAT_LIMIT = 10;
-  static const int PRELOAD_MESSAGE_LIMIT = 20;
-  static const int PRELOAD_USER_LIMIT = 20;
-  static const Duration PRELOAD_INTERVAL = Duration(hours: 12);
+  static const int preloadChatLimit = 10;
+  static const int preloadMessageLimit = 20;
+  static const int preloadUserLimit = 20;
+  static const Duration preloadInterval = Duration(hours: 12);
   
   /// Chạy duy nhất một lần 
   static Completer<void>? _runningPreloadTask;
@@ -172,7 +172,7 @@ class PreloadManager {
     
     try {
       // Giả lập tiền tải thông tin người dùng
-      _logger.v('Tiền tải thông tin người dùng');
+      _logger.t('Tiền tải thông tin người dùng');
       await Future.delayed(const Duration(milliseconds: 500));
       
       _completeTask();
@@ -188,7 +188,7 @@ class PreloadManager {
     
     try {
       // Giả lập tiền tải chat gần đây
-      _logger.v('Tiền tải danh sách chat gần đây');
+      _logger.t('Tiền tải danh sách chat gần đây');
       await Future.delayed(const Duration(milliseconds: 800));
       
       // Danh sách avatar URLs cần tiền tải
@@ -218,7 +218,7 @@ class PreloadManager {
     _increaseTaskCount();
     
     try {
-      _logger.v('Tiền tải dữ liệu thường xuyên sử dụng');
+      _logger.t('Tiền tải dữ liệu thường xuyên sử dụng');
       
       // Lấy danh sách keys thường truy cập từ CacheStats
       final frequentKeys = _cacheStats.getMostAccessedKeys(limit: 20);
@@ -234,16 +234,16 @@ class PreloadManager {
   }
   
   /// Tiền tải danh sách tin nhắn cho một cuộc trò chuyện
-  Future<void> preloadMessages(String chatId, {int limit = PRELOAD_MESSAGE_LIMIT}) async {
+  Future<void> preloadMessages(String chatId, {int limit = preloadMessageLimit}) async {
     try {
-      _logger.v('Tiền tải tin nhắn cho chat: $chatId');
+      _logger.t('Tiền tải tin nhắn cho chat: $chatId');
       
       // Giả lập tải tin nhắn
       await Future.delayed(const Duration(milliseconds: 700));
       
       // Trong thực tế sẽ gọi repository để tải tin nhắn và lưu vào cache
       
-      _logger.v('Đã tiền tải tin nhắn cho chat: $chatId');
+      _logger.t('Đã tiền tải tin nhắn cho chat: $chatId');
     } catch (e) {
       _logger.e('Lỗi khi tiền tải tin nhắn: $e');
     }
@@ -272,7 +272,7 @@ class PreloadManager {
         _prefetchImages(videoThumbnails),
       ]);
       
-      _logger.v('Đã tiền tải ${imageUrls.length} hình ảnh và ${videoThumbnails.length} thumbnails video');
+      _logger.t('Đã tiền tải ${imageUrls.length} hình ảnh và ${videoThumbnails.length} thumbnails video');
     } catch (e) {
       _logger.e('Lỗi khi tiền tải media: $e');
     }
@@ -302,7 +302,7 @@ class PreloadManager {
       // Trong thực tế sẽ tải và lưu hình ảnh
       await Future.delayed(const Duration(milliseconds: 300));
     } catch (e) {
-      _logger.v('Lỗi khi tiền tải hình ảnh $url: $e');
+      _logger.t('Lỗi khi tiền tải hình ảnh $url: $e');
     }
   }
   
@@ -314,7 +314,7 @@ class PreloadManager {
     final lastTime = DateTime.fromMillisecondsSinceEpoch(lastPreloadTime);
     final now = DateTime.now();
     
-    return now.difference(lastTime) > PRELOAD_INTERVAL;
+    return now.difference(lastTime) > preloadInterval;
   }
   
   /// Reset tiến trình

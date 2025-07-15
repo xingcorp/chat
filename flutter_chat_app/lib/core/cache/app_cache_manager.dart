@@ -4,13 +4,12 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_chat_app/core/cache/cache_stats.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:get_it/get_it.dart';
-
-import 'cache_stats.dart';
 
 /// Manager lưu trữ và quản lý cache của ứng dụng
 class AppCacheManager {
@@ -24,13 +23,13 @@ class AppCacheManager {
   final _logger = Logger();
   
   /// Cache configuration
-  static const String KEY_PREFIX = 'chat_app_cache_';
-  static const Duration DEFAULT_CACHE_DURATION = Duration(days: 7);
-  static const Duration CHAT_LIST_TTL = Duration(minutes: 30);
-  static const Duration MESSAGE_TTL = Duration(days: 30);
-  static const Duration USER_DATA_TTL = Duration(days: 14);
-  static const Duration MEDIA_THUMBNAIL_TTL = Duration(days: 30);
-  static const int MAX_CACHE_SIZE_MB = 200; // 200MB max cache
+  static const String keyPrefix = 'chat_app_cache_';
+  static const Duration defaultCacheDuration = Duration(days: 7);
+  static const Duration chatListTtl = Duration(minutes: 30);
+  static const Duration messageTtl = Duration(days: 30);
+  static const Duration userDataTtl = Duration(days: 14);
+  static const Duration mediaThumbnailTtl = Duration(days: 30);
+  static const int maxCacheSizeMb = 200; // 200MB max cache
   
   /// Cache managers
   late CacheManager _defaultCacheManager;
@@ -71,35 +70,35 @@ class AppCacheManager {
     
     // Đăng ký Hive adapters
     Hive.init(hiveCacheDir.path);
-    _apiCacheBox = await Hive.openBox<String>('${KEY_PREFIX}api_cache');
+    _apiCacheBox = await Hive.openBox<String>('${keyPrefix}api_cache');
     
     // Khởi tạo cache managers với config phù hợp
     _defaultCacheManager = CacheManager(
       Config(
-        '${KEY_PREFIX}default_cache',
-        stalePeriod: DEFAULT_CACHE_DURATION,
+        '${keyPrefix}default_cache',
+        stalePeriod: defaultCacheDuration,
         maxNrOfCacheObjects: 200,
-        repo: JsonCacheInfoRepository(databaseName: '${KEY_PREFIX}default_cache_db'),
+        repo: JsonCacheInfoRepository(databaseName: '${keyPrefix}default_cache_db'),
         fileService: HttpFileService(),
       ),
     );
     
     _mediaCacheManager = CacheManager(
       Config(
-        '${KEY_PREFIX}media_cache',
-        stalePeriod: DEFAULT_CACHE_DURATION,
+        '${keyPrefix}media_cache',
+        stalePeriod: defaultCacheDuration,
         maxNrOfCacheObjects: 100,
-        repo: JsonCacheInfoRepository(databaseName: '${KEY_PREFIX}media_cache_db'),
+        repo: JsonCacheInfoRepository(databaseName: '${keyPrefix}media_cache_db'),
         fileService: HttpFileService(),
       ),
     );
     
     _thumbnailCacheManager = CacheManager(
       Config(
-        '${KEY_PREFIX}thumbnail_cache',
-        stalePeriod: MEDIA_THUMBNAIL_TTL,
+        '${keyPrefix}thumbnail_cache',
+        stalePeriod: mediaThumbnailTtl,
         maxNrOfCacheObjects: 300,
-        repo: JsonCacheInfoRepository(databaseName: '${KEY_PREFIX}thumbnail_cache_db'),
+        repo: JsonCacheInfoRepository(databaseName: '${keyPrefix}thumbnail_cache_db'),
         fileService: HttpFileService(),
       ),
     );
@@ -112,7 +111,7 @@ class AppCacheManager {
   
   /// Phương thức cho cache API responses
   Future<void> cacheApiResponse<T>(String key, T data, {Duration? ttl}) async {
-    final expiry = DateTime.now().add(ttl ?? DEFAULT_CACHE_DURATION);
+    final expiry = DateTime.now().add(ttl ?? defaultCacheDuration);
     
     // Cache in memory
     _memoryCache[key] = _CacheEntry<T>(data, expiry);
@@ -122,7 +121,7 @@ class AppCacheManager {
       final jsonData = jsonEncode(data);
       await _apiCacheBox.put(key, jsonData);
       await _prefs.setInt('${key}_expiry', expiry.millisecondsSinceEpoch);
-      _logger.v('Đã cache API response: $key');
+      _logger.t('Đã cache API response: $key');
     } catch (e) {
       _logger.e('Lỗi khi cache API response: $e');
     }
@@ -142,7 +141,7 @@ class AppCacheManager {
       if (_memoryCache.containsKey(key)) {
         final cacheEntry = _memoryCache[key]!;
         if (cacheEntry.expiry.isAfter(DateTime.now())) {
-          _logger.v('Lấy API response từ memory cache: $key');
+          _logger.t('Lấy API response từ memory cache: $key');
           isHit = true;
           await _updateAccessStats(key, true);
           return cacheEntry.data as T;
@@ -164,7 +163,7 @@ class AppCacheManager {
                 final dynamic decoded = jsonDecode(jsonString);
                 
                 if (fromJson != null && decoded is Map<String, dynamic>) {
-                  _logger.v('Lấy API response từ disk cache: $key (Object)');
+                  _logger.t('Lấy API response từ disk cache: $key (Object)');
                   final result = fromJson(decoded);
                   // Lưu vào memory cache
                   _memoryCache[key] = _CacheEntry<T>(result, expiry);
@@ -173,7 +172,7 @@ class AppCacheManager {
                   _preloadRelatedData(key, decoded);
                   return result;
                 } else if (fromJsonList != null && decoded is List<dynamic>) {
-                  _logger.v('Lấy API response từ disk cache: $key (List)');
+                  _logger.t('Lấy API response từ disk cache: $key (List)');
                   final result = fromJsonList(decoded);
                   // Lưu vào memory cache
                   _memoryCache[key] = _CacheEntry<T>(result, expiry);
@@ -182,7 +181,7 @@ class AppCacheManager {
                   _preloadRelatedData(key, decoded);
                   return result;
                 } else {
-                  _logger.v('Lấy API response từ disk cache: $key (Raw)');
+                  _logger.t('Lấy API response từ disk cache: $key (Raw)');
                   final result = decoded as T;
                   _memoryCache[key] = _CacheEntry<T>(result, expiry);
                   isHit = true;
@@ -202,7 +201,7 @@ class AppCacheManager {
         }
       }
       
-      _logger.v('Cache miss: $key');
+      _logger.t('Cache miss: $key');
       await _updateAccessStats(key, false);
       return null;
     } finally {
@@ -250,7 +249,7 @@ class AppCacheManager {
   Future<File> getMediaFile(String url, {bool thumbnail = false}) async {
     final cacheManager = thumbnail ? _thumbnailCacheManager : _mediaCacheManager;
     try {
-      _logger.v('Lấy media file từ cache: $url');
+      _logger.t('Lấy media file từ cache: $url');
       return await cacheManager.getSingleFile(url);
     } catch (e) {
       _logger.e('Lỗi khi lấy media file: $e');
@@ -272,9 +271,9 @@ class AppCacheManager {
       await cacheManager.putFile(
         url,
         bytes,
-        maxAge: thumbnail ? MEDIA_THUMBNAIL_TTL : DEFAULT_CACHE_DURATION,
+        maxAge: thumbnail ? mediaThumbnailTtl : defaultCacheDuration,
       );
-      _logger.v('Đã cache file: $url');
+      _logger.t('Đã cache file: $url');
     } catch (e) {
       _logger.e('Lỗi khi cache file: $e');
     }
@@ -285,7 +284,7 @@ class AppCacheManager {
     _memoryCache.remove(key);
     await _apiCacheBox.delete(key);
     await _prefs.remove('${key}_expiry');
-    _logger.v('Đã invalidate cache: $key');
+    _logger.t('Đã invalidate cache: $key');
   }
   
   /// Xóa toàn bộ cache
@@ -308,7 +307,7 @@ class AppCacheManager {
   /// Kiểm tra và dọn dẹp cache nếu vượt quá kích thước cho phép
   Future<void> _cleanupCacheIfNeeded() async {
     final cacheSize = await _calculateTotalCacheSize();
-    if (cacheSize > MAX_CACHE_SIZE_MB * 1024 * 1024) {
+    if (cacheSize > maxCacheSizeMb * 1024 * 1024) {
       _logger.i('Cache vượt quá kích thước tối đa ($cacheSize bytes). Dọn dẹp cache...');
       await _removeOldestCache();
     }
@@ -323,9 +322,9 @@ class AppCacheManager {
       final tempDir = await getTemporaryDirectory();
       final cacheDirs = [
         Directory('${tempDir.path}/libCachedImageData'),
-        Directory('${tempDir.path}/${KEY_PREFIX}default_cache'),
-        Directory('${tempDir.path}/${KEY_PREFIX}media_cache'),
-        Directory('${tempDir.path}/${KEY_PREFIX}thumbnail_cache')
+        Directory('${tempDir.path}/${keyPrefix}default_cache'),
+        Directory('${tempDir.path}/${keyPrefix}media_cache'),
+        Directory('${tempDir.path}/${keyPrefix}thumbnail_cache')
       ];
       
       final futures = <Future<int>>[];
@@ -350,7 +349,7 @@ class AppCacheManager {
         }
       }
       
-      _logger.v('Tổng kích thước cache: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)}MB');
+      _logger.t('Tổng kích thước cache: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)}MB');
     } catch (e) {
       _logger.e('Lỗi khi tính toán kích thước cache: $e');
     }
@@ -387,7 +386,7 @@ class AppCacheManager {
     try {
       // Lấy thông tin về kích thước hiện tại
       final currentSize = await _calculateTotalCacheSize();
-      final targetSize = (MAX_CACHE_SIZE_MB * 0.7 * 1024 * 1024).toInt(); // Mục tiêu giảm xuống 70% kích thước tối đa
+      final targetSize = (maxCacheSizeMb * 0.7 * 1024 * 1024).toInt(); // Mục tiêu giảm xuống 70% kích thước tối đa
       
       _logger.i('Kích thước hiện tại: ${(currentSize / (1024 * 1024)).toStringAsFixed(2)}MB, '
           'mục tiêu: ${(targetSize / (1024 * 1024)).toStringAsFixed(2)}MB');

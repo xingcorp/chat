@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
-import 'package:flutter_chat_app/core/di/injection.dart';
+import 'package:flutter_chat_app/core/di/enterprise_injection.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
@@ -19,8 +19,8 @@ Future<void> main() async {
   // Load environment variables
   await dotenv.load(fileName: '.env');
   
-  // Configure dependencies
-  await configureInjection();
+  // Configure Enterprise dependencies
+  await EnterpriseDI.initialize();
   
   // Initialize services for desktop
   await _initializeDesktopServices();
@@ -33,9 +33,9 @@ Future<void> main() async {
 
 Future<void> _initializeDesktopServices() async {
   // Initialize database service
-  final databaseService = GetIt.I<DatabaseService>();
+  final databaseService = EnterpriseDI.get<DatabaseService>();
   await databaseService.initialize();
-  
+
   // Initialize any desktop-specific services here
   // Examples:
   // - File system access
@@ -51,8 +51,8 @@ class DesktopHomeScreen extends StatefulWidget {
 }
 
 class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
-  final _repository = GetIt.I<OfflineFirstRepository>();
-  final _uuid = Uuid();
+  final _repository = EnterpriseDI.get<OfflineFirstRepository>();
+  final _uuid = const Uuid();
   bool _isLoading = false;
   String _statusMessage = 'Ready';
   List<UserModel> _users = [];

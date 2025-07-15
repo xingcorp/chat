@@ -350,7 +350,7 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
       
       if (success) {
         _metrics.recordMessageSent();
-        _logger.v('Đã gửi tin nhắn: $type');
+        _logger.t('Đã gửi tin nhắn: $type');
         return true;
       } else if (queueIfDisconnected) {
         _pendingMessages.add(_PendingMessage(type, data, metadata: metadata));

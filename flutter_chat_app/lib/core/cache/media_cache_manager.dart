@@ -1,20 +1,19 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
+import 'package:flutter_chat_app/core/utils/device_performance_tier.dart';
+import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:video_compress/video_compress.dart';
-import 'package:get_it/get_it.dart';
-
-import 'app_cache_manager.dart';
-import '../utils/isolate_manager.dart';
-import '../utils/device_performance_tier.dart';
 
 /// Manager quản lý cache cho file media (hình ảnh, video...)
 class MediaCacheManager {
@@ -46,15 +45,15 @@ class MediaCacheManager {
   final Set<String> _currentlyPreloading = {};
   
   /// Sizes tối ưu cho thumbnails
-  static const int THUMBNAIL_SIZE_SMALL = 100;
-  static const int THUMBNAIL_SIZE_MEDIUM = 300;
-  static const int THUMBNAIL_SIZE_LARGE = 600;
-  
+  static const int thumbnailSizeSmall = 100;
+  static const int thumbnailSizeMedium = 300;
+  static const int thumbnailSizeLarge = 600;
+
   /// Chất lượng nén mặc định (0-100)
-  static const int DEFAULT_COMPRESS_QUALITY = 85;
-  
+  static const int defaultCompressQuality = 85;
+
   /// Maximum width cho ảnh được optimize (để tránh quá lớn khi upload)
-  static const int MAX_OPTIMIZE_WIDTH = 1920;
+  static const int maxOptimizeWidth = 1920;
   
   /// Private constructor
   MediaCacheManager._internal() {
@@ -107,7 +106,7 @@ class MediaCacheManager {
     try {
       // Kiểm tra xem hình ảnh đã tối ưu đã được cache chưa
       if (await _cacheManager.isMediaCached(cacheKey)) {
-        _logger.v('Lấy hình ảnh tối ưu từ cache: $cacheKey');
+        _logger.t('Lấy hình ảnh tối ưu từ cache: $cacheKey');
         return await _cacheManager.getMediaFile(cacheKey);
       }
       
@@ -164,7 +163,7 @@ class MediaCacheManager {
     final params = {
       'width': width,
       'height': height,
-      'quality': DEFAULT_COMPRESS_QUALITY,
+      'quality': defaultCompressQuality,
     };
     
     // Thực thi trong isolate
@@ -186,7 +185,7 @@ class MediaCacheManager {
   /// Tạo và lấy thumbnail cho một hình ảnh
   Future<File> getImageThumbnail(
     String imageUrl, {
-    int size = THUMBNAIL_SIZE_MEDIUM,
+    int size = thumbnailSizeMedium,
     bool useIsolate = true,
   }) async {
     final thumbnailCacheKey = '${imageUrl}_thumb_$size';
@@ -194,7 +193,7 @@ class MediaCacheManager {
     try {
       // Kiểm tra xem thumbnail đã có trong cache chưa
       if (await _cacheManager.isMediaCached(thumbnailCacheKey, thumbnail: true)) {
-        _logger.v('Lấy thumbnail hình ảnh từ cache: $thumbnailCacheKey');
+        _logger.t('Lấy thumbnail hình ảnh từ cache: $thumbnailCacheKey');
         return await _cacheManager.getMediaFile(thumbnailCacheKey, thumbnail: true);
       }
       
@@ -266,7 +265,7 @@ class MediaCacheManager {
   /// Tiền tải các ảnh và thumbnail dựa trên danh sách URL
   Future<void> preloadImages(
     List<String> imageUrls, {
-    int thumbnailSize = THUMBNAIL_SIZE_SMALL,
+    int thumbnailSize = thumbnailSizeSmall,
     bool preloadFullImages = false,
     bool prioritize = false,
   }) async {
@@ -278,7 +277,7 @@ class MediaCacheManager {
     
     if (newUrls.isEmpty) return;
     
-    _logger.v('Thêm ${newUrls.length} URLs vào hàng đợi tiền tải');
+    _logger.t('Thêm ${newUrls.length} URLs vào hàng đợi tiền tải');
     
     // Kiểm tra xem có URLs nào đã có trong cache để bỏ qua
     final urlsToCheck = <String>[];
@@ -372,18 +371,18 @@ class MediaCacheManager {
   }
   
   /// Tối ưu hình ảnh trước khi tải lên
-  Future<File> optimizeForUpload(File imageFile, {int quality = DEFAULT_COMPRESS_QUALITY}) async {
+  Future<File> optimizeForUpload(File imageFile, {int quality = defaultCompressQuality}) async {
     try {
       final targetPath = await _getTemporaryFilePath('.jpg');
       
-      _logger.v('Tối ưu hình ảnh trước khi tải lên: ${imageFile.path}');
+      _logger.t('Tối ưu hình ảnh trước khi tải lên: ${imageFile.path}');
       
       // Nén hình ảnh với kích thước tối đa
       final result = await FlutterImageCompress.compressAndGetFile(
         imageFile.path,
         targetPath,
         quality: quality,
-        minWidth: MAX_OPTIMIZE_WIDTH,
+        minWidth: maxOptimizeWidth,
         keepExif: false, // Loại bỏ EXIF data để giảm kích thước
       );
       
@@ -411,7 +410,7 @@ class MediaCacheManager {
   /// Nén video trước khi tải lên
   Future<MediaInfo?> compressVideo(File videoFile) async {
     try {
-      _logger.v('Bắt đầu nén video: ${videoFile.path}');
+      _logger.t('Bắt đầu nén video: ${videoFile.path}');
       final info = await VideoCompress.compressVideo(
         videoFile.path,
         quality: VideoQuality.MediumQuality,
@@ -437,7 +436,7 @@ class MediaCacheManager {
   }
   
   /// Tiền tải thumbnail cho danh sách URLs
-  Future<void> prefetchThumbnails(List<String> imageUrls, {int size = THUMBNAIL_SIZE_SMALL}) async {
+  Future<void> prefetchThumbnails(List<String> imageUrls, {int size = thumbnailSizeSmall}) async {
     // Chỉ tiền tải tối đa 10 thumbnail để tránh quá tải
     final urlsToLoad = imageUrls.take(10).toList();
     
@@ -446,7 +445,7 @@ class MediaCacheManager {
         unawaited(getImageThumbnail(url, size: size));
       } catch (e) {
         // Bỏ qua lỗi khi tiền tải
-        _logger.v('Lỗi khi tiền tải thumbnail: $e');
+        _logger.t('Lỗi khi tiền tải thumbnail: $e');
       }
     }
   }
@@ -507,7 +506,7 @@ class MediaCacheManager {
     try {
       // Kiểm tra xem thumbnail đã có trong cache chưa
       if (await _cacheManager.isMediaCached(thumbnailCacheKey, thumbnail: true)) {
-        _logger.v('Lấy thumbnail video từ cache: $thumbnailCacheKey');
+        _logger.t('Lấy thumbnail video từ cache: $thumbnailCacheKey');
         return await _cacheManager.getMediaFile(thumbnailCacheKey, thumbnail: true);
       }
       
@@ -546,9 +545,9 @@ class MediaCacheManager {
   Future<File> _optimizeImage(File file, {int? width, int? height}) async {
     final targetPath = await _getTemporaryFilePath('.jpg');
     
-    _logger.v('Tối ưu hình ảnh: ${file.path} (${width}x${height})');
+    _logger.t('Tối ưu hình ảnh: ${file.path} (${width}x${height})');
     
-    int targetWidth = width ?? MAX_OPTIMIZE_WIDTH;
+    int targetWidth = width ?? maxOptimizeWidth;
     int targetHeight = height ?? 1080;
     
     // Không cần nén nếu kích thước đã đủ nhỏ
@@ -561,7 +560,7 @@ class MediaCacheManager {
       final result = await FlutterImageCompress.compressAndGetFile(
         file.path,
         targetPath,
-        quality: DEFAULT_COMPRESS_QUALITY,
+        quality: defaultCompressQuality,
         minWidth: targetWidth,
         minHeight: targetHeight,
       );

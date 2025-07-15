@@ -388,4 +388,10 @@ class ChatMessage {
     }
     return null;
   }
-} 
+
+  /// Kiểm tra tin nhắn đã bị xóa
+  bool get isDeleted => status == MessageStatus.failed; // Temporary mapping
+
+  /// Kiểm tra tin nhắn đã được đọc bởi người dùng hiện tại
+  bool get isReadByCurrentUser => readBy.contains('current_user_id'); // Replace with actual logic
+}

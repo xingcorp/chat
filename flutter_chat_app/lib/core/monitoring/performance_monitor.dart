@@ -123,7 +123,7 @@ class PerformanceMonitor {
       // Save to active traces list
       _activeTraces[traceName] = trace;
       
-      _logger.v('Started trace: $traceName');
+      _logger.t('Started trace: $traceName');
     } catch (e) {
       _logger.e('Error starting trace: $e');
     }
@@ -158,7 +158,7 @@ class PerformanceMonitor {
       // Stop trace
       await trace.stop();
       
-      _logger.v('Stopped trace: $traceName');
+      _logger.t('Stopped trace: $traceName');
     } catch (e) {
       _logger.e('Error stopping trace: $e');
     }
@@ -187,7 +187,7 @@ class PerformanceMonitor {
       // Add metric
       trace.setMetric(metricName, value);
       
-      _logger.v('Added metric $metricName = $value for trace $traceName');
+      _logger.t('Added metric $metricName = $value for trace $traceName');
     } catch (e) {
       _logger.e('Error adding metric to trace: $e');
     }
@@ -216,7 +216,7 @@ class PerformanceMonitor {
       // Add attribute
       trace.putAttribute(attributeName, value);
       
-      _logger.v('Added attribute $attributeName = $value for trace $traceName');
+      _logger.t('Added attribute $attributeName = $value for trace $traceName');
     } catch (e) {
       _logger.e('Error adding attribute to trace: $e');
     }
@@ -254,7 +254,7 @@ class PerformanceMonitor {
       // Save to active metrics
       _activeHttpMetrics[key] = metric;
       
-      _logger.v('Started HTTP metric: $key');
+      _logger.t('Started HTTP metric: $key');
     } catch (e) {
       _logger.e('Error starting HTTP metric: $e');
     }
@@ -300,7 +300,7 @@ class PerformanceMonitor {
       // Stop metric
       await metric.stop();
       
-      _logger.v('Stopped HTTP metric: $key');
+      _logger.t('Stopped HTTP metric: $key');
     } catch (e) {
       _logger.e('Error stopping HTTP metric: $e');
     }
@@ -311,7 +311,7 @@ class PerformanceMonitor {
     if (!_isPerformanceCollectionEnabled) return;
     
     try {
-      _logger.v('Recorded custom metric: $name = $value');
+      _logger.t('Recorded custom metric: $name = $value');
       // Implementation depends on analytics system
     } catch (e) {
       _logger.e('Error recording custom metric: $e');
@@ -323,7 +323,7 @@ class PerformanceMonitor {
     if (!_isPerformanceCollectionEnabled) return;
     
     try {
-      _logger.v('Recorded event: $name with params: $parameters');
+      _logger.t('Recorded event: $name with params: $parameters');
       // Implementation depends on analytics system
     } catch (e) {
       _logger.e('Error recording event: $e');

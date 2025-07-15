@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/config/route/app_router.dart';
-import 'package:flutter_chat_app/core/di/injection.dart';
+import 'package:flutter_chat_app/core/di/enterprise_injection.dart';
 import 'package:flutter_chat_app/core/lifecycle/app_lifecycle_observer.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
@@ -26,7 +26,7 @@ import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/cache/cache_stats.dart';
 import 'package:flutter_chat_app/core/cache/preload_manager.dart';
 import 'package:flutter_chat_app/core/cache/background_sync_worker.dart';
-import 'package:flutter_chat_app/di/service_locator.dart';
+// Removed legacy service_locator.dart - now using EnterpriseDI
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_manager.dart';
 import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
@@ -78,8 +78,8 @@ Future<void> main() async {
   // Tải biến môi trường
   await dotenv.load(fileName: '.env');
   
-  // Đăng ký và khởi tạo dependency injection
-  await configureInjection();
+  // Đăng ký và khởi tạo Enterprise dependency injection
+  await EnterpriseDI.initialize();
   
   // Tùy thuộc vào nền tảng, chúng ta sẽ khởi động các dịch vụ phù hợp
   if (kIsWeb) {
@@ -94,17 +94,30 @@ Future<void> main() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   
   // Khởi tạo các managers cache
-  final appCacheManager = await GetIt.I<AppCacheManager>();
-  
-  // Khởi tạo và bắt đầu preload dữ liệu
-  final preloadManager = await GetIt.I<PreloadManager>();
-  unawaited(preloadManager.preloadEssentialData());
-  
-  // Khởi tạo background sync worker
-  final backgroundSyncWorker = await GetIt.I<BackgroundSyncWorker>();
-    
-  // Khởi tạo cache stats
-  final cacheStats = await GetIt.I<CacheStats>();
+  final appCacheManager = EnterpriseDI.get<AppCacheManager>();
+
+  // TODO: Register these services in EnterpriseDI later
+  // Khởi tạo và bắt đầu preload dữ liệu (if available)
+  // try {
+  //   final preloadManager = EnterpriseDI.get<PreloadManager>();
+  //   unawaited(preloadManager.preloadEssentialData());
+  // } catch (e) {
+  //   print('PreloadManager not available: $e');
+  // }
+
+  // Khởi tạo background sync worker (if available)
+  // try {
+  //   final backgroundSyncWorker = EnterpriseDI.get<BackgroundSyncWorker>();
+  // } catch (e) {
+  //   print('BackgroundSyncWorker not available: $e');
+  // }
+
+  // Khởi tạo cache stats (if available)
+  // try {
+  //   final cacheStats = EnterpriseDI.get<CacheStats>();
+  // } catch (e) {
+  //   print('CacheStats not available: $e');
+  // }
   
   // Khởi tạo monitoring services nếu có
   CrashReporter? crashReporter;
@@ -145,8 +158,8 @@ Future<void> main() async {
     });
   }
   
-  // Initialize dependency injection
-  await configureInjection();
+  // Initialize Enterprise dependency injection
+  await EnterpriseDI.initialize();
   
   // Try to upgrade to EnhancedMessageQueueService if available
   try {
@@ -174,55 +187,59 @@ Future<void> main() async {
 
 Future<void> _initializeWebServices() async {
   // Initialize web-specific services
-  final databaseService = GetIt.I<DatabaseService>();
+  final databaseService = EnterpriseDI.get<DatabaseService>();
   await databaseService.initialize();
-  
+
+  // TODO: Register these services in EnterpriseDI
   // Khởi tạo dịch vụ kết nối thời gian thực
-  final realtimeConnectionService = GetIt.I<RealtimeConnectionService>();
-  await realtimeConnectionService.initialize();
-  
+  // final realtimeConnectionService = EnterpriseDI.get<RealtimeConnectionService>();
+  // await realtimeConnectionService.initialize();
+
   // Khởi tạo dịch vụ tin nhắn chat
-  final chatMessageService = GetIt.I<ChatMessageService>();
-  await chatMessageService.initialize();
+  // final chatMessageService = EnterpriseDI.get<ChatMessageService>();
+  // await chatMessageService.initialize();
 }
 
 Future<void> _initializeMobileServices() async {
   // Initialize mobile-specific services
-  final databaseService = GetIt.I<DatabaseService>();
+  final databaseService = EnterpriseDI.get<DatabaseService>();
   await databaseService.initialize();
-  
+
+  // TODO: Register these services in EnterpriseDI
   // Khởi tạo dịch vụ kết nối thời gian thực
-  final realtimeConnectionService = GetIt.I<RealtimeConnectionService>();
-  await realtimeConnectionService.initialize();
-  
+  // final realtimeConnectionService = EnterpriseDI.get<RealtimeConnectionService>();
+  // await realtimeConnectionService.initialize();
+
   // Khởi tạo dịch vụ hàng đợi tin nhắn (standard or enhanced)
-  if (GetIt.I.isRegistered<EnhancedMessageQueueService>()) {
-    final enhancedMessageQueueService = GetIt.I<EnhancedMessageQueueService>();
-    await enhancedMessageQueueService.initialize();
-    debugPrint('Using EnhancedMessageQueueService for mobile platform');
-  } else {
-    final messageQueueService = GetIt.I<MessageQueueService>();
-    await messageQueueService.initialize();
-    debugPrint('Using standard MessageQueueService for mobile platform');
-  }
-  
+  // if (EnterpriseDI.isRegistered<EnhancedMessageQueueService>()) {
+  //   final enhancedMessageQueueService = EnterpriseDI.get<EnhancedMessageQueueService>();
+  //   await enhancedMessageQueueService.initialize();
+  //   debugPrint('Using EnhancedMessageQueueService for mobile platform');
+  // } else {
+  //   final messageQueueService = EnterpriseDI.get<MessageQueueService>();
+  //   await messageQueueService.initialize();
+  //   debugPrint('Using standard MessageQueueService for mobile platform');
+  // }
+
+  // TODO: Register ChatMessageService in EnterpriseDI
   // Khởi tạo dịch vụ tin nhắn chat
-  final chatMessageService = GetIt.I<ChatMessageService>();
-  await chatMessageService.initialize();
+  // final chatMessageService = EnterpriseDI.get<ChatMessageService>();
+  // await chatMessageService.initialize();
 }
 
 Future<void> _initializeDesktopServices() async {
   // Initialize desktop-specific services
-  final databaseService = GetIt.I<DatabaseService>();
+  final databaseService = EnterpriseDI.get<DatabaseService>();
   await databaseService.initialize();
-  
+
+  // TODO: Register these services in EnterpriseDI
   // Khởi tạo dịch vụ kết nối thời gian thực
-  final realtimeConnectionService = GetIt.I<RealtimeConnectionService>();
-  await realtimeConnectionService.initialize();
-  
+  // final realtimeConnectionService = EnterpriseDI.get<RealtimeConnectionService>();
+  // await realtimeConnectionService.initialize();
+
   // Khởi tạo dịch vụ hàng đợi tin nhắn
-  final messageQueueService = GetIt.I<MessageQueueService>();
-  await messageQueueService.initialize();
+  // final messageQueueService = EnterpriseDI.get<MessageQueueService>();
+  // await messageQueueService.initialize();
   
   // Khởi tạo dịch vụ tin nhắn chat
   final chatMessageService = GetIt.I<ChatMessageService>();

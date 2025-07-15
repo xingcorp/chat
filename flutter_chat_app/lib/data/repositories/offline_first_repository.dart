@@ -117,7 +117,7 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
     await _databaseService.saveChat(chat);
     
     // Then sync with server if online
-    final isConnected = await _connectivityService.isConnected;
+    final isConnected = _connectivityService.hasConnection;
     if (isConnected) {
       await _syncChat(chat);
     }
@@ -129,7 +129,7 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
     await _databaseService.saveMessage(message);
     
     // Then sync with server if online
-    final isConnected = await _connectivityService.isConnected;
+    final isConnected = _connectivityService.hasConnection;
     if (isConnected) {
       await _syncMessage(message);
     }
@@ -141,7 +141,7 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
     await _databaseService.saveUser(user);
     
     // Then sync with server if online
-    final isConnected = await _connectivityService.isConnected;
+    final isConnected = _connectivityService.hasConnection;
     if (isConnected) {
       await _syncUser(user);
     }
@@ -157,7 +157,7 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
       await _databaseService.deleteChat(chat.id);
       
       // Then sync with server if online
-      final isConnected = await _connectivityService.isConnected;
+      final isConnected = _connectivityService.hasConnection;
       if (isConnected) {
         await _syncChatDeletion(id);
       }
@@ -179,7 +179,7 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
       await _databaseService.deleteMessage(message.id);
       
       // Then sync with server if online
-      final isConnected = await _connectivityService.isConnected;
+      final isConnected = _connectivityService.hasConnection;
       if (isConnected) {
         await _syncMessageDeletion(id);
       }
@@ -196,7 +196,7 @@ class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
       await _databaseService.deleteUser(user.id);
       
       // Then sync with server if online
-      final isConnected = await _connectivityService.isConnected;
+      final isConnected = _connectivityService.hasConnection;
       if (isConnected) {
         await _syncUserDeletion(id);
       }
