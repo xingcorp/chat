@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';
+import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
 import 'package:flutter_chat_app/core/network/socket_analytics.dart';
 import 'package:flutter_chat_app/core/network/socket_manager.dart';
 import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';

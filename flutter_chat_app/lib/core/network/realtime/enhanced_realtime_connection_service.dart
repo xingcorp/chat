@@ -14,7 +14,9 @@ import '../http/http_client_interface.dart';
 import 'backoff_strategy.dart';
 import 'connection_health_monitor.dart';
 import 'connection_state_machine.dart';
+import 'models/realtime_connection_config.dart' as models;
 import 'realtime_connection_service.dart';
+import 'realtime_error.dart' as error;
 import 'realtime_performance_metrics.dart';
 
 /// Dịch vụ kết nối realtime được tối ưu hiệu suất
@@ -42,7 +44,7 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
   StreamSubscription? _connectivitySubscription;
 
   /// Cấu hình kết nối
-  final RealtimeConnectionConfig _config;
+  final models.RealtimeConnectionConfig _config;
 
   /// Controllers
   final _messageController = PublishSubject<RealtimeMessage>();
@@ -197,13 +199,13 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
       
       // Đăng ký lắng nghe kết nối
       _connectivitySubscription = _connectivityService
-          .onConnectionTypeChanged
-          .listen(_handleConnectivityChange);
+          .onConnectivityChanged
+          .listen(_handleConnectivityChangeAdapter);
       
       _initialized = true;
       _logger.d('EnhancedRealtimeConnectionService đã khởi tạo thành công');
     } catch (e, stackTrace) {
-      _logger.e('Lỗi khi khởi tạo EnhancedRealtimeConnectionService', e, stackTrace);
+      _logger.e('Lỗi khi khởi tạo EnhancedRealtimeConnectionService: $e\n$stackTrace');
       rethrow;
     }
   }
@@ -269,7 +271,7 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
       _logger.w('Tất cả phương thức kết nối đều thất bại');
       return false;
     } catch (e, stackTrace) {
-      _logger.e('Lỗi khi thực hiện kết nối', e, stackTrace);
+      _logger.e('Lỗi khi thực hiện kết nối: $e\n$stackTrace');
       return false;
     }
   }
@@ -347,11 +349,15 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
       }
       
       // Tạo tin nhắn
+      final messageData = <String, dynamic>{
+        ...data as Map<String, dynamic>? ?? {},
+        if (metadata != null) 'metadata': metadata,
+      };
+
       final message = RealtimeMessage(
         id: _generateMessageId(),
         type: type,
-        data: data,
-        metadata: metadata ?? {},
+        data: messageData,
         timestamp: DateTime.now(),
       );
       
@@ -436,23 +442,7 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
     if (_config.authToken == token) return;
     
     // Tạo config mới với token mới
-    _config = RealtimeConnectionConfig(
-      webSocketUrl: _config.webSocketUrl,
-      httpUrl: _config.httpUrl,
-      authToken: token,
-      maxReconnectAttempts: _config.maxReconnectAttempts,
-      initialReconnectDelay: _config.initialReconnectDelay,
-      reconnectBackoffFactor: _config.reconnectBackoffFactor,
-      connectionTimeout: _config.connectionTimeout,
-      pingInterval: _config.pingInterval,
-      pingTimeout: _config.pingTimeout,
-      longPollingInterval: _config.longPollingInterval,
-      messageRateLimit: _config.messageRateLimit,
-      rateLimitBackoffMs: _config.rateLimitBackoffMs,
-      useConnectionPool: _config.useConnectionPool,
-      maxConnectionPoolSize: _config.maxConnectionPoolSize,
-      additionalHeaders: _config.additionalHeaders,
-    );
+    _config = _config.copyWith(authToken: token);
     
     // Cần reconnect nếu đang kết nối
     if (isConnected) {
@@ -575,7 +565,15 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
       reason: 'Phát hiện zombie connection',
     );
   }
-  
+
+  /// Adapter method to handle connectivity changes from bool to List<ConnectionType>
+  void _handleConnectivityChangeAdapter(bool hasConnection) {
+    final connectionTypes = hasConnection
+        ? [ConnectionType.wifi] // Assume wifi when connected
+        : [ConnectionType.none];
+    _handleConnectivityChange(connectionTypes);
+  }
+
   /// Xử lý thay đổi kết nối
   void _handleConnectivityChange(List<ConnectionType> connectionTypes) {
     final hasConnection = connectionTypes.isNotEmpty && 
@@ -624,16 +622,17 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
       _logger.d('Kết nối WebSocket thành công');
       return true;
     } catch (e, stackTrace) {
-      _logger.e('Lỗi khi kết nối WebSocket', e, stackTrace);
+      _logger.e('Lỗi khi kết nối WebSocket: $e\n$stackTrace');
       
       // Tạo lỗi
-      final error = RealtimeError.fromException(
-        e,
-        type: RealtimeErrorType.webSocketError,
+      final realtimeError = RealtimeError(
+        message: 'WebSocket connection failed: $e',
+        code: 'WEBSOCKET_ERROR',
+        timestamp: DateTime.now(),
       );
-      
+
       // Gửi lỗi
-      _handleError(error);
+      _handleError(realtimeError);
       
       // Đóng WebSocket channel nếu đã tạo
       await _closeWebSocket();
@@ -672,14 +671,15 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
   
   /// Xử lý lỗi WebSocket
   void _handleWebSocketError(dynamic error) {
-    final realtimeError = RealtimeError.fromException(
-      error,
-      type: RealtimeErrorType.webSocketError,
+    final realtimeError = RealtimeError(
+      code: 'WEBSOCKET_ERROR',
+      message: 'WebSocket error: $error',
+      timestamp: DateTime.now(),
     );
-    
+
     _logger.e('Lỗi WebSocket: ${realtimeError.message}');
-    
-    // Gửi lỗi 
+
+    // Gửi lỗi
     _handleError(realtimeError);
     
     // Gửi sự kiện connectionError đến state machine
@@ -739,11 +739,12 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
       _metrics.recordMessageReceived();
       
     } catch (e, stackTrace) {
-      _logger.e('Lỗi khi xử lý tin nhắn', e, stackTrace);
-      
-      final error = RealtimeError.fromException(
-        e,
-        type: RealtimeErrorType.messageFormatError,
+      _logger.e('Lỗi khi xử lý tin nhắn: $e\n$stackTrace');
+
+      final error = RealtimeError(
+        code: 'MESSAGE_FORMAT_ERROR',
+        message: 'Message processing failed: $e',
+        timestamp: DateTime.now(),
       );
       
       _handleError(error);
@@ -768,10 +769,11 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
       return true;
     } catch (e) {
       _logger.e('Lỗi khi bắt đầu long polling: $e');
-      
-      final error = RealtimeError.fromException(
-        e,
-        type: RealtimeErrorType.networkError,
+
+      final error = RealtimeError(
+        code: 'NETWORK_ERROR',
+        message: 'Long polling failed: $e',
+        timestamp: DateTime.now(),
       );
       
       _handleError(error);
@@ -854,7 +856,19 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
     
     // Xử lý batch
     for (final pending in batch) {
-      final success = await sendMessage(
+      final messageData = <String, dynamic>{
+        ...pending.data as Map<String, dynamic>? ?? {},
+        if (pending.metadata != null) 'metadata': pending.metadata,
+      };
+
+      final message = RealtimeMessage(
+        id: _generateMessageId(),
+        type: pending.type,
+        data: messageData,
+        timestamp: DateTime.now(),
+      );
+
+      final success = await _sendMessageInternal(
         pending.type,
         pending.data,
         queueIfDisconnected: false,
@@ -896,7 +910,7 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
     }
     
     // Cập nhật metrics
-    _metrics.recordError(error.type.toString());
+    _metrics.recordError(error.code);
   }
   
   /// Chuyển đổi từ ConnectionState sang RealtimeConnectionState
@@ -924,7 +938,7 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
         return RealtimeConnectionState.error;
         
       case ConnectionState.closed:
-        return RealtimeConnectionState.closed;
+        return RealtimeConnectionState.disconnected;
     }
   }
   
@@ -958,11 +972,14 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
   /// Gửi thông báo trạng thái online
   Future<void> _sendOnlineStatusNotification(bool isOnline) async {
     try {
-      await sendMessage(
-        'status_update',
-        {'online': isOnline, 'timestamp': DateTime.now().millisecondsSinceEpoch},
-        queueIfDisconnected: false,
+      final message = RealtimeMessage(
+        id: _generateMessageId(),
+        type: 'status_update',
+        data: {'online': isOnline, 'timestamp': DateTime.now().millisecondsSinceEpoch},
+        timestamp: DateTime.now(),
       );
+
+      await sendMessage(message);
     } catch (e) {
       _logger.e('Lỗi khi gửi thông báo trạng thái online: $e');
     }

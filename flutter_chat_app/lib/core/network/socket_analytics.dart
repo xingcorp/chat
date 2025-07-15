@@ -205,4 +205,26 @@ class SocketAnalytics {
     _rateLimitAnalytics.reset();
     // We don't reset connection stats as they are valuable for long-term tracking
   }
-} 
+
+  // Alias methods for backward compatibility with test files
+
+  /// Track message sent (alias for trackEventSent)
+  void trackMessageSent([String? eventName]) {
+    trackEventSent(eventName ?? 'message');
+  }
+
+  /// Track message received (alias for trackEventReceived)
+  void trackMessageReceived([String? eventName]) {
+    trackEventReceived(eventName ?? 'message');
+  }
+
+  /// Track latency (alias for checkLatency)
+  Future<int?> trackLatency() {
+    return checkLatency();
+  }
+
+  /// Track error (alias for recordError)
+  void trackError(String errorType) {
+    recordError(errorType);
+  }
+}

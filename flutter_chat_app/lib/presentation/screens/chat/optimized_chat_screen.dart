@@ -9,6 +9,70 @@ import 'package:flutter_chat_app/presentation/widgets/chat/message_item.dart';
 import 'package:get_it/get_it.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 
+/// Extension for backward compatibility with MessagesLoaded state checks
+extension ChatStateExtension on ChatState {
+  /// Check if current state is messagesLoaded (backward compatibility)
+  bool get isMessagesLoaded => whenOrNull(messagesLoaded: (_, __, ___) => true) ?? false;
+
+  /// Check if current state is loading (backward compatibility)
+  bool get isLoading => whenOrNull(loading: () => true) ?? false;
+
+  /// Check if current state is error (backward compatibility)
+  bool get isError => whenOrNull(error: (_) => true) ?? false;
+
+  /// Get error message (backward compatibility)
+  String? get errorMessage => whenOrNull(error: (message) => message);
+
+  /// Get messages for a specific chat ID (backward compatibility)
+  List<ChatMessage> getMessagesForChat(String chatId) {
+    return whenOrNull(
+      messagesLoaded: (chats, currentChatId, messages) {
+        return currentChatId == chatId ? messages : [];
+      },
+    ) ?? [];
+  }
+
+  /// Get chats list (backward compatibility)
+  List<Chat> get chats {
+    return whenOrNull(
+      loaded: (chats) => chats,
+      messagesLoaded: (chats, _, __) => chats ?? [],
+    ) ?? [];
+  }
+
+  /// Get current chat ID from messagesLoaded state
+  String? get currentChatId {
+    return whenOrNull(
+      messagesLoaded: (_, chatId, __) => chatId,
+    );
+  }
+}
+
+/// Backward compatibility class for MessagesLoaded state checks
+class MessagesLoaded {
+  final List<Chat>? chats;
+  final String chatId;
+  final List<ChatMessage> messages;
+  final Map<String, List<ChatMessage>> messagesByChatId;
+
+  MessagesLoaded({
+    this.chats,
+    required this.chatId,
+    required this.messages,
+  }) : messagesByChatId = {chatId: messages};
+
+  /// Create from ChatState
+  static MessagesLoaded? fromChatState(ChatState state) {
+    return state.whenOrNull(
+      messagesLoaded: (chats, chatId, messages) => MessagesLoaded(
+        chats: chats,
+        chatId: chatId,
+        messages: messages,
+      ),
+    );
+  }
+}
+
 class OptimizedChatScreen extends StatefulWidget {
   final String chatId;
 
@@ -93,16 +157,17 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
     final chatBloc = context.read<ChatBloc>();
     final currentState = chatBloc.state;
     
-    if (currentState is MessagesLoaded) {
-      final messages = currentState.messagesByChatId[widget.chatId] ?? [];
-      if (messages.isNotEmpty) {
-        chatBloc.add(ChatEvent.loadMessages(
-          chatId: widget.chatId,
-          limit: 30,
-          beforeMessageId: messages.first.id,
-        ));
-      }
-    }
+    currentState.whenOrNull(
+      messagesLoaded: (chats, chatId, messages) {
+        if (messages.isNotEmpty) {
+          chatBloc.add(ChatEvent.loadMessages(
+            chatId: widget.chatId,
+            limit: 30,
+            beforeMessageId: messages.first.id,
+          ));
+        }
+      },
+    );
     
     // Reset loading state after a delay
     Future.delayed(const Duration(seconds: 1), () {
@@ -271,9 +336,11 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
     }
     
     final chatState = context.read<ChatBloc>().state;
-    final isGroupChat = chatState is MessagesLoaded 
-        ? chatState.chats?.firstWhere((c) => c.id == widget.chatId, orElse: () => Chat.empty()).isGroup ?? false 
-        : false;
+    final isGroupChat = chatState.whenOrNull(
+      messagesLoaded: (chats, chatId, messages) {
+        return chats?.firstWhere((c) => c.id == widget.chatId, orElse: () => Chat(id: widget.chatId)).type == ChatType.group;
+      },
+    ) ?? false;
     
     final widgets = messages.map((message) {
       // Use cached widget if available
@@ -339,37 +406,36 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
       appBar: AppBar(
         title: BlocBuilder<ChatBloc, ChatState>(
           buildWhen: (previous, current) {
-            if (previous is MessagesLoaded && current is MessagesLoaded) {
-              return previous.messagesByChatId[widget.chatId] != 
-                     current.messagesByChatId[widget.chatId];
+            if (previous.isMessagesLoaded && current.isMessagesLoaded) {
+              return previous.getMessagesForChat(widget.chatId) !=
+                     current.getMessagesForChat(widget.chatId);
             }
             return true;
           },
           builder: (context, state) {
-            if (state is MessagesLoaded) {
+            if (state.isMessagesLoaded) {
               final chat = state.chats.firstWhere(
                 (c) => c.id == widget.chatId,
                 orElse: () => Chat(
                   id: widget.chatId,
                   name: 'Chat',
-                  unreadCount: 0,
-                  lastMessage: null,
                 ),
               );
-              
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(chat.name, style: const TextStyle(fontSize: 16)),
-                  if (chat.isTyping)
-                    const Text(
-                      'Typing...',
-                      style: TextStyle(fontSize: 12),
-                    ),
+                  Text(chat.name ?? 'Chat', style: const TextStyle(fontSize: 16)),
+                  // Note: isTyping property not available in current Chat entity
+                  // if (chat.isTyping)
+                  //   const Text(
+                  //     'Typing...',
+                  //     style: TextStyle(fontSize: 12),
+                  //   ),
                 ],
               );
             }
-            
+
             return const Text('Chat');
           },
         ),
@@ -400,8 +466,8 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           if (_replyToMessageId != null)
             BlocBuilder<ChatBloc, ChatState>(
               builder: (context, state) {
-                if (state is MessagesLoaded) {
-                  final messages = state.messagesByChatId[widget.chatId] ?? [];
+                if (state.isMessagesLoaded) {
+                  final messages = state.getMessagesForChat(widget.chatId);
                   final replyMessage = messages.firstWhere(
                     (m) => m.id == _replyToMessageId,
                     orElse: () => null as ChatMessage,
@@ -457,23 +523,23 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           Expanded(
             child: BlocBuilder<ChatBloc, ChatState>(
               buildWhen: (previous, current) {
-                if (previous is MessagesLoaded && current is MessagesLoaded) {
-                  return previous.messagesByChatId[widget.chatId] != 
-                         current.messagesByChatId[widget.chatId];
+                if (previous.isMessagesLoaded && current.isMessagesLoaded) {
+                  return previous.getMessagesForChat(widget.chatId) !=
+                         current.getMessagesForChat(widget.chatId);
                 }
                 return true;
               },
               builder: (context, state) {
-                if (state is ChatLoading && state.messagesByChatId.isEmpty) {
+                if (state.isLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                
-                if (state is ChatError) {
+
+                if (state.isError) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Error: ${state.message}'),
+                        Text('Error: ${state.errorMessage ?? "Unknown error"}'),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _loadInitialMessages,
@@ -485,8 +551,8 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                 }
                 
                 final List<ChatMessage> messages;
-                if (state is MessagesLoaded) {
-                  messages = state.messagesByChatId[widget.chatId] ?? [];
+                if (state.isMessagesLoaded) {
+                  messages = state.getMessagesForChat(widget.chatId);
                 } else {
                   messages = [];
                 }

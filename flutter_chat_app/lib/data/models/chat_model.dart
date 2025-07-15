@@ -1,6 +1,8 @@
 import 'package:isar/isar.dart';
 import 'dart:convert';
 
+import 'package:flutter_chat_app/domain/entities/chat.dart' as domain;
+
 part 'chat_model.g.dart';
 
 /// Type of chat
@@ -335,6 +337,32 @@ class ChatModel {
       return jsonDecode(metadata!) as Map<String, dynamic>;
     } catch (e) {
       return null;
+    }
+  }
+
+  /// Convert ChatModel to domain Chat entity
+  domain.Chat toDomain() {
+    return domain.Chat(
+      id: serverId,
+      name: name,
+      avatarUrl: avatarUrl,
+      lastMessageTime: lastMessageTime,
+      lastMessagePreview: lastMessagePreview,
+      unreadCount: unreadCount,
+      type: _mapToDomainChatType(type),
+      participantIds: participantIds,
+    );
+  }
+
+  /// Map data layer ChatType to domain layer ChatType
+  static domain.ChatType _mapToDomainChatType(ChatType dataType) {
+    switch (dataType) {
+      case ChatType.direct:
+        return domain.ChatType.direct;
+      case ChatType.group:
+        return domain.ChatType.group;
+      case ChatType.channel:
+        return domain.ChatType.channel;
     }
   }
 

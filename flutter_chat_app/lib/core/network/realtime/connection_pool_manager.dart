@@ -180,7 +180,7 @@ class ConnectionPoolManager {
         retryCount++;
         // Nếu lỗi và đã thử đủ số lần, ném lỗi ra ngoài
         if (retryCount >= _maxRetryAttempts) {
-          throw RealtimeError.fromException(e, type: realtime_error.RealtimeErrorType.connectionPoolExhausted);
+          throw realtime_error.RealtimeError.fromException(e as Exception, type: realtime_error.RealtimeErrorType.connectionPoolExhausted);
         }
         // Đợi một chút trước khi thử lại
         await Future.delayed(Duration(milliseconds: 100 * retryCount));

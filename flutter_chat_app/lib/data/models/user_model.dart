@@ -68,6 +68,11 @@ class UserModel {
     );
   }
 
+  /// Create a user from JSON (alias for fromMap for API compatibility)
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel.fromMap(json);
+  }
+
   /// Convert user to a map
   Map<String, dynamic> toMap() {
     return {
