@@ -124,7 +124,7 @@ class DioHttpClient implements IHttpClient {
         onReceiveProgress: onReceiveProgress,
         );
         
-      _requestTracker.completeRequest(requestId, response.statusCode ?? 200, response: response.data);
+      _requestTracker.completeRequest(requestId, response.statusCode ?? 200);
       return response;
     } catch (e) {
       _handleError(e, requestId);
@@ -157,14 +157,14 @@ class DioHttpClient implements IHttpClient {
         onReceiveProgress: onReceiveProgress,
       );
       
-      _requestTracker.completeRequest(requestId, response.statusCode ?? 200, response: response.data);
+      _requestTracker.completeRequest(requestId, response.statusCode ?? 200);
       return response;
     } catch (e) {
       _handleError(e, requestId);
       rethrow;
     }
   }
-  
+
   @override
   Future<dio.Response<T>> put<T>(
     String path, {
@@ -178,7 +178,7 @@ class DioHttpClient implements IHttpClient {
     bool requiresAuth = true,
   }) async {
     final requestId = _requestTracker.startRequest('PUT', path, params: queryParameters);
-    
+
     try {
       final response = await _dio.put<T>(
         path,
@@ -189,8 +189,8 @@ class DioHttpClient implements IHttpClient {
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
       );
-      
-      _requestTracker.completeRequest(requestId, response.statusCode ?? 200, response: response.data);
+
+      _requestTracker.completeRequest(requestId, response.statusCode ?? 200);
       return response;
     } catch (e) {
       _handleError(e, requestId);
@@ -223,7 +223,7 @@ class DioHttpClient implements IHttpClient {
         onReceiveProgress: onReceiveProgress,
       );
       
-      _requestTracker.completeRequest(requestId, response.statusCode ?? 200, response: response.data);
+      _requestTracker.completeRequest(requestId, response.statusCode ?? 200);
       return response;
     } catch (e) {
       _handleError(e, requestId);
@@ -252,7 +252,7 @@ class DioHttpClient implements IHttpClient {
         cancelToken: cancelToken,
       );
       
-      _requestTracker.completeRequest(requestId, response.statusCode ?? 200, response: response.data);
+      _requestTracker.completeRequest(requestId, response.statusCode ?? 200);
       return response;
     } catch (e) {
       _handleError(e, requestId);

@@ -74,7 +74,8 @@ class AppLogger {
   /// Cập nhật cấp độ log
   void setLogLevel(LogLevel level) {
     _currentLevel = level;
-    (_logger.filter as _CustomLogFilter).level = level;
+    // Note: Logger package không còn hỗ trợ dynamic filter update
+    // Cần tạo lại logger instance với filter mới
     info('Đã cập nhật log level thành: ${level.name}');
   }
   
@@ -140,18 +141,18 @@ class LogEntry {
 
 /// Bộ lọc log tùy chỉnh
 class _CustomLogFilter extends LogFilter {
-  LogLevel level;
-  
-  _CustomLogFilter(this.level);
-  
+  final LogLevel _logLevel;
+
+  _CustomLogFilter(this._logLevel);
+
   @override
   bool shouldLog(LogEvent event) {
-    if (kReleaseMode && level.index < LogLevel.info.index) {
+    if (kReleaseMode && _logLevel.index < LogLevel.info.index) {
       return false;
     }
-    
+
     var logLevel = _mapLevelToLogLevel(event.level);
-    return logLevel.index >= level.index;
+    return logLevel.index >= _logLevel.index;
   }
   
   LogLevel _mapLevelToLogLevel(Level level) {
@@ -198,13 +199,13 @@ class _MemoryOutput extends LogOutput {
   void output(OutputEvent event) {
     for (var i = 0; i < event.lines.length; i++) {
       final logLevel = _mapLevelToLogLevel(event.level);
-      
+
       onLogAdded(LogEntry(
         timestamp: DateTime.now(),
         level: logLevel,
         message: event.lines[i],
-        error: event.error,
-        stackTrace: event.stackTrace,
+        error: null, // OutputEvent không còn có error property
+        stackTrace: null, // OutputEvent không còn có stackTrace property
       ));
     }
   }

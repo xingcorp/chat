@@ -10,7 +10,7 @@ import 'package:flutter_chat_app/config/route/app_router.dart';
 import 'package:flutter_chat_app/core/di/enterprise_injection.dart';
 import 'package:flutter_chat_app/core/lifecycle/app_lifecycle_observer.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
-import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
+import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart';
 import 'package:flutter_chat_app/core/services/chat_message_service.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
 import 'package:flutter_chat_app/core/theme/app_theme.dart';

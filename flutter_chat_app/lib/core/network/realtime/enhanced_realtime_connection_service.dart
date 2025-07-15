@@ -86,7 +86,7 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
     this._httpClient,
     this._connectivityService,
     this._config, [
-    this._realtimeConfig = const RealtimeConfig(),
+    this._realtimeConfig = const RealtimeConfig(serverUrl: 'ws://localhost:3000'),
   ]) {
     _backoffStrategy = BackoffStrategyFactory.createForWebSocketReconnect();
     
@@ -125,20 +125,20 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
     // Tạo stream đầu ra từ các thay đổi trạng thái
     final controller = BehaviorSubject<RealtimeConnectionType>();
     
-    // Ban đầu là none
-    controller.add(RealtimeConnectionType.none);
+    // Ban đầu là websocket
+    controller.add(RealtimeConnectionType.websocket);
     
     // Lắng nghe các thay đổi trạng thái
     _stateMachine.stateStream.listen((state) {
       // Chỉ cập nhật khi đang kết nối hoặc đã kết nối
       if (state.state == ConnectionState.connected) {
-        controller.add(_webSocketChannel != null 
-            ? RealtimeConnectionType.webSocket
-            : RealtimeConnectionType.longPolling);
+        controller.add(_webSocketChannel != null
+            ? RealtimeConnectionType.websocket
+            : RealtimeConnectionType.sse);
       } else if (state.state == ConnectionState.disconnected || 
                  state.state == ConnectionState.error ||
                  state.state == ConnectionState.closed) {
-        controller.add(RealtimeConnectionType.none);
+        controller.add(RealtimeConnectionType.websocket);
       }
     });
     
@@ -166,11 +166,11 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
   @override
   RealtimeConnectionType get connectionType {
     if (_stateMachine.currentState.state == ConnectionState.connected) {
-      return _webSocketChannel != null 
-          ? RealtimeConnectionType.webSocket
-          : RealtimeConnectionType.longPolling;
+      return _webSocketChannel != null
+          ? RealtimeConnectionType.websocket
+          : RealtimeConnectionType.sse;
     }
-    return RealtimeConnectionType.none;
+    return RealtimeConnectionType.websocket;
   }
   
   /// Kiểm tra kết nối đã được thiết lập chưa
@@ -306,7 +306,17 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
   
   /// Gửi tin nhắn đến server
   @override
-  Future<bool> sendMessage(
+  Future<void> sendMessage(RealtimeMessage message) async {
+    await _sendMessageInternal(
+      message.type,
+      message.data,
+      queueIfDisconnected: true,
+      metadata: null,
+    );
+  }
+
+  /// Internal method for sending messages with additional options
+  Future<bool> _sendMessageInternal(
     String type,
     dynamic data, {
     bool queueIfDisconnected = true,
@@ -956,6 +966,26 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
     } catch (e) {
       _logger.e('Lỗi khi gửi thông báo trạng thái online: $e');
     }
+  }
+
+  @override
+  Future<void> subscribe(String channel) async {
+    // Implementation for channel subscription
+    _logger.i('Subscribing to channel: $channel');
+    // Add channel subscription logic here
+  }
+
+  @override
+  Future<void> unsubscribe(String channel) async {
+    // Implementation for channel unsubscription
+    _logger.i('Unsubscribing from channel: $channel');
+    // Add channel unsubscription logic here
+  }
+
+  @override
+  List<String> get subscribedChannels {
+    // Return list of subscribed channels
+    return []; // Placeholder implementation
   }
 }
 

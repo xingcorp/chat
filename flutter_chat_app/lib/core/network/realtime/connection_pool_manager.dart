@@ -5,8 +5,8 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
-import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
-import 'package:flutter_chat_app/core/network/realtime/realtime_error.dart';
+import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart';
+import 'package:flutter_chat_app/core/network/realtime/realtime_error.dart' as realtime_error;
 
 /// Class quản lý connection pool cho các kết nối WebSocket
 /// Được cải tiến với cơ chế tự phục hồi, kiểm tra sức khỏe và quản lý bộ nhớ tối ưu
@@ -108,8 +108,8 @@ class ConnectionPoolManager {
   Future<IRealtimeConnectionService> acquireConnection() async {
     // Kiểm tra và khởi tạo nếu chưa
     if (!_initialized) {
-      throw RealtimeError(
-        type: RealtimeErrorType.unknown,
+      throw realtime_error.RealtimeError(
+        type: realtime_error.RealtimeErrorType.unknown,
         message: 'Connection pool manager has not been initialized',
       );
     }
@@ -141,8 +141,8 @@ class ConnectionPoolManager {
           if (connectionId == null) {
             retryCount++;
             if (retryCount >= _maxRetryAttempts) {
-              throw RealtimeError(
-                type: RealtimeErrorType.connectionPoolExhausted,
+              throw realtime_error.RealtimeError(
+                type: realtime_error.RealtimeErrorType.connectionPoolExhausted,
                 message: 'Connection pool exhausted, max size: $_maxPoolSize',
               );
             }
@@ -180,7 +180,7 @@ class ConnectionPoolManager {
         retryCount++;
         // Nếu lỗi và đã thử đủ số lần, ném lỗi ra ngoài
         if (retryCount >= _maxRetryAttempts) {
-          throw RealtimeError.fromException(e, type: RealtimeErrorType.connectionPoolExhausted);
+          throw RealtimeError.fromException(e, type: realtime_error.RealtimeErrorType.connectionPoolExhausted);
         }
         // Đợi một chút trước khi thử lại
         await Future.delayed(Duration(milliseconds: 100 * retryCount));
@@ -188,8 +188,8 @@ class ConnectionPoolManager {
     }
     
     // Nếu đã thử hết các cách mà vẫn không có kết nối
-    throw RealtimeError(
-      type: RealtimeErrorType.connectionPoolExhausted,
+    throw realtime_error.RealtimeError(
+      type: realtime_error.RealtimeErrorType.connectionPoolExhausted,
       message: 'Failed to acquire connection after $_maxRetryAttempts attempts',
     );
   }
@@ -238,9 +238,12 @@ class ConnectionPoolManager {
     // Đóng tất cả kết nối
     final futures = <Future<void>>[];
     for (final connection in _connections.values) {
-      futures.add(connection.service.dispose().catchError((e) {
-        debugPrint('Error closing connection: $e');
-        return null;
+      futures.add(Future(() {
+        try {
+          connection.service.dispose();
+        } catch (e) {
+          debugPrint('Error closing connection: $e');
+        }
       }));
     }
     
@@ -337,8 +340,8 @@ class ConnectionPoolManager {
   Future<String> _createNewConnection() async {
     if (_isCreatingConnection) {
       // Tránh tạo nhiều kết nối cùng lúc
-      throw RealtimeError(
-        type: RealtimeErrorType.unknown,
+      throw realtime_error.RealtimeError(
+        type: realtime_error.RealtimeErrorType.unknown,
         message: 'Already creating a new connection',
       );
     }
@@ -351,15 +354,13 @@ class ConnectionPoolManager {
       await service.initialize();
       
       // Kết nối với timeout để tránh treo
-      final connected = await service.connect().timeout(
-        Duration(seconds: 10),
-        onTimeout: () => false,
-      );
-      
-      if (!connected) {
+      try {
+        await service.connect().timeout(Duration(seconds: 10));
+      } catch (e) {
+        // Connection failed
         _failedConnections++;
-        throw RealtimeError(
-          type: RealtimeErrorType.networkError,
+        throw realtime_error.RealtimeError(
+          type: realtime_error.RealtimeErrorType.networkError,
           message: 'Failed to connect to realtime service',
         );
       }
@@ -393,7 +394,7 @@ class ConnectionPoolManager {
       stopwatch.stop();
       debugPrint('Failed to create connection: $e (${stopwatch.elapsedMilliseconds}ms)');
       
-      throw RealtimeError.fromException(e, type: RealtimeErrorType.webSocketError);
+      throw realtime_error.RealtimeError.fromException(e as Exception);
     } finally {
       _isCreatingConnection = false;
     }
@@ -587,8 +588,11 @@ class ConnectionPoolManager {
     if (connection == null) return;
     
     try {
-      await connection.service.dispose().timeout(
-        Duration(seconds: 3),
+      // Dispose doesn't return a Future, so we wrap it
+      await Future(() {
+        connection.service.dispose();
+      }).timeout(
+        const Duration(seconds: 3),
         onTimeout: () => null,
       );
     } catch (e) {
