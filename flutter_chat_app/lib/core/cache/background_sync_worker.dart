@@ -8,7 +8,69 @@ import 'package:flutter_chat_app/core/network/connectivity/connectivity_service.
 import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:workmanager/workmanager.dart';
+// import 'package:workmanager/workmanager.dart';  // Temporarily disabled
+
+// Stub implementations for workmanager
+class _WorkmanagerStub {
+  Future<void> initialize(Function callbackDispatcher, {bool isInDebugMode = false}) async {
+    // Stub implementation - does nothing
+  }
+
+  Future<void> registerPeriodicTask(String uniqueName, String taskName, {
+    Duration? frequency,
+    dynamic constraints,
+    dynamic existingWorkPolicy,
+    dynamic backoffPolicy,
+  }) async {
+    // Stub implementation - does nothing
+  }
+
+  Future<void> registerOneOffTask(String uniqueName, String taskName, {
+    dynamic inputData,
+    dynamic constraints,
+    dynamic existingWorkPolicy,
+  }) async {
+    // Stub implementation - does nothing
+  }
+
+  Future<void> cancelAll() async {
+    // Stub implementation - does nothing
+  }
+
+  void executeTask(Function callback) {
+    // Stub implementation - does nothing
+  }
+}
+
+class _ConstraintsStub {
+  final dynamic networkType;
+  final bool requiresBatteryNotLow;
+
+  _ConstraintsStub({this.networkType, this.requiresBatteryNotLow = false});
+}
+
+// Stub constants as objects with static-like access
+final NetworkType = _NetworkTypeStub();
+final ExistingWorkPolicy = _ExistingWorkPolicyStub();
+final BackoffPolicy = _BackoffPolicyStub();
+
+class _NetworkTypeStub {
+  final String connected = 'connected';
+}
+
+class _ExistingWorkPolicyStub {
+  final String replace = 'replace';
+  final String append = 'append';
+}
+
+class _BackoffPolicyStub {
+  final String exponential = 'exponential';
+}
+
+// Stub factory functions
+_WorkmanagerStub Workmanager() => _WorkmanagerStub();
+_ConstraintsStub Constraints({dynamic networkType, bool requiresBatteryNotLow = false}) =>
+    _ConstraintsStub(networkType: networkType, requiresBatteryNotLow: requiresBatteryNotLow);
 
 /// Manager xử lý đồng bộ dữ liệu trong nền
 class BackgroundSyncWorker {

@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
@@ -14,8 +16,8 @@ extension LocalizationExt on BuildContext {
   bool get isRtl => L10n.isRtl(locale);
   
   /// Get text direction based on current locale
-  TextDirection get textDirection {
-    return isRtl ? TextDirection.rtl : TextDirection.ltr;
+  ui.TextDirection get textDirection {
+    return isRtl ? ui.TextDirection.rtl : ui.TextDirection.ltr;
   }
   
   /// Get text alignment based on current locale

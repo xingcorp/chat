@@ -7,6 +7,8 @@ import 'package:flutter_chat_app/core/services/media_cache.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/local_storage_service.dart';
 import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart';
+import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
 
@@ -37,7 +39,11 @@ Future<bool> upgradeToEnhancedMessageQueue() async {
     
     // Register MediaCache if not already registered
     if (!getIt.isRegistered<MediaCache>()) {
-      final mediaCache = await MediaCache.create();
+      // Get required dependencies from DI container
+      final performanceMonitor = getIt<PerformanceMonitor>();
+      final isolateManager = getIt<IsolateManager>();
+
+      final mediaCache = await MediaCache.create(performanceMonitor, isolateManager);
       getIt.registerSingleton<MediaCache>(mediaCache);
       debugPrint('Registered MediaCache service');
     }

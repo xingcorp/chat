@@ -57,7 +57,7 @@ dependencies:
   flutter_local_notifications: ^19.0.0
   flutter_background_service: ^5.0.5
   flutter_background_service_android: ^6.2.2
-  workmanager: ^0.5.2
+  # workmanager: ^0.5.2  # Temporarily disabled due to v1 embedding issues
   
   # Storage
   shared_preferences: ^2.2.2
@@ -134,13 +134,13 @@ flutter:
     - assets/animations/
     - .env
 
-  # Production-optimized fonts
-  fonts:
-    - family: Roboto
-      fonts:
-        - asset: fonts/Roboto-Regular.ttf
-        - asset: fonts/Roboto-Bold.ttf
-          weight: 700
+  # Production-optimized fonts (temporarily disabled)
+  # fonts:
+  #   - family: Roboto
+  #     fonts:
+  #       - asset: fonts/Roboto-Regular.ttf
+  #       - asset: fonts/Roboto-Bold.ttf
+  #         weight: 700
 
 # dart run build_runner build --delete-conflicting-outputs
 

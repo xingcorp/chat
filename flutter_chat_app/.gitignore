@@ -50,6 +50,30 @@ pubspec.lock
 **/async.dart.transitive_digest
 **/async_matcher.dart.transitive_digest
 
+# Android build files
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+*.jks
+*.keystore
+
+# Android Gradle build files
+**/android/**/android_gradle_build.json
+**/android/**/android_gradle_build_mini.json
+**/android/**/build.ninja
+**/android/**/additional_project_files.txt
+**/android/**/build_file_index.txt
+
+# Android app build outputs
+**/android/app/build/
+**/android/app/src/main/java/io/flutter/plugins/
+**/android/app/.cxx/
+
 # Web related
 lib/generated_plugin_registrant.dart
 
