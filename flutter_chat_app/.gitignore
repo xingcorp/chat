@@ -35,6 +35,21 @@ migrate_working_dir/
 **/build/
 pubspec.lock
 
+# Dart build system files
+.packageLocations
+**/dart_tool/build/
+**/_composite.stamp
+**/asset_graph.json
+**/AssetManifest.bin
+**/AssetManifest.bin.json
+**/AssetManifest.json
+**/*.transitive_digest
+**/Affiliation\ Database*
+**/archive.dart.transitive_digest
+**/ast.dart.transitive_digest
+**/async.dart.transitive_digest
+**/async_matcher.dart.transitive_digest
+
 # Web related
 lib/generated_plugin_registrant.dart
 
