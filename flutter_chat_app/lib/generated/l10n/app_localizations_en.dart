@@ -99,6 +99,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String messageCount(int count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
+      
     );
     final String countString = countNumberFormat.format(count);
 

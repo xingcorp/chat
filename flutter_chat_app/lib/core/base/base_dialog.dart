@@ -53,7 +53,7 @@ abstract class BaseDialog extends BaseStatelessWidget {
       contentPadding: contentPadding ?? _getDefaultContentPadding(context),
       titlePadding: titlePadding ?? _getDefaultTitlePadding(context),
       actionsPadding: actionsPadding ?? _getDefaultActionsPadding(context),
-      backgroundColor: backgroundColor ?? Theme.of(context).dialogBackgroundColor,
+      backgroundColor: backgroundColor ?? Theme.of(context).dialogTheme.backgroundColor,
       elevation: elevation ?? 24.0,
       shape: shape ?? _getDefaultShape(context),
     );
@@ -233,7 +233,7 @@ class DialogAction extends Equatable {
     return ElevatedButton(
       onPressed: null,
       style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor ?? Theme.of(context).primaryColor.withOpacity(0.6),
+        backgroundColor: backgroundColor ?? Theme.of(context).primaryColor.withValues(alpha: 0.6),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
       child: Row(

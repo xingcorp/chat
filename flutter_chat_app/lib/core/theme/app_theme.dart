@@ -152,7 +152,7 @@ class AppTheme {
           vertical: 16,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
         elevation: 2,
         shape: RoundedRectangleBorder(
@@ -160,7 +160,7 @@ class AppTheme {
         ),
         clipBehavior: Clip.antiAlias,
       ),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
         elevation: 8,
         shape: RoundedRectangleBorder(
@@ -220,7 +220,7 @@ class AppTheme {
         circularTrackColor: isDark ? AppColors.backgroundDarkMode : AppColors.background,
         linearTrackColor: isDark ? AppColors.backgroundDarkMode : AppColors.background,
       ),
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelColor: primaryColor,
         unselectedLabelColor: isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary,
         indicatorColor: primaryColor,

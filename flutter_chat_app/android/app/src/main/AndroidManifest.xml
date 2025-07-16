@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Enterprise Background Processing Permissions -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -49,13 +50,15 @@
         <service
             android:name="id.flutter.flutter_background_service.BackgroundService"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="dataSync"
+            tools:replace="android:exported" />
 
         <!-- Boot receiver for auto-start background sync -->
         <receiver
             android:name="id.flutter.flutter_background_service.BootReceiver"
             android:enabled="true"
-            android:exported="false">
+            android:exported="false"
+            tools:replace="android:exported">
             <intent-filter android:priority="1000">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />

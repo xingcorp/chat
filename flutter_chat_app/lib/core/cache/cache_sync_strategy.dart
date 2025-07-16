@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:logger/logger.dart';
