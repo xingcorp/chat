@@ -13,7 +13,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_chat_app/core/services/attachment_queue_service.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/local_storage_service.dart';
-import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
+import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/entities/message_error_type.dart';
 import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
@@ -345,19 +345,7 @@ class DuplicateMessageException implements Exception {
   String toString() => message;
 }
 
-/// Lớp kết nối realtime 
-enum RealtimeConnectionState {
-  connecting,
-  connected,
-  disconnected,
-  reconnecting,
-}
 
-/// Lớp giả định cho realtime service
-class RealtimeConnectionService {
-  Stream<RealtimeConnectionState> get connectionStateStream => 
-      Stream<RealtimeConnectionState>.empty();
-}
 
 /// Extension cho MessageQueueEventType
 extension MessageQueueEventTypeExtension on MessageQueueEventType {
@@ -481,7 +469,7 @@ class EnhancedMessageQueueService {
   final LocalStorageService _localStorageService;
   
   /// Service kết nối realtime
-  final RealtimeConnectionService _realtimeConnectionService;
+  final IRealtimeConnectionService _realtimeConnectionService;
   
   /// Service quản lý tệp đính kèm
   final AttachmentQueueService _attachmentQueueService;

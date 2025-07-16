@@ -1,7 +1,5 @@
-import 'dart:ui';
-
-import 'package:injectable/injectable.dart';
 import 'package:flutter/material.dart';
+import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:intl/intl.dart';
@@ -111,7 +109,7 @@ class LocalizationService {
   
   /// Get the appropriate text direction for a locale
   TextDirection getTextDirection(Locale locale) {
-    return isRtl(locale) ? TextDirection.rtl : TextDirection.ltr;
+    return isRtl(locale) ? TextDirection.RTL : TextDirection.LTR;
   }
   
   /// Returns the full locale name with country code when available

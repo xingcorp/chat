@@ -214,7 +214,7 @@ class ResultUtils {
     try {
       return Result.success(fn());
     } catch (e) {
-      return Result.failure(UnexpectedFailure(message: e.toString()));
+      return Result.failure(UnexpectedFailure(e.toString()));
     }
   }
 
@@ -224,7 +224,7 @@ class ResultUtils {
       final value = await fn();
       return Result.success(value);
     } catch (e) {
-      return Result.failure(UnexpectedFailure(message: e.toString()));
+      return Result.failure(UnexpectedFailure(e.toString()));
     }
   }
 

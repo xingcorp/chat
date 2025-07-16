@@ -3,11 +3,10 @@ import 'package:get_it/get_it.dart';
 
 import 'package:flutter_chat_app/core/services/enhanced_message_queue_service.dart';
 import 'package:flutter_chat_app/core/services/attachment_queue_service.dart';
-import 'package:flutter_chat_app/core/services/message_queue_service.dart';
 import 'package:flutter_chat_app/core/services/media_cache.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/local_storage_service.dart';
-import 'package:flutter_chat_app/core/services/realtime_connection_service.dart';
+import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
 
@@ -31,7 +30,7 @@ Future<bool> upgradeToEnhancedMessageQueue() async {
     if (!getIt.isRegistered<IMessageRepository>() ||
         !getIt.isRegistered<LocalStorageService>() ||
         !getIt.isRegistered<ConnectivityService>() ||
-        !getIt.isRegistered<RealtimeConnectionService>()) {
+        !getIt.isRegistered<IRealtimeConnectionService>()) {
       debugPrint('Missing required dependencies for EnhancedMessageQueueService');
       return false;
     }
@@ -71,7 +70,7 @@ Future<bool> upgradeToEnhancedMessageQueue() async {
       getIt<IMessageRepository>(),
       getIt<LocalStorageService>(),
       getIt<ConnectivityService>(),
-      getIt<RealtimeConnectionService>(),
+      getIt<IRealtimeConnectionService>(),
       getIt<AttachmentQueueService>(),
     );
     

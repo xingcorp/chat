@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 
@@ -50,50 +52,49 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   
   @override
   Future<void> saveAuthToken(String token) async {
-    await _secureStorage.write(_authTokenKey, token);
+    await _secureStorage.setString(_authTokenKey, token);
   }
-  
+
   @override
   Future<String?> getAuthToken() async {
-    return await _secureStorage.read(_authTokenKey);
+    return await _secureStorage.getString(_authTokenKey);
   }
-  
+
   @override
   Future<void> removeAuthToken() async {
-    await _secureStorage.delete(_authTokenKey);
+    await _secureStorage.remove(_authTokenKey);
   }
   
   @override
   Future<void> saveRefreshToken(String token) async {
-    await _secureStorage.write(_refreshTokenKey, token);
+    await _secureStorage.setString(_refreshTokenKey, token);
   }
-  
+
   @override
   Future<String?> getRefreshToken() async {
-    return await _secureStorage.read(_refreshTokenKey);
+    return await _secureStorage.getString(_refreshTokenKey);
   }
-  
+
   @override
   Future<void> removeRefreshToken() async {
-    await _secureStorage.delete(_refreshTokenKey);
+    await _secureStorage.remove(_refreshTokenKey);
   }
   
   @override
   Future<void> saveCurrentUser(UserModel user) async {
-    final userJson = user.toJson();
-    await _secureStorage.write(_currentUserKey, userJson.toString());
+    final userMap = user.toMap();
+    await _secureStorage.setString(_currentUserKey, json.encode(userMap));
   }
   
   @override
   Future<UserModel?> getCurrentUser() async {
     try {
-      final userJsonString = await _secureStorage.read(_currentUserKey);
+      final userJsonString = await _secureStorage.getString(_currentUserKey);
       if (userJsonString == null) return null;
       
-      // Parse JSON string back to Map
-      // Note: This is a simplified implementation
-      // In production, use proper JSON serialization
-      return null; // TODO: Implement proper JSON parsing
+      // Parse JSON string back to Map and create UserModel
+      final userMap = json.decode(userJsonString) as Map<String, dynamic>;
+      return UserModel.fromMap(userMap);
     } catch (e) {
       return null;
     }
@@ -101,7 +102,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   
   @override
   Future<void> removeCurrentUser() async {
-    await _secureStorage.delete(_currentUserKey);
+    await _secureStorage.remove(_currentUserKey);
   }
   
   @override

@@ -43,8 +43,8 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
   /// StreamSubscription cho theo dõi kết nối
   StreamSubscription? _connectivitySubscription;
 
-  /// Cấu hình kết nối
-  final models.RealtimeConnectionConfig _config;
+  /// Cấu hình kết nối (mutable để support dynamic auth token updates)
+  models.RealtimeConnectionConfig _config;
 
   /// Controllers
   final _messageController = PublishSubject<RealtimeMessage>();
