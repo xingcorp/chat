@@ -7,9 +7,19 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat: enhance localization support with new service patterns, utilities, and error handling guidelines">
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/core/patterns/structural_patterns.mdc" beforeDir="false" afterPath="$PROJECT_DIR$/.cursor/rules/core/patterns/structural_patterns.mdc" afterDir="false" />
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix bug 2">
+      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config_subset" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config_subset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.dart_tool/version" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/version" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/background_sync_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/background_sync_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/l10n/l10n.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/l10n.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,7 +121,7 @@
     &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;doanbh/feature/fix__bug__v3&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;doan/fix__14__7&quot;,
     &quot;io.flutter.reload.alreadyRun&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;/Volumes/DoanBHSST9/FlutterGithubOXII/chat/flutter_chat_app&quot;,
@@ -418,7 +428,55 @@
       <option name="project" value="LOCAL" />
       <updated>1747407295802</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="add rules">
+      <option name="closed" value="true" />
+      <created>1752469465559</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1752469465559</updated>
+    </task>
+    <task id="LOCAL-00031" summary="add rules">
+      <option name="closed" value="true" />
+      <created>1752477238609</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1752477238609</updated>
+    </task>
+    <task id="LOCAL-00032" summary="fix multi">
+      <option name="closed" value="true" />
+      <created>1752547943555</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1752547943555</updated>
+    </task>
+    <task id="LOCAL-00033" summary="run done">
+      <option name="closed" value="true" />
+      <created>1752552918847</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1752552918847</updated>
+    </task>
+    <task id="LOCAL-00034" summary="fix bug 1">
+      <option name="closed" value="true" />
+      <created>1752555695040</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1752555695040</updated>
+    </task>
+    <task id="LOCAL-00035" summary="fix bug 2">
+      <option name="closed" value="true" />
+      <created>1752575960904</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1752575960904</updated>
+    </task>
+    <option name="localTasksCounter" value="36" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -426,10 +484,36 @@
       <map>
         <entry key="fa96ce9f-2aa7-4dcc-a68f-92371b339f1a" value="TOOL_WINDOW" />
         <entry key="4a34bef5-e306-4d10-af30-c61144bf832d" value="TOOL_WINDOW" />
+        <entry key="2f21ae50-d93b-4c6e-962a-17d1f123fa6a" value="TOOL_WINDOW" />
       </map>
     </option>
     <option name="TAB_STATES">
       <map>
+        <entry key="2f21ae50-d93b-4c6e-962a-17d1f123fa6a">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="structure">
+                    <value>
+                      <list>
+                        <option value="dir:/Volumes/DoanBHSST9/FlutterGithubOXII/chat/flutter_chat_app" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+            </State>
+          </value>
+        </entry>
         <entry key="4a34bef5-e306-4d10-af30-c61144bf832d">
           <value>
             <State>
@@ -453,6 +537,11 @@
               </option>
               <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
             </State>
+          </value>
+        </entry>
+        <entry key="MAIN">
+          <value>
+            <State />
           </value>
         </entry>
         <entry key="fa96ce9f-2aa7-4dcc-a68f-92371b339f1a">
@@ -484,11 +573,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="update version and dependencies; refactor connectivity service and user/chat models" />
-    <MESSAGE value="refactor: enhance message handling and connection services; add priority and conflict resolution for messages" />
-    <MESSAGE value="refactor: improve realtime connection handling and message processing; enhance message repository interface" />
-    <MESSAGE value="chore: update Flutter SDK version and dependencies; adjust package configurations and clean up code" />
-    <MESSAGE value="chore: update version to 3.27.4; refactor message handling and connectivity services; enhance chat repository interface" />
     <MESSAGE value="refactor: enhance GraphQL client and subscription handling; improve message processing and service initialization" />
     <MESSAGE value="fix: update version number and improve code consistency across various files" />
     <MESSAGE value="feat: enhance performance monitoring and animation handling with new configurations and optimizations" />
@@ -509,6 +593,11 @@
     <MESSAGE value="feat: enhance design pattern guidelines with detailed descriptions for behavioral and structural patterns in Flutter apps" />
     <MESSAGE value="feat: add localization support with localization service and locale management in Flutter app" />
     <MESSAGE value="feat: enhance localization support with new service patterns, utilities, and error handling guidelines" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance localization support with new service patterns, utilities, and error handling guidelines" />
+    <MESSAGE value="add rules" />
+    <MESSAGE value="fix multi" />
+    <MESSAGE value="run done" />
+    <MESSAGE value="fix bug 1" />
+    <MESSAGE value="fix bug 2" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix bug 2" />
   </component>
 </project>

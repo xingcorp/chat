@@ -40,7 +40,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_chat_app/core/upgrade_services.dart';
 import 'package:flutter_chat_app/core/services/enhanced_message_queue_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 

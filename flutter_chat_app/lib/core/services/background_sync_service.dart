@@ -7,7 +7,7 @@ import 'package:flutter_background_service_android/flutter_background_service_an
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:workmanager/workmanager.dart';
+import 'package:flutter_chat_app/core/cache/enterprise_background_sync_worker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
@@ -15,19 +15,18 @@ import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 /// Service for handling background synchronization
 @lazySingleton
 class BackgroundSyncService {
-  static const String _taskName = 'chatSyncTask';
-  static const String _taskUniqueName = 'com.example.flutter_chat_app.chat_sync';
+  // Enterprise worker handles task naming internally
   
   final FlutterBackgroundService _backgroundService = FlutterBackgroundService();
-  final Workmanager _workmanager = Workmanager();
+  final EnterpriseBackgroundSyncWorker _enterpriseWorker = EnterpriseBackgroundSyncWorker();
   
   /// Initialize the background sync service
   Future<void> initialize() async {
-    // Initialize background service
+    // Initialize enterprise background worker (replaces workmanager)
+    await _enterpriseWorker.initialize();
+
+    // Initialize background service for additional functionality
     await _initializeBackgroundService();
-    
-    // Initialize workmanager for periodic background tasks
-    await _initializeWorkManager();
   }
   
   /// Initialize the background service for continuous running tasks
@@ -206,29 +205,15 @@ class BackgroundSyncService {
     );
   }
   
-  /// Schedule a periodic background sync using WorkManager
+  /// Schedule a periodic background sync using Enterprise Worker
   Future<void> schedulePeriodicSync({
     Duration frequency = const Duration(hours: 1),
     bool requiresCharging = false,
     bool requiresDeviceIdle = false,
   }) async {
-    // Cancel any existing tasks first
-    await _workmanager.cancelByUniqueName(_taskUniqueName);
-    
-    // Schedule new periodic task
-    await _workmanager.registerPeriodicTask(
-      _taskUniqueName,
-      _taskName,
-      frequency: frequency,
-      constraints: Constraints(
-        networkType: NetworkType.connected,
-        requiresBatteryNotLow: true,
-        requiresCharging: requiresCharging,
-        requiresDeviceIdle: requiresDeviceIdle,
-      ),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
-    );
-    
+    // Use enterprise worker for scheduling
+    await _enterpriseWorker.setSyncInterval(frequency);
+
     // Save the sync settings
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('background_sync_enabled', true);
@@ -252,16 +237,16 @@ class BackgroundSyncService {
   
   /// Stop the continuous background service
   Future<bool> stopBackgroundService() async {
+    // Stop enterprise worker
+    await _enterpriseWorker.stopBackgroundSync();
+
     // Invoke the stop service event
     _backgroundService.invoke('stopService');
-    
-    // Cancel any work manager tasks
-    await _workmanager.cancelByUniqueName(_taskUniqueName);
-    
+
     // Save service state
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('background_sync_enabled', false);
-    
+
     // Wait a moment and check if service is actually stopped
     await Future.delayed(const Duration(seconds: 1));
     return !(await _backgroundService.isRunning());

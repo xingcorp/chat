@@ -34,6 +34,7 @@ import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
 import 'package:flutter_chat_app/core/services/localization_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/core/services/enterprise_background_sync_service.dart';
 import 'package:flutter_chat_app/core/utils/system_resources.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
 import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
@@ -331,6 +332,11 @@ class EnterpriseDI {
       // Localization Service
       serviceLocator.registerLazySingleton<LocalizationService>(
         () => LocalizationService(serviceLocator<LocalStorage>()),
+      );
+
+      // Enterprise Background Sync Service (replaces workmanager)
+      serviceLocator.registerLazySingleton<EnterpriseBackgroundSyncService>(
+        EnterpriseBackgroundSyncService.new,
       );
 
       stopwatch.stop();

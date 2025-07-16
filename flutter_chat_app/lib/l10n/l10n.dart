@@ -1,7 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 /// Extension on BuildContext for easy access to generated localizations
