@@ -3,15 +3,14 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/logger.dart';
+import 'package:flutter_chat_app/core/network/cache/api_cache_manager.dart';
+import 'package:flutter_chat_app/core/network/http/http_client_interface.dart';
+import 'package:flutter_chat_app/core/network/monitoring/api_request_tracker.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:mime/mime.dart';
-
-import '../monitoring/analytics_service.dart';
-import '../monitoring/logger.dart';
-import 'cache/api_cache_manager.dart';
-import 'http/http_client_interface.dart';
-import 'monitoring/api_request_tracker.dart';
 
 /// ApiClient class that provides a high-level interface for making API calls
 /// with built-in performance tracking, error handling, and caching.

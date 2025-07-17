@@ -48,7 +48,7 @@ abstract class BaseRepository {
         return Right(localData);
       } catch (e) {
         LogUtils.e('Repository', 'Local data source error: $e');
-        return Left(const ConnectionFailure(message: 'No internet connection and no cached data'));
+        return const Left(ConnectionFailure(message: 'No internet connection and no cached data'));
       }
     }
   }
@@ -95,7 +95,7 @@ abstract class BaseRepository {
           return Left(ServerFailure(message: e.toString()));
         }
       } else {
-        return Left(const ConnectionFailure(message: 'No internet connection and no cached data'));
+        return const Left(ConnectionFailure(message: 'No internet connection and no cached data'));
       }
     }
   }
@@ -131,7 +131,7 @@ abstract class BaseRepository {
         return Left(ServerFailure(message: e.toString()));
       }
     } else {
-      return Left(const ConnectionFailure(message: 'No internet connection'));
+      return const Left(ConnectionFailure(message: 'No internet connection'));
     }
   }
   
@@ -145,7 +145,7 @@ abstract class BaseRepository {
       return Right(localData);
     } catch (e) {
       LogUtils.e('Repository', 'Local data source error: $e');
-      return Left(const CacheFailure(message: 'Local data source error'));
+      return const Left(CacheFailure(message: 'Local data source error'));
     }
   }
 } 

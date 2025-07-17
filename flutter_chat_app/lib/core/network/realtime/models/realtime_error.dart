@@ -1,4 +1,4 @@
-import 'realtime_error_type.dart';
+import 'package:flutter_chat_app/core/network/realtime/models/realtime_error_type.dart';
 
 /// Các mã lỗi cho dịch vụ realtime
 enum RealtimeErrorCode {

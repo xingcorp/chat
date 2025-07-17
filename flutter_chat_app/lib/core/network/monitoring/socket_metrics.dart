@@ -1,8 +1,7 @@
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
 import 'package:logger/logger.dart';
-
-import '../../monitoring/analytics_service.dart';
 
 /// Class theo dõi các chỉ số hiệu suất cho kết nối WebSocket
 class WebSocketMetrics {

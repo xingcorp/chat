@@ -10,7 +10,6 @@ library performance_benchmark;
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/performance/performance_validator.dart';
 import 'package:logger/logger.dart';
 

@@ -2,22 +2,19 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:flutter_chat_app/core/network/connectivity/connectivity_service.dart';
+import 'package:flutter_chat_app/core/network/http/http_client_interface.dart';
+import 'package:flutter_chat_app/core/network/realtime/backoff_strategy.dart';
+import 'package:flutter_chat_app/core/network/realtime/connection_health_monitor.dart';
+import 'package:flutter_chat_app/core/network/realtime/connection_state_machine.dart';
+import 'package:flutter_chat_app/core/network/realtime/models/realtime_connection_config.dart' as models;
+import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart';
+import 'package:flutter_chat_app/core/network/realtime/realtime_performance_metrics.dart';
 import 'package:web_socket_channel/status.dart' as ws_status;
 import 'package:web_socket_channel/web_socket_channel.dart';
-
-import '../connectivity/connectivity_service.dart';
-import '../http/http_client_interface.dart';
-import 'backoff_strategy.dart';
-import 'connection_health_monitor.dart';
-import 'connection_state_machine.dart';
-import 'models/realtime_connection_config.dart' as models;
-import 'realtime_connection_service.dart';
-import 'realtime_error.dart' as error;
-import 'realtime_performance_metrics.dart';
 
 /// Dịch vụ kết nối realtime được tối ưu hiệu suất
 ///

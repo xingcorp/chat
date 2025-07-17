@@ -2,9 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter_chat_app/core/network/http/media_type.dart';
 import 'package:mime/mime.dart';
-
-import 'media_type.dart';
 
 /// Enum định nghĩa các strategy khi lấy dữ liệu từ cache
 enum CacheStrategy {

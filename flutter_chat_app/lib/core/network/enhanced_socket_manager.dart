@@ -1,16 +1,15 @@
 import 'dart:async';
 
 import 'package:injectable/injectable.dart';
+import 'package:flutter_chat_app/core/network/handlers/offline_message_handler.dart';
+import 'package:flutter_chat_app/core/network/models/network_quality.dart' as models;
+import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
+import 'package:flutter_chat_app/core/network/monitoring/network_quality_monitor.dart';
+import 'package:flutter_chat_app/core/network/socket_analytics.dart';
+import 'package:flutter_chat_app/core/network/socket_manager.dart';
+import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
 import 'package:logger/logger.dart';
 import 'package:rxdart/rxdart.dart';
-
-import 'handlers/offline_message_handler.dart';
-import 'models/network_quality.dart' as models;
-import 'models/socket_connection_state.dart';
-import 'monitoring/network_quality_monitor.dart';
-import 'socket_analytics.dart';
-import 'socket_manager.dart';
-import 'socket_rate_limiter.dart';
 
 /// Manager nâng cao cho Socket.IO với các tính năng mở rộng
 @singleton

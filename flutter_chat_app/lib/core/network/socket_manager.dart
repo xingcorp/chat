@@ -1,16 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
-
-import '../monitoring/analytics_service.dart';
-import 'models/socket_connection_state.dart';
 
 /// Base Socket Manager that handles Socket.IO connections
 @injectable

@@ -19,9 +19,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get_it/get_it.dart';
-
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
+import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
 import 'package:flutter_chat_app/core/config/app_config.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';

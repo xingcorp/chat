@@ -5,12 +5,11 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
+import 'package:flutter_chat_app/core/monitoring/logger.dart';
+import 'package:flutter_chat_app/core/network/cache/api_cache_manager.dart';
+import 'package:flutter_chat_app/core/network/http/http_client_interface.dart';
+import 'package:flutter_chat_app/core/network/monitoring/api_request_tracker.dart';
 import 'package:injectable/injectable.dart';
-
-import '../../monitoring/logger.dart';
-import '../cache/api_cache_manager.dart';
-import '../monitoring/api_request_tracker.dart';
-import 'http_client_interface.dart';
 
 /// Triển khai IHttpClient sử dụng thư viện Dio
 /// Tối ưu cho hiệu suất cao, độ tin cậy, và hỗ trợ các tính năng như caching, retry

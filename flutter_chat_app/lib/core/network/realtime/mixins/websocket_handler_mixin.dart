@@ -2,12 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/network/realtime/models/realtime_error.dart';
+import 'package:flutter_chat_app/core/network/realtime/models/realtime_error_type.dart';
+import 'package:flutter_chat_app/core/network/realtime/models/realtime_message.dart';
 import 'package:web_socket_channel/status.dart' as ws_status;
 import 'package:web_socket_channel/web_socket_channel.dart';
-
-import '../models/realtime_error.dart';
-import '../models/realtime_error_type.dart';
-import '../models/realtime_message.dart';
 
 /// Mixin cung cấp các phương thức xử lý WebSocket
 mixin WebSocketHandlerMixin {

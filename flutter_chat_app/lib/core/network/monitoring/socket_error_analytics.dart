@@ -1,8 +1,7 @@
 
+import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/network/monitoring/socket_metric_types.dart';
 import 'package:logger/logger.dart';
-
-import '../../monitoring/analytics_service.dart';
-import 'socket_metric_types.dart';
 
 /// Lớp theo dõi phân tích lỗi Socket
 class SocketErrorAnalytics {

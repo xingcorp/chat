@@ -1,9 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter_chat_app/core/network/models/network_quality.dart';
+import 'package:flutter_chat_app/core/network/socket_analytics.dart';
 import 'package:logger/logger.dart';
-
-import '../models/network_quality.dart';
-import '../socket_analytics.dart';
 
 /// Monitor theo dõi chất lượng kết nối mạng Socket
 class NetworkQualityMonitor {

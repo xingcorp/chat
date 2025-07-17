@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_chat_app/core/network/realtime/backoff_strategy.dart';
+import 'package:flutter_chat_app/core/network/realtime/connection_health_monitor.dart';
 import 'package:rxdart/subjects.dart';
-
-import 'backoff_strategy.dart';
-import 'connection_health_monitor.dart';
 
 /// Sự kiện kích hoạt chuyển đổi state
 enum ConnectionEvent {

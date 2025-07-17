@@ -1,16 +1,15 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
+import 'package:flutter_chat_app/core/network/monitoring/socket_connection_analytics.dart';
+import 'package:flutter_chat_app/core/network/monitoring/socket_error_analytics.dart';
+import 'package:flutter_chat_app/core/network/monitoring/socket_message_analytics.dart';
+import 'package:flutter_chat_app/core/network/monitoring/socket_metric_types.dart';
+import 'package:flutter_chat_app/core/network/monitoring/socket_rate_limit_analytics.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
-
-import '../monitoring/analytics_service.dart';
-import 'models/socket_connection_state.dart';
-import 'monitoring/socket_connection_analytics.dart';
-import 'monitoring/socket_error_analytics.dart';
-import 'monitoring/socket_message_analytics.dart';
-import 'monitoring/socket_metric_types.dart';
-import 'monitoring/socket_rate_limit_analytics.dart';
 
 /// Service tích hợp theo dõi phân tích dữ liệu Socket
 @injectable

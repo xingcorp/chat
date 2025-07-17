@@ -4,10 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:get_it/get_it.dart';
-import '../../../core/monitoring/analytics_service.dart';
-import '../../../core/monitoring/crash_reporter.dart';
-import '../../../core/monitoring/performance_monitor.dart';
-import 'base_state.dart';
+import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
+import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/presentation/blocs/base/base_state.dart';
 
 /// Lớp cơ sở trừu tượng cho tất cả các BLoC.
 /// EventType là kiểu dữ liệu cho các sự kiện mà BLoC này xử lý.

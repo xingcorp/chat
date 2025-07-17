@@ -10,7 +10,7 @@ import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
 import 'package:uuid/uuid.dart';
-import 'main.dart' show MyApp;
+import 'package:flutter_chat_app/main.dart' show MyApp;
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {

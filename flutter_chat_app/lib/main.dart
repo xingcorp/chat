@@ -45,9 +45,9 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 
 // Import home screens from respective platform files
-import 'main_mobile.dart' show MobileHomeScreen;
-import 'main_web.dart' show WebHomeScreen;
-import 'main_desktop.dart' show DesktopHomeScreen;
+import 'package:flutter_chat_app/main_mobile.dart' show MobileHomeScreen;
+import 'package:flutter_chat_app/main_web.dart' show WebHomeScreen;
+import 'package:flutter_chat_app/main_desktop.dart' show DesktopHomeScreen;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

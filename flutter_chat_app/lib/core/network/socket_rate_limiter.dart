@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
-import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
 /// Resultado de verificación de límite de tasa

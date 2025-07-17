@@ -1,6 +1,7 @@
 import 'dart:async';
+
+import 'package:flutter_chat_app/core/network/models/offline_message.dart';
 import 'package:logger/logger.dart';
-import '../models/offline_message.dart';
 
 /// Handler xử lý tin nhắn offline
 class OfflineMessageHandler {

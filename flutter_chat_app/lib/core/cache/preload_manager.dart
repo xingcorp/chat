@@ -1,14 +1,13 @@
 import 'dart:async';
 
-import 'package:get_it/get_it.dart';
-import 'package:logger/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/cache/cache_stats.dart';
 import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
 import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:get_it/get_it.dart';
+import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Manager quản lý tiền tải dữ liệu quan trọng khi ứng dụng khởi động
 class PreloadManager {

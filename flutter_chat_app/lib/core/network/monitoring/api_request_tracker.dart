@@ -3,11 +3,10 @@ import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/logger.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
-
-import '../../monitoring/analytics_service.dart';
-import '../../monitoring/logger.dart';
 
 /// Statistics for an API endpoint
 class EndpointStat {

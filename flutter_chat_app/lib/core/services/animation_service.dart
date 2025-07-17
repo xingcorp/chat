@@ -1,13 +1,14 @@
-import 'package:injectable/injectable.dart';
-import 'package:flutter_chat_app/core/utils/animation_config.dart';
-import 'package:flutter_chat_app/core/utils/device_performance_tier.dart';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui';
-import 'package:flutter_chat_app/core/services/device_capability_service.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/services/device_capability_service.dart';
+import 'package:flutter_chat_app/core/utils/animation_config.dart';
+import 'package:flutter_chat_app/core/utils/device_performance_tier.dart';
 import 'package:get_it/get_it.dart';
+import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
 /// Tipos de transição de página
