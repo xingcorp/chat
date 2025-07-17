@@ -29,7 +29,7 @@ abstract class BaseDialog extends BaseStatelessWidget {
   final Curve? insetAnimationCurve;
 
   const BaseDialog({
-    Key? key,
+    super.key,
     this.title,
     this.content,
     this.actions = const [],
@@ -42,7 +42,7 @@ abstract class BaseDialog extends BaseStatelessWidget {
     this.shape,
     this.insetAnimationDuration,
     this.insetAnimationCurve,
-  }) : super(key: key);
+  });
 
   @override
   Widget buildContent(BuildContext context) {
@@ -283,8 +283,8 @@ class ConfirmationDialog extends BaseDialog {
   final DialogActionType confirmType;
 
   const ConfirmationDialog({
-    Key? key,
-    String? title,
+    super.key,
+    super.title,
     required this.message,
     this.confirmText = 'OK',
     this.cancelText = 'Cancel',
@@ -292,8 +292,6 @@ class ConfirmationDialog extends BaseDialog {
     this.onCancel,
     this.confirmType = DialogActionType.primary,
   }) : super(
-          key: key,
-          title: title,
           actions: const [], // Will be built in _buildActions
         );
 

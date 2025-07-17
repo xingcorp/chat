@@ -44,7 +44,6 @@ import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -188,7 +187,7 @@ class EnterpriseDI {
 
     try {
       // Connectivity
-      serviceLocator.registerLazySingleton<Connectivity>(() => Connectivity());
+      serviceLocator.registerLazySingleton<Connectivity>(Connectivity.new);
       serviceLocator.registerLazySingleton<INetworkInfo>(
         () => NetworkInfo(
           connectivity: serviceLocator<Connectivity>(),
@@ -207,7 +206,7 @@ class EnterpriseDI {
 
       // Secure Storage
       serviceLocator.registerLazySingleton<SecureStorage>(
-        () => SecureStorageImpl(),
+        SecureStorageImpl.new,
       );
 
       stopwatch.stop();

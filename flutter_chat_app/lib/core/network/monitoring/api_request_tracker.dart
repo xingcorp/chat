@@ -190,7 +190,10 @@ class ApiRequestTracker {
       _startCleanupTimer();
     } catch (e) {
       // Fallback for when DI is not available (like tests)
-      print('Warning: Could not create ApiRequestTracker dependencies: $e');
+      // Use fallback logging when DI is not available
+      if (kDebugMode) {
+        debugPrint('Warning: Could not create ApiRequestTracker dependencies: $e');
+      }
     }
   }
   

@@ -113,7 +113,7 @@ class MediaCacheManager {
       // Nếu không có trong cache, tải và tối ưu
       final originalFile = await _cacheManager.getMediaFile(url);
       
-      if (useIsolate && _isolateManager != null) {
+      if (useIsolate) {
         // Xử lý trong isolate để không block main thread
         final optimizedBytes = await _processImageInIsolate(
           originalFile.path,
@@ -200,7 +200,7 @@ class MediaCacheManager {
       // Nếu không có, tải ảnh gốc
       final originalFile = await _cacheManager.getMediaFile(imageUrl);
       
-      if (useIsolate && _isolateManager != null) {
+      if (useIsolate) {
         // Xử lý trong isolate 
         final thumbnailBytes = await _generateThumbnailInIsolate(
           originalFile.path,
@@ -545,7 +545,7 @@ class MediaCacheManager {
   Future<File> _optimizeImage(File file, {int? width, int? height}) async {
     final targetPath = await _getTemporaryFilePath('.jpg');
     
-    _logger.t('Tối ưu hình ảnh: ${file.path} (${width}x${height})');
+    _logger.t('Tối ưu hình ảnh: ${file.path} (${width}x$height)');
     
     int targetWidth = width ?? maxOptimizeWidth;
     int targetHeight = height ?? 1080;

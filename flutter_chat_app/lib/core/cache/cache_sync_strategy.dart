@@ -188,13 +188,13 @@ class CacheSyncStrategy {
     _cacheManager.invalidateCache('message_$messageId');
     
     // Invalidate danh sách tin nhắn (với các prefix phổ biến)
-    _invalidateWithPrefix('${chatMessagesPrefix}${chatId}');
+    _invalidateWithPrefix('$chatMessagesPrefix$chatId');
   }
   
   /// Invalidate cache liên quan đến một chat cụ thể
   void _invalidateChatCache(String chatId) {
     // Invalidate chi tiết chat
-    _cacheManager.invalidateCache('${chatDetailPrefix}$chatId');
+    _cacheManager.invalidateCache('$chatDetailPrefix$chatId');
     
     // Invalidate danh sách chat
     _invalidateWithPrefix(chatListPrefix);
@@ -202,7 +202,7 @@ class CacheSyncStrategy {
   
   /// Invalidate cache liên quan đến một người dùng cụ thể
   void _invalidateUserCache(String userId) {
-    _cacheManager.invalidateCache('${userDataPrefix}$userId');
+    _cacheManager.invalidateCache('$userDataPrefix$userId');
   }
   
   /// Invalidate tất cả cache bắt đầu bằng một prefix

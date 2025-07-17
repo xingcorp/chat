@@ -3,12 +3,14 @@ import 'package:flutter_chat_app/data/datasources/auth/auth_remote_datasource.da
 import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart';
 import 'package:flutter_chat_app/domain/entities/user.dart';
 import 'package:flutter_chat_app/domain/repositories/auth_repository.dart';
+import 'package:logger/logger.dart';
 
 /// Implementation of the [AuthRepository] interface
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _authRemoteDataSource;
   final UserLocalDataSource _userLocalDataSource;
   final NetworkInfo _networkInfo;
+  final Logger _logger = Logger();
 
   /// Constructor
   AuthRepositoryImpl(
@@ -27,7 +29,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       return null;
     } catch (e) {
-      print('Error getting current user: $e');
+      _logger.e('Error getting current user: $e');
       return null;
     }
   }

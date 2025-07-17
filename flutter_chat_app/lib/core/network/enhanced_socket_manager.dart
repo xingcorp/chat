@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:rxdart/rxdart.dart';
@@ -8,7 +8,7 @@ import 'package:rxdart/rxdart.dart';
 import 'handlers/offline_message_handler.dart';
 import 'monitoring/network_quality_monitor.dart';
 import 'models/network_quality.dart' as models;
-import 'models/socket_error.dart';
+
 import 'models/socket_connection_state.dart';
 import 'socket_analytics.dart';
 import 'socket_manager.dart';
@@ -230,7 +230,7 @@ class EnhancedSocketManager {
     try {
       // Gửi sự kiện
       _socketManager.emit(event, {
-        ...data is Map ? data as Map : {'data': data},
+        ...data is Map ? data : {'data': data},
         'ackId': ackId,
       });
       

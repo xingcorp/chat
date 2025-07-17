@@ -191,17 +191,27 @@ class CacheStats {
   /// Lấy dữ liệu thống kê để hiển thị trên UI
   String getStatsReport() {
     final stats = getSummaryStats();
+    final apiHitRate = (stats['apiHitRate'] as double) * 100;
+    final mediaHitRate = (stats['mediaHitRate'] as double) * 100;
+    final overallHitRate = (stats['overallHitRate'] as double) * 100;
+    final averageLoadTime = stats['averageLoadTime'] as double;
+    final averageCachedLoadTime = stats['averageCachedLoadTime'] as double;
+    final apiHits = stats['apiHits'] as int;
+    final apiMisses = stats['apiMisses'] as int;
+    final mediaHits = stats['mediaHits'] as int;
+    final mediaMisses = stats['mediaMisses'] as int;
+
     return '''
     === Báo cáo hiệu quả Cache ===
-    Tỷ lệ trúng API: ${(stats['apiHitRate'] * 100).toStringAsFixed(1)}%
-    Tỷ lệ trúng Media: ${(stats['mediaHitRate'] * 100).toStringAsFixed(1)}%
-    Tỷ lệ trúng tổng thể: ${(stats['overallHitRate'] * 100).toStringAsFixed(1)}%
-    
-    Thời gian tải trung bình: ${stats['averageLoadTime'].toStringAsFixed(2)}ms
-    Thời gian tải với cache: ${stats['averageCachedLoadTime'].toStringAsFixed(2)}ms
-    
-    Tổng API requests: ${stats['apiHits'] + stats['apiMisses']}
-    Tổng Media requests: ${stats['mediaHits'] + stats['mediaMisses']}
+    Tỷ lệ trúng API: ${apiHitRate.toStringAsFixed(1)}%
+    Tỷ lệ trúng Media: ${mediaHitRate.toStringAsFixed(1)}%
+    Tỷ lệ trúng tổng thể: ${overallHitRate.toStringAsFixed(1)}%
+
+    Thời gian tải trung bình: ${averageLoadTime.toStringAsFixed(2)}ms
+    Thời gian tải với cache: ${averageCachedLoadTime.toStringAsFixed(2)}ms
+
+    Tổng API requests: ${apiHits + apiMisses}
+    Tổng Media requests: ${mediaHits + mediaMisses}
     ''';
   }
 }

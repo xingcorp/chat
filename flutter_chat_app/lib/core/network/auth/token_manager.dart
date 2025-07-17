@@ -138,24 +138,16 @@ class TokenManager {
       
       debugPrint('Refreshing token...');
       
-      // Giả lập thành công
-      final success = true;
-      
-      if (success) {
-        // Refresh token thành công, lưu token mới
-        await setTokens(
-          accessToken: 'new_access_token',
-          refreshToken: 'new_refresh_token',
-          expiryTime: DateTime.now().add(const Duration(hours: 1)),
-        );
-        
-        completer.complete(true);
-        return true;
-      } else {
-        // Refresh token thất bại
-        completer.complete(false);
-        return false;
-      }
+      // Giả lập thành công - TODO: Implement actual refresh logic
+      // Refresh token thành công, lưu token mới
+      await setTokens(
+        accessToken: 'new_access_token',
+        refreshToken: 'new_refresh_token',
+        expiryTime: DateTime.now().add(const Duration(hours: 1)),
+      );
+
+      completer.complete(true);
+      return true;
     } catch (e) {
       debugPrint('Error refreshing token: $e');
       completer.complete(false);

@@ -4,7 +4,7 @@ import 'package:flutter_chat_app/core/utils/logger.dart';
 /// Base class cho tất cả các widget có trạng thái trong ứng dụng
 /// Tích hợp tối ưu hiệu suất và debugging
 abstract class BaseStatefulWidget extends StatefulWidget {
-  const BaseStatefulWidget({Key? key}) : super(key: key);
+  const BaseStatefulWidget({super.key});
   
   /// Allow widgets to control when they should rebuild for optimization
   /// Returns true if the widget should rebuild when the configuration changes
@@ -112,7 +112,7 @@ abstract class BaseState<T extends BaseStatefulWidget> extends State<T> with Wid
 /// Base class for all stateless widgets
 abstract class BaseStatelessWidget extends StatelessWidget {
   /// Constructor
-  const BaseStatelessWidget({Key? key}) : super(key: key);
+  const BaseStatelessWidget({super.key});
 
   /// Build method to override in descendants
   @override

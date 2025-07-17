@@ -227,7 +227,20 @@ class EnterpriseBackgroundSyncWorker {
   /// Sync chat messages
   static Future<void> _syncChatMessages(Logger logger) async {
     logger.i('💬 Đồng bộ tin nhắn chat');
-    // Implementation for chat message sync
+
+    try {
+      // Use cache sync strategy for efficient sync
+      final cacheSyncStrategy = CacheSyncStrategy();
+
+      // Sync chat messages by marking data as dirty for refresh
+      cacheSyncStrategy.markChatListDirty();
+      cacheSyncStrategy.markUserDataDirty();
+
+      logger.d('✅ Chat messages synced successfully using cache strategy');
+    } catch (e) {
+      logger.e('❌ Failed to sync chat messages: $e');
+      rethrow;
+    }
     await Future.delayed(const Duration(seconds: 1)); // Simulate work
   }
   
@@ -245,6 +258,34 @@ class EnterpriseBackgroundSyncWorker {
     await Future.delayed(const Duration(milliseconds: 800)); // Simulate work
   }
   
+  /// Perform manual sync using cache strategy
+  Future<void> performManualSync() async {
+    if (!_isInitialized) {
+      _logger.w('⚠️ Background sync worker chưa được khởi tạo');
+      return;
+    }
+
+    try {
+      _logger.i('🔄 Bắt đầu manual sync với cache strategy');
+
+      // Use cache sync strategy for efficient sync
+      _cacheSyncStrategy.markChatListDirty();
+      _cacheSyncStrategy.markUserDataDirty();
+
+      // Check connectivity before sync
+      final isConnected = await _connectivityService.isConnected();
+      if (!isConnected) {
+        _logger.w('⚠️ Không có kết nối mạng, bỏ qua sync');
+        return;
+      }
+
+      _logger.i('✅ Manual sync hoàn thành');
+    } catch (e) {
+      _logger.e('❌ Lỗi khi thực hiện manual sync: $e');
+      rethrow;
+    }
+  }
+
   /// Đăng ký port cho communication
   void _registerPort() {
     _receivePort = ReceivePort();
@@ -252,7 +293,7 @@ class EnterpriseBackgroundSyncWorker {
       _receivePort!.sendPort,
       'enterprise_background_sync_port',
     );
-    
+
     _receivePort!.listen((dynamic message) {
       _logger.i('📨 Nhận thông báo từ background service: $message');
     });
@@ -343,7 +384,7 @@ class EnterpriseBackgroundSyncWorker {
   
   /// Check if background sync is running
   Future<bool> isRunning() async {
-    return await _backgroundService.isRunning();
+    return _backgroundService.isRunning();
   }
   
   /// Get sync statistics

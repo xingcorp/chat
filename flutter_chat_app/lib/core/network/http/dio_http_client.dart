@@ -2,8 +2,7 @@ import 'dart:async';
 import 'dart:core';
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:convert';
-import 'dart:collection';
+
 
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
@@ -628,10 +627,10 @@ class DioHttpClient implements IHttpClient {
         case dio.DioExceptionType.connectionTimeout:
         case dio.DioExceptionType.sendTimeout:
         case dio.DioExceptionType.receiveTimeout:
-          _logger.warn('DioHttpClient: Timeout [${method}] ${path}');
+          _logger.warn('DioHttpClient: Timeout [$method] $path');
           break;
         case dio.DioExceptionType.badResponse:
-          _logger.warn('DioHttpClient: Bad response [${method}] ${path}: ${statusCode}');
+          _logger.warn('DioHttpClient: Bad response [$method] $path: $statusCode');
           break;
         case dio.DioExceptionType.cancel:
           _logger.debug('DioHttpClient: Request cancelled [${method}] ${path}');

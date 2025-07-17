@@ -48,6 +48,24 @@ class MessageDeliveryTracker {
   
   /// Constructor
   MessageDeliveryTracker(this._performanceMonitor);
+
+  // Backward compatibility methods for tests
+
+  /// Start tracking a message (backward compatibility)
+  Future<String> startTracking(String messageId, String chatId) async {
+    return trackNewMessage(chatId, messageId: messageId);
+  }
+
+  /// Update message status (backward compatibility)
+  Future<void> updateStatus(String messageId, MessageDeliveryStatus status) async {
+    await updateMessageStatus(messageId, status);
+  }
+
+  /// Complete message tracking (backward compatibility)
+  Future<void> completeTracking(String messageId, {bool success = true}) async {
+    final status = success ? MessageDeliveryStatus.read : MessageDeliveryStatus.failed;
+    await updateMessageStatus(messageId, status);
+  }
   
   /// Khởi tạo
   Future<void> initialize() async {

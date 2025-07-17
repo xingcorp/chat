@@ -8,6 +8,7 @@ import 'dart:ui';
 import 'package:flutter_chat_app/core/services/device_capability_service.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
 import 'package:get_it/get_it.dart';
+import 'package:logger/logger.dart';
 
 /// Tipos de transição de página
 enum PageTransitionType {
@@ -63,7 +64,10 @@ class AnimationService {
   
   /// Monitor de desempenho
   final PerformanceMonitor? _performanceMonitor;
-  
+
+  /// Logger instance
+  final Logger _logger = Logger();
+
   /// Cấp hiệu năng thiết bị hiện tại
   late DevicePerformanceTier _currentPerformanceTier;
   
@@ -123,7 +127,7 @@ class AnimationService {
     // Start frame monitoring
     _startFrameMonitoring();
     
-    print('Animation Service initialized with tier: $_currentPerformanceTier');
+    _logger.i('Animation Service initialized with tier: $_currentPerformanceTier');
   }
   
   /// Start monitoring frame rate to adapt animations
@@ -342,7 +346,7 @@ class AnimationService {
       
       // Report metrics if slow
       if (duration.inMilliseconds > 500) {
-        _logger('Slow page transition to $routeName: ${duration.inMilliseconds}ms');
+        _logger.w('Slow page transition to $routeName: ${duration.inMilliseconds}ms');
       }
     }
   }
@@ -477,10 +481,7 @@ class AnimationService {
     }
   }
   
-  /// Simple logger
-  void _logger(String message) {
-    print('AnimationService: $message');
-  }
+
 }
 
 /// Cấu hình animation cho toàn ứng dụng

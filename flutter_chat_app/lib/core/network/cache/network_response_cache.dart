@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
 
 /// Chiến lược cache cho network responses
 enum CacheStrategy {
@@ -34,10 +35,13 @@ class NetworkResponseCache {
   
   /// SharedPreferences để lưu metadata
   final SharedPreferences _prefs;
-  
+
+  /// Logger instance
+  final Logger _logger = Logger();
+
   /// Key prefix cho metadata trong SharedPreferences
   static const String _prefixExpiry = 'cache_expiry_';
-  
+
   /// Key prefix cho group cache
   static const String _prefixGroup = 'cache_group_';
   
@@ -63,7 +67,7 @@ class NetworkResponseCache {
       // Xóa các cache đã hết hạn
       _cleanExpiredCache();
     } catch (e) {
-      print('Error initializing cache: $e');
+      _logger.e('Error initializing cache: $e');
     }
   }
   
@@ -95,7 +99,7 @@ class NetworkResponseCache {
       final jsonData = json.decode(jsonString);
       return jsonData as T;
     } catch (e) {
-      print('Error reading cache: $e');
+      _logger.e('Error reading cache: $e');
       return null;
     }
   }
@@ -149,7 +153,7 @@ class NetworkResponseCache {
         }
       }
     } catch (e) {
-      print('Error caching response: $e');
+      _logger.e('Error caching response: $e');
     }
   }
   

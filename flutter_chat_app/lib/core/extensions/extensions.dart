@@ -148,11 +148,11 @@ extension DateTimeExtension on DateTime {
     if (dateToCheck == today) {
       return toFormattedTime;
     } else if (dateToCheck == yesterday) {
-      return 'Hôm qua, ${toFormattedTime}';
+      return 'Hôm qua, $toFormattedTime';
     } else if (now.difference(this).inDays < 7) {
       // Trong vòng 1 tuần
       final weekday = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
-      return '${weekday[weekday.length - 1]}, ${toFormattedTime}';
+      return '${weekday[weekday.length - 1]}, $toFormattedTime';
     } else {
       return toFormattedDateTime;
     }

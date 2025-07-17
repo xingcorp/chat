@@ -80,14 +80,8 @@ class LoggerService {
   
   /// Log a critical message that should always be shown
   void critical(String message, [dynamic error, StackTrace? stackTrace]) {
-    // Log to console regardless of config
-    print('CRITICAL [$_tag] $message');
-    if (error != null) {
-      print('Error: $error');
-    }
-    if (stackTrace != null) {
-      print('StackTrace: $stackTrace');
-    }
+    // Log to console regardless of config using logger
+    _logger.f('CRITICAL [$_tag] $message', error: error, stackTrace: stackTrace);
     
     // Also log through the logger
     if (error != null) {

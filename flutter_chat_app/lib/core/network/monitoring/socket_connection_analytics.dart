@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+
 import 'package:logger/logger.dart';
 
 import '../../monitoring/analytics_service.dart';

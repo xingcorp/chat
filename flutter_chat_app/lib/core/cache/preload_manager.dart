@@ -93,9 +93,10 @@ class PreloadManager {
     
     try {
       // Nếu có isolate manager, sử dụng isolates để tải
-      if (_isolateManager != null) {
+      try {
         await _preloadWithIsolates();
-      } else {
+      } catch (e) {
+        _logger.w('Isolate preload failed, falling back to main thread: $e');
         // Tiền tải các loại dữ liệu song song
         await Future.wait([
           _preloadUserProfile(),
@@ -219,8 +220,9 @@ class PreloadManager {
       
       // Lấy danh sách keys thường truy cập từ CacheStats
       final frequentKeys = _cacheStats.getMostAccessedKeys(limit: 20);
-      
+
       // Tiền tải các dữ liệu này (thực tế sẽ tải dữ liệu thực)
+      _logger.d('Preloading ${frequentKeys.length} frequent cache keys');
       await Future.delayed(const Duration(milliseconds: 600));
       
       _completeTask();

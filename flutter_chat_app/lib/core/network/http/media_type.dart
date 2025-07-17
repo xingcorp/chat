@@ -1,5 +1,5 @@
 import 'package:mime/mime.dart';
-import 'package:dio/dio.dart';
+
 
 /// Lớp MediaType đại diện cho một MIME type, được sử dụng
 /// cho các header `Content-Type` và `Accept` trong HTTP requests.

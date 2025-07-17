@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+
 
 /// Enum representing types of socket errors that can occur
 enum SocketErrorType {

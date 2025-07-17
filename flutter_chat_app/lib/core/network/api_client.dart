@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -12,7 +10,6 @@ import 'package:get_it/get_it.dart';
 import '../monitoring/logger.dart';
 import '../monitoring/analytics_service.dart';
 import 'http/http_client_interface.dart';
-import 'http/media_type.dart';
 import 'monitoring/api_request_tracker.dart';
 import 'cache/api_cache_manager.dart';
 
@@ -39,9 +36,6 @@ class ApiClient {
   // Retry configuration
   int _maxRetries = 3;
   List<int> _retryDelays = [1000, 2000, 5000];
-  
-  // Get the GetIt instance
-  final GetIt _getIt = GetIt.instance;
   
   @visibleForTesting
   ApiClient({

@@ -17,33 +17,33 @@ abstract class Failure extends Equatable {
 /// Lỗi server
 class ServerFailure extends Failure {
   const ServerFailure({
-    required String message,
-    int? code,
-  }) : super(message: message, code: code);
+    required super.message,
+    super.code,
+  });
 }
 
 /// Lỗi kết nối
 class ConnectionFailure extends Failure {
   const ConnectionFailure({
-    required String message,
-    int? code,
-  }) : super(message: message, code: code);
+    required super.message,
+    super.code,
+  });
 }
 
 /// Lỗi cache
 class CacheFailure extends Failure {
   const CacheFailure({
-    required String message,
-    int? code,
-  }) : super(message: message, code: code);
+    required super.message,
+    super.code,
+  });
 }
 
 /// Lỗi xác thực
 class AuthenticationFailure extends Failure {
   const AuthenticationFailure({
-    required String message,
-    int? code,
-  }) : super(message: message, code: code);
+    required super.message,
+    super.code,
+  });
 }
 
 /// Lỗi không xác định
@@ -54,9 +54,9 @@ class UnexpectedFailure extends Failure {
 /// Lỗi truy cập không được phép
 class PermissionFailure extends Failure {
   const PermissionFailure({
-    required String message,
-    int? code,
-  }) : super(message: message, code: code);
+    required super.message,
+    super.code,
+  });
 }
 
 /// Lỗi nhập liệu
@@ -76,31 +76,31 @@ class ValidationFailure extends Failure {
 /// Lỗi timeout
 class TimeoutFailure extends Failure {
   const TimeoutFailure({
-    required String message,
-    int? code,
-  }) : super(message: message, code: code);
+    required super.message,
+    super.code,
+  });
 }
 
 /// Lỗi realtime
 class RealtimeFailure extends Failure {
   const RealtimeFailure({
-    required String message,
-    int? code,
-  }) : super(message: message, code: code);
+    required super.message,
+    super.code,
+  });
 }
 
 /// Lỗi upload file
 class UploadFailure extends Failure {
   const UploadFailure({
-    required String message,
-    int? code,
-  }) : super(message: message, code: code);
+    required super.message,
+    super.code,
+  });
 }
 
 /// Lỗi download file
 class DownloadFailure extends Failure {
   const DownloadFailure({
-    required String message,
-    int? code,
-  }) : super(message: message, code: code);
-} 
+    required super.message,
+    super.code,
+  });
+}
