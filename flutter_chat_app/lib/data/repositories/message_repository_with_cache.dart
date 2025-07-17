@@ -36,7 +36,7 @@ class MessageRepositoryWithCache implements IMessageRepository {
   Future<ChatMessage?> getMessageById(String messageId) async {
     try {
       // Kiểm tra cache trước
-      final cacheKey = 'message_${messageId}';
+      final cacheKey = 'message_$messageId';
       final cachedMessage = await _cacheManager.getApiResponse<MessageModel>(
         cacheKey,
         fromJson: (json) => MessageModel.fromMap(json),
@@ -408,7 +408,7 @@ class MessageRepositoryWithCache implements IMessageRepository {
       _cacheSyncStrategy.resetChatMessagesDirtyFlag(chatId);
       
       // Invalidate message list cache to ensure fresh data
-      await _cacheManager.invalidateCache('chat_messages_${chatId}');
+      await _cacheManager.invalidateCache('chat_messages_$chatId');
       
       _logger.i('Đã hoàn thành đồng bộ tin nhắn cho chat $chatId');
     } catch (e) {

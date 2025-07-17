@@ -64,10 +64,10 @@ class ValidationFailure extends Failure {
   final Map<String, String>? fieldErrors;
 
   const ValidationFailure({
-    required String message,
+    required super.message,
     this.fieldErrors,
-    int? code,
-  }) : super(message: message, code: code);
+    super.code,
+  });
 
   @override
   List<Object?> get props => [...super.props, fieldErrors];

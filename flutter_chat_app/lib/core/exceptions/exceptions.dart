@@ -16,43 +16,43 @@ class ServerException extends AppException {
   final int? statusCode;
   
   /// Constructor
-  ServerException({required String message, this.statusCode}) : super(message: message);
+  ServerException({required super.message, this.statusCode});
 }
 
 /// Exception thrown when a cache operation fails
 class CacheException extends AppException {
   /// Constructor
-  CacheException({required String message}) : super(message: message);
+  CacheException({required super.message});
 }
 
 /// Exception thrown when no internet connection is available
 class NoInternetException extends AppException {
   /// Constructor
-  NoInternetException({String message = 'No internet connection'}) : super(message: message);
+  NoInternetException({super.message = 'No internet connection'});
 }
 
 /// Exception thrown when authentication fails
 class AuthException extends AppException {
   /// Constructor
-  AuthException({required String message}) : super(message: message);
+  AuthException({required super.message});
 }
 
 /// Exception thrown when a resource is not found
 class NotFoundException extends AppException {
   /// Constructor
-  NotFoundException({required String message}) : super(message: message);
+  NotFoundException({required super.message});
 }
 
 /// Exception thrown when an operation times out
 class TimeoutException extends AppException {
   /// Constructor
-  TimeoutException({String message = 'Operation timed out'}) : super(message: message);
+  TimeoutException({super.message = 'Operation timed out'});
 }
 
 /// Exception thrown when an argument is invalid
 class InvalidArgumentException extends AppException {
   /// Constructor
-  InvalidArgumentException({required String message}) : super(message: message);
+  InvalidArgumentException({required super.message});
 }
 
 /// Exception thrown when a format is invalid

@@ -3,14 +3,13 @@ import 'dart:core';
 import 'dart:io';
 import 'dart:typed_data';
 
-
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../monitoring/logger.dart';
-import '../monitoring/api_request_tracker.dart';
 import '../cache/api_cache_manager.dart';
+import '../monitoring/api_request_tracker.dart';
 import 'http_client_interface.dart';
 
 /// Triển khai IHttpClient sử dụng thư viện Dio
@@ -633,10 +632,10 @@ class DioHttpClient implements IHttpClient {
           _logger.warn('DioHttpClient: Bad response [$method] $path: $statusCode');
           break;
         case dio.DioExceptionType.cancel:
-          _logger.debug('DioHttpClient: Request cancelled [${method}] ${path}');
+          _logger.debug('DioHttpClient: Request cancelled [$method] $path');
           break;
         default:
-          _logger.error('DioHttpClient: Error [${method}] ${path}', error);
+          _logger.error('DioHttpClient: Error [$method] $path', error);
           break;
       }
       

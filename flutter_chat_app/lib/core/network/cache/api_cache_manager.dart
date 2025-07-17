@@ -14,7 +14,7 @@ class ApiCacheManager {
   static const int _maxCacheEntries = 100; // Số lượng tối đa các mục trong cache
   
   final AppLogger _logger;
-  late SharedPreferences _prefs;
+  late final SharedPreferences _prefs;
   final List<String> _cacheIndex = []; // Danh sách các khóa cache theo thứ tự LRU
   
   /// Khởi tạo ApiCacheManager

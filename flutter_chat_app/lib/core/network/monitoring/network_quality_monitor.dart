@@ -1,8 +1,9 @@
 import 'dart:async';
+
 import 'package:logger/logger.dart';
 
-import '../socket_analytics.dart';
 import '../models/network_quality.dart';
+import '../socket_analytics.dart';
 
 /// Monitor theo dõi chất lượng kết nối mạng Socket
 class NetworkQualityMonitor {

@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 
 /// Extensions cho String

@@ -118,7 +118,7 @@ class HeroAvatar extends StatelessWidget {
     }
     
     // Tạo Hero tag duy nhất
-    final heroTag = 'avatar-${id}';
+    final heroTag = 'avatar-$id';
     
     // Kiểm tra nếu thiết bị có hỗ trợ Hero animation không
     if (animationService.config.useHeroAnimations) {

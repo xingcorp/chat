@@ -78,12 +78,12 @@ class ResourceManagerService {
           'quality': quality,
           'targetWidth': targetWidth,
           'targetHeight': targetHeight,
-          'outputPath': '${_tempDirectory}/${const Uuid().v4()}.jpg',
+          'outputPath': '$_tempDirectory/${const Uuid().v4()}.jpg',
         });
       }
       
       // For smaller images, compress directly
-      final outputPath = '${_tempDirectory}/${const Uuid().v4()}.jpg';
+      final outputPath = '$_tempDirectory/${const Uuid().v4()}.jpg';
       
       // Note: This is a simplified implementation
       // In a real application, you would use an image compression package
@@ -120,7 +120,7 @@ class ResourceManagerService {
       // This is a simplified implementation
       // In a real application, you would use a video compression package
       
-      final outputPath = '${_tempDirectory}/${const Uuid().v4()}.mp4';
+      final outputPath = '$_tempDirectory/${const Uuid().v4()}.mp4';
       debugPrint('Video would be compressed with quality: $quality');
       
       return file.copy(outputPath);
@@ -139,7 +139,7 @@ class ResourceManagerService {
   }) async {
     try {
       // Simplified implementation - in a real app would use a video processing package
-      final outputPath = '${_tempDirectory}/${const Uuid().v4()}_thumb.jpg';
+      final outputPath = '$_tempDirectory/${const Uuid().v4()}_thumb.jpg';
       debugPrint('Video thumbnail would be created from: $videoPath with quality: $quality');
       
       // Just create an empty file for demonstration purposes
@@ -158,7 +158,7 @@ class ResourceManagerService {
     int quality = 70,
   }) async {
     try {
-      final outputPath = '${_tempDirectory}/${const Uuid().v4()}_thumb.jpg';
+      final outputPath = '$_tempDirectory/${const Uuid().v4()}_thumb.jpg';
       
       // Simplified implementation - would use an image processing package
       debugPrint('Image thumbnail would be created with dimensions: $maxWidth x $maxHeight, quality: $quality');
@@ -192,7 +192,7 @@ class ResourceManagerService {
         final request = await httpClient.getUrl(Uri.parse(url));
         final response = await request.close();
         
-        final outputFile = File('${_tempDirectory}/$fileName');
+        final outputFile = File('$_tempDirectory/$fileName');
         final sink = outputFile.openWrite();
         
         int totalBytes = response.contentLength;

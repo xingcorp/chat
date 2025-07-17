@@ -308,7 +308,7 @@ class RealtimeConnectionService {
           case ConnectionType.longPolling:
             final response = await _httpClient
                 .post(
-                  Uri.parse('${_httpUrl}/realtime/send'),
+                  Uri.parse('$_httpUrl/realtime/send'),
                   headers: {'Content-Type': 'application/json'},
                   body: jsonEncode(message),
                 )
@@ -643,7 +643,7 @@ class RealtimeConnectionService {
       final response = await _httpClient
           .get(
             Uri.parse(
-              '${_httpUrl}/realtime/poll?session_id=$_sessionId&client=flutter&last_id=${_messageController.value?.id ?? ""}',
+              '$_httpUrl/realtime/poll?session_id=$_sessionId&client=flutter&last_id=${_messageController.value?.id ?? ""}',
             ),
           )
           .timeout(const Duration(seconds: 30));
@@ -685,7 +685,7 @@ class RealtimeConnectionService {
       
       // Gửi request kiểm tra
       final response = await _httpClient
-          .get(Uri.parse('${_httpUrl}/realtime/check'))
+          .get(Uri.parse('$_httpUrl/realtime/check'))
           .timeout(const Duration(seconds: 5));
       
       // Kiểm tra kết quả
@@ -734,7 +734,7 @@ class RealtimeConnectionService {
   
   /// Tạo URL WebSocket
   String _buildWebSocketUrl() {
-    return '${_webSocketUrl}?session_id=$_sessionId&client=flutter&version=1.0.0';
+    return '$_webSocketUrl?session_id=$_sessionId&client=flutter&version=1.0.0';
   }
   
   /// Xử lý tin nhắn

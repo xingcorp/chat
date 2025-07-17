@@ -169,7 +169,7 @@ class PerformanceService {
   final List<MemoryInfo> _memorySnapshots = [];
   
   /// Performance collection enabled
-  bool _isPerformanceCollectionEnabled = !kDebugMode;
+  final bool _isPerformanceCollectionEnabled = !kDebugMode;
   
   /// Show performance overlay
   bool _showPerformanceOverlay = false;
@@ -190,7 +190,7 @@ class PerformanceService {
   double _currentFps = 0;
   
   /// Current CPU usage
-  double _currentCpuUsage = 0;
+  final double _currentCpuUsage = 0;
   
   /// Average build time
   Duration _buildTime = Duration.zero;

@@ -98,10 +98,10 @@ class _PaginatedMessageListState extends State<PaginatedMessageList> {
   DateTime? _currentJumpDate;
   
   /// Hiển thị thanh cuộn nhanh
-  bool _showJumpBar = false;
-  
+  final bool _showJumpBar = false;
+
   /// Đang kéo thanh cuộn nhanh
-  bool _isDraggingJumpBar = false;
+  final bool _isDraggingJumpBar = false;
   
   @override
   void initState() {

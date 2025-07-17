@@ -3,10 +3,11 @@ import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
-import 'package:injectable/injectable.dart';
 import 'package:get_it/get_it.dart';
-import '../../monitoring/logger.dart';
+import 'package:injectable/injectable.dart';
+
 import '../../monitoring/analytics_service.dart';
+import '../../monitoring/logger.dart';
 
 /// Statistics for an API endpoint
 class EndpointStat {
@@ -178,8 +179,8 @@ class ApiRequestTracker {
   int? _slowestResponseTime;
   
   // Add new analysis metrics
-  Map<String, List<int>> _hourlyRequestCounts = {};
-  Map<String, Map<int, int>> _statusCodeDistribution = {};
+  final Map<String, List<int>> _hourlyRequestCounts = {};
+  final Map<String, Map<int, int>> _statusCodeDistribution = {};
   int _apdexThreshold = 500; // ms - target response time
   
   // Private constructor

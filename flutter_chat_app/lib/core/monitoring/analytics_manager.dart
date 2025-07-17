@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 
 /// Interface trừu tượng cho dịch vụ analytics

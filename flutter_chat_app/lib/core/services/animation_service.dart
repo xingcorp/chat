@@ -90,7 +90,7 @@ class AnimationService {
   DateTime _lastFrameRateCheck = DateTime.now();
   
   /// Metric collection
-  bool _collectMetrics = true;
+  final bool _collectMetrics = true;
   
   /// Map of animation durations for performance analysis
   final Map<String, List<Duration>> _animationMetrics = {};
