@@ -2,23 +2,26 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
+
 import 'package:flutter_chat_app/core/cache/enterprise_background_sync_worker.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 
 /// Service for handling background synchronization
 @lazySingleton
 class BackgroundSyncService {
   // Enterprise worker handles task naming internally
-  
+
   final FlutterBackgroundService _backgroundService = FlutterBackgroundService();
   final EnterpriseBackgroundSyncWorker _enterpriseWorker = EnterpriseBackgroundSyncWorker();
+  final Workmanager _workmanager = Workmanager();
   
   /// Initialize the background sync service
   Future<void> initialize() async {
@@ -130,22 +133,23 @@ class BackgroundSyncService {
   /// Callback dispatcher for Workmanager
   @pragma('vm:entry-point')
   static void _workmanagerCallbackDispatcher() {
+    // This is the entry point for background tasks
+    // Initialize necessary components
+    WidgetsFlutterBinding.ensureInitialized();
+
+    // Register the task handler
     Workmanager().executeTask((taskName, inputData) async {
-      // Initialize necessary components
-      WidgetsFlutterBinding.ensureInitialized();
-      DartPluginRegistrant.ensureInitialized();
-      
       if (taskName == 'chatSyncTask') {
         try {
           await _performBackgroundSync();
-          return true;
+          return Future.value(true);
         } catch (e) {
           debugPrint('Error in background sync: $e');
-          return false;
+          return Future.value(false);
         }
       }
-      
-      return true;
+
+      return Future.value(false);
     });
   }
   

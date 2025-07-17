@@ -205,9 +205,10 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         
         if (messages.isNotEmpty) {
+          final lastMessage = messages.first;
           final updatedChat = chat.copyWith(
-            lastMessage: messages.first,
-            updatedAt: DateTime.now(),
+            lastMessageTime: lastMessage.createdAt,
+            lastMessagePreview: lastMessage.content,
           );
           await saveChat(updatedChat);
         }
@@ -239,8 +240,8 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
           );
           
           final updatedChat = chat.copyWith(
-            lastMessage: latestMessage,
-            updatedAt: DateTime.now(),
+            lastMessageTime: latestMessage.createdAt,
+            lastMessagePreview: latestMessage.content,
           );
           await saveChat(updatedChat);
         }

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/network/handlers/offline_message_handler.dart';
 import 'package:flutter_chat_app/core/network/models/network_quality.dart' as models;
 import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
@@ -8,6 +7,7 @@ import 'package:flutter_chat_app/core/network/monitoring/network_quality_monitor
 import 'package:flutter_chat_app/core/network/socket_analytics.dart';
 import 'package:flutter_chat_app/core/network/socket_manager.dart';
 import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
+import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:rxdart/rxdart.dart';
 

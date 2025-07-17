@@ -7,44 +7,14 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix bug 7">
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix bug 8">
       <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/base/base_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/base/base_repository.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/cache/preload_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/cache/preload_manager.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/extensions/extensions.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/extensions/extensions.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/monitoring/analytics_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/monitoring/analytics_manager.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/api_client.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/api_client.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/cache/api_cache_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/cache/api_cache_manager.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/core/network/enhanced_socket_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/enhanced_socket_manager.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/handlers/offline_message_handler.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/handlers/offline_message_handler.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/http/dio_http_client.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/http/dio_http_client.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/http/http_client_interface.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/http/http_client_interface.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/monitoring/api_request_tracker.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/monitoring/api_request_tracker.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/monitoring/network_quality_monitor.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/monitoring/network_quality_monitor.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/monitoring/socket_connection_analytics.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/monitoring/socket_connection_analytics.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/monitoring/socket_error_analytics.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/monitoring/socket_error_analytics.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/monitoring/socket_message_analytics.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/monitoring/socket_message_analytics.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/monitoring/socket_metrics.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/monitoring/socket_metrics.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/monitoring/socket_rate_limit_analytics.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/monitoring/socket_rate_limit_analytics.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/realtime/connection_pool_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/realtime/connection_pool_manager.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/realtime/connection_state_machine.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/realtime/connection_state_machine.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/realtime/enhanced_realtime_connection_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/realtime/enhanced_realtime_connection_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/realtime/mixins/websocket_handler_mixin.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/realtime/mixins/websocket_handler_mixin.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/realtime/models/realtime_error.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/realtime/models/realtime_error.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/realtime/smart_reconnect_strategy.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/realtime/smart_reconnect_strategy.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/socket_analytics.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/socket_analytics.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/socket_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/socket_manager.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/socket_rate_limiter.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/socket_rate_limiter.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/performance/performance_benchmark.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/performance/performance_benchmark.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/performance/performance_validator.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/performance/performance_validator.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/animation_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/animation_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main_desktop.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_desktop.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main_mobile.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_mobile.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main_web.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_web.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/base/base_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/base/base_bloc.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/background_sync_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/background_sync_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/datasources/chat/chat_local_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/chat/chat_local_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/datasources/message/message_local_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/message/message_local_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat/message_item.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat/message_item.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -541,7 +511,15 @@
       <option name="project" value="LOCAL" />
       <updated>1752734725978</updated>
     </task>
-    <option name="localTasksCounter" value="41" />
+    <task id="LOCAL-00041" summary="fix bug 8">
+      <option name="closed" value="true" />
+      <created>1752744791277</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1752744791277</updated>
+    </task>
+    <option name="localTasksCounter" value="42" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -638,7 +616,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: add connectivity change stream and improve HTTP client configuration" />
     <MESSAGE value="feat: add cursor rules for maintaining a clean and robust Flutter codebase" />
     <MESSAGE value="feat: enhance cursor rules to enforce clean architecture principles and improve code quality" />
     <MESSAGE value="feat: update cursor rules to enforce clean architecture and improve code quality" />
@@ -663,7 +640,8 @@
     <MESSAGE value="fix bug 5" />
     <MESSAGE value="fix bug 6" />
     <MESSAGE value="fix bug 7" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix bug 7" />
+    <MESSAGE value="fix bug 8" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix bug 8" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

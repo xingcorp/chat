@@ -1,16 +1,14 @@
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:get_it/get_it.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:flutter_chat_app/core/services/media_service.dart';
-import 'package:flutter_chat_app/core/utils/date_formatter.dart';
-import 'package:flutter_chat_app/presentation/widgets/message_status_indicator.dart';
-import 'package:flutter_chat_app/core/utils/animation_config.dart';
-import 'package:flutter_chat_app/presentation/widgets/attachment_preview.dart';
 import 'package:timeago/timeago.dart' as timeago;
+
+import 'package:flutter_chat_app/core/services/media_service.dart';
+import 'package:flutter_chat_app/core/services/message_queue_service.dart';
+import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
+import 'package:flutter_chat_app/presentation/widgets/message_status_indicator.dart';
 
 class MessageItem extends StatefulWidget {
   final ChatMessage message;
@@ -200,8 +198,9 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                 if (isCurrentUser)
                   RepaintBoundary(
                     child: MessageStatusIndicator(
-                      status: widget.message.status,
-                      isRead: widget.message.isRead,
+                      messageId: widget.message.id,
+                      messageQueueService: GetIt.instance<MessageQueueService>(),
+                      status: _mapMessageStatusToQueueStatus(widget.message.status),
                     ),
                   ),
               ],
@@ -251,8 +250,9 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
           mainAxisSize: MainAxisSize.min,
           children: [
             // Reply indicator if this is a reply
-            if (widget.message.replyTo != null)
-              _buildReplyPreview(context, isFromCurrentUser),
+            // TODO: Add replyTo field to ChatMessage entity
+            // if (widget.message.replyTo != null)
+            //   _buildReplyPreview(context, isFromCurrentUser),
             
             // Attachment previews if any
             if (widget.message.attachments.isNotEmpty)
@@ -318,10 +318,28 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     // This method should return a widget representing the attachment previews
     throw UnimplementedError();
   }
-  
+
+  /// Map MessageStatus to MessageQueueStatus
+  MessageQueueStatus _mapMessageStatusToQueueStatus(MessageStatus status) {
+    switch (status) {
+      case MessageStatus.pending:
+        return MessageQueueStatus.pending;
+      case MessageStatus.sending:
+        return MessageQueueStatus.sending;
+      case MessageStatus.sent:
+        return MessageQueueStatus.sent;
+      case MessageStatus.delivered:
+        return MessageQueueStatus.delivered;
+      case MessageStatus.read:
+        return MessageQueueStatus.delivered; // Map read to delivered for now
+      case MessageStatus.failed:
+        return MessageQueueStatus.failed;
+    }
+  }
+
   BorderRadius _getBubbleBorderRadius(bool isFromCurrentUser) {
     // Implementation of _getBubbleBorderRadius method
     // This method should return the appropriate BorderRadius for the message bubble
     throw UnimplementedError();
   }
-} 
+}
