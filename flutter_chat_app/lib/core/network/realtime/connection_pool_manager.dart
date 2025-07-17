@@ -589,9 +589,7 @@ class ConnectionPoolManager {
     
     try {
       // Dispose doesn't return a Future, so we wrap it
-      await Future(() {
-        connection.service.dispose();
-      }).timeout(
+      await Future(connection.service.dispose).timeout(
         const Duration(seconds: 3),
         onTimeout: () => null,
       );

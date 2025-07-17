@@ -58,41 +58,41 @@ class InvalidArgumentException extends AppException {
 /// Exception thrown when a format is invalid
 class FormatException extends AppException {
   /// Constructor
-  FormatException({required String message}) : super(message: message);
+  FormatException({required super.message});
 }
 
 /// Exception thrown when a conflict occurs
 class ConflictException extends AppException {
   /// Constructor
-  ConflictException({required String message}) : super(message: message);
+  ConflictException({required super.message});
 }
 
 /// Exception thrown when a resource already exists
 class AlreadyExistsException extends AppException {
   /// Constructor
-  AlreadyExistsException({required String message}) : super(message: message);
+  AlreadyExistsException({required super.message});
 }
 
 /// Exception thrown when a validation fails
 class ValidationException extends AppException {
   /// Constructor
-  ValidationException({required String message}) : super(message: message);
+  ValidationException({required super.message});
 }
 
 /// Exception thrown when a permission is denied
 class PermissionDeniedException extends AppException {
   /// Constructor
-  PermissionDeniedException({required String message}) : super(message: message);
+  PermissionDeniedException({required super.message});
 }
 
 /// Exception thrown when a resource is being created
 class ResourceCreationException extends AppException {
   /// Constructor
-  ResourceCreationException({required String message}) : super(message: message);
+  ResourceCreationException({required super.message});
 }
 
 /// Exception thrown when an unexpected error occurs
 class UnexpectedException extends AppException {
   /// Constructor
-  UnexpectedException({String message = 'An unexpected error occurred'}) : super(message: message);
+  UnexpectedException({super.message = 'An unexpected error occurred'});
 } 

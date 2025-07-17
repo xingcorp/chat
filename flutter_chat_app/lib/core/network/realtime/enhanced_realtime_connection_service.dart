@@ -6,8 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as ws_status;
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../connectivity/connectivity_service.dart';
 import '../http/http_client_interface.dart';
@@ -829,7 +829,7 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
     // Lên lịch xử lý theo batch
     _batchProcessingTimer = Timer(
       const Duration(milliseconds: 50),
-      () => _processPendingMessagesBatch(),
+      _processPendingMessagesBatch,
     );
   }
   

@@ -84,11 +84,11 @@ class BadRequestException extends ApiException {
   final Map<String, dynamic>? validationErrors;
 
   BadRequestException({
-    String message = 'Yêu cầu không hợp lệ',
-    dynamic data,
-    String? endpoint,
+    super.message = 'Yêu cầu không hợp lệ',
+    super.data,
+    super.endpoint,
   }) : validationErrors = _extractValidationErrors(data),
-       super(message: message, statusCode: 400, data: data, endpoint: endpoint);
+       super(statusCode: 400);
 
   static Map<String, dynamic>? _extractValidationErrors(dynamic data) {
     if (data != null && data is Map<String, dynamic> && data.containsKey('errors')) {
@@ -129,19 +129,19 @@ class BadRequestException extends ApiException {
 /// Định nghĩa lỗi Unauthorized (401)
 class UnauthorizedException extends ApiException {
   UnauthorizedException({
-    String message = 'Chưa đăng nhập hoặc phiên đăng nhập hết hạn',
-    dynamic data,
-    String? endpoint,
-  }) : super(message: message, statusCode: 401, data: data, endpoint: endpoint);
+    super.message = 'Chưa đăng nhập hoặc phiên đăng nhập hết hạn',
+    super.data,
+    super.endpoint,
+  }) : super(statusCode: 401);
 }
 
 /// Định nghĩa lỗi Forbidden (403)
 class ForbiddenException extends ApiException {
   ForbiddenException({
-    String message = 'Không có quyền truy cập',
-    dynamic data,
-    String? endpoint,
-  }) : super(message: message, statusCode: 403, data: data, endpoint: endpoint);
+    super.message = 'Không có quyền truy cập',
+    super.data,
+    super.endpoint,
+  }) : super(statusCode: 403);
 }
 
 /// Định nghĩa lỗi Not Found (404)

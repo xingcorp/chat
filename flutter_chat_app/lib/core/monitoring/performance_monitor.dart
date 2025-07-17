@@ -115,9 +115,7 @@ class PerformanceMonitor {
       
       // Add attributes if available
       if (attributes != null) {
-        attributes.forEach((key, value) {
-          trace.putAttribute(key, value);
-        });
+        attributes.forEach(trace.putAttribute);
       }
       
       // Save to active traces list
@@ -150,9 +148,7 @@ class PerformanceMonitor {
       
       // Add metrics if available
       if (metrics != null) {
-        metrics.forEach((key, value) {
-          trace.setMetric(key, value);
-        });
+        metrics.forEach(trace.setMetric);
       }
       
       // Stop trace
@@ -246,9 +242,7 @@ class PerformanceMonitor {
       
       // Add attributes if available
       if (attributes != null) {
-        attributes.forEach((attrKey, value) {
-          metric.putAttribute(attrKey, value);
-        });
+        attributes.forEach(metric.putAttribute);
       }
       
       // Save to active metrics
