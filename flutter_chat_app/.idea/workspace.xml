@@ -7,11 +7,19 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix bug 10">
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="done bug">
+      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config_subset" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config_subset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.flutter-plugins" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/media_viewer.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/media_viewer.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/paginated_message_list.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/paginated_message_list.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/user/user_avatar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/user/user_avatar.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/enhanced_socket_manager_benchmark_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/enhanced_socket_manager_benchmark_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/performance/performance_validation_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/performance/performance_validation_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/socket_analytics_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/socket_analytics_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/socket_manager_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/socket_manager_test.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -532,7 +540,15 @@
       <option name="project" value="LOCAL" />
       <updated>1752814801760</updated>
     </task>
-    <option name="localTasksCounter" value="44" />
+    <task id="LOCAL-00044" summary="done bug">
+      <option name="closed" value="true" />
+      <created>1752815317369</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1752815317369</updated>
+    </task>
+    <option name="localTasksCounter" value="45" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -629,7 +645,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: update cursor rules to enforce clean architecture and improve code quality" />
     <MESSAGE value="feat: refactor to use EnhancedSocketManager for improved socket handling and analytics" />
     <MESSAGE value="feat: add core and feature layer rules to .cursor-rules.yaml for improved code quality guidelines" />
     <MESSAGE value="feat: enhance clean code and optimization guidelines with additional best practices and examples" />
@@ -654,7 +669,8 @@
     <MESSAGE value="fix bug 8" />
     <MESSAGE value="fix bug 9" />
     <MESSAGE value="fix bug 10" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix bug 10" />
+    <MESSAGE value="done bug" />
+    <option name="LAST_COMMIT_MESSAGE" value="done bug" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
