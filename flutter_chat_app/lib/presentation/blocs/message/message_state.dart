@@ -51,16 +51,18 @@ class MessagesLoaded extends MessageState {
   List<Object?> get props => [chatId, messages, hasReachedMax];
 }
 
-/// Trạng thái khi có lỗi
+/// **Trạng thái khi có lỗi với enterprise error handling**
 class MessagesError extends MessageState {
   final String chatId;
   final String error;
+  final List<ChatMessage>? previousMessages; // Preserve previous messages for better UX
 
   const MessagesError({
     required this.chatId,
     required this.error,
+    this.previousMessages,
   });
 
   @override
-  List<Object?> get props => [chatId, error];
-} 
+  List<Object?> get props => [chatId, error, previousMessages];
+}

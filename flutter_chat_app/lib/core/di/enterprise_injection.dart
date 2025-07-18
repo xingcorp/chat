@@ -34,6 +34,7 @@ import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/enterprise_background_sync_service.dart';
 import 'package:flutter_chat_app/core/services/localization_service.dart';
+import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
 import 'package:flutter_chat_app/core/utils/adaptive_animations.dart';
@@ -43,7 +44,6 @@ import 'package:flutter_chat_app/data/datasources/auth/auth_remote_datasource.da
 import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart';
 import 'package:flutter_chat_app/data/repositories/auth_repository_impl.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
-import 'package:flutter_chat_app/domain/repositories/auth_repository.dart';
 import 'package:get_it/get_it.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:logger/logger.dart';
@@ -266,6 +266,13 @@ class EnterpriseDI {
           serviceLocator<SocketManager>(),
           serviceLocator<SocketAnalytics>(),
           serviceLocator<SocketRateLimiter>(),
+        ),
+      );
+
+      // Real-time Service
+      serviceLocator.registerLazySingleton<RealtimeService>(
+        () => RealtimeService(
+          socketManager: serviceLocator<EnhancedSocketManager>(),
         ),
       );
 

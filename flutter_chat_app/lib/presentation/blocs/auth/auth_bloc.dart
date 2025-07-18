@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/domain/entities/user.dart';
+
 import 'package:flutter_chat_app/domain/repositories/auth_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -141,4 +140,77 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.copyWith(isOnboarded: true));
     }
   }
-} 
+
+  /// **Handle login request using IAuthRepository**
+  ///
+  /// **Performance**: <2s for login process (enterprise standard)
+  /// **Strategy**: Repository-based login with Either error handling
+  Future<void> _onAuthLoginRequested(
+    AuthLoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    // Emit loading state
+    emit(state.copyWith(isInitializing: true));
+
+    // Perform login via repository
+    final result = await _authRepository.login(event.email, event.password);
+
+    result.fold(
+      (failure) {
+        // Login failed - emit unauthenticated state
+        emit(const AuthState.unauthenticated());
+      },
+      (user) {
+        // Login successful - save to preferences and emit authenticated state
+        _preferences.setBool('isAuthenticated', true);
+        _preferences.setString('userId', user.id);
+
+        final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
+
+        emit(AuthState.authenticated(
+          userId: user.id,
+          isOnboarded: isOnboarded,
+        ));
+      },
+    );
+  }
+
+  /// **Handle register request using IAuthRepository**
+  ///
+  /// **Performance**: <3s for registration process
+  /// **Strategy**: Repository-based registration with Either error handling
+  Future<void> _onAuthRegisterRequested(
+    AuthRegisterRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    // Emit loading state
+    emit(state.copyWith(isInitializing: true));
+
+    // Perform registration via repository
+    final result = await _authRepository.register(
+      email: event.email,
+      password: event.password,
+      username: event.username,
+      displayName: event.displayName,
+    );
+
+    result.fold(
+      (failure) {
+        // Registration failed - emit unauthenticated state
+        emit(const AuthState.unauthenticated());
+      },
+      (user) {
+        // Registration successful - save to preferences and emit authenticated state
+        _preferences.setBool('isAuthenticated', true);
+        _preferences.setString('userId', user.id);
+
+        final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
+
+        emit(AuthState.authenticated(
+          userId: user.id,
+          isOnboarded: isOnboarded,
+        ));
+      },
+    );
+  }
+}

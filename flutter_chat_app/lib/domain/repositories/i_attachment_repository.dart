@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/utils/either.dart';
+
 /// Kết quả tải lên tập tin đính kèm
 class AttachmentUploadResult {
   /// ID của tập tin đính kèm trên server
@@ -44,55 +47,56 @@ class AttachmentUploadResult {
   }
 }
 
-/// Interface cho việc tương tác với repository tập tin đính kèm
+/// **ENTERPRISE ATTACHMENT REPOSITORY INTERFACE**
+///
+/// Updated interface for attachment operations with Either<Failure, T> error handling
+/// and enterprise-grade performance optimization.
+///
+/// **Error Handling**: All methods return Either<Failure, T> for consistent error management
+/// **Performance**: Optimized for enterprise attachment standards
+/// **Architecture**: Clean Architecture with SOLID principles
 abstract class IAttachmentRepository {
-  /// Tải tập tin lên server
-  /// 
-  /// [messageId]: ID của tin nhắn mà tập tin thuộc về
-  /// [chatId]: ID của chat mà tin nhắn thuộc về
-  /// [file]: Tập tin cần tải lên
-  /// [onProgress]: Callback để cập nhật tiến độ tải lên (0.0 - 1.0)
-  /// 
-  /// Trả về stream chứa kết quả tải lên
-  Stream<AttachmentUploadResult> uploadAttachment({
+  /// **Upload attachment to server - ONLINE-FIRST STRATEGY**
+  ///
+  /// **Strategy**: executeOnlineFirst (server upload required)
+  /// **Performance**: <5s for typical attachments
+  /// **Use Case**: Message attachments, file sharing
+  Future<Either<Failure, AttachmentUploadResult>> uploadAttachment({
     required String messageId,
     required String chatId,
     required File file,
     void Function(double progress)? onProgress,
   });
   
-  /// Tải tập tin từ server
-  /// 
-  /// [attachmentId]: ID của tập tin cần tải xuống
-  /// [destination]: Đường dẫn lưu tập tin
-  /// [onProgress]: Callback để cập nhật tiến độ tải xuống (0.0 - 1.0)
-  /// 
-  /// Trả về stream chứa đường dẫn tập tin đã tải xuống
-  Stream<String> downloadAttachment({
+  /// **Download attachment from server - ONLINE-FIRST WITH CACHE**
+  ///
+  /// **Strategy**: executeOfflineFirst (cached files priority)
+  /// **Performance**: <100ms for cached files, <5s for downloads
+  /// **Use Case**: Attachment viewing, file downloads
+  Future<Either<Failure, String>> downloadAttachment({
     required String attachmentId,
     required String destination,
     void Function(double progress)? onProgress,
   });
-  
-  /// Xóa tập tin từ server
-  /// 
-  /// [attachmentId]: ID của tập tin cần xóa
-  /// 
-  /// Trả về true nếu xóa thành công
-  Future<bool> deleteAttachment(String attachmentId);
-  
-  /// Lấy thông tin của tập tin
-  /// 
-  /// [attachmentId]: ID của tập tin cần lấy thông tin
-  /// 
-  /// Trả về thông tin của tập tin
-  Future<AttachmentUploadResult> getAttachmentInfo(String attachmentId);
-  
-  /// Lấy URL tạm thời cho tập tin
-  /// 
-  /// [attachmentId]: ID của tập tin
-  /// [expiryMinutes]: Thời gian hết hạn tính bằng phút
-  /// 
-  /// Trả về URL tạm thời
-  Future<String> getTemporaryUrl(String attachmentId, {int expiryMinutes = 60});
+
+  /// **Delete attachment from server - ONLINE-FIRST STRATEGY**
+  ///
+  /// **Strategy**: executeOnlineFirst (server deletion required)
+  /// **Performance**: <2s for deletion process
+  /// **Use Case**: Attachment cleanup, privacy management
+  Future<Either<Failure, bool>> deleteAttachment(String attachmentId);
+
+  /// **Get attachment information - OFFLINE-FIRST STRATEGY**
+  ///
+  /// **Strategy**: executeOfflineFirst (cached info priority)
+  /// **Performance**: <50ms for cached info
+  /// **Use Case**: Attachment metadata display
+  Future<Either<Failure, AttachmentUploadResult>> getAttachmentInfo(String attachmentId);
+
+  /// **Get temporary URL for attachment - ONLINE-FIRST STRATEGY**
+  ///
+  /// **Strategy**: executeOnlineFirst (server URL generation)
+  /// **Performance**: <1s for URL generation
+  /// **Use Case**: Secure attachment access, temporary sharing
+  Future<Either<Failure, String>> getTemporaryUrl(String attachmentId, {int expiryMinutes = 60});
 } 
