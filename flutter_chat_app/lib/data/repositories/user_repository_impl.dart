@@ -1,14 +1,11 @@
 import 'package:flutter_chat_app/core/base/base_repository.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
-import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/domain/entities/user.dart';
 import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
-import 'package:logger/logger.dart';
 
 /// **ENTERPRISE USER REPOSITORY IMPLEMENTATION**
 ///
@@ -120,100 +117,145 @@ class UserRepositoryImpl extends BaseRepository implements UserRepository {
   }
 
   @override
-  Future<User> updateUserProfile({
+  Future<Either<Failure, User>> updateUserProfile({
     String? displayName,
     String? bio,
     String? avatarUrl,
   }) async {
-    if (!(await _networkInfo.isConnected)) {
-      // Can't update profile when offline
-      throw Exception('No internet connection');
-    }
-
-    try {
-      // TODO: Implement proper user profile update
-      // For now, get current user and return it
-      final currentUser = await getCurrentUser();
-      if (currentUser != null) {
-        return currentUser;
-      }
-
-      throw Exception('No current user found');
-    } catch (e) {
-      print('Error updating user profile: $e');
-      throw Exception('Failed to update user profile: $e');
-    }
+    return executeRemoteOnly<User>(
+      remoteDataSource: () async {
+        final updatedUser = await _remoteDataSource.updateUserProfile(
+          displayName: displayName,
+          bio: bio,
+          avatarUrl: avatarUrl,
+        );
+        return updatedUser.toDomain();
+      },
+      cacheData: (user) async {
+        final userModel = UserModel.fromDomain(user);
+        await _localDataSource.saveUser(userModel);
+        await _localDataSource.saveCurrentUser(userModel);
+      },
+      operationName: 'updateUserProfile',
+    );
   }
 
-  // Helper method for syncing users (not part of interface)
-  Future<void> syncUsers() async {
-    if (!(await _networkInfo.isConnected)) {
-      return; // Can't sync when offline
-    }
+  /// **ENTERPRISE SYNC STRATEGY**
+  ///
+  /// Background synchronization of user data using BaseRepository sync pattern
+  Future<Either<Failure, void>> syncUsers() async {
+    return executeSyncStrategy(
+      syncOperation: () async {
+        logger.d('Starting user synchronization...');
 
-    try {
-      // TODO: Implement proper user syncing
-      print('User syncing not yet implemented');
-    } catch (e) {
-      // Log error but don't throw
-      print('Error syncing users: $e');
-    }
+        // Get latest users from remote
+        final remoteUsers = await _remoteDataSource.getUserContacts();
+
+        // Update local cache
+        await _localDataSource.saveUsers(remoteUsers);
+
+        logger.i('User synchronization completed successfully');
+      },
+      operationName: 'syncUsers',
+    );
   }
 
   // Missing interface methods - implement with placeholders for compilation success
 
   @override
-  Future<User?> getCurrentUser() async {
+  Future<Either<Failure, User?>> getCurrentUser() async {
+    return executeOfflineFirst<User?>(
+      localDataSource: () async {
+        final currentUser = await _localDataSource.getCurrentUser();
+        return currentUser?.toDomain();
+      },
+      remoteDataSource: () async {
+        final remoteUser = await _remoteDataSource.getCurrentUserProfile();
+        return remoteUser.toDomain();
+      },
+      cacheData: (user) async {
+        if (user != null) {
+          final userModel = UserModel.fromDomain(user);
+          await _localDataSource.saveCurrentUser(userModel);
+        }
+      },
+      operationName: 'getCurrentUser',
+    );
+  }
+
+
+
+  @override
+  Future<Either<Failure, List<User>>> getUserContacts() async {
+    return executeOfflineFirst<List<User>>(
+      localDataSource: () async {
+        // Get all users as contacts (simplified implementation)
+        final localUsers = await _localDataSource.getAllUsers();
+        return localUsers.map((model) => model.toDomain()).toList();
+      },
+      remoteDataSource: () async {
+        final remoteContacts = await _remoteDataSource.getUserContacts();
+        return remoteContacts.map((model) => model.toDomain()).toList();
+      },
+      cacheData: (contacts) async {
+        final contactModels = contacts.map((user) => UserModel.fromDomain(user)).toList();
+        await _localDataSource.saveUsers(contactModels);
+      },
+      operationName: 'getUserContacts',
+    );
+  }
+
+  @override
+  Future<Either<Failure, void>> saveUserLocally(User user) async {
+    return executeLocalOnly<void>(
+      localDataSource: () async {
+        final userModel = UserModel.fromDomain(user);
+        await _localDataSource.saveUser(userModel);
+      },
+      operationName: 'saveUserLocally',
+    );
+  }
+
+  @override
+  Future<Either<Failure, void>> saveCurrentUser(User user) async {
+    return executeLocalOnly<void>(
+      localDataSource: () async {
+        final userModel = UserModel.fromDomain(user);
+        await _localDataSource.saveCurrentUser(userModel);
+      },
+      operationName: 'saveCurrentUser',
+    );
+  }
+
+  @override
+  Future<Either<Failure, void>> clearCurrentUser() async {
+    return executeLocalOnly<void>(
+      localDataSource: () async {
+        await _localDataSource.clearCurrentUser();
+      },
+      operationName: 'clearCurrentUser',
+    );
+  }
+
+  @override
+  Future<Either<Failure, bool>> setUserStatus(bool isOnline) async {
+    return executeRemoteOnly<bool>(
+      remoteDataSource: () async {
+        return await _remoteDataSource.setUserStatus(isOnline);
+      },
+      operationName: 'setUserStatus',
+    );
+  }
+
+  @override
+  Stream<Either<Failure, User>> subscribeToUserStatus(String userId) {
     try {
-      final currentUser = await _localDataSource.getCurrentUser();
-      return currentUser?.toDomain();
+      // TODO: Implement proper real-time user status subscription
+      // For now, return empty stream with proper error handling
+      return Stream<Either<Failure, User>>.empty();
     } catch (e) {
-      return null;
+      logger.e('Error subscribing to user status: $e');
+      return Stream.value(Left(ServerFailure(message: 'Failed to subscribe to user status: ${e.toString()}')));
     }
-  }
-
-  @override
-  Future<List<User>> getAllUsers() async {
-    try {
-      final users = await _localDataSource.getAllUsers();
-      return users.map((model) => model.toDomain()).toList();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  @override
-  Future<List<User>> getUserContacts() async {
-    // TODO: Implement proper user contacts retrieval
-    return [];
-  }
-
-  @override
-  Future<void> saveUserLocally(User user) async {
-    // TODO: Implement proper user local saving
-    // Would need UserModel.fromDomain() method
-  }
-
-  @override
-  Future<void> saveCurrentUser(User user) async {
-    // TODO: Implement proper current user saving
-    // Would need UserModel.fromDomain() method
-  }
-
-  @override
-  Future<void> clearCurrentUser() async {
-    await _localDataSource.clearCurrentUser();
-  }
-
-  @override
-  Future<bool> setUserStatus(bool isOnline) async {
-    // TODO: Implement proper user status setting
-    return false;
-  }
-
-  @override
-  Stream<User> subscribeToUserStatus(String userId) {
-    // TODO: Implement proper user status subscription
-    return Stream.empty();
   }
 }
