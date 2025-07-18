@@ -172,11 +172,11 @@ class _MediaViewerState extends State<MediaViewer> {
                                _connectivityAnalyzer.currentQuality == NetworkQuality.poor;
       
       // Tải file
-      final file = await _resourceManager.loadMedia(
+      final file = await _resourceManager.downloadFile(
         url: widget.mediaUrl,
-        useCaching: widget.enableCaching,
-        onProgress: _handleLoadingProgress,
-        streamingMode: shouldUseStreaming,
+        fileName: widget.mediaUrl.split('/').last,
+        cache: widget.enableCaching,
+        // TODO: Implement progress tracking with progressStream
       );
       
       if (file != null) {

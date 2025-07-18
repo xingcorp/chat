@@ -7,31 +7,11 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix bug 9">
-      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config.json" afterDir="false" />
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix bug 10">
       <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/datasources/user/user_local_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/user/user_local_datasource.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/repositories/auth_repository_impl.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/auth_repository_impl.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/repositories/chat_repository_impl.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/chat_repository_impl.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/repositories/message_repository_with_cache.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/message_repository_with_cache.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/repositories/user_repository_impl.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/user_repository_impl.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/domain/usecases/auth/login_usecase.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/domain/usecases/auth/login_usecase.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/domain/usecases/auth/logout_usecase.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/domain/usecases/auth/logout_usecase.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/base/base_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/base/base_bloc.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/chat/chat_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/chat/chat_bloc.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/connection/connection_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/connection/connection_bloc.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/connectivity/connectivity_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/connectivity/connectivity_bloc.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/connectivity/connectivity_event.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/connectivity/connectivity_event.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/message_queue/message_queue_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/message_queue/message_queue_bloc.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/message_queue/message_queue_bloc.freezed.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/message_queue/message_queue_bloc.freezed.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/message_queue/message_queue_event.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/message_queue/message_queue_event.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/message_queue/message_queue_state.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/message_queue/message_queue_state.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/screens/chat/optimized_chat_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/screens/chat/optimized_chat_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat/optimized_message_list.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat/optimized_message_list.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat_message_input.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat_message_input.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/connection_status_widget.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/connection_status_widget.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/media_viewer.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/media_viewer.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/paginated_message_list.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/paginated_message_list.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/user/user_avatar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/user/user_avatar.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -544,7 +524,15 @@
       <option name="project" value="LOCAL" />
       <updated>1752747993820</updated>
     </task>
-    <option name="localTasksCounter" value="43" />
+    <task id="LOCAL-00043" summary="fix bug 10">
+      <option name="closed" value="true" />
+      <created>1752814801760</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1752814801760</updated>
+    </task>
+    <option name="localTasksCounter" value="44" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -641,7 +629,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: enhance cursor rules to enforce clean architecture principles and improve code quality" />
     <MESSAGE value="feat: update cursor rules to enforce clean architecture and improve code quality" />
     <MESSAGE value="feat: refactor to use EnhancedSocketManager for improved socket handling and analytics" />
     <MESSAGE value="feat: add core and feature layer rules to .cursor-rules.yaml for improved code quality guidelines" />
@@ -666,7 +653,8 @@
     <MESSAGE value="fix bug 7" />
     <MESSAGE value="fix bug 8" />
     <MESSAGE value="fix bug 9" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix bug 9" />
+    <MESSAGE value="fix bug 10" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix bug 10" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

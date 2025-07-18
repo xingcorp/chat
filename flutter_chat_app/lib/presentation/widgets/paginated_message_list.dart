@@ -571,6 +571,7 @@ class _PaginatedMessageListState extends State<PaginatedMessageList> {
       
       return MessageItem(
         message: item,
+        sender: item.sender,
         isCurrentUser: item.sender.id == widget.currentUserId,
         onTap: widget.onMessageTap != null ? () => widget.onMessageTap!(item) : null,
         onLongPress: widget.onMessageLongPress != null ? () => widget.onMessageLongPress!(item) : null,

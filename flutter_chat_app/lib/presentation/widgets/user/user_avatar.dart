@@ -57,7 +57,7 @@ class UserAvatar extends BaseStatelessWidget {
           color: _getBackgroundColor(context),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadowColor.withOpacity(0.2),
+              color: AppColors.shadow.withOpacity(0.2),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -177,17 +177,17 @@ class UserAvatar extends BaseStatelessWidget {
   Color _getStatusColor() {
     switch (status) {
       case UserStatus.online:
-        return AppColors.online;
+        return AppColors.success; // Use success color for online
       case UserStatus.offline:
-        return AppColors.offline;
+        return AppColors.textSecondary; // Use secondary text color for offline
       case UserStatus.away:
         return Colors.amber;
       case UserStatus.busy:
         return Colors.red;
       case UserStatus.typing:
-        return AppColors.typing;
+        return AppColors.primary; // Use primary color for typing
       default:
-        return AppColors.offline;
+        return AppColors.textSecondary; // Use secondary text color for default
     }
   }
   
