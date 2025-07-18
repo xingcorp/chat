@@ -73,6 +73,21 @@ class UserModel {
     return UserModel.fromMap(json);
   }
 
+  /// Create UserModel from domain User entity
+  factory UserModel.fromDomain(User user) {
+    return UserModel(
+      serverId: user.id,
+      username: user.username,
+      displayName: user.fullName ?? user.username,
+      avatarUrl: user.avatar,
+      email: user.email,
+      isOnline: user.isOnline,
+      lastSeen: user.lastSeen ?? DateTime.now(),
+      statusMessage: null, // User entity doesn't have statusMessage
+      roles: const [], // Default empty roles for domain conversion
+    );
+  }
+
   /// Convert user to a map
   Map<String, dynamic> toMap() {
     return {

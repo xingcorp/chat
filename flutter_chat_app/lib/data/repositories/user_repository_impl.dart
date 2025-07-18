@@ -1,128 +1,122 @@
+import 'package:flutter_chat_app/core/base/base_repository.dart';
+import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
+import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/domain/entities/user.dart';
 import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
+import 'package:logger/logger.dart';
 
-/// Implementation of [UserRepository]
-class UserRepositoryImpl implements UserRepository {
-  final NetworkInfo _networkInfo;
+/// **ENTERPRISE USER REPOSITORY IMPLEMENTATION**
+///
+/// Implements UserRepository using BaseRepository patterns with:
+/// - Offline-first strategy for user profiles (cached data)
+/// - Online-first strategy for user search (fresh results)
+/// - Remote-only strategy for user updates (server confirmation)
+/// - Comprehensive error handling and performance monitoring
+class UserRepositoryImpl extends BaseRepository implements UserRepository {
   final UserLocalDataSource _localDataSource;
   final UserRemoteDataSource _remoteDataSource;
 
-  /// Constructor
-  UserRepositoryImpl(
-    this._networkInfo,
-    this._localDataSource,
-    this._remoteDataSource,
-  );
+  /// Constructor with enterprise dependencies
+  UserRepositoryImpl({
+    required UserLocalDataSource localDataSource,
+    required UserRemoteDataSource remoteDataSource,
+    required super.networkInfo,
+    required super.logger,
+    required super.performanceMonitor,
+  }) : _localDataSource = localDataSource,
+       _remoteDataSource = remoteDataSource;
 
   @override
-  Future<User?> getUserById(String userId) async {
-    try {
-      // Try to get user from local storage first
-      final user = await _localDataSource.getUserById(userId);
-      if (user != null) {
-        return user.toDomain();
-      }
-
-      // If not in local storage and we're online, fetch from remote
-      if (await _networkInfo.isConnected) {
+  Future<Either<Failure, User?>> getUserById(String userId) async {
+    return executeOnlineFirst<User?>(
+      remoteDataSource: () async {
         final remoteUser = await _remoteDataSource.getUserProfile(userId);
-        if (remoteUser != null) {
-          // Save to local storage
-          await _localDataSource.saveUser(remoteUser);
-          return remoteUser.toDomain();
+        return remoteUser?.toDomain();
+      },
+      localDataSource: () async {
+        final localUser = await _localDataSource.getUserById(userId);
+        return localUser?.toDomain();
+      },
+      cacheData: (user) async {
+        if (user != null) {
+          final userModel = UserModel.fromDomain(user);
+          await _localDataSource.saveUser(userModel);
         }
-      }
-
-      return null;
-    } catch (e) {
-      // Log error and return null
-      print('Error getting user: $e');
-      return null;
-    }
+      },
+      operationName: 'getUserById',
+    );
   }
 
   @override
-  Future<List<User>> getUsers([int limit = 50]) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        // Get users from remote
-        // TODO: Implement proper remote user fetching
-        final remoteUsers = <UserModel>[];
-        
-        // Save to local cache
-        await _localDataSource.saveUsers(remoteUsers);
-        
-        // Return as domain entities
-        return remoteUsers.map((model) => model.toDomain()).toList();
-      } catch (e) {
-        // Fall back to local data
+  Future<Either<Failure, List<User>>> getUsers([int limit = 50]) async {
+    return executeOfflineFirst<List<User>>(
+      localDataSource: () async {
         final localUsers = await _localDataSource.getAllUsers();
         return localUsers.map((model) => model.toDomain()).toList();
-      }
-    } else {
-      // No internet, use local data
-      final localUsers = await _localDataSource.getAllUsers();
-      return localUsers.map((model) => model.toDomain()).toList();
-    }
+      },
+      remoteDataSource: () async {
+        // Get user contacts as the list of users (limited implementation)
+        final remoteUsers = await _remoteDataSource.getUserContacts();
+        return remoteUsers.map((model) => model.toDomain()).toList();
+      },
+      cacheData: (users) async {
+        final userModels = users.map((user) => UserModel.fromDomain(user)).toList();
+        await _localDataSource.saveUsers(userModels);
+      },
+      operationName: 'getUsers',
+    );
   }
 
   @override
-  Future<List<User>> searchUsers(String query, {int limit = 20}) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        // Search on server
-        final remoteUsers = await _remoteDataSource.searchUsers(query);
-        
-        // Cache results
-        await _localDataSource.saveUsers(remoteUsers);
-        
+  Future<Either<Failure, List<User>>> searchUsers(String query, {int limit = 20}) async {
+    return executeOnlineFirst<List<User>>(
+      remoteDataSource: () async {
+        final remoteUsers = await _remoteDataSource.searchUsers(query, limit: limit);
         return remoteUsers.map((model) => model.toDomain()).toList();
-      } catch (e) {
-        // Fall back to local search - filter from all users
+      },
+      localDataSource: () async {
+        // Local search - filter from all users
         final allUsers = await _localDataSource.getAllUsers();
         final filteredUsers = allUsers.where((user) =>
           user.username.toLowerCase().contains(query.toLowerCase()) ||
           (user.displayName?.toLowerCase().contains(query.toLowerCase()) ?? false)
         ).take(limit).toList();
         return filteredUsers.map((model) => model.toDomain()).toList();
-      }
-    } else {
-      // Offline - search locally - filter from all users
-      final allUsers = await _localDataSource.getAllUsers();
-      final filteredUsers = allUsers.where((user) =>
-        user.username.toLowerCase().contains(query.toLowerCase()) ||
-        (user.displayName?.toLowerCase().contains(query.toLowerCase()) ?? false)
-      ).take(limit).toList();
-      return filteredUsers.map((model) => model.toDomain()).toList();
-    }
+      },
+      cacheData: (users) async {
+        final userModels = users.map((user) => UserModel.fromDomain(user)).toList();
+        await _localDataSource.saveUsers(userModels);
+      },
+      operationName: 'searchUsers',
+    );
   }
 
   @override
-  Future<User?> updateUserStatus(String userId, String status) async {
-    if (!(await _networkInfo.isConnected)) {
-      // Can't update status when offline
-      return null;
-    }
-
-    try {
-      // TODO: Implement proper remote user status update
-      final updatedUser = null; // Placeholder
-      
-      if (updatedUser != null) {
-        // Update local cache
-        await _localDataSource.saveUser(updatedUser);
-        return updatedUser.toDomain();
-      }
-      
-      return null;
-    } catch (e) {
-      print('Error updating user status: $e');
-      return null;
-    }
+  Future<Either<Failure, User?>> updateUserStatus(String userId, String status) async {
+    return executeRemoteOnly<User?>(
+      remoteDataSource: () async {
+        // TODO: Implement proper remote user status update
+        final isOnline = await _remoteDataSource.setUserStatus(status == 'online');
+        if (isOnline) {
+          // Get updated user profile
+          final updatedUser = await _remoteDataSource.getUserProfile(userId);
+          return updatedUser.toDomain();
+        }
+        return null;
+      },
+      cacheData: (user) async {
+        if (user != null) {
+          final userModel = UserModel.fromDomain(user);
+          await _localDataSource.saveUser(userModel);
+        }
+      },
+      operationName: 'updateUserStatus',
+    );
   }
 
   @override
