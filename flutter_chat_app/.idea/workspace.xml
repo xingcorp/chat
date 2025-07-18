@@ -7,14 +7,9 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix 4">
-      <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix 5">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/attachment_queue_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/attachment_queue_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/chat_sync_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/chat_sync_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/repositories/chat_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/chat_repository.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/test_config.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/test_config.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -575,7 +570,15 @@
       <option name="project" value="LOCAL" />
       <updated>1752845715809</updated>
     </task>
-    <option name="localTasksCounter" value="49" />
+    <task id="LOCAL-00049" summary="fix 5">
+      <option name="closed" value="true" />
+      <created>1752849665467</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1752849665467</updated>
+    </task>
+    <option name="localTasksCounter" value="50" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -672,7 +675,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: add comprehensive guidelines for AI readiness, media handling, offline sync, real-time messaging, and worker pool scaling" />
     <MESSAGE value="feat: update design patterns, SOLID principles, and state management guidelines with improved descriptions and ensure alwaysApply is set to true" />
     <MESSAGE value="feat: refine architecture guidelines with enhanced descriptions, multi-platform structure, and state management best practices" />
     <MESSAGE value="feat: update workspace configuration to refine architecture guidelines with enhanced descriptions and multi-platform structure" />
@@ -697,7 +699,8 @@
     <MESSAGE value="fix 2" />
     <MESSAGE value="fix 3" />
     <MESSAGE value="fix 4" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix 4" />
+    <MESSAGE value="fix 5" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix 5" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

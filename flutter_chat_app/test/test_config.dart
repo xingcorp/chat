@@ -180,20 +180,22 @@ class TestDataFactory {
   static ChatMessage createTestMessage({
     String? id,
     String? chatId,
-    String? senderId,
     String? content,
-    ContentType type = ContentType.text,
-    DateTime? timestamp,
+    ContentType contentType = ContentType.text,
+    MessageSender? sender,
+    DateTime? createdAt,
   }) {
     return ChatMessage(
       id: id ?? 'test_message_1',
       chatId: chatId ?? 'test_chat_1',
-      senderId: senderId ?? 'test_user_1',
       content: content ?? 'Test message content',
-      type: type,
-      timestamp: timestamp ?? DateTime.now(),
-      isRead: false,
-      isDelivered: true,
+      contentType: contentType,
+      sender: sender ?? MessageSender(
+        id: 'test_user_1',
+        name: 'Test User',
+      ),
+      createdAt: createdAt ?? DateTime.now(),
+      updatedAt: createdAt ?? DateTime.now(),
     );
   }
 
@@ -206,13 +208,11 @@ class TestDataFactory {
       case FailureType.server:
         return ServerFailure(message: message ?? 'Test server failure');
       case FailureType.network:
-        return NetworkFailure(message: message ?? 'Test network failure');
+        return ConnectionFailure(message: message ?? 'Test network failure');
       case FailureType.cache:
         return CacheFailure(message: message ?? 'Test cache failure');
       case FailureType.validation:
         return ValidationFailure(message: message ?? 'Test validation failure');
-      default:
-        return ServerFailure(message: message ?? 'Test failure');
     }
   }
 }
