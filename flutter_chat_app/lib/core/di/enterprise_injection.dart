@@ -20,6 +20,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
+import 'package:flutter_chat_app/core/cache/enhanced_cache_manager.dart';
 import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
 import 'package:flutter_chat_app/core/config/app_config.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
@@ -27,6 +28,7 @@ import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
 import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
+import 'package:flutter_chat_app/core/network/network_optimizer.dart';
 import 'package:flutter_chat_app/core/network/socket_analytics.dart';
 import 'package:flutter_chat_app/core/network/socket_manager.dart';
 import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
@@ -34,6 +36,7 @@ import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/enterprise_background_sync_service.dart';
 import 'package:flutter_chat_app/core/services/localization_service.dart';
+import 'package:flutter_chat_app/core/services/memory_optimizer.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
@@ -273,6 +276,29 @@ class EnterpriseDI {
       serviceLocator.registerLazySingleton<RealtimeService>(
         () => RealtimeService(
           socketManager: serviceLocator<EnhancedSocketManager>(),
+        ),
+      );
+
+      // Memory Optimizer
+      serviceLocator.registerLazySingleton<MemoryOptimizer>(
+        () => MemoryOptimizer(
+          performanceMonitor: serviceLocator<PerformanceMonitor>(),
+        ),
+      );
+
+      // Enhanced Cache Manager
+      serviceLocator.registerLazySingleton<EnhancedCacheManager>(
+        () => EnhancedCacheManager(
+          localStorage: serviceLocator<LocalStorage>(),
+          performanceMonitor: serviceLocator<PerformanceMonitor>(),
+        ),
+      );
+
+      // Network Optimizer
+      serviceLocator.registerLazySingleton<NetworkOptimizer>(
+        () => NetworkOptimizer(
+          connectivityService: serviceLocator<ConnectivityService>(),
+          performanceMonitor: serviceLocator<PerformanceMonitor>(),
         ),
       );
 

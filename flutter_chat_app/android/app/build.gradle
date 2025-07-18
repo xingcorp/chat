@@ -50,10 +50,16 @@ android {
         }
 
         profile {
-            // Profile build for performance testing
-            minifyEnabled false
-            shrinkResources false
+            // Profile build for performance testing with production-like optimizations
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig = signingConfigs.debug
+
+            // Performance optimizations for profiling
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
         }
     }
 }

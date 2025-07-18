@@ -537,7 +537,6 @@ class AttachmentQueueService {
   
   /// Tải tập tin lên server với cập nhật tiến độ
   Future<AttachmentUploadResult> _uploadAttachment(QueuedAttachment attachment) async {
-    StreamSubscription? streamSubscription;
     
     try {
       // Lấy file
@@ -556,8 +555,8 @@ class AttachmentQueueService {
       final completer = Completer<AttachmentUploadResult>();
       
       // Tải lên với cập nhật tiến độ
-      final uploadStream = _attachmentRepository.uploadAttachment(
-        messageId: attachment.messageId, 
+      final uploadResult = await _attachmentRepository.uploadAttachment(
+        messageId: attachment.messageId,
         chatId: attachment.chatId,
         file: file,
         onProgress: (progress) {
@@ -566,10 +565,10 @@ class AttachmentQueueService {
             progress: progress,
             updatedAt: DateTime.now(),
           );
-          
+
           // Cập nhật trong danh sách đang xử lý
           _processingAttachments[attachment.localId] = updatedAttachment;
-          
+
           // Thông báo tiến độ
           _notifyAttachmentStatusChanged(updatedAttachment);
           _emitEvent(MessageQueueEventType.attachmentProgressUpdated,
@@ -579,32 +578,22 @@ class AttachmentQueueService {
           );
         },
       );
-      
-      // Lắng nghe kết quả
-      streamSubscription = uploadStream.listen(
-        (data) {
+
+      // Xử lý kết quả
+      uploadResult.fold(
+        (failure) {
           if (!completer.isCompleted) {
-            completer.complete(data);
+            completer.completeError(Exception(failure.message));
           }
         },
-        onError: (error, stack) {
+        (result) {
           if (!completer.isCompleted) {
-            completer.completeError(error, stack);
+            completer.complete(result);
           }
         },
-        onDone: () {
-          if (!completer.isCompleted) {
-            completer.completeError(
-              Exception('Kết thúc stream mà không có kết quả'), 
-              StackTrace.current
-            );
-          }
-        },
-        cancelOnError: false,
       );
       
-      // Lưu subscription để có thể hủy nếu cần
-      _activeUploads[attachment.localId] = streamSubscription;
+      // Không cần lưu subscription vì không còn stream
       
       // Đặt timeout
       final timeout = Timer(const Duration(minutes: 30), () {
@@ -624,10 +613,7 @@ class AttachmentQueueService {
       
       return result;
     } finally {
-      // Đảm bảo dọn dẹp mọi subscription
-      if (streamSubscription != null) {
-        await streamSubscription.cancel();
-      }
+      // Đảm bảo dọn dẹp
       _activeUploads.remove(attachment.localId);
     }
   }
@@ -778,10 +764,13 @@ class AttachmentQueueService {
   /// Lấy trạng thái của một attachment
   QueuedAttachment? getAttachmentById(String attachmentId) {
     // Tìm trong danh sách chờ
-    final pendingAttachment = _pendingAttachments
-        .firstWhere((a) => a.localId == attachmentId, orElse: () => null as QueuedAttachment);
-        
-    if (pendingAttachment != null) return pendingAttachment;
+    try {
+      final pendingAttachment = _pendingAttachments
+          .firstWhere((a) => a.localId == attachmentId);
+      return pendingAttachment;
+    } catch (e) {
+      // Không tìm thấy trong pending
+    }
     
     // Tìm trong danh sách đang xử lý
     return _processingAttachments[attachmentId];

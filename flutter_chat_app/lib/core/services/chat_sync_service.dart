@@ -8,7 +8,7 @@ import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/services/local_storage_service.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/data/repositories/chat_repository.dart';
+import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -18,7 +18,7 @@ class ChatSyncService {
   static const String _backgroundChannelPort = 'chat_sync_background_port';
   static const int _syncInterval = 60; // seconds
   
-  final ChatRepository _chatRepository;
+  final IChatRepository _chatRepository;
   final IMessageRepository _messageRepository;
   final LocalStorageService _localStorageService;
   final ConnectivityService _connectivityService;
