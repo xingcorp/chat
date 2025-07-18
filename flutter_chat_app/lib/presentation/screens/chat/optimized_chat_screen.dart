@@ -129,7 +129,8 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      context.read<ChatBloc>().add(ChatEvent.markChatAsRead(chatId: widget.chatId));
+      // TODO: Implement proper mark chat as read with message IDs
+      // context.read<ChatBloc>().add(ChatEvent.markMessagesAsRead(chatId: widget.chatId, messageIds: []));
     }
   }
   
@@ -144,7 +145,8 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
     ));
     
     // Mark chat as read when opened
-    context.read<ChatBloc>().add(ChatEvent.markChatAsRead(chatId: widget.chatId));
+    // TODO: Implement proper mark chat as read with message IDs
+    // context.read<ChatBloc>().add(ChatEvent.markMessagesAsRead(chatId: widget.chatId, messageIds: []));
   }
   
   void _loadMoreMessages() {
@@ -163,7 +165,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           chatBloc.add(ChatEvent.loadMessages(
             chatId: widget.chatId,
             limit: 30,
-            beforeMessageId: messages.first.id,
+            offset: messages.length, // Use offset instead of beforeMessageId
           ));
         }
       },
@@ -193,7 +195,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
         chatId: widget.chatId,
         content: messageText,
         contentType: ContentType.text,
-        replyToMessageId: _replyToMessageId,
+        // TODO: Implement reply functionality
       ));
     }
     
@@ -239,8 +241,8 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           chatId: widget.chatId,
           content: '',
           contentType: type,
-          attachments: [attachmentInfo['path']],
-          replyToMessageId: _replyToMessageId,
+          attachmentIds: [attachmentInfo['path']], // Use attachmentIds instead of attachments
+          // TODO: Implement reply functionality
         ));
         
         // Clear reply
@@ -314,10 +316,11 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              context.read<ChatBloc>().add(ChatEvent.deleteMessage(
-                chatId: widget.chatId,
-                messageId: message.id,
-              ));
+              // TODO: Implement proper message deletion
+              // Would need MessageBloc or different approach
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Delete message not implemented')),
+              );
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -344,7 +347,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
     
     final widgets = messages.map((message) {
       // Use cached widget if available
-      if (_cachedMessageItems.containsKey(message.id) && !message.isSending) {
+      if (_cachedMessageItems.containsKey(message.id) && message.status != MessageStatus.sending) {
         return _cachedMessageItems[message.id]!;
       }
       
@@ -352,14 +355,13 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
       final messageWidget = MessageItem(
         key: ValueKey('message_${message.id}'),
         message: message,
-        isCurrentUser: message.sender.id == currentUserId,
         showSenderInfo: isGroupChat,
         onTap: () => _handleMessageTap(message),
         onLongPress: () => _handleMessageLongPress(message),
       );
       
       // Only cache non-sending messages (since they might update)
-      if (!message.isSending) {
+      if (message.status != MessageStatus.sending) {
         _cachedMessageItems[message.id] = messageWidget;
       }
       
@@ -383,7 +385,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
       
       if (prev.id != curr.id || 
           prev.status != curr.status || 
-          prev.isSending != curr.isSending) {
+          prev.status != curr.status) {
         return false;
       }
     }
@@ -666,11 +668,11 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                                             _isTyping = isTypingNow;
                                           });
                                           
-                                          // Notify typing status
-                                          context.read<ChatBloc>().add(ChatEvent.updateTypingStatus(
-                                            chatId: widget.chatId,
-                                            isTyping: isTypingNow,
-                                          ));
+                                          // TODO: Implement typing status notification
+                                          // context.read<ChatBloc>().add(ChatEvent.updateTypingStatus(
+                                          //   chatId: widget.chatId,
+                                          //   isTyping: isTypingNow,
+                                          // ));
                                         }
                                       },
                                     ),

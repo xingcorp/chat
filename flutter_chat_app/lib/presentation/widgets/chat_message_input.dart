@@ -136,9 +136,9 @@ class _ChatMessageInputState extends State<ChatMessageInput> {
     ContentType contentType = ContentType.text;
     if (_attachmentIds.isNotEmpty) {
       if (text.isEmpty) {
-        contentType = ContentType.media;
+        contentType = ContentType.file; // Use 'file' instead of 'media'
       } else {
-        contentType = ContentType.mixed;
+        contentType = ContentType.text; // Use 'text' instead of 'mixed'
       }
     }
     
@@ -148,15 +148,12 @@ class _ChatMessageInputState extends State<ChatMessageInput> {
         chatId: widget.chatId,
         content: text,
         contentType: contentType,
-        attachmentIds: List.from(_attachmentIds),
+        attachments: [], // TODO: Convert _attachmentIds to List<Attachment>
       ),
     );
     
-    // Theo dõi để gọi callback khi tin nhắn được thêm vào hàng đợi
-    final messageQueueState = context.read<MessageQueueBloc>().state;
-    if (messageQueueState is _MessageEnqueued && widget.onMessageSent != null) {
-      widget.onMessageSent!(messageQueueState.messageId);
-    }
+    // TODO: Handle message enqueued callback properly with BlocListener
+    // This approach doesn't work as state is not immediately updated
     
     // Xóa danh sách tệp đính kèm
     setState(() {
@@ -259,9 +256,14 @@ class _ChatMessageInputState extends State<ChatMessageInput> {
           // Lắng nghe trạng thái MessageQueueBloc để cập nhật UI
           BlocListener<MessageQueueBloc, MessageQueueState>(
             listener: (context, state) {
-              if (state is _MessageEnqueued && widget.onMessageSent != null) {
-                widget.onMessageSent!(state.messageId);
-              }
+              state.maybeWhen(
+                messageEnqueued: (messageId) {
+                  if (widget.onMessageSent != null) {
+                    widget.onMessageSent!(messageId);
+                  }
+                },
+                orElse: () {},
+              );
             },
             child: const SizedBox.shrink(),
           ),

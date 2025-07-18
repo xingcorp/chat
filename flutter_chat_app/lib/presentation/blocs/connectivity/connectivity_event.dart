@@ -15,10 +15,10 @@ class ConnectivityStarted extends ConnectivityEvent {
 
 /// Event triggered when connectivity changes
 class ConnectivityChanged extends ConnectivityEvent {
-  final ConnectivityResult connectivityResult;
+  final List<ConnectivityResult> connectivityResults;
 
-  const ConnectivityChanged(this.connectivityResult);
+  const ConnectivityChanged(this.connectivityResults);
 
   @override
-  List<Object> get props => [connectivityResult];
-} 
+  List<Object> get props => [connectivityResults];
+}

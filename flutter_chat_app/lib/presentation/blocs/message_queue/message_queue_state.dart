@@ -10,16 +10,16 @@ class MessageQueueState with _$MessageQueueState {
   const factory MessageQueueState.loading() = _Loading;
   
   /// Message enqueued state
-  const factory MessageQueueState.messageEnqueued(QueuedMessage message) = _MessageEnqueued;
-  
+  const factory MessageQueueState.messageEnqueued(String messageId) = _MessageEnqueued;
+
   /// Message cancelled state
   const factory MessageQueueState.messageCancelled(String messageId) = _MessageCancelled;
-  
+
   /// Message status updated state
-  const factory MessageQueueState.messageStatusUpdated(QueuedMessage message) = _MessageStatusUpdated;
-  
+  const factory MessageQueueState.messageStatusUpdated(String messageId) = _MessageStatusUpdatedState;
+
   /// Pending messages loaded state
-  const factory MessageQueueState.pendingMessagesLoaded(List<QueuedMessage> messages) = _PendingMessagesLoaded;
+  const factory MessageQueueState.pendingMessagesLoaded(List<String> messageIds) = _PendingMessagesLoaded;
   
   /// Completed messages cleared state
   const factory MessageQueueState.completedMessagesCleared() = _CompletedMessagesCleared;

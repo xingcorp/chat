@@ -35,7 +35,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<User?> login(String email, String password) async {
+  Future<User> login(String email, String password) async {
     if (!(await _networkInfo.isConnected)) {
       // Can't login when offline
       throw Exception('No internet connection');
@@ -44,24 +44,24 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       // Attempt to login
       final userModel = await _authRemoteDataSource.login(email, password);
-      
+
       // Save user to local storage
       await _userLocalDataSource.saveUser(userModel);
-      await _userLocalDataSource.setCurrentUser(userModel.id);
-      
+      await _userLocalDataSource.saveCurrentUser(userModel);
+
       return userModel.toDomain();
     } catch (e) {
-      print('Login error: $e');
+      _logger.e('Login error: $e');
       throw Exception('Login failed: $e');
     }
   }
 
   @override
-  Future<User?> register({
+  Future<User> register({
     required String email,
     required String password,
-    required String name,
-    String? avatar,
+    required String username,
+    String? displayName,
   }) async {
     if (!(await _networkInfo.isConnected)) {
       // Can't register when offline
@@ -69,21 +69,21 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     try {
-      // Attempt to register
+      // Attempt to register - map interface params to remote datasource params
       final userModel = await _authRemoteDataSource.register(
         email: email,
         password: password,
-        name: name,
-        avatar: avatar,
+        name: displayName ?? username, // Use displayName if provided, otherwise username
+        avatar: null, // Avatar not supported in interface
       );
-      
+
       // Save user to local storage
       await _userLocalDataSource.saveUser(userModel);
-      await _userLocalDataSource.setCurrentUser(userModel.id);
-      
+      await _userLocalDataSource.saveCurrentUser(userModel);
+
       return userModel.toDomain();
     } catch (e) {
-      print('Registration error: $e');
+      _logger.e('Registration error: $e');
       throw Exception('Registration failed: $e');
     }
   }
@@ -189,8 +189,55 @@ class AuthRepositoryImpl implements AuthRepository {
         newPassword: newPassword,
       );
     } catch (e) {
-      print('Error changing password: $e');
+      _logger.e('Error changing password: $e');
       throw Exception('Failed to change password: $e');
     }
   }
-} 
+
+  @override
+  Future<String?> getAccessToken() async {
+    try {
+      return await _authRemoteDataSource.getAccessToken();
+    } catch (e) {
+      _logger.e('Error getting access token: $e');
+      return null;
+    }
+  }
+
+  @override
+  Future<String?> refreshToken() async {
+    try {
+      return await _authRemoteDataSource.refreshToken();
+    } catch (e) {
+      _logger.e('Error refreshing token: $e');
+      return null;
+    }
+  }
+
+  @override
+  Future<bool> resetPassword(String email) async {
+    if (!(await _networkInfo.isConnected)) {
+      throw Exception('No internet connection');
+    }
+
+    try {
+      return await _authRemoteDataSource.forgotPassword(email);
+    } catch (e) {
+      _logger.e('Error resetting password: $e');
+      throw Exception('Failed to reset password: $e');
+    }
+  }
+
+  @override
+  Future<bool> updateDeviceToken(String deviceToken) async {
+    try {
+      if (await _networkInfo.isConnected) {
+        return await _authRemoteDataSource.updateDeviceToken(deviceToken);
+      }
+      return false;
+    } catch (e) {
+      _logger.e('Error updating device token: $e');
+      return false;
+    }
+  }
+}

@@ -191,8 +191,7 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnectionState> {
     Emitter<ConnectionState> emit,
   ) {
     final bool isConnected = event.connectionState == realtime.ConnectionState.connected;
-    final bool isConnecting = event.connectionState == realtime.ConnectionState.connecting || 
-                              event.connectionState == realtime.ConnectionState.reconnecting;
+    final bool isConnecting = event.connectionState == realtime.ConnectionState.connecting;
     
     emit(state.copyWith(
       isConnected: isConnected,

@@ -6,9 +6,9 @@
 /// Author: Senior Flutter/Mobile Architect
 library logout_usecase;
 
-import 'package:dartz/dartz.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/usecases/usecase.dart';
+import 'package:flutter_chat_app/core/utils/result.dart';
 import 'package:flutter_chat_app/domain/repositories/auth_repository.dart';
 
 /// Logout use case implementation
@@ -21,19 +21,20 @@ class LogoutUseCase implements NoParamsUseCase<void> {
   const LogoutUseCase(this.repository);
 
   @override
-  Future<Either<Failure, void>> call() async {
+  Future<Result<void>> call() async {
     try {
       // Perform logout through repository
       await repository.logout();
-      
+
       // Additional business logic can be added here
       // For example: clear local cache, cancel subscriptions, etc.
       await _performCleanup();
-      
-      return const Right(null);
+
+      return const Result.success(null);
     } catch (e) {
       // Convert exceptions to appropriate failures
-      return Left(_mapExceptionToFailure(e));
+      final failure = _mapExceptionToFailure(e);
+      return Result.failure(failure);
     }
   }
 
@@ -50,11 +51,11 @@ class LogoutUseCase implements NoParamsUseCase<void> {
   /// Map exceptions to appropriate failures
   Failure _mapExceptionToFailure(dynamic exception) {
     if (exception is NetworkException) {
-      return NetworkFailure(message: exception.message);
+      return ConnectionFailure(message: exception.message);
     } else if (exception is ServerException) {
       return ServerFailure(message: exception.message);
     } else {
-      return UnknownFailure(message: 'Đã xảy ra lỗi không xác định: ${exception.toString()}');
+      return UnexpectedFailure('Đã xảy ra lỗi không xác định: ${exception.toString()}');
     }
   }
 }

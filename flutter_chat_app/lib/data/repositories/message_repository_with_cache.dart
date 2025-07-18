@@ -152,10 +152,7 @@ class MessageRepositoryWithCache implements IMessageRepository {
     int limit,
     String cacheKey,
   ) async {
-    final localMessages = await _localDataSource.getMessagesForChat(
-      chatId,
-      limit: limit,
-    );
+    final localMessages = await _localDataSource.getMessagesForChat(chatId);
     
     // Cache lại local data cho lần sau
     await _cacheManager.cacheApiResponse(
@@ -243,7 +240,7 @@ class MessageRepositoryWithCache implements IMessageRepository {
       final messages = await _localDataSource.getMessagesForChat('all');
       final message = messages.firstWhere(
         (m) => m.localId == messageId || m.serverId == messageId,
-        orElse: () => throw NotFoundException(),
+        orElse: () => throw NotFoundException(message: 'Message not found: $messageId'),
       );
       return message.chatId;
     } catch (e) {
@@ -444,9 +441,10 @@ class MessageRepositoryWithCache implements IMessageRepository {
       final videoUrls = <String>[];
       
       for (final message in messages) {
-        if (message.attachments == null) continue;
-        
-        for (final attachment in message.attachments!) {
+        final domainMessage = message.toDomain();
+        if (domainMessage.attachments.isEmpty) continue;
+
+        for (final attachment in domainMessage.attachments) {
           if (attachment.type == 'image') {
             imageUrls.add(attachment.url);
           } else if (attachment.type == 'video') {

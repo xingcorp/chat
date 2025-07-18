@@ -69,9 +69,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
     
     // Listen for connectivity changes
-    _connectivitySubscription = _connectivityService.onConnectivityChanged.listen((connectivityResults) {
-      // Extract actual connectivity status from the results
-      final isConnected = connectivityResults.any((result) => result != ConnectivityResult.none);
+    _connectivitySubscription = _connectivityService.onConnectivityChanged.listen((isConnected) {
+      // onConnectivityChanged already returns bool
       add(ChatEvent.connectivityChanged(isConnected));
     });
   }
@@ -206,8 +205,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       final chat = await _chatRepository.getChatById(event.chatId);
       if (chat != null) {
         final updatedChat = chat.copyWith(
-          lastMessage: message,
-          updatedAt: DateTime.now(),
+          lastMessagePreview: message.content,
+          lastMessageTime: DateTime.now(),
         );
         await _chatRepository.saveChatLocally(updatedChat);
       }
@@ -495,8 +494,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   void _prefetchAvatars(List<Chat> chats) {
     // Collect avatar URLs
     final avatarUrls = chats
-        .where((chat) => chat.avatar != null && chat.avatar!.isNotEmpty)
-        .map((chat) => chat.avatar!)
+        .where((chat) => chat.avatarUrl != null && chat.avatarUrl!.isNotEmpty)
+        .map((chat) => chat.avatarUrl!)
         .toList();
     
     // Prefetch thumbnails

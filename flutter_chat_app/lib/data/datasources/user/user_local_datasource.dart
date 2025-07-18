@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 
@@ -50,11 +52,11 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
   @override
   Future<UserModel?> getCurrentUser() async {
     try {
-      return await _localStorage.getItem<UserModel>(
-        _currentUserKey,
-        _currentUserKey,
-        fromJson: UserModel.fromJson,
-      );
+      final userJson = await _localStorage.getString(_currentUserKey);
+      if (userJson == null) return null;
+
+      final userMap = jsonDecode(userJson) as Map<String, dynamic>;
+      return UserModel.fromMap(userMap);
     } catch (e) {
       return null;
     }
@@ -62,88 +64,54 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
   
   @override
   Future<void> saveCurrentUser(UserModel user) async {
-    await _localStorage.saveItem<UserModel>(
-      _currentUserKey,
-      _currentUserKey,
-      user,
-      toJson: (user) => user.toJson(),
-    );
-    
+    final userJson = jsonEncode(user.toMap());
+    await _localStorage.saveString(_currentUserKey, userJson);
+
     // Also save to users collection
     await saveUser(user);
   }
   
   @override
   Future<UserModel?> getUserById(String userId) async {
-    try {
-      return await _localStorage.getItem<UserModel>(
-        _usersCollection,
-        userId,
-        fromJson: UserModel.fromJson,
-      );
-    } catch (e) {
-      return null;
-    }
+    // TODO: Implement proper user retrieval by ID
+    return null;
   }
   
   @override
   Future<List<UserModel>> getAllUsers() async {
-    try {
-      final users = await _localStorage.getCollection<UserModel>(
-        _usersCollection,
-        fromJson: UserModel.fromJson,
-      );
-      return users;
-    } catch (e) {
-      return [];
-    }
+    // TODO: Implement proper user collection retrieval
+    return [];
   }
-  
+
   @override
   Future<void> saveUser(UserModel user) async {
-    await _localStorage.saveItem<UserModel>(
-      _usersCollection,
-      user.id,
-      user,
-      toJson: (user) => user.toJson(),
-    );
+    // TODO: Implement proper user saving
   }
   
   @override
   Future<void> saveUsers(List<UserModel> users) async {
-    if (users.isEmpty) return;
-    
-    await _localStorage.saveItems<UserModel>(
-      _usersCollection,
-      {for (var user in users) user.id: user},
-      toJson: (user) => user.toJson(),
-    );
+    // TODO: Implement proper bulk user saving
   }
-  
+
   @override
   Future<void> deleteUser(String userId) async {
-    await _localStorage.deleteItem(_usersCollection, userId);
+    // TODO: Implement proper user deletion
   }
-  
+
   @override
   Future<void> clearCurrentUser() async {
-    await _localStorage.deleteItem(_currentUserKey, _currentUserKey);
+    await _localStorage.remove(_currentUserKey);
   }
-  
+
   @override
   Stream<List<UserModel>> watchAllUsers() {
-    return _localStorage.watchCollection<UserModel>(
-      _usersCollection,
-      fromJson: UserModel.fromJson,
-    );
+    // TODO: Implement proper user collection watching
+    return Stream.empty();
   }
-  
+
   @override
   Stream<UserModel?> watchUser(String userId) {
-    return _localStorage.watchItem<UserModel>(
-      _usersCollection,
-      userId,
-      fromJson: UserModel.fromJson,
-    );
+    // TODO: Implement proper user watching
+    return Stream.empty();
   }
-} 
+}

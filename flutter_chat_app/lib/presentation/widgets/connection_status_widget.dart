@@ -26,15 +26,20 @@ class ConnectionStatusWidget extends StatelessWidget {
                 final networkQuality = networkQualitySnapshot.data;
                 
                 // Nếu không có dữ liệu hoặc đã kết nối, không hiển thị gì
-                if (connectionState == null || 
-                    connectionState == realtime.ConnectionState.connected) {
+                if (connectionState == null) {
                   return _buildConnectedStatus(connectionType, networkQuality);
                 }
-                
+
+                final stateString = connectionState.toString().split('.').last;
+
                 // Trạng thái đang kết nối
-                if (connectionState == realtime.ConnectionState.connecting ||
-                    connectionState == realtime.ConnectionState.reconnecting) {
-                  return _buildConnectingStatus(connectionState);
+                if (stateString == 'connecting' || stateString == 'reconnecting') {
+                  return _buildConnectingStatus(stateString);
+                }
+
+                // Trạng thái đã kết nối
+                if (stateString == 'connected') {
+                  return _buildConnectedStatus(connectionType, networkQuality);
                 }
                 
                 // Trạng thái mất kết nối
@@ -94,11 +99,11 @@ class ConnectionStatusWidget extends StatelessWidget {
   }
   
   /// Hiển thị trạng thái đang kết nối
-  Widget _buildConnectingStatus(realtime.ConnectionState connectionState) {
-    final bool isReconnecting = connectionState == realtime.ConnectionState.reconnecting;
-    
-    final String statusText = isReconnecting 
-        ? "Đang kết nối lại..." 
+  Widget _buildConnectingStatus(String connectionState) {
+    final bool isReconnecting = connectionState == 'reconnecting';
+
+    final String statusText = isReconnecting
+        ? "Đang kết nối lại..."
         : "Đang kết nối...";
     
     return Container(

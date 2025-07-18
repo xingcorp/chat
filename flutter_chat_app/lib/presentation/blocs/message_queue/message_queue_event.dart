@@ -18,7 +18,7 @@ class MessageQueueEvent with _$MessageQueueEvent {
   
   /// Update message status
   const factory MessageQueueEvent.messageStatusUpdated(
-    QueuedMessage message,
+    String messageId,
   ) = _MessageStatusUpdated;
   
   /// Load all pending messages

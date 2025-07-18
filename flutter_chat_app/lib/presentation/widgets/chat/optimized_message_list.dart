@@ -168,13 +168,13 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
   void scrollToIndex(int index, {bool animated = true}) {
     if (!_isScrollControllerAttached || !mounted) return;
     
-    _performanceMonitor.startTrace('scroll_to_message');
+    _performanceMonitor.startTrace(TraceType.custom, customTraceName: 'scroll_to_message');
     _scrollController.scrollToIndex(
       index,
       preferPosition: AutoScrollPosition.middle,
       duration: animated ? _scrollDuration : Duration.zero,
     ).then((_) {
-      _performanceMonitor.stopTrace('scroll_to_message');
+      _performanceMonitor.stopTrace(TraceType.custom, customTraceName: 'scroll_to_message');
     });
   }
   
@@ -209,11 +209,12 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
     
     // If we have a specific message to scroll to, try to do that first
     if (_scrollToMessageId != null) {
-      final found = scrollToMessage(_scrollToMessageId!, animated: false);
-      if (found) {
-        _scrollToMessageId = null;
-        return;
-      }
+      scrollToMessage(_scrollToMessageId!, animated: false).then((found) {
+        if (found) {
+          _scrollToMessageId = null;
+        }
+      });
+      return;
     }
     
     // Otherwise scroll to bottom if there are recent messages from current user
@@ -230,7 +231,8 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
     }
     
     // Performance trace
-    _performanceMonitor.startTrace('render_message_list',
+    _performanceMonitor.startTrace(TraceType.custom,
+      customTraceName: 'render_message_list',
       attributes: {'count': widget.messages.length.toString()});
     
     Widget messageList = ListView.builder(
@@ -282,7 +284,6 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
                 },
                 child: MessageItem(
                   message: message,
-                  isCurrentUser: message.sender.id == widget.currentUserId,
                   showSenderInfo: widget.isGroupChat,
                   onTap: widget.onMessageTap != null ? () => widget.onMessageTap!(message) : null,
                   onLongPress: widget.onMessageLongPress != null ? () => widget.onMessageLongPress!(message) : null,
@@ -307,7 +308,7 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
     
     // Stop the performance trace after building
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      _performanceMonitor.stopTrace('render_message_list');
+      _performanceMonitor.stopTrace(TraceType.custom, customTraceName: 'render_message_list');
     });
     
     return messageList;

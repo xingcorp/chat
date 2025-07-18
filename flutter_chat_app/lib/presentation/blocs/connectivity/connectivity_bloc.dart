@@ -10,7 +10,7 @@ part 'connectivity_state.dart';
 /// Manages network connectivity state
 class ConnectivityBloc extends Bloc<ConnectivityEvent, ConnectivityState> {
   final Connectivity _connectivity;
-  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   ConnectivityBloc(this._connectivity) : super(const ConnectivityLoading()) {
     on<ConnectivityStarted>(_onConnectivityStarted);
@@ -25,12 +25,12 @@ class ConnectivityBloc extends Bloc<ConnectivityEvent, ConnectivityState> {
     await _connectivitySubscription?.cancel();
     
     // Initialize with current connectivity state
-    final connectivityResult = await _connectivity.checkConnectivity();
-    _emitConnectivityState(connectivityResult, emit);
+    final connectivityResults = await _connectivity.checkConnectivity();
+    _emitConnectivityState(connectivityResults, emit);
 
     // Listen for connectivity changes
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
-      (result) => add(ConnectivityChanged(result)),
+      (results) => add(ConnectivityChanged(results)),
     );
   }
 
@@ -39,25 +39,28 @@ class ConnectivityBloc extends Bloc<ConnectivityEvent, ConnectivityState> {
     ConnectivityChanged event,
     Emitter<ConnectivityState> emit,
   ) {
-    _emitConnectivityState(event.connectivityResult, emit);
+    _emitConnectivityState(event.connectivityResults, emit);
   }
 
-  /// Convert connectivity result to appropriate state
+  /// Convert connectivity results to appropriate state
   void _emitConnectivityState(
-    ConnectivityResult result,
+    List<ConnectivityResult> results,
     Emitter<ConnectivityState> emit,
   ) {
-    switch (result) {
-      case ConnectivityResult.wifi:
-      case ConnectivityResult.mobile:
-      case ConnectivityResult.ethernet:
-        emit(const ConnectivityConnected());
-        break;
-      case ConnectivityResult.none:
-        emit(const ConnectivityDisconnected());
-        break;
-      default:
-        emit(const ConnectivityDisconnected());
+    // Check if any result indicates connection
+    final hasConnection = results.any((result) =>
+      result == ConnectivityResult.wifi ||
+      result == ConnectivityResult.mobile ||
+      result == ConnectivityResult.ethernet ||
+      result == ConnectivityResult.vpn ||
+      result == ConnectivityResult.bluetooth ||
+      result == ConnectivityResult.other
+    );
+
+    if (hasConnection) {
+      emit(const ConnectivityConnected());
+    } else {
+      emit(const ConnectivityDisconnected());
     }
   }
 

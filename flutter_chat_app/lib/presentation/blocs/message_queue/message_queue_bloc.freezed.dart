@@ -22,7 +22,7 @@ mixin _$MessageQueueEvent {
             ContentType contentType, List<Attachment> attachments)
         enqueueMessage,
     required TResult Function(String messageId) cancelMessage,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(String messageId) messageStatusUpdated,
     required TResult Function() loadPendingMessages,
     required TResult Function() clearCompletedMessages,
   }) =>
@@ -33,7 +33,7 @@ mixin _$MessageQueueEvent {
             List<Attachment> attachments)?
         enqueueMessage,
     TResult? Function(String messageId)? cancelMessage,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(String messageId)? messageStatusUpdated,
     TResult? Function()? loadPendingMessages,
     TResult? Function()? clearCompletedMessages,
   }) =>
@@ -44,7 +44,7 @@ mixin _$MessageQueueEvent {
             List<Attachment> attachments)?
         enqueueMessage,
     TResult Function(String messageId)? cancelMessage,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(String messageId)? messageStatusUpdated,
     TResult Function()? loadPendingMessages,
     TResult Function()? clearCompletedMessages,
     required TResult orElse(),
@@ -217,7 +217,7 @@ class _$EnqueueMessageImpl implements _EnqueueMessage {
             ContentType contentType, List<Attachment> attachments)
         enqueueMessage,
     required TResult Function(String messageId) cancelMessage,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(String messageId) messageStatusUpdated,
     required TResult Function() loadPendingMessages,
     required TResult Function() clearCompletedMessages,
   }) {
@@ -231,7 +231,7 @@ class _$EnqueueMessageImpl implements _EnqueueMessage {
             List<Attachment> attachments)?
         enqueueMessage,
     TResult? Function(String messageId)? cancelMessage,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(String messageId)? messageStatusUpdated,
     TResult? Function()? loadPendingMessages,
     TResult? Function()? clearCompletedMessages,
   }) {
@@ -245,7 +245,7 @@ class _$EnqueueMessageImpl implements _EnqueueMessage {
             List<Attachment> attachments)?
         enqueueMessage,
     TResult Function(String messageId)? cancelMessage,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(String messageId)? messageStatusUpdated,
     TResult Function()? loadPendingMessages,
     TResult Function()? clearCompletedMessages,
     required TResult orElse(),
@@ -390,7 +390,7 @@ class _$CancelMessageImpl implements _CancelMessage {
             ContentType contentType, List<Attachment> attachments)
         enqueueMessage,
     required TResult Function(String messageId) cancelMessage,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(String messageId) messageStatusUpdated,
     required TResult Function() loadPendingMessages,
     required TResult Function() clearCompletedMessages,
   }) {
@@ -404,7 +404,7 @@ class _$CancelMessageImpl implements _CancelMessage {
             List<Attachment> attachments)?
         enqueueMessage,
     TResult? Function(String messageId)? cancelMessage,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(String messageId)? messageStatusUpdated,
     TResult? Function()? loadPendingMessages,
     TResult? Function()? clearCompletedMessages,
   }) {
@@ -418,7 +418,7 @@ class _$CancelMessageImpl implements _CancelMessage {
             List<Attachment> attachments)?
         enqueueMessage,
     TResult Function(String messageId)? cancelMessage,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(String messageId)? messageStatusUpdated,
     TResult Function()? loadPendingMessages,
     TResult Function()? clearCompletedMessages,
     required TResult orElse(),
@@ -490,7 +490,7 @@ abstract class _$$MessageStatusUpdatedImplCopyWith<$Res> {
           $Res Function(_$MessageStatusUpdatedImpl) then) =
       __$$MessageStatusUpdatedImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({QueuedMessage message});
+  $Res call({String messageId});
 }
 
 /// @nodoc
@@ -506,13 +506,13 @@ class __$$MessageStatusUpdatedImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? message = freezed,
+    Object? messageId = null,
   }) {
     return _then(_$MessageStatusUpdatedImpl(
-      freezed == message
-          ? _value.message
-          : message // ignore: cast_nullable_to_non_nullable
-              as QueuedMessage,
+      null == messageId
+          ? _value.messageId
+          : messageId // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -520,14 +520,14 @@ class __$$MessageStatusUpdatedImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
-  const _$MessageStatusUpdatedImpl(this.message);
+  const _$MessageStatusUpdatedImpl(this.messageId);
 
   @override
-  final QueuedMessage message;
+  final String messageId;
 
   @override
   String toString() {
-    return 'MessageQueueEvent.messageStatusUpdated(message: $message)';
+    return 'MessageQueueEvent.messageStatusUpdated(messageId: $messageId)';
   }
 
   @override
@@ -535,12 +535,12 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$MessageStatusUpdatedImpl &&
-            const DeepCollectionEquality().equals(other.message, message));
+            (identical(other.messageId, messageId) ||
+                other.messageId == messageId));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(message));
+  int get hashCode => Object.hash(runtimeType, messageId);
 
   /// Create a copy of MessageQueueEvent
   /// with the given fields replaced by the non-null parameter values.
@@ -559,11 +559,11 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
             ContentType contentType, List<Attachment> attachments)
         enqueueMessage,
     required TResult Function(String messageId) cancelMessage,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(String messageId) messageStatusUpdated,
     required TResult Function() loadPendingMessages,
     required TResult Function() clearCompletedMessages,
   }) {
-    return messageStatusUpdated(message);
+    return messageStatusUpdated(messageId);
   }
 
   @override
@@ -573,11 +573,11 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
             List<Attachment> attachments)?
         enqueueMessage,
     TResult? Function(String messageId)? cancelMessage,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(String messageId)? messageStatusUpdated,
     TResult? Function()? loadPendingMessages,
     TResult? Function()? clearCompletedMessages,
   }) {
-    return messageStatusUpdated?.call(message);
+    return messageStatusUpdated?.call(messageId);
   }
 
   @override
@@ -587,13 +587,13 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
             List<Attachment> attachments)?
         enqueueMessage,
     TResult Function(String messageId)? cancelMessage,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(String messageId)? messageStatusUpdated,
     TResult Function()? loadPendingMessages,
     TResult Function()? clearCompletedMessages,
     required TResult orElse(),
   }) {
     if (messageStatusUpdated != null) {
-      return messageStatusUpdated(message);
+      return messageStatusUpdated(messageId);
     }
     return orElse();
   }
@@ -641,10 +641,10 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
 }
 
 abstract class _MessageStatusUpdated implements MessageQueueEvent {
-  const factory _MessageStatusUpdated(final QueuedMessage message) =
+  const factory _MessageStatusUpdated(final String messageId) =
       _$MessageStatusUpdatedImpl;
 
-  QueuedMessage get message;
+  String get messageId;
 
   /// Create a copy of MessageQueueEvent
   /// with the given fields replaced by the non-null parameter values.
@@ -699,7 +699,7 @@ class _$LoadPendingMessagesImpl implements _LoadPendingMessages {
             ContentType contentType, List<Attachment> attachments)
         enqueueMessage,
     required TResult Function(String messageId) cancelMessage,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(String messageId) messageStatusUpdated,
     required TResult Function() loadPendingMessages,
     required TResult Function() clearCompletedMessages,
   }) {
@@ -713,7 +713,7 @@ class _$LoadPendingMessagesImpl implements _LoadPendingMessages {
             List<Attachment> attachments)?
         enqueueMessage,
     TResult? Function(String messageId)? cancelMessage,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(String messageId)? messageStatusUpdated,
     TResult? Function()? loadPendingMessages,
     TResult? Function()? clearCompletedMessages,
   }) {
@@ -727,7 +727,7 @@ class _$LoadPendingMessagesImpl implements _LoadPendingMessages {
             List<Attachment> attachments)?
         enqueueMessage,
     TResult Function(String messageId)? cancelMessage,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(String messageId)? messageStatusUpdated,
     TResult Function()? loadPendingMessages,
     TResult Function()? clearCompletedMessages,
     required TResult orElse(),
@@ -832,7 +832,7 @@ class _$ClearCompletedMessagesImpl implements _ClearCompletedMessages {
             ContentType contentType, List<Attachment> attachments)
         enqueueMessage,
     required TResult Function(String messageId) cancelMessage,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(String messageId) messageStatusUpdated,
     required TResult Function() loadPendingMessages,
     required TResult Function() clearCompletedMessages,
   }) {
@@ -846,7 +846,7 @@ class _$ClearCompletedMessagesImpl implements _ClearCompletedMessages {
             List<Attachment> attachments)?
         enqueueMessage,
     TResult? Function(String messageId)? cancelMessage,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(String messageId)? messageStatusUpdated,
     TResult? Function()? loadPendingMessages,
     TResult? Function()? clearCompletedMessages,
   }) {
@@ -860,7 +860,7 @@ class _$ClearCompletedMessagesImpl implements _ClearCompletedMessages {
             List<Attachment> attachments)?
         enqueueMessage,
     TResult Function(String messageId)? cancelMessage,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(String messageId)? messageStatusUpdated,
     TResult Function()? loadPendingMessages,
     TResult Function()? clearCompletedMessages,
     required TResult orElse(),
@@ -923,11 +923,10 @@ mixin _$MessageQueueState {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(QueuedMessage message) messageEnqueued,
+    required TResult Function(String messageId) messageEnqueued,
     required TResult Function(String messageId) messageCancelled,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
-    required TResult Function(List<QueuedMessage> messages)
-        pendingMessagesLoaded,
+    required TResult Function(String messageId) messageStatusUpdated,
+    required TResult Function(List<String> messageIds) pendingMessagesLoaded,
     required TResult Function() completedMessagesCleared,
     required TResult Function() noChange,
     required TResult Function(String message) error,
@@ -937,10 +936,10 @@ mixin _$MessageQueueState {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(QueuedMessage message)? messageEnqueued,
+    TResult? Function(String messageId)? messageEnqueued,
     TResult? Function(String messageId)? messageCancelled,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
-    TResult? Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult? Function(String messageId)? messageStatusUpdated,
+    TResult? Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult? Function()? completedMessagesCleared,
     TResult? Function()? noChange,
     TResult? Function(String message)? error,
@@ -950,10 +949,10 @@ mixin _$MessageQueueState {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(QueuedMessage message)? messageEnqueued,
+    TResult Function(String messageId)? messageEnqueued,
     TResult Function(String messageId)? messageCancelled,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
-    TResult Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult Function(String messageId)? messageStatusUpdated,
+    TResult Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult Function()? completedMessagesCleared,
     TResult Function()? noChange,
     TResult Function(String message)? error,
@@ -966,7 +965,8 @@ mixin _$MessageQueueState {
     required TResult Function(_Loading value) loading,
     required TResult Function(_MessageEnqueued value) messageEnqueued,
     required TResult Function(_MessageCancelled value) messageCancelled,
-    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_MessageStatusUpdatedState value)
+        messageStatusUpdated,
     required TResult Function(_PendingMessagesLoaded value)
         pendingMessagesLoaded,
     required TResult Function(_CompletedMessagesCleared value)
@@ -981,7 +981,7 @@ mixin _$MessageQueueState {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_MessageEnqueued value)? messageEnqueued,
     TResult? Function(_MessageCancelled value)? messageCancelled,
-    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult? Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult? Function(_CompletedMessagesCleared value)?
         completedMessagesCleared,
@@ -995,7 +995,7 @@ mixin _$MessageQueueState {
     TResult Function(_Loading value)? loading,
     TResult Function(_MessageEnqueued value)? messageEnqueued,
     TResult Function(_MessageCancelled value)? messageCancelled,
-    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult Function(_CompletedMessagesCleared value)? completedMessagesCleared,
     TResult Function(_NoChange value)? noChange,
@@ -1069,11 +1069,10 @@ class _$InitialImpl implements _Initial {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(QueuedMessage message) messageEnqueued,
+    required TResult Function(String messageId) messageEnqueued,
     required TResult Function(String messageId) messageCancelled,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
-    required TResult Function(List<QueuedMessage> messages)
-        pendingMessagesLoaded,
+    required TResult Function(String messageId) messageStatusUpdated,
+    required TResult Function(List<String> messageIds) pendingMessagesLoaded,
     required TResult Function() completedMessagesCleared,
     required TResult Function() noChange,
     required TResult Function(String message) error,
@@ -1086,10 +1085,10 @@ class _$InitialImpl implements _Initial {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(QueuedMessage message)? messageEnqueued,
+    TResult? Function(String messageId)? messageEnqueued,
     TResult? Function(String messageId)? messageCancelled,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
-    TResult? Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult? Function(String messageId)? messageStatusUpdated,
+    TResult? Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult? Function()? completedMessagesCleared,
     TResult? Function()? noChange,
     TResult? Function(String message)? error,
@@ -1102,10 +1101,10 @@ class _$InitialImpl implements _Initial {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(QueuedMessage message)? messageEnqueued,
+    TResult Function(String messageId)? messageEnqueued,
     TResult Function(String messageId)? messageCancelled,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
-    TResult Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult Function(String messageId)? messageStatusUpdated,
+    TResult Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult Function()? completedMessagesCleared,
     TResult Function()? noChange,
     TResult Function(String message)? error,
@@ -1124,7 +1123,8 @@ class _$InitialImpl implements _Initial {
     required TResult Function(_Loading value) loading,
     required TResult Function(_MessageEnqueued value) messageEnqueued,
     required TResult Function(_MessageCancelled value) messageCancelled,
-    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_MessageStatusUpdatedState value)
+        messageStatusUpdated,
     required TResult Function(_PendingMessagesLoaded value)
         pendingMessagesLoaded,
     required TResult Function(_CompletedMessagesCleared value)
@@ -1142,7 +1142,7 @@ class _$InitialImpl implements _Initial {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_MessageEnqueued value)? messageEnqueued,
     TResult? Function(_MessageCancelled value)? messageCancelled,
-    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult? Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult? Function(_CompletedMessagesCleared value)?
         completedMessagesCleared,
@@ -1159,7 +1159,7 @@ class _$InitialImpl implements _Initial {
     TResult Function(_Loading value)? loading,
     TResult Function(_MessageEnqueued value)? messageEnqueued,
     TResult Function(_MessageCancelled value)? messageCancelled,
-    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult Function(_CompletedMessagesCleared value)? completedMessagesCleared,
     TResult Function(_NoChange value)? noChange,
@@ -1220,11 +1220,10 @@ class _$LoadingImpl implements _Loading {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(QueuedMessage message) messageEnqueued,
+    required TResult Function(String messageId) messageEnqueued,
     required TResult Function(String messageId) messageCancelled,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
-    required TResult Function(List<QueuedMessage> messages)
-        pendingMessagesLoaded,
+    required TResult Function(String messageId) messageStatusUpdated,
+    required TResult Function(List<String> messageIds) pendingMessagesLoaded,
     required TResult Function() completedMessagesCleared,
     required TResult Function() noChange,
     required TResult Function(String message) error,
@@ -1237,10 +1236,10 @@ class _$LoadingImpl implements _Loading {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(QueuedMessage message)? messageEnqueued,
+    TResult? Function(String messageId)? messageEnqueued,
     TResult? Function(String messageId)? messageCancelled,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
-    TResult? Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult? Function(String messageId)? messageStatusUpdated,
+    TResult? Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult? Function()? completedMessagesCleared,
     TResult? Function()? noChange,
     TResult? Function(String message)? error,
@@ -1253,10 +1252,10 @@ class _$LoadingImpl implements _Loading {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(QueuedMessage message)? messageEnqueued,
+    TResult Function(String messageId)? messageEnqueued,
     TResult Function(String messageId)? messageCancelled,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
-    TResult Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult Function(String messageId)? messageStatusUpdated,
+    TResult Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult Function()? completedMessagesCleared,
     TResult Function()? noChange,
     TResult Function(String message)? error,
@@ -1275,7 +1274,8 @@ class _$LoadingImpl implements _Loading {
     required TResult Function(_Loading value) loading,
     required TResult Function(_MessageEnqueued value) messageEnqueued,
     required TResult Function(_MessageCancelled value) messageCancelled,
-    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_MessageStatusUpdatedState value)
+        messageStatusUpdated,
     required TResult Function(_PendingMessagesLoaded value)
         pendingMessagesLoaded,
     required TResult Function(_CompletedMessagesCleared value)
@@ -1293,7 +1293,7 @@ class _$LoadingImpl implements _Loading {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_MessageEnqueued value)? messageEnqueued,
     TResult? Function(_MessageCancelled value)? messageCancelled,
-    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult? Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult? Function(_CompletedMessagesCleared value)?
         completedMessagesCleared,
@@ -1310,7 +1310,7 @@ class _$LoadingImpl implements _Loading {
     TResult Function(_Loading value)? loading,
     TResult Function(_MessageEnqueued value)? messageEnqueued,
     TResult Function(_MessageCancelled value)? messageCancelled,
-    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult Function(_CompletedMessagesCleared value)? completedMessagesCleared,
     TResult Function(_NoChange value)? noChange,
@@ -1334,7 +1334,7 @@ abstract class _$$MessageEnqueuedImplCopyWith<$Res> {
           $Res Function(_$MessageEnqueuedImpl) then) =
       __$$MessageEnqueuedImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({QueuedMessage message});
+  $Res call({String messageId});
 }
 
 /// @nodoc
@@ -1350,13 +1350,13 @@ class __$$MessageEnqueuedImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? message = freezed,
+    Object? messageId = null,
   }) {
     return _then(_$MessageEnqueuedImpl(
-      freezed == message
-          ? _value.message
-          : message // ignore: cast_nullable_to_non_nullable
-              as QueuedMessage,
+      null == messageId
+          ? _value.messageId
+          : messageId // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -1364,14 +1364,14 @@ class __$$MessageEnqueuedImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$MessageEnqueuedImpl implements _MessageEnqueued {
-  const _$MessageEnqueuedImpl(this.message);
+  const _$MessageEnqueuedImpl(this.messageId);
 
   @override
-  final QueuedMessage message;
+  final String messageId;
 
   @override
   String toString() {
-    return 'MessageQueueState.messageEnqueued(message: $message)';
+    return 'MessageQueueState.messageEnqueued(messageId: $messageId)';
   }
 
   @override
@@ -1379,12 +1379,12 @@ class _$MessageEnqueuedImpl implements _MessageEnqueued {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$MessageEnqueuedImpl &&
-            const DeepCollectionEquality().equals(other.message, message));
+            (identical(other.messageId, messageId) ||
+                other.messageId == messageId));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(message));
+  int get hashCode => Object.hash(runtimeType, messageId);
 
   /// Create a copy of MessageQueueState
   /// with the given fields replaced by the non-null parameter values.
@@ -1400,16 +1400,15 @@ class _$MessageEnqueuedImpl implements _MessageEnqueued {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(QueuedMessage message) messageEnqueued,
+    required TResult Function(String messageId) messageEnqueued,
     required TResult Function(String messageId) messageCancelled,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
-    required TResult Function(List<QueuedMessage> messages)
-        pendingMessagesLoaded,
+    required TResult Function(String messageId) messageStatusUpdated,
+    required TResult Function(List<String> messageIds) pendingMessagesLoaded,
     required TResult Function() completedMessagesCleared,
     required TResult Function() noChange,
     required TResult Function(String message) error,
   }) {
-    return messageEnqueued(message);
+    return messageEnqueued(messageId);
   }
 
   @override
@@ -1417,15 +1416,15 @@ class _$MessageEnqueuedImpl implements _MessageEnqueued {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(QueuedMessage message)? messageEnqueued,
+    TResult? Function(String messageId)? messageEnqueued,
     TResult? Function(String messageId)? messageCancelled,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
-    TResult? Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult? Function(String messageId)? messageStatusUpdated,
+    TResult? Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult? Function()? completedMessagesCleared,
     TResult? Function()? noChange,
     TResult? Function(String message)? error,
   }) {
-    return messageEnqueued?.call(message);
+    return messageEnqueued?.call(messageId);
   }
 
   @override
@@ -1433,17 +1432,17 @@ class _$MessageEnqueuedImpl implements _MessageEnqueued {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(QueuedMessage message)? messageEnqueued,
+    TResult Function(String messageId)? messageEnqueued,
     TResult Function(String messageId)? messageCancelled,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
-    TResult Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult Function(String messageId)? messageStatusUpdated,
+    TResult Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult Function()? completedMessagesCleared,
     TResult Function()? noChange,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
     if (messageEnqueued != null) {
-      return messageEnqueued(message);
+      return messageEnqueued(messageId);
     }
     return orElse();
   }
@@ -1455,7 +1454,8 @@ class _$MessageEnqueuedImpl implements _MessageEnqueued {
     required TResult Function(_Loading value) loading,
     required TResult Function(_MessageEnqueued value) messageEnqueued,
     required TResult Function(_MessageCancelled value) messageCancelled,
-    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_MessageStatusUpdatedState value)
+        messageStatusUpdated,
     required TResult Function(_PendingMessagesLoaded value)
         pendingMessagesLoaded,
     required TResult Function(_CompletedMessagesCleared value)
@@ -1473,7 +1473,7 @@ class _$MessageEnqueuedImpl implements _MessageEnqueued {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_MessageEnqueued value)? messageEnqueued,
     TResult? Function(_MessageCancelled value)? messageCancelled,
-    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult? Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult? Function(_CompletedMessagesCleared value)?
         completedMessagesCleared,
@@ -1490,7 +1490,7 @@ class _$MessageEnqueuedImpl implements _MessageEnqueued {
     TResult Function(_Loading value)? loading,
     TResult Function(_MessageEnqueued value)? messageEnqueued,
     TResult Function(_MessageCancelled value)? messageCancelled,
-    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult Function(_CompletedMessagesCleared value)? completedMessagesCleared,
     TResult Function(_NoChange value)? noChange,
@@ -1505,10 +1505,10 @@ class _$MessageEnqueuedImpl implements _MessageEnqueued {
 }
 
 abstract class _MessageEnqueued implements MessageQueueState {
-  const factory _MessageEnqueued(final QueuedMessage message) =
+  const factory _MessageEnqueued(final String messageId) =
       _$MessageEnqueuedImpl;
 
-  QueuedMessage get message;
+  String get messageId;
 
   /// Create a copy of MessageQueueState
   /// with the given fields replaced by the non-null parameter values.
@@ -1589,11 +1589,10 @@ class _$MessageCancelledImpl implements _MessageCancelled {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(QueuedMessage message) messageEnqueued,
+    required TResult Function(String messageId) messageEnqueued,
     required TResult Function(String messageId) messageCancelled,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
-    required TResult Function(List<QueuedMessage> messages)
-        pendingMessagesLoaded,
+    required TResult Function(String messageId) messageStatusUpdated,
+    required TResult Function(List<String> messageIds) pendingMessagesLoaded,
     required TResult Function() completedMessagesCleared,
     required TResult Function() noChange,
     required TResult Function(String message) error,
@@ -1606,10 +1605,10 @@ class _$MessageCancelledImpl implements _MessageCancelled {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(QueuedMessage message)? messageEnqueued,
+    TResult? Function(String messageId)? messageEnqueued,
     TResult? Function(String messageId)? messageCancelled,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
-    TResult? Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult? Function(String messageId)? messageStatusUpdated,
+    TResult? Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult? Function()? completedMessagesCleared,
     TResult? Function()? noChange,
     TResult? Function(String message)? error,
@@ -1622,10 +1621,10 @@ class _$MessageCancelledImpl implements _MessageCancelled {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(QueuedMessage message)? messageEnqueued,
+    TResult Function(String messageId)? messageEnqueued,
     TResult Function(String messageId)? messageCancelled,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
-    TResult Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult Function(String messageId)? messageStatusUpdated,
+    TResult Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult Function()? completedMessagesCleared,
     TResult Function()? noChange,
     TResult Function(String message)? error,
@@ -1644,7 +1643,8 @@ class _$MessageCancelledImpl implements _MessageCancelled {
     required TResult Function(_Loading value) loading,
     required TResult Function(_MessageEnqueued value) messageEnqueued,
     required TResult Function(_MessageCancelled value) messageCancelled,
-    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_MessageStatusUpdatedState value)
+        messageStatusUpdated,
     required TResult Function(_PendingMessagesLoaded value)
         pendingMessagesLoaded,
     required TResult Function(_CompletedMessagesCleared value)
@@ -1662,7 +1662,7 @@ class _$MessageCancelledImpl implements _MessageCancelled {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_MessageEnqueued value)? messageEnqueued,
     TResult? Function(_MessageCancelled value)? messageCancelled,
-    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult? Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult? Function(_CompletedMessagesCleared value)?
         completedMessagesCleared,
@@ -1679,7 +1679,7 @@ class _$MessageCancelledImpl implements _MessageCancelled {
     TResult Function(_Loading value)? loading,
     TResult Function(_MessageEnqueued value)? messageEnqueued,
     TResult Function(_MessageCancelled value)? messageCancelled,
-    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult Function(_CompletedMessagesCleared value)? completedMessagesCleared,
     TResult Function(_NoChange value)? noChange,
@@ -1707,20 +1707,23 @@ abstract class _MessageCancelled implements MessageQueueState {
 }
 
 /// @nodoc
-abstract class _$$MessageStatusUpdatedImplCopyWith<$Res> {
-  factory _$$MessageStatusUpdatedImplCopyWith(_$MessageStatusUpdatedImpl value,
-          $Res Function(_$MessageStatusUpdatedImpl) then) =
-      __$$MessageStatusUpdatedImplCopyWithImpl<$Res>;
+abstract class _$$MessageStatusUpdatedStateImplCopyWith<$Res> {
+  factory _$$MessageStatusUpdatedStateImplCopyWith(
+          _$MessageStatusUpdatedStateImpl value,
+          $Res Function(_$MessageStatusUpdatedStateImpl) then) =
+      __$$MessageStatusUpdatedStateImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({QueuedMessage message});
+  $Res call({String messageId});
 }
 
 /// @nodoc
-class __$$MessageStatusUpdatedImplCopyWithImpl<$Res>
-    extends _$MessageQueueStateCopyWithImpl<$Res, _$MessageStatusUpdatedImpl>
-    implements _$$MessageStatusUpdatedImplCopyWith<$Res> {
-  __$$MessageStatusUpdatedImplCopyWithImpl(_$MessageStatusUpdatedImpl _value,
-      $Res Function(_$MessageStatusUpdatedImpl) _then)
+class __$$MessageStatusUpdatedStateImplCopyWithImpl<$Res>
+    extends _$MessageQueueStateCopyWithImpl<$Res,
+        _$MessageStatusUpdatedStateImpl>
+    implements _$$MessageStatusUpdatedStateImplCopyWith<$Res> {
+  __$$MessageStatusUpdatedStateImplCopyWithImpl(
+      _$MessageStatusUpdatedStateImpl _value,
+      $Res Function(_$MessageStatusUpdatedStateImpl) _then)
       : super(_value, _then);
 
   /// Create a copy of MessageQueueState
@@ -1728,67 +1731,65 @@ class __$$MessageStatusUpdatedImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? message = freezed,
+    Object? messageId = null,
   }) {
-    return _then(_$MessageStatusUpdatedImpl(
-      freezed == message
-          ? _value.message
-          : message // ignore: cast_nullable_to_non_nullable
-              as QueuedMessage,
+    return _then(_$MessageStatusUpdatedStateImpl(
+      null == messageId
+          ? _value.messageId
+          : messageId // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
 
 /// @nodoc
 
-class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
-  const _$MessageStatusUpdatedImpl(this.message);
+class _$MessageStatusUpdatedStateImpl implements _MessageStatusUpdatedState {
+  const _$MessageStatusUpdatedStateImpl(this.messageId);
 
   @override
-  final QueuedMessage message;
+  final String messageId;
 
   @override
   String toString() {
-    return 'MessageQueueState.messageStatusUpdated(message: $message)';
+    return 'MessageQueueState.messageStatusUpdated(messageId: $messageId)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$MessageStatusUpdatedImpl &&
-            const DeepCollectionEquality().equals(other.message, message));
+            other is _$MessageStatusUpdatedStateImpl &&
+            (identical(other.messageId, messageId) ||
+                other.messageId == messageId));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(message));
+  int get hashCode => Object.hash(runtimeType, messageId);
 
   /// Create a copy of MessageQueueState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$MessageStatusUpdatedImplCopyWith<_$MessageStatusUpdatedImpl>
-      get copyWith =>
-          __$$MessageStatusUpdatedImplCopyWithImpl<_$MessageStatusUpdatedImpl>(
-              this, _$identity);
+  _$$MessageStatusUpdatedStateImplCopyWith<_$MessageStatusUpdatedStateImpl>
+      get copyWith => __$$MessageStatusUpdatedStateImplCopyWithImpl<
+          _$MessageStatusUpdatedStateImpl>(this, _$identity);
 
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(QueuedMessage message) messageEnqueued,
+    required TResult Function(String messageId) messageEnqueued,
     required TResult Function(String messageId) messageCancelled,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
-    required TResult Function(List<QueuedMessage> messages)
-        pendingMessagesLoaded,
+    required TResult Function(String messageId) messageStatusUpdated,
+    required TResult Function(List<String> messageIds) pendingMessagesLoaded,
     required TResult Function() completedMessagesCleared,
     required TResult Function() noChange,
     required TResult Function(String message) error,
   }) {
-    return messageStatusUpdated(message);
+    return messageStatusUpdated(messageId);
   }
 
   @override
@@ -1796,15 +1797,15 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(QueuedMessage message)? messageEnqueued,
+    TResult? Function(String messageId)? messageEnqueued,
     TResult? Function(String messageId)? messageCancelled,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
-    TResult? Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult? Function(String messageId)? messageStatusUpdated,
+    TResult? Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult? Function()? completedMessagesCleared,
     TResult? Function()? noChange,
     TResult? Function(String message)? error,
   }) {
-    return messageStatusUpdated?.call(message);
+    return messageStatusUpdated?.call(messageId);
   }
 
   @override
@@ -1812,17 +1813,17 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(QueuedMessage message)? messageEnqueued,
+    TResult Function(String messageId)? messageEnqueued,
     TResult Function(String messageId)? messageCancelled,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
-    TResult Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult Function(String messageId)? messageStatusUpdated,
+    TResult Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult Function()? completedMessagesCleared,
     TResult Function()? noChange,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
     if (messageStatusUpdated != null) {
-      return messageStatusUpdated(message);
+      return messageStatusUpdated(messageId);
     }
     return orElse();
   }
@@ -1834,7 +1835,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     required TResult Function(_Loading value) loading,
     required TResult Function(_MessageEnqueued value) messageEnqueued,
     required TResult Function(_MessageCancelled value) messageCancelled,
-    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_MessageStatusUpdatedState value)
+        messageStatusUpdated,
     required TResult Function(_PendingMessagesLoaded value)
         pendingMessagesLoaded,
     required TResult Function(_CompletedMessagesCleared value)
@@ -1852,7 +1854,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_MessageEnqueued value)? messageEnqueued,
     TResult? Function(_MessageCancelled value)? messageCancelled,
-    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult? Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult? Function(_CompletedMessagesCleared value)?
         completedMessagesCleared,
@@ -1869,7 +1871,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult Function(_Loading value)? loading,
     TResult Function(_MessageEnqueued value)? messageEnqueued,
     TResult Function(_MessageCancelled value)? messageCancelled,
-    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult Function(_CompletedMessagesCleared value)? completedMessagesCleared,
     TResult Function(_NoChange value)? noChange,
@@ -1883,16 +1885,16 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   }
 }
 
-abstract class _MessageStatusUpdated implements MessageQueueState {
-  const factory _MessageStatusUpdated(final QueuedMessage message) =
-      _$MessageStatusUpdatedImpl;
+abstract class _MessageStatusUpdatedState implements MessageQueueState {
+  const factory _MessageStatusUpdatedState(final String messageId) =
+      _$MessageStatusUpdatedStateImpl;
 
-  QueuedMessage get message;
+  String get messageId;
 
   /// Create a copy of MessageQueueState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$MessageStatusUpdatedImplCopyWith<_$MessageStatusUpdatedImpl>
+  _$$MessageStatusUpdatedStateImplCopyWith<_$MessageStatusUpdatedStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -1903,7 +1905,7 @@ abstract class _$$PendingMessagesLoadedImplCopyWith<$Res> {
           $Res Function(_$PendingMessagesLoadedImpl) then) =
       __$$PendingMessagesLoadedImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({List<QueuedMessage> messages});
+  $Res call({List<String> messageIds});
 }
 
 /// @nodoc
@@ -1919,13 +1921,13 @@ class __$$PendingMessagesLoadedImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? messages = null,
+    Object? messageIds = null,
   }) {
     return _then(_$PendingMessagesLoadedImpl(
-      null == messages
-          ? _value._messages
-          : messages // ignore: cast_nullable_to_non_nullable
-              as List<QueuedMessage>,
+      null == messageIds
+          ? _value._messageIds
+          : messageIds // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 }
@@ -1933,20 +1935,20 @@ class __$$PendingMessagesLoadedImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$PendingMessagesLoadedImpl implements _PendingMessagesLoaded {
-  const _$PendingMessagesLoadedImpl(final List<QueuedMessage> messages)
-      : _messages = messages;
+  const _$PendingMessagesLoadedImpl(final List<String> messageIds)
+      : _messageIds = messageIds;
 
-  final List<QueuedMessage> _messages;
+  final List<String> _messageIds;
   @override
-  List<QueuedMessage> get messages {
-    if (_messages is EqualUnmodifiableListView) return _messages;
+  List<String> get messageIds {
+    if (_messageIds is EqualUnmodifiableListView) return _messageIds;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_messages);
+    return EqualUnmodifiableListView(_messageIds);
   }
 
   @override
   String toString() {
-    return 'MessageQueueState.pendingMessagesLoaded(messages: $messages)';
+    return 'MessageQueueState.pendingMessagesLoaded(messageIds: $messageIds)';
   }
 
   @override
@@ -1954,12 +1956,13 @@ class _$PendingMessagesLoadedImpl implements _PendingMessagesLoaded {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$PendingMessagesLoadedImpl &&
-            const DeepCollectionEquality().equals(other._messages, _messages));
+            const DeepCollectionEquality()
+                .equals(other._messageIds, _messageIds));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(_messages));
+  int get hashCode => Object.hash(
+      runtimeType, const DeepCollectionEquality().hash(_messageIds));
 
   /// Create a copy of MessageQueueState
   /// with the given fields replaced by the non-null parameter values.
@@ -1975,16 +1978,15 @@ class _$PendingMessagesLoadedImpl implements _PendingMessagesLoaded {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(QueuedMessage message) messageEnqueued,
+    required TResult Function(String messageId) messageEnqueued,
     required TResult Function(String messageId) messageCancelled,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
-    required TResult Function(List<QueuedMessage> messages)
-        pendingMessagesLoaded,
+    required TResult Function(String messageId) messageStatusUpdated,
+    required TResult Function(List<String> messageIds) pendingMessagesLoaded,
     required TResult Function() completedMessagesCleared,
     required TResult Function() noChange,
     required TResult Function(String message) error,
   }) {
-    return pendingMessagesLoaded(messages);
+    return pendingMessagesLoaded(messageIds);
   }
 
   @override
@@ -1992,15 +1994,15 @@ class _$PendingMessagesLoadedImpl implements _PendingMessagesLoaded {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(QueuedMessage message)? messageEnqueued,
+    TResult? Function(String messageId)? messageEnqueued,
     TResult? Function(String messageId)? messageCancelled,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
-    TResult? Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult? Function(String messageId)? messageStatusUpdated,
+    TResult? Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult? Function()? completedMessagesCleared,
     TResult? Function()? noChange,
     TResult? Function(String message)? error,
   }) {
-    return pendingMessagesLoaded?.call(messages);
+    return pendingMessagesLoaded?.call(messageIds);
   }
 
   @override
@@ -2008,17 +2010,17 @@ class _$PendingMessagesLoadedImpl implements _PendingMessagesLoaded {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(QueuedMessage message)? messageEnqueued,
+    TResult Function(String messageId)? messageEnqueued,
     TResult Function(String messageId)? messageCancelled,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
-    TResult Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult Function(String messageId)? messageStatusUpdated,
+    TResult Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult Function()? completedMessagesCleared,
     TResult Function()? noChange,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
     if (pendingMessagesLoaded != null) {
-      return pendingMessagesLoaded(messages);
+      return pendingMessagesLoaded(messageIds);
     }
     return orElse();
   }
@@ -2030,7 +2032,8 @@ class _$PendingMessagesLoadedImpl implements _PendingMessagesLoaded {
     required TResult Function(_Loading value) loading,
     required TResult Function(_MessageEnqueued value) messageEnqueued,
     required TResult Function(_MessageCancelled value) messageCancelled,
-    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_MessageStatusUpdatedState value)
+        messageStatusUpdated,
     required TResult Function(_PendingMessagesLoaded value)
         pendingMessagesLoaded,
     required TResult Function(_CompletedMessagesCleared value)
@@ -2048,7 +2051,7 @@ class _$PendingMessagesLoadedImpl implements _PendingMessagesLoaded {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_MessageEnqueued value)? messageEnqueued,
     TResult? Function(_MessageCancelled value)? messageCancelled,
-    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult? Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult? Function(_CompletedMessagesCleared value)?
         completedMessagesCleared,
@@ -2065,7 +2068,7 @@ class _$PendingMessagesLoadedImpl implements _PendingMessagesLoaded {
     TResult Function(_Loading value)? loading,
     TResult Function(_MessageEnqueued value)? messageEnqueued,
     TResult Function(_MessageCancelled value)? messageCancelled,
-    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult Function(_CompletedMessagesCleared value)? completedMessagesCleared,
     TResult Function(_NoChange value)? noChange,
@@ -2080,10 +2083,10 @@ class _$PendingMessagesLoadedImpl implements _PendingMessagesLoaded {
 }
 
 abstract class _PendingMessagesLoaded implements MessageQueueState {
-  const factory _PendingMessagesLoaded(final List<QueuedMessage> messages) =
+  const factory _PendingMessagesLoaded(final List<String> messageIds) =
       _$PendingMessagesLoadedImpl;
 
-  List<QueuedMessage> get messages;
+  List<String> get messageIds;
 
   /// Create a copy of MessageQueueState
   /// with the given fields replaced by the non-null parameter values.
@@ -2139,11 +2142,10 @@ class _$CompletedMessagesClearedImpl implements _CompletedMessagesCleared {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(QueuedMessage message) messageEnqueued,
+    required TResult Function(String messageId) messageEnqueued,
     required TResult Function(String messageId) messageCancelled,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
-    required TResult Function(List<QueuedMessage> messages)
-        pendingMessagesLoaded,
+    required TResult Function(String messageId) messageStatusUpdated,
+    required TResult Function(List<String> messageIds) pendingMessagesLoaded,
     required TResult Function() completedMessagesCleared,
     required TResult Function() noChange,
     required TResult Function(String message) error,
@@ -2156,10 +2158,10 @@ class _$CompletedMessagesClearedImpl implements _CompletedMessagesCleared {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(QueuedMessage message)? messageEnqueued,
+    TResult? Function(String messageId)? messageEnqueued,
     TResult? Function(String messageId)? messageCancelled,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
-    TResult? Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult? Function(String messageId)? messageStatusUpdated,
+    TResult? Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult? Function()? completedMessagesCleared,
     TResult? Function()? noChange,
     TResult? Function(String message)? error,
@@ -2172,10 +2174,10 @@ class _$CompletedMessagesClearedImpl implements _CompletedMessagesCleared {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(QueuedMessage message)? messageEnqueued,
+    TResult Function(String messageId)? messageEnqueued,
     TResult Function(String messageId)? messageCancelled,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
-    TResult Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult Function(String messageId)? messageStatusUpdated,
+    TResult Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult Function()? completedMessagesCleared,
     TResult Function()? noChange,
     TResult Function(String message)? error,
@@ -2194,7 +2196,8 @@ class _$CompletedMessagesClearedImpl implements _CompletedMessagesCleared {
     required TResult Function(_Loading value) loading,
     required TResult Function(_MessageEnqueued value) messageEnqueued,
     required TResult Function(_MessageCancelled value) messageCancelled,
-    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_MessageStatusUpdatedState value)
+        messageStatusUpdated,
     required TResult Function(_PendingMessagesLoaded value)
         pendingMessagesLoaded,
     required TResult Function(_CompletedMessagesCleared value)
@@ -2212,7 +2215,7 @@ class _$CompletedMessagesClearedImpl implements _CompletedMessagesCleared {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_MessageEnqueued value)? messageEnqueued,
     TResult? Function(_MessageCancelled value)? messageCancelled,
-    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult? Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult? Function(_CompletedMessagesCleared value)?
         completedMessagesCleared,
@@ -2229,7 +2232,7 @@ class _$CompletedMessagesClearedImpl implements _CompletedMessagesCleared {
     TResult Function(_Loading value)? loading,
     TResult Function(_MessageEnqueued value)? messageEnqueued,
     TResult Function(_MessageCancelled value)? messageCancelled,
-    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult Function(_CompletedMessagesCleared value)? completedMessagesCleared,
     TResult Function(_NoChange value)? noChange,
@@ -2290,11 +2293,10 @@ class _$NoChangeImpl implements _NoChange {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(QueuedMessage message) messageEnqueued,
+    required TResult Function(String messageId) messageEnqueued,
     required TResult Function(String messageId) messageCancelled,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
-    required TResult Function(List<QueuedMessage> messages)
-        pendingMessagesLoaded,
+    required TResult Function(String messageId) messageStatusUpdated,
+    required TResult Function(List<String> messageIds) pendingMessagesLoaded,
     required TResult Function() completedMessagesCleared,
     required TResult Function() noChange,
     required TResult Function(String message) error,
@@ -2307,10 +2309,10 @@ class _$NoChangeImpl implements _NoChange {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(QueuedMessage message)? messageEnqueued,
+    TResult? Function(String messageId)? messageEnqueued,
     TResult? Function(String messageId)? messageCancelled,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
-    TResult? Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult? Function(String messageId)? messageStatusUpdated,
+    TResult? Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult? Function()? completedMessagesCleared,
     TResult? Function()? noChange,
     TResult? Function(String message)? error,
@@ -2323,10 +2325,10 @@ class _$NoChangeImpl implements _NoChange {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(QueuedMessage message)? messageEnqueued,
+    TResult Function(String messageId)? messageEnqueued,
     TResult Function(String messageId)? messageCancelled,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
-    TResult Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult Function(String messageId)? messageStatusUpdated,
+    TResult Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult Function()? completedMessagesCleared,
     TResult Function()? noChange,
     TResult Function(String message)? error,
@@ -2345,7 +2347,8 @@ class _$NoChangeImpl implements _NoChange {
     required TResult Function(_Loading value) loading,
     required TResult Function(_MessageEnqueued value) messageEnqueued,
     required TResult Function(_MessageCancelled value) messageCancelled,
-    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_MessageStatusUpdatedState value)
+        messageStatusUpdated,
     required TResult Function(_PendingMessagesLoaded value)
         pendingMessagesLoaded,
     required TResult Function(_CompletedMessagesCleared value)
@@ -2363,7 +2366,7 @@ class _$NoChangeImpl implements _NoChange {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_MessageEnqueued value)? messageEnqueued,
     TResult? Function(_MessageCancelled value)? messageCancelled,
-    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult? Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult? Function(_CompletedMessagesCleared value)?
         completedMessagesCleared,
@@ -2380,7 +2383,7 @@ class _$NoChangeImpl implements _NoChange {
     TResult Function(_Loading value)? loading,
     TResult Function(_MessageEnqueued value)? messageEnqueued,
     TResult Function(_MessageCancelled value)? messageCancelled,
-    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult Function(_CompletedMessagesCleared value)? completedMessagesCleared,
     TResult Function(_NoChange value)? noChange,
@@ -2468,11 +2471,10 @@ class _$ErrorImpl implements _Error {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(QueuedMessage message) messageEnqueued,
+    required TResult Function(String messageId) messageEnqueued,
     required TResult Function(String messageId) messageCancelled,
-    required TResult Function(QueuedMessage message) messageStatusUpdated,
-    required TResult Function(List<QueuedMessage> messages)
-        pendingMessagesLoaded,
+    required TResult Function(String messageId) messageStatusUpdated,
+    required TResult Function(List<String> messageIds) pendingMessagesLoaded,
     required TResult Function() completedMessagesCleared,
     required TResult Function() noChange,
     required TResult Function(String message) error,
@@ -2485,10 +2487,10 @@ class _$ErrorImpl implements _Error {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(QueuedMessage message)? messageEnqueued,
+    TResult? Function(String messageId)? messageEnqueued,
     TResult? Function(String messageId)? messageCancelled,
-    TResult? Function(QueuedMessage message)? messageStatusUpdated,
-    TResult? Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult? Function(String messageId)? messageStatusUpdated,
+    TResult? Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult? Function()? completedMessagesCleared,
     TResult? Function()? noChange,
     TResult? Function(String message)? error,
@@ -2501,10 +2503,10 @@ class _$ErrorImpl implements _Error {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(QueuedMessage message)? messageEnqueued,
+    TResult Function(String messageId)? messageEnqueued,
     TResult Function(String messageId)? messageCancelled,
-    TResult Function(QueuedMessage message)? messageStatusUpdated,
-    TResult Function(List<QueuedMessage> messages)? pendingMessagesLoaded,
+    TResult Function(String messageId)? messageStatusUpdated,
+    TResult Function(List<String> messageIds)? pendingMessagesLoaded,
     TResult Function()? completedMessagesCleared,
     TResult Function()? noChange,
     TResult Function(String message)? error,
@@ -2523,7 +2525,8 @@ class _$ErrorImpl implements _Error {
     required TResult Function(_Loading value) loading,
     required TResult Function(_MessageEnqueued value) messageEnqueued,
     required TResult Function(_MessageCancelled value) messageCancelled,
-    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_MessageStatusUpdatedState value)
+        messageStatusUpdated,
     required TResult Function(_PendingMessagesLoaded value)
         pendingMessagesLoaded,
     required TResult Function(_CompletedMessagesCleared value)
@@ -2541,7 +2544,7 @@ class _$ErrorImpl implements _Error {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_MessageEnqueued value)? messageEnqueued,
     TResult? Function(_MessageCancelled value)? messageCancelled,
-    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult? Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult? Function(_CompletedMessagesCleared value)?
         completedMessagesCleared,
@@ -2558,7 +2561,7 @@ class _$ErrorImpl implements _Error {
     TResult Function(_Loading value)? loading,
     TResult Function(_MessageEnqueued value)? messageEnqueued,
     TResult Function(_MessageCancelled value)? messageCancelled,
-    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_MessageStatusUpdatedState value)? messageStatusUpdated,
     TResult Function(_PendingMessagesLoaded value)? pendingMessagesLoaded,
     TResult Function(_CompletedMessagesCleared value)? completedMessagesCleared,
     TResult Function(_NoChange value)? noChange,

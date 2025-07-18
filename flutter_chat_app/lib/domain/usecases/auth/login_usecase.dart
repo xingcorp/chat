@@ -77,7 +77,7 @@ class LoginUseCase implements UseCase<User, LoginParams> {
     }
 
     if (errors.isNotEmpty) {
-      return ValidationFailure(errors.join(', '));
+      return ValidationFailure(message: errors.join(', '));
     }
 
     return null;
@@ -91,13 +91,13 @@ class LoginUseCase implements UseCase<User, LoginParams> {
   /// Map exceptions to appropriate failures
   Failure _mapExceptionToFailure(dynamic exception) {
     if (exception is AuthenticationException) {
-      return AuthenticationFailure(exception.message);
+      return AuthenticationFailure(message: exception.message);
     } else if (exception is NetworkException) {
-      return NetworkFailure(exception.message);
+      return ConnectionFailure(message: exception.message);
     } else if (exception is ServerException) {
-      return ServerFailure(exception.message);
+      return ServerFailure(message: exception.message);
     } else {
-      return UnknownFailure('Đã xảy ra lỗi không xác định: ${exception.toString()}');
+      return UnexpectedFailure('Đã xảy ra lỗi không xác định: ${exception.toString()}');
     }
   }
 }

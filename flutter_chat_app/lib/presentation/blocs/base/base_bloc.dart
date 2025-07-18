@@ -230,58 +230,79 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
     final operationName = '${runtimeType.toString()}_operation';
     
     try {
-      // Sử dụng phương thức traceFunction của PerformanceMonitor
-      return await _performanceMonitor.traceFunction<T?>(
+      // Start performance tracing
+      await _performanceMonitor.startTrace(
         TraceType.custom,
-        () async {
-          // Thêm thuộc tính về số lần thử tối đa
-          await _performanceMonitor.addTraceAttribute(
-            TraceType.custom, 
-            customTraceName: operationName,
-            attributeName: 'retry_max',
-            value: maxRetries.toString()
-          );
-          
-          while (attempts < maxRetries) {
-            try {
-              return await operation();
-            } catch (e, stackTrace) {
-              attempts++;
-              _logger.w('Thao tác thất bại (lần thử $attempts/$maxRetries): $e');
-              
-              if (attempts >= maxRetries) {
-                // Đã hết số lần thử, phát ra lỗi
-                final errorType = _classifyError(e);
-                emitError(
-                  _extractUserFriendlyMessage(e, errorType),
-                  error: e,
-                  stackTrace: stackTrace,
-                  type: errorType
-                );
-                
-                // Thêm thông tin kết quả thất bại
-                await _performanceMonitor.addTraceAttribute(
-                  TraceType.custom,
-                  customTraceName: operationName,
-                  attributeName: 'result',
-                  value: 'failed'
-                );
-                
-                return null;
-              }
-              
-              // Chờ trước khi thử lại
-              await Future.delayed(retryDelay * attempts);
-            }
-          }
-          
-          return null;
-        },
         customTraceName: operationName,
-        attributes: {'bloc': runtimeType.toString()}
+        attributes: {
+          'retry_max': maxRetries.toString(),
+          'bloc': runtimeType.toString(),
+        },
       );
+
+      T? result;
+      while (attempts < maxRetries) {
+        try {
+          result = await operation();
+
+          // Add success attribute
+          await _performanceMonitor.addTraceAttribute(
+            TraceType.custom,
+            customTraceName: operationName,
+            attributeName: 'result',
+            value: 'success'
+          );
+
+          break; // Success, exit retry loop
+        } catch (e, stackTrace) {
+          attempts++;
+          _logger.w('Thao tác thất bại (lần thử $attempts/$maxRetries): $e');
+
+          if (attempts >= maxRetries) {
+            // Đã hết số lần thử, phát ra lỗi
+            final errorType = _classifyError(e);
+            emitError(
+              _extractUserFriendlyMessage(e, errorType),
+              error: e,
+              stackTrace: stackTrace,
+              type: errorType
+            );
+
+            // Add failure attribute
+            await _performanceMonitor.addTraceAttribute(
+              TraceType.custom,
+              customTraceName: operationName,
+              attributeName: 'result',
+              value: 'failed'
+            );
+
+            result = null;
+            break;
+          }
+
+          // Chờ trước khi thử lại
+          await Future.delayed(retryDelay * attempts);
+        }
+      }
+
+      // Stop performance tracing
+      await _performanceMonitor.stopTrace(
+        TraceType.custom,
+        customTraceName: operationName,
+      );
+
+      return result;
     } catch (e) {
       _logger.e('Lỗi khi theo dõi hiệu suất: $e');
+
+      // Stop tracing on error
+      try {
+        await _performanceMonitor.stopTrace(
+          TraceType.custom,
+          customTraceName: operationName,
+        );
+      } catch (_) {}
+
       return null;
     }
   }
