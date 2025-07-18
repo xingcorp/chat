@@ -1075,32 +1075,51 @@ class EnhancedMessageQueueService {
         contentType: updatedMessage.contentType.toString().split('.').last,
         attachmentIds: serverAttachmentIds,
       );
-      
-      // Cập nhật thời gian hoàn thành
-      final duration = DateTime.now().difference(startTime);
-      _metrics.addSendDuration(duration);
-      
-      // Đánh dấu đã gửi
-      final sentMessage = updatedMessage.copyWithStatus(
-        status: MessageQueueStatus.sent,
-        serverId: result.id,
+
+      // Handle Either<Failure, ChatMessage> result
+      result.fold(
+        (failure) {
+          // Handle failure case
+          debugPrint('Failed to send message: ${failure.message}');
+
+          // Mark as failed
+          final failedMessage = updatedMessage.copyWithStatus(
+            status: MessageQueueStatus.failed,
+            errorMessage: failure.message,
+          );
+
+          // Update queue
+          _sendingMessages.remove(updatedMessage.localId);
+          // Add back to queue for retry or mark as failed
+          _messageQueue.add(failedMessage);
+
+          // Update metrics
+          final duration = DateTime.now().difference(startTime);
+          _metrics.addSendDuration(duration);
+          _metrics.recordFailure(_mapFailureToErrorType(failure));
+
+          throw Exception('Send failed: ${failure.message}');
+        },
+        (sentMessage) {
+          // Handle success case
+          // Cập nhật thời gian hoàn thành
+          final duration = DateTime.now().difference(startTime);
+          _metrics.addSendDuration(duration);
+
+          // Đánh dấu đã gửi
+          final completedMessage = updatedMessage.copyWithStatus(
+            status: MessageQueueStatus.sent,
+            serverId: sentMessage.id,
+          );
+
+          // Update queue
+          _sendingMessages.remove(updatedMessage.localId);
+
+          // Update metrics
+          _metrics.recordSuccess(sendDuration: duration);
+          _metrics.recordProcessingCompleted();
+        },
       );
-      
-      // Xóa khỏi danh sách đang gửi
-      _sendingMessages.remove(updatedMessage.localId);
-      
-      // Cập nhật metrics
-      _metrics.recordSuccess(sendDuration: duration);
-      _metrics.recordProcessingCompleted();
-      
-      // Thông báo thành công
-      _notifyMessageStatusChanged(sentMessage);
-      _emitEvent(MessageQueueEventType.messageSent,
-        messageId: sentMessage.localId,
-        serverId: sentMessage.serverId,
-      );
-      
-      debugPrint('Tin nhắn gửi thành công: ${sentMessage.localId}');
       
     } catch (e) {
       debugPrint('Lỗi gửi tin nhắn: $e');
@@ -1532,6 +1551,27 @@ class EnhancedMessageQueueService {
     
     // Đánh dấu không được khởi tạo
     _initialized = false;
+  }
+
+  /// **Helper method to map Failure to MessageErrorType**
+  MessageErrorType _mapFailureToErrorType(dynamic failure) {
+    final message = failure.toString().toLowerCase();
+
+    if (message.contains('network') || message.contains('connection')) {
+      return MessageErrorType.networkError;
+    } else if (message.contains('server') || message.contains('500') || message.contains('503')) {
+      return MessageErrorType.serverError;
+    } else if (message.contains('auth') || message.contains('401') || message.contains('403')) {
+      return MessageErrorType.authError;
+    } else if (message.contains('validation') || message.contains('400') || message.contains('422')) {
+      return MessageErrorType.validationError;
+    } else if (message.contains('file') || message.contains('attachment')) {
+      return MessageErrorType.fileError;
+    } else if (message.contains('rate') || message.contains('429')) {
+      return MessageErrorType.rateLimitError;
+    } else {
+      return MessageErrorType.unknown;
+    }
   }
 }
 

@@ -16,7 +16,7 @@ import 'package:flutter_chat_app/domain/repositories/auth_repository.dart';
 /// Handles user logout with proper cleanup and error handling.
 /// Follows Clean Architecture principles by encapsulating business logic.
 class LogoutUseCase implements NoParamsUseCase<void> {
-  final AuthRepository repository;
+  final IAuthRepository repository;
 
   const LogoutUseCase(this.repository);
 

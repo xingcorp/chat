@@ -7,19 +7,23 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="done bug">
-      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config_subset" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config_subset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.flutter-plugins" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins" afterDir="false" />
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix 2">
       <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/enhanced_socket_manager_benchmark_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/enhanced_socket_manager_benchmark_test.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/performance/performance_validation_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/performance/performance_validation_test.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/socket_analytics_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/socket_analytics_test.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/socket_manager_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/socket_manager_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/chat_sync_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/chat_sync_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/enhanced_message_queue_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/enhanced_message_queue_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/message_queue_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/message_queue_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/repositories/auth_repository_impl.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/auth_repository_impl.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/repositories/message_repository.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/repositories/message_repository_impl.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/message_repository_impl.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/repositories/message_repository_with_cache.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/domain/repositories/auth_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/domain/repositories/auth_repository.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/domain/repositories/i_message_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/domain/repositories/i_message_repository.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/domain/usecases/auth/login_usecase.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/domain/usecases/auth/login_usecase.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/domain/usecases/auth/logout_usecase.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/domain/usecases/auth/logout_usecase.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/auth/auth_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/auth/auth_bloc.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/message/message_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/message/message_bloc.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -121,7 +125,7 @@
     &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;doan/fix__14__7&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;consolidation/phase1-repository-unification&quot;,
     &quot;io.flutter.reload.alreadyRun&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;/Volumes/DoanBHSST9/FlutterGithubOXII/chat/flutter_chat_app&quot;,
@@ -548,7 +552,23 @@
       <option name="project" value="LOCAL" />
       <updated>1752815317369</updated>
     </task>
-    <option name="localTasksCounter" value="45" />
+    <task id="LOCAL-00045" summary="fix 1">
+      <option name="closed" value="true" />
+      <created>1752820314223</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1752820314223</updated>
+    </task>
+    <task id="LOCAL-00046" summary="fix 2">
+      <option name="closed" value="true" />
+      <created>1752832940644</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1752832940644</updated>
+    </task>
+    <option name="localTasksCounter" value="47" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -645,8 +665,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: refactor to use EnhancedSocketManager for improved socket handling and analytics" />
-    <MESSAGE value="feat: add core and feature layer rules to .cursor-rules.yaml for improved code quality guidelines" />
     <MESSAGE value="feat: enhance clean code and optimization guidelines with additional best practices and examples" />
     <MESSAGE value="feat: add comprehensive error handling and security guidelines to improve code quality and consistency" />
     <MESSAGE value="feat: add comprehensive guidelines for AI readiness, media handling, offline sync, real-time messaging, and worker pool scaling" />
@@ -670,7 +688,9 @@
     <MESSAGE value="fix bug 9" />
     <MESSAGE value="fix bug 10" />
     <MESSAGE value="done bug" />
-    <option name="LAST_COMMIT_MESSAGE" value="done bug" />
+    <MESSAGE value="fix 1" />
+    <MESSAGE value="fix 2" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix 2" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

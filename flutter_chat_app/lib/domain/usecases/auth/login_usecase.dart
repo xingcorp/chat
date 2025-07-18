@@ -32,7 +32,7 @@ class LoginParams extends Equatable {
 /// Handles user authentication with proper validation and error handling.
 /// Follows Clean Architecture principles by encapsulating business logic.
 class LoginUseCase implements UseCase<User, LoginParams> {
-  final AuthRepository repository;
+  final IAuthRepository repository;
 
   const LoginUseCase(this.repository);
 
@@ -44,18 +44,17 @@ class LoginUseCase implements UseCase<User, LoginParams> {
       return Result.failure(validationResult);
     }
 
-    try {
-      // Attempt login through repository
-      final user = await repository.login(params.email, params.password);
+    // Attempt login through repository using Either pattern
+    final result = await repository.login(params.email, params.password);
 
-      // Additional business logic can be added here
-      // For example: logging, analytics, user preferences setup
-
-      return Result.success(user);
-    } catch (e) {
-      // Convert exceptions to appropriate failures
-      return Result.failure(_mapExceptionToFailure(e));
-    }
+    return result.fold(
+      (failure) => Result.failure(failure),
+      (user) {
+        // Additional business logic can be added here
+        // For example: logging, analytics, user preferences setup
+        return Result.success(user);
+      },
+    );
   }
 
   /// Validate login parameters

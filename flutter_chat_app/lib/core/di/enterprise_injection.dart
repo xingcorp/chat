@@ -39,7 +39,11 @@ import 'package:flutter_chat_app/core/storage/secure_storage.dart';
 import 'package:flutter_chat_app/core/utils/adaptive_animations.dart';
 import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_chat_app/core/utils/system_resources.dart';
+import 'package:flutter_chat_app/data/datasources/auth/auth_remote_datasource.dart';
+import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart';
+import 'package:flutter_chat_app/data/repositories/auth_repository_impl.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
+import 'package:flutter_chat_app/domain/repositories/auth_repository.dart';
 import 'package:get_it/get_it.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:logger/logger.dart';
@@ -89,6 +93,7 @@ class EnterpriseDI {
       await _initializeNetworking();     // Target: <100ms
       await _initializeStorage();        // Target: <100ms
       await _initializeServices();       // Target: <50ms
+      await _initializeBlocs();          // Target: <50ms
 
       _isInitialized = true;
       _totalStopwatch.stop();
@@ -310,6 +315,9 @@ class EnterpriseDI {
         ),
       );
 
+      // AuthRepository will be auto-registered via @LazySingleton annotation
+      // No manual registration needed due to injectable pattern
+
       stopwatch.stop();
       _initializationTimes['storage'] = stopwatch.elapsedMilliseconds;
       _logger.d('✅ Storage Services initialized in ${stopwatch.elapsedMilliseconds}ms');
@@ -342,6 +350,25 @@ class EnterpriseDI {
       
     } catch (e, stackTrace) {
       _logger.e('❌ Services initialization failed', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Initialize BLoCs with factory pattern for proper lifecycle management
+  static Future<void> _initializeBlocs() async {
+    final stopwatch = Stopwatch()..start();
+    _logger.d('🎯 Initializing BLoCs...');
+
+    try {
+      // AuthBloc will be auto-registered via @injectable annotation
+      // No manual registration needed due to injectable pattern
+
+      stopwatch.stop();
+      _initializationTimes['blocs'] = stopwatch.elapsedMilliseconds;
+      _logger.d('✅ BLoCs initialized in ${stopwatch.elapsedMilliseconds}ms');
+
+    } catch (e, stackTrace) {
+      _logger.e('❌ BLoCs initialization failed', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }

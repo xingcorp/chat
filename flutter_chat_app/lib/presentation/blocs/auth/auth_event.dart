@@ -43,4 +43,36 @@ class AuthLoggedOut extends AuthEvent {
 class AuthOnboardingCompleted extends AuthEvent {
   /// Constructor
   const AuthOnboardingCompleted();
-} 
+}
+
+/// **Event đăng nhập với email và password**
+class AuthLoginRequested extends AuthEvent {
+  final String email;
+  final String password;
+
+  const AuthLoginRequested({
+    required this.email,
+    required this.password,
+  });
+
+  @override
+  List<Object> get props => [email, password];
+}
+
+/// **Event đăng ký tài khoản mới**
+class AuthRegisterRequested extends AuthEvent {
+  final String email;
+  final String password;
+  final String username;
+  final String? displayName;
+
+  const AuthRegisterRequested({
+    required this.email,
+    required this.password,
+    required this.username,
+    this.displayName,
+  });
+
+  @override
+  List<Object> get props => [email, password, username, displayName ?? ''];
+}

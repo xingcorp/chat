@@ -9,7 +9,7 @@ import 'package:flutter_chat_app/core/services/local_storage_service.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/data/repositories/chat_repository.dart';
-import 'package:flutter_chat_app/data/repositories/message_repository.dart';
+import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// Service that handles chat synchronization with the server
@@ -19,7 +19,7 @@ class ChatSyncService {
   static const int _syncInterval = 60; // seconds
   
   final ChatRepository _chatRepository;
-  final MessageRepository _messageRepository;
+  final IMessageRepository _messageRepository;
   final LocalStorageService _localStorageService;
   final ConnectivityService _connectivityService;
   
@@ -139,8 +139,8 @@ class ChatSyncService {
   /// Handle new messages from real-time subscription
   Future<void> _handleNewMessage(ChatMessage message) async {
     try {
-      // Save message to local storage
-      await _messageRepository.saveMessageLocally(message);
+      // TODO: Implement saveMessageLocally in IMessageRepository
+      // await _messageRepository.saveMessageLocally(message);
       
       // Check if we need to update chat's last message
       final chatList = await _chatRepository.getChatsFromLocalStorage();
@@ -158,8 +158,8 @@ class ChatSyncService {
         }
       }
       
-      // Notify listeners about the new message
-      _messageRepository.notifyNewMessage(message);
+      // TODO: Implement notifyNewMessage in IMessageRepository
+      // _messageRepository.notifyNewMessage(message);
     } catch (e) {
       debugPrint('Error handling new message: $e');
     }
@@ -241,19 +241,12 @@ class ChatSyncService {
     }
     
     try {
-      // Get the timestamp of the latest local message
-      final latestMessageTime = await _messageRepository.getLatestMessageTimestamp(chatId);
-      
-      // Fetch messages newer than the latest local message
-      final messages = await _messageRepository.getChatMessages(
-        chatId,
-        since: latestMessageTime,
-      );
-      
-      // Save to local storage
-      for (final message in messages) {
-        await _messageRepository.saveMessageLocally(message);
-      }
+      // TODO: Implement sync methods in IMessageRepository
+      // final latestMessageTime = await _messageRepository.getLatestMessageTimestamp(chatId);
+      // final messages = await _messageRepository.getChatMessages(chatId, since: latestMessageTime);
+      // for (final message in messages) {
+      //   await _messageRepository.saveMessageLocally(message);
+      // }
       
       // Mark as synced
       _pendingChatsToSync.remove(chatId);

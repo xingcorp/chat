@@ -1,243 +1,367 @@
+import 'package:flutter_chat_app/core/base/base_repository.dart';
+import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/exceptions/exceptions.dart';
+import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
+import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/data/datasources/auth/auth_remote_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart';
 import 'package:flutter_chat_app/domain/entities/user.dart';
 import 'package:flutter_chat_app/domain/repositories/auth_repository.dart';
+import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
-/// Implementation of the [AuthRepository] interface
-class AuthRepositoryImpl implements AuthRepository {
+/// **ENTERPRISE AUTHENTICATION REPOSITORY IMPLEMENTATION**
+///
+/// Unified implementation with BaseRepository pattern for enterprise-grade
+/// authentication performance and security.
+///
+/// **Performance Targets:**
+/// - Login process: <2s (enterprise standard)
+/// - Token operations: <1s
+/// - Cached operations: <50ms
+///
+/// **Architecture:** Clean Architecture + SOLID principles + BaseRepository pattern
+@LazySingleton(as: IAuthRepository)
+class AuthRepositoryImpl extends BaseRepository implements IAuthRepository {
   final AuthRemoteDataSource _authRemoteDataSource;
   final UserLocalDataSource _userLocalDataSource;
-  final NetworkInfo _networkInfo;
-  final Logger _logger = Logger();
 
   /// Constructor
-  AuthRepositoryImpl(
-    this._authRemoteDataSource,
-    this._userLocalDataSource,
-    this._networkInfo,
-  );
+  AuthRepositoryImpl({
+    required AuthRemoteDataSource authRemoteDataSource,
+    required UserLocalDataSource userLocalDataSource,
+    required super.networkInfo,
+    required super.logger,
+    required super.performanceMonitor,
+  }) : _authRemoteDataSource = authRemoteDataSource,
+       _userLocalDataSource = userLocalDataSource;
 
+  /// **Check if user is logged in - OFFLINE-FIRST STRATEGY**
+  ///
+  /// **Performance**: <50ms for cached auth status
+  /// **Strategy**: Local storage check → Error handling
   @override
-  Future<User?> getCurrentUser() async {
-    try {
-      // Try to get the current user from local storage
-      final currentUser = await _userLocalDataSource.getCurrentUser();
-      if (currentUser != null) {
-        return currentUser.toDomain();
-      }
-      return null;
-    } catch (e) {
-      _logger.e('Error getting current user: $e');
-      return null;
-    }
+  Future<Either<Failure, bool>> isLoggedIn() async {
+    return executeOfflineFirst<bool>(
+      remoteDataSource: () async {
+        // Remote check not needed for login status
+        throw ServerException(message: 'Remote login status check not supported');
+      },
+      localDataSource: () async {
+        // Check if there's a current user in local storage
+        final currentUser = await _userLocalDataSource.getCurrentUser();
+        final isLoggedIn = currentUser != null;
+        logger.t('Login status check: $isLoggedIn');
+        return isLoggedIn;
+      },
+      operationName: 'isLoggedIn',
+    );
   }
 
+  /// **Login with email and password - ONLINE-FIRST STRATEGY**
+  ///
+  /// **Performance**: <2s for login process (enterprise standard)
+  /// **Strategy**: Server authentication → Local storage → Error handling
   @override
-  Future<User> login(String email, String password) async {
-    if (!(await _networkInfo.isConnected)) {
-      // Can't login when offline
-      throw Exception('No internet connection');
-    }
+  Future<Either<Failure, User>> login(String email, String password) async {
+    return executeOnlineFirst<User>(
+      remoteDataSource: () async {
+        logger.i('Attempting login for user: $email');
+        
+        // Attempt to login
+        final userModel = await _authRemoteDataSource.login(email, password);
 
-    try {
-      // Attempt to login
-      final userModel = await _authRemoteDataSource.login(email, password);
+        // Save user to local storage
+        await _userLocalDataSource.saveUser(userModel);
+        await _userLocalDataSource.saveCurrentUser(userModel);
 
-      // Save user to local storage
-      await _userLocalDataSource.saveUser(userModel);
-      await _userLocalDataSource.saveCurrentUser(userModel);
-
-      return userModel.toDomain();
-    } catch (e) {
-      _logger.e('Login error: $e');
-      throw Exception('Login failed: $e');
-    }
+        logger.i('Login successful for user: $email');
+        return userModel.toDomain();
+      },
+      localDataSource: () async {
+        // Cannot login offline - authentication requires server
+        throw ConnectionFailure(message: 'Cannot login without internet connection');
+      },
+      operationName: 'login',
+    );
   }
 
+  /// **Register a new user - ONLINE-FIRST STRATEGY**
+  ///
+  /// **Performance**: <3s for registration process
+  /// **Strategy**: Server registration → Local storage → Error handling
   @override
-  Future<User> register({
+  Future<Either<Failure, User>> register({
     required String email,
     required String password,
     required String username,
     String? displayName,
   }) async {
-    if (!(await _networkInfo.isConnected)) {
-      // Can't register when offline
-      throw Exception('No internet connection');
-    }
+    return executeOnlineFirst<User>(
+      remoteDataSource: () async {
+        logger.i('Attempting registration for user: $email');
+        
+        // Attempt to register - map interface params to remote datasource params
+        final userModel = await _authRemoteDataSource.register(
+          email: email,
+          password: password,
+          name: displayName ?? username, // Use displayName if provided, otherwise username
+          avatar: null, // Avatar not supported in interface
+        );
 
-    try {
-      // Attempt to register - map interface params to remote datasource params
-      final userModel = await _authRemoteDataSource.register(
-        email: email,
-        password: password,
-        name: displayName ?? username, // Use displayName if provided, otherwise username
-        avatar: null, // Avatar not supported in interface
-      );
+        // Save user to local storage
+        await _userLocalDataSource.saveUser(userModel);
+        await _userLocalDataSource.saveCurrentUser(userModel);
 
-      // Save user to local storage
-      await _userLocalDataSource.saveUser(userModel);
-      await _userLocalDataSource.saveCurrentUser(userModel);
-
-      return userModel.toDomain();
-    } catch (e) {
-      _logger.e('Registration error: $e');
-      throw Exception('Registration failed: $e');
-    }
+        logger.i('Registration successful for user: $email');
+        return userModel.toDomain();
+      },
+      localDataSource: () async {
+        // Cannot register offline - registration requires server
+        throw ConnectionFailure(message: 'Cannot register without internet connection');
+      },
+      operationName: 'register',
+    );
   }
 
+  /// **Logout the current user - ONLINE-FIRST WITH OFFLINE FALLBACK**
+  ///
+  /// **Performance**: <1s for logout process
+  /// **Strategy**: Server logout → Local cleanup → Always succeed locally
   @override
-  Future<bool> logout() async {
-    try {
-      // If we're online, tell the server we're logging out
-      if (await _networkInfo.isConnected) {
+  Future<Either<Failure, bool>> logout() async {
+    return executeOnlineFirst<bool>(
+      remoteDataSource: () async {
+        logger.i('Attempting server logout');
+        
         try {
           await _authRemoteDataSource.logout();
+          logger.i('Server logout successful');
         } catch (e) {
           // Even if server logout fails, we'll still clear local session
-          print('Error logging out from server: $e');
+          logger.w('Server logout failed, continuing with local cleanup: $e');
         }
-      }
-      
-      // Clear current user
-      await _userLocalDataSource.clearCurrentUser();
-      
-      return true;
-    } catch (e) {
-      print('Error during logout: $e');
-      return false;
-    }
+        
+        // Clear current user locally
+        await _userLocalDataSource.clearCurrentUser();
+        
+        return true;
+      },
+      localDataSource: () async {
+        // Offline logout - just clear local session
+        logger.i('Offline logout - clearing local session');
+        await _userLocalDataSource.clearCurrentUser();
+        return true;
+      },
+      operationName: 'logout',
+    );
   }
 
+  /// **Reset password with email - ONLINE-FIRST STRATEGY**
+  ///
+  /// **Performance**: <2s for password reset request
+  /// **Strategy**: Server email sending → Error handling
   @override
-  Future<bool> isLoggedIn() async {
-    try {
-      // Check if there's a current user in local storage
-      final currentUser = await _userLocalDataSource.getCurrentUser();
-      return currentUser != null;
-    } catch (e) {
-      return false;
-    }
+  Future<Either<Failure, bool>> resetPassword(String email) async {
+    return executeOnlineFirst<bool>(
+      remoteDataSource: () async {
+        logger.i('Requesting password reset for: $email');
+        final success = await _authRemoteDataSource.forgotPassword(email);
+        logger.i('Password reset request result: $success');
+        return success;
+      },
+      localDataSource: () async {
+        // Cannot reset password offline
+        throw ConnectionFailure(message: 'Cannot reset password without internet connection');
+      },
+      operationName: 'resetPassword',
+    );
   }
 
+  /// **Send password reset email - ONLINE-FIRST STRATEGY**
+  ///
+  /// **Performance**: <2s for email sending
+  /// **Strategy**: Server email sending → Error handling
   @override
-  Future<bool> sendPasswordResetEmail(String email) async {
-    if (!(await _networkInfo.isConnected)) {
-      throw Exception('No internet connection');
-    }
-
-    try {
-      // Request password reset
-      return await _authRemoteDataSource.forgotPassword(email);
-    } catch (e) {
-      print('Error sending password reset: $e');
-      throw Exception('Failed to send password reset email: $e');
-    }
+  Future<Either<Failure, bool>> sendPasswordResetEmail(String email) async {
+    return executeOnlineFirst<bool>(
+      remoteDataSource: () async {
+        logger.i('Sending password reset email to: $email');
+        final success = await _authRemoteDataSource.forgotPassword(email);
+        logger.i('Password reset email sent: $success');
+        return success;
+      },
+      localDataSource: () async {
+        // Cannot send email offline
+        throw ConnectionFailure(message: 'Cannot send password reset email without internet connection');
+      },
+      operationName: 'sendPasswordResetEmail',
+    );
   }
 
+  /// **Get current authenticated user - OFFLINE-FIRST STRATEGY**
+  ///
+  /// **Performance**: <50ms for cached user data
+  /// **Strategy**: Cache → Local DB → Error handling
   @override
-  Future<User?> refreshUser(String userId) async {
-    if (!(await _networkInfo.isConnected)) {
-      return null; // Can't refresh when offline
-    }
-
-    try {
-      // Get fresh user data from server
-      final userModel = await _authRemoteDataSource.refreshUser(userId);
-      
-      if (userModel != null) {
-        // Update in local storage
-        await _userLocalDataSource.saveUser(userModel);
-        return userModel.toDomain();
-      }
-      
-      return null;
-    } catch (e) {
-      print('Error refreshing user: $e');
-      return null;
-    }
+  Future<Either<Failure, User?>> getCurrentUser() async {
+    return executeOfflineFirst<User?>(
+      remoteDataSource: () async {
+        // Remote fallback not implemented for current user
+        throw ServerException(message: 'Remote current user fetch not supported');
+      },
+      localDataSource: () async {
+        // Get from local database
+        final currentUser = await _userLocalDataSource.getCurrentUser();
+        if (currentUser != null) {
+          logger.t('Retrieved current user from local storage');
+          return currentUser.toDomain();
+        }
+        return null;
+      },
+      operationName: 'getCurrentUser',
+    );
   }
 
+  /// **Get access token - OFFLINE-FIRST STRATEGY**
+  ///
+  /// **Performance**: <50ms for cached tokens
+  /// **Strategy**: Local token → Server refresh if needed
   @override
-  Future<bool> verifyEmail(String code) async {
-    if (!(await _networkInfo.isConnected)) {
-      throw Exception('No internet connection');
-    }
-
-    try {
-      return await _authRemoteDataSource.verifyEmail(code);
-    } catch (e) {
-      print('Error verifying email: $e');
-      throw Exception('Failed to verify email: $e');
-    }
+  Future<Either<Failure, String?>> getAccessToken() async {
+    return executeOfflineFirst<String?>(
+      remoteDataSource: () async {
+        // Try to get fresh token from server
+        return await _authRemoteDataSource.getAccessToken();
+      },
+      localDataSource: () async {
+        // Try to get cached token
+        return await _authRemoteDataSource.getAccessToken();
+      },
+      operationName: 'getAccessToken',
+    );
   }
 
+  /// **Refresh authentication token - ONLINE-FIRST STRATEGY**
+  ///
+  /// **Performance**: <1s for token refresh
+  /// **Strategy**: Server token refresh → Error handling
   @override
-  Future<bool> changePassword({
+  Future<Either<Failure, String?>> refreshToken() async {
+    return executeOnlineFirst<String?>(
+      remoteDataSource: () async {
+        logger.i('Refreshing authentication token');
+        final token = await _authRemoteDataSource.refreshToken();
+        logger.i('Token refresh successful');
+        return token;
+      },
+      localDataSource: () async {
+        // Cannot refresh token offline
+        throw ConnectionFailure(message: 'Cannot refresh token without internet connection');
+      },
+      operationName: 'refreshToken',
+    );
+  }
+
+  /// **Refresh user data from server - ONLINE-FIRST STRATEGY**
+  ///
+  /// **Performance**: <1s for user data refresh
+  /// **Strategy**: Server user data → Local storage update
+  @override
+  Future<Either<Failure, User?>> refreshUser(String userId) async {
+    return executeOnlineFirst<User?>(
+      remoteDataSource: () async {
+        logger.i('Refreshing user data for: $userId');
+        
+        // Get fresh user data from server
+        final userModel = await _authRemoteDataSource.refreshUser(userId);
+        
+        if (userModel != null) {
+          // Update in local storage
+          await _userLocalDataSource.saveUser(userModel);
+          logger.i('User data refreshed successfully');
+          return userModel.toDomain();
+        }
+        
+        return null;
+      },
+      localDataSource: () async {
+        // Cannot refresh user data offline
+        return null;
+      },
+      operationName: 'refreshUser',
+    );
+  }
+
+  /// **Verify email with code - ONLINE-FIRST STRATEGY**
+  ///
+  /// **Performance**: <2s for email verification
+  /// **Strategy**: Server verification → Error handling
+  @override
+  Future<Either<Failure, bool>> verifyEmail(String code) async {
+    return executeOnlineFirst<bool>(
+      remoteDataSource: () async {
+        logger.i('Verifying email with code');
+        final success = await _authRemoteDataSource.verifyEmail(code);
+        logger.i('Email verification result: $success');
+        return success;
+      },
+      localDataSource: () async {
+        // Cannot verify email offline
+        throw ConnectionFailure(message: 'Cannot verify email without internet connection');
+      },
+      operationName: 'verifyEmail',
+    );
+  }
+
+  /// **Change password - ONLINE-FIRST STRATEGY**
+  ///
+  /// **Performance**: <2s for password change
+  /// **Strategy**: Server password update → Error handling
+  @override
+  Future<Either<Failure, bool>> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
-    if (!(await _networkInfo.isConnected)) {
-      throw Exception('No internet connection');
-    }
-
-    try {
-      return await _authRemoteDataSource.changePassword(
-        currentPassword: currentPassword,
-        newPassword: newPassword,
-      );
-    } catch (e) {
-      _logger.e('Error changing password: $e');
-      throw Exception('Failed to change password: $e');
-    }
+    return executeOnlineFirst<bool>(
+      remoteDataSource: () async {
+        logger.i('Changing user password');
+        final success = await _authRemoteDataSource.changePassword(
+          currentPassword: currentPassword,
+          newPassword: newPassword,
+        );
+        logger.i('Password change result: $success');
+        return success;
+      },
+      localDataSource: () async {
+        // Cannot change password offline
+        throw ConnectionFailure(message: 'Cannot change password without internet connection');
+      },
+      operationName: 'changePassword',
+    );
   }
 
+  /// **Update device token - ONLINE-FIRST WITH OFFLINE QUEUING**
+  ///
+  /// **Performance**: <1s for token update
+  /// **Strategy**: Server token update → Offline queuing
   @override
-  Future<String?> getAccessToken() async {
-    try {
-      return await _authRemoteDataSource.getAccessToken();
-    } catch (e) {
-      _logger.e('Error getting access token: $e');
-      return null;
-    }
-  }
-
-  @override
-  Future<String?> refreshToken() async {
-    try {
-      return await _authRemoteDataSource.refreshToken();
-    } catch (e) {
-      _logger.e('Error refreshing token: $e');
-      return null;
-    }
-  }
-
-  @override
-  Future<bool> resetPassword(String email) async {
-    if (!(await _networkInfo.isConnected)) {
-      throw Exception('No internet connection');
-    }
-
-    try {
-      return await _authRemoteDataSource.forgotPassword(email);
-    } catch (e) {
-      _logger.e('Error resetting password: $e');
-      throw Exception('Failed to reset password: $e');
-    }
-  }
-
-  @override
-  Future<bool> updateDeviceToken(String deviceToken) async {
-    try {
-      if (await _networkInfo.isConnected) {
-        return await _authRemoteDataSource.updateDeviceToken(deviceToken);
-      }
-      return false;
-    } catch (e) {
-      _logger.e('Error updating device token: $e');
-      return false;
-    }
+  Future<Either<Failure, bool>> updateDeviceToken(String deviceToken) async {
+    return executeOnlineFirst<bool>(
+      remoteDataSource: () async {
+        logger.i('Updating device token');
+        final success = await _authRemoteDataSource.updateDeviceToken(deviceToken);
+        logger.i('Device token update result: $success');
+        return success;
+      },
+      localDataSource: () async {
+        // Queue for later when online
+        logger.i('Queuing device token update for when online');
+        // TODO: Implement offline queuing mechanism
+        return false;
+      },
+      operationName: 'updateDeviceToken',
+    );
   }
 }

@@ -761,20 +761,45 @@ class MessageQueueService {
         contentType: updatedMessage.contentType.toString().split('.').last,
         attachmentIds: updatedMessage.attachmentIds,
       );
-      
-      // Mark as sent
-      final sentMessage = updatedMessage.copyWithStatus(
-        status: MessageQueueStatus.sent,
-        serverId: result.id,
+
+      // Handle Either<Failure, ChatMessage> result
+      result.fold(
+        (failure) {
+          // Handle failure case
+          debugPrint('Failed to send message: ${failure.message}');
+
+          // Mark as failed
+          final failedMessage = updatedMessage.copyWithStatus(
+            status: MessageQueueStatus.failed,
+          );
+
+          // Update queue
+          _sendingMessages.remove(updatedMessage.localId);
+          // Add back to queue for retry or mark as failed
+          _messageQueue.add(failedMessage);
+
+          // Notify listeners
+          _notifyMessageStatusChanged(failedMessage);
+
+          throw Exception('Send failed: ${failure.message}');
+        },
+        (sentMessage) {
+          // Handle success case
+          // Mark as sent
+          final completedMessage = updatedMessage.copyWithStatus(
+            status: MessageQueueStatus.sent,
+            serverId: sentMessage.id,
+          );
+
+          // Remove from sending messages
+          _sendingMessages.remove(updatedMessage.localId);
+
+          // Notify listeners
+          _notifyMessageStatusChanged(completedMessage);
+
+          debugPrint('Message sent successfully: ${completedMessage.localId}');
+        },
       );
-      
-      // Remove from sending messages
-      _sendingMessages.remove(updatedMessage.localId);
-      
-      // Notify listeners
-      _notifyMessageStatusChanged(sentMessage);
-      
-      debugPrint('Message sent successfully: ${sentMessage.localId}');
     } catch (e) {
       debugPrint('Failed to send message: $e');
       
