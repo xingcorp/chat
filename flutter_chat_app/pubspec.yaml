@@ -68,7 +68,7 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   quiver: ^3.2.2
   
-  # Offline Database
+  # Offline Database - Latest Dev Version as Required
   isar: ^4.0.0-dev.14
   isar_flutter_libs: ^4.0.0-dev.14
 
@@ -115,6 +115,7 @@ dev_dependencies:
   # Code Generation
   build_runner: ^2.4.8
   injectable_generator: ^2.4.1
+  # isar_generator not needed for Isar v4.0.0-dev.14 - code generation is built-in
   json_serializable: ^6.7.1
   freezed: ^2.4.7
   mockito: ^5.4.4

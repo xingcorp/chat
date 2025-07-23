@@ -34,6 +34,7 @@ import 'package:flutter_chat_app/core/network/socket_manager.dart';
 import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
+// import 'package:flutter_chat_app/core/database/isar_database_service.dart';  // Temporarily disabled - Isar v4 compatibility issues
 import 'package:flutter_chat_app/core/services/enterprise_background_sync_service.dart';
 import 'package:flutter_chat_app/core/services/localization_service.dart';
 import 'package:flutter_chat_app/core/services/memory_optimizer.dart';
@@ -44,6 +45,7 @@ import 'package:flutter_chat_app/core/utils/adaptive_animations.dart';
 import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_chat_app/core/utils/system_resources.dart';
 import 'package:flutter_chat_app/data/datasources/auth/auth_remote_datasource.dart';
+// import 'package:flutter_chat_app/data/datasources/chat/chat_local_datasource_isar.dart';  // Temporarily disabled - Isar v4 compatibility issues
 import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart';
 import 'package:flutter_chat_app/data/repositories/auth_repository_impl.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';

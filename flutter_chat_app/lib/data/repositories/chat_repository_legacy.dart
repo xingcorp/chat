@@ -6,21 +6,23 @@ import 'package:flutter_chat_app/core/services/local_storage_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
 
-/// Implementation of the chat repository
-@LazySingleton(as: IChatRepository)
-class ChatRepository implements IChatRepository {
+/// Legacy implementation of the chat repository (DEPRECATED)
+/// Use ChatRepositoryImpl instead for production
+/// This class is kept for reference only and should not be used in production
+// @LazySingleton(as: IChatRepository) // Commented out to avoid conflicts
+class ChatRepositoryLegacy {
   final GraphQLClient _client;
   final LocalStorageService _localStorageService;
   
   /// Constructor
-  ChatRepository(this._client, this._localStorageService);
+  ChatRepositoryLegacy(this._client, this._localStorageService);
   
   /// Get the GraphQL client
-  @override
+  
   GraphQLClient get client => _client;
 
   /// Get all chats for the current user
-  @override
+  
   Future<List<Chat>> getChats() async {
     final result = await _client.query(
       QueryOptions(
@@ -105,7 +107,7 @@ class ChatRepository implements IChatRepository {
   }
 
   /// Get a specific chat by ID
-  @override
+  
   Future<Chat?> getChatById(String chatId) async {
     final result = await _client.query(
       QueryOptions(
@@ -189,7 +191,7 @@ class ChatRepository implements IChatRepository {
   }
 
   /// Create a new chat
-  @override
+  
   Future<Chat> createChat({
     required String name,
     required List<String> participantIds,
@@ -265,7 +267,7 @@ class ChatRepository implements IChatRepository {
   }
 
   /// Update an existing chat
-  @override
+  
   Future<Chat> updateChat({
     required String chatId,
     String? name,
@@ -341,7 +343,7 @@ class ChatRepository implements IChatRepository {
   }
 
   /// Add participants to a chat
-  @override
+  
   Future<bool> addParticipants({
     required String chatId,
     required List<String> userIds,
@@ -374,7 +376,7 @@ class ChatRepository implements IChatRepository {
   }
 
   /// Remove participants from a chat
-  @override
+  
   Future<bool> removeParticipants({
     required String chatId,
     required List<String> userIds,
@@ -407,7 +409,7 @@ class ChatRepository implements IChatRepository {
   }
 
   /// Leave a chat
-  @override
+  
   Future<bool> leaveChat(String chatId) async {
     final result = await _client.mutate(
       MutationOptions(
@@ -442,7 +444,7 @@ class ChatRepository implements IChatRepository {
   }
   
   /// Delete a chat
-  @override
+  
   Future<bool> deleteChat(String chatId) async {
     final result = await _client.mutate(
       MutationOptions(
@@ -477,7 +479,7 @@ class ChatRepository implements IChatRepository {
   }
   
   /// Mark a chat as read
-  @override
+  
   Future<bool> markChatAsRead(String chatId) async {
     final result = await _client.mutate(
       MutationOptions(
@@ -511,7 +513,7 @@ class ChatRepository implements IChatRepository {
   }
   
   /// Sync a chat with the server
-  @override
+  
   Future<void> syncChat(String chatId) async {
     await getChatById(chatId);
   }
@@ -528,14 +530,14 @@ class ChatRepository implements IChatRepository {
   }
 
   /// Save a chat to local storage
-  @override
+  
   Future<void> saveChatLocally(Chat chat) async {
     final chatJson = jsonEncode(chat.toJson());
     await _localStorageService.setString('chat_${chat.id}', chatJson);
   }
 
   /// Get chats from local storage
-  @override
+  
   Future<List<Chat>> getChatsFromLocalStorage() async {
     final chatsJson = _localStorageService.getString('chats');
     if (chatsJson == null) return [];

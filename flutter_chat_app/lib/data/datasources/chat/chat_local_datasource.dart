@@ -1,5 +1,7 @@
 import 'package:flutter_chat_app/core/error/exceptions.dart';
-import 'package:flutter_chat_app/core/storage/local_storage.dart';
+import 'package:flutter_chat_app/core/database/isar_database_service.dart';
+import 'package:flutter_chat_app/data/models/isar/chat_isar_model.dart';
+import 'package:flutter_chat_app/data/models/isar/chat_message_isar_model.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
@@ -44,23 +46,34 @@ abstract class ChatLocalDataSource {
   Future<List<ChatMessage>> getChatMessages(String chatId, {int limit = 20, String? before});
 }
 
-/// Implementation of local chat data source
+/// **ENTERPRISE ISAR-BASED CHAT LOCAL DATA SOURCE**
+///
+/// High-performance local data source using Isar database for blazing fast
+/// chat and message operations. Optimized for messaging apps with millions
+/// of messages like WhatsApp/Telegram.
+///
+/// **Performance Features:**
+/// - Binary serialization for maximum I/O speed
+/// - Advanced indexing for complex queries
+/// - Real-time watch queries with minimal overhead
+/// - Memory-efficient lazy loading and pagination
+/// - Batch operations for optimal performance
+///
+/// **Architecture**: Enterprise messaging database layer
 @LazySingleton(as: ChatLocalDataSource)
 class ChatLocalDataSourceImpl implements ChatLocalDataSource {
-  final LocalStorage _localStorage;
-  
+  final IsarDatabaseService _databaseService;
+
   /// Constructor
-  ChatLocalDataSourceImpl(this._localStorage);
+  ChatLocalDataSourceImpl(this._databaseService);
   
   @override
   Future<List<Chat>> getChats() async {
     try {
-      final chatData = await _localStorage.getList('chats');
-      return chatData
-          .map((data) => Chat.fromJson(Map<String, dynamic>.from(data)))
-          .toList();
+      final chatModels = await _databaseService.chats.getChatsSortedByTime();
+      return chatModels.map((model) => model.toDomain()).toList();
     } catch (e) {
-      throw CacheException(message: 'Failed to get chats from local storage: $e');
+      throw CacheException(message: 'Failed to get chats from Isar database: $e');
     }
   }
   

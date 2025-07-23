@@ -143,20 +143,25 @@ class ChatSyncService {
       // await _messageRepository.saveMessageLocally(message);
       
       // Check if we need to update chat's last message
-      final chatList = await _chatRepository.getChatsFromLocalStorage();
-      for (final chat in chatList) {
-        if (chat.id == message.chatId && 
-            (chat.lastMessageTime == null || 
-             (message.createdAt.isAfter(chat.lastMessageTime!)))) {
-          final updatedChat = chat.copyWith(
-            lastMessageTime: message.createdAt,
-            lastMessagePreview: message.content,
-            // If there's an unread count field, you might want to increase it here
-            // unreadCount: chat.unreadCount + 1,
-          );
-          await _chatRepository.saveChatLocally(updatedChat);
-        }
-      }
+      final chatListResult = await _chatRepository.getChatsFromLocalStorage();
+      await chatListResult.fold(
+        (failure) async => print('Failed to get chats: ${failure.message}'),
+        (chatList) async {
+          for (final chat in chatList) {
+            if (chat.id == message.chatId &&
+                (chat.lastMessageTime == null ||
+                 (message.createdAt.isAfter(chat.lastMessageTime!)))) {
+              final updatedChat = chat.copyWith(
+                lastMessageTime: message.createdAt,
+                lastMessagePreview: message.content,
+                // If there's an unread count field, you might want to increase it here
+                // unreadCount: chat.unreadCount + 1,
+              );
+              await _chatRepository.saveChatLocally(updatedChat);
+            }
+          }
+        },
+      );
       
       // TODO: Implement notifyNewMessage in IMessageRepository
       // _messageRepository.notifyNewMessage(message);
@@ -205,17 +210,22 @@ class ChatSyncService {
       }
       
       // Fetch fresh chats from server
-      final chats = await _chatRepository.getChats();
-      
-      // Save to local storage
-      for (final chat in chats) {
-        await _chatRepository.saveChatLocally(chat);
-      }
-      
-      // Sync messages for each chat
-      for (final chat in chats) {
-        await syncChatMessages(chat.id);
-      }
+      final chatsResult = await _chatRepository.getChats();
+
+      await chatsResult.fold(
+        (failure) async => debugPrint('Failed to get chats: ${failure.message}'),
+        (chats) async {
+          // Save to local storage
+          for (final chat in chats) {
+            await _chatRepository.saveChatLocally(chat);
+          }
+
+          // Sync messages for each chat
+          for (final chat in chats) {
+            await syncChatMessages(chat.id);
+          }
+        },
+      );
       
       // Update last sync time
       _lastSyncTime = DateTime.now();

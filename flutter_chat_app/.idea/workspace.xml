@@ -7,9 +7,19 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix 5">
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix 6">
+      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config_subset" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config_subset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/test_config.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/test_config.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/chat_sync_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/chat_sync_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/datasources/chat/chat_local_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/chat/chat_local_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/repositories/chat_repository_legacy.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/chat_repository_legacy.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -185,14 +195,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00001" summary="update project configuration and dependencies for Isar database integration">
-      <option name="closed" value="true" />
-      <created>1743478533195</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1743478533195</updated>
     </task>
     <task id="LOCAL-00002" summary="update version and dependencies; refactor connectivity service and user/chat models">
       <option name="closed" value="true" />
@@ -578,7 +580,15 @@
       <option name="project" value="LOCAL" />
       <updated>1752849665467</updated>
     </task>
-    <option name="localTasksCounter" value="50" />
+    <task id="LOCAL-00050" summary="fix 6">
+      <option name="closed" value="true" />
+      <created>1752850507442</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1752850507442</updated>
+    </task>
+    <option name="localTasksCounter" value="51" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -675,7 +685,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: update design patterns, SOLID principles, and state management guidelines with improved descriptions and ensure alwaysApply is set to true" />
     <MESSAGE value="feat: refine architecture guidelines with enhanced descriptions, multi-platform structure, and state management best practices" />
     <MESSAGE value="feat: update workspace configuration to refine architecture guidelines with enhanced descriptions and multi-platform structure" />
     <MESSAGE value="feat: enhance design pattern guidelines with detailed descriptions for behavioral and structural patterns in Flutter apps" />
@@ -700,7 +709,8 @@
     <MESSAGE value="fix 3" />
     <MESSAGE value="fix 4" />
     <MESSAGE value="fix 5" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix 5" />
+    <MESSAGE value="fix 6" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix 6" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
