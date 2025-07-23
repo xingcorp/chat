@@ -57,5 +57,25 @@
   "databaseError": "Lỗi cơ sở dữ liệu",
   "syncError": "Lỗi đồng bộ hóa",
   "uploadError": "Lỗi tải lên",
-  "downloadError": "Lỗi tải xuống"
-} 
+  "downloadError": "Lỗi tải xuống",
+  "themeSettings": "Giao diện",
+  "lightTheme": "Sáng",
+  "darkTheme": "Tối",
+  "systemTheme": "Theo hệ thống",
+  "themeChanged": "Đã thay đổi giao diện",
+  "appearance": "Giao diện",
+  "general": "Chung",
+  "privacy": "Riêng tư",
+  "security": "Bảo mật",
+  "help": "Trợ giúp",
+  "feedback": "Phản hồi",
+  "version": "Phiên bản",
+  "account": "Tài khoản",
+  "profile": "Hồ sơ",
+  "avatar": "Ảnh đại diện",
+  "displayName": "Tên hiển thị",
+  "bio": "Tiểu sử",
+  "accessibility": "Khả năng tiếp cận",
+  "fontSize": "Cỡ chữ",
+  "animations": "Hoạt ảnh"
+}

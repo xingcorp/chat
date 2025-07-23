@@ -7,56 +7,19 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix sua nhieu">
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix sua nhieu 1">
       <change beforePath="$PROJECT_DIR$/.dart_tool/package_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.dart_tool/package_config_subset" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config_subset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.dart_tool/version" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/version" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.flutter-plugins" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DEPLOYMENT.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/tempt/DEPLOYMENT.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ENTERPRISE_REFACTOR_SUMMARY.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/tempt/ENTERPRISE_REFACTOR_SUMMARY.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README_OFFLINE_FIRST.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/tempt/README_OFFLINE_FIRST.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fixed_state_management_header.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/tempt/fixed_state_management_header.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/cache/app_cache_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/cache/app_cache_manager.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/database/database_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/database/database_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/database/isar_v4_schema_generator.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/enterprise_injection.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/error/failures.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/error/failures.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/initialization/enterprise_app_initializer.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/initialization/enterprise_app_initializer.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/isar_enterprise_integration_hub.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/media/isar_media_storage_manager.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/monitoring/crash_reporter.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/monitoring/crash_reporter.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/monitoring/performance_monitor.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/monitoring/performance_monitor.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/realtime/connection_pool_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/realtime/connection_pool_manager.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/offline/isar_offline_first_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/offline/isar_offline_first_manager.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/enterprise_app_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/enterprise_app_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/enterprise_integration_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/enterprise_integration_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/sync/isar_realtime_sync_engine.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/datasources/chat/chat_local_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/chat/chat_local_datasource.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/datasources/chat/chat_local_datasource_isar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/chat/chat_local_datasource_isar.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/datasources/chat/chat_remote_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/chat/chat_remote_datasource.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/models/isar/chat_isar_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/models/isar/chat_isar_model.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/models/isar/chat_isar_model.g.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/models/isar/chat_message_isar_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/models/isar/chat_message_isar_model.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/models/isar/chat_message_isar_model.g.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/repositories/chat_repository_impl.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/chat_repository_impl.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/repositories/enterprise_chat_repository_impl.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/enterprise_chat_repository_impl.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/di/monitoring_module.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/di/monitoring_module.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/domain/repositories/i_chat_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/domain/repositories/i_chat_repository.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/bloc/chat/enterprise_chat_bloc.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/theme/app_theme.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/theme/app_theme.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/l10n/app_vi.arb" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/app_vi.arb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/performance/performance_test_suite.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/performance/performance_test_suite.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/test_config.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/test_config.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/unit/repositories/message_repository_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/repositories/message_repository_test.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/widget/message_item_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/widget/message_item_test.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_enterprise_complete_solution.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_isar_enterprise_complete_validation.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_isar_v4.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_isar_v4_enterprise.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_isar_v4_minimal.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_isar_v4_working.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/validate_isar_v4_implementation.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/web/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -237,14 +200,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00003" summary="update version and dependencies; refactor connectivity service and user/chat models">
-      <option name="closed" value="true" />
-      <created>1743494393775</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1743494393787</updated>
     </task>
     <task id="LOCAL-00004" summary="refactor: enhance message handling and connection services; add priority and conflict resolution for messages">
       <option name="closed" value="true" />
@@ -630,7 +585,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753236988358</updated>
     </task>
-    <option name="localTasksCounter" value="52" />
+    <task id="LOCAL-00052" summary="fix sua nhieu 1">
+      <option name="closed" value="true" />
+      <created>1753247238742</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1753247238742</updated>
+    </task>
+    <option name="localTasksCounter" value="53" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -727,7 +690,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: update workspace configuration to refine architecture guidelines with enhanced descriptions and multi-platform structure" />
     <MESSAGE value="feat: enhance design pattern guidelines with detailed descriptions for behavioral and structural patterns in Flutter apps" />
     <MESSAGE value="feat: add localization support with localization service and locale management in Flutter app" />
     <MESSAGE value="feat: enhance localization support with new service patterns, utilities, and error handling guidelines" />
@@ -752,7 +714,8 @@
     <MESSAGE value="fix 5" />
     <MESSAGE value="fix 6" />
     <MESSAGE value="fix sua nhieu" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix sua nhieu" />
+    <MESSAGE value="fix sua nhieu 1" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix sua nhieu 1" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

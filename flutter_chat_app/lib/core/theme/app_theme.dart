@@ -140,11 +140,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
         ),
         errorBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: AppColors.error, width: 1),
+          borderSide: const BorderSide(color: AppColors.error, width: 1),
           borderRadius: BorderRadius.circular(12),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: AppColors.error, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
           borderRadius: BorderRadius.circular(12),
         ),
         contentPadding: const EdgeInsets.symmetric(
@@ -152,7 +152,7 @@ class AppTheme {
           vertical: 16,
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
         elevation: 2,
         shape: RoundedRectangleBorder(
@@ -160,7 +160,7 @@ class AppTheme {
         ),
         clipBehavior: Clip.antiAlias,
       ),
-      dialogTheme: DialogThemeData(
+      dialogTheme: DialogTheme(
         backgroundColor: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
         elevation: 8,
         shape: RoundedRectangleBorder(
@@ -169,7 +169,7 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: isDark ? AppColors.surfaceDarkMode : Colors.grey[800],
-        contentTextStyle: TextStyle(
+        contentTextStyle: const TextStyle(
           color: Colors.white,
         ),
         behavior: SnackBarBehavior.floating,
@@ -220,7 +220,7 @@ class AppTheme {
         circularTrackColor: isDark ? AppColors.backgroundDarkMode : AppColors.background,
         linearTrackColor: isDark ? AppColors.backgroundDarkMode : AppColors.background,
       ),
-      tabBarTheme: TabBarThemeData(
+      tabBarTheme: TabBarTheme(
         labelColor: primaryColor,
         unselectedLabelColor: isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary,
         indicatorColor: primaryColor,
