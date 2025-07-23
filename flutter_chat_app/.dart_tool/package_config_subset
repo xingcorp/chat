@@ -794,6 +794,10 @@ pretty_dio_logger
 3.0
 file:///Users/doanbh/.pub-cache/hosted/pub.dev/pretty_dio_logger-1.4.0/
 file:///Users/doanbh/.pub-cache/hosted/pub.dev/pretty_dio_logger-1.4.0/lib/
+process
+3.3
+file:///Users/doanbh/.pub-cache/hosted/pub.dev/process-5.0.3/
+file:///Users/doanbh/.pub-cache/hosted/pub.dev/process-5.0.3/lib/
 provider
 2.12
 file:///Users/doanbh/.pub-cache/hosted/pub.dev/provider-6.1.5/
@@ -942,6 +946,10 @@ string_scanner
 3.1
 file:///Users/doanbh/.pub-cache/hosted/pub.dev/string_scanner-1.4.1/
 file:///Users/doanbh/.pub-cache/hosted/pub.dev/string_scanner-1.4.1/lib/
+sync_http
+2.12
+file:///Users/doanbh/.pub-cache/hosted/pub.dev/sync_http-0.3.1/
+file:///Users/doanbh/.pub-cache/hosted/pub.dev/sync_http-0.3.1/lib/
 synchronized
 3.5
 file:///Users/doanbh/.pub-cache/hosted/pub.dev/synchronized-3.3.0+3/
@@ -1058,6 +1066,10 @@ web_socket_channel
 3.3
 file:///Users/doanbh/.pub-cache/hosted/pub.dev/web_socket_channel-3.0.3/
 file:///Users/doanbh/.pub-cache/hosted/pub.dev/web_socket_channel-3.0.3/lib/
+webdriver
+3.1
+file:///Users/doanbh/.pub-cache/hosted/pub.dev/webdriver-3.0.4/
+file:///Users/doanbh/.pub-cache/hosted/pub.dev/webdriver-3.0.4/lib/
 webkit_inspection_protocol
 3.0
 file:///Users/doanbh/.pub-cache/hosted/pub.dev/webkit_inspection_protocol-1.2.1/
@@ -1102,6 +1114,10 @@ flutter
 3.7
 file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/flutter/
 file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/flutter/lib/
+flutter_driver
+3.7
+file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/flutter_driver/
+file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/flutter_driver/lib/
 flutter_localizations
 3.7
 file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/flutter_localizations/
@@ -1114,4 +1130,12 @@ flutter_web_plugins
 3.7
 file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/flutter_web_plugins/
 file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/flutter_web_plugins/lib/
+fuchsia_remote_debug_protocol
+3.7
+file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/fuchsia_remote_debug_protocol/
+file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/fuchsia_remote_debug_protocol/lib/
+integration_test
+3.7
+file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/integration_test/
+file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/integration_test/lib/
 2

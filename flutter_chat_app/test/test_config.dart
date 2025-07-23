@@ -56,10 +56,12 @@ class TestConfig {
   /// **Setup test configurations**
   static void _setupTestConfigurations() {
     // Disable animations for faster tests
-    WidgetsBinding.instance.disableAnimations = true;
-    
+    // Note: disableAnimations is not available in current Flutter version
+    // WidgetsBinding.instance.disableAnimations = true;
+
     // Set test-specific timeouts
-    testWidgets.timeout = const Timeout(Duration(seconds: 30));
+    // Note: timeout setter is not available in current test framework
+    // testWidgets.timeout = const Timeout(Duration(seconds: 30));
   }
 
   /// **Create test widget wrapper - WIDGET TEST HELPER**

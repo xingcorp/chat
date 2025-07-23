@@ -13,8 +13,8 @@ class CrashReporter {
   /// Logger
   final _logger = Logger();
   
-  /// Crashlytics instance
-  final FirebaseCrashlytics _crashlytics;
+  /// Crashlytics instance (nullable for stub implementations)
+  final FirebaseCrashlytics? _crashlytics;
   
   /// Package info
   late PackageInfo _packageInfo;
@@ -36,12 +36,14 @@ class CrashReporter {
       // Không kích hoạt Crashlytics trong debug mode
       _isCrashlyticsEnabled = !kDebugMode;
       
-      // Cấu hình Crashlytics
-      await _crashlytics.setCrashlyticsCollectionEnabled(_isCrashlyticsEnabled);
-      
-      // Thêm thông tin phiên bản
-      await _crashlytics.setCustomKey('app_version', _packageInfo.version);
-      await _crashlytics.setCustomKey('build_number', _packageInfo.buildNumber);
+      // Cấu hình Crashlytics (if available)
+      if (_crashlytics != null) {
+        await _crashlytics!.setCrashlyticsCollectionEnabled(_isCrashlyticsEnabled);
+
+        // Thêm thông tin phiên bản
+        await _crashlytics!.setCustomKey('app_version', _packageInfo.version);
+        await _crashlytics!.setCustomKey('build_number', _packageInfo.buildNumber);
+      }
       
       // Ghi lại unhandled errors từ Flutter framework
       FlutterError.onError = _handleFlutterError;
@@ -66,8 +68,8 @@ class CrashReporter {
   void _handleFlutterError(FlutterErrorDetails details) {
     _logger.e('Flutter Error: ${details.exception}');
     
-    if (_isCrashlyticsEnabled) {
-      _crashlytics.recordFlutterError(details);
+    if (_isCrashlyticsEnabled && _crashlytics != null) {
+      _crashlytics!.recordFlutterError(details);
     } else {
       FlutterError.presentError(details);
     }
@@ -96,8 +98,8 @@ class CrashReporter {
     String? reason,
     Iterable<Object>? information,
   }) {
-    if (_isCrashlyticsEnabled) {
-      _crashlytics.recordError(
+    if (_isCrashlyticsEnabled && _crashlytics != null) {
+      _crashlytics!.recordError(
         exception,
         stackTrace,
         reason: reason,
@@ -119,9 +121,9 @@ class CrashReporter {
     try {
       if (_isCrashlyticsEnabled) {
         // Thêm dữ liệu custom nếu có
-        if (additionalData != null) {
+        if (additionalData != null && _crashlytics != null) {
           for (final entry in additionalData.entries) {
-            await _crashlytics.setCustomKey(entry.key, entry.value.toString());
+            await _crashlytics!.setCustomKey(entry.key, entry.value.toString());
           }
         }
         
@@ -139,29 +141,29 @@ class CrashReporter {
   
   /// Đặt thông tin user cho phiên hiện tại
   Future<void> setUserIdentifier(String userId) async {
-    if (_isCrashlyticsEnabled) {
-      await _crashlytics.setUserIdentifier(userId);
+    if (_isCrashlyticsEnabled && _crashlytics != null) {
+      await _crashlytics!.setUserIdentifier(userId);
     }
   }
   
   /// Đặt custom key
   Future<void> setCustomKey(String key, dynamic value) async {
-    if (_isCrashlyticsEnabled) {
-      await _crashlytics.setCustomKey(key, value);
+    if (_isCrashlyticsEnabled && _crashlytics != null) {
+      await _crashlytics!.setCustomKey(key, value);
     }
   }
   
   /// Ghi log vào Crashlytics
   Future<void> log(String message) async {
-    if (_isCrashlyticsEnabled) {
-      await _crashlytics.log(message);
+    if (_isCrashlyticsEnabled && _crashlytics != null) {
+      await _crashlytics!.log(message);
     }
   }
   
   /// Tạo crash test để kiểm tra
   Future<void> testCrash() async {
-    if (_isCrashlyticsEnabled) {
-      _crashlytics.crash();
+    if (_isCrashlyticsEnabled && _crashlytics != null) {
+      _crashlytics!.crash();
     } else {
       _logger.w('Crashlytics disabled in debug mode. No test crash will occur.');
       throw Exception('Test Crash');

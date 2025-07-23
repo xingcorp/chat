@@ -17,10 +17,10 @@ import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import '../database/isar_v4_enterprise_database.dart';
-import '../network/realtime/enhanced_realtime_connection_service.dart';
-import '../../data/models/isar/chat_isar_model.dart';
-import '../../data/models/isar/chat_message_isar_model.dart';
+// import '../database/isar_v4_enterprise_database.dart'; // DISABLED - Isar v4 compatibility
+// import '../network/realtime/enhanced_realtime_connection_service.dart'; // DISABLED - Missing file
+// import '../../data/models/isar/chat_isar_model.dart'; // DISABLED - Isar v4 compatibility
+// import '../../data/models/isar/chat_message_isar_model.dart'; // DISABLED - Isar v4 compatibility
 
 /// **REAL-TIME SYNC ENGINE**
 /// 

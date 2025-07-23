@@ -16,11 +16,86 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
-import '../database/enterprise_database_service.dart';
+import '../database/database_service.dart';
 // Note: These imports will be available when the respective components are implemented
 // import '../offline/isar_offline_first_manager.dart';
 // import '../sync/isar_realtime_sync_engine.dart';
 // import '../media/isar_media_storage_manager.dart';
+
+/// **STUB IMPLEMENTATIONS FOR MISSING COMPONENTS**
+/// These will be replaced with actual implementations when available
+
+/// Stub for offline-first manager
+class IsarOfflineFirstManager {
+  static IsarOfflineFirstManager get instance => IsarOfflineFirstManager();
+
+  Future<void> initialize() async {
+    debugPrint('📴 IsarOfflineFirstManager stub initialized');
+  }
+
+  Stream<OfflineEvent> get offlineEventStream => const Stream.empty();
+
+  Map<String, int> getOfflineMetrics() => <String, int>{};
+
+  Future<void> dispose() async {
+    debugPrint('📴 IsarOfflineFirstManager stub disposed');
+  }
+}
+
+/// Stub for realtime sync engine
+class IsarRealtimeSyncEngine {
+  static IsarRealtimeSyncEngine get instance => IsarRealtimeSyncEngine();
+
+  Future<void> initialize() async {
+    debugPrint('🔄 IsarRealtimeSyncEngine stub initialized');
+  }
+
+  Stream<SyncEvent> get syncEventStream => const Stream.empty();
+
+  Map<String, int> getSyncMetrics() => <String, int>{};
+
+  Future<void> dispose() async {
+    debugPrint('🔄 IsarRealtimeSyncEngine stub disposed');
+  }
+}
+
+/// Stub for media storage manager
+class IsarMediaStorageManager {
+  static IsarMediaStorageManager get instance => IsarMediaStorageManager();
+
+  Future<void> initialize() async {
+    debugPrint('📁 IsarMediaStorageManager stub initialized');
+  }
+
+  Stream<MediaEvent> get mediaEventStream => const Stream.empty();
+
+  Map<String, int> getMediaMetrics() => <String, int>{};
+
+  Future<void> dispose() async {
+    debugPrint('📁 IsarMediaStorageManager stub disposed');
+  }
+}
+
+/// Stub event classes
+class SyncEvent {
+  final SyncEventType type;
+  SyncEvent({required this.type});
+}
+
+class OfflineEvent {
+  final OfflineEventType type;
+  OfflineEvent({required this.type});
+}
+
+class MediaEvent {
+  final MediaEventType type;
+  MediaEvent({required this.type});
+}
+
+/// Stub event type enums
+enum SyncEventType { messageReceived, messageSent, chatUpdated }
+enum OfflineEventType { wentOnline, wentOffline }
+enum MediaEventType { fileStored, fileDeleted }
 
 /// **ENTERPRISE INTEGRATION SERVICE**
 /// 
@@ -28,7 +103,7 @@ import '../database/enterprise_database_service.dart';
 @singleton
 class EnterpriseIntegrationService {
   // Core services
-  final EnterpriseDatabaseService _databaseService;
+  final DatabaseService _databaseService;
   late IsarOfflineFirstManager _offlineManager;
   late IsarRealtimeSyncEngine _syncEngine;
   late IsarMediaStorageManager _mediaManager;

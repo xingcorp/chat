@@ -312,7 +312,7 @@ class DatabaseService {
   /// **Dispose Resources**
   Future<void> dispose() async {
     if (_isar != null) {
-      await _isar!.close();
+      _isar!.close();  // Remove await - close() is synchronous in Isar
       _isar = null;
     }
     

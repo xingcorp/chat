@@ -152,7 +152,7 @@ class AppCacheManager {
       }
       
       // Kiểm tra disk cache
-      if (await _apiCacheBox.containsKey(key)) {
+      if (_apiCacheBox.containsKey(key)) {
         final expiryTimestamp = _prefs.getInt('${key}_expiry');
         if (expiryTimestamp != null) {
           final expiry = DateTime.fromMillisecondsSinceEpoch(expiryTimestamp);
@@ -483,7 +483,7 @@ class AppCacheManager {
   /// Kiểm tra xem một key có trong cache không (cho debugging)
   bool isInMemoryCache(String key) => _memoryCache.containsKey(key);
   
-  Future<bool> isInDiskCache(String key) async => await _apiCacheBox.containsKey(key);
+  Future<bool> isInDiskCache(String key) async => _apiCacheBox.containsKey(key);
   
   /// Lấy tất cả cache key
   Future<List<String>> getAllCacheKeys() async {

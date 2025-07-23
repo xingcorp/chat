@@ -2,7 +2,9 @@ import 'package:flutter_chat_app/core/network/graphql_client.dart';
 // import 'package:flutter_chat_app/core/network/socket_manager.dart'; // Remove old import
 import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart'; // Add new import
 import 'package:flutter_chat_app/data/models/chat_model.dart';
-import 'package:flutter_chat_app/data/models/user_model.dart';
+import 'package:flutter_chat_app/data/models/message_model.dart';
+
+import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 // import 'package:socket_io_client/socket_io_client.dart' as io; // No longer needed directly here
 
 /// Interface for ChatRemoteDataSource
@@ -36,6 +38,18 @@ abstract class ChatRemoteDataSource {
   
   /// Subscribe to new/updated chats
   Stream<ChatModel> subscribeToChats();
+
+  /// Get all chats (alias for getUserChats for consistency)
+  Future<List<ChatModel>> getChats();
+
+  /// Get chat by ID (alias for getChatDetails for consistency)
+  Future<ChatModel?> getChatById(String chatId);
+
+  /// Get messages for a chat
+  Future<List<MessageModel>> getChatMessages(String chatId, {int limit = 50, String? before});
+
+  /// Send a message
+  Future<MessageModel> sendMessage(ChatMessage message);
 }
 
 /// Implementation of [ChatRemoteDataSource]
@@ -84,8 +98,8 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       ''',
     );
     
-    final List<dynamic> chatsData = result['data']?['getUserChats'] ?? [];
-    return chatsData.map((chatData) => ChatModel.fromMap(chatData)).toList();
+    final chatsData = result['data']?['getUserChats'] as List<dynamic>? ?? [];
+    return chatsData.map((chatData) => ChatModel.fromMap(chatData as Map<String, dynamic>)).toList();
   }
   
   @override
@@ -126,11 +140,11 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       variables: {'chatId': chatId},
     );
     
-    final chatData = result['data']?['getChatDetails'];
+    final chatData = result['data']?['getChatDetails'] as Map<String, dynamic>?;
     if (chatData == null) {
       throw Exception('Chat not found or failed to fetch details');
     }
-    
+
     return ChatModel.fromMap(chatData);
   }
   
@@ -160,11 +174,11 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       variables: {'userId': userId},
     );
     
-    final chatData = result['data']?['createDirectChat'];
+    final chatData = result['data']?['createDirectChat'] as Map<String, dynamic>?;
     if (chatData == null) {
       throw Exception('Failed to create direct chat');
     }
-    
+
     return ChatModel.fromMap(chatData);
   }
   
@@ -197,11 +211,11 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       },
     );
     
-    final chatData = result['data']?['createGroupChat'];
+    final chatData = result['data']?['createGroupChat'] as Map<String, dynamic>?;
     if (chatData == null) {
       throw Exception('Failed to create group chat');
     }
-    
+
     return ChatModel.fromMap(chatData);
   }
   
@@ -229,11 +243,11 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       variables: variables,
     );
     
-    final chatData = result['data']?['updateChat'];
+    final chatData = result['data']?['updateChat'] as Map<String, dynamic>?;
     if (chatData == null) {
       throw Exception('Failed to update chat');
     }
-    
+
     return ChatModel.fromMap(chatData);
   }
   
@@ -252,7 +266,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       },
     );
     
-    return result['data']?['addUsersToChat'] ?? false;
+    return result['data']?['addUsersToChat'] as bool? ?? false;
   }
   
   @override
@@ -270,7 +284,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       },
     );
     
-    return result['data']?['removeUsersFromChat'] ?? false;
+    return result['data']?['removeUsersFromChat'] as bool? ?? false;
   }
   
   @override
@@ -285,7 +299,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       variables: {'chatId': chatId},
     );
     
-    return result['data']?['deleteChat'] ?? false;
+    return result['data']?['deleteChat'] as bool? ?? false;
   }
   
   @override
@@ -300,7 +314,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       variables: {'chatId': chatId},
     );
     
-    return result['data']?['leaveChat'] ?? false;
+    return result['data']?['leaveChat'] as bool? ?? false;
   }
   
   @override
@@ -308,11 +322,100 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     // Đảm bảo socket được kết nối (Có thể không cần nếu AppBloc quản lý)
     // _socketManager.connect();
     _enhancedSocketManager.connect(); // Use enhanced manager
-    
+
     // Stream controller for chat updates
     // return _socketManager
     return _enhancedSocketManager // Use enhanced manager
         .on<Map<String, dynamic>>('chat_updated')
-        .map((data) => ChatModel.fromMap(data));
+        .map(ChatModel.fromMap);
   }
-} 
+
+  /// **Get all chats (alias for getUserChats for consistency)**
+  @override
+  Future<List<ChatModel>> getChats() async {
+    return getUserChats();
+  }
+
+  /// **Get chat by ID (alias for getChatDetails for consistency)**
+  @override
+  Future<ChatModel?> getChatById(String chatId) async {
+    try {
+      final chat = await getChatDetails(chatId);
+      return chat;
+    } catch (e) {
+      // Return null if chat not found or error occurred
+      return null;
+    }
+  }
+
+  /// **Get messages for a chat**
+  @override
+  Future<List<MessageModel>> getChatMessages(String chatId, {int limit = 50, String? before}) async {
+    // Query the GraphQL server for chat messages
+    final variables = <String, dynamic>{
+      'chatId': chatId,
+      'limit': limit,
+    };
+
+    if (before != null) {
+      variables['before'] = before;
+    }
+
+    final result = await _client.query(
+      r'''
+        query GetChatMessages($chatId: ID!, $limit: Int!, $before: String) {
+          getChatMessages(chatId: $chatId, limit: $limit, before: $before) {
+            id
+            content
+            type
+            createdAt
+            updatedAt
+            senderId
+            chatId
+            readBy
+            status
+          }
+        }
+      ''',
+      variables: variables,
+    );
+
+    final messagesData = result['data']?['getChatMessages'] as List<dynamic>? ?? [];
+    return messagesData.map((messageData) => MessageModel.fromMap(messageData as Map<String, dynamic>)).toList();
+  }
+
+  /// **Send a message**
+  @override
+  Future<MessageModel> sendMessage(ChatMessage message) async {
+    // Mutation to send a message
+    final result = await _client.mutate(
+      r'''
+        mutation SendMessage($chatId: ID!, $content: String!, $type: String!) {
+          sendMessage(chatId: $chatId, content: $content, type: $type) {
+            id
+            content
+            type
+            createdAt
+            updatedAt
+            senderId
+            chatId
+            readBy
+            status
+          }
+        }
+      ''',
+      variables: {
+        'chatId': message.chatId,
+        'content': message.content,
+        'type': message.contentType.toString(),
+      },
+    );
+
+    final messageData = result['data']?['sendMessage'] as Map<String, dynamic>?;
+    if (messageData == null) {
+      throw Exception('Failed to send message');
+    }
+
+    return MessageModel.fromMap(messageData);
+  }
+}

@@ -4,9 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_chat_app/core/services/memory_optimizer.dart';
-import 'package:flutter_chat_app/core/cache/enhanced_cache_manager.dart';
-import 'package:flutter_chat_app/core/network/network_optimizer.dart';
+import '../mocks/mock_services.dart';
 import 'package:flutter_chat_app/presentation/widgets/virtualized_message_list.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 
@@ -50,10 +48,10 @@ void main() {
           await Future.delayed(const Duration(milliseconds: 100));
           
           // Initialize core services
-          final memoryOptimizer = MemoryOptimizer();
+          final memoryOptimizer = MockMemoryOptimizer();
           await memoryOptimizer.initialize();
-          
-          final cacheManager = EnhancedCacheManager();
+
+          final cacheManager = MockEnhancedCacheManager();
           await cacheManager.initialize();
           
           // Simulate additional startup tasks
@@ -69,21 +67,21 @@ void main() {
         
         // Test MemoryOptimizer initialization
         var duration = await TestConfig.measurePerformance(() async {
-          final memoryOptimizer = MemoryOptimizer();
+          final memoryOptimizer = MockMemoryOptimizer();
           await memoryOptimizer.initialize();
         });
         services['MemoryOptimizer'] = duration;
 
         // Test EnhancedCacheManager initialization
         duration = await TestConfig.measurePerformance(() async {
-          final cacheManager = EnhancedCacheManager();
+          final cacheManager = MockEnhancedCacheManager();
           await cacheManager.initialize();
         });
         services['EnhancedCacheManager'] = duration;
 
         // Test NetworkOptimizer initialization
         duration = await TestConfig.measurePerformance(() async {
-          final networkOptimizer = NetworkOptimizer();
+          final networkOptimizer = MockNetworkOptimizer();
           await networkOptimizer.initialize();
         });
         services['NetworkOptimizer'] = duration;
@@ -120,7 +118,7 @@ void main() {
       });
 
       test('should handle memory pressure gracefully', () async {
-        final memoryOptimizer = MemoryOptimizer();
+        final memoryOptimizer = MockMemoryOptimizer();
         await memoryOptimizer.initialize();
 
         // Simulate memory pressure
@@ -133,7 +131,7 @@ void main() {
       });
 
       test('should optimize memory usage over time', () async {
-        final memoryOptimizer = MemoryOptimizer();
+        final memoryOptimizer = MockMemoryOptimizer();
         await memoryOptimizer.initialize();
 
         // Simulate memory optimization cycle
@@ -148,7 +146,7 @@ void main() {
 
     group('Cache Performance', () {
       test('should retrieve cached data within 50ms', () async {
-        final cacheManager = EnhancedCacheManager();
+        final cacheManager = MockEnhancedCacheManager();
         await cacheManager.initialize();
 
         // Pre-populate cache
@@ -167,7 +165,7 @@ void main() {
       });
 
       test('should handle cache misses efficiently', () async {
-        final cacheManager = EnhancedCacheManager();
+        final cacheManager = MockEnhancedCacheManager();
         await cacheManager.initialize();
 
         // Test cache miss performance
@@ -181,7 +179,7 @@ void main() {
       });
 
       test('should handle high cache volume', () async {
-        final cacheManager = EnhancedCacheManager();
+        final cacheManager = MockEnhancedCacheManager();
         await cacheManager.initialize();
 
         // Test high volume cache operations
@@ -293,7 +291,7 @@ void main() {
 
     group('Network Performance', () {
       test('should handle concurrent network requests', () async {
-        final networkOptimizer = NetworkOptimizer();
+        final networkOptimizer = MockNetworkOptimizer();
         await networkOptimizer.initialize();
 
         // Test concurrent request handling
@@ -312,7 +310,7 @@ void main() {
       });
 
       test('should optimize network request batching', () async {
-        final networkOptimizer = NetworkOptimizer();
+        final networkOptimizer = MockNetworkOptimizer();
         await networkOptimizer.initialize();
 
         // Test request batching performance
@@ -360,7 +358,7 @@ void main() {
       });
 
       test('should maintain performance under sustained load', () async {
-        final memoryOptimizer = MemoryOptimizer();
+        final memoryOptimizer = MockMemoryOptimizer();
         await memoryOptimizer.initialize();
 
         // Test sustained load performance

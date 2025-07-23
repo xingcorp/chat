@@ -104,3 +104,19 @@ class DownloadFailure extends Failure {
     super.code,
   });
 }
+
+/// Lỗi xung đột dữ liệu
+class ConflictFailure extends Failure {
+  const ConflictFailure({
+    required super.message,
+    super.code,
+  });
+}
+
+/// Lỗi không xác định
+class UnknownFailure extends Failure {
+  const UnknownFailure({
+    required super.message,
+    super.code,
+  });
+}

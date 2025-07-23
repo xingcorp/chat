@@ -66,4 +66,16 @@ abstract class IChatRepository {
 
   /// Synchronize chat data with sync strategy (background operation)
   Future<Either<Failure, void>> syncChat(String chatId);
+
+  /// **Send Message**
+  ///
+  /// Sends a message with optimistic UI updates and enterprise error handling.
+  /// Uses offline-first strategy with automatic retry and sync.
+  Future<Either<Failure, ChatMessage>> sendMessage(ChatMessage message);
+
+  /// **Search Chats**
+  ///
+  /// Searches chats by name or content with enterprise performance optimization.
+  /// Uses local-first strategy for instant results with optional remote search.
+  Future<Either<Failure, List<Chat>>> searchChats(String searchTerm, {int limit = 20});
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
@@ -46,7 +47,7 @@ void main() {
     group('Rendering', () {
       testWidgets('should render text message correctly', (WidgetTester tester) async {
         // Arrange
-        const widget = MessageItem(
+        final widget = MessageItem(
           message: testMessage,
           sender: testSender,
           isCurrentUser: false,
@@ -65,7 +66,7 @@ void main() {
 
       testWidgets('should render current user message with different styling', (WidgetTester tester) async {
         // Arrange
-        const widget = MessageItem(
+        final widget = MessageItem(
           message: testMessage,
           sender: testSender,
           isCurrentUser: true,
@@ -192,7 +193,7 @@ void main() {
 
       testWidgets('should not handle gestures when callbacks are null', (WidgetTester tester) async {
         // Arrange
-        const widget = MessageItem(
+        final widget = MessageItem(
           message: testMessage,
           sender: testSender,
           isCurrentUser: false,
@@ -215,7 +216,7 @@ void main() {
     group('Visual Appearance', () {
       testWidgets('should have correct colors for current user', (WidgetTester tester) async {
         // Arrange
-        const widget = MessageItem(
+        final widget = MessageItem(
           message: testMessage,
           sender: testSender,
           isCurrentUser: true,
@@ -234,7 +235,7 @@ void main() {
 
       testWidgets('should have correct colors for other user', (WidgetTester tester) async {
         // Arrange
-        const widget = MessageItem(
+        final widget = MessageItem(
           message: testMessage,
           sender: testSender,
           isCurrentUser: false,
@@ -253,7 +254,7 @@ void main() {
 
       testWidgets('should have rounded corners', (WidgetTester tester) async {
         // Arrange
-        const widget = MessageItem(
+        final widget = MessageItem(
           message: testMessage,
           sender: testSender,
           isCurrentUser: false,
@@ -273,7 +274,7 @@ void main() {
     group('Performance', () {
       testWidgets('should render within performance target', (WidgetTester tester) async {
         // Arrange
-        const widget = MessageItem(
+        final widget = MessageItem(
           message: testMessage,
           sender: testSender,
           isCurrentUser: false,
@@ -297,10 +298,10 @@ void main() {
           )
         );
 
-        final widgets = messages.map((msg) => MessageItem(
-          message: msg,
+        final widgets = messages.asMap().entries.map((entry) => MessageItem(
+          message: entry.value,
           sender: testSender,
-          isCurrentUser: index % 2 == 0,
+          isCurrentUser: entry.key % 2 == 0,
         )).toList();
 
         // Act & Assert
@@ -318,7 +319,7 @@ void main() {
     group('Accessibility', () {
       testWidgets('should have proper semantics', (WidgetTester tester) async {
         // Arrange
-        const widget = MessageItem(
+        final widget = MessageItem(
           message: testMessage,
           sender: testSender,
           isCurrentUser: false,
@@ -334,7 +335,7 @@ void main() {
 
       testWidgets('should support screen readers', (WidgetTester tester) async {
         // Arrange
-        const widget = MessageItem(
+        final widget = MessageItem(
           message: testMessage,
           sender: testSender,
           isCurrentUser: false,
@@ -345,7 +346,7 @@ void main() {
 
         // Assert
         final semantics = tester.getSemantics(find.byType(MessageItem));
-        expect(semantics.hasAction(SemanticsAction.tap), isTrue);
+        expect(semantics.getSemanticsData().actions & SemanticsAction.tap.index, isNonZero);
       });
     });
 
@@ -353,7 +354,7 @@ void main() {
       testWidgets('should handle empty message content', (WidgetTester tester) async {
         // Arrange
         final emptyMessage = TestDataFactory.createTestMessage(content: '');
-        const widget = MessageItem(
+        final widget = MessageItem(
           message: emptyMessage,
           sender: testSender,
           isCurrentUser: false,
@@ -371,7 +372,7 @@ void main() {
         // Arrange
         final longContent = 'A' * 1000;
         final longMessage = TestDataFactory.createTestMessage(content: longContent);
-        const widget = MessageItem(
+        final widget = MessageItem(
           message: longMessage,
           sender: testSender,
           isCurrentUser: false,
@@ -393,7 +394,7 @@ void main() {
           avatar: null,
         );
         
-        const widget = MessageItem(
+        final widget = MessageItem(
           message: testMessage,
           sender: senderWithoutAvatar,
           isCurrentUser: false,

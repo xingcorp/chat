@@ -176,6 +176,12 @@ class EnterpriseAppService {
       case AppEventType.appError:
         debugPrint('❌ App error occurred: ${event.data}');
         break;
+      case AppEventType.appHealthy:
+        debugPrint('✅ App is healthy and running normally');
+        break;
+      case AppEventType.appUnhealthy:
+        debugPrint('⚠️ App is unhealthy - monitoring required');
+        break;
     }
   }
   

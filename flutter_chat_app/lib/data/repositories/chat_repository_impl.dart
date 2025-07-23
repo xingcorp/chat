@@ -7,6 +7,8 @@ import 'package:flutter_chat_app/data/datasources/chat/chat_local_datasource.dar
 import 'package:flutter_chat_app/data/datasources/chat/chat_remote_datasource.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
+import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:injectable/injectable.dart';
@@ -256,6 +258,47 @@ class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
         return true;
       },
       operationName: 'markChatAsRead',
+    );
+  }
+
+  @override
+  Future<Either<Failure, List<Chat>>> searchChats(String searchTerm, {int limit = 20}) async {
+    return executeOfflineFirst<List<Chat>>(
+      localDataSource: () async {
+        return await _localDataSource.searchChats(searchTerm, limit: limit);
+      },
+      remoteDataSource: () async {
+        // TODO: Implement remote search when available
+        return <Chat>[];
+      },
+      cacheData: (chats) async {
+        // Cache search results
+        await Future.wait(
+          chats.map((chat) => _localDataSource.saveChat(chat))
+        );
+      },
+      operationName: 'searchChats',
+    );
+  }
+
+  @override
+  Future<Either<Failure, ChatMessage>> sendMessage(ChatMessage message) async {
+    return executeOnlineFirst<ChatMessage>(
+      remoteDataSource: () async {
+        // Send message via remote datasource (expects ChatMessage, returns MessageModel)
+        final sentMessageModel = await _remoteDataSource.sendMessage(message);
+        return ChatMessage.fromJson(sentMessageModel.toMap());
+      },
+      localDataSource: () async {
+        // Save message locally with pending status
+        await _localDataSource.saveMessage(message.chatId, message);
+        return message;
+      },
+      cacheData: (sentMessage) async {
+        // Update local message with server response
+        await _localDataSource.saveMessage(sentMessage.chatId, sentMessage);
+      },
+      operationName: 'sendMessage',
     );
   }
 }

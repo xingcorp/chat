@@ -58,8 +58,8 @@ class PerformanceMonitor {
   /// Logger
   final _logger = Logger();
   
-  /// Firebase Performance instance
-  final FirebasePerformance _performance;
+  /// Firebase Performance instance (nullable for stub implementations)
+  final FirebasePerformance? _performance;
   
   /// Active traces
   final Map<String, Trace> _activeTraces = {};
@@ -81,8 +81,10 @@ class PerformanceMonitor {
       // Disable in debug mode
       _isPerformanceCollectionEnabled = !kDebugMode;
       
-      // Configure Firebase Performance
-      await _performance.setPerformanceCollectionEnabled(_isPerformanceCollectionEnabled);
+      // Configure Firebase Performance (if available)
+      if (_performance != null) {
+        await _performance!.setPerformanceCollectionEnabled(_isPerformanceCollectionEnabled);
+      }
       
       _logger.i('Performance Monitor initialized. Collection enabled: $_isPerformanceCollectionEnabled');
     } catch (e) {
@@ -109,8 +111,13 @@ class PerformanceMonitor {
         await stopTrace(type, customTraceName: customTraceName);
       }
       
-      // Create new trace
-      final trace = _performance.newTrace(traceName);
+      // Create new trace (if performance available)
+      if (_performance == null) {
+        _logger.w('Performance monitoring not available - trace $traceName skipped');
+        return;
+      }
+
+      final trace = _performance!.newTrace(traceName);
       await trace.start();
       
       // Add attributes if available
@@ -236,8 +243,13 @@ class PerformanceMonitor {
         await stopHttpMetric(url, method);
       }
       
-      // Start new metric
-      final metric = _performance.newHttpMetric(url, method);
+      // Start new metric (if performance available)
+      if (_performance == null) {
+        _logger.w('Performance monitoring not available - HTTP metric skipped');
+        return;
+      }
+
+      final metric = _performance!.newHttpMetric(url, method);
       await metric.start();
       
       // Add attributes if available

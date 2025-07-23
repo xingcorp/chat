@@ -138,21 +138,21 @@ abstract class MonitoringModule {
   }
   
   /// Tạo Crashlytics giả lập cho môi trường không hỗ trợ
-  FirebaseCrashlytics _createNoOpCrashlytics() {
+  FirebaseCrashlytics? _createNoOpCrashlytics() {
     if (kDebugMode) {
       print('Creating NoOp Crashlytics');
     }
-    // Vì không thể tạo trực tiếp FirebaseCrashlytics, trả về null và xử lý trong adapter
-    return null as FirebaseCrashlytics;
+    // Return null for stub implementation - will be handled by adapter
+    return null;
   }
   
   /// Tạo Performance giả lập cho môi trường không hỗ trợ
-  FirebasePerformance _createNoOpPerformance() {
+  FirebasePerformance? _createNoOpPerformance() {
     if (kDebugMode) {
       print('Creating NoOp Performance');
     }
-    // Vì không thể tạo trực tiếp FirebasePerformance, trả về null và xử lý trong adapter
-    return null as FirebasePerformance;
+    // Return null for stub implementation - will be handled by adapter
+    return null;
   }
 }
 

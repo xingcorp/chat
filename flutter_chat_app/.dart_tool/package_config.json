@@ -536,6 +536,12 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "flutter_driver",
+      "rootUri": "file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/flutter_driver",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
       "name": "flutter_hooks",
       "rootUri": "file:///Users/doanbh/.pub-cache/hosted/pub.dev/flutter_hooks-0.20.5",
       "packageUri": "lib/",
@@ -758,6 +764,12 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "fuchsia_remote_debug_protocol",
+      "rootUri": "file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/fuchsia_remote_debug_protocol",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
       "name": "get_it",
       "rootUri": "file:///Users/doanbh/.pub-cache/hosted/pub.dev/get_it-8.0.3",
       "packageUri": "lib/",
@@ -942,6 +954,12 @@
       "rootUri": "file:///Users/doanbh/.pub-cache/hosted/pub.dev/injectable_generator-2.4.2",
       "packageUri": "lib/",
       "languageVersion": "3.0"
+    },
+    {
+      "name": "integration_test",
+      "rootUri": "file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292/packages/integration_test",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
     },
     {
       "name": "intl",
@@ -1226,6 +1244,12 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "process",
+      "rootUri": "file:///Users/doanbh/.pub-cache/hosted/pub.dev/process-5.0.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
       "name": "provider",
       "rootUri": "file:///Users/doanbh/.pub-cache/hosted/pub.dev/provider-6.1.5",
       "packageUri": "lib/",
@@ -1454,6 +1478,12 @@
       "languageVersion": "3.1"
     },
     {
+      "name": "sync_http",
+      "rootUri": "file:///Users/doanbh/.pub-cache/hosted/pub.dev/sync_http-0.3.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "synchronized",
       "rootUri": "file:///Users/doanbh/.pub-cache/hosted/pub.dev/synchronized-3.3.0+3",
       "packageUri": "lib/",
@@ -1628,6 +1658,12 @@
       "languageVersion": "3.3"
     },
     {
+      "name": "webdriver",
+      "rootUri": "file:///Users/doanbh/.pub-cache/hosted/pub.dev/webdriver-3.0.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
+    },
+    {
       "name": "webkit_inspection_protocol",
       "rootUri": "file:///Users/doanbh/.pub-cache/hosted/pub.dev/webkit_inspection_protocol-1.2.1",
       "packageUri": "lib/",
@@ -1676,7 +1712,7 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2025-07-21T04:13:23.309839Z",
+  "generated": "2025-07-23T04:50:32.909946Z",
   "generator": "pub",
   "generatorVersion": "3.7.2",
   "flutterRoot": "file:///Volumes/DoanBHSST9/FlutterSDK/flutter_v3292",

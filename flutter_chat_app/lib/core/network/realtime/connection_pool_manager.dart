@@ -91,7 +91,7 @@ class ConnectionPoolManager {
     for (int i = 0; i < preConnectCount; i++) {
       futures.add(_createNewConnection().catchError((e) {
         debugPrint('Failed to pre-connect: $e');
-        return null;
+        return '';  // Return empty string instead of null
       }));
     }
     
@@ -219,6 +219,7 @@ class ConnectionPoolManager {
           if (_connections.length < _maxPoolSize / 2) {
             _createNewConnection().catchError((e) {
               debugPrint('Failed to create replacement connection: $e');
+              return '';  // Return empty string for error case
             });
           }
         }

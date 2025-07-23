@@ -49,6 +49,7 @@ import 'package:flutter_chat_app/data/datasources/auth/auth_remote_datasource.da
 import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart';
 import 'package:flutter_chat_app/data/repositories/auth_repository_impl.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
+import 'package:flutter_chat_app/core/enterprise_integration_hub.dart';
 import 'package:get_it/get_it.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:logger/logger.dart';
@@ -369,6 +370,11 @@ class EnterpriseDI {
     _logger.d('🎯 Initializing Application Services...');
 
     try {
+      // Enterprise Integration Hub
+      final integrationHub = EnterpriseIntegrationHub.instance;
+      await integrationHub.initialize();
+      serviceLocator.registerSingleton<EnterpriseIntegrationHub>(integrationHub);
+
       // Localization Service
       serviceLocator.registerLazySingleton<LocalizationService>(
         () => LocalizationService(serviceLocator<LocalStorage>()),
