@@ -34,6 +34,9 @@ class EnhancedSocketManager {
   
   /// Danh sách subscription cần dọn dẹp
   final List<StreamSubscription> _subscriptions = [];
+
+  /// Danh sách StreamController cần dọn dẹp
+  final List<StreamController> _streamControllers = [];
   
   /// Controller theo dõi chất lượng mạng
   final BehaviorSubject<models.NetworkQuality> _networkQualityController = 
@@ -121,19 +124,22 @@ class EnhancedSocketManager {
   Stream<T> on<T>(String event) {
     // Xử lý message received analytics
     final streamController = BehaviorSubject<T>();
-    
+
+    // Track StreamController để close sau này
+    _streamControllers.add(streamController);
+
     final subscription = _socketManager.on<T>(event).listen((data) {
       if (!streamController.isClosed) {
         // Ghi nhận tin nhắn nhận được
         _analytics.recordMessageReceived();
-        
+
         streamController.add(data);
       }
     });
-    
+
     // Lưu subscription để dọn dẹp sau này
     _subscriptions.add(subscription);
-    
+
     return streamController.stream;
   }
   
@@ -294,12 +300,12 @@ class EnhancedSocketManager {
   
   /// Kiểm tra hiệu suất kết nối
   Future<Map<String, dynamic>> checkConnectionHealth() async {
-    return await _analytics.checkConnectionHealth();
+    return _analytics.checkConnectionHealth();
   }
-  
+
   /// Kiểm tra độ trễ kết nối
   Future<int?> checkLatency() async {
-    return await _analytics.checkLatency();
+    return _analytics.checkLatency();
   }
   
   /// Lấy thông tin rate limit cho một event
@@ -341,8 +347,16 @@ class EnhancedSocketManager {
       subscription.cancel();
     }
     _subscriptions.clear();
-    
-    // Đóng các controller
+
+    // Đóng tất cả StreamController được tạo động
+    for (final controller in _streamControllers) {
+      if (!controller.isClosed) {
+        controller.close();
+      }
+    }
+    _streamControllers.clear();
+
+    // Đóng các controller chính
     _networkQualityController.close();
     _errorController.close();
     

@@ -32,24 +32,23 @@ import 'package:flutter_chat_app/core/network/network_optimizer.dart';
 import 'package:flutter_chat_app/core/network/socket_analytics.dart';
 import 'package:flutter_chat_app/core/network/socket_manager.dart';
 import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
+import 'package:flutter_chat_app/core/network/websocket_client.dart';
+// import 'package:flutter_chat_app/core/database/isar_database_service.dart';  // Temporarily disabled - Isar v4 compatibility issues
+import 'package:flutter_chat_app/core/enterprise_integration_hub.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
-// import 'package:flutter_chat_app/core/database/isar_database_service.dart';  // Temporarily disabled - Isar v4 compatibility issues
 import 'package:flutter_chat_app/core/services/enterprise_background_sync_service.dart';
 import 'package:flutter_chat_app/core/services/localization_service.dart';
 import 'package:flutter_chat_app/core/services/memory_optimizer.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
+import 'package:flutter_chat_app/core/services/messaging_service.dart';
 import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
 import 'package:flutter_chat_app/core/utils/adaptive_animations.dart';
 import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_chat_app/core/utils/system_resources.dart';
-import 'package:flutter_chat_app/data/datasources/auth/auth_remote_datasource.dart';
 // import 'package:flutter_chat_app/data/datasources/chat/chat_local_datasource_isar.dart';  // Temporarily disabled - Isar v4 compatibility issues
-import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart';
-import 'package:flutter_chat_app/data/repositories/auth_repository_impl.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
-import 'package:flutter_chat_app/core/enterprise_integration_hub.dart';
 import 'package:get_it/get_it.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:logger/logger.dart';
@@ -258,27 +257,19 @@ class EnterpriseDI {
         SocketRateLimiter.new,
       );
 
-      // Socket Manager
-      serviceLocator.registerLazySingleton<SocketManager>(() => SocketManager(
-        serverUrl: AppConfig.webSocketUrl,
-        logger: serviceLocator<Logger>(),
-        analytics: serviceLocator<AnalyticsService>(), // Use AnalyticsService instead of SocketAnalytics
-        options: _getSocketOptions(),
-      ));
+      // **CLEAN ARCHITECTURE SERVICES - PROFESSIONAL NAMING**
+      // Clean naming: WebSocketClient, MessagingService (no prefixes)
 
-      // Enhanced Socket Manager
-      serviceLocator.registerLazySingleton<EnhancedSocketManager>(
-        () => EnhancedSocketManager(
-          serviceLocator<SocketManager>(),
-          serviceLocator<SocketAnalytics>(),
-          serviceLocator<SocketRateLimiter>(),
+      serviceLocator.registerLazySingleton<WebSocketClient>(
+        () => WebSocketClient(
+          serverUrl: AppConfig.webSocketUrl,
+          options: _getSocketOptions(),
         ),
       );
 
-      // Real-time Service
-      serviceLocator.registerLazySingleton<RealtimeService>(
-        () => RealtimeService(
-          socketManager: serviceLocator<EnhancedSocketManager>(),
+      serviceLocator.registerLazySingleton<MessagingService>(
+        () => MessagingService(
+          webSocketClient: serviceLocator<WebSocketClient>(),
         ),
       );
 

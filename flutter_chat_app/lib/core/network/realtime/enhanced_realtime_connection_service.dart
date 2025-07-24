@@ -46,6 +46,7 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
   /// Controllers
   final _messageController = PublishSubject<RealtimeMessage>();
   final _errorController = PublishSubject<RealtimeError>();
+  final _connectionTypeController = BehaviorSubject<RealtimeConnectionType>.seeded(RealtimeConnectionType.websocket);
   
   /// Metrics theo dõi hiệu suất
   final RealtimePerformanceMetrics _metrics = RealtimePerformanceMetrics();
@@ -120,29 +121,7 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
   
   /// Stream theo dõi loại kết nối
   @override
-  Stream<RealtimeConnectionType> get connectionTypeStream {
-    // Tạo stream đầu ra từ các thay đổi trạng thái
-    final controller = BehaviorSubject<RealtimeConnectionType>();
-    
-    // Ban đầu là websocket
-    controller.add(RealtimeConnectionType.websocket);
-    
-    // Lắng nghe các thay đổi trạng thái
-    _stateMachine.stateStream.listen((state) {
-      // Chỉ cập nhật khi đang kết nối hoặc đã kết nối
-      if (state.state == ConnectionState.connected) {
-        controller.add(_webSocketChannel != null
-            ? RealtimeConnectionType.websocket
-            : RealtimeConnectionType.sse);
-      } else if (state.state == ConnectionState.disconnected || 
-                 state.state == ConnectionState.error ||
-                 state.state == ConnectionState.closed) {
-        controller.add(RealtimeConnectionType.websocket);
-      }
-    });
-    
-    return controller.stream;
-  }
+  Stream<RealtimeConnectionType> get connectionTypeStream => _connectionTypeController.stream;
   
   /// Stream để theo dõi lỗi
   @override
@@ -466,6 +445,7 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
     // Đóng controllers
     await _messageController.close();
     await _errorController.close();
+    await _connectionTypeController.close();
     
     _logger.d('EnhancedRealtimeConnectionService đã được giải phóng');
   }
@@ -522,14 +502,17 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
   /// Xử lý thay đổi trạng thái kết nối
   void _handleStateChange(ConnectionStateModel state) {
     _logger.d('Trạng thái kết nối thay đổi: ${state.state} (${state.reason})');
-    
+
+    // Cập nhật connection type stream
+    _updateConnectionType(state.state);
+
     // Xử lý các tác vụ khi trạng thái thay đổi
     switch (state.state) {
       case ConnectionState.connected:
         // Gửi thông báo hiện tại đang online
         _sendOnlineStatusNotification(true);
         break;
-        
+
       case ConnectionState.disconnected:
       case ConnectionState.error:
       case ConnectionState.closed:
@@ -538,9 +521,22 @@ class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
           _sendOnlineStatusNotification(false);
         }
         break;
-        
+
       default:
         break;
+    }
+  }
+
+  /// Cập nhật connection type dựa trên trạng thái
+  void _updateConnectionType(ConnectionState state) {
+    if (state == ConnectionState.connected) {
+      final connectionType = _webSocketChannel != null
+          ? RealtimeConnectionType.websocket
+          : RealtimeConnectionType.sse;
+      _connectionTypeController.add(connectionType);
+    } else {
+      // Khi không kết nối, mặc định là websocket
+      _connectionTypeController.add(RealtimeConnectionType.websocket);
     }
   }
   

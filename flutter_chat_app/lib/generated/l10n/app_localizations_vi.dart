@@ -1,5 +1,5 @@
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -195,4 +195,64 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get downloadError => 'Lỗi tải xuống';
+
+  @override
+  String get themeSettings => 'Giao diện';
+
+  @override
+  String get lightTheme => 'Sáng';
+
+  @override
+  String get darkTheme => 'Tối';
+
+  @override
+  String get systemTheme => 'Theo hệ thống';
+
+  @override
+  String get themeChanged => 'Đã thay đổi giao diện';
+
+  @override
+  String get appearance => 'Giao diện';
+
+  @override
+  String get general => 'Chung';
+
+  @override
+  String get privacy => 'Riêng tư';
+
+  @override
+  String get security => 'Bảo mật';
+
+  @override
+  String get help => 'Trợ giúp';
+
+  @override
+  String get feedback => 'Phản hồi';
+
+  @override
+  String get version => 'Phiên bản';
+
+  @override
+  String get account => 'Tài khoản';
+
+  @override
+  String get profile => 'Hồ sơ';
+
+  @override
+  String get avatar => 'Ảnh đại diện';
+
+  @override
+  String get displayName => 'Tên hiển thị';
+
+  @override
+  String get bio => 'Tiểu sử';
+
+  @override
+  String get accessibility => 'Khả năng tiếp cận';
+
+  @override
+  String get fontSize => 'Cỡ chữ';
+
+  @override
+  String get animations => 'Hoạt ảnh';
 }

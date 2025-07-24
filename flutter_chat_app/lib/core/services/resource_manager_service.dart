@@ -315,10 +315,9 @@ class ResourceManagerService {
     Function(double)? onProgress,
     Function(Object)? onError,
   }) {
-    final controller = StreamController<double>();
-    if (onProgress != null) {
-      controller.stream.listen(onProgress);
-    }
+    // TODO: Implement proper progress tracking with dispose mechanism
+    // StreamController approach causes memory leaks in this context
+    // Consider using StatefulWidget or callback-based progress tracking
     
     if (mediaType.toLowerCase() == 'image') {
       return loadImageWithBlur(

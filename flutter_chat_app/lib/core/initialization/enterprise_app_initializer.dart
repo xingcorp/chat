@@ -12,6 +12,7 @@
 /// - Health checks and validation
 
 import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 
@@ -24,7 +25,10 @@ import '../../data/models/message_model.dart';
 import '../../data/repositories/enterprise_chat_repository_impl.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/repositories/i_chat_repository.dart';
-import '../../presentation/bloc/chat/enterprise_chat_bloc_simple.dart';
+import '../../presentation/blocs/chat/chat_bloc.dart';
+import '../cache/cache_sync_strategy.dart';
+import '../cache/media_cache_manager.dart';
+import '../services/connectivity_service.dart';
 
 /// **ENTERPRISE APP INITIALIZER**
 /// 
@@ -143,10 +147,32 @@ class EnterpriseAppInitializer {
           _getIt<ChatRemoteDataSource>(),
         ),
       );
-      
-      // Presentation Layer
-      _getIt.registerFactory<EnterpriseChatBlocSimple>(
-        () => EnterpriseChatBlocSimple(_getIt<IChatRepository>()),
+
+      // Core Services for ChatBloc
+      _getIt.registerSingleton<Connectivity>(
+        Connectivity(),
+      );
+
+      _getIt.registerSingleton<ConnectivityService>(
+        ConnectivityService(_getIt<Connectivity>()),
+      );
+
+      _getIt.registerSingleton<CacheSyncStrategy>(
+        CacheSyncStrategy(),
+      );
+
+      _getIt.registerSingleton<MediaCacheManager>(
+        MediaCacheManager(),
+      );
+
+      // Presentation Layer - Updated to use consolidated ChatBloc
+      _getIt.registerFactory<ChatBloc>(
+        () => ChatBloc(
+          _getIt<IChatRepository>(),
+          _getIt<ConnectivityService>(),
+          _getIt<CacheSyncStrategy>(),
+          _getIt<MediaCacheManager>(),
+        ),
       );
       
       debugPrint('✅ Dependencies registered successfully');
@@ -209,7 +235,7 @@ class EnterpriseAppInitializer {
       
       // BLoCs are created on-demand via factory
       // Test BLoC creation
-      final testBloc = _getIt<EnterpriseChatBlocSimple>();
+      final testBloc = _getIt<ChatBloc>();
       await testBloc.close(); // Clean up test instance
       
       debugPrint('✅ Presentation layer initialized');

@@ -436,6 +436,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Download error'**
   String get downloadError;
+
+  /// Theme settings option
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get themeSettings;
+
+  /// Light theme option
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get lightTheme;
+
+  /// Dark theme option
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get darkTheme;
+
+  /// System theme option
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get systemTheme;
+
+  /// Message shown when theme is changed
+  ///
+  /// In en, this message translates to:
+  /// **'Theme changed successfully'**
+  String get themeChanged;
+
+  /// Appearance settings section
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get appearance;
+
+  /// General settings section
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get general;
+
+  /// Privacy settings section
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get privacy;
+
+  /// Security settings section
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get security;
+
+  /// Help settings section
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get help;
+
+  /// Feedback settings option
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get feedback;
+
+  /// Version information
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get version;
+
+  /// Account settings section
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// Profile settings section
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profile;
+
+  /// Avatar settings option
+  ///
+  /// In en, this message translates to:
+  /// **'Avatar'**
+  String get avatar;
+
+  /// Display name field
+  ///
+  /// In en, this message translates to:
+  /// **'Display Name'**
+  String get displayName;
+
+  /// Bio field
+  ///
+  /// In en, this message translates to:
+  /// **'Bio'**
+  String get bio;
+
+  /// Accessibility settings section
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility'**
+  String get accessibility;
+
+  /// Font size setting
+  ///
+  /// In en, this message translates to:
+  /// **'Font Size'**
+  String get fontSize;
+
+  /// Animations setting
+  ///
+  /// In en, this message translates to:
+  /// **'Animations'**
+  String get animations;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

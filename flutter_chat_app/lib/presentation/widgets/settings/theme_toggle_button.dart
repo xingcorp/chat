@@ -1,12 +1,13 @@
-/// **THEME TOGGLE BUTTON**
-/// 
-/// Widget for switching between light/dark themes with smooth animations.
-/// Provides WhatsApp/Telegram-level user experience.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
+
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
+
+/// **THEME TOGGLE BUTTON**
+///
+/// Widget for switching between light/dark themes with smooth animations.
+/// Provides WhatsApp/Telegram-level user experience.
 
 /// **THEME TOGGLE BUTTON**
 /// 

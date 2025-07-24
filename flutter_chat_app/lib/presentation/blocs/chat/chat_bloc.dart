@@ -1,21 +1,20 @@
 import 'dart:async';
 
-import 'package:bloc/bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
+
+import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
+import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/services/chat_sync_service.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
 import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
-import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
-import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
-import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
-import 'package:logger/logger.dart';
 
 part 'chat_event.dart';
 part 'chat_state.dart';
@@ -31,12 +30,15 @@ part 'chat_bloc.freezed.dart';
 @injectable
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final IChatRepository _chatRepository;
-  final IMessageRepository _messageRepository;
-  final ChatSyncService _chatSyncService;
+  // final IMessageRepository _messageRepository; // TODO: Use in Phase 3
+  // final ChatSyncService _chatSyncService; // TODO: Use in Phase 3
   final ConnectivityService _connectivityService;
   final CacheSyncStrategy _cacheSyncStrategy;
   final MediaCacheManager _mediaCacheManager;
   final Logger _logger = Logger();
+
+  // Performance monitoring
+  final Stopwatch _performanceStopwatch = Stopwatch();
 
   // Subscriptions for real-time updates
   StreamSubscription<ChatMessage>? _messageSubscription;
@@ -46,8 +48,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   /// Constructor
   ChatBloc(
     this._chatRepository,
-    this._messageRepository,
-    this._chatSyncService,
+    // IMessageRepository messageRepository, // TODO: Use in Phase 3
+    // ChatSyncService chatSyncService, // TODO: Use in Phase 3
     this._connectivityService,
     this._cacheSyncStrategy,
     this._mediaCacheManager,
@@ -64,43 +66,45 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     _LoadChats event,
     Emitter<ChatState> emit,
   ) async {
-    // Skip if already loading
-    if (state is _Loading) {
-      return;
-    }
-    
-    emit(const ChatState.loading());
-    
-    _logger.i('Tải danh sách chat của người dùng');
-    
-    // Kiểm tra xem có cần refresh cache không
-    final shouldRefresh = event.forceRefresh || _cacheSyncStrategy.shouldRefreshChatList();
-    
-    // Lấy danh sách chat using Either pattern
-    final result = await _chatRepository.getChats();
-    
-    result.fold(
-      (failure) {
-        _logger.e('Lỗi khi tải danh sách chat: ${failure.message}');
-        emit(ChatState.error(message: _getErrorMessage(failure)));
-      },
-      (chats) {
-        _logger.i('Đã tải ${chats.length} chat');
-        
-        // Reset dirty flag sau khi tải thành công
-        if (shouldRefresh) {
-          _cacheSyncStrategy.resetChatListDirtyFlag();
-        }
-        
-        // Pre-cache avatars for better UX
-        _prefetchAvatars(chats);
-        
-        // Subscribe to real-time updates nếu chưa có
-        _subscribeToRealTimeUpdates();
-        
-        emit(ChatState.loaded(chats: chats));
-      },
-    );
+    await _executeWithMonitoring('load_chats', () async {
+      // Skip if already loading
+      if (state is _Loading) {
+        return;
+      }
+
+      emit(const ChatState.loading());
+
+      _logger.i('Tải danh sách chat của người dùng');
+
+      // Kiểm tra xem có cần refresh cache không
+      final shouldRefresh = event.forceRefresh || _cacheSyncStrategy.shouldRefreshChatList();
+
+      // Lấy danh sách chat using Either pattern
+      final result = await _chatRepository.getChats();
+
+      result.fold(
+        (failure) {
+          _logger.e('Lỗi khi tải danh sách chat: ${failure.message}');
+          emit(ChatState.error(message: _getErrorMessage(failure)));
+        },
+        (chats) {
+          _logger.i('Đã tải ${chats.length} chat');
+
+          // Reset dirty flag sau khi tải thành công
+          if (shouldRefresh) {
+            _cacheSyncStrategy.resetChatListDirtyFlag();
+          }
+
+          // Pre-cache avatars for better UX
+          _prefetchAvatars(chats);
+
+          // Subscribe to real-time updates nếu chưa có
+          _subscribeToRealTimeUpdates();
+
+          emit(ChatState.loaded(chats: chats));
+        },
+      );
+    });
   }
 
   /// **Load chat details with Either<Failure, T> pattern - ENTERPRISE READY**
@@ -234,6 +238,34 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       return failure.message.isNotEmpty
           ? failure.message
           : 'Đã xảy ra lỗi không xác định.';
+    }
+  }
+
+  /// **Performance Monitoring Wrapper**
+  ///
+  /// Wraps operations with performance monitoring and logging.
+  /// Target: <100ms for most operations, <500ms for network operations
+  Future<void> _executeWithMonitoring(
+    String operation,
+    Future<void> Function() action,
+  ) async {
+    _performanceStopwatch.reset();
+    _performanceStopwatch.start();
+
+    try {
+      await action();
+    } catch (error) {
+      _logger.e('💥 Error in $operation: $error');
+      rethrow;
+    } finally {
+      _performanceStopwatch.stop();
+      final duration = _performanceStopwatch.elapsedMilliseconds;
+
+      if (duration > 100) {
+        _logger.w('⚠️ Slow operation: $operation took ${duration}ms');
+      } else {
+        _logger.d('⚡ Fast operation: $operation took ${duration}ms');
+      }
     }
   }
 

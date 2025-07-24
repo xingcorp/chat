@@ -131,6 +131,7 @@ class GraphQLSubscriptionService {
     final id = _uuid.v4();
     
     // Tạo subscription controller với khả năng buffer khi mất kết nối
+    // Controller này sẽ được close trong _unsubscribe() method khi subscription bị hủy
     final controller = StreamController<Map<String, dynamic>>.broadcast(
       onCancel: () {
         _unsubscribe(id);

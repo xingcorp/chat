@@ -295,5 +295,105 @@
   "downloadError": "Download error",
   "@downloadError": {
     "description": "Download error message"
+  },
+
+  "themeSettings": "Theme",
+  "@themeSettings": {
+    "description": "Theme settings option"
+  },
+
+  "lightTheme": "Light",
+  "@lightTheme": {
+    "description": "Light theme option"
+  },
+
+  "darkTheme": "Dark",
+  "@darkTheme": {
+    "description": "Dark theme option"
+  },
+
+  "systemTheme": "System",
+  "@systemTheme": {
+    "description": "System theme option"
+  },
+
+  "themeChanged": "Theme changed successfully",
+  "@themeChanged": {
+    "description": "Message shown when theme is changed"
+  },
+
+  "appearance": "Appearance",
+  "@appearance": {
+    "description": "Appearance settings section"
+  },
+
+  "general": "General",
+  "@general": {
+    "description": "General settings section"
+  },
+
+  "privacy": "Privacy",
+  "@privacy": {
+    "description": "Privacy settings section"
+  },
+
+  "security": "Security",
+  "@security": {
+    "description": "Security settings section"
+  },
+
+  "help": "Help",
+  "@help": {
+    "description": "Help settings section"
+  },
+
+  "feedback": "Feedback",
+  "@feedback": {
+    "description": "Feedback settings option"
+  },
+
+  "version": "Version",
+  "@version": {
+    "description": "Version information"
+  },
+
+  "account": "Account",
+  "@account": {
+    "description": "Account settings section"
+  },
+
+  "profile": "Profile",
+  "@profile": {
+    "description": "Profile settings section"
+  },
+
+  "avatar": "Avatar",
+  "@avatar": {
+    "description": "Avatar settings option"
+  },
+
+  "displayName": "Display Name",
+  "@displayName": {
+    "description": "Display name field"
+  },
+
+  "bio": "Bio",
+  "@bio": {
+    "description": "Bio field"
+  },
+
+  "accessibility": "Accessibility",
+  "@accessibility": {
+    "description": "Accessibility settings section"
+  },
+
+  "fontSize": "Font Size",
+  "@fontSize": {
+    "description": "Font size setting"
+  },
+
+  "animations": "Animations",
+  "@animations": {
+    "description": "Animations setting"
   }
-} 
+}

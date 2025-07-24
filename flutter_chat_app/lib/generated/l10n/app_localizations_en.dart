@@ -1,5 +1,5 @@
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -195,4 +195,64 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get downloadError => 'Download error';
+
+  @override
+  String get themeSettings => 'Theme';
+
+  @override
+  String get lightTheme => 'Light';
+
+  @override
+  String get darkTheme => 'Dark';
+
+  @override
+  String get systemTheme => 'System';
+
+  @override
+  String get themeChanged => 'Theme changed successfully';
+
+  @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get general => 'General';
+
+  @override
+  String get privacy => 'Privacy';
+
+  @override
+  String get security => 'Security';
+
+  @override
+  String get help => 'Help';
+
+  @override
+  String get feedback => 'Feedback';
+
+  @override
+  String get version => 'Version';
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String get profile => 'Profile';
+
+  @override
+  String get avatar => 'Avatar';
+
+  @override
+  String get displayName => 'Display Name';
+
+  @override
+  String get bio => 'Bio';
+
+  @override
+  String get accessibility => 'Accessibility';
+
+  @override
+  String get fontSize => 'Font Size';
+
+  @override
+  String get animations => 'Animations';
 }
