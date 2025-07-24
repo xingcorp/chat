@@ -96,7 +96,7 @@ class LoginUseCase implements UseCase<User, LoginParams> {
     } else if (exception is ServerException) {
       return ServerFailure(message: exception.message);
     } else {
-      return UnexpectedFailure('Đã xảy ra lỗi không xác định: ${exception.toString()}');
+      return UnexpectedFailure(message: 'Đã xảy ra lỗi không xác định: ${exception.toString()}');
     }
   }
 }

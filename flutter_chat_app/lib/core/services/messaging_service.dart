@@ -159,7 +159,8 @@ class MessagingService implements IConnectionManager, IMessageSender, IMessageRe
     required WebSocketClient webSocketClient,
   }) : _webSocketClient = webSocketClient {
     _initializeSocketListeners();
-    _logger.i('🚀 Messaging Service initialized');
+    _initializeConnectionRecovery();
+    _logger.i('🚀 Messaging Service initialized with connection recovery');
   }
 
   /// **IConnectionManager Implementation**
@@ -465,6 +466,113 @@ class MessagingService implements IConnectionManager, IMessageSender, IMessageRe
     );
 
     _logger.i('✅ Messaging event listeners initialized');
+  }
+
+  /// **Initialize Connection Recovery**
+  ///
+  /// Sets up connection recovery monitoring and automatic rejoin logic
+  void _initializeConnectionRecovery() {
+    _logger.i('🔄 Initializing connection recovery');
+
+    // Monitor connection state changes for recovery
+    _subscriptions.add(
+      _webSocketClient.connectionState.listen((state) {
+        _handleConnectionStateChange(state);
+      }),
+    );
+
+    // Monitor connection errors for recovery notifications
+    _subscriptions.add(
+      _webSocketClient.errorStream.listen((error) {
+        if (error != null) {
+          _handleConnectionError(error);
+        }
+      }),
+    );
+  }
+
+  /// **Handle Connection State Change**
+  ///
+  /// Responds to connection state changes with appropriate recovery actions
+  void _handleConnectionStateChange(ConnectionState state) {
+    _logger.d('🔄 Connection state changed: $state');
+
+    switch (state) {
+      case ConnectionState.connected:
+        _handleConnectionRecovered();
+        break;
+
+      case ConnectionState.disconnected:
+        _handleConnectionLost();
+        break;
+
+      case ConnectionState.reconnecting:
+        _handleReconnecting();
+        break;
+
+      case ConnectionState.error:
+        _handleConnectionError(null);
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  /// **Handle Connection Recovered**
+  ///
+  /// Automatically rejoins all previously joined chats
+  void _handleConnectionRecovered() {
+    _logger.i('✅ Connection recovered - rejoining chats');
+
+    if (_joinedChats.isNotEmpty) {
+      final chatsToRejoin = Set<String>.from(_joinedChats);
+      _joinedChats.clear(); // Clear to allow rejoin
+
+      // Rejoin all chats
+      for (final chatId in chatsToRejoin) {
+        joinChat(chatId).then((result) {
+          result.fold(
+            (failure) {
+              _logger.e('❌ Failed to rejoin chat $chatId: ${failure.message}');
+            },
+            (success) {
+              _logger.i('✅ Successfully rejoined chat: $chatId');
+            },
+          );
+        });
+      }
+    }
+  }
+
+  /// **Handle Connection Lost**
+  ///
+  /// Notifies about connection loss and prepares for recovery
+  void _handleConnectionLost() {
+    _logger.w('❌ Messaging connection lost');
+
+    // Emit connection lost notification
+    // TODO: Add connection status stream for UI notifications
+  }
+
+  /// **Handle Reconnecting**
+  ///
+  /// Notifies about reconnection attempts
+  void _handleReconnecting() {
+    _logger.i('🔄 Messaging service reconnecting...');
+
+    // Emit reconnecting notification
+    // TODO: Add reconnection progress stream for UI
+  }
+
+  /// **Handle Connection Error**
+  ///
+  /// Processes connection errors and determines recovery actions
+  void _handleConnectionError(dynamic error) {
+    _logger.e('💥 Messaging connection error: $error');
+
+    // Emit error notification
+    // TODO: Add error stream for UI error handling
   }
 
   /// **Handle New Message Event**

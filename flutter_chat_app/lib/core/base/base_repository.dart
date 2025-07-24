@@ -349,7 +349,7 @@ abstract class BaseRepository {
       );
 
       return Left(UnexpectedFailure(
-        'Unexpected error in $operationName: ${e.toString()}',
+        message: 'Unexpected error in $operationName: ${e.toString()}',
       ));
     } finally {
       // Stop performance trace

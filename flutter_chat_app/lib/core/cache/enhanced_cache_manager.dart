@@ -662,4 +662,13 @@ enum CachePriority {
 /// **Cache failure class**
 class CacheFailure extends Failure {
   const CacheFailure({required String message}) : super(message: message);
+
+  @override
+  String get userMessage => 'Có lỗi xảy ra với dữ liệu cục bộ. Vui lòng thử lại.';
+
+  @override
+  String get category => 'cache';
+
+  @override
+  bool get isRecoverable => true;
 }

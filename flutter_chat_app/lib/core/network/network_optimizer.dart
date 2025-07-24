@@ -619,6 +619,15 @@ enum RequestPriority {
 /// **Network failure class**
 class NetworkFailure extends Failure {
   const NetworkFailure({required String message}) : super(message: message);
+
+  @override
+  String get userMessage => 'Có lỗi xảy ra với kết nối mạng. Vui lòng kiểm tra kết nối và thử lại.';
+
+  @override
+  String get category => 'network';
+
+  @override
+  bool get isRecoverable => true;
 }
 
 /// **Extension for list operations**

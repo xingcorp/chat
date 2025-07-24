@@ -33,7 +33,7 @@ abstract class UseCase<Type, Params> {
       );
     } catch (e, stacktrace) {
       LogUtils.e('UseCase', 'Execute error: $e\n$stacktrace');
-      onFailure(UnexpectedFailure(e.toString()));
+      onFailure(UnexpectedFailure(message: e.toString()));
     }
   }
 }

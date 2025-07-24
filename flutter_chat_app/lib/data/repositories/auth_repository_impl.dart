@@ -1,5 +1,6 @@
 import 'package:flutter_chat_app/core/base/base_repository.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/error/repository_error_mixin.dart';
 import 'package:flutter_chat_app/core/exceptions/exceptions.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
@@ -23,7 +24,9 @@ import 'package:logger/logger.dart';
 ///
 /// **Architecture:** Clean Architecture + SOLID principles + BaseRepository pattern
 @LazySingleton(as: IAuthRepository)
-class AuthRepositoryImpl extends BaseRepository implements IAuthRepository {
+class AuthRepositoryImpl extends BaseRepository
+    with RepositoryErrorMixin
+    implements IAuthRepository {
   final AuthRemoteDataSource _authRemoteDataSource;
   final UserLocalDataSource _userLocalDataSource;
 
@@ -37,18 +40,14 @@ class AuthRepositoryImpl extends BaseRepository implements IAuthRepository {
   }) : _authRemoteDataSource = authRemoteDataSource,
        _userLocalDataSource = userLocalDataSource;
 
-  /// **Check if user is logged in - OFFLINE-FIRST STRATEGY**
+  /// **Check if user is logged in - STANDARDIZED ERROR HANDLING**
   ///
   /// **Performance**: <50ms for cached auth status
-  /// **Strategy**: Local storage check → Error handling
+  /// **Strategy**: Standardized error handling with RepositoryErrorMixin
   @override
   Future<Either<Failure, bool>> isLoggedIn() async {
-    return executeOfflineFirst<bool>(
-      remoteDataSource: () async {
-        // Remote check not needed for login status
-        throw ServerException(message: 'Remote login status check not supported');
-      },
-      localDataSource: () async {
+    return handleCacheOperation(
+      () async {
         // Check if there's a current user in local storage
         final currentUser = await _userLocalDataSource.getCurrentUser();
         final isLoggedIn = currentUser != null;
@@ -56,19 +55,46 @@ class AuthRepositoryImpl extends BaseRepository implements IAuthRepository {
         return isLoggedIn;
       },
       operationName: 'isLoggedIn',
+      context: {
+        'source': 'local_cache',
+        'operation_type': 'auth_check',
+      },
     );
   }
 
-  /// **Login with email and password - ONLINE-FIRST STRATEGY**
+  /// **Login with email and password - STANDARDIZED ERROR HANDLING**
   ///
   /// **Performance**: <2s for login process (enterprise standard)
-  /// **Strategy**: Server authentication → Local storage → Error handling
+  /// **Strategy**: Input validation → Network operation → Local storage
   @override
   Future<Either<Failure, User>> login(String email, String password) async {
-    return executeOnlineFirst<User>(
-      remoteDataSource: () async {
+    // Step 1: Validate input parameters
+    final validationResult = validateInput({
+      'email': email,
+      'password': password,
+    }, operationName: 'login');
+
+    if (validationResult.isLeft) {
+      return validationResult.fold(
+        (failure) => Left(failure),
+        (_) => throw StateError('Unexpected validation success'),
+      );
+    }
+
+    // Step 2: Additional email validation
+    if (!_isValidEmail(email)) {
+      return Left(ValidationFailure(
+        message: 'Invalid email format',
+        code: 'invalid_email',
+        fieldErrors: {'email': 'Email không hợp lệ'},
+      ));
+    }
+
+    // Step 3: Execute network operation with retry logic
+    return handleNetworkOperation(
+      () async {
         logger.i('Attempting login for user: $email');
-        
+
         // Attempt to login
         final userModel = await _authRemoteDataSource.login(email, password);
 
@@ -79,12 +105,18 @@ class AuthRepositoryImpl extends BaseRepository implements IAuthRepository {
         logger.i('Login successful for user: $email');
         return userModel.toDomain();
       },
-      localDataSource: () async {
-        // Cannot login offline - authentication requires server
-        throw ConnectionFailure(message: 'Cannot login without internet connection');
-      },
       operationName: 'login',
+      maxRetries: 2,
+      context: {
+        'email': email,
+        'operation_type': 'authentication',
+      },
     );
+  }
+
+  /// **Validate Email Format**
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
   /// **Register a new user - ONLINE-FIRST STRATEGY**

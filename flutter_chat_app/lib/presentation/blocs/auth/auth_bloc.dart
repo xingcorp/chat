@@ -1,11 +1,15 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import 'package:flutter_chat_app/domain/repositories/auth_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/domain/entities/user.dart';
+import 'package:flutter_chat_app/domain/repositories/auth_repository.dart';
+import 'package:flutter_chat_app/presentation/blocs/base/bloc_error_mixin.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -18,7 +22,7 @@ part 'auth_state.dart';
 /// **Performance**: <100ms for auth state changes
 /// **Architecture**: Clean Architecture + BLoC pattern + Either error handling
 @injectable
-class AuthBloc extends Bloc<AuthEvent, AuthState> {
+class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
   final IAuthRepository _authRepository;
   final SharedPreferences _preferences;
   
@@ -28,7 +32,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required SharedPreferences preferences,
   }) : _authRepository = authRepository,
        _preferences = preferences,
-       super(const AuthState.unknown()) {
+       super(const AuthInitial.initial()) {
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthLoggedIn>(_onAuthLoggedIn);
     on<AuthLoggedOut>(_onAuthLoggedOut);
@@ -37,67 +41,131 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthRegisterRequested>(_onAuthRegisterRequested);
   }
   
-  /// **Check authentication status using IAuthRepository**
+  /// **Check authentication status - STANDARDIZED ERROR HANDLING**
   ///
   /// **Performance**: <100ms for auth status check
-  /// **Strategy**: Repository-based auth check with Either error handling
+  /// **Strategy**: BlocErrorMixin with Either error handling
   Future<void> _onAuthCheckRequested(
     AuthCheckRequested event,
     Emitter<AuthState> emit,
   ) async {
-    // Check authentication status via repository
-    final result = await _authRepository.isLoggedIn();
+    // Emit loading state
+    emit(const AuthLoading(operation: 'check'));
 
-    result.fold(
-      (failure) {
-        // Authentication check failed - assume unauthenticated
-        emit(const AuthState.unauthenticated());
-      },
-      (isAuthenticated) async {
-        if (isAuthenticated) {
-          // Get current user details
-          final userResult = await _authRepository.getCurrentUser();
+    try {
+      // Check authentication status
+      final result = await _authRepository.isLoggedIn();
 
-          userResult.fold(
-            (failure) {
-              // Failed to get user details - assume unauthenticated
-              emit(const AuthState.unauthenticated());
-            },
-            (user) {
-              final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
+      result.fold(
+        (failure) {
+          // Authentication check failed - emit error state
+          emit(AuthError(
+            failure: failure,
+            operation: 'isLoggedIn',
+            retryAction: () => add(const AuthCheckRequested()),
+          ));
+        },
+        (isAuthenticated) async {
+          if (isAuthenticated) {
+            // Get current user details
+            final userResult = await _authRepository.getCurrentUser();
 
-              if (user != null) {
-                emit(AuthState.authenticated(
-                  userId: user.id,
-                  isOnboarded: isOnboarded,
+            userResult.fold(
+              (failure) {
+                // Failed to get user details - emit error state
+                emit(AuthError(
+                  failure: failure,
+                  operation: 'getCurrentUser',
+                  retryAction: () => add(const AuthCheckRequested()),
                 ));
-              } else {
-                emit(const AuthState.unauthenticated());
-              }
-            },
-          );
-        } else {
-          emit(const AuthState.unauthenticated());
-        }
-      },
-    );
+              },
+              (user) {
+                final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
+
+                if (user != null) {
+                  emit(AuthAuthenticated(
+                    user: user,
+                    isOnboarded: isOnboarded,
+                  ));
+                } else {
+                  emit(const AuthUnauthenticated());
+                }
+              },
+            );
+          } else {
+            emit(const AuthUnauthenticated());
+          }
+        },
+      );
+    } catch (exception, stackTrace) {
+      logger.e('Auth check exception', error: exception, stackTrace: stackTrace);
+
+      emit(AuthError(
+        failure: UnexpectedFailure(
+          message: 'Unexpected error during auth check: $exception',
+          code: 'auth_check_exception',
+        ),
+        operation: 'authCheck',
+        retryAction: () => add(const AuthCheckRequested()),
+      ));
+    }
   }
   
-  // Đăng nhập
+  /// **Handle successful login - STANDARDIZED ERROR HANDLING**
+  ///
+  /// **Performance**: <100ms for auth data persistence
+  /// **Strategy**: Local storage persistence → Get user → State update
   Future<void> _onAuthLoggedIn(
-    AuthLoggedIn event, 
+    AuthLoggedIn event,
     Emitter<AuthState> emit,
   ) async {
-    await _preferences.setBool('isAuthenticated', true);
-    await _preferences.setString('userId', event.userId);
-    await _preferences.setString('accessToken', event.accessToken);
-    
-    final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
-    
-    emit(AuthState.authenticated(
-      userId: event.userId, 
-      isOnboarded: isOnboarded,
-    ));
+    try {
+      await _preferences.setBool('isAuthenticated', true);
+      await _preferences.setString('userId', event.userId);
+      await _preferences.setString('accessToken', event.accessToken);
+
+      final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
+
+      // Get current user from repository
+      final userResult = await _authRepository.getCurrentUser();
+
+      userResult.fold(
+        (failure) {
+          emit(AuthError(
+            failure: failure,
+            operation: 'getCurrentUser',
+            retryAction: () => add(event),
+          ));
+        },
+        (user) {
+          if (user != null) {
+            emit(AuthAuthenticated(
+              user: user,
+              isOnboarded: isOnboarded,
+            ));
+          } else {
+            emit(AuthError(
+              failure: UnexpectedFailure(
+                message: 'User not found after login',
+                code: 'user_not_found',
+              ),
+              operation: 'login',
+            ));
+          }
+        },
+      );
+    } catch (exception, stackTrace) {
+      logger.e('Login data save exception', error: exception, stackTrace: stackTrace);
+
+      emit(AuthError(
+        failure: UnexpectedFailure(
+          message: 'Failed to save login data: $exception',
+          code: 'login_save_exception',
+        ),
+        operation: 'saveLoginData',
+        retryAction: () => add(event),
+      ));
+    }
   }
   
   /// **Handle logout using IAuthRepository**
@@ -117,27 +185,45 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         _preferences.setBool('isAuthenticated', false);
         _preferences.remove('userId');
         _preferences.remove('accessToken');
-        emit(const AuthState.unauthenticated());
+        emit(const AuthUnauthenticated.unauthenticated());
       },
       (success) {
         // Logout successful - clear local preferences
         _preferences.setBool('isAuthenticated', false);
         _preferences.remove('userId');
         _preferences.remove('accessToken');
-        emit(const AuthState.unauthenticated());
+        emit(const AuthUnauthenticated.unauthenticated());
       },
     );
   }
   
-  // Hoàn thành onboarding
+  /// **Complete onboarding - STANDARDIZED ERROR HANDLING**
+  ///
+  /// **Performance**: <50ms for onboarding completion
+  /// **Strategy**: BlocErrorMixin with Either error handling
   Future<void> _onAuthOnboardingCompleted(
-    AuthOnboardingCompleted event, 
+    AuthOnboardingCompleted event,
     Emitter<AuthState> emit,
   ) async {
-    await _preferences.setBool('isOnboarded', true);
-    
-    if (state.isAuthenticated) {
-      emit(state.copyWith(isOnboarded: true));
+    try {
+      await _preferences.setBool('isOnboarded', true);
+
+      if (state is AuthAuthenticated) {
+        final currentState = state as AuthAuthenticated;
+        emit(AuthAuthenticated(
+          user: currentState.user,
+          isOnboarded: true,
+        ));
+      }
+    } catch (e) {
+      emit(AuthError(
+        failure: UnexpectedFailure(
+          message: 'Failed to complete onboarding: $e',
+          code: 'onboarding_failed',
+        ),
+        operation: 'onboarding',
+        retryAction: () => add(event),
+      ));
     }
   }
 
@@ -150,7 +236,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     // Emit loading state
-    emit(state.copyWith(isInitializing: true));
+    emit(const AuthLoading(operation: 'login'));
 
     // Perform login via repository
     final result = await _authRepository.login(event.email, event.password);
@@ -158,7 +244,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (failure) {
         // Login failed - emit unauthenticated state
-        emit(const AuthState.unauthenticated());
+        emit(const AuthUnauthenticated.unauthenticated());
       },
       (user) {
         // Login successful - save to preferences and emit authenticated state
@@ -167,8 +253,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
 
-        emit(AuthState.authenticated(
-          userId: user.id,
+        emit(AuthAuthenticated(
+          user: user,
           isOnboarded: isOnboarded,
         ));
       },
@@ -184,7 +270,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     // Emit loading state
-    emit(state.copyWith(isInitializing: true));
+    emit(const AuthLoading(operation: 'register'));
 
     // Perform registration via repository
     final result = await _authRepository.register(
@@ -197,7 +283,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (failure) {
         // Registration failed - emit unauthenticated state
-        emit(const AuthState.unauthenticated());
+        emit(const AuthUnauthenticated.unauthenticated());
       },
       (user) {
         // Registration successful - save to preferences and emit authenticated state
@@ -206,8 +292,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
 
-        emit(AuthState.authenticated(
-          userId: user.id,
+        emit(AuthAuthenticated(
+          user: user,
           isOnboarded: isOnboarded,
         ));
       },
