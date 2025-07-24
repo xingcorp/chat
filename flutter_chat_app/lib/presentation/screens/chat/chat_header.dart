@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
+import 'package:flutter_chat_app/core/localization/app_strings.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 
 /// Header cho màn hình chi tiết chat
@@ -61,7 +62,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
                   child: Material(
                     color: Colors.transparent,
                     child: Text(
-                      chat.name ?? 'Chat',
+                      chat.name ?? AppStrings.chats,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -96,7 +97,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
     const bool isOnline = true;
     
     return Text(
-      isOnline ? 'Đang hoạt động' : 'Không hoạt động',
+      isOnline ? AppStrings.online : AppStrings.offline,
       style: TextStyle(
         fontSize: 12,
         color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),

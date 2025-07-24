@@ -12,6 +12,8 @@ import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart
 import 'package:uuid/uuid.dart';
 import 'package:flutter_chat_app/main.dart' show MyApp;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_chat_app/core/localization/app_strings.dart';
+import 'package:flutter_chat_app/core/constants/app_dimensions.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -186,22 +188,22 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                 // Navigation sidebar
                 NavigationRail(
                   extended: true,
-                  destinations: const [
+                  destinations: [
                     NavigationRailDestination(
                       icon: Icon(Icons.home),
-                      label: Text('Home'),
+                      label: Text('Home'), // Keep as is - not user-facing
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.chat),
-                      label: Text('Chats'),
+                      label: Text(AppStrings.chats),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.people),
-                      label: Text('Users'),
+                      label: Text('Users'), // Keep as is - not user-facing
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.settings),
-                      label: Text('Settings'),
+                      label: Text(AppStrings.settings),
                     ),
                   ],
                   selectedIndex: _selectedIndex,
@@ -222,7 +224,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(AppDimensions.PADDING_DEFAULT),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -244,7 +246,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                       
                       Expanded(
                         child: _chats.isEmpty
-                            ? const Center(child: Text('No chats yet'))
+                            ? Center(child: Text('Chưa có cuộc trò chuyện nào'))
                             : ListView.builder(
                                 itemCount: _chats.length,
                                 itemBuilder: (context, index) {
@@ -269,7 +271,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                       
                       // Status bar
                       Container(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(AppDimensions.PADDING_SMALL),
                         color: Colors.grey[200],
                         child: Row(
                           children: [
@@ -298,7 +300,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                 // Main content area with messages
                 Expanded(
                   child: _selectedChat == null
-                      ? const Center(child: Text('Select a chat to view messages'))
+                      ? Center(child: Text('Chọn cuộc trò chuyện để xem tin nhắn'))
                       : Column(
                           children: [
                             // Chat header
@@ -317,7 +319,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                             // Message list
                             Expanded(
                               child: _messages.isEmpty
-                                  ? const Center(child: Text('No messages yet'))
+                                  ? Center(child: Text('Chưa có tin nhắn nào'))
                                   : ListView.builder(
                                       itemCount: _messages.length,
                                       itemBuilder: (context, index) {
@@ -328,10 +330,10 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                                           alignment: isSentByMe ? Alignment.centerRight : Alignment.centerLeft,
                                           child: Container(
                                             margin: const EdgeInsets.symmetric(
-                                              horizontal: 16.0,
-                                              vertical: 4.0,
+                                              horizontal: AppDimensions.MARGIN_DEFAULT,
+                                              vertical: AppDimensions.MARGIN_TINY,
                                             ),
-                                            padding: const EdgeInsets.all(12.0),
+                                            padding: const EdgeInsets.all(AppDimensions.PADDING_MEDIUM),
                                             decoration: BoxDecoration(
                                               color: isSentByMe
                                                   ? Theme.of(context).colorScheme.primary
@@ -367,7 +369,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                             
                             // Message input
                             Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(AppDimensions.PADDING_SMALL),
                               child: Row(
                                 children: [
                                   IconButton(
@@ -378,14 +380,14 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                                   ),
                                   Expanded(
                                     child: TextField(
-                                      decoration: const InputDecoration(
-                                        hintText: 'Type a message...',
+                                      decoration: InputDecoration(
+                                        hintText: AppStrings.typeMessage,
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.all(Radius.circular(24.0)),
                                         ),
                                         contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 16.0,
-                                          vertical: 8.0,
+                                          horizontal: AppDimensions.PADDING_DEFAULT,
+                                          vertical: AppDimensions.PADDING_SMALL,
                                         ),
                                       ),
                                     ),
@@ -420,7 +422,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(AppDimensions.PADDING_DEFAULT),
                           child: Text(
                             'Users',
                             style: TextStyle(
@@ -432,7 +434,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                         
                         Expanded(
                           child: _users.isEmpty
-                              ? const Center(child: Text('No users yet'))
+                              ? Center(child: Text('Chưa có người dùng nào'))
                               : ListView.builder(
                                   itemCount: _users.length,
                                   itemBuilder: (context, index) {

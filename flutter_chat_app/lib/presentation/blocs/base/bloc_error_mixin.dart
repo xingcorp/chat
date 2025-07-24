@@ -13,6 +13,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 
 import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/localization/error_localization_service.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 
 /// **BLoC Error Handling Mixin**
@@ -22,6 +23,10 @@ import 'package:flutter_chat_app/core/utils/either.dart';
 mixin BlocErrorMixin<Event, State> on BlocBase<State> {
   /// Logger instance for error tracking
   Logger get logger => Logger();
+
+  /// Error localization service instance
+  ErrorLocalizationService get _errorLocalizationService =>
+      ErrorLocalizationService.instance;
 
   /// **Handle Either Result**
   ///
@@ -45,8 +50,9 @@ mixin BlocErrorMixin<Event, State> on BlocBase<State> {
           error: failure,
         );
         
-        // Log user message for debugging
-        logger.w('💬 User message: ${failure.userMessage}');
+        // Log localized user message for debugging
+        final localizedMessage = _errorLocalizationService.getLocalizedErrorMessage(failure);
+        logger.w('💬 Localized message: $localizedMessage');
         
         emit(onFailure(failure));
       },
@@ -142,6 +148,41 @@ mixin BlocErrorMixin<Event, State> on BlocBase<State> {
   /// Gets error category for analytics and UI handling
   String getErrorCategory(Failure failure) {
     return failure.category;
+  }
+
+  /// **Get Error Display Information**
+  ///
+  /// Returns comprehensive error information for UI display
+  DisplayError getErrorDisplayInfo(
+    Failure failure, {
+    Map<String, dynamic>? context,
+    bool includeRecovery = true,
+  }) {
+    return _errorLocalizationService.formatErrorForDisplay(
+      failure,
+      context: context,
+      includeRecovery: includeRecovery,
+    );
+  }
+
+  /// **Get Localized Error Message with Context**
+  ///
+  /// Returns contextualized error message for specific operations
+  String getLocalizedErrorMessage(
+    Failure failure, {
+    Map<String, dynamic>? context,
+  }) {
+    return _errorLocalizationService.getErrorMessageWithContext(
+      failure,
+      context: context,
+    );
+  }
+
+  /// **Get Recovery Guidance**
+  ///
+  /// Returns step-by-step recovery guidance for the error
+  List<String> getRecoveryGuidance(Failure failure) {
+    return _errorLocalizationService.getRecoveryGuidance(failure);
   }
 
   /// **Handle Validation Errors**

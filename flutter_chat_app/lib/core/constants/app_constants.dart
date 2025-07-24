@@ -1,7 +1,40 @@
 
+/// **APP CONSTANTS - CENTRALIZED CONFIGURATION**
+///
+/// Professional centralized constants following enterprise standards:
+/// - No hardcoded values in business logic
+/// - SCREAMING_SNAKE_CASE for primitive constants
+/// - PascalCase for configuration classes
+/// - Comprehensive documentation with usage examples
+///
+/// **Architecture:** Clean Architecture + Configuration Management
 
-/// Các hằng số cho ứng dụng
+/// **APPLICATION CONSTANTS**
 class AppConstants {
+  // Private constructor to prevent instantiation
+  AppConstants._();
+
+  /// **Application Information**
+  static const String APP_NAME = 'Flutter Chat App';
+  static const String APP_VERSION = '1.0.0';
+  static const String APP_BUILD_NUMBER = '1';
+  static const String APP_PACKAGE_NAME = 'com.enterprise.flutter_chat_app';
+
+  /// **API Configuration**
+  static const String API_BASE_URL = 'https://api.enterprise-chat.com';
+  static const String API_VERSION = 'v1';
+  static const int API_TIMEOUT_SECONDS = 30;
+  static const int API_RETRY_ATTEMPTS = 3;
+  static const int API_RETRY_DELAY_MS = 1000;
+
+  /// **WebSocket Configuration**
+  static const String WEBSOCKET_URL = 'wss://ws.enterprise-chat.com';
+  static const int WEBSOCKET_RECONNECT_ATTEMPTS = 5;
+  static const int WEBSOCKET_RECONNECT_DELAY_MS = 500;
+  static const int WEBSOCKET_PING_INTERVAL_SECONDS = 30;
+  static const int WEBSOCKET_TIMEOUT_SECONDS = 10;
+
+  /// **UI Dimensions (Legacy - Maintained for backward compatibility)**
   // Kích thước và khoảng cách
   static const double kDefaultPadding = 16.0;
   static const double kSmallPadding = 8.0;

@@ -9,6 +9,7 @@
 /// **Architecture:** Clean Architecture + SOLID principles + Either<Failure, T>
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter_chat_app/core/localization/error_messages_vi.dart';
 
 /// **Base Failure Class**
 ///
@@ -61,13 +62,15 @@ class ServerFailure extends Failure {
   String get userMessage {
     switch (code) {
       case '500':
-        return 'Lỗi server nội bộ. Vui lòng thử lại sau.';
+        return ErrorMessagesVi.getErrorMessage('server_error');
       case '502':
-        return 'Server tạm thời không khả dụng. Vui lòng thử lại sau.';
+        return ErrorMessagesVi.getErrorMessage('server_unavailable');
       case '503':
-        return 'Dịch vụ đang bảo trì. Vui lòng thử lại sau.';
+        return ErrorMessagesVi.getErrorMessage('server_maintenance');
+      case 'overload':
+        return ErrorMessagesVi.getErrorMessage('server_overload');
       default:
-        return 'Có lỗi xảy ra từ server. Vui lòng thử lại sau.';
+        return ErrorMessagesVi.getErrorMessage('server_error');
     }
   }
 
@@ -91,13 +94,17 @@ class ConnectionFailure extends Failure {
   String get userMessage {
     switch (code) {
       case 'timeout':
-        return 'Kết nối bị timeout. Vui lòng kiểm tra mạng và thử lại.';
+        return ErrorMessagesVi.getErrorMessage('connection_timeout');
       case 'no_internet':
-        return 'Không có kết nối internet. Vui lòng kiểm tra mạng.';
+        return ErrorMessagesVi.getErrorMessage('no_internet');
       case 'dns_error':
-        return 'Không thể kết nối đến server. Vui lòng thử lại sau.';
+        return ErrorMessagesVi.getErrorMessage('connection_failed');
+      case 'lost':
+        return ErrorMessagesVi.getErrorMessage('connection_lost');
+      case 'weak':
+        return ErrorMessagesVi.getErrorMessage('weak_connection');
       default:
-        return 'Có lỗi kết nối mạng. Vui lòng kiểm tra và thử lại.';
+        return ErrorMessagesVi.getErrorMessage('connection_failed');
     }
   }
 
@@ -118,7 +125,7 @@ class NetworkFailure extends Failure {
   });
 
   @override
-  String get userMessage => 'Có lỗi mạng xảy ra. Vui lòng thử lại.';
+  String get userMessage => ErrorMessagesVi.getErrorMessage('connection_failed');
 
   @override
   String get category => 'network';
@@ -142,15 +149,19 @@ class AuthenticationFailure extends Failure {
   String get userMessage {
     switch (code) {
       case 'invalid_credentials':
-        return 'Tên đăng nhập hoặc mật khẩu không đúng.';
+        return ErrorMessagesVi.getErrorMessage('invalid_credentials');
       case 'account_locked':
-        return 'Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.';
+        return ErrorMessagesVi.getErrorMessage('account_locked');
       case 'token_expired':
-        return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        return ErrorMessagesVi.getErrorMessage('token_expired');
       case 'account_not_verified':
-        return 'Tài khoản chưa được xác thực. Vui lòng kiểm tra email.';
+        return ErrorMessagesVi.getErrorMessage('account_not_verified');
+      case 'login_failed':
+        return ErrorMessagesVi.getErrorMessage('login_failed');
+      case 'account_disabled':
+        return ErrorMessagesVi.getErrorMessage('account_disabled');
       default:
-        return 'Có lỗi xác thực. Vui lòng đăng nhập lại.';
+        return ErrorMessagesVi.getErrorMessage('login_failed');
     }
   }
 
