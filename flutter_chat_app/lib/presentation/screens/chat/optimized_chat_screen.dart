@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/localization/app_strings.dart';
 import 'package:flutter_chat_app/core/services/media_service.dart';
 import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
@@ -272,7 +273,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
         children: [
           ListTile(
             leading: const Icon(Icons.reply),
-            title: const Text('Reply'),
+            title: Text(AppStrings.replyMessage),
             onTap: () {
               Navigator.pop(context);
               setState(() {
@@ -282,7 +283,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           ),
           ListTile(
             leading: const Icon(Icons.forward),
-            title: const Text('Forward'),
+            title: Text(AppStrings.forwardMessage),
             onTap: () {
               Navigator.pop(context);
               // Implement forward logic
@@ -291,7 +292,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           if (message.isFromCurrentUser)
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete', style: TextStyle(color: Colors.red)),
+              title: Text(AppStrings.deleteMessage, style: const TextStyle(color: Colors.red)),
               onTap: () {
                 Navigator.pop(context);
                 _confirmDeleteMessage(message);
@@ -306,12 +307,12 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Message'),
-        content: const Text('Are you sure you want to delete this message?'),
+        title: Text(AppStrings.deleteMessage),
+        content: Text(AppStrings.confirmDelete),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppStrings.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -319,10 +320,10 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
               // TODO: Implement proper message deletion
               // Would need MessageBloc or different approach
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Delete message not implemented')),
+                SnackBar(content: Text('Chức năng xóa tin nhắn chưa được triển khai')),
               );
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(AppStrings.delete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -427,7 +428,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(chat.name ?? 'Chat', style: const TextStyle(fontSize: 16)),
+                  Text(chat.name ?? AppStrings.chats, style: const TextStyle(fontSize: 16)),
                   // Note: isTyping property not available in current Chat entity
                   // if (chat.isTyping)
                   //   const Text(
@@ -438,7 +439,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
               );
             }
 
-            return const Text('Chat');
+            return Text(AppStrings.chats);
           },
         ),
         actions: [
@@ -487,7 +488,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Replying to ${replyMessage.senderName}',
+                                  'Trả lời ${replyMessage.senderName}',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
@@ -541,11 +542,11 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Error: ${state.errorMessage ?? "Unknown error"}'),
+                        Text('Lỗi: ${state.errorMessage ?? "Lỗi không xác định"}'),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _loadInitialMessages,
-                          child: const Text('Retry'),
+                          child: Text(AppStrings.retry),
                         ),
                       ],
                     ),
@@ -561,7 +562,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                 
                 if (messages.isEmpty) {
                   return const Center(
-                    child: Text('No messages yet. Start the conversation!'),
+                    child: Text('Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!'),
                   );
                 }
                 
@@ -654,8 +655,8 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                     child: TextField(
                                       controller: _messageController,
-                                      decoration: const InputDecoration(
-                                        hintText: 'Type a message',
+                                      decoration: InputDecoration(
+                                        hintText: AppStrings.typeMessage,
                                         border: InputBorder.none,
                                       ),
                                       maxLines: 5,
@@ -724,7 +725,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
         children: [
           _buildAttachmentOption(
             icon: Icons.photo,
-            label: 'Image',
+            label: 'Hình ảnh',
             color: Colors.purple,
             onTap: () => _handleAttachmentSelection(ContentType.image),
           ),
@@ -736,13 +737,13 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           ),
           _buildAttachmentOption(
             icon: Icons.insert_drive_file,
-            label: 'File',
+            label: 'Tệp tin',
             color: Colors.blue,
             onTap: () => _handleAttachmentSelection(ContentType.file),
           ),
           _buildAttachmentOption(
             icon: Icons.location_on,
-            label: 'Location',
+            label: 'Vị trí',
             color: Colors.green,
             onTap: () => _handleAttachmentSelection(ContentType.location),
           ),

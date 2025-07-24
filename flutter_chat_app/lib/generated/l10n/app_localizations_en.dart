@@ -255,4 +255,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get animations => 'Animations';
+
+  @override
+  String get pleaseEnterGroupName => 'Please enter group name';
+
+  @override
+  String get pleaseSelectMembers => 'Please select at least one member';
+
+  @override
+  String get createNewGroup => 'Create New Group';
+
+  @override
+  String get create => 'Create';
 }

@@ -45,7 +45,7 @@ mixin LoadingStateMixin<T extends StatefulWidget> on State<T> {
                 children: [
                   const CircularProgressIndicator(),
                   if (loadingText != null) ...[
-                    SizedBox(height: AppDimensions.SPACING_DEFAULT),
+                    const SizedBox(height: AppDimensions.spacingDefault),
                     Text(
                       loadingText,
                       style: const TextStyle(color: AppColors.WHITE),
@@ -84,23 +84,23 @@ mixin ErrorStateMixin<T extends StatefulWidget> on State<T> {
     if (!hasError) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.PADDING_DEFAULT),
+      padding: const EdgeInsets.all(AppDimensions.paddingDefault),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
+          const Icon(
             Icons.error_outline,
-            size: AppDimensions.ICON_HUGE,
+            size: AppDimensions.iconHuge,
             color: AppColors.ERROR,
           ),
-          SizedBox(height: AppDimensions.SPACING_DEFAULT),
+          const SizedBox(height: AppDimensions.spacingDefault),
           Text(
             _errorMessage!,
             textAlign: TextAlign.center,
             style: const TextStyle(color: AppColors.ERROR),
           ),
           if (onRetry != null) ...[
-            SizedBox(height: AppDimensions.SPACING_DEFAULT),
+            const SizedBox(height: AppDimensions.spacingDefault),
             ElevatedButton(
               onPressed: () {
                 clearError();
@@ -238,14 +238,14 @@ extension BuildContextExtensions on BuildContext {
   double get screenHeight => screenSize.height;
 
   /// **Check if device is mobile**
-  bool get isMobile => screenWidth < AppDimensions.BREAKPOINT_MOBILE;
+  bool get isMobile => screenWidth < AppDimensions.breakpointMobile;
 
   /// **Check if device is tablet**
-  bool get isTablet => screenWidth >= AppDimensions.BREAKPOINT_MOBILE && 
-                       screenWidth < AppDimensions.BREAKPOINT_DESKTOP;
+  bool get isTablet => screenWidth >= AppDimensions.breakpointMobile && 
+                       screenWidth < AppDimensions.breakpointDesktop;
 
   /// **Check if device is desktop**
-  bool get isDesktop => screenWidth >= AppDimensions.BREAKPOINT_DESKTOP;
+  bool get isDesktop => screenWidth >= AppDimensions.breakpointDesktop;
 
   /// **Get theme**
   ThemeData get theme => Theme.of(this);
@@ -411,7 +411,7 @@ class _CacheEntry<V> {
 /// 
 ///   Widget _buildContent() {
 ///     return Container(
-///       padding: EdgeInsets.all(AppDimensions.PADDING_DEFAULT),
+///       padding: EdgeInsets.all(AppDimensions.paddingDefault),
 ///       child: Text(
 ///         'Hello World'.capitalize,
 ///         style: context.textTheme.bodyLarge,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/cache/cache_stats.dart';
 import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
+import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:get_it/get_it.dart';
@@ -192,11 +193,7 @@ class PreloadManager {
       final List<String> avatarUrls = [];
       
       // Giả lập: Thêm một số avatar URLs (trong thực tế sẽ lấy từ dữ liệu chat)
-      avatarUrls.addAll([
-        'https://example.com/avatar1.jpg',
-        'https://example.com/avatar2.jpg',
-        'https://example.com/avatar3.jpg',
-      ]);
+      avatarUrls.addAll(AppConstants.mockAvatarUrls);
       
       // Tiền tải avatars
       if (avatarUrls.isNotEmpty) {
@@ -255,14 +252,9 @@ class PreloadManager {
       
       // Trong thực tế sẽ lấy URLs từ danh sách tin nhắn
       // Giả lập với một số URLs tĩnh
-      imageUrls.addAll([
-        'https://example.com/image1.jpg',
-        'https://example.com/image2.jpg',
-      ]);
-      
-      videoThumbnails.addAll([
-        'https://example.com/video1_thumb.jpg',
-      ]);
+      imageUrls.addAll(AppConstants.mockImageUrls);
+
+      videoThumbnails.addAll(AppConstants.mockVideoThumbnailUrls);
       
       // Tiền tải thumbnails cho cả hình ảnh và video
       await Future.wait([

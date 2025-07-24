@@ -14,6 +14,8 @@ import 'package:flutter_chat_app/core/constants/app_dimensions.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/localization/error_localization_service.dart';
 
+import '../../../core/theme/app_colors.dart';
+
 /// **ERROR DISPLAY WIDGET**
 class ErrorDisplayWidget extends StatelessWidget {
   /// The failure to display
@@ -67,14 +69,14 @@ class ErrorDisplayWidget extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.all(AppDimensions.MARGIN_DEFAULT),
-      padding: const EdgeInsets.all(AppDimensions.PADDING_DEFAULT),
+      margin: const EdgeInsets.all(AppDimensions.marginDefault),
+      padding: const EdgeInsets.all(AppDimensions.paddingDefault),
       decoration: BoxDecoration(
         color: _getBackgroundColor(displayError.severity),
-        borderRadius: BorderRadius.circular(AppDimensions.RADIUS_DEFAULT),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusDefault),
         border: Border.all(
           color: _getBorderColor(displayError.severity),
-          width: AppDimensions.BORDER_DEFAULT,
+          width: AppDimensions.borderDefault,
         ),
       ),
       child: Column(
@@ -82,17 +84,17 @@ class ErrorDisplayWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildHeader(displayError),
-          const SizedBox(height: AppDimensions.SPACING_DEFAULT),
+          const SizedBox(height: AppDimensions.spacingDefault),
           _buildMessage(displayError),
           if (showRecoveryGuidance && displayError.recoverySteps != null) ...[
-            const SizedBox(height: AppDimensions.SPACING_LARGE),
+            const SizedBox(height: AppDimensions.spacingLarge),
             _buildRecoveryGuidance(displayError.recoverySteps!),
           ],
           if (showTechnicalDetails) ...[
-            const SizedBox(height: AppDimensions.SPACING_LARGE),
+            const SizedBox(height: AppDimensions.spacingLarge),
             _buildTechnicalDetails(),
           ],
-          const SizedBox(height: AppDimensions.SPACING_LARGE),
+          const SizedBox(height: AppDimensions.spacingLarge),
           _buildActions(displayError),
         ],
       ),
@@ -105,9 +107,9 @@ class ErrorDisplayWidget extends StatelessWidget {
       children: [
         Text(
           displayError.icon,
-          style: const TextStyle(fontSize: AppDimensions.ICON_LARGE),
+          style: const TextStyle(fontSize: AppDimensions.iconLarge),
         ),
-        const SizedBox(width: AppDimensions.SPACING_SMALL),
+        const SizedBox(width: AppDimensions.spacingSmall),
         Expanded(
           child: Text(
             displayError.title,
@@ -123,13 +125,13 @@ class ErrorDisplayWidget extends StatelessWidget {
             onPressed: onDismiss,
             icon: const Icon(
               Icons.close,
-              size: AppDimensions.ICON_DEFAULT,
+              size: AppDimensions.iconDefault,
               color: AppColors.TEXT_SECONDARY_LIGHT,
             ),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(
-              minWidth: AppDimensions.TOUCH_TARGET_SMALL,
-              minHeight: AppDimensions.TOUCH_TARGET_SMALL,
+              minWidth: AppDimensions.touchTargetSmall,
+              minHeight: AppDimensions.touchTargetSmall,
             ),
           ),
       ],
@@ -161,7 +163,7 @@ class ErrorDisplayWidget extends StatelessWidget {
             color: AppColors.TEXT_PRIMARY_LIGHT,
           ),
         ),
-        const SizedBox(height: AppDimensions.SPACING_SMALL),
+        const SizedBox(height: AppDimensions.spacingSmall),
         ...recoverySteps.asMap().entries.map((entry) {
           final index = entry.key;
           final step = entry.value;
@@ -188,7 +190,7 @@ class ErrorDisplayWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: AppDimensions.SPACING_SMALL),
+                const SizedBox(width: AppDimensions.spacingSmall),
                 Expanded(
                   child: Text(
                     step,
@@ -223,10 +225,10 @@ class ErrorDisplayWidget extends StatelessWidget {
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(AppDimensions.PADDING_SMALL),
+          padding: const EdgeInsets.all(AppDimensions.paddingSmall),
           decoration: BoxDecoration(
             color: AppColors.GREY_100,
-            borderRadius: BorderRadius.circular(AppDimensions.RADIUS_SMALL),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
           ),
           child: Text(
             summary.technicalDetails,
@@ -257,15 +259,15 @@ class ErrorDisplayWidget extends StatelessWidget {
             ),
           ),
         if (displayError.secondaryAction != null && onSecondaryAction != null)
-          const SizedBox(width: AppDimensions.SPACING_SMALL),
+          const SizedBox(width: AppDimensions.spacingSmall),
         ElevatedButton(
           onPressed: onPrimaryAction,
           style: ElevatedButton.styleFrom(
             backgroundColor: _getPrimaryActionColor(displayError.severity),
             foregroundColor: AppColors.WHITE,
             padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.PADDING_LARGE,
-              vertical: AppDimensions.PADDING_SMALL,
+              horizontal: AppDimensions.paddingLarge,
+              vertical: AppDimensions.paddingSmall,
             ),
           ),
           child: Text(
@@ -350,10 +352,10 @@ class CompactErrorDisplayWidget extends StatelessWidget {
     );
 
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.PADDING_SMALL),
+      padding: const EdgeInsets.all(AppDimensions.paddingSmall),
       decoration: BoxDecoration(
         color: AppColors.ERROR_LIGHT,
-        borderRadius: BorderRadius.circular(AppDimensions.RADIUS_SMALL),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
         border: Border.all(color: AppColors.ERROR),
       ),
       child: Row(
@@ -361,9 +363,9 @@ class CompactErrorDisplayWidget extends StatelessWidget {
           const Icon(
             Icons.error_outline,
             color: AppColors.ERROR,
-            size: AppDimensions.ICON_DEFAULT,
+            size: AppDimensions.iconDefault,
           ),
-          const SizedBox(width: AppDimensions.SPACING_SMALL),
+          const SizedBox(width: AppDimensions.spacingSmall),
           Expanded(
             child: Text(
               message,
@@ -379,11 +381,11 @@ class CompactErrorDisplayWidget extends StatelessWidget {
               icon: const Icon(
                 Icons.refresh,
                 color: AppColors.ERROR,
-                size: AppDimensions.ICON_SMALL,
+                size: AppDimensions.iconSmall,
               ),
               constraints: const BoxConstraints(
-                minWidth: AppDimensions.TOUCH_TARGET_SMALL,
-                minHeight: AppDimensions.TOUCH_TARGET_SMALL,
+                minWidth: AppDimensions.touchTargetSmall,
+                minHeight: AppDimensions.touchTargetSmall,
               ),
             ),
           if (onDismiss != null)
@@ -392,11 +394,11 @@ class CompactErrorDisplayWidget extends StatelessWidget {
               icon: const Icon(
                 Icons.close,
                 color: AppColors.ERROR,
-                size: AppDimensions.ICON_SMALL,
+                size: AppDimensions.iconSmall,
               ),
               constraints: const BoxConstraints(
-                minWidth: AppDimensions.TOUCH_TARGET_SMALL,
-                minHeight: AppDimensions.TOUCH_TARGET_SMALL,
+                minWidth: AppDimensions.touchTargetSmall,
+                minHeight: AppDimensions.touchTargetSmall,
               ),
             ),
         ],

@@ -15,24 +15,24 @@ class AppConstants {
   AppConstants._();
 
   /// **Application Information**
-  static const String APP_NAME = 'Flutter Chat App';
-  static const String APP_VERSION = '1.0.0';
-  static const String APP_BUILD_NUMBER = '1';
-  static const String APP_PACKAGE_NAME = 'com.enterprise.flutter_chat_app';
+  static const String appName = 'Flutter Chat App';
+  static const String appVersion = '1.0.0';
+  static const String appBuildNumber = '1';
+  static const String appPackageName = 'com.enterprise.flutter_chat_app';
 
   /// **API Configuration**
-  static const String API_BASE_URL = 'https://api.enterprise-chat.com';
-  static const String API_VERSION = 'v1';
-  static const int API_TIMEOUT_SECONDS = 30;
-  static const int API_RETRY_ATTEMPTS = 3;
-  static const int API_RETRY_DELAY_MS = 1000;
+  static const String apiBaseUrl = 'https://api.enterprise-chat.com';
+  static const String apiVersion = 'v1';
+  static const int apiTimeoutSeconds = 30;
+  static const int apiRetryAttempts = 3;
+  static const int apiRetryDelayMs = 1000;
 
   /// **WebSocket Configuration**
-  static const String WEBSOCKET_URL = 'wss://ws.enterprise-chat.com';
-  static const int WEBSOCKET_RECONNECT_ATTEMPTS = 5;
-  static const int WEBSOCKET_RECONNECT_DELAY_MS = 500;
-  static const int WEBSOCKET_PING_INTERVAL_SECONDS = 30;
-  static const int WEBSOCKET_TIMEOUT_SECONDS = 10;
+  static const String websocketUrl = 'wss://ws.enterprise-chat.com';
+  static const int websocketReconnectAttempts = 5;
+  static const int websocketReconnectDelayMs = 500;
+  static const int websocketPingIntervalSeconds = 30;
+  static const int websocketTimeoutSeconds = 10;
 
   /// **UI Dimensions (Legacy - Maintained for backward compatibility)**
   // Kích thước và khoảng cách
@@ -160,4 +160,20 @@ class AppConstants {
   static const String kEventGroupDeleted = 'group_deleted';
   static const String kEventGroupUserAdded = 'group_user_added';
   static const String kEventGroupUserRemoved = 'group_user_removed';
-} 
+
+  /// **Mock Data URLs (for development/testing)**
+  static const String mockAvatarBaseUrl = 'https://api.dicebear.com/7.x/avataaars/svg';
+  static const String mockImageBaseUrl = 'https://picsum.photos';
+  static const List<String> mockAvatarUrls = [
+    '$mockAvatarBaseUrl?seed=avatar1',
+    '$mockAvatarBaseUrl?seed=avatar2',
+    '$mockAvatarBaseUrl?seed=avatar3',
+  ];
+  static const List<String> mockImageUrls = [
+    '$mockImageBaseUrl/300/200?random=1',
+    '$mockImageBaseUrl/300/200?random=2',
+  ];
+  static const List<String> mockVideoThumbnailUrls = [
+    '$mockImageBaseUrl/300/200?random=video1',
+  ];
+}

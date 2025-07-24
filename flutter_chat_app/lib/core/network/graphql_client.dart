@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -53,7 +54,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     ValueNotifier<GraphQLClient>? clientNotifier,
   }) async {
     final httpLink = HttpLink(
-      dotenv.env['GRAPHQL_API_URL'] ?? 'http://localhost:3000/graphql',
+      dotenv.env['GRAPHQL_API_URL'] ?? '${AppConstants.apiBaseUrl}/graphql',
     );
 
     final authLink = AuthLink(

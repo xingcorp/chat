@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// Create group page
 class CreateGroupPage extends StatefulWidget {
@@ -68,8 +69,8 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   void _createGroup() {
     if (_groupNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng nhập tên nhóm'),
+        SnackBar(
+          content: Text(context.l10n.pleaseEnterGroupName),
         ),
       );
       return;
@@ -77,8 +78,8 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     
     if (_selectedContacts.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng chọn ít nhất một thành viên'),
+        SnackBar(
+          content: Text(context.l10n.pleaseSelectMembers),
         ),
       );
       return;
@@ -92,11 +93,11 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tạo nhóm mới'),
+        title: Text(context.l10n.createNewGroup),
         actions: [
           TextButton(
             onPressed: _selectedContacts.isNotEmpty ? _createGroup : null,
-            child: const Text('Tạo'),
+            child: Text(context.l10n.create),
           ),
         ],
       ),

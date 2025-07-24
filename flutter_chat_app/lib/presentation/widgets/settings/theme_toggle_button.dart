@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:flutter_chat_app/core/localization/app_strings.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
 
@@ -95,11 +96,11 @@ class ThemeToggleButton extends StatelessWidget {
   String _getTooltip(BuildContext context, ThemeMode themeMode) {
     switch (themeMode) {
       case ThemeMode.light:
-        return 'Switch to Dark Theme';
+        return 'Chuyển sang chế độ tối';
       case ThemeMode.dark:
-        return 'Switch to Light Theme';
+        return 'Chuyển sang chế độ sáng';
       case ThemeMode.system:
-        return 'Switch Theme';
+        return 'Chuyển chế độ';
     }
   }
   
@@ -107,11 +108,11 @@ class ThemeToggleButton extends StatelessWidget {
   String _getSubtitle(BuildContext context, ThemeMode themeMode) {
     switch (themeMode) {
       case ThemeMode.light:
-        return 'Light';
+        return 'Sáng';
       case ThemeMode.dark:
-        return 'Dark';
+        return 'Tối';
       case ThemeMode.system:
-        return 'System';
+        return 'Hệ thống';
     }
   }
 }
@@ -134,24 +135,24 @@ class ThemeSelectorDialog extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _ThemeOption(
-                title: 'Light',
-                subtitle: 'Always use light theme',
+                title: 'Sáng',
+                subtitle: 'Luôn sử dụng chế độ sáng',
                 icon: Icons.light_mode,
                 themeMode: ThemeMode.light,
                 isSelected: state.themeMode == ThemeMode.light,
                 onTap: () => _selectTheme(context, themeCubit, ThemeMode.light),
               ),
               _ThemeOption(
-                title: 'Dark',
-                subtitle: 'Always use dark theme',
+                title: 'Tối',
+                subtitle: 'Luôn sử dụng chế độ tối',
                 icon: Icons.dark_mode,
                 themeMode: ThemeMode.dark,
                 isSelected: state.themeMode == ThemeMode.dark,
                 onTap: () => _selectTheme(context, themeCubit, ThemeMode.dark),
               ),
               _ThemeOption(
-                title: 'System',
-                subtitle: 'Follow system setting',
+                title: 'Hệ thống',
+                subtitle: 'Theo cài đặt hệ thống',
                 icon: Icons.brightness_auto,
                 themeMode: ThemeMode.system,
                 isSelected: state.themeMode == ThemeMode.system,

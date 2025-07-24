@@ -395,5 +395,25 @@
   "animations": "Animations",
   "@animations": {
     "description": "Animations setting"
+  },
+
+  "pleaseEnterGroupName": "Please enter group name",
+  "@pleaseEnterGroupName": {
+    "description": "Validation message for empty group name"
+  },
+
+  "pleaseSelectMembers": "Please select at least one member",
+  "@pleaseSelectMembers": {
+    "description": "Validation message for no selected members"
+  },
+
+  "createNewGroup": "Create New Group",
+  "@createNewGroup": {
+    "description": "Create group page title"
+  },
+
+  "create": "Create",
+  "@create": {
+    "description": "Create button text"
   }
 }

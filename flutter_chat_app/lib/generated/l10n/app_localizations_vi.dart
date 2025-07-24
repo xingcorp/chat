@@ -255,4 +255,16 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get animations => 'Hoạt ảnh';
+
+  @override
+  String get pleaseEnterGroupName => 'Vui lòng nhập tên nhóm';
+
+  @override
+  String get pleaseSelectMembers => 'Vui lòng chọn ít nhất một thành viên';
+
+  @override
+  String get createNewGroup => 'Tạo nhóm mới';
+
+  @override
+  String get create => 'Tạo';
 }

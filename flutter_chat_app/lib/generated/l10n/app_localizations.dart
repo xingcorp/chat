@@ -556,6 +556,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Animations'**
   String get animations;
+
+  /// Validation message for empty group name
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter group name'**
+  String get pleaseEnterGroupName;
+
+  /// Validation message for no selected members
+  ///
+  /// In en, this message translates to:
+  /// **'Please select at least one member'**
+  String get pleaseSelectMembers;
+
+  /// Create group page title
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Group'**
+  String get createNewGroup;
+
+  /// Create button text
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

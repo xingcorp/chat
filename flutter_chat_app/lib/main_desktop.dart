@@ -224,7 +224,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.all(AppDimensions.PADDING_DEFAULT),
+                        padding: const EdgeInsets.all(AppDimensions.paddingDefault),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -271,7 +271,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                       
                       // Status bar
                       Container(
-                        padding: const EdgeInsets.all(AppDimensions.PADDING_SMALL),
+                        padding: const EdgeInsets.all(AppDimensions.paddingSmall),
                         color: Colors.grey[200],
                         child: Row(
                           children: [
@@ -330,10 +330,10 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                                           alignment: isSentByMe ? Alignment.centerRight : Alignment.centerLeft,
                                           child: Container(
                                             margin: const EdgeInsets.symmetric(
-                                              horizontal: AppDimensions.MARGIN_DEFAULT,
-                                              vertical: AppDimensions.MARGIN_TINY,
+                                              horizontal: AppDimensions.marginDefault,
+                                              vertical: AppDimensions.marginTiny,
                                             ),
-                                            padding: const EdgeInsets.all(AppDimensions.PADDING_MEDIUM),
+                                            padding: const EdgeInsets.all(AppDimensions.paddingMedium),
                                             decoration: BoxDecoration(
                                               color: isSentByMe
                                                   ? Theme.of(context).colorScheme.primary
@@ -369,7 +369,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                             
                             // Message input
                             Padding(
-                              padding: const EdgeInsets.all(AppDimensions.PADDING_SMALL),
+                              padding: const EdgeInsets.all(AppDimensions.paddingSmall),
                               child: Row(
                                 children: [
                                   IconButton(
@@ -386,8 +386,8 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                                           borderRadius: BorderRadius.all(Radius.circular(24.0)),
                                         ),
                                         contentPadding: EdgeInsets.symmetric(
-                                          horizontal: AppDimensions.PADDING_DEFAULT,
-                                          vertical: AppDimensions.PADDING_SMALL,
+                                          horizontal: AppDimensions.paddingDefault,
+                                          vertical: AppDimensions.paddingSmall,
                                         ),
                                       ),
                                     ),
@@ -422,7 +422,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.all(AppDimensions.PADDING_DEFAULT),
+                          padding: const EdgeInsets.all(AppDimensions.paddingDefault),
                           child: Text(
                             'Users',
                             style: TextStyle(
