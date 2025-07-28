@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// Register page
 class RegisterPage extends StatelessWidget {

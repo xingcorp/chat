@@ -267,4 +267,75 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get create => 'Create';
+
+  @override
+  String get dontHaveAccount => 'Don\'t have an account?';
+
+  @override
+  String chatTitle(String chatId) {
+    return 'Chat $chatId';
+  }
+
+  @override
+  String get comingSoon => 'Coming Soon';
+
+  @override
+  String get viewInfo => 'View Info';
+
+  @override
+  String get groupName => 'Group Name';
+
+  @override
+  String get members => 'Members';
+
+  @override
+  String get addMembers => 'Add Members';
+
+  @override
+  String get search => 'Search';
+
+  @override
+  String get muteNotifications => 'Mute Notifications';
+
+  @override
+  String memberCount(int count) {
+    return '$count members';
+  }
+
+  @override
+  String get typing => 'Typing...';
+
+  @override
+  String get seen => 'Seen';
+
+  @override
+  String get sent => 'Sent';
+
+  @override
+  String get sending => 'Sending...';
+
+  @override
+  String get cannotLoadMessages => 'Cannot load messages';
+
+  @override
+  String get justNow => 'Just now';
+
+  @override
+  String minutesAgo(int minutes) {
+    return '$minutes minutes ago';
+  }
+
+  @override
+  String hoursAgo(int hours) {
+    return '$hours hours ago';
+  }
+
+  @override
+  String get reply => 'Reply';
+
+  @override
+  String get forward => 'Forward';
+
+  @override
+  String get confirmDelete => 'Are you sure you want to delete this message?';
 }

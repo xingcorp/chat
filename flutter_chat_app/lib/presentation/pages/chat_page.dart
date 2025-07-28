@@ -4,6 +4,7 @@
 /// This is a basic stub for testing purposes.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// **CHAT PAGE**
 /// 
@@ -20,10 +21,10 @@ class ChatPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chat $chatId'),
+        title: Text(context.l10n.chatTitle(chatId)),
       ),
-      body: const Center(
-        child: Text('Chat Page - Coming Soon'),
+      body: Center(
+        child: Text('Chat Page - ${context.l10n.comingSoon}'),
       ),
     );
   }

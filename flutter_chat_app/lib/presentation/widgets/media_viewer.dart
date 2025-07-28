@@ -244,7 +244,7 @@ class _MediaViewerState extends State<MediaViewer> {
           return Center(
             child: Text(
               'Lỗi phát video: $errorMessage',
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: Colors.white),
             ),
           );
         },
@@ -299,7 +299,7 @@ class _MediaViewerState extends State<MediaViewer> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline,
             color: Colors.red,
             size: 48,

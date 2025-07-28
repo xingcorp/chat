@@ -26,6 +26,7 @@ import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/cache/cache_stats.dart';
 import 'package:flutter_chat_app/core/cache/preload_manager.dart';
 import 'package:flutter_chat_app/core/cache/background_sync_worker.dart';
+import 'package:flutter_chat_app/core/localization/l10n_helper.dart' as l10n_helper;
 // Removed legacy service_locator.dart - now using EnterpriseDI
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_manager.dart';
@@ -271,6 +272,9 @@ class MyApp extends StatelessWidget {
       ],
       child: BlocBuilder<LocaleCubit, LocaleState>(
         builder: (context, localeState) {
+          // Initialize L10nHelper with current locale
+          l10n_helper.L10nHelper.initialize(localeState.locale ?? const Locale('en'));
+
           return MaterialApp(
             title: 'Flutter Chat App',
             debugShowCheckedModeBanner: false,

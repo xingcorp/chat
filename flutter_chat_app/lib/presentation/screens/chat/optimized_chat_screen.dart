@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_app/core/localization/app_strings.dart';
 import 'package:flutter_chat_app/core/services/media_service.dart';
 import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
@@ -273,7 +273,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
         children: [
           ListTile(
             leading: const Icon(Icons.reply),
-            title: Text(AppStrings.replyMessage),
+            title: Text(context.l10n.reply),
             onTap: () {
               Navigator.pop(context);
               setState(() {
@@ -283,7 +283,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           ),
           ListTile(
             leading: const Icon(Icons.forward),
-            title: Text(AppStrings.forwardMessage),
+            title: Text(context.l10n.forward),
             onTap: () {
               Navigator.pop(context);
               // Implement forward logic
@@ -291,8 +291,8 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           ),
           if (message.isFromCurrentUser)
             ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: Text(AppStrings.deleteMessage, style: const TextStyle(color: Colors.red)),
+              leading: Icon(Icons.delete, color: Colors.red),
+              title: Text(context.l10n.delete, style: TextStyle(color: Colors.red)),
               onTap: () {
                 Navigator.pop(context);
                 _confirmDeleteMessage(message);
@@ -307,12 +307,12 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppStrings.deleteMessage),
-        content: Text(AppStrings.confirmDelete),
+        title: Text(context.l10n.delete),
+        content: Text(context.l10n.confirmDelete),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(AppStrings.cancel),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -323,7 +323,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                 SnackBar(content: Text('Chức năng xóa tin nhắn chưa được triển khai')),
               );
             },
-            child: Text(AppStrings.delete, style: const TextStyle(color: Colors.red)),
+            child: Text(context.l10n.delete, style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -428,7 +428,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(chat.name ?? AppStrings.chats, style: const TextStyle(fontSize: 16)),
+                  Text(chat.name ?? context.l10n.chats, style: const TextStyle(fontSize: 16)),
                   // Note: isTyping property not available in current Chat entity
                   // if (chat.isTyping)
                   //   const Text(
@@ -439,7 +439,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
               );
             }
 
-            return Text(AppStrings.chats);
+            return Text(context.l10n.chats);
           },
         ),
         actions: [
@@ -546,7 +546,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _loadInitialMessages,
-                          child: Text(AppStrings.retry),
+                          child: Text(context.l10n.retry),
                         ),
                       ],
                     ),
@@ -628,7 +628,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                     _buildAttachmentMenu(),
                   
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                    padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                     child: Row(
                       children: [
                         IconButton(
@@ -652,11 +652,11 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                               children: [
                                 Expanded(
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                    padding: EdgeInsets.symmetric(horizontal: 16.0),
                                     child: TextField(
                                       controller: _messageController,
                                       decoration: InputDecoration(
-                                        hintText: AppStrings.typeMessage,
+                                        hintText: context.l10n.typeMessage,
                                         border: InputBorder.none,
                                       ),
                                       maxLines: 5,

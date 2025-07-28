@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// Login page
 class LoginPage extends StatelessWidget {
@@ -9,7 +10,7 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Đăng nhập'),
+        title: Text(context.l10n.login),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -24,8 +25,8 @@ class LoginPage extends StatelessWidget {
               color: Colors.blue,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Flutter Chat App',
+            Text(
+              context.l10n.appTitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 24,
@@ -62,8 +63,8 @@ class LoginPage extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text(
-                'ĐĂNG NHẬP',
+              child: Text(
+                context.l10n.login.toUpperCase(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -75,17 +76,17 @@ class LoginPage extends StatelessWidget {
             // Forgot password
             TextButton(
               onPressed: () {},
-              child: const Text('Quên mật khẩu?'),
+              child: Text(context.l10n.forgotPassword),
             ),
             
             // Register link
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('Chưa có tài khoản?'),
+                Text(context.l10n.dontHaveAccount),
                 TextButton(
                   onPressed: () {},
-                  child: const Text('Đăng ký'),
+                  child: Text(context.l10n.register),
                 ),
               ],
             ),

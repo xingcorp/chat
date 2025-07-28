@@ -157,7 +157,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
             // Sender info for group chats
             if (widget.showSenderInfo && !isCurrentUser)
               Padding(
-                padding: const EdgeInsets.only(left: 12.0, bottom: 4.0),
+                padding: EdgeInsets.only(left: 12.0, bottom: 4.0),
                 child: RepaintBoundary(
                   child: Text(
                     widget.message.senderName,
@@ -261,7 +261,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
             // Message content
             if (widget.message.content.isNotEmpty || widget.message.attachments.isEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 12.0,
                   vertical: 8.0,
                 ),

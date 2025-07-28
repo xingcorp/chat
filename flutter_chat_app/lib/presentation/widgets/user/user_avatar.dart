@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
-import 'package:flutter_chat_app/core/theme/app_colors.dart';
 
 /// Enum trạng thái người dùng
 enum UserStatus {
@@ -50,14 +48,14 @@ class UserAvatar extends BaseStatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: size.r,
-        height: size.r,
+        width: size,
+        height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: _getBackgroundColor(context),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadow.withOpacity(0.2),
+              color: Colors.black.withOpacity(0.2),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -107,8 +105,8 @@ class UserAvatar extends BaseStatelessWidget {
       return CachedNetworkImage(
         imageUrl: imageUrl!,
         fit: BoxFit.cover,
-        width: size.r,
-        height: size.r,
+        width: size,
+        height: size,
         placeholder: (context, url) => _buildInitials(),
         errorWidget: (context, url, error) => _buildInitials(),
         fadeInDuration: const Duration(milliseconds: 300),
@@ -163,7 +161,7 @@ class UserAvatar extends BaseStatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(
             color: Colors.white,
-            width: 2.r,
+            width: 2,
           ),
         ),
         child: status == UserStatus.typing
@@ -177,17 +175,17 @@ class UserAvatar extends BaseStatelessWidget {
   Color _getStatusColor() {
     switch (status) {
       case UserStatus.online:
-        return AppColors.success; // Use success color for online
+        return Colors.green; // Use green color for online
       case UserStatus.offline:
-        return AppColors.textSecondary; // Use secondary text color for offline
+        return Colors.grey; // Use grey color for offline
       case UserStatus.away:
         return Colors.amber;
       case UserStatus.busy:
         return Colors.red;
       case UserStatus.typing:
-        return AppColors.primary; // Use primary color for typing
+        return Colors.blue; // Use blue color for typing
       default:
-        return AppColors.textSecondary; // Use secondary text color for default
+        return Colors.grey; // Use grey color for default
     }
   }
   

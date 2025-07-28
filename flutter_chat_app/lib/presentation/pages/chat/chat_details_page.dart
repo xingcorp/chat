@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// Chat details page
 class ChatDetailsPage extends StatefulWidget {
@@ -143,7 +144,7 @@ class _ChatDetailsPageState extends State<ChatDetailsPage> {
                   Text(
                     _isGroup 
                         ? '5 thành viên' 
-                        : 'Trực tuyến',
+                        : context.l10n.online,
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.normal,
@@ -168,17 +169,17 @@ class _ChatDetailsPageState extends State<ChatDetailsPage> {
               // Handle menu selection
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'viewProfile',
-                child: Text('Xem thông tin'),
+                child: Text(context.l10n.viewInfo),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'search',
-                child: Text('Tìm kiếm'),
+                child: Text(context.l10n.search),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'mute',
-                child: Text('Tắt thông báo'),
+                child: Text(context.l10n.muteNotifications),
               ),
             ],
           ),
@@ -299,8 +300,8 @@ class _ChatDetailsPageState extends State<ChatDetailsPage> {
                 Expanded(
                   child: TextField(
                     controller: _messageController,
-                    decoration: const InputDecoration(
-                      hintText: 'Nhập tin nhắn...',
+                    decoration: InputDecoration(
+                      hintText: context.l10n.typeMessage,
                       border: InputBorder.none,
                     ),
                     textCapitalization: TextCapitalization.sentences,

@@ -263,7 +263,7 @@ abstract class AppLocalizations {
   /// **'Connecting...'**
   String get connecting;
 
-  /// Reconnecting status
+  /// Reconnection status
   ///
   /// In en, this message translates to:
   /// **'Reconnecting...'**
@@ -383,7 +383,7 @@ abstract class AppLocalizations {
   /// **'Users'**
   String get users;
 
-  /// Chats title
+  /// Chats section title
   ///
   /// In en, this message translates to:
   /// **'Chats'**
@@ -580,6 +580,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create'**
   String get create;
+
+  /// Text asking if user doesn't have account
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account?'**
+  String get dontHaveAccount;
+
+  /// Chat page title with ID
+  ///
+  /// In en, this message translates to:
+  /// **'Chat {chatId}'**
+  String chatTitle(String chatId);
+
+  /// Coming soon placeholder text
+  ///
+  /// In en, this message translates to:
+  /// **'Coming Soon'**
+  String get comingSoon;
+
+  /// View information button text
+  ///
+  /// In en, this message translates to:
+  /// **'View Info'**
+  String get viewInfo;
+
+  /// Group name label
+  ///
+  /// In en, this message translates to:
+  /// **'Group Name'**
+  String get groupName;
+
+  /// Members label
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get members;
+
+  /// Add members button text
+  ///
+  /// In en, this message translates to:
+  /// **'Add Members'**
+  String get addMembers;
+
+  /// Search button text
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get search;
+
+  /// Mute notifications option
+  ///
+  /// In en, this message translates to:
+  /// **'Mute Notifications'**
+  String get muteNotifications;
+
+  /// Number of members in group
+  ///
+  /// In en, this message translates to:
+  /// **'{count} members'**
+  String memberCount(int count);
+
+  /// Typing indicator text
+  ///
+  /// In en, this message translates to:
+  /// **'Typing...'**
+  String get typing;
+
+  /// Message seen status
+  ///
+  /// In en, this message translates to:
+  /// **'Seen'**
+  String get seen;
+
+  /// Message sent status
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get sent;
+
+  /// Message sending status
+  ///
+  /// In en, this message translates to:
+  /// **'Sending...'**
+  String get sending;
+
+  /// Error when messages fail to load
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot load messages'**
+  String get cannotLoadMessages;
+
+  /// Time indicator for recent messages
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get justNow;
+
+  /// Time indicator for minutes
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} minutes ago'**
+  String minutesAgo(int minutes);
+
+  /// Time indicator for hours
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} hours ago'**
+  String hoursAgo(int hours);
+
+  /// Reply to message action
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get reply;
+
+  /// Forward message action
+  ///
+  /// In en, this message translates to:
+  /// **'Forward'**
+  String get forward;
+
+  /// Confirmation dialog for deleting message
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this message?'**
+  String get confirmDelete;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

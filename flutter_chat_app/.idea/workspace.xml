@@ -7,25 +7,50 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix 3">
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix 4">
       <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/cache/preload_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/cache/preload_manager.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/constants/app_colors.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/constants/app_constants.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/constants/app_constants.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/core/constants/app_dimensions.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/constants/app_dimensions.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/graphql_client.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/graphql_client.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/extensions/extensions.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/extensions/extensions.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/tools/code_analysis_helper.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/tools/code_analysis_helper.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/core/utils/reusable_components.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/utils/reusable_components.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/enterprise_main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/enterprise_main.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/l10n/app_en.arb" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/app_en.arb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/l10n/app_vi.arb" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/app_vi.arb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/main_desktop.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_desktop.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main_mobile.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_mobile.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main_web.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_web.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/pages/auth/forgot_password_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/pages/auth/forgot_password_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/pages/auth/login_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/pages/auth/login_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/pages/auth/register_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/pages/auth/register_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/pages/chat/chat_details_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/pages/chat/chat_details_page.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/presentation/pages/chat/create_group_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/pages/chat/create_group_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/pages/chat_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/pages/chat_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/pages/error_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/pages/error_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/pages/splash_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/pages/splash_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/screens/chat/chat_header.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/screens/chat/chat_header.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/presentation/screens/chat/optimized_chat_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/screens/chat/optimized_chat_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat/chat_bubble.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat/chat_bubble.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat/chat_input.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat/chat_input.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat/chat_list_item.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat/chat_list_item.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat/message_item.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat/message_item.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat/optimized_message_list.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat/optimized_message_list.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat/typing_indicator.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat/typing_indicator.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/common/error_display_widget.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/common/error_display_widget.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/connection/connection_status_widget.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/connection/connection_status_widget.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/connection_status_widget.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/connection_status_widget.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/date_separator.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/date_separator.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/error/error_recovery_widget.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/error/error_recovery_widget.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/media_viewer.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/media_viewer.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/offline/offline_mode_indicator.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/offline/offline_mode_indicator.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/settings/theme_toggle_button.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/settings/theme_toggle_button.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/user/user_avatar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/user/user_avatar.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/proto/chat_message_proto_enums.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/proto/chat_message_proto_enums.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/test_isar_generation.dart" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -206,14 +231,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00008" summary="refactor: enhance GraphQL client and subscription handling; improve message processing and service initialization">
-      <option name="closed" value="true" />
-      <created>1743501947521</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1743501947521</updated>
     </task>
     <task id="LOCAL-00009" summary="refactor: enhance GraphQL client and subscription handling; improve message processing and service initialization">
       <option name="closed" value="true" />
@@ -599,7 +616,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753342162107</updated>
     </task>
-    <option name="localTasksCounter" value="57" />
+    <task id="LOCAL-00057" summary="fix 4">
+      <option name="closed" value="true" />
+      <created>1753348886755</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1753348886755</updated>
+    </task>
+    <option name="localTasksCounter" value="58" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -712,7 +737,6 @@
     <MESSAGE value="fix bug 9" />
     <MESSAGE value="fix bug 10" />
     <MESSAGE value="done bug" />
-    <MESSAGE value="fix 4" />
     <MESSAGE value="fix 5" />
     <MESSAGE value="fix 6" />
     <MESSAGE value="fix sua nhieu" />
@@ -721,7 +745,8 @@
     <MESSAGE value="fix 1" />
     <MESSAGE value="fix 2" />
     <MESSAGE value="fix 3" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix 3" />
+    <MESSAGE value="fix 4" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix 4" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -270,7 +270,7 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
             controller: _scrollController,
             index: messageIndex,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
               child: VisibilityDetector(
                 key: ValueKey('visibility_${message.id}'),
                 onVisibilityChanged: (visibilityInfo) {

@@ -247,7 +247,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                   ),
                   title: Text(contact['name']),
                   subtitle: Text(
-                    contact['isOnline'] ? 'Trực tuyến' : 'Ngoại tuyến',
+                    contact['isOnline'] ? context.l10n.online : context.l10n.offline,
                     style: TextStyle(
                       color: contact['isOnline'] ? Colors.green : Colors.grey,
                     ),

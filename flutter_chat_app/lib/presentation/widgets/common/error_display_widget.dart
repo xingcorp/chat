@@ -9,7 +9,6 @@
 /// **Architecture:** Clean Architecture + Material Design + Localization
 
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/core/constants/app_colors.dart';
 import 'package:flutter_chat_app/core/constants/app_dimensions.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/localization/error_localization_service.dart';
@@ -113,20 +112,20 @@ class ErrorDisplayWidget extends StatelessWidget {
         Expanded(
           child: Text(
             displayError.title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.TEXT_PRIMARY_LIGHT,
+              color: AppColors.textPrimary,
             ),
           ),
         ),
         if (onDismiss != null)
           IconButton(
             onPressed: onDismiss,
-            icon: const Icon(
+            icon: Icon(
               Icons.close,
               size: AppDimensions.iconDefault,
-              color: AppColors.TEXT_SECONDARY_LIGHT,
+              color: Colors.grey,
             ),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(
@@ -142,9 +141,9 @@ class ErrorDisplayWidget extends StatelessWidget {
   Widget _buildMessage(DisplayError displayError) {
     return Text(
       displayError.message,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
-        color: AppColors.TEXT_PRIMARY_LIGHT,
+        color: AppColors.textPrimary,
         height: 1.4,
       ),
     );
@@ -155,12 +154,12 @@ class ErrorDisplayWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Hướng dẫn khắc phục:',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.TEXT_PRIMARY_LIGHT,
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: AppDimensions.spacingSmall),
@@ -168,22 +167,22 @@ class ErrorDisplayWidget extends StatelessWidget {
           final index = entry.key;
           final step = entry.value;
           return Padding(
-            padding: const EdgeInsets.only(bottom: AppDimensions.SPACING_TINY),
+            padding: EdgeInsets.only(bottom: 4.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   width: 20,
                   height: 20,
-                  decoration: const BoxDecoration(
-                    color: AppColors.PRIMARY_BLUE,
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
                     shape: BoxShape.circle,
                   ),
                   child: Center(
                     child: Text(
                       '${index + 1}',
-                      style: const TextStyle(
-                        color: AppColors.WHITE,
+                      style: TextStyle(
+                        color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -194,9 +193,9 @@ class ErrorDisplayWidget extends StatelessWidget {
                 Expanded(
                   child: Text(
                     step,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.TEXT_SECONDARY_LIGHT,
+                      color: Colors.grey.shade600,
                       height: 1.3,
                     ),
                   ),
@@ -214,12 +213,12 @@ class ErrorDisplayWidget extends StatelessWidget {
     final summary = ErrorLocalizationService.instance.getErrorSummary(failure);
     
     return ExpansionTile(
-      title: const Text(
+      title: Text(
         'Chi tiết kỹ thuật',
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: AppColors.TEXT_SECONDARY_LIGHT,
+          color: Colors.grey.shade600,
         ),
       ),
       children: [
@@ -227,15 +226,15 @@ class ErrorDisplayWidget extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(AppDimensions.paddingSmall),
           decoration: BoxDecoration(
-            color: AppColors.GREY_100,
+            color: Colors.grey.shade100,
             borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
           ),
           child: Text(
             summary.technicalDetails,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontFamily: 'monospace',
-              color: AppColors.TEXT_SECONDARY_LIGHT,
+              color: Colors.grey.shade600,
             ),
           ),
         ),
@@ -253,8 +252,8 @@ class ErrorDisplayWidget extends StatelessWidget {
             onPressed: onSecondaryAction,
             child: Text(
               secondaryActionText ?? displayError.secondaryAction!,
-              style: const TextStyle(
-                color: AppColors.TEXT_SECONDARY_LIGHT,
+              style: TextStyle(
+                color: Colors.grey.shade600,
               ),
             ),
           ),
@@ -264,7 +263,7 @@ class ErrorDisplayWidget extends StatelessWidget {
           onPressed: onPrimaryAction,
           style: ElevatedButton.styleFrom(
             backgroundColor: _getPrimaryActionColor(displayError.severity),
-            foregroundColor: AppColors.WHITE,
+            foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(
               horizontal: AppDimensions.paddingLarge,
               vertical: AppDimensions.paddingSmall,
@@ -287,13 +286,13 @@ class ErrorDisplayWidget extends StatelessWidget {
   Color _getBackgroundColor(ErrorSeverity severity) {
     switch (severity) {
       case ErrorSeverity.low:
-        return AppColors.INFO_LIGHT;
+        return Colors.blue.shade100;
       case ErrorSeverity.medium:
-        return AppColors.WARNING_LIGHT;
+        return Colors.orange.shade100;
       case ErrorSeverity.high:
-        return AppColors.ERROR_LIGHT;
+        return Colors.red.shade100;
       case ErrorSeverity.critical:
-        return AppColors.ERROR_LIGHT;
+        return Colors.red.shade100;
     }
   }
 
@@ -301,13 +300,13 @@ class ErrorDisplayWidget extends StatelessWidget {
   Color _getBorderColor(ErrorSeverity severity) {
     switch (severity) {
       case ErrorSeverity.low:
-        return AppColors.INFO;
+        return AppColors.info;
       case ErrorSeverity.medium:
-        return AppColors.WARNING;
+        return AppColors.warning;
       case ErrorSeverity.high:
-        return AppColors.ERROR;
+        return AppColors.error;
       case ErrorSeverity.critical:
-        return AppColors.ERROR_DARK;
+        return Colors.red.shade800;
     }
   }
 
@@ -315,13 +314,13 @@ class ErrorDisplayWidget extends StatelessWidget {
   Color _getPrimaryActionColor(ErrorSeverity severity) {
     switch (severity) {
       case ErrorSeverity.low:
-        return AppColors.INFO;
+        return AppColors.info;
       case ErrorSeverity.medium:
-        return AppColors.WARNING;
+        return AppColors.warning;
       case ErrorSeverity.high:
-        return AppColors.ERROR;
+        return AppColors.error;
       case ErrorSeverity.critical:
-        return AppColors.ERROR_DARK;
+        return Colors.red.shade800;
     }
   }
 }
@@ -354,23 +353,23 @@ class CompactErrorDisplayWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingSmall),
       decoration: BoxDecoration(
-        color: AppColors.ERROR_LIGHT,
+        color: Colors.red.shade100,
         borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-        border: Border.all(color: AppColors.ERROR),
+        border: Border.all(color: AppColors.error),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline,
-            color: AppColors.ERROR,
+            color: AppColors.error,
             size: AppDimensions.iconDefault,
           ),
           const SizedBox(width: AppDimensions.spacingSmall),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: AppColors.ERROR_DARK,
+              style: TextStyle(
+                color: Colors.red.shade800,
                 fontSize: 14,
               ),
             ),
@@ -378,9 +377,9 @@ class CompactErrorDisplayWidget extends StatelessWidget {
           if (onRetry != null && failure.isRecoverable)
             IconButton(
               onPressed: onRetry,
-              icon: const Icon(
+              icon: Icon(
                 Icons.refresh,
-                color: AppColors.ERROR,
+                color: AppColors.error,
                 size: AppDimensions.iconSmall,
               ),
               constraints: const BoxConstraints(
@@ -391,9 +390,9 @@ class CompactErrorDisplayWidget extends StatelessWidget {
           if (onDismiss != null)
             IconButton(
               onPressed: onDismiss,
-              icon: const Icon(
+              icon: Icon(
                 Icons.close,
-                color: AppColors.ERROR,
+                color: AppColors.error,
                 size: AppDimensions.iconSmall,
               ),
               constraints: const BoxConstraints(

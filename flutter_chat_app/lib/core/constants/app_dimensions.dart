@@ -206,11 +206,11 @@ class ResponsiveDimensions {
   /// **Get Responsive Padding**
   static double getResponsivePadding(double screenWidth) {
     if (screenWidth < AppDimensions.breakpointMobile) {
-      return AppDimensions.PADDING_DEFAULT;
+      return AppDimensions.paddingDefault;
     } else if (screenWidth < AppDimensions.breakpointTablet) {
-      return AppDimensions.PADDING_LARGE;
+      return AppDimensions.paddingLarge;
     } else {
-      return AppDimensions.PADDING_EXTRA_LARGE;
+      return AppDimensions.paddingExtraLarge;
     }
   }
 

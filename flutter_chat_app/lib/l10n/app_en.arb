@@ -415,5 +415,144 @@
   "create": "Create",
   "@create": {
     "description": "Create button text"
+  },
+
+  "dontHaveAccount": "Don't have an account?",
+  "@dontHaveAccount": {
+    "description": "Text asking if user doesn't have account"
+  },
+
+  "chatTitle": "Chat {chatId}",
+  "@chatTitle": {
+    "description": "Chat page title with ID",
+    "placeholders": {
+      "chatId": {
+        "type": "String",
+        "example": "123"
+      }
+    }
+  },
+
+  "comingSoon": "Coming Soon",
+  "@comingSoon": {
+    "description": "Coming soon placeholder text"
+  },
+
+  "viewInfo": "View Info",
+  "@viewInfo": {
+    "description": "View information button text"
+  },
+
+  "groupName": "Group Name",
+  "@groupName": {
+    "description": "Group name label"
+  },
+
+  "members": "Members",
+  "@members": {
+    "description": "Members label"
+  },
+
+  "addMembers": "Add Members",
+  "@addMembers": {
+    "description": "Add members button text"
+  },
+
+  "search": "Search",
+  "@search": {
+    "description": "Search button text"
+  },
+
+  "muteNotifications": "Mute Notifications",
+  "@muteNotifications": {
+    "description": "Mute notifications option"
+  },
+
+  "memberCount": "{count} members",
+  "@memberCount": {
+    "description": "Number of members in group",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+
+  "typing": "Typing...",
+  "@typing": {
+    "description": "Typing indicator text"
+  },
+
+  "seen": "Seen",
+  "@seen": {
+    "description": "Message seen status"
+  },
+
+  "sent": "Sent",
+  "@sent": {
+    "description": "Message sent status"
+  },
+
+  "sending": "Sending...",
+  "@sending": {
+    "description": "Message sending status"
+  },
+
+  "cannotLoadMessages": "Cannot load messages",
+  "@cannotLoadMessages": {
+    "description": "Error when messages fail to load"
+  },
+
+  "reconnecting": "Reconnecting...",
+  "@reconnecting": {
+    "description": "Reconnection status"
+  },
+
+  "justNow": "Just now",
+  "@justNow": {
+    "description": "Time indicator for recent messages"
+  },
+
+  "minutesAgo": "{minutes} minutes ago",
+  "@minutesAgo": {
+    "description": "Time indicator for minutes",
+    "placeholders": {
+      "minutes": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+
+  "hoursAgo": "{hours} hours ago",
+  "@hoursAgo": {
+    "description": "Time indicator for hours",
+    "placeholders": {
+      "hours": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+
+  "reply": "Reply",
+  "@reply": {
+    "description": "Reply to message action"
+  },
+
+  "forward": "Forward",
+  "@forward": {
+    "description": "Forward message action"
+  },
+
+  "confirmDelete": "Are you sure you want to delete this message?",
+  "@confirmDelete": {
+    "description": "Confirmation dialog for deleting message"
+  },
+
+  "chats": "Chats",
+  "@chats": {
+    "description": "Chats section title"
   }
 }

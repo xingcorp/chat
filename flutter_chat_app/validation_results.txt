@@ -1,0 +1,51 @@
+🔍 Flutter Chat App - Code Quality Validation
+============================================================
+
+📋 Running validation checks...
+
+1️⃣  Checking for hardcoded values...
+2️⃣  Checking for duplicate code patterns...
+3️⃣  Checking architecture compliance...
+4️⃣  Checking constant usage...
+5️⃣  Checking reusable component usage...
+
+📊 Validation Results:
+============================================================
+
+📋 Hardcoded Values:
+   Errors: 38, Warnings: 198, Info: 7397
+   ℹ️ Potential hardcoded string: 'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '. Consider extracting to constants.
+      📁 lib/generated/l10n/app_localizations.dart:586
+   ℹ️ Potential hardcoded string: 'an issue with the localizations generation tool. Please file an issue '. Consider extracting to constants.
+      📁 lib/generated/l10n/app_localizations.dart:587
+   ℹ️ Potential hardcoded string: 'on GitHub with a reproducible sample app and the gen-l10n configuration '. Consider extracting to constants.
+      📁 lib/generated/l10n/app_localizations.dart:588
+   ℹ️ Potential hardcoded string: 'that was used.'. Consider extracting to constants.
+      📁 lib/generated/l10n/app_localizations.dart:589
+   ℹ️ Potential hardcoded string: 'Ứng dụng Chat Flutter'. Consider extracting to constants.
+      📁 lib/generated/l10n/app_localizations_vi.dart:12
+   ... and 7628 more issues
+
+📋 Duplicate Patterns:
+   Errors: 0, Warnings: 1227, Info: 0
+   ⚠️ Duplicate function name "MaterialApp" found in 5 files. Consider consolidating.
+   ⚠️ Duplicate function name "messageCount" found in 6 files. Consider consolidating.
+   ⚠️ Duplicate function name "lastSeen" found in 6 files. Consider consolidating.
+   ⚠️ Duplicate function name "_AppLocalizationsDelegate" found in 2 files. Consider consolidating.
+   ⚠️ Duplicate function name "load" found in 2 files. Consider consolidating.
+   ... and 1222 more issues
+
+📋 Architecture Compliance:
+   Errors: 0, Warnings: 1, Info: 0
+   ⚠️ Either pattern used without Failure type. Use Either<Failure, T> pattern.
+
+📋 Constant Usage:
+   Errors: 0, Warnings: 0, Info: 0
+
+📋 Reusability Compliance:
+   Errors: 0, Warnings: 0, Info: 0
+
+📈 Summary:
+   Total Errors: 38
+   Total Warnings: 1426
+   Total Info: 7397

@@ -1,7 +1,10 @@
+// ignore_for_file: constant_identifier_names
+
 /// Protocol Buffer enum definitions for chat messages
-/// 
+///
 /// This file provides manual implementations of proto enums
 /// to avoid dependency on protobuf code generation.
+library;
 
 /// Content type enumeration for protocol buffers
 enum ContentTypeProto {

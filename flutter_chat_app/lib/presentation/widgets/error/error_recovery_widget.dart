@@ -9,6 +9,7 @@
 /// **Architecture:** Clean Architecture + Flutter Best Practices + Material Design 3
 
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:flutter_chat_app/core/error/failures.dart';

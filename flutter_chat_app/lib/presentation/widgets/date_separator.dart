@@ -23,10 +23,10 @@ class DateSeparator extends StatelessWidget {
       constraints: maxWidth != null 
           ? BoxConstraints(maxWidth: maxWidth!) 
           : null,
-      margin: const EdgeInsets.symmetric(vertical: 16.0),
+      margin: EdgeInsets.symmetric(vertical: 16.0),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(
+          padding: EdgeInsets.symmetric(
             horizontal: 16.0,
             vertical: 6.0,
           ),

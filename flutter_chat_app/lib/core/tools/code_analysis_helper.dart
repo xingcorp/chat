@@ -185,7 +185,7 @@ class CodeAnalysisHelper {
 
     // Patterns for hardcoded values
     final patterns = {
-      'string': RegExp(r"'[^']{3,}'|\"[^\"]{3,}\""),
+      'string': RegExp(r"'[^']{3,}'"),
       'number': RegExp(r'\b\d+\.?\d*\b'),
       'color': RegExp(r'Color\(0x[A-Fa-f0-9]{8}\)'),
       'dimension': RegExp(r'\b\d+\.?\d*\s*(?:px|dp|sp)\b'),

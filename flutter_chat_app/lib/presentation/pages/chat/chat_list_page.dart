@@ -132,13 +132,13 @@ class _ChatListPageState extends State<ChatListPage> {
                 if (chat['unread'] > 0)
                   Container(
                     padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: Colors.blue,
                       shape: BoxShape.circle,
                     ),
                     child: Text(
                       chat['unread'].toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/services/connectivity_analyzer_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_connection_service.dart' as realtime;

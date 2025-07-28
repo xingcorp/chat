@@ -170,7 +170,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get users => 'Người dùng';
 
   @override
-  String get chats => 'Cuộc trò chuyện';
+  String get chats => 'Trò chuyện';
 
   @override
   String get messages => 'Tin nhắn';
@@ -267,4 +267,75 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get create => 'Tạo';
+
+  @override
+  String get dontHaveAccount => 'Chưa có tài khoản?';
+
+  @override
+  String chatTitle(String chatId) {
+    return 'Chat $chatId';
+  }
+
+  @override
+  String get comingSoon => 'Sắp ra mắt';
+
+  @override
+  String get viewInfo => 'Xem thông tin';
+
+  @override
+  String get groupName => 'Tên nhóm';
+
+  @override
+  String get members => 'Thành viên';
+
+  @override
+  String get addMembers => 'Thêm thành viên';
+
+  @override
+  String get search => 'Tìm kiếm';
+
+  @override
+  String get muteNotifications => 'Tắt thông báo';
+
+  @override
+  String memberCount(int count) {
+    return '$count thành viên';
+  }
+
+  @override
+  String get typing => 'Đang nhập...';
+
+  @override
+  String get seen => 'Đã xem';
+
+  @override
+  String get sent => 'Đã gửi';
+
+  @override
+  String get sending => 'Đang gửi...';
+
+  @override
+  String get cannotLoadMessages => 'Không thể tải tin nhắn';
+
+  @override
+  String get justNow => 'Vừa xong';
+
+  @override
+  String minutesAgo(int minutes) {
+    return '$minutes phút trước';
+  }
+
+  @override
+  String hoursAgo(int hours) {
+    return '$hours giờ trước';
+  }
+
+  @override
+  String get reply => 'Trả lời';
+
+  @override
+  String get forward => 'Chuyển tiếp';
+
+  @override
+  String get confirmDelete => 'Bạn có chắc chắn muốn xóa tin nhắn này?';
 }

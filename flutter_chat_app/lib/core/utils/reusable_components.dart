@@ -9,7 +9,6 @@
 /// **Architecture:** Clean Architecture + Reusability Patterns
 
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/core/constants/app_colors.dart';
 import 'package:flutter_chat_app/core/constants/app_dimensions.dart';
 
 /// **REUSABLE WIDGET MIXINS**
@@ -38,7 +37,7 @@ mixin LoadingStateMixin<T extends StatefulWidget> on State<T> {
         child,
         if (_isLoading)
           Container(
-            color: overlayColor ?? AppColors.OVERLAY_LIGHT,
+            color: overlayColor ?? Colors.black54,
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -48,7 +47,7 @@ mixin LoadingStateMixin<T extends StatefulWidget> on State<T> {
                     const SizedBox(height: AppDimensions.spacingDefault),
                     Text(
                       loadingText,
-                      style: const TextStyle(color: AppColors.WHITE),
+                      style: TextStyle(color: Colors.white),
                     ),
                   ],
                 ],
@@ -88,16 +87,16 @@ mixin ErrorStateMixin<T extends StatefulWidget> on State<T> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline,
             size: AppDimensions.iconHuge,
-            color: AppColors.ERROR,
+            color: Colors.red,
           ),
           const SizedBox(height: AppDimensions.spacingDefault),
           Text(
             _errorMessage!,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.ERROR),
+            style: TextStyle(color: Colors.red),
           ),
           if (onRetry != null) ...[
             const SizedBox(height: AppDimensions.spacingDefault),

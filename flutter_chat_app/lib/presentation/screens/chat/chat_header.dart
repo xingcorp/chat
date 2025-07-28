@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
-import 'package:flutter_chat_app/core/localization/app_strings.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 
 /// Header cho màn hình chi tiết chat
@@ -62,7 +62,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
                   child: Material(
                     color: Colors.transparent,
                     child: Text(
-                      chat.name ?? AppStrings.chats,
+                      chat.name ?? context.l10n.chats,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -74,7 +74,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 
                 // Trạng thái (online/offline, đang nhập,...)
-                _buildStatusText(theme),
+                _buildStatusText(context, theme),
               ],
             ),
           ),
@@ -91,13 +91,13 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
   }
   
   /// Hiển thị trạng thái chat
-  Widget _buildStatusText(ThemeData theme) {
+  Widget _buildStatusText(BuildContext context, ThemeData theme) {
     // Đây là một placeholder, trong triển khai thực tế cần lấy trạng thái từ user service
     // hoặc connectivity service
     const bool isOnline = true;
     
     return Text(
-      isOnline ? AppStrings.online : AppStrings.offline,
+      isOnline ? context.l10n.online : context.l10n.offline,
       style: TextStyle(
         fontSize: 12,
         color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),

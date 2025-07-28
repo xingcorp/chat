@@ -1,10 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
-import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/core/utils/attachment_type.dart';
@@ -43,7 +40,7 @@ class ChatInput extends BaseStatefulWidget {
   final bool enableVoiceRecording;
   
   /// Constructor
-  const ChatInput({
+  ChatInput({
     Key? key,
     required this.onSendText,
     this.onTypingStarted,
@@ -454,7 +451,7 @@ class _ChatInputState extends BaseState<ChatInput> {
                         color: Theme.of(context).primaryColor,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.mic,
                         color: Colors.white,
                       ),
@@ -509,12 +506,12 @@ class _ChatInputState extends BaseState<ChatInput> {
           child: Row(
             children: [
               if (_isDraggingToCancel)
-                const Icon(
+                Icon(
                   Icons.delete,
                   color: Colors.red,
                 )
               else
-                const Icon(
+                Icon(
                   Icons.mic,
                   color: Colors.red,
                 ),

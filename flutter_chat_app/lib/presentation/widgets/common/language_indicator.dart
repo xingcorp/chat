@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 
 /// A widget that shows the current language with animation effects
@@ -27,16 +27,40 @@ class LanguageIndicator extends StatelessWidget {
     return BlocBuilder<LocaleCubit, LocaleState>(
       builder: (context, state) {
         final currentLocale = state.locale ?? Localizations.localeOf(context);
-        final flag = L10n.getLocaleFlag(currentLocale);
-        
+        final flag = _getLocaleFlag(currentLocale);
+
         return _AnimatedLanguageDisplay(
           flag: flag,
-          languageName: showLanguageName ? L10n.getLanguageName(currentLocale) : null,
+          languageName: showLanguageName ? _getLanguageName(currentLocale) : null,
           flagSize: flagSize,
           textStyle: textStyle,
         );
       },
     );
+  }
+
+  /// Get flag emoji for locale
+  String _getLocaleFlag(Locale locale) {
+    switch (locale.languageCode) {
+      case 'vi':
+        return '🇻🇳';
+      case 'en':
+        return '🇺🇸';
+      default:
+        return '🌐';
+    }
+  }
+
+  /// Get language name for locale
+  String _getLanguageName(Locale locale) {
+    switch (locale.languageCode) {
+      case 'vi':
+        return 'Tiếng Việt';
+      case 'en':
+        return 'English';
+      default:
+        return 'Unknown';
+    }
   }
 }
 
