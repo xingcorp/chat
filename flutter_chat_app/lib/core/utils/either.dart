@@ -1,7 +1,7 @@
 // Custom implementation of the Either type from functional programming
 // This provides a way to return either a failure or success value
 
-import 'package:flutter_chat_app/core/error/failures.dart';
+
 
 /// Generic class that represents a value of one of two possible types.
 /// Instances of [Either] are either an instance of [Left] or [Right].

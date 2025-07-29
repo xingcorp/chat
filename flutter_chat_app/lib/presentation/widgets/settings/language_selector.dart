@@ -19,6 +19,13 @@ class LanguageSelectorScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(context.l10n.selectLanguage),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.analytics),
+            tooltip: 'Performance Metrics',
+            onPressed: () => _showPerformanceMetrics(context),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -28,15 +35,52 @@ class LanguageSelectorScreen extends StatelessWidget {
               child: Icon(Icons.language),
             ),
             title: Text(context.l10n.systemDefault),
+            subtitle: BlocBuilder<LocaleCubit, LocaleState>(
+              builder: (context, state) {
+                if (state.hasError) {
+                  return Text(
+                    'Error: ${state.error}',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontSize: 12,
+                    ),
+                  );
+                }
+                if (state.lastSwitchDuration != null) {
+                  return Text(
+                    'Switch time: ${state.lastSwitchDuration!.inMilliseconds}ms',
+                    style: TextStyle(
+                      color: state.isPerformanceOptimal
+                          ? Colors.green
+                          : Colors.orange,
+                      fontSize: 12,
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
             onTap: () {
               context.read<LocaleCubit>().changeLocale(null);
               Navigator.pop(context);
             },
             trailing: BlocBuilder<LocaleCubit, LocaleState>(
               builder: (context, state) {
-                return state.locale == null
-                    ? const Icon(Icons.check, color: Colors.green)
-                    : const SizedBox.shrink();
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (state.isRtl)
+                      Icon(
+                        Icons.format_textdirection_r_to_l,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    const SizedBox(width: 4),
+                    state.locale == null
+                        ? const Icon(Icons.check, color: Colors.green)
+                        : const SizedBox.shrink(),
+                  ],
+                );
               },
             ),
           ),
@@ -52,6 +96,42 @@ class LanguageSelectorScreen extends StatelessWidget {
                 return _LanguageListTile(localeInfo: localeInfo);
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPerformanceMetrics(BuildContext context) {
+    final localeCubit = context.read<LocaleCubit>();
+    final metrics = localeCubit.getPerformanceMetrics();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('I18N Performance Metrics'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Last Switch: ${metrics['lastSwitchDuration'] ?? 'N/A'}ms'),
+            Text('Performance: ${metrics['isPerformanceOptimal'] ? '✅ Optimal' : '⚠️ Slow'}'),
+            Text('Cache Size: ${metrics['cacheSize']} translations'),
+            if (metrics['lastLocaleChange'] != null)
+              Text('Last Change: ${metrics['lastLocaleChange']}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              localeCubit.clearCache();
+              Navigator.pop(context);
+            },
+            child: const Text('Clear Cache'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
           ),
         ],
       ),

@@ -16,6 +16,8 @@ import 'package:flutter_chat_app/core/services/message_queue_service.dart';
 import 'package:flutter_chat_app/core/theme/app_theme.dart';
 import 'package:flutter_chat_app/presentation/blocs/app/app_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/auth/auth_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
+import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
@@ -269,31 +271,50 @@ class MyApp extends StatelessWidget {
         BlocProvider<LocaleCubit>(
           create: (context) => GetIt.I<LocaleCubit>(),
         ),
+        BlocProvider<ThemeCubit>(
+          create: (context) => GetIt.I<ThemeCubit>(),
+        ),
       ],
-      child: BlocBuilder<LocaleCubit, LocaleState>(
-        builder: (context, localeState) {
-          // Initialize L10nHelper with current locale
-          l10n_helper.L10nHelper.initialize(localeState.locale ?? const Locale('en'));
+      child: BlocBuilder<ThemeCubit, ThemeState>(
+        builder: (context, themeState) {
+          return BlocBuilder<LocaleCubit, LocaleState>(
+            builder: (context, localeState) {
+              // Initialize L10nHelper with current locale
+              l10n_helper.L10nHelper.initialize(localeState.locale ?? const Locale('en'));
 
-          return MaterialApp(
-            title: 'Flutter Chat App',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: ThemeMode.system,
+              return MaterialApp(
+                title: 'Flutter Chat App',
+                debugShowCheckedModeBanner: false,
 
-            // Localization
-            locale: localeState.locale,
-            supportedLocales: L10n.all,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
+                // **ENTERPRISE THEME INTEGRATION**
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: themeState.themeMode, // Use enhanced ThemeCubit
 
-            // ... rest of your app configuration
-            home: _buildHomeScreen(),
+                // **ENTERPRISE I18N INTEGRATION**
+                locale: localeState.locale,
+                supportedLocales: L10n.all,
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+
+                // **RTL SUPPORT**
+                builder: (context, child) {
+                  return Directionality(
+                    textDirection: localeState.isRtl
+                        ? TextDirection.rtl
+                        : TextDirection.ltr,
+                    child: child!,
+                  );
+                },
+
+                // ... rest of your app configuration
+                home: _buildHomeScreen(),
+              );
+            },
           );
         },
       ),

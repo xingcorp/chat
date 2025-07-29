@@ -57,8 +57,43 @@ class ThemeToggleButton extends StatelessWidget {
             ),
           ),
           title: Text(context.l10n.themeSettings),
-          subtitle: Text(_getSubtitle(context, state.themeMode)),
-          trailing: const Icon(Icons.chevron_right),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_getSubtitle(context, state.themeMode)),
+              if (state.hasError)
+                Text(
+                  'Error: ${state.error}',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 12,
+                  ),
+                ),
+              if (state.lastSwitchDuration != null)
+                Text(
+                  'Switch time: ${state.lastSwitchDuration!.inMilliseconds}ms',
+                  style: TextStyle(
+                    color: state.isPerformanceOptimal
+                        ? Colors.green
+                        : Colors.orange,
+                    fontSize: 12,
+                  ),
+                ),
+            ],
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (state.isDynamicColorsEnabled)
+                Icon(
+                  Icons.palette,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
           onTap: () => _showThemeSelector(context),
         );
       },
@@ -133,6 +168,16 @@ class ThemeSelectorDialog extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Dynamic Colors Toggle
+              SwitchListTile(
+                title: const Text('Dynamic Colors'),
+                subtitle: const Text('Use system wallpaper colors (Android 12+)'),
+                value: state.isDynamicColorsEnabled,
+                onChanged: (value) {
+                  themeCubit.setDynamicColors(value);
+                },
+              ),
+              const Divider(),
               _ThemeOption(
                 title: 'Sáng',
                 subtitle: 'Luôn sử dụng chế độ sáng',
@@ -160,6 +205,11 @@ class ThemeSelectorDialog extends StatelessWidget {
             ],
           ),
           actions: [
+            // Performance Metrics Button
+            TextButton(
+              onPressed: () => _showPerformanceMetrics(context, themeCubit),
+              child: const Text('Performance'),
+            ),
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(context.l10n.close),
@@ -173,6 +223,41 @@ class ThemeSelectorDialog extends StatelessWidget {
   void _selectTheme(BuildContext context, ThemeCubit themeCubit, ThemeMode themeMode) {
     themeCubit.changeTheme(themeMode);
     Navigator.pop(context);
+  }
+
+  void _showPerformanceMetrics(BuildContext context, ThemeCubit themeCubit) {
+    final metrics = themeCubit.getPerformanceMetrics();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Theme Performance Metrics'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Last Switch: ${metrics['lastSwitchDuration'] ?? 'N/A'}ms'),
+            Text('Performance: ${metrics['isPerformanceOptimal'] ? '✅ Optimal' : '⚠️ Slow'}'),
+            Text('Cache Size: ${metrics['cacheSize']} themes'),
+            if (metrics['lastThemeChange'] != null)
+              Text('Last Change: ${metrics['lastThemeChange']}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              themeCubit.clearCache();
+              Navigator.pop(context);
+            },
+            child: const Text('Clear Cache'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

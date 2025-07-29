@@ -6,7 +6,7 @@
 /// Author: Senior Flutter/Mobile Architect
 library usecase;
 
-import 'package:flutter_chat_app/core/error/failures.dart';
+
 import 'package:flutter_chat_app/core/utils/result.dart';
 
 /// Base interface for all use cases
