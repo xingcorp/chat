@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Flutter Chat App</string>
+	<string>OXII Chat</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>flutter_chat_app</string>
+	<string>OXII Chat</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -45,5 +45,131 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- ========================================= -->
+	<!-- ENTERPRISE MESSAGING APP PERMISSIONS     -->
+	<!-- iOS Privacy Usage Descriptions           -->
+	<!-- ========================================= -->
+
+	<!-- CRITICAL PERMISSIONS - Core Functionality -->
+
+	<!-- Camera Access for Photo/Video Capture -->
+	<key>NSCameraUsageDescription</key>
+	<string>OXII Chat cần quyền truy cập camera để chụp ảnh và quay video gửi cho bạn bè. Bạn có thể chụp ảnh trực tiếp hoặc quay video ngay trong cuộc trò chuyện.</string>
+
+	<!-- Microphone Access for Voice Messages -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>OXII Chat cần quyền truy cập microphone để ghi âm tin nhắn thoại và thực hiện cuộc gọi thoại. Tin nhắn thoại giúp giao tiếp nhanh chóng và tiện lợi hơn.</string>
+
+	<!-- Photo Library Access for Media Sharing -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>OXII Chat cần quyền truy cập thư viện ảnh để bạn có thể chọn và chia sẻ ảnh, video từ thiết bị. Chúng tôi chỉ truy cập những file bạn chọn chia sẻ.</string>
+
+	<!-- Photo Library Add Access -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>OXII Chat cần quyền lưu ảnh và video vào thư viện để bạn có thể lưu trữ những khoảnh khắc đáng nhớ từ cuộc trò chuyện.</string>
+
+	<!-- IMPORTANT PERMISSIONS - Enhanced Features -->
+
+	<!-- Contacts Access for Friend Discovery -->
+	<key>NSContactsUsageDescription</key>
+	<string>OXII Chat cần quyền truy cập danh bạ để giúp bạn tìm và kết nối với bạn bè đang sử dụng ứng dụng. Chúng tôi không lưu trữ danh bạ của bạn trên server.</string>
+
+	<!-- Location Access for Location Sharing -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>OXII Chat cần quyền truy cập vị trí để bạn có thể chia sẻ vị trí hiện tại với bạn bè khi cần thiết. Vị trí chỉ được truy cập khi bạn chủ động chia sẻ.</string>
+
+	<!-- Background Location (if needed) -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>OXII Chat có thể cần quyền truy cập vị trí ngay cả khi ứng dụng đang chạy nền để cập nhật vị trí trong các tính năng chia sẻ vị trí thời gian thực.</string>
+
+	<!-- Calendar Access for Event Integration -->
+	<key>NSCalendarsUsageDescription</key>
+	<string>OXII Chat cần quyền truy cập lịch để tạo sự kiện và nhắc nhở từ các cuộc trò chuyện. Bạn có thể tạo lịch hẹn trực tiếp từ tin nhắn.</string>
+
+	<!-- OPTIONAL PERMISSIONS - Advanced Features -->
+
+	<!-- Face ID / Touch ID for Security -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>OXII Chat sử dụng Face ID để bảo mật ứng dụng và xác thực danh tính khi truy cập các tính năng nhạy cảm. Dữ liệu sinh trắc học không được lưu trữ.</string>
+
+	<!-- Bluetooth for Device Connectivity -->
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>OXII Chat cần quyền Bluetooth để kết nối với các thiết bị âm thanh như tai nghe, loa khi thực hiện cuộc gọi thoại hoặc nghe tin nhắn thoại.</string>
+
+	<!-- Bluetooth Peripheral -->
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>OXII Chat có thể sử dụng Bluetooth để chia sẻ file và kết nối với các thiết bị khác một cách an toàn và nhanh chóng.</string>
+
+	<!-- Motion & Fitness (for gesture features) -->
+	<key>NSMotionUsageDescription</key>
+	<string>OXII Chat có thể sử dụng cảm biến chuyển động để phát hiện cử chỉ lắc thiết bị để thực hiện các thao tác nhanh như gửi tin nhắn hoặc xóa nội dung.</string>
+
+	<!-- Speech Recognition -->
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>OXII Chat có thể sử dụng nhận dạng giọng nói để chuyển đổi tin nhắn thoại thành văn bản, giúp bạn đọc nội dung tin nhắn thoại dễ dàng hơn.</string>
+
+	<!-- Siri Integration -->
+	<key>NSSiriUsageDescription</key>
+	<string>OXII Chat tích hợp với Siri để bạn có thể gửi tin nhắn và thực hiện cuộc gọi bằng giọng nói một cách tiện lợi.</string>
+
+	<!-- ========================================= -->
+	<!-- iOS 14+ PRIVACY FEATURES                 -->
+	<!-- ========================================= -->
+
+	<!-- App Tracking Transparency -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>OXII Chat muốn theo dõi hoạt động của bạn trên các ứng dụng và website khác để cung cấp trải nghiệm cá nhân hóa tốt hơn và hiển thị quảng cáo phù hợp. Dữ liệu này giúp chúng tôi cải thiện dịch vụ.</string>
+
+	<!-- Local Network Access -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>OXII Chat cần quyền truy cập mạng cục bộ để kết nối với các thiết bị trong cùng mạng WiFi, hỗ trợ tính năng chia sẻ file nhanh và đồng bộ dữ liệu.</string>
+
+	<!-- ========================================= -->
+	<!-- BACKGROUND MODES & CAPABILITIES          -->
+	<!-- ========================================= -->
+
+	<!-- Background Modes -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>background-fetch</string>
+		<string>background-processing</string>
+		<string>remote-notification</string>
+		<string>voip</string>
+		<string>audio</string>
+	</array>
+
+	<!-- Background App Refresh -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.oxii.chat.background-sync</string>
+		<string>com.oxii.chat.message-cleanup</string>
+		<string>com.oxii.chat.media-optimization</string>
+	</array>
+
+	<!-- ========================================= -->
+	<!-- SECURITY & PRIVACY SETTINGS              -->
+	<!-- ========================================= -->
+
+	<!-- Prevent Screenshots in Sensitive Areas -->
+	<key>UIApplicationSupportsMultipleScenes</key>
+	<false/>
+
+	<!-- Support for Dark Mode -->
+	<key>UIUserInterfaceStyle</key>
+	<string>Automatic</string>
+
+	<!-- Require Full Screen -->
+	<key>UIRequiresFullScreen</key>
+	<false/>
+
+	<!-- Status Bar Style -->
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleDefault</string>
+
+	<!-- Hide Status Bar -->
+	<key>UIStatusBarHidden</key>
+	<false/>
+
 </dict>
 </plist>

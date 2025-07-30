@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- File Provider Paths Configuration for OXII Chat -->
+<!-- Defines secure file sharing paths for media and documents -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Internal app storage -->
+    <files-path name="internal_files" path="." />
+    
+    <!-- Cache directory for temporary files -->
+    <cache-path name="cache_files" path="." />
+    
+    <!-- External files directory -->
+    <external-files-path name="external_files" path="." />
+    
+    <!-- External cache directory -->
+    <external-cache-path name="external_cache" path="." />
+    
+    <!-- Media directories -->
+    <external-files-path name="images" path="Pictures/" />
+    <external-files-path name="videos" path="Movies/" />
+    <external-files-path name="audio" path="Music/" />
+    <external-files-path name="documents" path="Documents/" />
+    
+    <!-- Download directory (Android 10+) -->
+    <external-path name="downloads" path="Download/" />
+    
+    <!-- Shared media directories -->
+    <external-media-path name="shared_images" path="Pictures/" />
+    <external-media-path name="shared_videos" path="Movies/" />
+    <external-media-path name="shared_audio" path="Music/" />
+    
+    <!-- Temporary sharing directory -->
+    <cache-path name="temp_share" path="share/" />
+</paths>

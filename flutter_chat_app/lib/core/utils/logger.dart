@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
+import 'package:injectable/injectable.dart';
 
 /// Cấp độ log
 enum LogLevel {
@@ -128,4 +129,88 @@ class LogUtils {
         return 1200;
     }
   }
-} 
+}
+
+/// Enterprise-grade AppLogger for permissions service
+/// Provides structured logging với performance tracking
+@singleton
+class AppLogger {
+  static final Logger _logger = Logger(
+    printer: PrettyPrinter(
+      methodCount: 1,
+      errorMethodCount: 3,
+      lineLength: 120,
+      colors: true,
+      printEmojis: true,
+      dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
+    ),
+    level: kDebugMode ? Level.trace : Level.error,
+  );
+
+  /// Log info message
+  void info(String message, [Map<String, dynamic>? context]) {
+    _logWithContext(Level.info, message, context);
+  }
+
+  /// Log debug message
+  void debug(String message, [Map<String, dynamic>? context]) {
+    _logWithContext(Level.debug, message, context);
+  }
+
+  /// Log warning message
+  void warning(String message, [Map<String, dynamic>? context]) {
+    _logWithContext(Level.warning, message, context);
+  }
+
+  /// Log error message
+  void error(String message, [dynamic error, StackTrace? stackTrace]) {
+    if (error != null) {
+      _logger.e(message, error: error, stackTrace: stackTrace);
+    } else {
+      _logger.e(message);
+    }
+  }
+
+  /// Log trace message
+  void trace(String message, [Map<String, dynamic>? context]) {
+    _logWithContext(Level.trace, message, context);
+  }
+
+  /// Log fatal message
+  void fatal(String message, [dynamic error, StackTrace? stackTrace]) {
+    if (error != null) {
+      _logger.f(message, error: error, stackTrace: stackTrace);
+    } else {
+      _logger.f(message);
+    }
+  }
+
+  /// Private method để log với context
+  void _logWithContext(Level level, String message, Map<String, dynamic>? context) {
+    final contextStr = context != null ? ' | Context: $context' : '';
+    final fullMessage = '$message$contextStr';
+
+    switch (level) {
+      case Level.trace:
+        _logger.t(fullMessage);
+        break;
+      case Level.debug:
+        _logger.d(fullMessage);
+        break;
+      case Level.info:
+        _logger.i(fullMessage);
+        break;
+      case Level.warning:
+        _logger.w(fullMessage);
+        break;
+      case Level.error:
+        _logger.e(fullMessage);
+        break;
+      case Level.fatal:
+        _logger.f(fullMessage);
+        break;
+      default:
+        _logger.i(fullMessage);
+    }
+  }
+}

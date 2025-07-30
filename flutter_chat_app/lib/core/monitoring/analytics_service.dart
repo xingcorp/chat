@@ -219,6 +219,41 @@ class AnalyticsService {
     }
   }
   
+  /// Track custom event với tên và parameters tùy chỉnh
+  /// Method này được sử dụng bởi PermissionsService
+  Future<void> track(String eventName, Map<String, dynamic> parameters) async {
+    if (!_isAnalyticsEnabled) return;
+
+    try {
+      // Kết hợp parameters mặc định và tùy chỉnh
+      final combinedParams = <String, dynamic>{
+        ..._defaultProperties,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+
+      // Add current user ID if available
+      if (_currentUserId != null && !combinedParams.containsKey('user_id')) {
+        combinedParams['user_id'] = _currentUserId;
+      }
+
+      combinedParams.addAll(parameters);
+
+      // Chuyển đổi parameters để phù hợp với Firebase Analytics
+      final convertedParams = _convertParameters(combinedParams);
+
+      // Ghi nhận sự kiện
+      await _analytics.logEvent(
+        name: eventName,
+        parameters: convertedParams,
+      );
+
+      _logger.t('Đã track event: $eventName với ${convertedParams.length} parameters');
+    } catch (e) {
+      _logger.e('Lỗi khi track event: $e');
+      // Don't report analytics errors to prevent circular dependencies
+    }
+  }
+
   /// Ghi nhận sự kiện
   Future<void> logEvent(
     AnalyticsEvent event, {

@@ -125,6 +125,20 @@ class AppColors {
   /// Secondary background color
   static const Color secondaryBackground = Color(0xFFFFF3E0);
 
+  // Additional properties for permissions UI
+  /// Surface variant color
+  static const Color surfaceVariant = Color(0xFFF5F5F5);
+
+  /// Outline color
+  static const Color outline = Color(0xFFE0E0E0);
+
+  /// Primary gradient
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [Color(0xFF2196F3), Color(0xFF1976D2)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   // Helper methods
   /// Get message background color based on theme mode
   static Color getSentMessageBackgroundColor(bool isDarkMode) {

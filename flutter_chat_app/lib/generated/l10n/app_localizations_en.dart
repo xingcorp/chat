@@ -1,5 +1,5 @@
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -99,7 +99,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String messageCount(int count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
-      
     );
     final String countString = countNumberFormat.format(count);
 
@@ -338,4 +337,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confirmDelete => 'Are you sure you want to delete this message?';
+
+  @override
+  String get contacts => 'Contacts';
+
+  @override
+  String get groups => 'Groups';
+
+  @override
+  String get welcomeToChat => 'Welcome to Flutter Chat App';
 }

@@ -35,29 +35,27 @@
   <script>
     // The value below is injected by flutter build, do not touch.
     const serviceWorkerVersion = "{{flutter_service_worker_version}}";
+
+    // Flutter 3.32+ requires buildConfig to be set
+    window._flutter = window._flutter || {};
+    window._flutter.buildConfig = {
+      builds: [
+        {
+          compileTarget: "dart2js",
+          renderer: "canvaskit",
+          mainModule: "main.dart.js"
+        }
+      ]
+    };
   </script>
-  
+
   <!-- This script adds the flutter initialization JS code -->
-  <script src="flutter.js" defer></script>
+  <script src="flutter_bootstrap.js" async></script>
   
-  <!-- Isar needs web worker scripts -->
-  <script src="assets/packages/isar_flutter_libs/assets/index.js" defer></script>
+  <!-- Isar needs web worker scripts - DISABLED FOR WEB COMPATIBILITY -->
+  <!-- <script src="assets/packages/isar_flutter_libs/assets/index.js" defer></script> -->
 </head>
 <body>
-  <script>
-    window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.load({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
-        }
-      });
-    });
-  </script>
+  <!-- Flutter 3.32+ uses flutter_bootstrap.js automatically -->
 </body>
 </html>

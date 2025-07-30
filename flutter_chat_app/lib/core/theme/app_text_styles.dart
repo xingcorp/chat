@@ -177,6 +177,81 @@ class AppTextStyles {
         letterSpacing: 0.5,
       );
 
+  // Material Design 3 Typography Scale
+  static TextStyle get headlineLarge => TextStyle(
+        fontSize: 32.sp,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textPrimary,
+        height: 1.25,
+        letterSpacing: 0,
+      );
+
+  static TextStyle get headlineMedium => TextStyle(
+        fontSize: 28.sp,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textPrimary,
+        height: 1.29,
+        letterSpacing: 0,
+      );
+
+  static TextStyle get headlineSmall => TextStyle(
+        fontSize: 24.sp,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textPrimary,
+        height: 1.33,
+        letterSpacing: 0,
+      );
+
+  static TextStyle get titleLarge => TextStyle(
+        fontSize: 22.sp,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textPrimary,
+        height: 1.27,
+        letterSpacing: 0,
+      );
+
+  static TextStyle get titleMedium => TextStyle(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textPrimary,
+        height: 1.5,
+        letterSpacing: 0.15,
+      );
+
+  static TextStyle get titleSmall => TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textPrimary,
+        height: 1.43,
+        letterSpacing: 0.1,
+      );
+
+  static TextStyle get labelLarge => TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textPrimary,
+        height: 1.43,
+        letterSpacing: 0.1,
+      );
+
+  static TextStyle get labelMedium => TextStyle(
+        fontSize: 12.sp,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textPrimary,
+        height: 1.33,
+        letterSpacing: 0.5,
+      );
+
+  static TextStyle get labelSmall => TextStyle(
+        fontSize: 11.sp,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textPrimary,
+        height: 1.45,
+        letterSpacing: 0.5,
+      );
+
+
+
   // Caption and specific styles
   static TextStyle caption({
     Color? color,

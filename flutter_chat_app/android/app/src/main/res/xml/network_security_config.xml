@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Network Security Configuration for OXII Chat -->
+<!-- Ensures secure communication and prevents cleartext traffic -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <!-- Production API endpoints -->
+        <domain includeSubdomains="true">api.oxii.chat</domain>
+        <domain includeSubdomains="true">ws.oxii.chat</domain>
+        <domain includeSubdomains="true">cdn.oxii.chat</domain>
+        
+        <!-- Firebase services -->
+        <domain includeSubdomains="true">firebase.googleapis.com</domain>
+        <domain includeSubdomains="true">firebaseapp.com</domain>
+        <domain includeSubdomains="true">firebasestorage.googleapis.com</domain>
+        
+        <!-- Google services -->
+        <domain includeSubdomains="true">googleapis.com</domain>
+        <domain includeSubdomains="true">google.com</domain>
+        
+        <!-- Certificate pinning for enhanced security -->
+        <pin-set expiration="2025-12-31">
+            <!-- Replace with actual certificate pins -->
+            <pin digest="SHA-256">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</pin>
+            <pin digest="SHA-256">BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=</pin>
+        </pin-set>
+    </domain-config>
+    
+    <!-- Debug configuration for development -->
+    <debug-overrides>
+        <trust-anchors>
+            <!-- Trust user added CAs for debugging -->
+            <certificates src="user"/>
+            <certificates src="system"/>
+        </trust-anchors>
+    </debug-overrides>
+    
+    <!-- Base configuration -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>

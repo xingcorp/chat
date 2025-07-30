@@ -1,55 +1,69 @@
+// Dart imports
 import 'dart:async';
 import 'dart:io' show Platform;
 
+// Flutter imports
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+// Third-party package imports
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+
+// App imports - Config
 import 'package:flutter_chat_app/config/route/app_router.dart';
+
+// App imports - Core
 import 'package:flutter_chat_app/core/di/enterprise_injection.dart';
 import 'package:flutter_chat_app/core/lifecycle/app_lifecycle_observer.dart';
-import 'package:flutter_chat_app/core/services/database_service.dart';
-import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart';
-import 'package:flutter_chat_app/core/services/chat_message_service.dart';
-import 'package:flutter_chat_app/core/services/message_queue_service.dart';
 import 'package:flutter_chat_app/core/theme/app_theme.dart';
-import 'package:flutter_chat_app/presentation/blocs/app/app_bloc.dart';
-import 'package:flutter_chat_app/presentation/blocs/auth/auth_bloc.dart';
-import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
-import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_chat_app/core/localization/l10n_helper.dart' as l10n_helper;
+
+// App imports - Services
+import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/core/services/performance_service.dart';
+import 'package:flutter_chat_app/core/services/chat_message_service.dart';
+import 'package:flutter_chat_app/core/services/animation_service.dart';
+import 'package:flutter_chat_app/core/services/device_capability_service.dart';
+
+// App imports - Cache
+import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
+
+// App imports - Monitoring
+import 'package:flutter_chat_app/core/monitoring/analytics_manager.dart';
+import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
+import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+
+// App imports - Data
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
-import 'package:uuid/uuid.dart';
-import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
-import 'package:flutter_chat_app/core/cache/cache_stats.dart';
-import 'package:flutter_chat_app/core/cache/preload_manager.dart';
-import 'package:flutter_chat_app/core/cache/background_sync_worker.dart';
-import 'package:flutter_chat_app/core/localization/l10n_helper.dart' as l10n_helper;
-// Removed legacy service_locator.dart - now using EnterpriseDI
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_chat_app/core/monitoring/analytics_manager.dart';
-import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_chat_app/core/services/animation_service.dart';
-import 'package:flutter_chat_app/core/services/device_capability_service.dart';
-import 'package:flutter_chat_app/core/services/performance_service.dart';
+
+// App imports - Presentation
+import 'package:flutter_chat_app/presentation/blocs/app/app_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/auth/auth_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
+import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 import 'package:flutter_chat_app/presentation/widgets/app_wrapper.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_chat_app/core/upgrade_services.dart';
-import 'package:flutter_chat_app/core/services/enhanced_message_queue_service.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+
+// App imports - Localization
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
+
+// App imports - Upgrade
+import 'package:flutter_chat_app/core/upgrade_services.dart';
 
 // Import home screens from respective platform files
+import 'package:flutter_chat_app/presentation/pages/home/web_home_screen.dart';
 import 'package:flutter_chat_app/main_mobile.dart' show MobileHomeScreen;
-import 'package:flutter_chat_app/main_web.dart' show WebHomeScreen;
 import 'package:flutter_chat_app/main_desktop.dart' show DesktopHomeScreen;
 
 Future<void> main() async {
@@ -75,7 +89,7 @@ Future<void> main() async {
     // Khởi tạo Firebase
     await Firebase.initializeApp();
   } catch (e) {
-    print('Firebase initialization failed: $e');
+    debugPrint('Firebase initialization failed: $e');
   }
   
   // Tải biến môi trường
@@ -87,10 +101,12 @@ Future<void> main() async {
   // Tùy thuộc vào nền tảng, chúng ta sẽ khởi động các dịch vụ phù hợp
   if (kIsWeb) {
     await _initializeWebServices();
-  } else if (Platform.isAndroid || Platform.isIOS) {
-    await _initializeMobileServices();
   } else {
-    await _initializeDesktopServices();
+    if (Platform.isAndroid || Platform.isIOS) {
+      await _initializeMobileServices();
+    } else {
+      await _initializeDesktopServices();
+    }
   }
   
   // Khởi tạo SharedPreferences
@@ -146,7 +162,7 @@ Future<void> main() async {
     });
   } catch (e) {
     // Log lỗi nếu không khởi tạo được monitoring services
-    print('Could not initialize monitoring services: $e');
+    debugPrint('Could not initialize monitoring services: $e');
   }
   
   // Khởi tạo PerformanceService
@@ -167,9 +183,9 @@ Future<void> main() async {
   // Try to upgrade to EnhancedMessageQueueService if available
   try {
     await upgradeToEnhancedMessageQueue();
-    debugPrint("✓ Enhanced message queue service enabled");
+    debugPrint('✓ Enhanced message queue service enabled');
   } catch (e) {
-    debugPrint("Using standard message queue service: $e");
+    debugPrint('Using standard message queue service: $e');
   }
   
   // Bắt tất cả lỗi không xử lý trong zone
@@ -183,15 +199,16 @@ Future<void> main() async {
       ),
     );
   }, (error, stackTrace) {
-    print('Unhandled error: $error\n$stackTrace');
+    debugPrint('Unhandled error: $error\n$stackTrace');
     crashReporter?.recordError(error, stackTrace, reason: 'unhandled_error');
   });
 }
 
 Future<void> _initializeWebServices() async {
   // Initialize web-specific services
-  final databaseService = EnterpriseDI.get<DatabaseService>();
-  await databaseService.initialize();
+  // NOTE: Isar database not supported on web platform
+  // final databaseService = EnterpriseDI.get<DatabaseService>();
+  // await databaseService.initialize();
 
   // TODO: Register these services in EnterpriseDI
   // Khởi tạo dịch vụ kết nối thời gian thực
@@ -254,9 +271,9 @@ class MyApp extends StatelessWidget {
   final SharedPreferences sharedPreferences;
   
   const MyApp({
-    Key? key, 
+    super.key,
     required this.sharedPreferences,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -324,10 +341,12 @@ class MyApp extends StatelessWidget {
   Widget _buildHomeScreen() {
     if (kIsWeb) {
       return const WebHomeScreen();
-    } else if (Platform.isAndroid || Platform.isIOS) {
-      return const MobileHomeScreen();
     } else {
-      return const DesktopHomeScreen();
+      if (Platform.isAndroid || Platform.isIOS) {
+        return const MobileHomeScreen();
+      } else {
+        return const DesktopHomeScreen();
+      }
     }
   }
 }
@@ -341,7 +360,7 @@ class IsarTestScreen extends StatefulWidget {
 
 class _IsarTestScreenState extends State<IsarTestScreen> {
   final _repository = GetIt.I<OfflineFirstRepository>();
-  final _uuid = Uuid();
+  final _uuid = const Uuid();
   bool _isLoading = false;
   String _statusMessage = 'Ready';
   List<UserModel> _users = [];
@@ -554,7 +573,7 @@ Future<void> setupServices() async {
 
 /// Màn hình chính
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();

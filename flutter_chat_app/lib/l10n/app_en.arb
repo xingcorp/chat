@@ -554,5 +554,20 @@
   "chats": "Chats",
   "@chats": {
     "description": "Chats section title"
+  },
+
+  "contacts": "Contacts",
+  "@contacts": {
+    "description": "Contacts section title"
+  },
+
+  "groups": "Groups",
+  "@groups": {
+    "description": "Groups section title"
+  },
+
+  "welcomeToChat": "Welcome to Flutter Chat App",
+  "@welcomeToChat": {
+    "description": "Welcome message on home screen"
   }
 }
