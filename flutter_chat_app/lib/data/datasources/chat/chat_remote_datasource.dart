@@ -1,421 +1,514 @@
 import 'package:flutter_chat_app/core/network/graphql_client.dart';
-// import 'package:flutter_chat_app/core/network/socket_manager.dart'; // Remove old import
-import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart'; // Add new import
-import 'package:flutter_chat_app/data/models/chat_model.dart';
-import 'package:flutter_chat_app/data/models/message_model.dart';
+import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';
+import 'package:flutter_chat_app/data/dtos/chat_dto.dart';
+import 'package:flutter_chat_app/data/dtos/message_dto.dart';
+import 'package:flutter_chat_app/data/graphql/chat_operations.dart';
+import 'package:injectable/injectable.dart';
 
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
-// import 'package:socket_io_client/socket_io_client.dart' as io; // No longer needed directly here
-
-/// Interface for ChatRemoteDataSource
-abstract class ChatRemoteDataSource {
-  /// Get the list of chats for the current user
-  Future<List<ChatModel>> getUserChats();
+/// **Chat Remote Data Source Interface**
+///
+/// Defines contract for fetching chat data from backend API.
+/// Uses DTOs for type-safe API communication.
+abstract class IChatRemoteDataSource {
+  /// Get paginated list of conversations
+  Future<ChatListResponseDto> getConversationList({
+    int size = 25,
+    int page = 0,
+    String? keyword,
+    String? type,
+  });
   
-  /// Get details of a specific chat
-  Future<ChatModel> getChatDetails(String chatId);
+  /// Get conversation details by ID or receiverId
+  Future<ChatDto> getConversationDetail({
+    String? conversationId,
+    String? receiverId,
+  });
   
-  /// Create a new direct chat with a user
-  Future<ChatModel> createDirectChat(String userId);
+  /// Create a new group conversation
+  Future<ChatDto> createGroup({
+    required String name,
+    String? imgUrl,
+    String? description,
+    required String groupType,
+    required List<String> memberIds,
+  });
   
-  /// Create a new group chat
-  Future<ChatModel> createGroupChat(String name, List<String> userIds);
+  /// Update group information
+  Future<ChatDto> updateGroup({
+    required String conversationId,
+    String? name,
+    String? imgUrl,
+    String? description,
+    String? groupType,
+    List<String>? memberIds,
+    List<String>? adminIds,
+  });
   
-  /// Update a chat's details
-  Future<ChatModel> updateChat(String chatId, {String? name, String? avatarUrl});
+  /// Leave a conversation
+  Future<String> leaveConversation(String conversationId);
   
-  /// Add users to a group chat
-  Future<bool> addUsersToChat(String chatId, List<String> userIds);
+  /// Delete a conversation
+  Future<Map<String, dynamic>> deleteConversation(String conversationId);
   
-  /// Remove users from a group chat
-  Future<bool> removeUsersFromChat(String chatId, List<String> userIds);
+  /// Get messages for a conversation
+  Future<MessageListResponseDto> getMessageList({
+    required String conversationId,
+    int size = 100,
+    Map<String, dynamic>? lastKey,
+    String? type,
+    String order = 'DESC',
+    int? from,
+  });
   
-  /// Delete a chat
-  Future<bool> deleteChat(String chatId);
-  
-  /// Leave a group chat
-  Future<bool> leaveChat(String chatId);
-  
-  /// Subscribe to new/updated chats
-  Stream<ChatModel> subscribeToChats();
-
-  /// Get all chats (alias for getUserChats for consistency)
-  Future<List<ChatModel>> getChats();
-
-  /// Get chat by ID (alias for getChatDetails for consistency)
-  Future<ChatModel?> getChatById(String chatId);
-
-  /// Get messages for a chat
-  Future<List<MessageModel>> getChatMessages(String chatId, {int limit = 50, String? before});
-
   /// Send a message
-  Future<MessageModel> sendMessage(ChatMessage message);
+  Future<MessageDto> sendMessage({
+    String? conversationId,
+    String? receiverId,
+    required String type,
+    required String message,
+    List<String>? urls,
+    String? fileName,
+    String? replyMessageId,
+    String? forwardedFromMessageId,
+    required int createdAt,
+  });
+  
+  /// Edit or delete a message
+  Future<MessageDto> editMessage({
+    required String messageId,
+    required String act,
+    String? message,
+  });
+  
+  /// Mark messages as read
+  Future<String> markAsRead({
+    required String conversationId,
+    required int readCount,
+  });
+  
+  /// Add or remove reaction
+  Future<MessageDto> updateReaction({
+    required String messageId,
+    required String code,
+    required String act,
+  });
+  
+  /// Delete message history
+  Future<Map<String, dynamic>> deleteHistory(String conversationId);
+  
+  /// Search messages
+  Future<List<MessageDto>> searchMessages({
+    required String keyword,
+    List<String>? conversationIds,
+    List<String>? senderIds,
+    List<String>? messageTypes,
+    int? from,
+    int? to,
+    int page = 0,
+    int size = 100,
+  });
+  
+  /// Subscribe to chat updates via Socket.IO
+  Stream<ChatDto> subscribeToChats();
 }
 
-/// Implementation of [ChatRemoteDataSource]
-class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
+/// **Chat Remote Data Source Implementation**
+///
+/// Implements backend API communication using GraphQL and Socket.IO.
+/// Returns DTOs for type-safe data transfer.
+@LazySingleton(as: IChatRemoteDataSource)
+class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
   final GraphQLClientWrapper _client;
-  // final SocketManager _socketManager; // Change type
-  final EnhancedSocketManager _enhancedSocketManager;
+  final EnhancedSocketManager _socketManager;
   
-  // ChatRemoteDataSourceImpl(this._client, this._socketManager); // Update constructor parameter type
-  ChatRemoteDataSourceImpl(this._client, this._enhancedSocketManager);
-  
-  @override
-  Future<List<ChatModel>> getUserChats() async {
-    // Query the GraphQL server for the user's chats
-    final result = await _client.query(
-      '''
-        query GetUserChats {
-          getUserChats {
-            id
-            name
-            type
-            avatarUrl
-            lastActivity
-            createdAt
-            updatedAt
-            participants {
-              id
-              username
-              displayName
-              avatarUrl
-              lastSeen
-            }
-            lastMessage {
-              id
-              content
-              type
-              createdAt
-              sender {
-                id
-                username
-                displayName
-              }
-            }
-          }
-        }
-      ''',
-    );
-    
-    final chatsData = result['data']?['getUserChats'] as List<dynamic>? ?? [];
-    return chatsData.map((chatData) => ChatModel.fromMap(chatData as Map<String, dynamic>)).toList();
-  }
+  ChatRemoteDataSourceImpl(
+    this._client,
+    this._socketManager,
+  );
   
   @override
-  Future<ChatModel> getChatDetails(String chatId) async {
-    // Query the GraphQL server for the chat details
-    final result = await _client.query(
-      '''
-        query GetChatDetails(\$chatId: ID!) {
-          getChatDetails(chatId: \$chatId) {
-            id
-            name
-            type
-            avatarUrl
-            lastActivity
-            createdAt
-            updatedAt
-            participants {
-              id
-              username
-              displayName
-              avatarUrl
-              lastSeen
-            }
-            lastMessage {
-              id
-              content
-              type
-              createdAt
-              sender {
-                id
-                username
-                displayName
-              }
-            }
-          }
-        }
-      ''',
-      variables: {'chatId': chatId},
-    );
-    
-    final chatData = result['data']?['getChatDetails'] as Map<String, dynamic>?;
-    if (chatData == null) {
-      throw Exception('Chat not found or failed to fetch details');
-    }
-
-    return ChatModel.fromMap(chatData);
-  }
-  
-  @override
-  Future<ChatModel> createDirectChat(String userId) async {
-    // Mutation to create a direct chat
-    final result = await _client.mutate(
-      '''
-        mutation CreateDirectChat(\$userId: ID!) {
-          createDirectChat(userId: \$userId) {
-            id
-            name
-            type
-            avatarUrl
-            lastActivity
-            createdAt
-            updatedAt
-            participants {
-              id
-              username
-              displayName
-              avatarUrl
-            }
-          }
-        }
-      ''',
-      variables: {'userId': userId},
-    );
-    
-    final chatData = result['data']?['createDirectChat'] as Map<String, dynamic>?;
-    if (chatData == null) {
-      throw Exception('Failed to create direct chat');
-    }
-
-    return ChatModel.fromMap(chatData);
-  }
-  
-  @override
-  Future<ChatModel> createGroupChat(String name, List<String> userIds) async {
-    // Mutation to create a group chat
-    final result = await _client.mutate(
-      '''
-        mutation CreateGroupChat(\$name: String!, \$userIds: [ID!]!) {
-          createGroupChat(name: \$name, userIds: \$userIds) {
-            id
-            name
-            type
-            avatarUrl
-            lastActivity
-            createdAt
-            updatedAt
-            participants {
-              id
-              username
-              displayName
-              avatarUrl
-            }
-          }
-        }
-      ''',
-      variables: {
-        'name': name,
-        'userIds': userIds,
-      },
-    );
-    
-    final chatData = result['data']?['createGroupChat'] as Map<String, dynamic>?;
-    if (chatData == null) {
-      throw Exception('Failed to create group chat');
-    }
-
-    return ChatModel.fromMap(chatData);
-  }
-  
-  @override
-  Future<ChatModel> updateChat(String chatId, {String? name, String? avatarUrl}) async {
-    // Prepare variables, removing null values
-    final variables = <String, dynamic>{'chatId': chatId};
-    if (name != null) variables['name'] = name;
-    if (avatarUrl != null) variables['avatarUrl'] = avatarUrl;
-    
-    // Mutation to update a chat
-    final result = await _client.mutate(
-      '''
-        mutation UpdateChat(\$chatId: ID!, \$name: String, \$avatarUrl: String) {
-          updateChat(chatId: \$chatId, name: \$name, avatarUrl: \$avatarUrl) {
-            id
-            name
-            type
-            avatarUrl
-            lastActivity
-            updatedAt
-          }
-        }
-      ''',
-      variables: variables,
-    );
-    
-    final chatData = result['data']?['updateChat'] as Map<String, dynamic>?;
-    if (chatData == null) {
-      throw Exception('Failed to update chat');
-    }
-
-    return ChatModel.fromMap(chatData);
-  }
-  
-  @override
-  Future<bool> addUsersToChat(String chatId, List<String> userIds) async {
-    // Mutation to add users to a chat
-    final result = await _client.mutate(
-      '''
-        mutation AddUsersToChat(\$chatId: ID!, \$userIds: [ID!]!) {
-          addUsersToChat(chatId: \$chatId, userIds: \$userIds)
-        }
-      ''',
-      variables: {
-        'chatId': chatId,
-        'userIds': userIds,
-      },
-    );
-    
-    return result['data']?['addUsersToChat'] as bool? ?? false;
-  }
-  
-  @override
-  Future<bool> removeUsersFromChat(String chatId, List<String> userIds) async {
-    // Mutation to remove users from a chat
-    final result = await _client.mutate(
-      '''
-        mutation RemoveUsersFromChat(\$chatId: ID!, \$userIds: [ID!]!) {
-          removeUsersFromChat(chatId: \$chatId, userIds: \$userIds)
-        }
-      ''',
-      variables: {
-        'chatId': chatId,
-        'userIds': userIds,
-      },
-    );
-    
-    return result['data']?['removeUsersFromChat'] as bool? ?? false;
-  }
-  
-  @override
-  Future<bool> deleteChat(String chatId) async {
-    // Mutation to delete a chat
-    final result = await _client.mutate(
-      '''
-        mutation DeleteChat(\$chatId: ID!) {
-          deleteChat(chatId: \$chatId)
-        }
-      ''',
-      variables: {'chatId': chatId},
-    );
-    
-    return result['data']?['deleteChat'] as bool? ?? false;
-  }
-  
-  @override
-  Future<bool> leaveChat(String chatId) async {
-    // Mutation to leave a chat
-    final result = await _client.mutate(
-      '''
-        mutation LeaveChat(\$chatId: ID!) {
-          leaveChat(chatId: \$chatId)
-        }
-      ''',
-      variables: {'chatId': chatId},
-    );
-    
-    return result['data']?['leaveChat'] as bool? ?? false;
-  }
-  
-  @override
-  Stream<ChatModel> subscribeToChats() {
-    // Đảm bảo socket được kết nối (Có thể không cần nếu AppBloc quản lý)
-    // _socketManager.connect();
-    _enhancedSocketManager.connect(); // Use enhanced manager
-
-    // Stream controller for chat updates
-    // return _socketManager
-    return _enhancedSocketManager // Use enhanced manager
-        .on<Map<String, dynamic>>('chat_updated')
-        .map(ChatModel.fromMap);
-  }
-
-  /// **Get all chats (alias for getUserChats for consistency)**
-  @override
-  Future<List<ChatModel>> getChats() async {
-    return getUserChats();
-  }
-
-  /// **Get chat by ID (alias for getChatDetails for consistency)**
-  @override
-  Future<ChatModel?> getChatById(String chatId) async {
-    try {
-      final chat = await getChatDetails(chatId);
-      return chat;
-    } catch (e) {
-      // Return null if chat not found or error occurred
-      return null;
-    }
-  }
-
-  /// **Get messages for a chat**
-  @override
-  Future<List<MessageModel>> getChatMessages(String chatId, {int limit = 50, String? before}) async {
-    // Query the GraphQL server for chat messages
+  Future<ChatListResponseDto> getConversationList({
+    int size = 25,
+    int page = 0,
+    String? keyword,
+    String? type,
+  }) async {
     final variables = <String, dynamic>{
-      'chatId': chatId,
-      'limit': limit,
+      'filters': {
+        'size': size,
+        'page': page,
+        if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
+        if (type != null) 'type': type,
+      },
     };
-
-    if (before != null) {
-      variables['before'] = before;
-    }
-
+    
     final result = await _client.query(
-      r'''
-        query GetChatMessages($chatId: ID!, $limit: Int!, $before: String) {
-          getChatMessages(chatId: $chatId, limit: $limit, before: $before) {
-            id
-            content
-            type
-            createdAt
-            updatedAt
-            senderId
-            chatId
-            readBy
-            status
-          }
-        }
-      ''',
+      ChatQueries.getConversationList,
       variables: variables,
     );
-
-    final messagesData = result['data']?['getChatMessages'] as List<dynamic>? ?? [];
-    return messagesData.map((messageData) => MessageModel.fromMap(messageData as Map<String, dynamic>)).toList();
+    
+    final data = result['data']?['chatConversationList'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to fetch conversation list');
+    }
+    
+    return ChatListResponseDto.fromJson(data);
   }
-
-  /// **Send a message**
+  
   @override
-  Future<MessageModel> sendMessage(ChatMessage message) async {
-    // Mutation to send a message
-    final result = await _client.mutate(
-      r'''
-        mutation SendMessage($chatId: ID!, $content: String!, $type: String!) {
-          sendMessage(chatId: $chatId, content: $content, type: $type) {
-            id
-            content
-            type
-            createdAt
-            updatedAt
-            senderId
-            chatId
-            readBy
-            status
-          }
-        }
-      ''',
-      variables: {
-        'chatId': message.chatId,
-        'content': message.content,
-        'type': message.contentType.toString(),
-      },
+  Future<ChatDto> getConversationDetail({
+    String? conversationId,
+    String? receiverId,
+  }) async {
+    if (conversationId == null && receiverId == null) {
+      throw ArgumentError('Either conversationId or receiverId must be provided');
+    }
+    
+    final variables = <String, dynamic>{
+      if (conversationId != null) 'conversationId': conversationId,
+      if (receiverId != null) 'receiverId': receiverId,
+    };
+    
+    final result = await _client.query(
+      ChatQueries.getConversationDetail,
+      variables: variables,
     );
-
-    final messageData = result['data']?['sendMessage'] as Map<String, dynamic>?;
-    if (messageData == null) {
+    
+    final data = result['data']?['chatConversationDetail'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to fetch conversation detail');
+    }
+    
+    return ChatDto.fromJson(data);
+  }
+  
+  @override
+  Future<ChatDto> createGroup({
+    required String name,
+    String? imgUrl,
+    String? description,
+    required String groupType,
+    required List<String> memberIds,
+  }) async {
+    final variables = <String, dynamic>{
+      'arguments': {
+        'name': name,
+        if (imgUrl != null) 'imgUrl': imgUrl,
+        if (description != null) 'description': description,
+        'groupType': groupType,
+        'memberIds': memberIds,
+      },
+    };
+    
+    final result = await _client.mutate(
+      ChatMutations.createGroup,
+      variables: variables,
+    );
+    
+    final data = result['data']?['chatGroupAdd'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to create group');
+    }
+    
+    return ChatDto.fromJson(data);
+  }
+  
+  @override
+  Future<ChatDto> updateGroup({
+    required String conversationId,
+    String? name,
+    String? imgUrl,
+    String? description,
+    String? groupType,
+    List<String>? memberIds,
+    List<String>? adminIds,
+  }) async {
+    final variables = <String, dynamic>{
+      'arguments': {
+        'conversationId': conversationId,
+        if (name != null) 'name': name,
+        if (imgUrl != null) 'imgUrl': imgUrl,
+        if (description != null) 'description': description,
+        if (groupType != null) 'groupType': groupType,
+        if (memberIds != null) 'memberIds': memberIds,
+        if (adminIds != null) 'adminIds': adminIds,
+      },
+    };
+    
+    final result = await _client.mutate(
+      ChatMutations.editGroup,
+      variables: variables,
+    );
+    
+    final data = result['data']?['chatGroupEdit'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to update group');
+    }
+    
+    return ChatDto.fromJson(data);
+  }
+  
+  @override
+  Future<String> leaveConversation(String conversationId) async {
+    final variables = <String, dynamic>{
+      'arguments': {
+        'conversationId': conversationId,
+      },
+    };
+    
+    final result = await _client.mutate(
+      ChatMutations.leaveConversation,
+      variables: variables,
+    );
+    
+    final data = result['data']?['chatConversationLeave'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to leave conversation');
+    }
+    
+    return data['id'] as String;
+  }
+  
+  @override
+  Future<Map<String, dynamic>> deleteConversation(String conversationId) async {
+    final variables = <String, dynamic>{
+      'arguments': {
+        'conversationId': conversationId,
+      },
+    };
+    
+    final result = await _client.mutate(
+      ChatMutations.deleteConversation,
+      variables: variables,
+    );
+    
+    final data = result['data']?['chatConversationDelete'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to delete conversation');
+    }
+    
+    return data;
+  }
+  
+  @override
+  Future<MessageListResponseDto> getMessageList({
+    required String conversationId,
+    int size = 100,
+    Map<String, dynamic>? lastKey,
+    String? type,
+    String order = 'DESC',
+    int? from,
+  }) async {
+    final variables = <String, dynamic>{
+      'filters': {
+        'conversationId': conversationId,
+        'size': size,
+        if (lastKey != null) 'lastKey': lastKey,
+        if (type != null) 'type': type,
+        'order': order,
+        if (from != null) 'from': from,
+      },
+    };
+    
+    final result = await _client.query(
+      ChatQueries.getMessageList,
+      variables: variables,
+    );
+    
+    final data = result['data']?['chatMessageList'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to fetch message list');
+    }
+    
+    return MessageListResponseDto.fromJson(data);
+  }
+  
+  @override
+  Future<MessageDto> sendMessage({
+    String? conversationId,
+    String? receiverId,
+    required String type,
+    required String message,
+    List<String>? urls,
+    String? fileName,
+    String? replyMessageId,
+    String? forwardedFromMessageId,
+    required int createdAt,
+  }) async {
+    if (conversationId == null && receiverId == null) {
+      throw ArgumentError('Either conversationId or receiverId must be provided');
+    }
+    
+    final variables = <String, dynamic>{
+      'arguments': {
+        if (conversationId != null) 'conversationId': conversationId,
+        if (receiverId != null) 'receiverId': receiverId,
+        'type': type,
+        'message': message,
+        if (urls != null && urls.isNotEmpty) 'urls': urls,
+        if (fileName != null) 'fileName': fileName,
+        if (replyMessageId != null) 'replyMessageId': replyMessageId,
+        if (forwardedFromMessageId != null) 'forwardedFromMessageId': forwardedFromMessageId,
+        'createdAt': createdAt,
+      },
+    };
+    
+    final result = await _client.mutate(
+      ChatMutations.sendMessage,
+      variables: variables,
+    );
+    
+    final data = result['data']?['chatMessageAdd'] as Map<String, dynamic>?;
+    if (data == null) {
       throw Exception('Failed to send message');
     }
-
-    return MessageModel.fromMap(messageData);
+    
+    return MessageDto.fromJson(data);
+  }
+  
+  @override
+  Future<MessageDto> editMessage({
+    required String messageId,
+    required String act,
+    String? message,
+  }) async {
+    final variables = <String, dynamic>{
+      'arguments': {
+        'messageId': messageId,
+        'act': act,
+        if (message != null) 'message': message,
+      },
+    };
+    
+    final result = await _client.mutate(
+      ChatMutations.editMessage,
+      variables: variables,
+    );
+    
+    final data = result['data']?['chatMessageEdit'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to edit message');
+    }
+    
+    return MessageDto.fromJson(data);
+  }
+  
+  @override
+  Future<String> markAsRead({
+    required String conversationId,
+    required int readCount,
+  }) async {
+    final variables = <String, dynamic>{
+      'arguments': {
+        'conversationId': conversationId,
+        'readCount': readCount,
+      },
+    };
+    
+    final result = await _client.mutate(
+      ChatMutations.markAsRead,
+      variables: variables,
+    );
+    
+    final data = result['data']?['chatMessageUpdateRead'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to mark as read');
+    }
+    
+    return data['conversationId'] as String;
+  }
+  
+  @override
+  Future<MessageDto> updateReaction({
+    required String messageId,
+    required String code,
+    required String act,
+  }) async {
+    final variables = <String, dynamic>{
+      'arguments': {
+        'messageId': messageId,
+        'code': code,
+        'act': act,
+      },
+    };
+    
+    final result = await _client.mutate(
+      ChatMutations.updateReaction,
+      variables: variables,
+    );
+    
+    final data = result['data']?['chatMessageUpdateReaction'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to update reaction');
+    }
+    
+    return MessageDto.fromJson(data);
+  }
+  
+  @override
+  Future<Map<String, dynamic>> deleteHistory(String conversationId) async {
+    final variables = <String, dynamic>{
+      'arguments': {
+        'conversationId': conversationId,
+      },
+    };
+    
+    final result = await _client.mutate(
+      ChatMutations.deleteHistory,
+      variables: variables,
+    );
+    
+    final data = result['data']?['chatMessageDeleteHistory'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to delete history');
+    }
+    
+    return data;
+  }
+  
+  @override
+  Future<List<MessageDto>> searchMessages({
+    required String keyword,
+    List<String>? conversationIds,
+    List<String>? senderIds,
+    List<String>? messageTypes,
+    int? from,
+    int? to,
+    int page = 0,
+    int size = 100,
+  }) async {
+    final variables = <String, dynamic>{
+      'filters': {
+        'keyword': keyword,
+        if (conversationIds != null) 'conversationIds': conversationIds,
+        if (senderIds != null) 'senderIds': senderIds,
+        if (messageTypes != null) 'messageTypes': messageTypes,
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
+        'page': page,
+        'size': size,
+      },
+    };
+    
+    final result = await _client.query(
+      ChatQueries.searchMessages,
+      variables: variables,
+    );
+    
+    final data = result['data']?['chatSearch'] as List<dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to search messages');
+    }
+    
+    return data.map((json) => MessageDto.fromJson(json as Map<String, dynamic>)).toList();
+  }
+  
+  @override
+  Stream<ChatDto> subscribeToChats() {
+    _socketManager.connect();
+    
+    return _socketManager
+        .on<Map<String, dynamic>>('chat_updated')
+        .map((data) => ChatDto.fromJson(data));
   }
 }
