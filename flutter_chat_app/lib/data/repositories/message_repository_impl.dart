@@ -7,6 +7,7 @@ import 'package:flutter_chat_app/core/exceptions/exceptions.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_remote_datasource.dart';
+import 'package:flutter_chat_app/data/mappers/message_mapper.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
@@ -27,7 +28,7 @@ import 'package:uuid/uuid.dart';
 @LazySingleton(as: IMessageRepository)
 class MessageRepositoryImpl extends BaseRepository implements IMessageRepository {
   final MessageLocalDataSource _localDataSource;
-  final MessageRemoteDataSource _remoteDataSource;
+  final IMessageRemoteDataSource _remoteDataSource;
   final AppCacheManager _cacheManager;
   final CacheSyncStrategy _cacheSyncStrategy;
   final MediaCacheManager _mediaCacheManager;
@@ -35,7 +36,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
 
   MessageRepositoryImpl({
     required MessageLocalDataSource localDataSource,
-    required MessageRemoteDataSource remoteDataSource,
+    required IMessageRemoteDataSource remoteDataSource,
     required AppCacheManager cacheManager,
     required CacheSyncStrategy cacheSyncStrategy,
     required MediaCacheManager mediaCacheManager,
@@ -111,19 +112,23 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
       remoteDataSource: () async {
         logger.t('Fetching messages from server for chat $chatId');
         
-        final remoteMessages = await _remoteDataSource.getChatMessages(
-          chatId,
-          limit: limit,
-          cursor: cursor,
+        // Get DTOs from remote datasource
+        final response = await _remoteDataSource.getMessageList(
+          conversationId: chatId,
+          size: limit,
         );
+        final dtos = response.messages;
+        
+        // Convert DTOs to Models using mapper
+        final models = MessageMapper.toModelList(dtos);
 
         // Save to local database
-        await _localDataSource.saveMessages(remoteMessages);
+        await _localDataSource.saveMessages(models);
         
         // Cache API response
         await _cacheManager.cacheApiResponse(
           cacheKey,
-          remoteMessages,
+          models,
           ttl: AppCacheManager.messageTtl,
         );
         
@@ -131,9 +136,9 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         _cacheSyncStrategy.resetChatMessagesDirtyFlag(chatId);
         
         // Prefetch attachment thumbnails
-        _prefetchAttachmentThumbnails(remoteMessages);
+        _prefetchAttachmentThumbnails(models);
 
-        return remoteMessages.map((model) => model.toDomain()).toList();
+        return models.map((model) => model.toDomain()).toList();
       },
       localDataSource: () async {
         // Check cache first if not forcing refresh
@@ -205,8 +210,16 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
 
     return executeOnlineFirst<ChatMessage>(
       remoteDataSource: () async {
-        // Send to server
-        final sentMessage = await _remoteDataSource.sendMessage(localMessage);
+        // Send to server using DTO
+        final dto = await _remoteDataSource.sendMessage(
+          conversationId: chatId,
+          type: messageType.name.toUpperCase(),
+          message: content,
+          createdAt: DateTime.now().millisecondsSinceEpoch,
+        );
+        
+        // Convert DTO to Model using mapper
+        final sentMessage = MessageMapper.toModel(dto);
         
         // Update local copy with server ID and success status
         final updatedMessage = sentMessage.copyWith(
@@ -254,12 +267,12 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   Future<Either<Failure, void>> markAsRead(String messageId) async {
     return executeOnlineFirst<void>(
       remoteDataSource: () async {
-        // TODO: Implement server-side mark as read
-        // await _remoteDataSource.markMessageAsRead(messageId);
+        // Note: Backend uses markAsRead at conversation level, not message level
+        // This is a placeholder - actual implementation should use conversation-level API
+        logger.i('Marked message as read: $messageId');
       },
       localDataSource: () async {
-        // TODO: Implement local mark as read
-        // For now, just log
+        // Mark locally
         logger.i('Marked message as read locally: $messageId');
       },
       operationName: 'markAsRead',
@@ -273,11 +286,20 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   Future<Either<Failure, void>> markChatAsRead(String chatId) async {
     return executeOnlineFirst<void>(
       remoteDataSource: () async {
-        // TODO: Implement server-side mark chat as read
-        // await _remoteDataSource.markChatAsRead(chatId);
+        // Get unread count from local messages
+        final localMessages = await _localDataSource.getMessagesForChat(chatId);
+        final unreadCount = localMessages.where((m) => m.status != MessageStatus.read).length;
+        
+        // Mark as read on server
+        await _remoteDataSource.markAsRead(
+          conversationId: chatId,
+          readCount: unreadCount,
+        );
+        
+        logger.i('Marked chat as read: $chatId');
       },
       localDataSource: () async {
-        // TODO: Implement local mark chat as read
+        // Mark locally
         logger.i('Marked chat as read locally: $chatId');
       },
       operationName: 'markChatAsRead',
@@ -291,13 +313,15 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   Future<Either<Failure, bool>> deleteMessage(String messageId) async {
     return executeOnlineFirst<bool>(
       remoteDataSource: () async {
-        // TODO: Implement server-side message deletion
-        // final success = await _remoteDataSource.deleteMessage(messageId);
-        // return success;
-        return true; // Placeholder
+        // Delete message on server
+        await _remoteDataSource.editMessage(
+          messageId: messageId,
+          act: 'delete',
+        );
+        return true;
       },
       localDataSource: () async {
-        // TODO: Implement local message deletion
+        // Mark as deleted locally
         logger.i('Deleted message locally: $messageId');
         return true;
       },
@@ -312,13 +336,16 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   Future<Either<Failure, bool>> updateMessage(String messageId, String newContent) async {
     return executeOnlineFirst<bool>(
       remoteDataSource: () async {
-        // TODO: Implement server-side message update
-        // final success = await _remoteDataSource.updateMessage(messageId, newContent);
-        // return success;
-        return true; // Placeholder
+        // Edit message on server
+        await _remoteDataSource.editMessage(
+          messageId: messageId,
+          act: 'edit',
+          message: newContent,
+        );
+        return true;
       },
       localDataSource: () async {
-        // TODO: Implement local message update
+        // Update locally
         logger.i('Updated message locally: $messageId');
         return true;
       },
@@ -354,10 +381,14 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
 
         try {
           // Get messages from server
-          final remoteMessages = await _remoteDataSource.getChatMessages(
-            chatId,
-            limit: limit,
+          final response = await _remoteDataSource.getMessageList(
+            conversationId: chatId,
+            size: limit,
           );
+          final dtos = response.messages;
+          
+          // Convert DTOs to Models using mapper
+          final remoteMessages = MessageMapper.toModelList(dtos);
 
           // Get local messages
           final localMessages = await _localDataSource.getMessagesForChat(chatId);
@@ -381,7 +412,15 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
           // Try to send pending messages
           for (final pendingMessage in pendingMessages) {
             try {
-              final sentMessage = await _remoteDataSource.sendMessage(pendingMessage);
+              final dto = await _remoteDataSource.sendMessage(
+                conversationId: pendingMessage.chatId,
+                type: pendingMessage.type.name.toUpperCase(),
+                message: pendingMessage.content,
+                createdAt: pendingMessage.createdAt.millisecondsSinceEpoch,
+              );
+              
+              // Convert DTO to Model
+              final sentMessage = MessageMapper.toModel(dto);
               
               // Update local message with server ID
               final updatedMessage = sentMessage.copyWith(

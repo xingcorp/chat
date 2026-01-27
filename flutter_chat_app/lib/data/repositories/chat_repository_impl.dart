@@ -5,6 +5,8 @@ import 'package:flutter_chat_app/core/network/graphql_client.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/data/datasources/chat/chat_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/chat/chat_remote_datasource.dart';
+import 'package:flutter_chat_app/data/datasources/auth/auth_local_datasource.dart';
+import 'package:flutter_chat_app/data/mappers/chat_mapper.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
@@ -26,13 +28,15 @@ import 'package:injectable/injectable.dart';
 @LazySingleton(as: IChatRepository)
 class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
   final ChatLocalDataSource _localDataSource;
-  final ChatRemoteDataSource _remoteDataSource;
+  final IChatRemoteDataSource _remoteDataSource;
+  final IAuthLocalDataSource _authLocalDataSource;
   final GraphQLClientWrapper _graphQLClient;
 
   /// Constructor with enterprise dependencies
   ChatRepositoryImpl(
     this._localDataSource,
     this._remoteDataSource,
+    this._authLocalDataSource,
     this._graphQLClient, {
     required super.networkInfo,
     required super.logger,
@@ -50,8 +54,19 @@ class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
         return localChats; // Already Chat entities
       },
       remoteDataSource: () async {
-        final remoteChatModels = await _remoteDataSource.getUserChats();
-        return remoteChatModels.map((model) => model.toDomain()).toList();
+        // Get current user ID for mapper
+        final currentUser = await _authLocalDataSource.getCurrentUser();
+        final currentUserId = currentUser?.id ?? '';
+        
+        // Get DTOs from remote datasource
+        final response = await _remoteDataSource.getConversationList();
+        final dtos = response.conversations;
+        
+        // Convert DTOs to Models using mapper
+        final models = ChatMapper.toModelList(dtos, currentUserId);
+        
+        // Convert Models to Domain entities
+        return models.map((model) => model.toDomain()).toList();
       },
       cacheData: (chats) async {
         // Save chats to local storage
@@ -67,8 +82,18 @@ class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
   Future<Either<Failure, Chat?>> getChatById(String chatId) async {
     return executeOnlineFirst<Chat?>(
       remoteDataSource: () async {
-        final remoteChatModel = await _remoteDataSource.getChatDetails(chatId);
-        return remoteChatModel.toDomain();
+        // Get current user ID for mapper
+        final currentUser = await _authLocalDataSource.getCurrentUser();
+        final currentUserId = currentUser?.id ?? '';
+        
+        // Get DTO from remote datasource
+        final dto = await _remoteDataSource.getConversationDetail(chatId);
+        
+        // Convert DTO to Model using mapper
+        final model = ChatMapper.toModel(dto, currentUserId);
+        
+        // Convert Model to Domain entity
+        return model.toDomain();
       },
       localDataSource: () async {
         final localChat = await _localDataSource.getChatById(chatId);
@@ -112,20 +137,36 @@ class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
   }) async {
     return executeRemoteOnly<Chat>(
       remoteDataSource: () async {
-        final ChatModel result;
+        // Get current user ID for mapper
+        final currentUser = await _authLocalDataSource.getCurrentUser();
+        final currentUserId = currentUser?.id ?? '';
 
         if (isGroup) {
-          result = await _remoteDataSource.createGroupChat(name, participantIds);
+          // Create group chat
+          final dto = await _remoteDataSource.createGroup(
+            name: name,
+            memberIds: participantIds,
+          );
+          
+          // Convert DTO to Model using mapper
+          final model = ChatMapper.toModel(dto, currentUserId);
+          
+          // Convert Model to Domain entity
+          return model.toDomain();
         } else {
+          // Direct chats are not created via API, they exist when first message is sent
           if (participantIds.length != 1) {
             throw core_exceptions.InvalidArgumentException(
               message: 'Direct chats must have exactly one participant'
             );
           }
-          result = await _remoteDataSource.createDirectChat(participantIds.first);
+          
+          // For direct chats, we create a local placeholder
+          // The actual conversation will be created when first message is sent
+          throw core_exceptions.InvalidArgumentException(
+            message: 'Direct chats are created automatically when sending first message'
+          );
         }
-
-        return result.toDomain();
       },
       cacheData: (chat) async {
         // Save new chat to local storage
@@ -143,13 +184,22 @@ class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
   }) async {
     return executeRemoteOnly<Chat>(
       remoteDataSource: () async {
-        final result = await _remoteDataSource.updateChat(
-          chatId,
+        // Get current user ID for mapper
+        final currentUser = await _authLocalDataSource.getCurrentUser();
+        final currentUserId = currentUser?.id ?? '';
+        
+        // Update group via remote datasource
+        final dto = await _remoteDataSource.updateGroup(
+          conversationId: chatId,
           name: name,
-          avatarUrl: avatarUrl,
+          imageUrl: avatarUrl,
         );
-
-        return result.toDomain();
+        
+        // Convert DTO to Model using mapper
+        final model = ChatMapper.toModel(dto, currentUserId);
+        
+        // Convert Model to Domain entity
+        return model.toDomain();
       },
       cacheData: (chat) async {
         // Save updated chat to local storage
@@ -166,7 +216,12 @@ class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
   }) async {
     return executeRemoteOnly<bool>(
       remoteDataSource: () async {
-        return await _remoteDataSource.addUsersToChat(chatId, userIds);
+        // Add members to group
+        await _remoteDataSource.addMembersToGroup(
+          conversationId: chatId,
+          memberIds: userIds,
+        );
+        return true;
       },
       cacheData: (success) async {
         if (success) {
@@ -184,11 +239,18 @@ class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
       syncOperation: () async {
         logger.d('Starting chat synchronization for chat: $chatId');
 
+        // Get current user ID for mapper
+        final currentUser = await _authLocalDataSource.getCurrentUser();
+        final currentUserId = currentUser?.id ?? '';
+
         // Get latest chat data from remote
-        final remoteChatModel = await _remoteDataSource.getChatDetails(chatId);
+        final dto = await _remoteDataSource.getConversationDetail(chatId);
+        
+        // Convert DTO to Model using mapper
+        final model = ChatMapper.toModel(dto, currentUserId);
 
         // Update local cache
-        await _localDataSource.saveChat(remoteChatModel.toDomain());
+        await _localDataSource.saveChat(model.toDomain());
 
         logger.i('Chat synchronization completed for chat: $chatId');
       },
@@ -203,8 +265,12 @@ class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
   }) async {
     return executeRemoteOnly<bool>(
       remoteDataSource: () async {
-        // TODO: Implement proper participant removal in remote data source
-        return await _remoteDataSource.removeUsersFromChat(chatId, userIds);
+        // Remove members from group
+        await _remoteDataSource.removeMembersFromGroup(
+          conversationId: chatId,
+          memberIds: userIds,
+        );
+        return true;
       },
       cacheData: (success) async {
         if (success) {
@@ -220,8 +286,9 @@ class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
   Future<Either<Failure, bool>> leaveChat(String chatId) async {
     return executeRemoteOnly<bool>(
       remoteDataSource: () async {
-        // TODO: Implement proper chat leaving in remote data source
-        return await _remoteDataSource.leaveChat(chatId);
+        // Leave conversation
+        await _remoteDataSource.leaveConversation(chatId);
+        return true;
       },
       cacheData: (success) async {
         if (success) {
@@ -237,8 +304,9 @@ class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
   Future<Either<Failure, bool>> deleteChat(String chatId) async {
     return executeRemoteOnly<bool>(
       remoteDataSource: () async {
-        // TODO: Implement proper chat deletion in remote data source
-        return await _remoteDataSource.deleteChat(chatId);
+        // Delete conversation
+        await _remoteDataSource.deleteConversation(chatId);
+        return true;
       },
       cacheData: (success) async {
         if (success) {
@@ -268,8 +336,22 @@ class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
         return await _localDataSource.searchChats(searchTerm, limit: limit);
       },
       remoteDataSource: () async {
-        // TODO: Implement remote search when available
-        return <Chat>[];
+        // Get current user ID for mapper
+        final currentUser = await _authLocalDataSource.getCurrentUser();
+        final currentUserId = currentUser?.id ?? '';
+        
+        // Search conversations via remote datasource
+        final response = await _remoteDataSource.searchConversations(
+          keyword: searchTerm,
+          limit: limit,
+        );
+        final dtos = response.conversations;
+        
+        // Convert DTOs to Models using mapper
+        final models = ChatMapper.toModelList(dtos, currentUserId);
+        
+        // Convert Models to Domain entities
+        return models.map((model) => model.toDomain()).toList();
       },
       cacheData: (chats) async {
         // Cache search results
@@ -285,9 +367,11 @@ class ChatRepositoryImpl extends BaseRepository implements IChatRepository {
   Future<Either<Failure, ChatMessage>> sendMessage(ChatMessage message) async {
     return executeOnlineFirst<ChatMessage>(
       remoteDataSource: () async {
-        // Send message via remote datasource (expects ChatMessage, returns MessageModel)
-        final sentMessageModel = await _remoteDataSource.sendMessage(message);
-        return ChatMessage.fromJson(sentMessageModel.toMap());
+        // Note: Message sending is handled by MessageRepository
+        // This method is kept for backward compatibility
+        throw core_exceptions.InvalidArgumentException(
+          message: 'Use MessageRepository.sendMessage() instead'
+        );
       },
       localDataSource: () async {
         // Save message locally with pending status
