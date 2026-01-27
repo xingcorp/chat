@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Domain Layer Guard",
+  "description": "Enforce strict domain layer rules - no Flutter or infrastructure dependencies",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/domain/**/*.dart"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "🚨 CRITICAL: Domain Layer Validation\n\nThis is a DOMAIN layer file. Enforce these STRICT rules:\n\n**FORBIDDEN IMPORTS:**\n❌ package:flutter (Material, Widget, BuildContext, etc.)\n❌ Infrastructure: http, dio, sqflite, isar, socket_io_client\n❌ Data models from lib/data/models\n❌ Presentation layer imports\n❌ Any UI-related packages\n\n**ALLOWED IMPORTS:**\n✅ dart:core, dart:async\n✅ package:equatable\n✅ package:dartz (Either, Left, Right)\n✅ Other domain layer files\n✅ Core error/failure classes\n\n**REQUIRED PATTERNS:**\n✅ Repository interfaces (abstract class)\n✅ Entities (pure business objects)\n✅ Use cases (single responsibility)\n✅ Either<Failure, T> return types\n\n**CHECK:**\n1. Scan all imports\n2. Verify no implementation details\n3. Check return types use Either<Failure, T>\n4. Ensure entities are pure (no JSON, no DB annotations)\n\nIf violations found, report with line numbers and suggest fixes immediately."
+  }
+}

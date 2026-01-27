@@ -3,10 +3,11 @@
 // Tuân thủ Single Responsibility Principle
 
 import 'package:injectable/injectable.dart';
-import '../entities/permission_entity.dart';
-import '../repositories/permissions_repository.dart';
-import '../../core/error/failures.dart';
-import '../../core/usecases/usecase.dart';
+import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/usecases/usecase.dart';
+import 'package:flutter_chat_app/core/utils/result.dart';
+import 'package:flutter_chat_app/domain/entities/permission_entity.dart';
+import 'package:flutter_chat_app/domain/repositories/permissions_repository.dart';
 
 /// Parameters cho RequestPermissionUseCase
 class RequestPermissionParams {
@@ -41,7 +42,7 @@ class RequestPermissionUseCase
   final PermissionsRepository _repository;
 
   @override
-  Future<Either<Failure, PermissionEntity>> call(
+  Future<Result<PermissionEntity>> call(
     RequestPermissionParams params,
   ) async {
     try {
@@ -50,12 +51,12 @@ class RequestPermissionUseCase
       
       // 2. Nếu đã được cấp, return ngay
       if (currentPermission.isGranted) {
-        return Right(currentPermission);
+        return Result.success(currentPermission);
       }
       
       // 3. Kiểm tra có thể request không
       if (!params.forceRequest && !currentPermission.canRequest) {
-        return Left(PermissionFailure(
+        return Result.failure(PermissionFailure(
           type: params.type,
           reason: _getFailureReason(currentPermission.status),
           message: _getFailureMessage(params.type, currentPermission.status),
@@ -65,7 +66,7 @@ class RequestPermissionUseCase
       // 4. Kiểm tra platform support
       final isSupported = await _repository.isPermissionSupported(params.type);
       if (!isSupported) {
-        return Left(PermissionFailure(
+        return Result.failure(PermissionFailure(
           type: params.type,
           reason: PermissionFailureReason.notSupported,
           message: 'Permission ${params.type.name} không được hỗ trợ trên platform này',
@@ -75,7 +76,7 @@ class RequestPermissionUseCase
       // 5. Kiểm tra enterprise policy restrictions
       final isRestricted = await _repository.isPermissionRestrictedByPolicy(params.type);
       if (isRestricted) {
-        return Left(PermissionFailure(
+        return Result.failure(PermissionFailure(
           type: params.type,
           reason: PermissionFailureReason.restrictedByPolicy,
           message: 'Permission ${params.type.name} bị hạn chế bởi enterprise policy',
@@ -86,7 +87,7 @@ class RequestPermissionUseCase
       if (params.showRationale && currentPermission.shouldShowRationale) {
         final shouldContinue = await _showRationale(params.type, params.context);
         if (!shouldContinue) {
-          return Left(PermissionFailure(
+          return Result.failure(PermissionFailure(
             type: params.type,
             reason: PermissionFailureReason.userCancelled,
             message: 'User đã hủy permission request',
@@ -105,9 +106,9 @@ class RequestPermissionUseCase
       
       // 9. Xử lý kết quả
       if (result.isGranted) {
-        return Right(result);
+        return Result.success(result);
       } else {
-        return Left(PermissionFailure(
+        return Result.failure(PermissionFailure(
           type: params.type,
           reason: _getFailureReason(result.status),
           message: _getFailureMessage(params.type, result.status),
@@ -115,7 +116,7 @@ class RequestPermissionUseCase
       }
       
     } catch (e) {
-      return Left(PermissionFailure(
+      return Result.failure(PermissionFailure(
         type: params.type,
         reason: PermissionFailureReason.unknown,
         message: 'Lỗi không xác định khi request permission: $e',
@@ -198,12 +199,20 @@ class PermissionFailure extends Failure {
   const PermissionFailure({
     required this.type,
     required this.reason,
-    required this.message,
+    required super.message,
   });
 
   final PermissionType type;
   final PermissionFailureReason reason;
-  final String message;
+
+  @override
+  String get userMessage => 'Lỗi quyền ${type.name}: $message';
+
+  @override
+  String get category => 'permission';
+
+  @override
+  bool get isRecoverable => reason != PermissionFailureReason.notSupported;
 
   @override
   List<Object?> get props => [type, reason, message];

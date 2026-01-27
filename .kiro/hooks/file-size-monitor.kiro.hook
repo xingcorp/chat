@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "File Size Monitor",
+  "description": "Monitor file size and suggest splitting large files",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/**/*.dart",
+      "src/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check file size and complexity:\n\n**FILE SIZE LIMITS:**\n- ⚠️ Warning: >400 lines\n- 🚨 Critical: >600 lines\n- 💀 Unacceptable: >800 lines\n\n**COUNT:**\n1. Total lines\n2. Code lines (excluding comments/blank)\n3. Number of classes/functions\n4. Cyclomatic complexity (if high)\n\n**IF FILE TOO LARGE, SUGGEST SPLITTING:**\n\n**For Flutter Widgets:**\n```dart\n// Before: 500-line ChatPage\nclass ChatPage extends StatefulWidget { ... }\n\n// After: Split into components\nlib/presentation/pages/chat/\n  ├── chat_page.dart (main page, ~100 lines)\n  ├── widgets/\n  │   ├── chat_app_bar.dart\n  │   ├── message_list.dart\n  │   ├── message_input.dart\n  │   └── chat_actions.dart\n```\n\n**For BLoCs:**\n```dart\n// If BLoC >400 lines, consider:\n1. Split into multiple BLoCs (by feature)\n2. Extract event handlers to separate methods\n3. Move business logic to use cases\n```\n\n**For Repositories:**\n```dart\n// If repository >400 lines:\n1. Split by entity (UserRepository, ProfileRepository)\n2. Extract data source logic\n3. Move transformations to mappers\n```\n\n**For Services:**\n```dart\n// If service >400 lines:\n1. Split by responsibility (SRP)\n2. Extract helper methods to utilities\n3. Consider facade pattern\n```\n\n**For NestJS Services:**\n```typescript\n// If service >400 lines:\n1. Split into multiple services\n2. Extract business logic to domain layer\n3. Use helper services\n```\n\n**REFACTORING SUGGESTIONS:**\n1. Identify logical boundaries\n2. Suggest file structure\n3. Show how to split while maintaining functionality\n4. Update imports and dependencies\n5. Ensure tests still pass\n\n**BENEFITS OF SMALLER FILES:**\n- Easier to understand\n- Easier to test\n- Better reusability\n- Faster compilation\n- Better git diffs\n- Easier code review\n\nIf file >400 lines, provide detailed refactoring plan."
+  }
+}

@@ -2,16 +2,20 @@
 // Enterprise-grade permissions onboarding với progressive disclosure
 // Tuân thủ Material Design 3 và accessibility guidelines
 
+// Flutter imports
 import 'package:flutter/material.dart';
+
+// Third-party package imports
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
-import '../../../domain/entities/permission_entity.dart';
-import '../../blocs/permissions/permissions_bloc.dart';
-import '../../widgets/permissions/permission_card_widget.dart';
-import '../../widgets/permissions/permission_rationale_widget.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/utils/app_localizations.dart';
+
+// App imports
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+import 'package:flutter_chat_app/core/utils/app_localizations.dart';
+import 'package:flutter_chat_app/domain/entities/permission_entity.dart';
+import 'package:flutter_chat_app/presentation/blocs/permissions/permissions_bloc.dart';
+import 'package:flutter_chat_app/presentation/widgets/permissions/permission_card_widget.dart';
 
 class PermissionsOnboardingPage extends StatefulWidget {
   const PermissionsOnboardingPage({super.key});

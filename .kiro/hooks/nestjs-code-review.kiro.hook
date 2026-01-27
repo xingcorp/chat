@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "NestJS Code Review",
+  "description": "Review NestJS backend code for best practices and patterns",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "src/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review this NestJS code change and check for:\n\n**Architecture & Patterns:**\n- Proper module organization\n- Dependency injection with @Injectable()\n- GraphQL-first approach with decorators\n- Repository pattern usage\n\n**Code Quality:**\n- Use path aliases (@common, @modules, @models, etc.)\n- Proper TypeScript types (avoid any)\n- Input validation with class-validator\n- Proper error handling\n\n**GraphQL:**\n- @ObjectType, @InputType, @Field decorators\n- Proper resolver structure\n- Query/Mutation naming conventions\n\n**Best Practices:**\n- Use Logger service (not console.log)\n- Async/await patterns\n- Proper transaction handling\n- Security considerations\n\nProvide specific suggestions with code examples if violations found."
+  }
+}

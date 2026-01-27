@@ -108,9 +108,11 @@ class MobilePermissionsDataSource implements PermissionsDataSource {
   Future<bool> openAppSettings() async {
     try {
       if (Platform.isAndroid) {
-        return await AppSettings.openAppSettings();
+        await AppSettings.openAppSettings();
+        return true;
       } else if (Platform.isIOS) {
-        return await AppSettings.openAppSettings();
+        await AppSettings.openAppSettings();
+        return true;
       }
       return false;
     } catch (e) {
@@ -219,8 +221,6 @@ class MobilePermissionsDataSource implements PermissionsDataSource {
         return PermissionStatus.limited;
       case ph.PermissionStatus.provisional:
         return PermissionStatus.limited;
-      default:
-        return PermissionStatus.unknown;
     }
   }
 

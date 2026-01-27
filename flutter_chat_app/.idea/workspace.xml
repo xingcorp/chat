@@ -3,11 +3,31 @@
   <component name="AndroidGradleBuildConfiguration">
     <option name="COMMAND_LINE_OPTIONS" value="--debug and --stacktrace" />
   </component>
+  <component name="AndroidLayouts">
+    <shared>
+      <config />
+    </shared>
+  </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix 4" />
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix 6">
+      <change beforePath="$PROJECT_DIR$/.dart_tool/dartpad/web_plugin_registrant.dart" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/dartpad/web_plugin_registrant.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/permissions_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/permissions_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/theme/app_text_styles.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/theme/app_text_styles.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/datasources/permissions_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/permissions_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/repositories/permissions_repository_impl.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/permissions_repository_impl.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/domain/usecases/request_permission_usecase.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/domain/usecases/request_permission_usecase.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main_desktop.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_desktop.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main_web_simple.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_web_simple.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/pages/permissions/permissions_onboarding_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/pages/permissions/permissions_onboarding_page.dart" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -23,9 +43,6 @@
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
-  </component>
-  <component name="GithubDefaultAccount">
-    <option name="defaultAccountId" value="60f1d662-d4ec-45e3-9f7d-648f320a8846" />
   </component>
   <component name="GradleLocalSettings">
     <option name="projectSyncType">
@@ -131,6 +148,15 @@
       <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
       <option name="VM_PARAMETERS" />
     </configuration>
+    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType">
+      <module name="" />
+      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
+      <option name="PROGRAM_PARAMETERS" />
+      <predefined_log_file enabled="true" id="idea.log" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration default="true" type="Application" factoryName="Application">
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <method v="2">
@@ -162,15 +188,6 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType">
-      <module name="" />
-      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
-      <option name="PROGRAM_PARAMETERS" />
-      <predefined_log_file enabled="true" id="idea.log" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <list>
       <item itemvalue="Flutter.main.dart" />
       <item itemvalue="Flutter.main_web" />
@@ -187,22 +204,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00009" summary="refactor: enhance GraphQL client and subscription handling; improve message processing and service initialization">
-      <option name="closed" value="true" />
-      <created>1743591016635</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1743591016643</updated>
-    </task>
-    <task id="LOCAL-00010" summary="fix: update version number and improve code consistency across various files">
-      <option name="closed" value="true" />
-      <created>1744788984788</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1744788984788</updated>
     </task>
     <task id="LOCAL-00011" summary="feat: enhance performance monitoring and animation handling with new configurations and optimizations">
       <option name="closed" value="true" />
@@ -580,7 +581,23 @@
       <option name="project" value="LOCAL" />
       <updated>1753348886755</updated>
     </task>
-    <option name="localTasksCounter" value="58" />
+    <task id="LOCAL-00058" summary="fix 5">
+      <option name="closed" value="true" />
+      <created>1753769858010</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1753769858010</updated>
+    </task>
+    <task id="LOCAL-00059" summary="fix 6">
+      <option name="closed" value="true" />
+      <created>1753852148810</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1753852148810</updated>
+    </task>
+    <option name="localTasksCounter" value="60" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -693,8 +710,6 @@
     <MESSAGE value="fix bug 9" />
     <MESSAGE value="fix bug 10" />
     <MESSAGE value="done bug" />
-    <MESSAGE value="fix 5" />
-    <MESSAGE value="fix 6" />
     <MESSAGE value="fix sua nhieu" />
     <MESSAGE value="fix sua nhieu 1" />
     <MESSAGE value="fix sua nhieu 2" />
@@ -702,7 +717,9 @@
     <MESSAGE value="fix 2" />
     <MESSAGE value="fix 3" />
     <MESSAGE value="fix 4" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix 4" />
+    <MESSAGE value="fix 5" />
+    <MESSAGE value="fix 6" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix 6" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

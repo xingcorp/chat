@@ -1,0 +1,16 @@
+{
+  "title": "Auto-Update Tests",
+  "description": "Automatically update test files when source code changes to maintain test coverage",
+  "enabled": true,
+  "trigger": {
+    "type": "onFileSave",
+    "filePatterns": [
+      "flutter_chat_app/lib/domain/**/*.dart",
+      "flutter_chat_app/lib/data/**/*.dart"
+    ]
+  },
+  "action": {
+    "type": "agentPrompt",
+    "prompt": "Review the changes in this file and update the corresponding test file in the test/ directory to maintain comprehensive test coverage. Follow the existing test patterns using bloc_test and mocktail. Ensure all new functionality is tested with proper arrange-act-assert structure."
+  }
+}

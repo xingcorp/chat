@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Flutter Code Review",
+  "description": "Review Flutter code changes for best practices, performance, and architecture compliance",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/**/*.dart"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review this Flutter code change and check for:\n\n**Architecture & Patterns:**\n- Clean Architecture layer separation (domain/data/presentation)\n- Proper use of BLoC pattern with Either<Failure, T>\n- Dependency injection with @injectable annotations\n\n**Code Quality:**\n- Use const constructors where possible\n- Package imports (not relative imports)\n- Single quotes for strings\n- Type annotations for public APIs\n- Proper null safety (avoid ! operator)\n\n**Performance:**\n- Avoid unnecessary rebuilds\n- Use const widgets\n- Proper disposal of resources\n\n**Best Practices:**\n- Use Logger instead of print()\n- Localization for UI strings (context.l10n)\n- Max 400 lines per file\n- Proper error handling\n\nProvide specific suggestions with code examples if violations found."
+  }
+}

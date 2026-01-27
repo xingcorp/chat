@@ -1,0 +1,60 @@
+<!-- STAGING FLAVOR ANDROID MANIFEST -->
+<!-- Staging-specific configuration cho OXII Chat STG -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <!-- Staging-specific permissions -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+                     android:maxSdkVersion="28" />
+    
+    <!-- Development tools permissions -->
+    <uses-permission android:name="android.permission.DUMP" />
+    <uses-permission android:name="android.permission.READ_LOGS" />
+    
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher_staging"
+        android:roundIcon="@mipmap/ic_launcher_staging_round"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:networkSecurityConfig="@xml/network_security_config_staging"
+        android:usesCleartextTraffic="true"
+        android:debuggable="true">
+        
+        <!-- Staging-specific metadata -->
+        <meta-data
+            android:name="com.oxii.chat.ENVIRONMENT"
+            android:value="staging" />
+            
+        <meta-data
+            android:name="com.oxii.chat.API_BASE_URL"
+            android:value="https://api-staging.oxii.chat" />
+            
+        <meta-data
+            android:name="com.oxii.chat.ENABLE_DEBUG_TOOLS"
+            android:value="true" />
+            
+        <!-- Firebase Messaging Service -->
+        <service
+            android:name="com.oxii.chat.firebase.StagingMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        
+        <!-- Staging notification channels -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="@string/notification_channel_id" />
+            
+        <!-- Staging app shortcuts -->
+        <meta-data
+            android:name="android.app.shortcuts"
+            android:resource="@xml/shortcuts_staging" />
+            
+    </application>
+    
+</manifest>

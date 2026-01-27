@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "GraphQL Pattern Validator",
+  "description": "Validate NestJS GraphQL resolvers and types follow best practices",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "src/models/resolvers/**/*.ts",
+      "src/modules/graphql/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Validate this GraphQL code:\n\n**OBJECT TYPE PATTERN:**\n```typescript\n@ObjectType()\nexport class User {\n  @Field(() => ID)\n  id: string;\n  \n  @Field()\n  email: string;\n  \n  @Field({ nullable: true })\n  displayName?: string;\n}\n```\n\n**INPUT TYPE PATTERN:**\n```typescript\n@InputType()\nexport class CreateUserInput {\n  @Field()\n  @IsEmail()\n  email: string;\n  \n  @Field()\n  @MinLength(8)\n  password: string;\n}\n```\n\n**RESOLVER PATTERN:**\n```typescript\n@Resolver(() => User)\nexport class UserResolver {\n  constructor(private readonly userService: UserService) {}\n  \n  @Query(() => User)\n  async user(@Args('id') id: string): Promise<User> {\n    return this.userService.findById(id);\n  }\n  \n  @Mutation(() => User)\n  async createUser(@Args('input') input: CreateUserInput): Promise<User> {\n    return this.userService.create(input);\n  }\n}\n```\n\n**CHECK FOR:**\n✅ Proper decorators (@ObjectType, @Field, @Query, @Mutation)\n✅ Input validation (class-validator decorators)\n✅ Dependency injection in constructor\n✅ Async/await for database operations\n✅ Proper error handling\n✅ Type safety (no any)\n\n❌ Missing @Field decorators\n❌ No input validation\n❌ Synchronous database calls\n❌ Exposing sensitive data\n❌ Missing error handling\n❌ Direct database access (should use service)\n\n**NAMING CONVENTIONS:**\n- Queries: getUser, listUsers, findUserById\n- Mutations: createUser, updateUser, deleteUser\n- Subscriptions: onUserCreated, userUpdated\n\nReport violations and suggest fixes."
+  }
+}

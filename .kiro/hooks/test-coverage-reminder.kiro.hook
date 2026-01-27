@@ -1,0 +1,20 @@
+{
+  "enabled": true,
+  "name": "Test Coverage Reminder",
+  "description": "Remind to update tests when business logic changes",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/domain/usecases/**/*.dart",
+      "flutter_chat_app/lib/data/repositories/**/*.dart",
+      "flutter_chat_app/lib/presentation/bloc/**/*.dart",
+      "src/modules/**/**.service.ts",
+      "src/modules/**/**.resolver.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check if tests need updating for this change:\n\n**FLUTTER TEST STRUCTURE:**\n```\nlib/domain/usecases/get_user.dart\n  → test/domain/usecases/get_user_test.dart\n\nlib/data/repositories/user_repository_impl.dart\n  → test/data/repositories/user_repository_impl_test.dart\n\nlib/presentation/bloc/auth/auth_bloc.dart\n  → test/presentation/bloc/auth/auth_bloc_test.dart\n```\n\n**REQUIRED TESTS:**\n\n**Use Case Tests:**\n- Success case\n- Failure cases (each failure type)\n- Edge cases\n- Input validation\n\n**Repository Tests:**\n- Network connectivity check\n- Remote data source success\n- Remote data source failures\n- Cache operations\n- Error mapping\n\n**BLoC Tests (using bloc_test):**\n- Each event → expected states\n- Error handling\n- Loading states\n- Success states\n\n**NESTJS TEST STRUCTURE:**\n```\nsrc/modules/user/user.service.ts\n  → src/modules/user/user.service.spec.ts\n\nsrc/modules/user/user.resolver.ts\n  → src/modules/user/user.resolver.spec.ts\n```\n\n**ACTION:**\n1. Check if corresponding test file exists\n2. If not, suggest creating it\n3. If exists, suggest what test cases to add/update\n4. Provide test code template\n\n**PATTERNS:**\n- Use mocktail for Flutter mocks\n- Use bloc_test for BLoC testing\n- Use @nestjs/testing for NestJS\n- Follow AAA pattern (Arrange-Act-Assert)\n\nSuggest specific test cases needed for this change."
+  }
+}

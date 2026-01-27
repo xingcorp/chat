@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "BLoC Pattern Validator",
+  "description": "Validate BLoC implementation follows best practices with Freezed and proper state management",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/presentation/bloc/**/*.dart",
+      "flutter_chat_app/lib/presentation/blocs/**/*.dart"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Validate this BLoC implementation:\n\n**Event Design:**\n- Uses @freezed for immutable events\n- Clear naming (e.g., LoginRequested, LogoutRequested)\n- Required parameters marked properly\n\n**State Design:**\n- Uses @freezed for immutable states\n- Includes: initial, loading, success, error states\n- Error state has Failure object and retry action\n- Loading state has optional operation name\n\n**BLoC Implementation:**\n- Extends Bloc<Event, State>\n- Uses @injectable for DI\n- Proper event handlers with Emitter<State>\n- Uses Either<Failure, T> from repositories\n- Proper error handling with fold()\n- Cleanup in close() method if needed\n\n**Common Issues:**\n- Missing const constructors\n- Not disposing StreamSubscriptions\n- Direct state mutation\n- Missing error handling\n- Not using repository interfaces\n\nReport violations and suggest fixes."
+  }
+}

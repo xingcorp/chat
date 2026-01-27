@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Offline-First Validator",
+  "description": "Validate offline-first patterns in repositories and services",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/data/repositories/**/*.dart",
+      "flutter_chat_app/lib/core/services/**/*sync*.dart",
+      "flutter_chat_app/lib/core/offline/**/*.dart"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Validate offline-first implementation:\n\n**OFFLINE-FIRST PATTERN:**\n```dart\n@override\nFuture<Either<Failure, List<Message>>> getMessages(String chatId) async {\n  try {\n    // 1. Always try cache first (instant response)\n    final cachedMessages = await _localDataSource.getMessages(chatId);\n    \n    // 2. Return cached data immediately\n    if (cachedMessages.isNotEmpty) {\n      // Start background sync\n      _syncInBackground(chatId);\n      return Right(cachedMessages.map((m) => m.toEntity()).toList());\n    }\n    \n    // 3. If cache empty, check network\n    if (!await _networkInfo.isConnected) {\n      return const Left(NetworkFailure(\n        message: 'No cached data and no internet connection',\n      ));\n    }\n    \n    // 4. Fetch from remote\n    final remoteMessages = await _remoteDataSource.getMessages(chatId);\n    \n    // 5. Update cache\n    await _localDataSource.cacheMessages(remoteMessages);\n    \n    // 6. Return fresh data\n    return Right(remoteMessages.map((m) => m.toEntity()).toList());\n    \n  } on CacheException catch (e) {\n    // Cache failed, try remote\n    return _fetchFromRemote(chatId);\n  } on ServerException catch (e) {\n    return Left(ServerFailure(message: e.message));\n  }\n}\n```\n\n**WRITE OPERATIONS (Queue Pattern):**\n```dart\n@override\nFuture<Either<Failure, Message>> sendMessage(Message message) async {\n  try {\n    // 1. Save to local DB immediately (optimistic update)\n    final localMessage = message.copyWith(\n      status: MessageStatus.pending,\n      localId: uuid.v4(),\n    );\n    await _localDataSource.saveMessage(localMessage);\n    \n    // 2. Add to sync queue\n    await _syncQueue.enqueue(localMessage);\n    \n    // 3. Try to send if online\n    if (await _networkInfo.isConnected) {\n      try {\n        final sentMessage = await _remoteDataSource.sendMessage(message);\n        await _localDataSource.updateMessage(sentMessage);\n        await _syncQueue.markComplete(localMessage.localId);\n        return Right(sentMessage.toEntity());\n      } catch (e) {\n        // Will retry from queue later\n      }\n    }\n    \n    // 4. Return local message (will sync later)\n    return Right(localMessage.toEntity());\n    \n  } catch (e) {\n    return Left(UnexpectedFailure(message: '$e'));\n  }\n}\n```\n\n**CHECK FOR:**\n✅ Cache-first strategy\n✅ Network connectivity check\n✅ Background sync mechanism\n✅ Optimistic updates for writes\n✅ Sync queue for failed operations\n✅ Conflict resolution strategy\n\n❌ Network-first (defeats offline-first)\n❌ No caching layer\n❌ Blocking on network calls\n❌ No queue for failed writes\n❌ No retry mechanism\n\n**REQUIRED COMPONENTS:**\n- INetworkInfo (connectivity check)\n- Local data source (Isar/SQLite)\n- Remote data source (API)\n- Sync queue service\n- Background sync worker\n\nReport violations and suggest proper offline-first implementation."
+  }
+}

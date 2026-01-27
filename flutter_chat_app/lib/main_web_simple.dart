@@ -2,6 +2,7 @@
 ///
 /// Simplified web entry point without Isar database
 /// Focuses on theme and i18n enterprise features for web platform
+library;
 ///
 /// **Features:**
 /// - Enterprise theme system
@@ -9,19 +10,23 @@
 /// - Web-optimized performance
 /// - No database dependencies
 
+// Flutter imports
 import 'package:flutter/material.dart';
+
+// Third-party package imports
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'core/storage/local_storage.dart';
-import 'core/theme/app_theme.dart';
-import 'generated/l10n/app_localizations.dart';
-import 'l10n/l10n.dart';
-import 'presentation/blocs/locale/locale_cubit.dart';
-import 'presentation/blocs/theme/theme_cubit.dart';
-import 'presentation/pages/home/web_home_screen.dart';
+// App imports
+import 'package:flutter_chat_app/core/storage/local_storage.dart';
+import 'package:flutter_chat_app/core/theme/app_theme.dart';
+import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
+import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
+import 'package:flutter_chat_app/presentation/pages/home/web_home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "Dependency Injection Validator",
+  "description": "Validate proper DI usage in Flutter (Injectable) and NestJS",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/data/repositories/**/*.dart",
+      "flutter_chat_app/lib/data/datasources/**/*.dart",
+      "flutter_chat_app/lib/presentation/bloc/**/*.dart",
+      "flutter_chat_app/lib/core/services/**/*.dart",
+      "src/modules/**/*.service.ts",
+      "src/modules/**/*.resolver.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Validate Dependency Injection implementation:\n\n**FLUTTER (Injectable/GetIt):**\n\n**Repository Implementation:**\n```dart\n@LazySingleton(as: IAuthRepository)\nclass AuthRepositoryImpl implements IAuthRepository {\n  final IAuthRemoteDataSource _remoteDataSource;\n  final IAuthLocalDataSource _localDataSource;\n  \n  AuthRepositoryImpl({\n    required IAuthRemoteDataSource remoteDataSource,\n    required IAuthLocalDataSource localDataSource,\n  }) : _remoteDataSource = remoteDataSource,\n       _localDataSource = localDataSource;\n}\n```\n\n**BLoC:**\n```dart\n@injectable\nclass AuthBloc extends Bloc<AuthEvent, AuthState> {\n  final IAuthRepository _repository;\n  \n  AuthBloc({required IAuthRepository repository})\n      : _repository = repository,\n        super(const AuthState.initial());\n}\n```\n\n**Service:**\n```dart\n@singleton\nclass LoggerService {\n  // Singleton service\n}\n```\n\n**NESTJS:**\n```typescript\n@Injectable()\nexport class UserService {\n  constructor(\n    private readonly userRepo: UserRepository,\n    private readonly logger: LoggerService,\n  ) {}\n}\n```\n\n**CHECK FOR:**\n\n**Flutter:**\n✅ @injectable, @singleton, or @lazySingleton annotation\n✅ Constructor injection (not getIt.get() in code)\n✅ Interface binding (as: IRepository)\n✅ Private fields with underscore\n✅ Named parameters in constructor\n\n❌ Direct instantiation (new ClassName())\n❌ getIt.get() calls in business logic\n❌ Missing DI annotations\n❌ Circular dependencies\n❌ Singleton abuse (use lazySingleton)\n\n**NestJS:**\n✅ @Injectable() decorator\n✅ Constructor injection\n✅ Private readonly fields\n✅ Proper module registration\n\n❌ Direct instantiation\n❌ Missing @Injectable()\n❌ Not registered in module providers\n❌ Circular dependencies\n\n**SCOPES:**\n- @singleton: Created once, lives forever\n- @lazySingleton: Created on first use\n- @injectable: New instance each time\n\nReport violations and suggest proper DI setup."
+  }
+}

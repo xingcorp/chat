@@ -138,24 +138,23 @@ class PermissionsService {
         ),
       );
       
-      return result.fold(
-        (failure) {
-          _logger.warning('Permission request failed: ${failure.message}');
-          _trackPermissionRequestFailure(type, failure);
-          return PermissionRequestResult.failure(failure);
-        },
-        (permission) {
-          _logger.info('Permission request successful: ${type.name}');
-          
-          // Cập nhật cache
-          _permissionCache[type] = permission;
-          
-          // Track success
-          _trackPermissionRequestSuccess(permission);
-          
-          return PermissionRequestResult.success(permission);
-        },
-      );
+      if (result.isSuccess) {
+        final permission = result.valueOrNull!;
+        _logger.info('Permission request successful: ${type.name}');
+
+        // Cập nhật cache
+        _permissionCache[type] = permission;
+
+        // Track success
+        _trackPermissionRequestSuccess(permission);
+
+        return PermissionRequestResult.success(permission);
+      } else {
+        final failure = result.failureOrNull!;
+        _logger.warning('Permission request failed: ${failure.message}');
+        _trackPermissionRequestFailure(type, failure);
+        return PermissionRequestResult.failure(failure);
+      }
       
     } catch (e) {
       _logger.error('Unexpected error requesting permission ${type.name}: $e');
@@ -272,7 +271,7 @@ class PermissionsService {
   Future<PermissionStatusSummary> getPermissionSummary() async {
     await _ensureInitialized();
     
-    final allTypes = PermissionType.values;
+    const allTypes = PermissionType.values;
     final results = await _repository.checkPermissions(allTypes);
     
     final granted = <PermissionType>[];

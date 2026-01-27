@@ -94,8 +94,30 @@ class AppTextStyles {
         height: height,
       );
 
-  // Body styles
-  static TextStyle bodyLarge({
+  // Body styles - Getters for direct use
+  static TextStyle get bodyLarge => TextStyle(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.normal,
+        color: AppColors.textPrimary,
+        height: 1.5,
+      );
+
+  static TextStyle get bodyMedium => TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.normal,
+        color: AppColors.textPrimary,
+        height: 1.4,
+      );
+
+  static TextStyle get bodySmall => TextStyle(
+        fontSize: 12.sp,
+        fontWeight: FontWeight.normal,
+        color: AppColors.textSecondary,
+        height: 1.4,
+      );
+
+  // Body styles - Functions for customization
+  static TextStyle bodyLargeCustom({
     Color? color,
     FontWeight? fontWeight,
     TextDecoration? decoration,
@@ -109,7 +131,7 @@ class AppTextStyles {
         height: height ?? 1.5,
       );
 
-  static TextStyle bodyMedium({
+  static TextStyle bodyMediumCustom({
     Color? color,
     FontWeight? fontWeight,
     TextDecoration? decoration,
@@ -123,7 +145,7 @@ class AppTextStyles {
         height: height ?? 1.4,
       );
 
-  static TextStyle bodySmall({
+  static TextStyle bodySmallCustom({
     Color? color,
     FontWeight? fontWeight,
     TextDecoration? decoration,
@@ -174,6 +196,28 @@ class AppTextStyles {
         fontWeight: fontWeight ?? FontWeight.w600,
         color: color ?? AppColors.textButton,
         decoration: decoration,
+        letterSpacing: 0.5,
+      );
+
+  // Button styles - Getters for direct use
+  static TextStyle get buttonLargeStyle => TextStyle(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textButton,
+        letterSpacing: 0.5,
+      );
+
+  static TextStyle get buttonMediumStyle => TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textButton,
+        letterSpacing: 0.5,
+      );
+
+  static TextStyle get buttonSmallStyle => TextStyle(
+        fontSize: 12.sp,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textButton,
         letterSpacing: 0.5,
       );
 

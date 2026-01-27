@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Localization Enforcer",
+  "description": "Detect hardcoded UI strings and enforce localization usage",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/presentation/**/*.dart"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check for hardcoded UI strings in this presentation layer file:\n\n**SCAN FOR:**\n- Text('...') with hardcoded strings\n- SnackBar/Dialog messages\n- Button labels\n- Error messages shown to users\n- Placeholder text\n- Validation messages\n\n**ALLOWED HARDCODED:**\n✅ Technical constants (API keys, cache keys)\n✅ Log messages (logger.info('...'))\n✅ Developer-only strings\n✅ Empty strings Text('')\n\n**REQUIRED PATTERN:**\n❌ Text('Welcome to app')\n✅ Text(context.l10n.welcomeMessage)\n\n❌ 'Error occurred'\n✅ context.l10n.errorGeneric\n\n**ACTION:**\nIf hardcoded UI strings found:\n1. List each violation with line number\n2. Suggest the localization key name\n3. Show how to add to app_en.arb and app_vi.arb\n4. Provide corrected code\n\nNote: This is for RTL support and internationalization."
+  }
+}

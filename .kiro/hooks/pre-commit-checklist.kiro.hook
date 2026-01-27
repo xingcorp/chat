@@ -1,0 +1,12 @@
+{
+  "title": "Pre-Commit Checklist",
+  "description": "Run all checks before committing code",
+  "enabled": true,
+  "trigger": {
+    "type": "manual"
+  },
+  "action": {
+    "type": "agentPrompt",
+    "prompt": "Run the following pre-commit checks in flutter_chat_app and report results:\n\n1. **Flutter Analyze**: Run 'flutter analyze' and report any errors or warnings\n2. **Tests**: Run 'flutter test' and report pass/fail status\n3. **Print Statements**: Search for print() statements in lib/ (should use Logger instead)\n4. **Hardcoded Strings**: Check for hardcoded UI strings (should use localization)\n5. **Relative Imports**: Check for relative imports like '../../' (should use package imports)\n6. **Null Assertions**: Check for null assertion operator '!' usage\n7. **Layer Separation**: Verify no Flutter imports in domain layer\n\nProvide a summary checklist with ✓ or ✗ for each item."
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Pre-Commit Validation",
+  "description": "Comprehensive pre-commit checklist - run before committing code",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "🚀 PRE-COMMIT VALIDATION CHECKLIST\n\nRun comprehensive checks before committing:\n\n**1. FLUTTER ANALYSIS**\n```bash\ncd flutter_chat_app\nflutter analyze\n```\nReport: Errors, Warnings, Info\n\n**2. FLUTTER TESTS**\n```bash\ncd flutter_chat_app\nflutter test\n```\nReport: Pass/Fail count, Coverage %\n\n**3. CODE QUALITY CHECKS**\n\n**Print Statements:**\n```bash\ngrep -r \"print(\" flutter_chat_app/lib/ --include=\"*.dart\"\n```\n❌ Should use Logger instead\n\n**Hardcoded Strings:**\n```bash\ngrep -r \"Text('\" flutter_chat_app/lib/presentation/ --include=\"*.dart\"\n```\n⚠️ Check if UI strings need localization\n\n**Relative Imports:**\n```bash\ngrep -r \"import '\\.\\.\" flutter_chat_app/lib/ --include=\"*.dart\"\n```\n❌ Should use package imports\n\n**Null Assertions:**\n```bash\ngrep -r \"!\" flutter_chat_app/lib/ --include=\"*.dart\" | grep -v \"!=\" | grep -v \"//\"\n```\n⚠️ Review null assertion operator usage\n\n**4. ARCHITECTURE VALIDATION**\n\n**Domain Layer Purity:**\n```bash\ngrep -r \"package:flutter\" flutter_chat_app/lib/domain/ --include=\"*.dart\"\n```\n❌ CRITICAL: Domain must not import Flutter\n\n**5. CODE GENERATION**\nCheck if generated files are up to date:\n- *.g.dart files\n- *.freezed.dart files\n- Localization files\n\n**6. NESTJS CHECKS (if backend changed)**\n```bash\nnpm run lint\nnpm run test\n```\n\n**7. GIT STATUS**\n```bash\ngit status\n```\nList modified files and check for:\n- Untracked files that should be committed\n- Files that should be in .gitignore\n- Large files (>1MB)\n\n**OUTPUT FORMAT:**\n```\n✅ Flutter Analyze: PASSED (0 errors, 2 warnings)\n✅ Flutter Tests: PASSED (45/45 tests, 87% coverage)\n❌ Print Statements: FOUND 3 instances\n   - lib/presentation/pages/chat_page.dart:45\n   - lib/core/services/auth_service.dart:123\n⚠️ Hardcoded Strings: FOUND 5 instances (review needed)\n✅ Relative Imports: NONE FOUND\n⚠️ Null Assertions: FOUND 2 instances (review needed)\n✅ Domain Layer: CLEAN (no Flutter imports)\n✅ Code Generation: UP TO DATE\n✅ Git Status: CLEAN\n\n📊 OVERALL: READY TO COMMIT (2 warnings to review)\n```\n\nProvide actionable recommendations for any issues found."
+  }
+}

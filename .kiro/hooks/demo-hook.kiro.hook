@@ -1,0 +1,17 @@
+{
+  "enabled": false,
+  "name": "Demo Hook",
+  "description": "A demonstration hook that triggers when TypeScript or Dart files are edited and asks the agent to review the changes",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "*.ts",
+      "*.dart"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review the changes I just made to this file and provide suggestions for improvements based on the project's architecture and coding standards."
+  }
+}

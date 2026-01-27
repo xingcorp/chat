@@ -3,6 +3,8 @@ plugins {
     id "kotlin-android"
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
+    // Firebase Google Services plugin for multi-flavor support
+    id "com.google.gms.google-services"
 }
 
 android {
@@ -22,14 +24,71 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // Base application configuration
         applicationId = "com.oxii.chat"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Enterprise messaging app configuration
+        multiDexEnabled true
+        vectorDrawables.useSupportLibrary = true
+
+        // Default build config fields
+        buildConfigField "String", "FLAVOR", '"production"'
+        buildConfigField "String", "API_BASE_URL", '"https://api.oxii.chat"'
+        buildConfigField "String", "WEBSOCKET_URL", '"wss://ws.oxii.chat"'
+        buildConfigField "boolean", "ENABLE_LOGGING", "false"
+    }
+
+    // **ENTERPRISE FLAVOR CONFIGURATION**
+    flavorDimensions "environment"
+
+    productFlavors {
+        staging {
+            dimension "environment"
+            applicationIdSuffix ".staging"
+            versionNameSuffix "-staging"
+
+            // Staging-specific configuration
+            buildConfigField "String", "FLAVOR", '"staging"'
+            buildConfigField "String", "API_BASE_URL", '"https://api-staging.oxii.chat"'
+            buildConfigField "String", "WEBSOCKET_URL", '"wss://ws-staging.oxii.chat"'
+            buildConfigField "boolean", "ENABLE_LOGGING", "true"
+            buildConfigField "boolean", "ENABLE_MOCK_DATA", "true"
+            buildConfigField "boolean", "ENABLE_DEBUG_TOOLS", "true"
+
+            // Staging app name
+            resValue "string", "app_name", "OXII Chat STG"
+
+            // Staging notification channel
+            resValue "string", "notification_channel_id", "oxii_chat_staging_notifications"
+
+            // Staging Firebase configuration
+            resValue "string", "firebase_project_id", "oxii-chat-staging"
+        }
+
+        production {
+            dimension "environment"
+
+            // Production configuration
+            buildConfigField "String", "FLAVOR", '"production"'
+            buildConfigField "String", "API_BASE_URL", '"https://api.oxii.chat"'
+            buildConfigField "String", "WEBSOCKET_URL", '"wss://ws.oxii.chat"'
+            buildConfigField "boolean", "ENABLE_LOGGING", "false"
+            buildConfigField "boolean", "ENABLE_MOCK_DATA", "false"
+            buildConfigField "boolean", "ENABLE_DEBUG_TOOLS", "false"
+
+            // Production app name
+            resValue "string", "app_name", "OXII Chat"
+
+            // Production notification channel
+            resValue "string", "notification_channel_id", "oxii_chat_notifications"
+
+            // Production Firebase configuration
+            resValue "string", "firebase_project_id", "oxii-chat-prod"
+        }
     }
 
     buildTypes {

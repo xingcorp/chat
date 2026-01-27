@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Repository Pattern Validator",
+  "description": "Validate repository implementations follow Clean Architecture patterns",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/data/repositories/**/*.dart"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Validate this repository implementation:\n\n**REQUIRED STRUCTURE:**\n✅ Implements interface from domain/repositories\n✅ Uses @LazySingleton(as: IRepositoryInterface)\n✅ Injects data sources via constructor\n✅ Returns Either<Failure, T> for all methods\n\n**ERROR HANDLING PATTERN:**\n```dart\ntry {\n  // Check network if needed\n  if (!await _networkInfo.isConnected) {\n    return const Left(NetworkFailure());\n  }\n  \n  // Call remote data source\n  final result = await _remoteDataSource.method();\n  \n  // Cache if needed\n  await _localDataSource.cache(result);\n  \n  // Return success\n  return Right(result.toEntity());\n  \n} on ServerException catch (e) {\n  return Left(ServerFailure(message: e.message));\n} on NetworkException catch (e) {\n  return Left(NetworkFailure(message: e.message));\n} on CacheException catch (e) {\n  return Left(CacheFailure(message: e.message));\n} catch (e) {\n  return Left(UnexpectedFailure(message: '$e'));\n}\n```\n\n**CHECK FOR:**\n❌ Throwing exceptions (should return Left(Failure))\n❌ Returning null (should return Either)\n❌ Direct model usage (should convert to entity)\n❌ Business logic (belongs in use cases)\n❌ UI logic (belongs in presentation)\n❌ Missing error handling\n❌ Not checking network connectivity\n\n**OFFLINE-FIRST PATTERN:**\n1. Try cache first\n2. If cache miss, check network\n3. Fetch from remote\n4. Update cache\n5. Return result\n\nReport violations and suggest proper implementation."
+  }
+}

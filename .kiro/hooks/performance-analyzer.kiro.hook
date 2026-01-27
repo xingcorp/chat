@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Performance Analyzer",
+  "description": "Analyze code for performance issues and suggest optimizations",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/presentation/widgets/**/*.dart",
+      "flutter_chat_app/lib/presentation/pages/**/*.dart",
+      "flutter_chat_app/lib/presentation/screens/**/*.dart"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Analyze this UI code for performance issues:\n\n**WIDGET OPTIMIZATION:**\n- Missing const constructors (major performance impact)\n- Unnecessary StatefulWidget (could be StatelessWidget)\n- Build method too complex (extract widgets)\n- Creating widgets in build() instead of const\n\n**LIST PERFORMANCE:**\n- ListView without itemExtent or prototypeItem\n- Missing keys in list items\n- Not using ListView.builder for long lists\n- Heavy computations in itemBuilder\n\n**STATE MANAGEMENT:**\n- Unnecessary rebuilds (use BlocSelector)\n- Missing buildWhen in BlocBuilder\n- setState() rebuilding entire widget tree\n- Not disposing controllers/subscriptions\n\n**MEMORY LEAKS:**\n- StreamSubscription not cancelled\n- Controllers not disposed\n- Listeners not removed\n- Timer not cancelled\n\n**EXPENSIVE OPERATIONS:**\n- Synchronous file I/O in build()\n- Heavy computations in build()\n- Image loading without caching\n- Unnecessary animations\n\n**TARGETS:**\n- 60fps rendering\n- <150MB memory usage\n- <2s startup time\n\nReport issues with severity (Critical/High/Medium/Low) and provide optimized code examples."
+  }
+}

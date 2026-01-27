@@ -61,33 +61,86 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 // App imports - Upgrade
 import 'package:flutter_chat_app/core/upgrade_services.dart';
 
+// App imports - Flavor Configuration
+import 'package:flutter_chat_app/core/config/flavor_config.dart';
+import 'package:flutter_chat_app/core/config/environment_manager.dart';
+import 'package:flutter_chat_app/core/config/firebase_config.dart';
+import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
+
 // Import home screens from respective platform files
 import 'package:flutter_chat_app/presentation/pages/home/web_home_screen.dart';
 import 'package:flutter_chat_app/main_mobile.dart' show MobileHomeScreen;
 import 'package:flutter_chat_app/main_desktop.dart' show DesktopHomeScreen;
 
+/// **MAIN ENTRY POINT - ENTERPRISE FLUTTER CHAT APP**
+///
+/// Production-ready chat application với enterprise-grade architecture:
+/// - Clean Architecture + SOLID principles
+/// - BLoC state management
+/// - Offline-first với Isar database
+/// - Real-time messaging
+/// - Comprehensive error handling
+/// - Performance optimization
+/// - Multi-platform support
+/// - Multi-flavor support (staging/production)
+///
+/// **Performance Targets:**
+/// - Startup time: <2s
+/// - Memory usage: <150MB
+/// - Message delivery: <100ms
+/// - 60fps UI rendering
+///
+/// **Author:** Senior Flutter/Mobile Architect
+
+/// Main function - Entry point của ứng dụng
+/// Sử dụng default flavor (staging) nếu không được specify
 Future<void> main() async {
+  // Initialize default flavor if not already set
+  if (!FlavorConfig.isInitialized) {
+    FlavorConfig.initializeFromEnvironment();
+  }
+
+  await runMainApp();
+}
+
+/// Run main app với flavor configuration
+Future<void> runMainApp() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Initialize environment manager
+  final logger = AppLogger();
+  final environmentManager = EnvironmentManager(logger);
+  await environmentManager.initialize();
+
+  // Print environment info in debug mode
+  environmentManager.printEnvironmentInfo();
+
   // Thiết lập hướng màn hình và màu theme cho status bar
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
-  // Cấu hình SystemUI
+
+  // Cấu hình SystemUI với flavor-specific colors
+  final flavorColors = FlavorUtils.getFlavorColors();
   SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.white,
+    SystemUiOverlayStyle(
+      statusBarColor: Color(flavorColors['primary'] as int).withValues(alpha: 0.8),
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Color(flavorColors['background'] as int),
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
   
   try {
-    // Khởi tạo Firebase
-    await Firebase.initializeApp();
+    // Khởi tạo Firebase services với flavor-specific configuration
+    final firebaseServiceManager = FirebaseServiceManager(logger);
+    await firebaseServiceManager.initializeServices();
+
+    // Log Firebase configuration summary
+    final configSummary = firebaseServiceManager.getConfigurationSummary();
+    logger.info('Firebase configuration: $configSummary');
+
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
   }

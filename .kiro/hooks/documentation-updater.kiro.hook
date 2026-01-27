@@ -1,0 +1,20 @@
+{
+  "enabled": true,
+  "name": "Documentation Updater",
+  "description": "Remind to update documentation when public APIs change",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/domain/repositories/**/*.dart",
+      "flutter_chat_app/lib/domain/usecases/**/*.dart",
+      "flutter_chat_app/lib/core/services/**/*.dart",
+      "src/modules/**/**.resolver.ts",
+      "src/modules/**/**.service.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check if documentation needs updating:\n\n**SCAN FOR PUBLIC API CHANGES:**\n- New public classes\n- New public methods\n- Changed method signatures\n- New parameters\n- Changed return types\n- Deprecated methods\n\n**DART DOCUMENTATION PATTERN:**\n```dart\n/// Repository for managing user authentication.\n///\n/// Provides methods to login, logout, and check authentication status.\n/// All methods return [Either<Failure, T>] for proper error handling.\n///\n/// Example:\n/// ```dart\n/// final result = await authRepository.login(email, password);\n/// result.fold(\n///   (failure) => print('Error: ${failure.message}'),\n///   (user) => print('Logged in: ${user.email}'),\n/// );\n/// ```\nabstract class IAuthRepository {\n  /// Authenticates user with [email] and [password].\n  ///\n  /// Returns [User] on success, or [Failure] on error:\n  /// - [NetworkFailure] if no internet connection\n  /// - [ServerFailure] if server error or invalid credentials\n  /// - [ValidationFailure] if email/password format invalid\n  ///\n  /// Throws: Never throws, always returns [Either]\n  Future<Either<Failure, User>> login(String email, String password);\n}\n```\n\n**TYPESCRIPT DOCUMENTATION PATTERN:**\n```typescript\n/**\n * Service for managing user operations.\n *\n * Handles user CRUD operations, authentication, and profile management.\n * All methods are async and return Promises.\n *\n * @example\n * ```typescript\n * const user = await userService.findById('123');\n * ```\n */\n@Injectable()\nexport class UserService {\n  /**\n   * Finds a user by their unique ID.\n   *\n   * @param id - The unique user identifier\n   * @returns Promise resolving to User entity\n   * @throws {NotFoundException} If user not found\n   * @throws {DatabaseException} If database error occurs\n   */\n  async findById(id: string): Promise<User> {\n    // Implementation\n  }\n}\n```\n\n**CHECK FOR:**\n❌ Missing doc comments on public APIs\n❌ Outdated documentation\n❌ Missing @param, @returns, @throws\n❌ No usage examples\n❌ Unclear descriptions\n\n**DOCUMENTATION FILES TO UPDATE:**\n- README.md (if major feature added)\n- API documentation\n- Architecture docs\n- Migration guides (if breaking changes)\n- CHANGELOG.md\n\n**IF CHANGES FOUND:**\n1. List what documentation is missing/outdated\n2. Suggest doc comments to add\n3. Identify which doc files need updating\n4. Provide documentation templates\n\nRemind: Good documentation is as important as good code!"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "Import Organizer",
+  "description": "Check import organization and suggest proper ordering",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/**/*.dart",
+      "src/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check import organization:\n\n**FLUTTER IMPORT ORDER:**\n```dart\n// 1. Dart SDK imports\nimport 'dart:async';\nimport 'dart:convert';\n\n// 2. Flutter imports\nimport 'package:flutter/material.dart';\nimport 'package:flutter/services.dart';\n\n// 3. Third-party packages (alphabetical)\nimport 'package:bloc/bloc.dart';\nimport 'package:dartz/dartz.dart';\nimport 'package:equatable/equatable.dart';\nimport 'package:injectable/injectable.dart';\n\n// 4. Project imports (alphabetical, use package: not relative)\nimport 'package:flutter_chat_app/core/error/failures.dart';\nimport 'package:flutter_chat_app/domain/entities/user.dart';\nimport 'package:flutter_chat_app/domain/repositories/auth_repository.dart';\n```\n\n**CRITICAL RULES:**\n❌ NEVER use relative imports: import '../../core/error.dart'\n✅ ALWAYS use package imports: import 'package:flutter_chat_app/core/error.dart'\n\n**NESTJS IMPORT ORDER:**\n```typescript\n// 1. Node built-ins\nimport { join } from 'path';\nimport { readFileSync } from 'fs';\n\n// 2. Third-party packages\nimport { Injectable } from '@nestjs/common';\nimport { InjectRepository } from '@nestjs/typeorm';\n\n// 3. Path aliases (alphabetical)\nimport { OfficeUser } from '@models/entities';\nimport { RedisService } from '@core/common/redis.service';\nimport { UserRepository } from '@models/repositories';\n\n// 4. Relative imports (only for same directory)\nimport { UserDto } from './user.dto';\n```\n\n**PATH ALIASES (NestJS):**\n- @common/* → src/common/*\n- @models/* → src/models/*\n- @modules/* → src/modules/*\n- @core/* → src/modules/core/*\n- @services/* → src/services/*\n\n**CHECK FOR:**\n❌ Relative imports in Flutter (../../)\n❌ Unused imports\n❌ Duplicate imports\n❌ Wrong import order\n❌ Missing path aliases in NestJS\n\nSuggest properly organized imports if issues found."
+  }
+}

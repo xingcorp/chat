@@ -1,0 +1,15 @@
+{
+  "title": "Clean Architecture Validator",
+  "description": "Validate layer separation rules in domain layer files",
+  "enabled": true,
+  "trigger": {
+    "type": "onFileSave",
+    "filePatterns": [
+      "flutter_chat_app/lib/domain/**/*.dart"
+    ]
+  },
+  "action": {
+    "type": "agentPrompt",
+    "prompt": "Check this domain layer file for violations of Clean Architecture rules:\n1. No Flutter imports (package:flutter)\n2. No infrastructure imports (http, sqflite, isar, socket_io_client, etc.)\n3. Only domain entities, repository interfaces, and use cases\n4. Use Either<Failure, T> for error handling\n5. No implementation details\n\nReport any violations found with specific line numbers and suggestions for fixing them."
+  }
+}

@@ -2,16 +2,21 @@
 // Concrete implementation của PermissionsRepository
 // Tuân thủ Clean Architecture và Dependency Inversion
 
+// Dart imports
 import 'dart:async';
 import 'dart:convert';
+
+// Third-party package imports
 import 'package:injectable/injectable.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rxdart/rxdart.dart';
-import '../../domain/entities/permission_entity.dart';
-import '../../domain/repositories/permissions_repository.dart';
-import '../datasources/permissions_datasource.dart';
-import '../../core/constants/storage_keys.dart';
-import '../../core/utils/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// App imports
+import 'package:flutter_chat_app/core/constants/storage_keys.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter_chat_app/data/datasources/permissions_datasource.dart';
+import 'package:flutter_chat_app/domain/entities/permission_entity.dart';
+import 'package:flutter_chat_app/domain/repositories/permissions_repository.dart';
 
 @Injectable(as: PermissionsRepository)
 class PermissionsRepositoryImpl implements PermissionsRepository {
@@ -115,7 +120,7 @@ class PermissionsRepositoryImpl implements PermissionsRepository {
       
     } catch (e) {
       _logger.error('Error requesting permission ${type.name}: $e');
-      return await checkPermission(type);
+      return checkPermission(type);
     }
   }
 
@@ -163,11 +168,11 @@ class PermissionsRepositoryImpl implements PermissionsRepository {
     } catch (e) {
       _logger.error('Error requesting permissions batch: $e');
       return PermissionBatchResult(
-        results: {},
+        results: const {},
         allGranted: false,
         criticalGranted: false,
         deniedPermissions: types,
-        permanentlyDeniedPermissions: [],
+        permanentlyDeniedPermissions: const [],
       );
     }
   }
@@ -302,7 +307,7 @@ class PermissionsRepositoryImpl implements PermissionsRepository {
 
   @override
   Future<PermissionEntity> getPermissionInfo(PermissionType type) async {
-    return await checkPermission(type);
+    return checkPermission(type);
   }
 
   @override

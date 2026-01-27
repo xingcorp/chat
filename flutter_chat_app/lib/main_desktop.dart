@@ -1,20 +1,25 @@
+// Dart imports
 import 'dart:async';
 
+// Flutter imports
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
+
+// Third-party package imports
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+
+// App imports
+import 'package:flutter_chat_app/core/constants/app_dimensions.dart';
 import 'package:flutter_chat_app/core/di/enterprise_injection.dart';
+import 'package:flutter_chat_app/core/localization/app_strings.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
-import 'package:uuid/uuid.dart';
 import 'package:flutter_chat_app/main.dart' show MyApp;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_chat_app/core/localization/app_strings.dart';
-import 'package:flutter_chat_app/core/constants/app_dimensions.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -190,20 +195,20 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                 NavigationRail(
                   extended: true,
                   destinations: [
-                    NavigationRailDestination(
+                    const NavigationRailDestination(
                       icon: Icon(Icons.home),
                       label: Text('Home'), // Keep as is - not user-facing
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.chat),
+                      icon: const Icon(Icons.chat),
                       label: Text(AppStrings.chats),
                     ),
-                    NavigationRailDestination(
+                    const NavigationRailDestination(
                       icon: Icon(Icons.people),
                       label: Text('Users'), // Keep as is - not user-facing
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.settings),
+                      icon: const Icon(Icons.settings),
                       label: Text(AppStrings.settings),
                     ),
                   ],
@@ -247,7 +252,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                       
                       Expanded(
                         child: _chats.isEmpty
-                            ? Center(child: Text('Chưa có cuộc trò chuyện nào'))
+                            ? const Center(child: Text('Chưa có cuộc trò chuyện nào'))
                             : ListView.builder(
                                 itemCount: _chats.length,
                                 itemBuilder: (context, index) {
@@ -301,7 +306,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                 // Main content area with messages
                 Expanded(
                   child: _selectedChat == null
-                      ? Center(child: Text('Chọn cuộc trò chuyện để xem tin nhắn'))
+                      ? const Center(child: Text('Chọn cuộc trò chuyện để xem tin nhắn'))
                       : Column(
                           children: [
                             // Chat header
@@ -320,7 +325,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                             // Message list
                             Expanded(
                               child: _messages.isEmpty
-                                  ? Center(child: Text('Chưa có tin nhắn nào'))
+                                  ? const Center(child: Text('Chưa có tin nhắn nào'))
                                   : ListView.builder(
                                       itemCount: _messages.length,
                                       itemBuilder: (context, index) {
@@ -355,7 +360,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                                                   message.createdAt.toString().substring(0, 16),
                                                   style: TextStyle(
                                                     color: isSentByMe
-                                                        ? Colors.white.withOpacity(0.7)
+                                                        ? Colors.white.withValues(alpha: 0.7)
                                                         : Colors.black54,
                                                     fontSize: 10,
                                                   ),

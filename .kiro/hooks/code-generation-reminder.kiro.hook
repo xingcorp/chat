@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "name": "Code Generation Reminder",
+  "description": "Remind to run build_runner when models with code generation annotations are modified",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "flutter_chat_app/lib/data/models/**/*.dart",
+      "flutter_chat_app/lib/domain/entities/**/*.dart",
+      "flutter_chat_app/lib/presentation/bloc/**/*_event.dart",
+      "flutter_chat_app/lib/presentation/bloc/**/*_state.dart"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check if this file needs code generation:\n\n**SCAN FOR ANNOTATIONS:**\n- @freezed (Freezed classes)\n- @JsonSerializable (JSON serialization)\n- @collection (Isar database)\n- @injectable, @singleton, @lazySingleton (Injectable DI)\n\n**IF FOUND:**\n⚠️ Remind to run code generation:\n\n```bash\n# Generate code\ncd flutter_chat_app\ndart run build_runner build --delete-conflicting-outputs\n\n# Or watch mode for auto-generation\ndart run build_runner watch --delete-conflicting-outputs\n```\n\n**ALSO CHECK:**\n- Missing .g.dart or .freezed.dart imports\n- Part directive: part 'filename.g.dart';\n- Part of directive in generated files\n\n**FOR LOCALIZATION FILES:**\nIf .arb files modified, remind:\n```bash\nflutter gen-l10n\n```\n\nProvide clear instructions on what needs to be generated and why."
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "title": "Flutter Analyze on Save",
+  "description": "Run flutter analyze when Dart files are saved to catch errors early",
+  "enabled": true,
+  "trigger": {
+    "type": "onFileSave",
+    "filePatterns": [
+      "flutter_chat_app/lib/**/*.dart"
+    ]
+  },
+  "action": {
+    "type": "agentPrompt",
+    "prompt": "Run flutter analyze in the flutter_chat_app directory and report any errors or warnings found. If there are errors, provide suggestions on how to fix them."
+  }
+}
