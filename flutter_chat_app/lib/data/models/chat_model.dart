@@ -92,7 +92,7 @@ class ChatModel {
     this.metadata,
   });
 
-  /// Create a chat from a map
+  /// Create a chat from a map (legacy format)
   factory ChatModel.fromMap(Map<String, dynamic> map) {
     return ChatModel(
       serverId: map['id'] as String,
@@ -119,7 +119,100 @@ class ChatModel {
     );
   }
 
-  /// Convert chat to a map
+  /// **Create ChatModel from Backend API Response**
+  ///
+  /// Maps backend conversation object to ChatModel.
+  /// Backend uses different field names and structure.
+  ///
+  /// **Backend Fields:**
+  /// - id, name, type, description, imgUrl, groupType
+  /// - createdAt, lastMessageAt, lastMessageId
+  /// - creator { id, fullname, avatarUrl }
+  /// - members[] { id, userId, admin, unreadCount, user {...} }
+  ///
+  /// **Parameters:**
+  /// - map: Backend conversation object
+  /// - currentUserId: Current user's ID to extract unreadCount
+  ///
+  /// **Returns:** ChatModel instance
+  factory ChatModel.fromBackendMap(
+    Map<String, dynamic> map,
+    String currentUserId,
+  ) {
+    // Extract members array
+    final members = (map['members'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    
+    // Extract participant IDs from members
+    final participantIds = members
+        .map((m) => m['userId'] as String?)
+        .whereType<String>()
+        .toList();
+    
+    // Find admin (first member with admin=true)
+    final adminMember = members.firstWhere(
+      (m) => m['admin'] == true,
+      orElse: () => <String, dynamic>{},
+    );
+    final adminId = adminMember['userId'] as String?;
+    
+    // Find current user's member to get unreadCount
+    final currentUserMember = members.firstWhere(
+      (m) => m['userId'] == currentUserId,
+      orElse: () => <String, dynamic>{},
+    );
+    final unreadCount = currentUserMember['unreadCount'] as int? ?? 0;
+    
+    // Parse type
+    final typeStr = (map['type'] as String?)?.toLowerCase() ?? 'direct';
+    final type = ChatType.values.firstWhere(
+      (e) => e.name == typeStr,
+      orElse: () => ChatType.direct,
+    );
+    
+    // Parse timestamps
+    final createdAt = _parseTimestamp(map['createdAt']);
+    final lastMessageTime = _parseTimestamp(map['lastMessageAt']);
+    
+    return ChatModel(
+      serverId: map['id'] as String,
+      name: map['name'] as String?,
+      type: type,
+      lastMessageId: map['lastMessageId'] as String?,
+      lastMessagePreview: null, // Backend doesn't provide preview
+      lastMessageTime: lastMessageTime,
+      unreadCount: unreadCount,
+      participantIds: participantIds,
+      adminId: adminId,
+      avatarUrl: map['imgUrl'] as String?, // Backend uses imgUrl
+      isMuted: false, // Backend doesn't provide this
+      isPinned: false, // Backend doesn't provide this
+      createdAt: createdAt,
+      updatedAt: lastMessageTime,
+      metadata: jsonEncode({
+        'description': map['description'],
+        'groupType': map['groupType'],
+        'creator': map['creator'],
+        'members': members,
+      }),
+    );
+  }
+
+  /// Parse timestamp from backend (milliseconds since epoch or DateTime string)
+  static DateTime _parseTimestamp(dynamic timestamp) {
+    if (timestamp == null) return DateTime.now();
+    
+    if (timestamp is int) {
+      return DateTime.fromMillisecondsSinceEpoch(timestamp);
+    } else if (timestamp is double) {
+      return DateTime.fromMillisecondsSinceEpoch(timestamp.toInt());
+    } else if (timestamp is String) {
+      return DateTime.parse(timestamp);
+    }
+    
+    return DateTime.now();
+  }
+
+  /// Convert chat to a map (legacy format)
   Map<String, dynamic> toMap() {
     return {
       'id': serverId,
@@ -138,6 +231,45 @@ class ChatModel {
       'updatedAt': updatedAt?.toIso8601String(),
       'metadata': metadata,
     };
+  }
+
+  /// **Convert ChatModel to Backend API Format**
+  ///
+  /// Converts ChatModel to format expected by backend mutations.
+  /// Used for creating/updating groups.
+  ///
+  /// **Backend Expected Format:**
+  /// - name: String
+  /// - imgUrl: String (not avatarUrl)
+  /// - description: String
+  /// - groupType: String ("Public" | "Private")
+  /// - memberIds: [String] (not participantIds)
+  ///
+  /// **Parameters:**
+  /// - includeId: Whether to include conversationId (for updates)
+  ///
+  /// **Returns:** Map ready for backend API
+  Map<String, dynamic> toBackendMap({bool includeId = false}) {
+    final metadataMap = metadataMap;
+    
+    final result = <String, dynamic>{
+      'name': name,
+      'imgUrl': avatarUrl, // Backend expects imgUrl
+      'description': metadataMap?['description'] as String?,
+      'groupType': metadataMap?['groupType'] as String? ?? 'Private',
+      'memberIds': participantIds, // Backend expects memberIds
+    };
+    
+    if (includeId) {
+      result['conversationId'] = serverId;
+    }
+    
+    // Add adminIds if updating group
+    if (includeId && adminId != null) {
+      result['adminIds'] = [adminId];
+    }
+    
+    return result;
   }
 
   /// Create a copy of this chat with changed fields
