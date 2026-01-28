@@ -833,4 +833,74 @@ extension DatabaseServiceExtension on DatabaseService {
         ? await (_implementation as WebDatabaseImplementation).deleteUser(id)
         : await (_implementation as NativeDatabaseImplementation).deleteUser(id);
   }
+  
+  /// Get performance statistics
+  Map<String, dynamic> getPerformanceStats() {
+    return {
+      'database_type': kIsWeb ? 'web' : 'native',
+      'is_initialized': _isInitialized,
+      'operation_times': <String, int>{
+        'read': 5,  // Placeholder - would track actual times
+        'write': 8,
+        'query': 12,
+      },
+      'total_operations': 0,  // Placeholder
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+  }
+  
+  /// Perform health check
+  Future<HealthCheckResult> performHealthCheck() async {
+    try {
+      if (!_isInitialized) {
+        return HealthCheckResult(
+          isHealthy: false,
+          message: 'Database not initialized',
+        );
+      }
+      
+      // Try a simple operation to verify database is working
+      await getAllChats();
+      
+      return HealthCheckResult(
+        isHealthy: true,
+        message: 'Database is healthy',
+      );
+    } catch (e) {
+      return HealthCheckResult(
+        isHealthy: false,
+        message: 'Database health check failed: $e',
+      );
+    }
+  }
+  
+  /// Dispose resources
+  Future<void> dispose() async {
+    await close();
+  }
+  
+  /// Get chats (alias for getAllChats for compatibility)
+  Future<List<ChatModel>> getChats() async {
+    return getAllChats();
+  }
+  
+  /// Get messages for chat with limit
+  Future<List<MessageModel>> getMessagesForChat(String chatId, {int? limit}) async {
+    final messages = await _implementation.getMessagesForChat(chatId);
+    if (limit != null && messages.length > limit) {
+      return messages.sublist(0, limit);
+    }
+    return messages;
+  }
+}
+
+/// Health check result
+class HealthCheckResult {
+  final bool isHealthy;
+  final String message;
+  
+  const HealthCheckResult({
+    required this.isHealthy,
+    required this.message,
+  });
 }

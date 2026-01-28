@@ -1,9 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart';
-import 'package:flutter_chat_app/core/database/database_service.dart';
-import 'package:flutter_chat_app/data/models/isar/chat_isar_model.dart';
-import 'package:flutter_chat_app/data/models/isar/chat_message_isar_model.dart';
+import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/data/models/chat_model.dart';
+import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
+import 'package:flutter_chat_app/domain/entities/chat.dart' as domain;
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
 import 'package:injectable/injectable.dart';
@@ -81,6 +82,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   Future<List<Chat>> getChats() async {
     try {
       final chatModels = await _databaseService.getChats();
+      // Convert ChatModel to Chat domain entity using toDomain method
       return chatModels.map((model) => model.toDomain()).toList();
     } catch (e) {
       throw CacheException(message: 'Failed to get chats from database: $e');
@@ -103,23 +105,35 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   @override
   Future<void> saveChat(Chat chat) async {
     try {
-      final chats = await getChats();
+      // Convert Chat domain entity to ChatModel
+      final chatModel = ChatModel(
+        serverId: chat.id,
+        name: chat.name,
+        type: _mapToDataChatType(chat.type),
+        lastMessagePreview: chat.lastMessagePreview,
+        lastMessageTime: chat.lastMessageTime,
+        unreadCount: chat.unreadCount,
+        participantIds: chat.participantIds,
+        avatarUrl: chat.avatarUrl,
+        createdAt: DateTime.now(),
+      );
       
-      // Check if chat already exists
-      final index = chats.indexWhere((c) => c.id == chat.id);
-      
-      if (index >= 0) {
-        // Update existing chat
-        chats[index] = chat;
-      } else {
-        // Add new chat
-        chats.add(chat);
-      }
-      
-      // Save updated list using database service
-      await _databaseService.saveChat(ChatIsarModel.fromDomain(chat));
+      // Save using database service
+      await _databaseService.saveChat(chatModel);
     } catch (e) {
       throw CacheException(message: 'Failed to save chat to local storage: $e');
+    }
+  }
+  
+  /// Map domain ChatType to data ChatType
+  ChatType _mapToDataChatType(domain.ChatType domainType) {
+    switch (domainType) {
+      case domain.ChatType.direct:
+        return ChatType.direct;
+      case domain.ChatType.group:
+        return ChatType.group;
+      case domain.ChatType.channel:
+        return ChatType.channel;
     }
   }
   
@@ -128,7 +142,18 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
     try {
       // Save each chat using database service
       for (final chat in chats) {
-        await _databaseService.saveChat(ChatIsarModel.fromDomain(chat));
+        final chatModel = ChatModel(
+          serverId: chat.id,
+          name: chat.name,
+          type: _mapToDataChatType(chat.type),
+          lastMessagePreview: chat.lastMessagePreview,
+          lastMessageTime: chat.lastMessageTime,
+          unreadCount: chat.unreadCount,
+          participantIds: chat.participantIds,
+          avatarUrl: chat.avatarUrl,
+          createdAt: DateTime.now(),
+        );
+        await _databaseService.saveChat(chatModel);
       }
     } catch (e) {
       throw CacheException(message: 'Failed to save chats to local storage: $e');
@@ -207,36 +232,31 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   @override
   Future<void> saveMessage(String chatId, ChatMessage message, {bool needsSync = false}) async {
     try {
-      final messages = await getChatMessages(chatId);
-      
-      // Check if message already exists
-      final index = messages.indexWhere((m) => m.id == message.id);
-      
-      if (index >= 0) {
-        // Update existing message
-        messages[index] = message;
-      } else {
-        // Add new message
-        messages.add(message);
-      }
+      // Convert ChatMessage domain entity to MessageModel
+      final messageModel = MessageModel(
+        serverId: message.id,
+        localId: message.id,
+        chatId: chatId,
+        senderId: message.sender.id,
+        content: message.content,
+        type: _mapToDataMessageType(message.contentType),
+        status: _mapToDataMessageStatus(message.status),
+        createdAt: message.createdAt,
+        updatedAt: message.updatedAt,
+        readBy: message.readBy,
+      );
       
       // Save updated message using database service
-      await _databaseService.saveMessage(ChatMessageIsarModel.fromDomain(message));
+      await _databaseService.saveMessage(messageModel);
       
       // Update last message in chat
       final chat = await getChatById(chatId);
       if (chat != null) {
-        // Sort messages by created time to find the latest
-        messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        
-        if (messages.isNotEmpty) {
-          final lastMessage = messages.first;
-          final updatedChat = chat.copyWith(
-            lastMessageTime: lastMessage.createdAt,
-            lastMessagePreview: lastMessage.content,
-          );
-          await saveChat(updatedChat);
-        }
+        final updatedChat = chat.copyWith(
+          lastMessageTime: message.createdAt,
+          lastMessagePreview: message.content,
+        );
+        await saveChat(updatedChat);
       }
       
       // TODO: If needsSync is true, we would add to a sync queue in a real implementation
@@ -245,12 +265,52 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
     }
   }
   
+  /// Map domain ContentType to data MessageType
+  MessageType _mapToDataMessageType(ContentType contentType) {
+    switch (contentType) {
+      case ContentType.text:
+        return MessageType.text;
+      case ContentType.image:
+        return MessageType.image;
+      case ContentType.video:
+        return MessageType.video;
+      case ContentType.audio:
+        return MessageType.audio;
+      case ContentType.file:
+        return MessageType.file;
+      case ContentType.location:
+        return MessageType.location;
+      case ContentType.link:
+        return MessageType.contact;
+      case ContentType.event:
+        return MessageType.system;
+    }
+  }
+  
+  /// Map domain MessageStatus to data MessageStatus
+  MessageStatus _mapToDataMessageStatus(MessageStatus domainStatus) {
+    // Both enums have the same values, so we can just return it
+    return domainStatus;
+  }
+  
   @override
   Future<void> saveMessages(String chatId, List<ChatMessage> messages) async {
     try {
       // Save each message using database service
       for (final message in messages) {
-        await _databaseService.saveMessage(ChatMessageIsarModel.fromDomain(message));
+        final messageModel = MessageModel(
+          serverId: message.id,
+          localId: message.id,
+          chatId: chatId,
+          senderId: message.sender.id,
+          content: message.content,
+          type: _mapToDataMessageType(message.contentType),
+          status: _mapToDataMessageStatus(message.status),
+          createdAt: message.createdAt,
+          updatedAt: message.updatedAt,
+          readBy: message.readBy,
+        );
+        await _databaseService.saveMessage(messageModel);
       }
       
       // Update last message in chat
@@ -320,10 +380,10 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   Future<List<ChatMessage>> getChatMessages(String chatId, {int limit = 20, String? before}) async {
     try {
       // Get messages using database service
-      final isarMessages = await _databaseService.getMessagesForChat(chatId, limit: limit);
+      final messageModels = await _databaseService.getMessagesForChat(chatId, limit: limit);
 
-      // Convert to domain entities
-      var messages = isarMessages.map((isarModel) => isarModel.toDomain()).toList();
+      // Convert MessageModel to ChatMessage domain entity using toDomain method
+      var messages = messageModels.map((model) => model.toDomain()).toList();
 
       // Sort by creation time (newest first)
       messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));

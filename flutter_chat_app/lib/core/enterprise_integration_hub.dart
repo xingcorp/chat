@@ -15,21 +15,20 @@
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:injectable/injectable.dart';
 
-import 'package:flutter_chat_app/core/database/database_service.dart';
+import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/enterprise_integration_service.dart';
 
 /// **ENTERPRISE INTEGRATION HUB**
 /// 
 /// Orchestrates all enterprise components for messaging app
+/// Uses Injectable DI for proper dependency management
+@singleton
 class EnterpriseIntegrationHub {
-  static EnterpriseIntegrationHub? _instance;
-  static EnterpriseIntegrationHub get instance => _instance ??= EnterpriseIntegrationHub._();
-  
-  EnterpriseIntegrationHub._();
+  final DatabaseService _database;
   
   // Core components
-  DatabaseService? _database;
   EnterpriseIntegrationService? _integrationService;
   
   // Integration state
@@ -45,6 +44,9 @@ class EnterpriseIntegrationHub {
   final StreamController<Map<String, dynamic>> _systemEventController = StreamController.broadcast();
   final StreamController<Map<String, dynamic>> _performanceEventController = StreamController.broadcast();
   final StreamController<Map<String, dynamic>> _healthEventController = StreamController.broadcast();
+  
+  /// Constructor for dependency injection
+  EnterpriseIntegrationHub(this._database);
   
   /// **Initialize Enterprise Integration Hub**
   /// 
@@ -106,8 +108,7 @@ class EnterpriseIntegrationHub {
     debugPrint('📊 Initializing Enterprise Database...');
     
     try {
-      _database = DatabaseService.instance;
-      await _database!.initialize();
+      await _database.initialize();
       
       _componentStatus['database'] = 'healthy';
       debugPrint('✅ Database initialized successfully');
@@ -124,7 +125,7 @@ class EnterpriseIntegrationHub {
     debugPrint('🔄 Initializing Enterprise Integration Service...');
     
     try {
-      _integrationService = EnterpriseIntegrationService(_database!);
+      _integrationService = EnterpriseIntegrationService(_database);
       await _integrationService!.initialize();
       
       _componentStatus['integration_service'] = 'healthy';

@@ -1,7 +1,7 @@
-/// **UNIFIED WEBSOCKET SERVICE**
+/// **REALTIME MESSAGING SERVICE**
 ///
-/// Enterprise-grade WebSocket service with <100ms latency
-/// Consolidates all WebSocket implementations into single service
+/// Enterprise-grade real-time messaging service with <100ms latency
+/// Provides Socket.IO-based real-time communication aligned with backend
 /// 
 /// **Features:**
 /// - Real-time messaging with <100ms delivery
@@ -12,6 +12,7 @@
 /// - Error handling and recovery
 ///
 /// **Architecture:** Clean Architecture + SOLID Principles
+/// **Protocol:** Socket.IO (aligns with NestJS backend)
 
 import 'dart:async';
 import 'dart:convert';
@@ -141,9 +142,9 @@ class WebSocketMetrics {
   });
 }
 
-/// **UNIFIED WEBSOCKET SERVICE**
+/// **REALTIME MESSAGING SERVICE**
 @singleton
-class UnifiedWebSocketService {
+class RealtimeMessagingService {
   // Dependencies
   final NetworkInfo _networkInfo;
   final Logger _logger = Logger();
@@ -187,7 +188,7 @@ class UnifiedWebSocketService {
   static const Duration _heartbeatInterval = Duration(seconds: 30);
 
   /// Constructor
-  UnifiedWebSocketService(this._networkInfo) {
+  RealtimeMessagingService(this._networkInfo) {
     _initializeService();
   }
 
@@ -201,7 +202,7 @@ class UnifiedWebSocketService {
       'autoConnect': false,
     };
     
-    _logger.i('🚀 UnifiedWebSocketService initialized');
+    _logger.i('🚀 RealtimeMessagingService initialized');
     _logger.d('📋 Server URL: $_serverUrl');
   }
 
@@ -224,6 +225,116 @@ class UnifiedWebSocketService {
 
   /// Is connecting
   bool get isConnecting => currentState == WebSocketConnectionState.connecting;
+
+  /// **HEALTH CHECK** (from ConnectionPoolManager)
+  ///
+  /// Checks connection latency by sending a ping and measuring response time.
+  ///
+  /// Returns latency in milliseconds, or `null` if:
+  /// - Connection is not established
+  /// - Ping times out (>5 seconds)
+  /// - An error occurs during the check
+  ///
+  /// Example:
+  /// ```dart
+  /// final latency = await service.checkLatency();
+  /// if (latency != null) {
+  ///   print('Connection latency: ${latency}ms');
+  /// } else {
+  ///   print('Unable to check latency');
+  /// }
+  /// ```
+  ///
+  /// Performance: <5s timeout, typically <100ms for good connections
+  Future<int?> checkLatency() async {
+    if (!isConnected) return null;
+    
+    try {
+      final startTime = DateTime.now();
+      final completer = Completer<int?>();
+      
+      // Setup one-time pong listener
+      void onPong(_) {
+        if (!completer.isCompleted) {
+          final latency = DateTime.now().difference(startTime).inMilliseconds;
+          completer.complete(latency);
+        }
+      }
+      
+      if (_socketIO != null && _socketIO!.connected) {
+        _socketIO!.once('pong', onPong);
+        _socketIO!.emit('ping');
+      } else {
+        return null;
+      }
+      
+      // Timeout after 5 seconds
+      return await completer.future.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => null,
+      );
+    } catch (e) {
+      _logger.e('Error checking latency: $e');
+      return null;
+    }
+  }
+
+  /// **CONNECTION STATISTICS** (from ConnectionPoolManager)
+  ///
+  /// Returns comprehensive connection statistics for monitoring and debugging.
+  ///
+  /// Returns a map containing:
+  /// - `isConnected` (bool): Current connection status
+  /// - `connectionState` (String): Current state name
+  /// - `messagesSent` (int): Total messages sent
+  /// - `messagesReceived` (int): Total messages received
+  /// - `queuedMessages` (int): Messages waiting to be sent
+  /// - `reconnectAttempts` (int): Number of reconnection attempts
+  /// - `averageLatency` (int): Average latency in milliseconds
+  /// - `successRate` (double): Message delivery success rate (0.0-1.0)
+  /// - `uptime` (int): Connection uptime in seconds
+  /// - `lastConnected` (String?): ISO 8601 timestamp of last connection
+  ///
+  /// Example:
+  /// ```dart
+  /// final stats = service.getConnectionStats();
+  /// print('Connected: ${stats['isConnected']}');
+  /// print('Latency: ${stats['averageLatency']}ms');
+  /// print('Success Rate: ${(stats['successRate'] * 100).toStringAsFixed(1)}%');
+  /// ```
+  ///
+  /// Useful for:
+  /// - Performance monitoring dashboards
+  /// - Connection health checks
+  /// - Debugging connection issues
+  /// - Analytics and reporting
+  Map<String, dynamic> getConnectionStats() {
+    final uptime = _lastConnected != null
+        ? DateTime.now().difference(_lastConnected!)
+        : Duration.zero;
+    
+    final successRate = _messagesSent > 0
+        ? (_messagesSent - _messageQueue.length) / _messagesSent
+        : 1.0;
+    
+    return {
+      'isConnected': isConnected,
+      'connectionState': currentState.name,
+      'messagesSent': _messagesSent,
+      'messagesReceived': _messagesReceived,
+      'queuedMessages': _messageQueue.length,
+      'reconnectAttempts': _reconnectAttempts,
+      'averageLatency': _latencyMeasurements.isEmpty
+          ? 0
+          : _latencyMeasurements
+              .map((d) => d.inMilliseconds)
+              .reduce((a, b) => a + b) ~/
+              _latencyMeasurements.length,
+      'successRate': successRate,
+      'uptime': uptime.inSeconds,
+      'lastConnected': _lastConnected?.toIso8601String(),
+    };
+  }
 
   /// **CONNECT TO WEBSOCKET**
   ///

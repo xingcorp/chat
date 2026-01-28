@@ -60,7 +60,7 @@ Future<void> initializeDependencies() async {
     await _registerExternalDependencies(logger);
 
     // Step 2: Initialize auto-generated dependencies
-    configureDependencies(getIt);
+    getIt.init();
 
     stopwatch.stop();
     logger.i('✅ DI initialized in ${stopwatch.elapsedMilliseconds}ms');

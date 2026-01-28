@@ -140,7 +140,7 @@ import '../services/realtime_connection_service.dart' as _i357;
 import '../services/realtime_service.dart' as _i301;
 import '../services/resource_manager_service.dart' as _i558;
 import '../services/state_persistence_service.dart' as _i797;
-import '../services/unified_websocket_service.dart' as _i6;
+import '../services/realtime_messaging_service.dart' as _i6;
 import '../storage/local_storage.dart' as _i329;
 import '../utils/isolate_manager.dart' as _i686;
 import '../utils/logger.dart' as _i221;
@@ -205,8 +205,8 @@ _i174.GetIt configureDependencies(
       () => _i329.LocalStorageImpl(gh<_i460.SharedPreferences>()));
   gh.singleton<_i914.MessagingService>(() =>
       _i914.MessagingService(webSocketClient: gh<_i777.WebSocketClient>()));
-  gh.singleton<_i6.UnifiedWebSocketService>(
-      () => _i6.UnifiedWebSocketService(gh<_i932.NetworkInfo>()));
+  gh.singleton<_i6.RealtimeMessagingService>(
+      () => _i6.RealtimeMessagingService(gh<_i932.NetworkInfo>()));
   gh.singleton<_i794.PerformanceMonitor>(
       () => _i794.PerformanceMonitor(gh<_i346.FirebasePerformance>()));
   gh.lazySingleton<_i924.IHttpClient>(() => _i152.DioHttpClient(
@@ -231,7 +231,7 @@ _i174.GetIt configureDependencies(
   gh.singleton<_i47.ConnectivityService>(
       () => _i47.ConnectivityService(gh<_i895.Connectivity>()));
   gh.factory<_i88.RealtimeMessageBloc>(
-      () => _i88.RealtimeMessageBloc(gh<_i6.UnifiedWebSocketService>()));
+      () => _i88.RealtimeMessageBloc(gh<_i6.RealtimeMessagingService>()));
   gh.singleton<_i842.EnvironmentManager>(
       () => _i842.EnvironmentManager(gh<_i221.AppLogger>()));
   gh.singleton<_i177.FirebaseServiceManager>(

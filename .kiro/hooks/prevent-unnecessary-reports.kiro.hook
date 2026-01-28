@@ -1,0 +1,22 @@
+{
+  "name": "Prevent Unnecessary Report Files",
+  "version": "1.0.0",
+  "description": "Remind to update tasks.md instead of creating separate report files",
+  "when": {
+    "type": "fileCreated",
+    "patterns": [
+      ".kiro/specs/**/*_COMPLETE.md",
+      ".kiro/specs/**/*_REPORT.md",
+      ".kiro/specs/**/*_SUMMARY.md",
+      ".kiro/specs/**/*CHECKPOINT*.md",
+      ".kiro/specs/**/PHASE_*_COMPLETE*.md",
+      ".kiro/specs/**/TASK_*_COMPLETE*.md",
+      ".kiro/specs/**/*IMPLEMENTATION*.md",
+      ".kiro/specs/**/*STATUS*.md"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "⚠️ **STOP! You're creating an unnecessary report file.**\n\n**File being created**: {{file}}\n\n**Rule**: Do NOT create separate report files for task completion.\n\n**What you should do instead**:\n1. Open `.kiro/specs/[spec-name]/tasks.md`\n2. Mark checkboxes `[x]` for completed acceptance criteria\n3. Add brief notes about implementation details\n4. Update the Success Criteria Summary section\n\n**Example**:\n```markdown\n### Task 1.3: Convert DatabaseService to Injectable\n\n**Acceptance Criteria**:\n- [x] DatabaseService.instance pattern is removed\n- [x] DatabaseService uses @singleton annotation\n- [x] Tests pass\n- [x] Added compatibility methods\n\n**Phase 1 Status**: ✅ COMPLETED (2026-01-28)\n- All tasks completed successfully\n- Key improvements: X, Y, Z\n```\n\n**Exceptions** (when separate files ARE allowed):\n- ✅ Audit/Analysis files with data (e.g., `DI_AUDIT_REPORT.md`)\n- ✅ User explicitly requested the file\n- ✅ Core spec files (README.md, requirements.md, design.md, tasks.md)\n\n**Question**: Is this file really necessary, or should you update tasks.md instead?\n\n**Action**:\n- If unnecessary: DELETE this file and update tasks.md\n- If necessary: Explain why this is an exception to the rule"
+  }
+}

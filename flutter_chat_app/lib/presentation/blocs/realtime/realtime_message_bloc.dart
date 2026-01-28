@@ -20,7 +20,7 @@ import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
-import '../../../core/services/unified_websocket_service.dart';
+import '../../../core/services/realtime_messaging_service.dart';
 import '../../../domain/entities/chat_message.dart';
 
 /// **REALTIME MESSAGE EVENTS**
@@ -205,7 +205,7 @@ class MessageStatusUpdated extends RealtimeMessageState {
 /// **REALTIME MESSAGE BLOC**
 @injectable
 class RealtimeMessageBloc extends Bloc<RealtimeMessageEvent, RealtimeMessageState> {
-  final UnifiedWebSocketService _webSocketService;
+  final RealtimeMessagingService _webSocketService;
   final Logger _logger = Logger();
   
   // Subscriptions

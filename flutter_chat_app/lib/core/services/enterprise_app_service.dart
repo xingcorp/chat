@@ -15,7 +15,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
-import '../database/database_service.dart';
+import 'database_service.dart';
 
 /// **ENTERPRISE APP SERVICE**
 /// 

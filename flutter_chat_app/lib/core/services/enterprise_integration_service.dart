@@ -16,7 +16,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
-import '../database/database_service.dart';
+import 'database_service.dart';
 // Note: These imports will be available when the respective components are implemented
 // import '../offline/isar_offline_first_manager.dart';
 // import '../sync/isar_realtime_sync_engine.dart';
