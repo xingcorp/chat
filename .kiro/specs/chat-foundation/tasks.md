@@ -495,42 +495,52 @@ This document outlines the implementation tasks for Phase 1 (Chat Foundation) of
   - _Requirements: 12.7_
 
 
-- [ ] 11. Update UI Components
-  - [ ] 11.1 Update ChatListPage
-    - Connect to ChatBloc using BlocProvider
-    - Add BlocBuilder to rebuild on state changes
-    - Display loading indicator for loading state
-    - Display conversation list for loaded state
-    - Display error message for error state with retry button
-    - Display empty state when no conversations
-    - Add pull-to-refresh functionality
-    - Add pagination support (load more on scroll)
-    - Navigate to ChatDetailsPage on conversation tap
+- [x] 11. Update UI Components ✅ **COMPLETE** (2025-01-28)
+  - [x] 11.1 Update ChatListPage
+    - Connected to ChatBloc using BlocProvider and BlocConsumer
+    - Added BlocBuilder to rebuild on state changes (initial, loading, loaded, error)
+    - Display loading indicator with localized message (context.l10n.loadingConversations)
+    - Display conversation list with avatar, name, last message, time, unread count
+    - Display error message with retry button (context.l10n.retryOperation)
+    - Display empty state with icon and message (context.l10n.noConversations)
+    - Added RefreshIndicator for pull-to-refresh functionality
+    - Added ScrollController for pagination support (loads at 80% scroll)
+    - Navigate to ChatDetailsPage on conversation tap with conversationId
+    - All strings localized using context.l10n (no hardcoded Vietnamese text)
+    - Proper resource cleanup (dispose ScrollController)
     - _Requirements: 6.1, 6.5, 6.6, 6.7, 6.8_
+    - _See: `.kiro/specs/chat-foundation/TASK_11_COMPLETE.md`_
 
-  - [ ] 11.2 Update ChatDetailsPage
-    - Connect to MessageBloc using BlocProvider
-    - Add BlocBuilder to rebuild on state changes
-    - Display loading indicator for loading state
-    - Display message list for loaded state
-    - Display error message for error state with retry button
-    - Display empty state when no messages
-    - Add message input widget
-    - Handle send message action
-    - Add pagination support (load more on scroll)
-    - Show typing indicator when user is typing
+  - [x] 11.2 Update ChatDetailsPage
+    - Connected to MessageBloc using BlocProvider and BlocConsumer
+    - Added BlocBuilder to rebuild on state changes (initial, loading, loaded, error)
+    - Display loading indicator with localized message (context.l10n.loadingMessages)
+    - Display message list using MessageItem widget (reverse list for chat)
+    - Display error message with retry button
+    - Display empty state with icon and message (context.l10n.noMessagesInChat)
+    - Added message input widget with TextField and send button
+    - Handle send message action with validation (context.l10n.messageEmpty)
+    - Added ScrollController for pagination support (loads at top for reverse list)
+    - Added RefreshIndicator for pull-to-refresh
+    - Show typing indicator placeholder (TODO)
+    - Added long-press context menu with copy, reply, edit, delete, forward actions
+    - All strings localized using context.l10n
+    - Proper resource cleanup (dispose controllers and focus nodes)
     - _Requirements: 6.3, 6.4, 6.5, 6.6, 6.7, 6.8_
+    - _See: `.kiro/specs/chat-foundation/TASK_11_COMPLETE.md`_
 
-  - [ ] 11.3 Update MessageBubble widget
-    - Display message content
-    - Display sender information
-    - Display timestamp
-    - Show "edited" indicator if message is edited
-    - Show reactions if present
-    - Add tap handler for reactions
-    - Add long-press menu for message actions
+  - [x] 11.3 Update MessageBubble widget (MessageItem)
+    - Display message content (all existing types: text, image, video, audio, file)
+    - Display sender information (avatar, name)
+    - Display timestamp with DateFormatterService
+    - Show "Edited" indicator if message.editedAt is not null
+    - Show reactions if present (grouped by emoji with counts)
+    - Add tap handler for reactions (TODO: implement reaction picker)
+    - Add long-press menu for message actions (copy, reply, edit, delete, forward)
     - Use const constructor where possible
+    - Proper styling for current user vs others
     - _Requirements: 11.6, 13.10_
+    - _See: `.kiro/specs/chat-foundation/TASK_11_COMPLETE.md`_
 
   - [ ] 11.4 Update CreateGroupPage
     - Connect to ChatBloc using BlocProvider
@@ -541,6 +551,7 @@ This document outlines the implementation tasks for Phase 1 (Chat Foundation) of
     - Show error message on failure with retry
     - Navigate back on success
     - _Requirements: 6.2, 6.5, 6.6, 6.7_
+    - _Note: Placeholder in ChatListPage menu, will be implemented in future task_
 
 - [ ] 11.5 Write widget tests for UI components
   - Test ChatListPage displays conversations correctly

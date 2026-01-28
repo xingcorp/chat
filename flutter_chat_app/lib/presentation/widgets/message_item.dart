@@ -183,8 +183,66 @@ class MessageItem extends StatelessWidget {
             
             // Thời gian gửi tin nhắn
             _buildTimestamp(context),
+            
+            // Reactions (if any)
+            if (message.reactions.isNotEmpty)
+              _buildReactions(context),
           ],
         ),
+      ),
+    );
+  }
+  
+  /// Xây dựng hiển thị reactions
+  Widget _buildReactions(BuildContext context) {
+    // Group reactions by emoji code
+    final reactionCounts = <String, int>{};
+    for (final reaction in message.reactions) {
+      reactionCounts[reaction.code] = (reactionCounts[reaction.code] ?? 0) + 1;
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 4.0),
+      child: Wrap(
+        spacing: 4.0,
+        runSpacing: 4.0,
+        children: reactionCounts.entries.map((entry) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+            decoration: BoxDecoration(
+              color: isCurrentUser 
+                  ? Colors.white.withOpacity(0.2)
+                  : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12.0),
+              border: Border.all(
+                color: isCurrentUser 
+                    ? Colors.white.withOpacity(0.3)
+                    : Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                width: 1.0,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  entry.key,
+                  style: const TextStyle(fontSize: 12.0),
+                ),
+                const SizedBox(width: 2.0),
+                Text(
+                  entry.value.toString(),
+                  style: TextStyle(
+                    fontSize: 10.0,
+                    fontWeight: FontWeight.bold,
+                    color: isCurrentUser 
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -483,17 +541,33 @@ class MessageItem extends StatelessWidget {
   Widget _buildTimestamp(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 8.0, bottom: 4.0, left: 8.0),
-      child: Align(
-        alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
-        child: Text(
-          DateFormatterService.formatTimeForMessage(message.createdAt),
-          style: TextStyle(
-            fontSize: 10.0,
-            color: isCurrentUser 
-                ? Colors.white70
-                : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Show "Edited" label if message was edited
+          if (message.editedAt != null) ...[
+            Text(
+              'Edited', // TODO: Use context.l10n.edited when available
+              style: TextStyle(
+                fontSize: 10.0,
+                fontStyle: FontStyle.italic,
+                color: isCurrentUser 
+                    ? Colors.white60
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+              ),
+            ),
+            const SizedBox(width: 4.0),
+          ],
+          Text(
+            DateFormatterService.formatTimeForMessage(message.createdAt),
+            style: TextStyle(
+              fontSize: 10.0,
+              color: isCurrentUser 
+                  ? Colors.white70
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
