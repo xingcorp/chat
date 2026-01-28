@@ -553,25 +553,31 @@ This document outlines the implementation tasks for Phase 1 (Chat Foundation) of
   - Mock BLoCs
   - _Requirements: 12.1_
 
-- [ ] 12. Add Localization Strings
-  - [ ] 12.1 Update English ARB file (app_en.arb)
-    - Add error messages (errorNoInternet, errorServer, errorCache, errorUnexpected)
-    - Add loading messages (loadingConversations, loadingMessages, sendingMessage)
-    - Add empty state messages (noConversations, noMessages)
-    - Add button labels (retry, send, cancel)
-    - Add validation messages (messageEmpty, nameRequired, membersRequired)
+- [x] 12. Add Localization Strings ✅ **COMPLETE** (2025-01-28)
+  - [x] 12.1 Update English ARB file (app_en.arb)
+    - Added 80+ error messages (errorNoInternet, errorServer, errorCache, errorUnexpected, errorValidation)
+    - Added loading messages (loadingConversations, loadingMessages, sendingMessage, creatingGroup, updatingGroup, deletingConversation, leavingConversation)
+    - Added empty state messages (noConversations, noMessagesInChat, noSearchResults)
+    - Added button labels (retryOperation, pullToRefresh, releaseToRefresh, markAsRead, markAsUnread)
+    - Added validation messages (messageEmpty, nameRequired, membersRequired, conversationIdRequired, messageIdRequired, invalidPageSize, invalidPageNumber, invalidReadCount)
+    - Added UI labels, success messages, confirmation dialogs, search placeholders, form labels, media actions, message actions, offline mode strings
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.8_
+    - _See: `.kiro/specs/chat-foundation/TASK_12_COMPLETE.md`_
 
-  - [ ] 12.2 Update Vietnamese ARB file (app_vi.arb)
-    - Translate all English strings to Vietnamese
-    - Ensure translations are natural and contextually appropriate
+  - [x] 12.2 Update Vietnamese ARB file (app_vi.arb)
+    - Translated all 80+ English strings to Vietnamese
+    - Natural Vietnamese phrasing with culturally appropriate translations
+    - Consistent terminology and proper Vietnamese grammar
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.8_
+    - _See: `.kiro/specs/chat-foundation/TASK_12_COMPLETE.md`_
 
-  - [ ] 12.3 Generate localization code
-    - Run: `flutter gen-l10n`
-    - Verify generated files in lib/l10n/
-    - Fix any generation errors
+  - [x] 12.3 Generate localization code
+    - Executed: `flutter gen-l10n`
+    - Generated files in lib/generated/l10n/ (app_localizations.dart, app_localizations_en.dart, app_localizations_vi.dart)
+    - Verified all new strings included in generated code
+    - No generation errors
     - _Requirements: 15.6_
+    - _See: `.kiro/specs/chat-foundation/TASK_12_COMPLETE.md`_
 
   - [ ] 12.4 Update UI to use localized strings
     - Replace hardcoded strings in ChatListPage
@@ -580,6 +586,7 @@ This document outlines the implementation tasks for Phase 1 (Chat Foundation) of
     - Replace hardcoded strings in error messages
     - Use context.l10n.stringKey pattern
     - _Requirements: 10.3, 10.4, 10.5, 10.6_
+    - _Note: Will be completed as part of Task 11 (Update UI Components)_
 
 - [ ] 13. Checkpoint - Integration Complete
   - Run `flutter analyze` - ensure no errors

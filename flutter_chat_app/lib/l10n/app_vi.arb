@@ -107,5 +107,97 @@
   "chats": "Trò chuyện",
   "contacts": "Danh bạ",
   "groups": "Nhóm",
-  "welcomeToChat": "Chào mừng đến với Flutter Chat App"
+  "welcomeToChat": "Chào mừng đến với Flutter Chat App",
+
+  "errorNoInternet": "Không có kết nối internet. Vui lòng kiểm tra mạng của bạn.",
+  "errorServer": "Lỗi máy chủ. Vui lòng thử lại sau.",
+  "errorCache": "Không thể tải dữ liệu đã lưu.",
+  "errorUnexpected": "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
+  "errorValidation": "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.",
+
+  "loadingConversations": "Đang tải cuộc trò chuyện...",
+  "loadingMessages": "Đang tải tin nhắn...",
+  "sendingMessage": "Đang gửi tin nhắn...",
+  "creatingGroup": "Đang tạo nhóm...",
+  "updatingGroup": "Đang cập nhật nhóm...",
+  "deletingConversation": "Đang xóa cuộc trò chuyện...",
+  "leavingConversation": "Đang rời khỏi cuộc trò chuyện...",
+
+  "noConversations": "Chưa có cuộc trò chuyện. Bắt đầu trò chuyện mới!",
+  "noMessagesInChat": "Chưa có tin nhắn. Gửi tin nhắn đầu tiên!",
+  "noSearchResults": "Không tìm thấy kết quả nào.",
+
+  "messageEmpty": "Tin nhắn không được để trống",
+  "nameRequired": "Tên là bắt buộc",
+  "membersRequired": "Vui lòng chọn ít nhất một thành viên",
+  "conversationIdRequired": "ID cuộc trò chuyện là bắt buộc",
+  "messageIdRequired": "ID tin nhắn là bắt buộc",
+  "invalidPageSize": "Kích thước trang phải từ 1 đến 100",
+  "invalidPageNumber": "Số trang phải lớn hơn hoặc bằng 0",
+  "invalidReadCount": "Số lượng đọc phải lớn hơn 0",
+
+  "retryOperation": "Thử lại",
+  "pullToRefresh": "Kéo để làm mới",
+  "releaseToRefresh": "Thả để làm mới",
+  "refreshing": "Đang làm mới...",
+  "loadingMore": "Đang tải thêm...",
+
+  "edited": "Đã chỉnh sửa",
+  "deleted": "Tin nhắn đã bị xóa",
+  "you": "Bạn",
+  "admin": "Quản trị viên",
+
+  "leaveGroup": "Rời nhóm",
+  "deleteConversation": "Xóa cuộc trò chuyện",
+  "editGroup": "Chỉnh sửa nhóm",
+  "groupInfo": "Thông tin nhóm",
+
+  "conversationDeleted": "Đã xóa cuộc trò chuyện thành công",
+  "leftConversation": "Bạn đã rời khỏi cuộc trò chuyện",
+  "groupCreated": "Đã tạo nhóm thành công",
+  "groupUpdated": "Đã cập nhật nhóm thành công",
+  "messageSent": "Đã gửi tin nhắn",
+  "messageEdited": "Đã chỉnh sửa tin nhắn",
+  "messageDeleted": "Đã xóa tin nhắn",
+
+  "confirmLeaveGroup": "Bạn có chắc chắn muốn rời khỏi nhóm này?",
+  "confirmDeleteConversation": "Bạn có chắc chắn muốn xóa cuộc trò chuyện này?",
+
+  "searchConversations": "Tìm kiếm cuộc trò chuyện...",
+  "searchMessages": "Tìm kiếm tin nhắn...",
+  "selectMembers": "Chọn thành viên",
+  "groupDescription": "Mô tả nhóm",
+  "optional": "Tùy chọn",
+  "required": "Bắt buộc",
+
+  "addPhoto": "Thêm ảnh",
+  "changePhoto": "Đổi ảnh",
+  "removePhoto": "Xóa ảnh",
+  "camera": "Máy ảnh",
+  "gallery": "Thư viện",
+  "file": "Tệp",
+  "attachFile": "Đính kèm tệp",
+
+  "replyTo": "Trả lời {name}",
+  "forwardedMessage": "Tin nhắn được chuyển tiếp",
+  "mentionedYou": "{name} đã nhắc đến bạn",
+  "unreadMessages": "{count} tin nhắn chưa đọc",
+
+  "markAsRead": "Đánh dấu đã đọc",
+  "markAsUnread": "Đánh dấu chưa đọc",
+  "copyMessage": "Sao chép tin nhắn",
+  "editMessage": "Chỉnh sửa tin nhắn",
+  "deleteMessage": "Xóa tin nhắn",
+  "forwardMessage": "Chuyển tiếp tin nhắn",
+  "replyMessage": "Trả lời tin nhắn",
+  "reactToMessage": "Bày tỏ cảm xúc",
+
+  "messageCopied": "Đã sao chép tin nhắn vào clipboard",
+
+  "offlineMode": "Bạn đang ngoại tuyến. Tin nhắn sẽ được gửi khi kết nối lại.",
+  "syncingMessages": "Đang đồng bộ tin nhắn...",
+  "messageQueued": "Tin nhắn đã được xếp hàng để gửi",
+  "operationQueued": "Thao tác đã được xếp hàng. Sẽ xử lý khi có kết nối.",
+  "backOnline": "Đã kết nối lại. Đang đồng bộ...",
+  "connectionLost": "Mất kết nối. Đang làm việc ngoại tuyến."
 }

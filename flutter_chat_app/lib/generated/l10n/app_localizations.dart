@@ -724,6 +724,468 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Welcome to Flutter Chat App'**
   String get welcomeToChat;
+
+  /// Error message when there is no internet connection
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Please check your network.'**
+  String get errorNoInternet;
+
+  /// Error message when server returns an error
+  ///
+  /// In en, this message translates to:
+  /// **'Server error. Please try again later.'**
+  String get errorServer;
+
+  /// Error message when cache operation fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load cached data.'**
+  String get errorCache;
+
+  /// Error message for unexpected errors
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error occurred. Please try again.'**
+  String get errorUnexpected;
+
+  /// Error message for validation errors
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid input. Please check your data.'**
+  String get errorValidation;
+
+  /// Loading message when fetching conversations
+  ///
+  /// In en, this message translates to:
+  /// **'Loading conversations...'**
+  String get loadingConversations;
+
+  /// Loading message when fetching messages
+  ///
+  /// In en, this message translates to:
+  /// **'Loading messages...'**
+  String get loadingMessages;
+
+  /// Loading message when sending a message
+  ///
+  /// In en, this message translates to:
+  /// **'Sending message...'**
+  String get sendingMessage;
+
+  /// Loading message when creating a group
+  ///
+  /// In en, this message translates to:
+  /// **'Creating group...'**
+  String get creatingGroup;
+
+  /// Loading message when updating a group
+  ///
+  /// In en, this message translates to:
+  /// **'Updating group...'**
+  String get updatingGroup;
+
+  /// Loading message when deleting a conversation
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting conversation...'**
+  String get deletingConversation;
+
+  /// Loading message when leaving a conversation
+  ///
+  /// In en, this message translates to:
+  /// **'Leaving conversation...'**
+  String get leavingConversation;
+
+  /// Empty state message when there are no conversations
+  ///
+  /// In en, this message translates to:
+  /// **'No conversations yet. Start a new chat!'**
+  String get noConversations;
+
+  /// Empty state message when there are no messages in a chat
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet. Send the first message!'**
+  String get noMessagesInChat;
+
+  /// Empty state message when search returns no results
+  ///
+  /// In en, this message translates to:
+  /// **'No results found for your search.'**
+  String get noSearchResults;
+
+  /// Validation message when message is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Message cannot be empty'**
+  String get messageEmpty;
+
+  /// Validation message when name field is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get nameRequired;
+
+  /// Validation message when no members are selected
+  ///
+  /// In en, this message translates to:
+  /// **'Please select at least one member'**
+  String get membersRequired;
+
+  /// Validation message when conversation ID is missing
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation ID is required'**
+  String get conversationIdRequired;
+
+  /// Validation message when message ID is missing
+  ///
+  /// In en, this message translates to:
+  /// **'Message ID is required'**
+  String get messageIdRequired;
+
+  /// Validation message for invalid page size
+  ///
+  /// In en, this message translates to:
+  /// **'Page size must be between 1 and 100'**
+  String get invalidPageSize;
+
+  /// Validation message for invalid page number
+  ///
+  /// In en, this message translates to:
+  /// **'Page number must be 0 or greater'**
+  String get invalidPageNumber;
+
+  /// Validation message for invalid read count
+  ///
+  /// In en, this message translates to:
+  /// **'Read count must be greater than 0'**
+  String get invalidReadCount;
+
+  /// Button text to retry a failed operation
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retryOperation;
+
+  /// Pull to refresh instruction
+  ///
+  /// In en, this message translates to:
+  /// **'Pull to refresh'**
+  String get pullToRefresh;
+
+  /// Release to refresh instruction
+  ///
+  /// In en, this message translates to:
+  /// **'Release to refresh'**
+  String get releaseToRefresh;
+
+  /// Refreshing status message
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing...'**
+  String get refreshing;
+
+  /// Loading more items message
+  ///
+  /// In en, this message translates to:
+  /// **'Loading more...'**
+  String get loadingMore;
+
+  /// Label shown on edited messages
+  ///
+  /// In en, this message translates to:
+  /// **'Edited'**
+  String get edited;
+
+  /// Text shown for deleted messages
+  ///
+  /// In en, this message translates to:
+  /// **'This message was deleted'**
+  String get deleted;
+
+  /// Label for current user
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get you;
+
+  /// Label for admin users
+  ///
+  /// In en, this message translates to:
+  /// **'Admin'**
+  String get admin;
+
+  /// Button text to leave a group
+  ///
+  /// In en, this message translates to:
+  /// **'Leave Group'**
+  String get leaveGroup;
+
+  /// Button text to delete a conversation
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Conversation'**
+  String get deleteConversation;
+
+  /// Button text to edit group details
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Group'**
+  String get editGroup;
+
+  /// Group information page title
+  ///
+  /// In en, this message translates to:
+  /// **'Group Info'**
+  String get groupInfo;
+
+  /// Success message when conversation is deleted
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation deleted successfully'**
+  String get conversationDeleted;
+
+  /// Success message when user leaves a conversation
+  ///
+  /// In en, this message translates to:
+  /// **'You left the conversation'**
+  String get leftConversation;
+
+  /// Success message when group is created
+  ///
+  /// In en, this message translates to:
+  /// **'Group created successfully'**
+  String get groupCreated;
+
+  /// Success message when group is updated
+  ///
+  /// In en, this message translates to:
+  /// **'Group updated successfully'**
+  String get groupUpdated;
+
+  /// Success message when message is sent
+  ///
+  /// In en, this message translates to:
+  /// **'Message sent'**
+  String get messageSent;
+
+  /// Success message when message is edited
+  ///
+  /// In en, this message translates to:
+  /// **'Message edited'**
+  String get messageEdited;
+
+  /// Success message when message is deleted
+  ///
+  /// In en, this message translates to:
+  /// **'Message deleted'**
+  String get messageDeleted;
+
+  /// Confirmation dialog for leaving a group
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to leave this group?'**
+  String get confirmLeaveGroup;
+
+  /// Confirmation dialog for deleting a conversation
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this conversation?'**
+  String get confirmDeleteConversation;
+
+  /// Placeholder text for conversation search
+  ///
+  /// In en, this message translates to:
+  /// **'Search conversations...'**
+  String get searchConversations;
+
+  /// Placeholder text for message search
+  ///
+  /// In en, this message translates to:
+  /// **'Search messages...'**
+  String get searchMessages;
+
+  /// Title for member selection screen
+  ///
+  /// In en, this message translates to:
+  /// **'Select Members'**
+  String get selectMembers;
+
+  /// Label for group description field
+  ///
+  /// In en, this message translates to:
+  /// **'Group Description'**
+  String get groupDescription;
+
+  /// Label for optional fields
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optional;
+
+  /// Label for required fields
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get required;
+
+  /// Button text to add a photo
+  ///
+  /// In en, this message translates to:
+  /// **'Add Photo'**
+  String get addPhoto;
+
+  /// Button text to change a photo
+  ///
+  /// In en, this message translates to:
+  /// **'Change Photo'**
+  String get changePhoto;
+
+  /// Button text to remove a photo
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Photo'**
+  String get removePhoto;
+
+  /// Camera option
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get camera;
+
+  /// Gallery option
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get gallery;
+
+  /// File option
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get file;
+
+  /// Button text to attach a file
+  ///
+  /// In en, this message translates to:
+  /// **'Attach File'**
+  String get attachFile;
+
+  /// Reply to message indicator
+  ///
+  /// In en, this message translates to:
+  /// **'Reply to {name}'**
+  String replyTo(String name);
+
+  /// Label for forwarded messages
+  ///
+  /// In en, this message translates to:
+  /// **'Forwarded message'**
+  String get forwardedMessage;
+
+  /// Notification when someone mentions you
+  ///
+  /// In en, this message translates to:
+  /// **'{name} mentioned you'**
+  String mentionedYou(String name);
+
+  /// Unread message count
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unread messages'**
+  String unreadMessages(int count);
+
+  /// Button text to mark messages as read
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as read'**
+  String get markAsRead;
+
+  /// Button text to mark messages as unread
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as unread'**
+  String get markAsUnread;
+
+  /// Button text to copy message
+  ///
+  /// In en, this message translates to:
+  /// **'Copy message'**
+  String get copyMessage;
+
+  /// Button text to edit message
+  ///
+  /// In en, this message translates to:
+  /// **'Edit message'**
+  String get editMessage;
+
+  /// Button text to delete message
+  ///
+  /// In en, this message translates to:
+  /// **'Delete message'**
+  String get deleteMessage;
+
+  /// Button text to forward message
+  ///
+  /// In en, this message translates to:
+  /// **'Forward message'**
+  String get forwardMessage;
+
+  /// Button text to reply to message
+  ///
+  /// In en, this message translates to:
+  /// **'Reply to message'**
+  String get replyMessage;
+
+  /// Button text to react to message
+  ///
+  /// In en, this message translates to:
+  /// **'React to message'**
+  String get reactToMessage;
+
+  /// Success message when message is copied
+  ///
+  /// In en, this message translates to:
+  /// **'Message copied to clipboard'**
+  String get messageCopied;
+
+  /// Information message when user is offline
+  ///
+  /// In en, this message translates to:
+  /// **'You are offline. Messages will be sent when you reconnect.'**
+  String get offlineMode;
+
+  /// Message shown when syncing offline messages
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing messages...'**
+  String get syncingMessages;
+
+  /// Message shown when message is queued offline
+  ///
+  /// In en, this message translates to:
+  /// **'Message queued for sending'**
+  String get messageQueued;
+
+  /// Message shown when operation is queued offline
+  ///
+  /// In en, this message translates to:
+  /// **'Operation queued. Will be processed when online.'**
+  String get operationQueued;
+
+  /// Message shown when connection is restored
+  ///
+  /// In en, this message translates to:
+  /// **'Back online. Syncing...'**
+  String get backOnline;
+
+  /// Message shown when connection is lost
+  ///
+  /// In en, this message translates to:
+  /// **'Connection lost. Working offline.'**
+  String get connectionLost;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -347,4 +347,241 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcomeToChat => 'Welcome to Flutter Chat App';
+
+  @override
+  String get errorNoInternet => 'No internet connection. Please check your network.';
+
+  @override
+  String get errorServer => 'Server error. Please try again later.';
+
+  @override
+  String get errorCache => 'Failed to load cached data.';
+
+  @override
+  String get errorUnexpected => 'An unexpected error occurred. Please try again.';
+
+  @override
+  String get errorValidation => 'Invalid input. Please check your data.';
+
+  @override
+  String get loadingConversations => 'Loading conversations...';
+
+  @override
+  String get loadingMessages => 'Loading messages...';
+
+  @override
+  String get sendingMessage => 'Sending message...';
+
+  @override
+  String get creatingGroup => 'Creating group...';
+
+  @override
+  String get updatingGroup => 'Updating group...';
+
+  @override
+  String get deletingConversation => 'Deleting conversation...';
+
+  @override
+  String get leavingConversation => 'Leaving conversation...';
+
+  @override
+  String get noConversations => 'No conversations yet. Start a new chat!';
+
+  @override
+  String get noMessagesInChat => 'No messages yet. Send the first message!';
+
+  @override
+  String get noSearchResults => 'No results found for your search.';
+
+  @override
+  String get messageEmpty => 'Message cannot be empty';
+
+  @override
+  String get nameRequired => 'Name is required';
+
+  @override
+  String get membersRequired => 'Please select at least one member';
+
+  @override
+  String get conversationIdRequired => 'Conversation ID is required';
+
+  @override
+  String get messageIdRequired => 'Message ID is required';
+
+  @override
+  String get invalidPageSize => 'Page size must be between 1 and 100';
+
+  @override
+  String get invalidPageNumber => 'Page number must be 0 or greater';
+
+  @override
+  String get invalidReadCount => 'Read count must be greater than 0';
+
+  @override
+  String get retryOperation => 'Retry';
+
+  @override
+  String get pullToRefresh => 'Pull to refresh';
+
+  @override
+  String get releaseToRefresh => 'Release to refresh';
+
+  @override
+  String get refreshing => 'Refreshing...';
+
+  @override
+  String get loadingMore => 'Loading more...';
+
+  @override
+  String get edited => 'Edited';
+
+  @override
+  String get deleted => 'This message was deleted';
+
+  @override
+  String get you => 'You';
+
+  @override
+  String get admin => 'Admin';
+
+  @override
+  String get leaveGroup => 'Leave Group';
+
+  @override
+  String get deleteConversation => 'Delete Conversation';
+
+  @override
+  String get editGroup => 'Edit Group';
+
+  @override
+  String get groupInfo => 'Group Info';
+
+  @override
+  String get conversationDeleted => 'Conversation deleted successfully';
+
+  @override
+  String get leftConversation => 'You left the conversation';
+
+  @override
+  String get groupCreated => 'Group created successfully';
+
+  @override
+  String get groupUpdated => 'Group updated successfully';
+
+  @override
+  String get messageSent => 'Message sent';
+
+  @override
+  String get messageEdited => 'Message edited';
+
+  @override
+  String get messageDeleted => 'Message deleted';
+
+  @override
+  String get confirmLeaveGroup => 'Are you sure you want to leave this group?';
+
+  @override
+  String get confirmDeleteConversation => 'Are you sure you want to delete this conversation?';
+
+  @override
+  String get searchConversations => 'Search conversations...';
+
+  @override
+  String get searchMessages => 'Search messages...';
+
+  @override
+  String get selectMembers => 'Select Members';
+
+  @override
+  String get groupDescription => 'Group Description';
+
+  @override
+  String get optional => 'Optional';
+
+  @override
+  String get required => 'Required';
+
+  @override
+  String get addPhoto => 'Add Photo';
+
+  @override
+  String get changePhoto => 'Change Photo';
+
+  @override
+  String get removePhoto => 'Remove Photo';
+
+  @override
+  String get camera => 'Camera';
+
+  @override
+  String get gallery => 'Gallery';
+
+  @override
+  String get file => 'File';
+
+  @override
+  String get attachFile => 'Attach File';
+
+  @override
+  String replyTo(String name) {
+    return 'Reply to $name';
+  }
+
+  @override
+  String get forwardedMessage => 'Forwarded message';
+
+  @override
+  String mentionedYou(String name) {
+    return '$name mentioned you';
+  }
+
+  @override
+  String unreadMessages(int count) {
+    return '$count unread messages';
+  }
+
+  @override
+  String get markAsRead => 'Mark as read';
+
+  @override
+  String get markAsUnread => 'Mark as unread';
+
+  @override
+  String get copyMessage => 'Copy message';
+
+  @override
+  String get editMessage => 'Edit message';
+
+  @override
+  String get deleteMessage => 'Delete message';
+
+  @override
+  String get forwardMessage => 'Forward message';
+
+  @override
+  String get replyMessage => 'Reply to message';
+
+  @override
+  String get reactToMessage => 'React to message';
+
+  @override
+  String get messageCopied => 'Message copied to clipboard';
+
+  @override
+  String get offlineMode => 'You are offline. Messages will be sent when you reconnect.';
+
+  @override
+  String get syncingMessages => 'Syncing messages...';
+
+  @override
+  String get messageQueued => 'Message queued for sending';
+
+  @override
+  String get operationQueued => 'Operation queued. Will be processed when online.';
+
+  @override
+  String get backOnline => 'Back online. Syncing...';
+
+  @override
+  String get connectionLost => 'Connection lost. Working offline.';
 }

@@ -347,4 +347,241 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get welcomeToChat => 'Chào mừng đến với Flutter Chat App';
+
+  @override
+  String get errorNoInternet => 'Không có kết nối internet. Vui lòng kiểm tra mạng của bạn.';
+
+  @override
+  String get errorServer => 'Lỗi máy chủ. Vui lòng thử lại sau.';
+
+  @override
+  String get errorCache => 'Không thể tải dữ liệu đã lưu.';
+
+  @override
+  String get errorUnexpected => 'Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.';
+
+  @override
+  String get errorValidation => 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
+
+  @override
+  String get loadingConversations => 'Đang tải cuộc trò chuyện...';
+
+  @override
+  String get loadingMessages => 'Đang tải tin nhắn...';
+
+  @override
+  String get sendingMessage => 'Đang gửi tin nhắn...';
+
+  @override
+  String get creatingGroup => 'Đang tạo nhóm...';
+
+  @override
+  String get updatingGroup => 'Đang cập nhật nhóm...';
+
+  @override
+  String get deletingConversation => 'Đang xóa cuộc trò chuyện...';
+
+  @override
+  String get leavingConversation => 'Đang rời khỏi cuộc trò chuyện...';
+
+  @override
+  String get noConversations => 'Chưa có cuộc trò chuyện. Bắt đầu trò chuyện mới!';
+
+  @override
+  String get noMessagesInChat => 'Chưa có tin nhắn. Gửi tin nhắn đầu tiên!';
+
+  @override
+  String get noSearchResults => 'Không tìm thấy kết quả nào.';
+
+  @override
+  String get messageEmpty => 'Tin nhắn không được để trống';
+
+  @override
+  String get nameRequired => 'Tên là bắt buộc';
+
+  @override
+  String get membersRequired => 'Vui lòng chọn ít nhất một thành viên';
+
+  @override
+  String get conversationIdRequired => 'ID cuộc trò chuyện là bắt buộc';
+
+  @override
+  String get messageIdRequired => 'ID tin nhắn là bắt buộc';
+
+  @override
+  String get invalidPageSize => 'Kích thước trang phải từ 1 đến 100';
+
+  @override
+  String get invalidPageNumber => 'Số trang phải lớn hơn hoặc bằng 0';
+
+  @override
+  String get invalidReadCount => 'Số lượng đọc phải lớn hơn 0';
+
+  @override
+  String get retryOperation => 'Thử lại';
+
+  @override
+  String get pullToRefresh => 'Kéo để làm mới';
+
+  @override
+  String get releaseToRefresh => 'Thả để làm mới';
+
+  @override
+  String get refreshing => 'Đang làm mới...';
+
+  @override
+  String get loadingMore => 'Đang tải thêm...';
+
+  @override
+  String get edited => 'Đã chỉnh sửa';
+
+  @override
+  String get deleted => 'Tin nhắn đã bị xóa';
+
+  @override
+  String get you => 'Bạn';
+
+  @override
+  String get admin => 'Quản trị viên';
+
+  @override
+  String get leaveGroup => 'Rời nhóm';
+
+  @override
+  String get deleteConversation => 'Xóa cuộc trò chuyện';
+
+  @override
+  String get editGroup => 'Chỉnh sửa nhóm';
+
+  @override
+  String get groupInfo => 'Thông tin nhóm';
+
+  @override
+  String get conversationDeleted => 'Đã xóa cuộc trò chuyện thành công';
+
+  @override
+  String get leftConversation => 'Bạn đã rời khỏi cuộc trò chuyện';
+
+  @override
+  String get groupCreated => 'Đã tạo nhóm thành công';
+
+  @override
+  String get groupUpdated => 'Đã cập nhật nhóm thành công';
+
+  @override
+  String get messageSent => 'Đã gửi tin nhắn';
+
+  @override
+  String get messageEdited => 'Đã chỉnh sửa tin nhắn';
+
+  @override
+  String get messageDeleted => 'Đã xóa tin nhắn';
+
+  @override
+  String get confirmLeaveGroup => 'Bạn có chắc chắn muốn rời khỏi nhóm này?';
+
+  @override
+  String get confirmDeleteConversation => 'Bạn có chắc chắn muốn xóa cuộc trò chuyện này?';
+
+  @override
+  String get searchConversations => 'Tìm kiếm cuộc trò chuyện...';
+
+  @override
+  String get searchMessages => 'Tìm kiếm tin nhắn...';
+
+  @override
+  String get selectMembers => 'Chọn thành viên';
+
+  @override
+  String get groupDescription => 'Mô tả nhóm';
+
+  @override
+  String get optional => 'Tùy chọn';
+
+  @override
+  String get required => 'Bắt buộc';
+
+  @override
+  String get addPhoto => 'Thêm ảnh';
+
+  @override
+  String get changePhoto => 'Đổi ảnh';
+
+  @override
+  String get removePhoto => 'Xóa ảnh';
+
+  @override
+  String get camera => 'Máy ảnh';
+
+  @override
+  String get gallery => 'Thư viện';
+
+  @override
+  String get file => 'Tệp';
+
+  @override
+  String get attachFile => 'Đính kèm tệp';
+
+  @override
+  String replyTo(String name) {
+    return 'Trả lời $name';
+  }
+
+  @override
+  String get forwardedMessage => 'Tin nhắn được chuyển tiếp';
+
+  @override
+  String mentionedYou(String name) {
+    return '$name đã nhắc đến bạn';
+  }
+
+  @override
+  String unreadMessages(int count) {
+    return '$count tin nhắn chưa đọc';
+  }
+
+  @override
+  String get markAsRead => 'Đánh dấu đã đọc';
+
+  @override
+  String get markAsUnread => 'Đánh dấu chưa đọc';
+
+  @override
+  String get copyMessage => 'Sao chép tin nhắn';
+
+  @override
+  String get editMessage => 'Chỉnh sửa tin nhắn';
+
+  @override
+  String get deleteMessage => 'Xóa tin nhắn';
+
+  @override
+  String get forwardMessage => 'Chuyển tiếp tin nhắn';
+
+  @override
+  String get replyMessage => 'Trả lời tin nhắn';
+
+  @override
+  String get reactToMessage => 'Bày tỏ cảm xúc';
+
+  @override
+  String get messageCopied => 'Đã sao chép tin nhắn vào clipboard';
+
+  @override
+  String get offlineMode => 'Bạn đang ngoại tuyến. Tin nhắn sẽ được gửi khi kết nối lại.';
+
+  @override
+  String get syncingMessages => 'Đang đồng bộ tin nhắn...';
+
+  @override
+  String get messageQueued => 'Tin nhắn đã được xếp hàng để gửi';
+
+  @override
+  String get operationQueued => 'Thao tác đã được xếp hàng. Sẽ xử lý khi có kết nối.';
+
+  @override
+  String get backOnline => 'Đã kết nối lại. Đang đồng bộ...';
+
+  @override
+  String get connectionLost => 'Mất kết nối. Đang làm việc ngoại tuyến.';
 }

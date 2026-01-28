@@ -569,5 +569,408 @@
   "welcomeToChat": "Welcome to Flutter Chat App",
   "@welcomeToChat": {
     "description": "Welcome message on home screen"
+  },
+
+  "errorNoInternet": "No internet connection. Please check your network.",
+  "@errorNoInternet": {
+    "description": "Error message when there is no internet connection"
+  },
+
+  "errorServer": "Server error. Please try again later.",
+  "@errorServer": {
+    "description": "Error message when server returns an error"
+  },
+
+  "errorCache": "Failed to load cached data.",
+  "@errorCache": {
+    "description": "Error message when cache operation fails"
+  },
+
+  "errorUnexpected": "An unexpected error occurred. Please try again.",
+  "@errorUnexpected": {
+    "description": "Error message for unexpected errors"
+  },
+
+  "errorValidation": "Invalid input. Please check your data.",
+  "@errorValidation": {
+    "description": "Error message for validation errors"
+  },
+
+  "loadingConversations": "Loading conversations...",
+  "@loadingConversations": {
+    "description": "Loading message when fetching conversations"
+  },
+
+  "loadingMessages": "Loading messages...",
+  "@loadingMessages": {
+    "description": "Loading message when fetching messages"
+  },
+
+  "sendingMessage": "Sending message...",
+  "@sendingMessage": {
+    "description": "Loading message when sending a message"
+  },
+
+  "creatingGroup": "Creating group...",
+  "@creatingGroup": {
+    "description": "Loading message when creating a group"
+  },
+
+  "updatingGroup": "Updating group...",
+  "@updatingGroup": {
+    "description": "Loading message when updating a group"
+  },
+
+  "deletingConversation": "Deleting conversation...",
+  "@deletingConversation": {
+    "description": "Loading message when deleting a conversation"
+  },
+
+  "leavingConversation": "Leaving conversation...",
+  "@leavingConversation": {
+    "description": "Loading message when leaving a conversation"
+  },
+
+  "noConversations": "No conversations yet. Start a new chat!",
+  "@noConversations": {
+    "description": "Empty state message when there are no conversations"
+  },
+
+  "noMessagesInChat": "No messages yet. Send the first message!",
+  "@noMessagesInChat": {
+    "description": "Empty state message when there are no messages in a chat"
+  },
+
+  "noSearchResults": "No results found for your search.",
+  "@noSearchResults": {
+    "description": "Empty state message when search returns no results"
+  },
+
+  "messageEmpty": "Message cannot be empty",
+  "@messageEmpty": {
+    "description": "Validation message when message is empty"
+  },
+
+  "nameRequired": "Name is required",
+  "@nameRequired": {
+    "description": "Validation message when name field is empty"
+  },
+
+  "membersRequired": "Please select at least one member",
+  "@membersRequired": {
+    "description": "Validation message when no members are selected"
+  },
+
+  "conversationIdRequired": "Conversation ID is required",
+  "@conversationIdRequired": {
+    "description": "Validation message when conversation ID is missing"
+  },
+
+  "messageIdRequired": "Message ID is required",
+  "@messageIdRequired": {
+    "description": "Validation message when message ID is missing"
+  },
+
+  "invalidPageSize": "Page size must be between 1 and 100",
+  "@invalidPageSize": {
+    "description": "Validation message for invalid page size"
+  },
+
+  "invalidPageNumber": "Page number must be 0 or greater",
+  "@invalidPageNumber": {
+    "description": "Validation message for invalid page number"
+  },
+
+  "invalidReadCount": "Read count must be greater than 0",
+  "@invalidReadCount": {
+    "description": "Validation message for invalid read count"
+  },
+
+  "retryOperation": "Retry",
+  "@retryOperation": {
+    "description": "Button text to retry a failed operation"
+  },
+
+  "pullToRefresh": "Pull to refresh",
+  "@pullToRefresh": {
+    "description": "Pull to refresh instruction"
+  },
+
+  "releaseToRefresh": "Release to refresh",
+  "@releaseToRefresh": {
+    "description": "Release to refresh instruction"
+  },
+
+  "refreshing": "Refreshing...",
+  "@refreshing": {
+    "description": "Refreshing status message"
+  },
+
+  "loadingMore": "Loading more...",
+  "@loadingMore": {
+    "description": "Loading more items message"
+  },
+
+  "edited": "Edited",
+  "@edited": {
+    "description": "Label shown on edited messages"
+  },
+
+  "deleted": "This message was deleted",
+  "@deleted": {
+    "description": "Text shown for deleted messages"
+  },
+
+  "you": "You",
+  "@you": {
+    "description": "Label for current user"
+  },
+
+  "admin": "Admin",
+  "@admin": {
+    "description": "Label for admin users"
+  },
+
+  "leaveGroup": "Leave Group",
+  "@leaveGroup": {
+    "description": "Button text to leave a group"
+  },
+
+  "deleteConversation": "Delete Conversation",
+  "@deleteConversation": {
+    "description": "Button text to delete a conversation"
+  },
+
+  "editGroup": "Edit Group",
+  "@editGroup": {
+    "description": "Button text to edit group details"
+  },
+
+  "groupInfo": "Group Info",
+  "@groupInfo": {
+    "description": "Group information page title"
+  },
+
+  "conversationDeleted": "Conversation deleted successfully",
+  "@conversationDeleted": {
+    "description": "Success message when conversation is deleted"
+  },
+
+  "leftConversation": "You left the conversation",
+  "@leftConversation": {
+    "description": "Success message when user leaves a conversation"
+  },
+
+  "groupCreated": "Group created successfully",
+  "@groupCreated": {
+    "description": "Success message when group is created"
+  },
+
+  "groupUpdated": "Group updated successfully",
+  "@groupUpdated": {
+    "description": "Success message when group is updated"
+  },
+
+  "messageSent": "Message sent",
+  "@messageSent": {
+    "description": "Success message when message is sent"
+  },
+
+  "messageEdited": "Message edited",
+  "@messageEdited": {
+    "description": "Success message when message is edited"
+  },
+
+  "messageDeleted": "Message deleted",
+  "@messageDeleted": {
+    "description": "Success message when message is deleted"
+  },
+
+  "confirmLeaveGroup": "Are you sure you want to leave this group?",
+  "@confirmLeaveGroup": {
+    "description": "Confirmation dialog for leaving a group"
+  },
+
+  "confirmDeleteConversation": "Are you sure you want to delete this conversation?",
+  "@confirmDeleteConversation": {
+    "description": "Confirmation dialog for deleting a conversation"
+  },
+
+  "searchConversations": "Search conversations...",
+  "@searchConversations": {
+    "description": "Placeholder text for conversation search"
+  },
+
+  "searchMessages": "Search messages...",
+  "@searchMessages": {
+    "description": "Placeholder text for message search"
+  },
+
+  "selectMembers": "Select Members",
+  "@selectMembers": {
+    "description": "Title for member selection screen"
+  },
+
+  "groupDescription": "Group Description",
+  "@groupDescription": {
+    "description": "Label for group description field"
+  },
+
+  "optional": "Optional",
+  "@optional": {
+    "description": "Label for optional fields"
+  },
+
+  "required": "Required",
+  "@required": {
+    "description": "Label for required fields"
+  },
+
+  "addPhoto": "Add Photo",
+  "@addPhoto": {
+    "description": "Button text to add a photo"
+  },
+
+  "changePhoto": "Change Photo",
+  "@changePhoto": {
+    "description": "Button text to change a photo"
+  },
+
+  "removePhoto": "Remove Photo",
+  "@removePhoto": {
+    "description": "Button text to remove a photo"
+  },
+
+  "camera": "Camera",
+  "@camera": {
+    "description": "Camera option"
+  },
+
+  "gallery": "Gallery",
+  "@gallery": {
+    "description": "Gallery option"
+  },
+
+  "file": "File",
+  "@file": {
+    "description": "File option"
+  },
+
+  "attachFile": "Attach File",
+  "@attachFile": {
+    "description": "Button text to attach a file"
+  },
+
+  "replyTo": "Reply to {name}",
+  "@replyTo": {
+    "description": "Reply to message indicator",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "John"
+      }
+    }
+  },
+
+  "forwardedMessage": "Forwarded message",
+  "@forwardedMessage": {
+    "description": "Label for forwarded messages"
+  },
+
+  "mentionedYou": "{name} mentioned you",
+  "@mentionedYou": {
+    "description": "Notification when someone mentions you",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "John"
+      }
+    }
+  },
+
+  "unreadMessages": "{count} unread messages",
+  "@unreadMessages": {
+    "description": "Unread message count",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+
+  "markAsRead": "Mark as read",
+  "@markAsRead": {
+    "description": "Button text to mark messages as read"
+  },
+
+  "markAsUnread": "Mark as unread",
+  "@markAsUnread": {
+    "description": "Button text to mark messages as unread"
+  },
+
+  "copyMessage": "Copy message",
+  "@copyMessage": {
+    "description": "Button text to copy message"
+  },
+
+  "editMessage": "Edit message",
+  "@editMessage": {
+    "description": "Button text to edit message"
+  },
+
+  "deleteMessage": "Delete message",
+  "@deleteMessage": {
+    "description": "Button text to delete message"
+  },
+
+  "forwardMessage": "Forward message",
+  "@forwardMessage": {
+    "description": "Button text to forward message"
+  },
+
+  "replyMessage": "Reply to message",
+  "@replyMessage": {
+    "description": "Button text to reply to message"
+  },
+
+  "reactToMessage": "React to message",
+  "@reactToMessage": {
+    "description": "Button text to react to message"
+  },
+
+  "messageCopied": "Message copied to clipboard",
+  "@messageCopied": {
+    "description": "Success message when message is copied"
+  },
+
+  "offlineMode": "You are offline. Messages will be sent when you reconnect.",
+  "@offlineMode": {
+    "description": "Information message when user is offline"
+  },
+
+  "syncingMessages": "Syncing messages...",
+  "@syncingMessages": {
+    "description": "Message shown when syncing offline messages"
+  },
+
+  "messageQueued": "Message queued for sending",
+  "@messageQueued": {
+    "description": "Message shown when message is queued offline"
+  },
+
+  "operationQueued": "Operation queued. Will be processed when online.",
+  "@operationQueued": {
+    "description": "Message shown when operation is queued offline"
+  },
+
+  "backOnline": "Back online. Syncing...",
+  "@backOnline": {
+    "description": "Message shown when connection is restored"
+  },
+
+  "connectionLost": "Connection lost. Working offline.",
+  "@connectionLost": {
+    "description": "Message shown when connection is lost"
   }
 }
