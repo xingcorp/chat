@@ -469,6 +469,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get groupCreated => 'Đã tạo nhóm thành công';
 
   @override
+  String get groupCreatedSuccessfully => 'Đã tạo nhóm thành công';
+
+  @override
   String get groupUpdated => 'Đã cập nhật nhóm thành công';
 
   @override

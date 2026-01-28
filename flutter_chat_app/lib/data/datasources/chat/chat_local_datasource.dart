@@ -71,7 +71,7 @@ abstract class ChatLocalDataSource {
 /// - Batch operations for optimal performance
 ///
 /// **Architecture**: Enterprise messaging database layer
-@LazySingleton(as: ChatLocalDataSource)
+@lazySingleton
 class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   final DatabaseService _databaseService;
 

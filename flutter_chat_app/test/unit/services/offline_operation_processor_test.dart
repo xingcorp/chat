@@ -51,27 +51,22 @@ void main() {
     test('should process sendMessage operation successfully', () async {
       // Arrange
       final operation = OfflineOperationModel(
+        operationId: 'op-1',
         type: OperationType.sendMessage,
-        data: {
-          'chatId': 'test-chat-id',
-          'content': 'Test message',
-          'senderId': 'user-1',
-          'contentType': 'text',
-          'attachmentIds': <String>[],
-        },
+        data: '{"chatId":"test-chat-id","content":"Test message","senderId":"user-1","contentType":"text","attachmentIds":[]}',
         timestamp: DateTime.now(),
       );
 
       final testMessage = ChatMessage(
         id: 'msg-1',
         content: 'Test message',
-        senderId: 'user-1',
+        sender: MessageSender(id: 'user-1', name: 'User 1'),
         chatId: 'test-chat-id',
         createdAt: DateTime.now(),
-        type: MessageType.text,
-        status: MessageStatus.sent,
-        attachments: [],
-        reactions: [],
+        updatedAt: DateTime.now(),
+        contentType: ContentType.text,
+        attachments: const [],
+        reactions: const [],
       );
 
       when(mockMessageRepository.sendMessage(
@@ -98,14 +93,9 @@ void main() {
     test('should throw exception when sendMessage fails', () async {
       // Arrange
       final operation = OfflineOperationModel(
+        operationId: 'op-2',
         type: OperationType.sendMessage,
-        data: {
-          'chatId': 'test-chat-id',
-          'content': 'Test message',
-          'senderId': 'user-1',
-          'contentType': 'text',
-          'attachmentIds': <String>[],
-        },
+        data: '{"chatId":"test-chat-id","content":"Test message","senderId":"user-1","contentType":"text","attachmentIds":[]}',
         timestamp: DateTime.now(),
       );
 
@@ -139,11 +129,9 @@ void main() {
     test('should process editMessage operation successfully', () async {
       // Arrange
       final operation = OfflineOperationModel(
+        operationId: 'op-3',
         type: OperationType.editMessage,
-        data: {
-          'messageId': 'msg-1',
-          'newContent': 'Updated message',
-        },
+        data: '{"messageId":"msg-1","newContent":"Updated message"}',
         timestamp: DateTime.now(),
       );
 
@@ -165,11 +153,9 @@ void main() {
     test('should throw exception when editMessage fails', () async {
       // Arrange
       final operation = OfflineOperationModel(
+        operationId: 'op-4',
         type: OperationType.editMessage,
-        data: {
-          'messageId': 'msg-1',
-          'newContent': 'Updated message',
-        },
+        data: '{"messageId":"msg-1","newContent":"Updated message"}',
         timestamp: DateTime.now(),
       );
 
@@ -192,10 +178,9 @@ void main() {
     test('should process deleteMessage operation successfully', () async {
       // Arrange
       final operation = OfflineOperationModel(
+        operationId: 'op-5',
         type: OperationType.deleteMessage,
-        data: {
-          'messageId': 'msg-1',
-        },
+        data: '{"messageId":"msg-1"}',
         timestamp: DateTime.now(),
       );
 
@@ -214,12 +199,9 @@ void main() {
     test('should process createGroup operation successfully', () async {
       // Arrange
       final operation = OfflineOperationModel(
+        operationId: 'op-6',
         type: OperationType.createGroup,
-        data: {
-          'name': 'Test Group',
-          'participantIds': ['user-1', 'user-2'],
-          'isGroup': true,
-        },
+        data: '{"name":"Test Group","participantIds":["user-1","user-2"],"isGroup":true}',
         timestamp: DateTime.now(),
       );
 
@@ -227,9 +209,7 @@ void main() {
         id: 'chat-1',
         name: 'Test Group',
         type: ChatType.group,
-        participants: [],
-        createdAt: DateTime.now(),
-        lastMessage: null,
+        participantIds: const ['user-1', 'user-2'],
         unreadCount: 0,
       );
 
@@ -253,12 +233,9 @@ void main() {
     test('should throw exception when createGroup fails', () async {
       // Arrange
       final operation = OfflineOperationModel(
+        operationId: 'op-7',
         type: OperationType.createGroup,
-        data: {
-          'name': 'Test Group',
-          'participantIds': ['user-1', 'user-2'],
-          'isGroup': true,
-        },
+        data: '{"name":"Test Group","participantIds":["user-1","user-2"],"isGroup":true}',
         timestamp: DateTime.now(),
       );
 
@@ -282,12 +259,9 @@ void main() {
     test('should process editGroup operation successfully', () async {
       // Arrange
       final operation = OfflineOperationModel(
+        operationId: 'op-8',
         type: OperationType.editGroup,
-        data: {
-          'chatId': 'chat-1',
-          'name': 'Updated Group Name',
-          'avatarUrl': 'https://example.com/avatar.jpg',
-        },
+        data: '{"chatId":"chat-1","name":"Updated Group Name","avatarUrl":"https://example.com/avatar.jpg"}',
         timestamp: DateTime.now(),
       );
 
@@ -295,9 +269,7 @@ void main() {
         id: 'chat-1',
         name: 'Updated Group Name',
         type: ChatType.group,
-        participants: [],
-        createdAt: DateTime.now(),
-        lastMessage: null,
+        participantIds: const [],
         unreadCount: 0,
       );
 
@@ -323,10 +295,9 @@ void main() {
     test('should process leaveConversation operation successfully', () async {
       // Arrange
       final operation = OfflineOperationModel(
+        operationId: 'op-9',
         type: OperationType.leaveConversation,
-        data: {
-          'chatId': 'chat-1',
-        },
+        data: '{"chatId":"chat-1"}',
         timestamp: DateTime.now(),
       );
 
@@ -345,10 +316,9 @@ void main() {
     test('should process markAsRead operation successfully', () async {
       // Arrange
       final operation = OfflineOperationModel(
+        operationId: 'op-10',
         type: OperationType.markAsRead,
-        data: {
-          'chatId': 'chat-1',
-        },
+        data: '{"chatId":"chat-1"}',
         timestamp: DateTime.now(),
       );
 
@@ -367,11 +337,9 @@ void main() {
     test('should throw UnimplementedError for addReaction', () async {
       // Arrange
       final operation = OfflineOperationModel(
+        operationId: 'op-11',
         type: OperationType.addReaction,
-        data: {
-          'messageId': 'msg-1',
-          'code': '👍',
-        },
+        data: '{"messageId":"msg-1","code":"👍"}',
         timestamp: DateTime.now(),
       );
 

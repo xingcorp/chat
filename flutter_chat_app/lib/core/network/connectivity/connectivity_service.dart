@@ -82,7 +82,7 @@ abstract class IConnectivityService {
 }
 
 /// Implementation của IConnectivityService
-@LazySingleton(as: IConnectivityService)
+@lazySingleton
 class ConnectivityServiceImpl implements IConnectivityService {
   /// Plugin connectivity
   final Connectivity _connectivity;

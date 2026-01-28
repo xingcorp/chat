@@ -37,7 +37,7 @@ abstract class IMediaRemoteDataSource {
 }
 
 /// Implementation of remote media data source
-@LazySingleton(as: IMediaRemoteDataSource)
+@lazySingleton
 class MediaRemoteDataSourceImpl implements IMediaRemoteDataSource {
   final http.Client _httpClient;
   final String _baseUrl;

@@ -36,7 +36,7 @@ abstract class GraphQLClientWrapper {
 }
 
 /// Implementation of GraphQL client
-@LazySingleton(as: GraphQLClientWrapper)
+@lazySingleton
 class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
   final GraphQLClient _client;
   final NetworkInfo _networkInfo;

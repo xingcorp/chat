@@ -92,7 +92,7 @@ abstract class IMessageRemoteDataSource {
 ///
 /// Implements backend API communication using GraphQL and Socket.IO.
 /// Returns DTOs for type-safe data transfer.
-@LazySingleton(as: IMessageRemoteDataSource)
+@lazySingleton
 class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
   final GraphQLClientWrapper _client;
   final RealtimeMessagingService _realtimeService;

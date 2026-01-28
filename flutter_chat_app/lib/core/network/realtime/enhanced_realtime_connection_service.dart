@@ -20,7 +20,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 ///
 /// Cung cấp khả năng xử lý kết nối WebSocket thông minh, tự phục hồi,
 /// và chuyển đổi mượt mà giữa WebSocket và long polling.
-@LazySingleton(as: IRealtimeConnectionService)
+@lazySingleton
 class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
   /// Logger
   final Logger _logger;

@@ -158,6 +158,8 @@
   "conversationDeleted": "Đã xóa cuộc trò chuyện thành công",
   "leftConversation": "Bạn đã rời khỏi cuộc trò chuyện",
   "groupCreated": "Đã tạo nhóm thành công",
+
+  "groupCreatedSuccessfully": "Đã tạo nhóm thành công",
   "groupUpdated": "Đã cập nhật nhóm thành công",
   "messageSent": "Đã gửi tin nhắn",
   "messageEdited": "Đã chỉnh sửa tin nhắn",

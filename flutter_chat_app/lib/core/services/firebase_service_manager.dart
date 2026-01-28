@@ -11,20 +11,20 @@
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
-import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
 
 import 'package:flutter_chat_app/core/config/flavor_config.dart';
 import 'package:flutter_chat_app/core/config/firebase_config.dart';
-import 'package:flutter_chat_app/core/utils/logger.dart';
 
 /// **Firebase Service Manager**
 /// 
 /// Centralized management of Firebase services based on flavor
-@singleton
+/// 
+/// **Note**: Registered manually in core_module.dart (not via Injectable)
 class FirebaseServiceManager {
   FirebaseServiceManager(this._logger);
 
-  final AppLogger _logger;
+  final Logger _logger;
   
   bool _analyticsInitialized = false;
   bool _crashlyticsInitialized = false;
@@ -36,7 +36,7 @@ class FirebaseServiceManager {
     try {
       final config = FlavorConfig.instance;
       
-      _logger.info('Initializing Firebase services for ${config.flavor.name}');
+      _logger.i('Initializing Firebase services for ${config.flavor.name}');
       
       // Initialize core Firebase first
       await FirebaseConfigManager.initialize();
@@ -47,10 +47,10 @@ class FirebaseServiceManager {
       await _initializePerformanceMonitoring(config);
       await _initializeMessaging(config);
       
-      _logger.info('All Firebase services initialized successfully');
+      _logger.i('All Firebase services initialized successfully');
       
     } catch (e, stackTrace) {
-      _logger.error('Failed to initialize Firebase services', e, stackTrace);
+      _logger.e('Failed to initialize Firebase services', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -58,7 +58,7 @@ class FirebaseServiceManager {
   /// Initialize Firebase Analytics
   Future<void> _initializeAnalytics(FlavorConfig config) async {
     if (!config.environment.enableAnalytics) {
-      _logger.info('Analytics disabled for ${config.flavor.name}');
+      _logger.i('Analytics disabled for ${config.flavor.name}');
       return;
     }
     
@@ -75,21 +75,21 @@ class FirebaseServiceManager {
       // Set debug mode for staging
       if (config.isStaging) {
         // await FirebaseAnalytics.instance.setDebugModeEnabled(true);
-        _logger.info('Analytics debug mode enabled for staging');
+        _logger.i('Analytics debug mode enabled for staging');
       }
       
       _analyticsInitialized = true;
-      _logger.info('Firebase Analytics initialized for ${config.flavor.name}');
+      _logger.i('Firebase Analytics initialized for ${config.flavor.name}');
       
     } catch (e, stackTrace) {
-      _logger.error('Failed to initialize Analytics', e, stackTrace);
+      _logger.e('Failed to initialize Analytics', error: e, stackTrace: stackTrace);
     }
   }
   
   /// Initialize Firebase Crashlytics
   Future<void> _initializeCrashlytics(FlavorConfig config) async {
     if (!config.environment.enableCrashlytics) {
-      _logger.info('Crashlytics disabled for ${config.flavor.name}');
+      _logger.i('Crashlytics disabled for ${config.flavor.name}');
       return;
     }
     
@@ -105,21 +105,21 @@ class FirebaseServiceManager {
       // Set user identifier for staging
       if (config.isStaging) {
         // await FirebaseCrashlytics.instance.setUserIdentifier('staging-user');
-        _logger.info('Crashlytics staging user identifier set');
+        _logger.i('Crashlytics staging user identifier set');
       }
       
       _crashlyticsInitialized = true;
-      _logger.info('Firebase Crashlytics initialized for ${config.flavor.name}');
+      _logger.i('Firebase Crashlytics initialized for ${config.flavor.name}');
       
     } catch (e, stackTrace) {
-      _logger.error('Failed to initialize Crashlytics', e, stackTrace);
+      _logger.e('Failed to initialize Crashlytics', error: e, stackTrace: stackTrace);
     }
   }
   
   /// Initialize Firebase Performance Monitoring
   Future<void> _initializePerformanceMonitoring(FlavorConfig config) async {
     if (!config.environment.enablePerformanceMonitoring) {
-      _logger.info('Performance monitoring disabled for ${config.flavor.name}');
+      _logger.i('Performance monitoring disabled for ${config.flavor.name}');
       return;
     }
     
@@ -132,10 +132,10 @@ class FirebaseServiceManager {
       // await trace.start();
       
       _performanceInitialized = true;
-      _logger.info('Firebase Performance Monitoring initialized for ${config.flavor.name}');
+      _logger.i('Firebase Performance Monitoring initialized for ${config.flavor.name}');
       
     } catch (e, stackTrace) {
-      _logger.error('Failed to initialize Performance Monitoring', e, stackTrace);
+      _logger.e('Failed to initialize Performance Monitoring', error: e, stackTrace: stackTrace);
     }
   }
   
@@ -162,10 +162,10 @@ class FirebaseServiceManager {
       // await messaging.subscribeToTopic('${topicPrefix}_updates');
       
       _messagingInitialized = true;
-      _logger.info('Firebase Messaging initialized for ${config.flavor.name}');
+      _logger.i('Firebase Messaging initialized for ${config.flavor.name}');
       
     } catch (e, stackTrace) {
-      _logger.error('Failed to initialize Messaging', e, stackTrace);
+      _logger.e('Failed to initialize Messaging', error: e, stackTrace: stackTrace);
     }
   }
   
@@ -190,10 +190,10 @@ class FirebaseServiceManager {
       //   parameters: enrichedParameters,
       // );
       
-      _logger.debug('Analytics event logged: $name');
+      _logger.d('Analytics event logged: $name');
       
     } catch (e, stackTrace) {
-      _logger.error('Failed to log analytics event', e, stackTrace);
+      _logger.e('Failed to log analytics event', error: e, stackTrace: stackTrace);
     }
   }
   
@@ -223,10 +223,10 @@ class FirebaseServiceManager {
       //   information: enrichedContext.entries.map((e) => '${e.key}: ${e.value}').toList(),
       // );
       
-      _logger.debug('Error recorded to Crashlytics: $exception');
+      _logger.d('Error recorded to Crashlytics: $exception');
       
     } catch (e, stackTrace) {
-      _logger.error('Failed to record error to Crashlytics', e, stackTrace);
+      _logger.e('Failed to record error to Crashlytics', error: e, stackTrace: stackTrace);
     }
   }
   
@@ -239,10 +239,10 @@ class FirebaseServiceManager {
       // final trace = FirebasePerformance.instance.newTrace(name);
       // await trace.start();
       
-      _logger.debug('Performance trace started: $name');
+      _logger.d('Performance trace started: $name');
       
     } catch (e, stackTrace) {
-      _logger.error('Failed to start performance trace', e, stackTrace);
+      _logger.e('Failed to start performance trace', error: e, stackTrace: stackTrace);
     }
   }
   
@@ -255,11 +255,11 @@ class FirebaseServiceManager {
       // final token = await FirebaseMessaging.instance.getToken();
       // return token;
       
-      _logger.debug('FCM token retrieved');
+      _logger.d('FCM token retrieved');
       return 'demo_fcm_token_${FlavorConfig.instance.flavor.name}';
       
     } catch (e, stackTrace) {
-      _logger.error('Failed to get FCM token', e, stackTrace);
+      _logger.e('Failed to get FCM token', error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -275,10 +275,10 @@ class FirebaseServiceManager {
       // Note: Actual topic subscription would go here
       // await FirebaseMessaging.instance.subscribeToTopic(flavorTopic);
       
-      _logger.info('Subscribed to topic: $flavorTopic');
+      _logger.i('Subscribed to topic: $flavorTopic');
       
     } catch (e, stackTrace) {
-      _logger.error('Failed to subscribe to topic', e, stackTrace);
+      _logger.e('Failed to subscribe to topic', error: e, stackTrace: stackTrace);
     }
   }
   

@@ -48,7 +48,7 @@ abstract class AuthRemoteDataSource {
 }
 
 /// Implementation of [AuthRemoteDataSource] using GraphQL
-@LazySingleton(as: AuthRemoteDataSource)
+@lazySingleton
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final GraphQLClientWrapper _client;
   

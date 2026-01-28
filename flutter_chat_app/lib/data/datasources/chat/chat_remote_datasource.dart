@@ -134,7 +134,7 @@ abstract class IChatRemoteDataSource {
 ///
 /// Implements backend API communication using GraphQL and Socket.IO.
 /// Returns DTOs for type-safe data transfer.
-@LazySingleton(as: IChatRemoteDataSource)
+@lazySingleton
 class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
   final GraphQLClientWrapper _client;
   final EnhancedSocketManager _socketManager;

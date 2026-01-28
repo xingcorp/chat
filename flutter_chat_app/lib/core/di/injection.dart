@@ -22,6 +22,7 @@ import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'injection.config.dart';
+import 'modules/core_module.dart';
 
 /// Global service locator instance
 /// 
@@ -41,7 +42,7 @@ final GetIt getIt = GetIt.instance;
   preferRelativeImports: true,
   asExtension: true,
 )
-Future<void> initializeDependencies() async {
+Future<void> configureDependencies() async {
   final logger = Logger(
     printer: PrettyPrinter(
       methodCount: 1,
@@ -60,8 +61,11 @@ Future<void> initializeDependencies() async {
     // Step 1: Register external dependencies
     await _registerExternalDependencies(logger);
 
-    // Step 2: Initialize auto-generated dependencies
-    configureDependencies(getIt);
+    // Step 2: Register core module (manual registration)
+    await registerCoreModule(getIt);
+
+    // Step 3: Initialize auto-generated dependencies (feature services)
+    getIt.init();
 
     stopwatch.stop();
     logger.i('✅ DI initialized in ${stopwatch.elapsedMilliseconds}ms');

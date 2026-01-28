@@ -28,7 +28,7 @@ import 'package:flutter_chat_app/data/datasources/chat/chat_remote_datasource.da
 /// **ENTERPRISE CHAT REPOSITORY**
 /// 
 /// Production-ready repository with enterprise patterns and performance optimization
-@LazySingleton(as: IChatRepository)
+@lazySingleton
 class EnterpriseChatRepositoryImpl implements IChatRepository {
   final ChatLocalDataSource _localDataSource;
   final ChatRemoteDataSource _remoteDataSource;

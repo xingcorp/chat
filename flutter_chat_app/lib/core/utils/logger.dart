@@ -133,7 +133,8 @@ class LogUtils {
 
 /// Enterprise-grade AppLogger for permissions service
 /// Provides structured logging với performance tracking
-@singleton
+/// 
+/// Registered manually in core_module.dart
 class AppLogger {
   static final Logger _logger = Logger(
     printer: PrettyPrinter(

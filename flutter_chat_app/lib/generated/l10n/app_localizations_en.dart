@@ -469,6 +469,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupCreated => 'Group created successfully';
 
   @override
+  String get groupCreatedSuccessfully => 'Group created successfully';
+
+  @override
   String get groupUpdated => 'Group updated successfully';
 
   @override

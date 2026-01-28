@@ -23,7 +23,7 @@ import 'package:logger/logger.dart';
 /// - Cached operations: <50ms
 ///
 /// **Architecture:** Clean Architecture + SOLID principles + BaseRepository pattern
-@LazySingleton(as: IAuthRepository)
+@lazySingleton
 class AuthRepositoryImpl extends BaseRepository
     with RepositoryErrorMixin
     implements IAuthRepository {

@@ -10,7 +10,7 @@ import 'package:isar/isar.dart';
 
 /// Implementation of offline queue service
 /// Manages operations that need to be synced when device comes online
-@Singleton(as: IOfflineQueueService)
+@singleton
 class OfflineQueueService implements IOfflineQueueService {
   final Isar _isar;
   final INetworkInfo _networkInfo;

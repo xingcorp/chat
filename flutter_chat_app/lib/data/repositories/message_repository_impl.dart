@@ -25,7 +25,7 @@ import 'package:uuid/uuid.dart';
 /// - Offline operations: Immediate response
 ///
 /// **Architecture:** Clean Architecture + SOLID principles + BaseRepository pattern
-@LazySingleton(as: IMessageRepository)
+@lazySingleton
 class MessageRepositoryImpl extends BaseRepository implements IMessageRepository {
   final MessageLocalDataSource _localDataSource;
   final IMessageRemoteDataSource _remoteDataSource;

@@ -47,7 +47,7 @@ abstract class LocalStorage {
 }
 
 /// Implementation of local storage using SharedPreferences
-@LazySingleton(as: LocalStorage)
+@lazySingleton
 class LocalStorageImpl implements LocalStorage {
   final SharedPreferences _prefs;
   

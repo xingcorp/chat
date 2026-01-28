@@ -38,7 +38,7 @@ abstract class UserLocalDataSource {
 }
 
 /// Implementation of [UserLocalDataSource]
-@LazySingleton(as: UserLocalDataSource)
+@lazySingleton
 class UserLocalDataSourceImpl implements UserLocalDataSource {
   final LocalStorage _localStorage;
   

@@ -11,19 +11,18 @@
 
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:injectable/injectable.dart';
-
 import 'package:flutter_chat_app/core/config/flavor_config.dart';
-import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:logger/logger.dart';
 
 /// **Environment Manager Service**
 /// 
 /// Manages application environment configuration and runtime behavior
-@singleton
+/// 
+/// **Note**: Registered manually in core_module.dart (not via Injectable)
 class EnvironmentManager {
   EnvironmentManager(this._logger);
 
-  final AppLogger _logger;
+  final Logger _logger;
   
   late final FlavorConfig _config;
   late final Map<String, dynamic> _runtimeInfo;
@@ -47,10 +46,10 @@ class EnvironmentManager {
       // Setup environment-specific services
       await _setupEnvironmentServices();
       
-      _logger.info('Environment initialized: ${_config.flavor.name}');
+      _logger.i('Environment initialized: ${_config.flavor.name}');
       
     } catch (e, stackTrace) {
-      _logger.error('Failed to initialize environment', e, stackTrace);
+      _logger.e('Failed to initialize environment', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -164,21 +163,21 @@ class EnvironmentManager {
     
     final summary = getEnvironmentSummary();
     
-    logger.info('🏗️ ===== ENVIRONMENT INFORMATION =====');
-    logger.info('📱 App: ${FlavorUtils.getAppDisplayName()}');
-    logger.info('🏷️ Flavor: ${summary['flavor']}');
-    logger.info('🔧 Build Mode: ${summary['buildMode']}');
-    logger.info('📱 Platform: ${summary['platform']}');
-    logger.info('🌐 API Base URL: ${summary['apiBaseUrl']}');
-    logger.info('🔌 WebSocket URL: ${summary['websocketUrl']}');
-    logger.info('🔥 Firebase Project: ${summary['firebaseProjectId']}');
-    logger.info('📊 Analytics: ${summary['enableAnalytics']}');
-    logger.info('💥 Crashlytics: ${summary['enableCrashlytics']}');
-    logger.info('⚡ Performance Monitoring: ${summary['enablePerformanceMonitoring']}');
-    logger.info('🧪 Mock Data: ${summary['enableMockData']}');
-    logger.info('🛠️ Debug Tools: ${summary['enableDebugTools']}');
-    logger.info('📝 Log Level: ${summary['logLevel']}');
-    logger.info('🏗️ =====================================');
+    _logger.i('🏗️ ===== ENVIRONMENT INFORMATION =====');
+    _logger.i('📱 App: ${FlavorUtils.getAppDisplayName()}');
+    _logger.i('🏷️ Flavor: ${summary['flavor']}');
+    _logger.i('🔧 Build Mode: ${summary['buildMode']}');
+    _logger.i('📱 Platform: ${summary['platform']}');
+    _logger.i('🌐 API Base URL: ${summary['apiBaseUrl']}');
+    _logger.i('🔌 WebSocket URL: ${summary['websocketUrl']}');
+    _logger.i('🔥 Firebase Project: ${summary['firebaseProjectId']}');
+    _logger.i('📊 Analytics: ${summary['enableAnalytics']}');
+    _logger.i('💥 Crashlytics: ${summary['enableCrashlytics']}');
+    _logger.i('⚡ Performance Monitoring: ${summary['enablePerformanceMonitoring']}');
+    _logger.i('🧪 Mock Data: ${summary['enableMockData']}');
+    _logger.i('🛠️ Debug Tools: ${summary['enableDebugTools']}');
+    _logger.i('📝 Log Level: ${summary['logLevel']}');
+    _logger.i('🏗️ =====================================');
   }
   
   /// Collect runtime information
@@ -241,11 +240,11 @@ class EnvironmentManager {
     
     if (errors.isNotEmpty) {
       final errorMessage = 'Environment configuration validation failed:\n${errors.join('\n')}';
-      _logger.error(errorMessage);
+      _logger.e(errorMessage);
       throw StateError(errorMessage);
     }
     
-    _logger.info('Environment configuration validated successfully');
+    _logger.i('Environment configuration validated successfully');
   }
   
   /// Setup environment-specific services
@@ -262,7 +261,7 @@ class EnvironmentManager {
     // Setup retry configuration
     // RetryConfig.setMaxAttempts(_config.environment.maxRetryAttempts);
     
-    _logger.info('Environment-specific services configured');
+    _logger.i('Environment-specific services configured');
   }
   
   /// Switch environment (for testing purposes only)
@@ -271,7 +270,7 @@ class EnvironmentManager {
       throw UnsupportedError('Environment switching is not allowed in release mode');
     }
     
-    _logger.info('Switching environment from ${_config.flavor.name} to ${newFlavor.name}');
+    _logger.i('Switching environment from ${_config.flavor.name} to ${newFlavor.name}');
     
     // Reinitialize with new flavor
     switch (newFlavor) {

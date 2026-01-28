@@ -965,6 +965,12 @@ abstract class AppLocalizations {
   /// **'Group created successfully'**
   String get groupCreated;
 
+  /// Success message when group is created
+  ///
+  /// In en, this message translates to:
+  /// **'Group created successfully'**
+  String get groupCreatedSuccessfully;
+
   /// Success message when group is updated
   ///
   /// In en, this message translates to:

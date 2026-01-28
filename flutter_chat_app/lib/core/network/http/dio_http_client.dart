@@ -13,7 +13,7 @@ import 'package:injectable/injectable.dart';
 
 /// Triển khai IHttpClient sử dụng thư viện Dio
 /// Tối ưu cho hiệu suất cao, độ tin cậy, và hỗ trợ các tính năng như caching, retry
-@LazySingleton(as: IHttpClient)
+@lazySingleton
 class DioHttpClient implements IHttpClient {
   final dio.Dio _dio = dio.Dio();
   final AppLogger _logger;

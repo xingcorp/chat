@@ -41,7 +41,7 @@ abstract class IMediaLocalDataSource {
 }
 
 /// Implementation of local media data source
-@LazySingleton(as: IMediaLocalDataSource)
+@lazySingleton
 class MediaLocalDataSourceImpl implements IMediaLocalDataSource {
   static const String _cacheDir = 'media_cache';
   static const String _metadataFile = 'attachments_metadata.json';

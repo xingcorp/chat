@@ -12,9 +12,8 @@ import 'dart:io';
 /// Service class responsible for managing the Isar database instance
 /// and providing methods for database operations.
 /// 
-/// Uses @preResolve for async initialization and platform-specific implementation.
-@preResolve
-@singleton
+/// Uses manual DI registration in core_module.dart due to async initialization.
+/// @preResolve annotation removed - now registered manually.
 class DatabaseService {
   final IDatabaseImplementation _implementation;
   bool _isInitialized = false;
@@ -22,11 +21,10 @@ class DatabaseService {
   /// Private constructor with implementation
   DatabaseService._(this._implementation);
 
-  /// Factory method for Injectable
+  /// Factory method for manual DI registration
   /// 
   /// Creates platform-specific implementation and initializes the database.
-  /// This method is called by Injectable during DI setup.
-  @factoryMethod
+  /// Called by core_module.dart during DI setup.
   static Future<DatabaseService> create() async {
     // Create platform-specific implementation
     final implementation = kIsWeb 

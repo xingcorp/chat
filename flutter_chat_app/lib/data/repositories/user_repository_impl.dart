@@ -15,7 +15,7 @@ import 'package:injectable/injectable.dart';
 /// - Online-first strategy for user search (fresh results)
 /// - Remote-only strategy for user updates (server confirmation)
 /// - Comprehensive error handling and performance monitoring
-@LazySingleton(as: UserRepository)
+@lazySingleton
 class UserRepositoryImpl extends BaseRepository implements UserRepository {
   final UserLocalDataSource _localDataSource;
   final UserRemoteDataSource _remoteDataSource;

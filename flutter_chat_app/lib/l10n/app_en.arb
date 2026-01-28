@@ -776,6 +776,11 @@
     "description": "Success message when group is created"
   },
 
+  "groupCreatedSuccessfully": "Group created successfully",
+  "@groupCreatedSuccessfully": {
+    "description": "Success message when group is created"
+  },
+
   "groupUpdated": "Group updated successfully",
   "@groupUpdated": {
     "description": "Success message when group is updated"

@@ -23,8 +23,8 @@ import '../config/production_config.dart';
 /// - Crash reporting integration
 ///
 /// **Architecture**: Production-ready logging with enterprise standards
-
-@singleton
+/// 
+/// Registered manually in core_module.dart
 class ProductionLogger {
   static const String _logFileName = 'flutter_chat_app.log';
   static const int _maxLogFileSize = 10 * 1024 * 1024; // 10MB

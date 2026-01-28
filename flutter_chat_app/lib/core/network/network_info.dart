@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
 /// Interface para verificar la conectividad de la red
 /// 
 /// Note: Interface should NOT have @injectable annotation.
-/// Only the implementation (NetworkInfo) needs @LazySingleton annotation.
+/// Only the implementation (NetworkInfo) needs manual registration in core_module.dart.
 abstract class INetworkInfo {
   /// Verificar si el dispositivo tiene conexión a internet
   Future<bool> get isConnected;
@@ -33,7 +32,8 @@ abstract class INetworkInfo {
 }
 
 /// Implementación del verificador de conectividad
-@LazySingleton(as: INetworkInfo)
+/// 
+/// **Note**: Registered manually in core_module.dart (not via Injectable)
 class NetworkInfo implements INetworkInfo {
   /// Plugin de conectividad
   final Connectivity _connectivity;

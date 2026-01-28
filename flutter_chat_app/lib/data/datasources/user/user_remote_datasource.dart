@@ -28,7 +28,7 @@ abstract class UserRemoteDataSource {
 }
 
 /// Implementation of [UserRemoteDataSource]
-@LazySingleton(as: UserRemoteDataSource)
+@lazySingleton
 class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   final GraphQLClientWrapper _client;
   
