@@ -28,7 +28,7 @@ import 'injection.config.dart';
 /// Example: `final authService = getIt<IAuthService>();`
 final GetIt getIt = GetIt.instance;
 
-/// Configure all dependencies
+/// Initialize all dependencies
 /// 
 /// This must be called before running the app.
 /// Registers external dependencies first, then auto-generated ones.
@@ -40,7 +40,7 @@ final GetIt getIt = GetIt.instance;
   preferRelativeImports: true,
   asExtension: true,
 )
-Future<void> configureDependencies() async {
+Future<void> initializeDependencies() async {
   final logger = Logger(
     printer: PrettyPrinter(
       methodCount: 1,
@@ -60,7 +60,7 @@ Future<void> configureDependencies() async {
     await _registerExternalDependencies(logger);
 
     // Step 2: Initialize auto-generated dependencies
-    await getIt.init();
+    configureDependencies(getIt);
 
     stopwatch.stop();
     logger.i('✅ DI initialized in ${stopwatch.elapsedMilliseconds}ms');
