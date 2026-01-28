@@ -7,6 +7,12 @@ import 'package:flutter_chat_app/core/network/realtime/realtime_connection_servi
 import 'package:flutter_chat_app/core/network/realtime/realtime_error.dart' as realtime_error;
 import 'package:injectable/injectable.dart';
 
+/// Typedef for connection factory function
+/// 
+/// This typedef is required for Injectable to resolve the function type.
+/// Without it, Injectable cannot handle complex function types.
+typedef ConnectionFactory = Future<IRealtimeConnectionService> Function();
+
 /// Class quản lý connection pool cho các kết nối WebSocket
 /// Được cải tiến với cơ chế tự phục hồi, kiểm tra sức khỏe và quản lý bộ nhớ tối ưu
 @singleton
@@ -33,7 +39,7 @@ class ConnectionPoolManager {
   Timer? _healthCheckTimer;
   
   /// Factory tạo kết nối mới
-  final Future<IRealtimeConnectionService> Function() _connectionFactory;
+  final ConnectionFactory _connectionFactory;
   
   /// Flag đánh dấu đã khởi tạo
   bool _initialized = false;
@@ -61,7 +67,7 @@ class ConnectionPoolManager {
   
   /// Constructor
   ConnectionPoolManager({
-    required Future<IRealtimeConnectionService> Function() connectionFactory,
+    required ConnectionFactory connectionFactory,
     int maxPoolSize = 5,
     int maxConnectionLifetime = 3600000, // 1 giờ
     int maxIdleTime = 600000, // 10 phút

@@ -525,3 +525,59 @@ WidgetsBinding.instance.addTimingsCallback((timings) {
 ---
 
 **Remember**: Premature optimization is the root of all evil. Profile first, then optimize!
+
+
+## 📝 Documentation Rules
+
+### CRITICAL: Minimize Documentation Creation
+
+**Rule**: Do NOT create markdown documentation files after every fix unless explicitly requested by the user.
+
+**Why**:
+- Creates noise in the repository
+- Wastes time and resources
+- Makes git history cluttered
+- User can see the work in code changes
+
+**When to Create Documentation**:
+- ✅ User explicitly requests documentation
+- ✅ Major architectural changes that need explanation
+- ✅ Complex features that need usage guide
+- ✅ API documentation for public interfaces
+
+**When NOT to Create Documentation**:
+- ❌ After every bug fix
+- ❌ After every refactoring
+- ❌ After every error fix
+- ❌ For routine maintenance work
+
+**What to Do Instead**:
+- ✅ Write clear commit messages
+- ✅ Add inline code comments
+- ✅ Update existing documentation if needed
+- ✅ Provide verbal summary to user
+
+**Example**:
+```
+❌ BAD: Create INJECTABLE_FIXES_COMPLETE.md after fixing 2 files
+✅ GOOD: Fix the files, commit with clear message, tell user verbally
+
+❌ BAD: Create PHASE_3_COMPLETE.md after fixing BLoC errors
+✅ GOOD: Fix errors, commit, summarize in chat
+
+✅ GOOD: Create ARCHITECTURE.md when user asks "document the architecture"
+✅ GOOD: Update README.md when adding new features
+```
+
+**Commit Message Format** (instead of docs):
+```
+fix: Brief description of what was fixed
+
+- Detailed point 1
+- Detailed point 2
+- Impact/results
+
+Technical details if needed.
+```
+
+This keeps the repository clean and focuses on code quality over documentation quantity.

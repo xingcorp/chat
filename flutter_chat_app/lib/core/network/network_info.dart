@@ -5,7 +5,9 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
 /// Interface para verificar la conectividad de la red
-@injectable
+/// 
+/// Note: Interface should NOT have @injectable annotation.
+/// Only the implementation (NetworkInfo) needs @LazySingleton annotation.
 abstract class INetworkInfo {
   /// Verificar si el dispositivo tiene conexión a internet
   Future<bool> get isConnected;

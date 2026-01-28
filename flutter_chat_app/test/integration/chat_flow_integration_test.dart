@@ -141,7 +141,7 @@ void main() {
       // Arrange
       when(mockNetworkInfo.isConnected).thenAnswer((_) async => true);
       when(mockChatRemoteDataSource.getConversationList())
-          .thenAnswer((_) async => /* Mock response */);
+          .thenAnswer((_) async => []);
 
       // Act
       chatBloc.add(const ChatEvent.loadConversations());
@@ -170,7 +170,7 @@ void main() {
         type: anyNamed('type'),
         message: anyNamed('message'),
         createdAt: anyNamed('createdAt'),
-      )).thenAnswer((_) async => /* Mock response */);
+      )).thenAnswer((_) async => null);
 
       // Act
       messageBloc.add(MessageEvent.sendMessage(
@@ -219,7 +219,7 @@ void main() {
         type: anyNamed('type'),
         message: anyNamed('message'),
         createdAt: anyNamed('createdAt'),
-      )).thenAnswer((_) async => /* Mock response */);
+      )).thenAnswer((_) async => null);
 
       // Act - Process queue
       await offlineQueueService.processQueue();

@@ -23,7 +23,9 @@ import '../../data/models/isar/chat_message_isar_model.dart';
 /// **DATABASE SERVICE**
 /// 
 /// Single responsibility: Manage Isar database operations with enterprise patterns
-@singleton
+/// 
+/// Note: This uses manual singleton pattern, not Injectable DI.
+/// For DI-managed database service, use core/services/database_service.dart
 class DatabaseService {
   static DatabaseService? _instance;
   static DatabaseService get instance => _instance ??= DatabaseService._();

@@ -101,29 +101,25 @@ abstract class MonitoringModule {
   }
   
   /// Cung cấp Crash Reporter
-  @preResolve
+  /// 
+  /// Note: Removed @preResolve because @factoryParam is not compatible with it.
+  /// CrashReporter will initialize itself when first accessed.
   @singleton
-  Future<CrashReporter> provideCrashReporter(
-    @factoryParam FirebaseCrashlytics? crashlytics,
-  ) async {
-    final reporter = CrashReporter(
-      crashlytics ?? _createNoOpCrashlytics(),
-    );
-    await reporter.initialize();
-    return reporter;
+  CrashReporter provideCrashReporter(
+    FirebaseCrashlytics crashlytics,
+  ) {
+    return CrashReporter(crashlytics);
   }
   
   /// Cung cấp Performance Monitor
-  @preResolve
+  /// 
+  /// Note: Removed @preResolve because @factoryParam is not compatible with it.
+  /// PerformanceMonitor will initialize itself when first accessed.
   @singleton
-  Future<PerformanceMonitor> providePerformanceMonitor(
-    @factoryParam FirebasePerformance? performance,
-  ) async {
-    final monitor = PerformanceMonitor(
-      performance ?? _createNoOpPerformance(),
-    );
-    await monitor.initialize();
-    return monitor;
+  PerformanceMonitor providePerformanceMonitor(
+    FirebasePerformance performance,
+  ) {
+    return PerformanceMonitor(performance);
   }
   
   /// Cung cấp Message Delivery Tracker
