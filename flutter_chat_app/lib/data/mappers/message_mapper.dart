@@ -1,19 +1,120 @@
 import 'dart:convert';
 import 'package:flutter_chat_app/data/dtos/message_dto.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
+import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:uuid/uuid.dart';
 
 /// **Message Mapper**
 ///
-/// Converts between MessageDto (API) and MessageModel (Isar DB).
+/// Converts between MessageDto (API), MessageModel (Isar DB), and ChatMessage (Domain Entity).
 ///
 /// **Responsibilities:**
 /// - Map DTO fields to Model fields
+/// - Map DTO fields to Domain Entity fields
 /// - Convert timestamps
 /// - Parse message type
 /// - Store additional data in metadata
 class MessageMapper {
   static const _uuid = Uuid();
+
+  /// **Convert MessageDto to ChatMessage Domain Entity**
+  ///
+  /// Maps backend DTO directly to domain entity for real-time events.
+  /// Bypasses MessageModel layer since real-time messages are stored by repository.
+  ///
+  /// **Parameters:**
+  /// - dto: MessageDto from backend API or Socket.IO event
+  ///
+  /// **Returns:** ChatMessage domain entity
+  static ChatMessage toEntity(MessageDto dto) {
+    // Parse content type
+    final typeStr = dto.type.toLowerCase();
+    final contentType = _parseContentType(typeStr);
+    
+    // Convert timestamps
+    final createdAt = DateTime.fromMillisecondsSinceEpoch(dto.createdAt);
+    final updatedAt = dto.editAt != null
+        ? DateTime.fromMillisecondsSinceEpoch(dto.editAt!)
+        : createdAt;
+    
+    // Create sender
+    final sender = MessageSender(
+      id: dto.senderId,
+      name: dto.sender?.fullName ?? 'Unknown',
+      avatar: dto.sender?.avatarUrl,
+    );
+    
+    // Parse attachments from URLs
+    final attachments = dto.urls.map((url) {
+      return MessageAttachment(
+        id: _uuid.v4(),
+        url: url,
+        type: _getAttachmentType(url),
+        name: dto.fileName ?? _getFileNameFromUrl(url),
+        size: 0, // Not provided by backend
+      );
+    }).toList();
+    
+    return ChatMessage(
+      id: dto.id,
+      chatId: dto.chatId,
+      content: dto.content,
+      contentType: contentType,
+      sender: sender,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      readBy: dto.readerIds,
+      deliveredTo: const [], // Not provided by backend
+      attachments: attachments,
+    );
+  }
+
+  /// **Parse ContentType from string**
+  static ContentType _parseContentType(String typeStr) {
+    switch (typeStr) {
+      case 'text':
+        return ContentType.text;
+      case 'image':
+        return ContentType.image;
+      case 'video':
+        return ContentType.video;
+      case 'audio':
+        return ContentType.audio;
+      case 'file':
+        return ContentType.file;
+      case 'location':
+        return ContentType.location;
+      case 'link':
+        return ContentType.link;
+      case 'event':
+        return ContentType.event;
+      default:
+        return ContentType.text;
+    }
+  }
+
+  /// **Get attachment type from URL**
+  static String _getAttachmentType(String url) {
+    final extension = url.split('.').last.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(extension)) {
+      return 'image';
+    } else if (['mp4', 'mov', 'avi', 'mkv'].contains(extension)) {
+      return 'video';
+    } else if (['mp3', 'wav', 'ogg', 'm4a'].contains(extension)) {
+      return 'audio';
+    } else {
+      return 'file';
+    }
+  }
+
+  /// **Get file name from URL**
+  static String _getFileNameFromUrl(String url) {
+    try {
+      return Uri.parse(url).pathSegments.last;
+    } catch (_) {
+      return 'file';
+    }
+  }
 
   /// **Convert MessageDto to MessageModel**
   ///
