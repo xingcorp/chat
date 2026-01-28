@@ -1,5 +1,6 @@
 import 'package:flutter_chat_app/core/network/graphql_client.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
+import 'package:injectable/injectable.dart';
 
 /// Interface for remote user data operations
 abstract class UserRemoteDataSource {
@@ -27,6 +28,7 @@ abstract class UserRemoteDataSource {
 }
 
 /// Implementation of [UserRemoteDataSource]
+@LazySingleton(as: UserRemoteDataSource)
 class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   final GraphQLClientWrapper _client;
   

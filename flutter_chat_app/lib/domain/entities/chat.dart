@@ -107,6 +107,19 @@ class Chat {
         return ChatType.direct;
     }
   }
+  
+  // ============================================================================
+  // BACKWARD COMPATIBILITY GETTERS
+  // ============================================================================
+  
+  /// Alias for avatarUrl (backward compatibility with UI)
+  String? get imgUrl => avatarUrl;
+  
+  /// Alias for lastMessagePreview (backward compatibility with UI)
+  String? get lastMessage => lastMessagePreview;
+  
+  /// Alias for lastMessageTime (backward compatibility with UI)
+  DateTime? get lastMessageAt => lastMessageTime;
 }
 
 /// Loại chat

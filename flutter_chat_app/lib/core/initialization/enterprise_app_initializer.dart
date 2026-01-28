@@ -1,5 +1,16 @@
 /// **ENTERPRISE APP INITIALIZER**
 /// 
+/// **DEPRECATED**: This file is deprecated and should not be used.
+/// Use `EnterpriseDI.initialize()` from `enterprise_injection.dart` instead.
+/// 
+/// This file violates Clean Architecture by importing presentation layer
+/// from infrastructure layer. It also manually registers dependencies
+/// with incorrect parameters, causing constructor mismatch errors.
+/// 
+/// **Migration Guide:**
+/// - Replace `EnterpriseAppInitializer.instance.initializeEnterpriseApp()`
+/// - With `EnterpriseDI.initialize()`
+/// 
 /// Production-ready app initialization for messaging apps with
 /// WhatsApp/Telegram/Zalo-level performance and enterprise standards.
 /// 
@@ -11,6 +22,7 @@
 /// - Dependency injection coordination
 /// - Health checks and validation
 
+@Deprecated('Use EnterpriseDI.initialize() instead. This file violates Clean Architecture.')
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';

@@ -108,7 +108,7 @@ Future<void> runMainApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize environment manager
-  final logger = AppLogger();
+  final logger = AppLogger.instance;
   final environmentManager = EnvironmentManager(logger);
   await environmentManager.initialize();
 

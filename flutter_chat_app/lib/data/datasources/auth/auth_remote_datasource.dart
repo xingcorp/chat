@@ -1,6 +1,7 @@
 import 'package:flutter_chat_app/core/exceptions/exceptions.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/services/graphql/graphql_client_wrapper.dart';
+import 'package:injectable/injectable.dart';
 
 /// Interface for remote authentication operations
 abstract class AuthRemoteDataSource {
@@ -47,6 +48,7 @@ abstract class AuthRemoteDataSource {
 }
 
 /// Implementation of [AuthRemoteDataSource] using GraphQL
+@LazySingleton(as: AuthRemoteDataSource)
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final GraphQLClientWrapper _client;
   

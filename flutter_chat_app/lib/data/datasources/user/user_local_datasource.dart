@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
+import 'package:injectable/injectable.dart';
 
 /// Interface for local user data operations
 abstract class UserLocalDataSource {
@@ -37,6 +38,7 @@ abstract class UserLocalDataSource {
 }
 
 /// Implementation of [UserLocalDataSource]
+@LazySingleton(as: UserLocalDataSource)
 class UserLocalDataSourceImpl implements UserLocalDataSource {
   final LocalStorage _localStorage;
   

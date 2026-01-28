@@ -27,7 +27,10 @@ enum NetworkQuality {
 @lazySingleton
 class ConnectivityAnalyzerService {
   /// Plugin kết nối
-  final Connectivity _connectivity = Connectivity();
+  final Connectivity _connectivity;
+  
+  /// Constructor
+  ConnectivityAnalyzerService(this._connectivity);
   
   /// Stream thông báo thay đổi kết nối
   final BehaviorSubject<List<ConnectivityResult>> _connectivityStream = BehaviorSubject();

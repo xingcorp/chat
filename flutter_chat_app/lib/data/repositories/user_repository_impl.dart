@@ -6,6 +6,7 @@ import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.da
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/domain/entities/user.dart';
 import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
+import 'package:injectable/injectable.dart';
 
 /// **ENTERPRISE USER REPOSITORY IMPLEMENTATION**
 ///
@@ -14,6 +15,7 @@ import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
 /// - Online-first strategy for user search (fresh results)
 /// - Remote-only strategy for user updates (server confirmation)
 /// - Comprehensive error handling and performance monitoring
+@LazySingleton(as: UserRepository)
 class UserRepositoryImpl extends BaseRepository implements UserRepository {
   final UserLocalDataSource _localDataSource;
   final UserRemoteDataSource _remoteDataSource;

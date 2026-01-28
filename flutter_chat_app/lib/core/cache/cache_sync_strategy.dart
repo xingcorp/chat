@@ -1,9 +1,11 @@
 
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
+import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
 /// Manager quản lý chiến lược đồng bộ và invalidate cache
+@singleton
 class CacheSyncStrategy {
   /// Singleton instance
   static final CacheSyncStrategy _instance = CacheSyncStrategy._internal();

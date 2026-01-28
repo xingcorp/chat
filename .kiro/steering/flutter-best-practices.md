@@ -7,6 +7,80 @@ priority: medium
 
 # Flutter Best Practices & Performance Optimization
 
+## 🎯 Critical Architecture Rules
+
+### Logging - ALWAYS Use AppLogger
+```dart
+// ❌ NEVER use Logger directly
+import 'package:logger/logger.dart';
+final Logger _logger = Logger();
+
+// ✅ ALWAYS use AppLogger via DI
+import 'package:flutter_chat_app/core/utils/logger.dart';
+
+@injectable
+class MyService {
+  final AppLogger _logger;
+  
+  MyService({required AppLogger logger}) : _logger = logger;
+  
+  void doSomething() {
+    _logger.info('Operation started');
+    _logger.debug('Debug info');
+    _logger.warning('Warning message');
+    _logger.error('Error occurred', error);
+  }
+}
+```
+
+### Widgets - ALWAYS Use BaseStatefulWidget
+```dart
+// ❌ NEVER use StatefulWidget directly
+class MyPage extends StatefulWidget {
+  @override
+  State<MyPage> createState() => _MyPageState();
+}
+
+class _MyPageState extends State<MyPage> {
+  void updateData() {
+    setState(() {}); // Can crash if disposed!
+  }
+}
+
+// ✅ ALWAYS use BaseStatefulWidget
+import 'package:flutter_chat_app/core/base/base_widget.dart';
+
+class MyPage extends BaseStatefulWidget {
+  const MyPage({super.key});
+  
+  @override
+  State<MyPage> createState() => _MyPageState();
+}
+
+class _MyPageState extends BaseState<MyPage> {
+  // Automatic lifecycle logging
+  // Automatic WidgetsBindingObserver
+  
+  void updateData() {
+    safeSetState(() {}); // Safe - won't crash!
+  }
+  
+  @override
+  void onAppResumed() {
+    // Handle app resume
+  }
+  
+  @override
+  void onAppPaused() {
+    // Handle app pause
+  }
+}
+```
+
+**Benefits:**
+- ✅ AppLogger: Consistent logging, structured context, performance tracking
+- ✅ BaseStatefulWidget: Safe setState, automatic lifecycle logging, memory leak prevention
+
 ## Performance Optimization
 
 ### Widget Optimization
@@ -349,10 +423,23 @@ final dio = Dio(BaseOptions(
 
 ### Avoid These Mistakes
 ```dart
-// ❌ Don't call setState after dispose
+// ❌ Don't use setState directly - use safeSetState from BaseState
+setState(() => _data = data); // Can crash if disposed!
+
+// ✅ Use safeSetState from BaseState
+safeSetState(() => _data = data); // Safe!
+
+// ❌ Don't call setState after dispose (if not using BaseState)
 if (mounted) {
   setState(() => _data = data);
 }
+
+// ❌ Don't use Logger directly - use AppLogger
+final Logger _logger = Logger();
+
+// ✅ Use AppLogger via DI
+final AppLogger _logger;
+MyClass({required AppLogger logger}) : _logger = logger;
 
 // ❌ Don't use BuildContext across async gaps
 // BAD:

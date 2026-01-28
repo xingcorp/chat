@@ -142,6 +142,9 @@
   "refreshing": "Đang làm mới...",
   "loadingMore": "Đang tải thêm...",
 
+  "syncing": "Đang đồng bộ...",
+  "offline": "Ngoại tuyến",
+
   "edited": "Đã chỉnh sửa",
   "deleted": "Tin nhắn đã bị xóa",
   "you": "Bạn",

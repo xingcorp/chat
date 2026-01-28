@@ -93,7 +93,10 @@ class SystemResourceState {
 }
 
 /// System resource monitoring service
-@singleton
+/// 
+/// Note: @singleton annotation removed to avoid duplicate registration
+/// This class is manually registered in enterprise_injection.dart
+// @singleton
 class SystemResourceMonitor {
   /// Timer for metrics collection
   Timer? _monitorTimer;

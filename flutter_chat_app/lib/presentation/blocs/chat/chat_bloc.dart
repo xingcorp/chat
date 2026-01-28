@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bloc/bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -33,7 +34,7 @@ part 'chat_bloc.freezed.dart';
 /// **Performance**: <2s for chat operations
 /// **Architecture**: Clean Architecture + BLoC pattern + Result<T> handling
 @injectable
-class ChatBloc extends BaseBloc<ChatEvent, ChatState> with BlocErrorMixin {
+class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   // UseCases (Domain Layer)
   final GetConversationsUseCase _getConversations;
   final GetConversationDetailUseCase _getConversationDetail;
@@ -85,7 +86,6 @@ class ChatBloc extends BaseBloc<ChatEvent, ChatState> with BlocErrorMixin {
       return;
     }
 
-    emitLoading(message: 'Đang tải danh sách chat...');
     emit(const ChatState.loading());
 
     logger.i('Loading conversations using UseCase');
@@ -93,16 +93,10 @@ class ChatBloc extends BaseBloc<ChatEvent, ChatState> with BlocErrorMixin {
     // Check if cache refresh is needed
     final shouldRefresh = event.forceRefresh || _cacheSyncStrategy.shouldRefreshChatList();
 
-    // Execute with retry for resilience
-    final result = await executeWithRetry(
-      () => _getConversations(),
-      maxRetries: 3,
-      emitLoadingState: false, // Already emitted above
-      loadingMessage: 'Đang tải danh sách chat...',
-    );
+    // Execute UseCase
+    final result = await _getConversations();
 
-    if (result != null) {
-      result.fold(
+    result.fold(
         (failure) {
           logger.e('Failed to load conversations: ${failure.message}');
           emit(ChatState.error(message: getUserErrorMessage(failure)));
@@ -124,7 +118,6 @@ class ChatBloc extends BaseBloc<ChatEvent, ChatState> with BlocErrorMixin {
           emit(ChatState.loaded(chats: chats));
         },
       );
-    }
   }
 
   /// **Load chat details using GetConversationDetailUseCase - CLEAN ARCHITECTURE**
@@ -163,7 +156,7 @@ class ChatBloc extends BaseBloc<ChatEvent, ChatState> with BlocErrorMixin {
   ) async {
     logger.i('Creating new chat: ${event.name}');
 
-    emitLoading(message: 'Đang tạo cuộc trò chuyện...');
+    emit(const ChatState.loading());
 
     // Create params for UseCase
     final params = CreateGroupParams(
@@ -196,7 +189,7 @@ class ChatBloc extends BaseBloc<ChatEvent, ChatState> with BlocErrorMixin {
   ) async {
     logger.i('Updating chat: ${event.chatId}');
 
-    emitLoading(message: 'Đang cập nhật...');
+    emit(const ChatState.loading());
 
     // Create params for UseCase
     final params = UpdateGroupParams(
@@ -233,7 +226,7 @@ class ChatBloc extends BaseBloc<ChatEvent, ChatState> with BlocErrorMixin {
   ) async {
     logger.i('Leaving chat: ${event.chatId}');
 
-    emitLoading(message: 'Đang rời khỏi cuộc trò chuyện...');
+    emit(const ChatState.loading());
 
     // Create params for UseCase
     final params = LeaveConversationParams(conversationId: event.chatId);

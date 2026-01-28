@@ -301,7 +301,7 @@ class FirebaseServiceManager {
       'flavor': config.flavor.name,
       'projectId': app?.options.projectId ?? 'unknown',
       'appId': app?.options.appId ?? 'unknown',
-      'apiKey': app?.options.apiKey.substring(0, 10) + '...' ?? 'unknown',
+      'apiKey': (app?.options.apiKey.substring(0, 10) ?? 'unknown') + '...',
       'services': getServiceStatus(),
       'environment': {
         'enableAnalytics': config.environment.enableAnalytics,

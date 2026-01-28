@@ -711,6 +711,16 @@
     "description": "Loading more items message"
   },
 
+  "syncing": "Syncing...",
+  "@syncing": {
+    "description": "Syncing data message"
+  },
+
+  "offline": "Offline",
+  "@offline": {
+    "description": "Offline status message"
+  },
+
   "edited": "Edited",
   "@edited": {
     "description": "Label shown on edited messages"

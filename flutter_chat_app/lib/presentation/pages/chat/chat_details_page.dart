@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/di/enterprise_injection.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
 import 'package:flutter_chat_app/presentation/widgets/message_item.dart';
+import 'package:get_it/get_it.dart';
+
+// Service locator instance
+final getIt = GetIt.instance;
 
 /// Chat details page with MessageBloc integration
-class ChatDetailsPage extends StatefulWidget {
+class ChatDetailsPage extends BaseStatefulWidget {
   /// Chat ID
   final String chatId;
   
@@ -21,7 +26,7 @@ class ChatDetailsPage extends StatefulWidget {
   State<ChatDetailsPage> createState() => _ChatDetailsPageState();
 }
 
-class _ChatDetailsPageState extends State<ChatDetailsPage> {
+class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _messageFocusNode = FocusNode();
@@ -35,7 +40,11 @@ class _ChatDetailsPageState extends State<ChatDetailsPage> {
     _scrollController.addListener(_onScroll);
     // Load initial messages
     context.read<MessageBloc>().add(
-      MessageEvent.loadMessages(conversationId: widget.chatId, size: _pageSize),
+      LoadMessages(
+        chatId: widget.chatId,
+        limit: _pageSize,
+        forceRefresh: false,
+      ),
     );
   }
   
@@ -53,18 +62,15 @@ class _ChatDetailsPageState extends State<ChatDetailsPage> {
     // Load more when scrolled to top (reverse list)
     if (_scrollController.position.pixels <= _scrollController.position.minScrollExtent + 100) {
       final state = context.read<MessageBloc>().state;
-      state.whenOrNull(
-        loaded: (messages, hasMore, lastKey) {
-          if (hasMore) {
-            setState(() {
-              _isLoadingMore = true;
-            });
-            context.read<MessageBloc>().add(
-              MessageEvent.loadMoreMessages(conversationId: widget.chatId, size: _pageSize),
-            );
-          }
-        },
-      );
+      // Check if state has more messages to load
+      if (state is MessagesLoaded) {
+        safeSetState(() {
+          _isLoadingMore = true;
+        });
+        context.read<MessageBloc>().add(
+          const LoadMoreMessages(limit: _pageSize),
+        );
+      }
     }
   }
   
@@ -77,10 +83,15 @@ class _ChatDetailsPageState extends State<ChatDetailsPage> {
       return;
     }
     
+    // TODO: Get current user ID from auth state
+    final currentUserId = 'current_user_id'; // Placeholder
+    
     context.read<MessageBloc>().add(
-      MessageEvent.sendMessage(
-        conversationId: widget.chatId,
-        message: text,
+      SendMessage(
+        content: text,
+        senderId: currentUserId,
+        contentType: 'text',
+        attachmentIds: const [],
       ),
     );
     
@@ -101,7 +112,7 @@ class _ChatDetailsPageState extends State<ChatDetailsPage> {
   
   Future<void> _onRefresh() async {
     context.read<MessageBloc>().add(
-      MessageEvent.refreshMessages(conversationId: widget.chatId),
+      const RefreshMessages(),
     );
     await Future.delayed(const Duration(milliseconds: 500));
   }
@@ -186,33 +197,36 @@ class _ChatDetailsPageState extends State<ChatDetailsPage> {
             Expanded(
               child: BlocConsumer<MessageBloc, MessageState>(
                 listener: (context, state) {
-                  state.whenOrNull(
-                    loaded: (messages, hasMore, lastKey) {
-                      setState(() {
-                        _isLoadingMore = false;
-                      });
-                    },
-                    error: (failure, operation, retryAction) {
-                      setState(() {
-                        _isLoadingMore = false;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(failure.message),
-                          action: retryAction != null
-                              ? SnackBarAction(
-                                  label: context.l10n.retryOperation,
-                                  onPressed: retryAction,
-                                )
-                              : null,
+                  if (state is MessagesLoaded) {
+                    safeSetState(() {
+                      _isLoadingMore = false;
+                    });
+                  } else if (state is MessagesError) {
+                    safeSetState(() {
+                      _isLoadingMore = false;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.error),
+                        action: SnackBarAction(
+                          label: context.l10n.retryOperation,
+                          onPressed: () {
+                            context.read<MessageBloc>().add(
+                              LoadMessages(
+                                chatId: widget.chatId,
+                                limit: _pageSize,
+                                forceRefresh: true,
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  );
+                      ),
+                    );
+                  }
                 },
                 builder: (context, state) {
-                  return state.when(
-                    initial: () => Center(
+                  if (state is MessageInitial || state is MessagesLoading) {
+                    return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -221,65 +235,73 @@ class _ChatDetailsPageState extends State<ChatDetailsPage> {
                           Text(context.l10n.loadingMessages),
                         ],
                       ),
-                    ),
-                    loading: (operation) => Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const CircularProgressIndicator(),
-                          const SizedBox(height: 16),
-                          Text(operation ?? context.l10n.loadingMessages),
-                        ],
-                      ),
-                    ),
-                    loaded: (messages, hasMore, lastKey) {
-                      if (messages.isEmpty) {
-                        return _buildEmptyState(context);
-                      }
-                      
-                      return RefreshIndicator(
-                        onRefresh: _onRefresh,
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.all(8),
-                          reverse: true, // Show newest messages at bottom
-                          itemCount: messages.length + (_isLoadingMore ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (_isLoadingMore && index == messages.length) {
-                              // Loading more indicator at top
-                              return Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Center(
-                                  child: Column(
-                                    children: [
-                                      const CircularProgressIndicator(),
-                                      const SizedBox(height: 8),
-                                      Text(context.l10n.loadingMore),
-                                    ],
-                                  ),
+                    );
+                  } else if (state is MessagesLoaded) {
+                    final messages = state.messages;
+                    final hasMore = !state.hasReachedMax;
+                    
+                    if (messages.isEmpty) {
+                      return _buildEmptyState(context);
+                    }
+                    
+                    return RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(8),
+                        reverse: true, // Show newest messages at bottom
+                        itemCount: messages.length + (_isLoadingMore ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (_isLoadingMore && index == messages.length) {
+                            // Loading more indicator at top
+                            return Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    const CircularProgressIndicator(),
+                                    const SizedBox(height: 8),
+                                    Text(context.l10n.loadingMore),
+                                  ],
                                 ),
-                              );
-                            }
-                            
-                            final message = messages[index];
-                            // TODO: Get current user ID from auth
-                            final isCurrentUser = message.sender.id == 'current_user_id';
-                            
-                            return MessageItem(
-                              message: message,
-                              sender: message.sender,
-                              isCurrentUser: isCurrentUser,
-                              onLongPress: () {
-                                _showMessageOptions(context, message, isCurrentUser);
-                              },
+                              ),
                             );
-                          },
-                        ),
-                      );
-                    },
-                    error: (failure, operation, retryAction) {
-                      return _buildErrorState(context, failure.message, retryAction);
-                    },
+                          }
+                          
+                          final message = messages[index];
+                          // TODO: Get current user ID from auth
+                          final isCurrentUser = message.sender.id == 'current_user_id';
+                          
+                          return MessageItem(
+                            message: message,
+                            sender: message.sender,
+                            isCurrentUser: isCurrentUser,
+                            onLongPress: () {
+                              _showMessageOptions(context, message, isCurrentUser);
+                            },
+                          );
+                        },
+                      ),
+                    );
+                  } else if (state is MessagesError) {
+                    return _buildErrorState(
+                      context,
+                      state.error,
+                      () {
+                        context.read<MessageBloc>().add(
+                          LoadMessages(
+                            chatId: widget.chatId,
+                            limit: _pageSize,
+                            forceRefresh: true,
+                          ),
+                        );
+                      },
+                    );
+                  }
+                  
+                  // Fallback for unknown state
+                  return Center(
+                    child: Text('Unknown state: ${state.runtimeType}'),
                   );
                 },
               ),
@@ -482,7 +504,7 @@ class _ChatDetailsPageState extends State<ChatDetailsPage> {
             onPressed: () {
               Navigator.pop(context);
               context.read<MessageBloc>().add(
-                MessageEvent.deleteMessage(messageId: message.id),
+                DeleteMessage(message.id),
               );
             },
             child: Text(context.l10n.delete),

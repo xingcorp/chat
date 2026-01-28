@@ -11,7 +11,6 @@
 
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
 
 import 'package:flutter_chat_app/core/config/flavor_config.dart';
@@ -165,21 +164,21 @@ class EnvironmentManager {
     
     final summary = getEnvironmentSummary();
     
-    print('🏗️ ===== ENVIRONMENT INFORMATION =====');
-    print('📱 App: ${FlavorUtils.getAppDisplayName()}');
-    print('🏷️ Flavor: ${summary['flavor']}');
-    print('🔧 Build Mode: ${summary['buildMode']}');
-    print('📱 Platform: ${summary['platform']}');
-    print('🌐 API Base URL: ${summary['apiBaseUrl']}');
-    print('🔌 WebSocket URL: ${summary['websocketUrl']}');
-    print('🔥 Firebase Project: ${summary['firebaseProjectId']}');
-    print('📊 Analytics: ${summary['enableAnalytics']}');
-    print('💥 Crashlytics: ${summary['enableCrashlytics']}');
-    print('⚡ Performance Monitoring: ${summary['enablePerformanceMonitoring']}');
-    print('🧪 Mock Data: ${summary['enableMockData']}');
-    print('🛠️ Debug Tools: ${summary['enableDebugTools']}');
-    print('📝 Log Level: ${summary['logLevel']}');
-    print('🏗️ =====================================');
+    logger.info('🏗️ ===== ENVIRONMENT INFORMATION =====');
+    logger.info('📱 App: ${FlavorUtils.getAppDisplayName()}');
+    logger.info('🏷️ Flavor: ${summary['flavor']}');
+    logger.info('🔧 Build Mode: ${summary['buildMode']}');
+    logger.info('📱 Platform: ${summary['platform']}');
+    logger.info('🌐 API Base URL: ${summary['apiBaseUrl']}');
+    logger.info('🔌 WebSocket URL: ${summary['websocketUrl']}');
+    logger.info('🔥 Firebase Project: ${summary['firebaseProjectId']}');
+    logger.info('📊 Analytics: ${summary['enableAnalytics']}');
+    logger.info('💥 Crashlytics: ${summary['enableCrashlytics']}');
+    logger.info('⚡ Performance Monitoring: ${summary['enablePerformanceMonitoring']}');
+    logger.info('🧪 Mock Data: ${summary['enableMockData']}');
+    logger.info('🛠️ Debug Tools: ${summary['enableDebugTools']}');
+    logger.info('📝 Log Level: ${summary['logLevel']}');
+    logger.info('🏗️ =====================================');
   }
   
   /// Collect runtime information
@@ -202,7 +201,7 @@ class EnvironmentManager {
       _runtimeInfo.addAll({
         'executable': Platform.executable,
         'executableArguments': Platform.executableArguments,
-        'packageRoot': Platform.packageRoot,
+        // 'packageRoot': Platform.packageRoot, // DEPRECATED - removed in Dart 2.0+
         'packageConfig': Platform.packageConfig,
       });
     }

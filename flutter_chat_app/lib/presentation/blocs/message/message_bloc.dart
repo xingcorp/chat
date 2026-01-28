@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 
@@ -28,7 +29,7 @@ part 'message_state.dart';
 /// - Error handling: Comprehensive with user-friendly messages
 /// - Real-time updates: <100ms delivery
 @injectable
-class MessageBloc extends BaseBloc<MessageEvent, MessageState> with BlocErrorMixin {
+class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   // UseCases (Domain Layer)
   final GetMessagesUseCase _getMessages;
   final SendMessageUseCase _sendMessage;
@@ -185,6 +186,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> with BlocErrorMix
     final params = SendMessageParams(
       conversationId: currentState.chatId,
       content: event.content,
+      senderId: event.senderId,
       contentType: event.contentType,
       attachmentIds: event.attachmentIds,
     );
@@ -229,7 +231,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> with BlocErrorMix
     // Create params for UseCase
     final params = EditMessageParams(
       messageId: event.messageId,
-      content: event.content,
+      newContent: event.content,
     );
 
     // Execute UseCase
@@ -246,18 +248,37 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> with BlocErrorMix
           previousMessages: currentState.messages,
         ));
       },
-      (editedMessage) {
-        logger.i('Message edited successfully');
-        
-        // Update message in list
-        final updatedMessages = currentState.messages.map((msg) {
-          return msg.id == event.messageId ? editedMessage : msg;
-        }).toList();
+      (success) {
+        if (success) {
+          logger.i('Message edited successfully');
+          
+          // Update message in list with new content
+          final updatedMessages = currentState.messages.map((msg) {
+            if (msg.id == event.messageId) {
+              // Create updated message with new content
+              return ChatMessage(
+                id: msg.id,
+                chatId: msg.chatId,
+                sender: msg.sender,
+                content: event.content, // Use new content
+                contentType: msg.contentType,
+                createdAt: msg.createdAt,
+                updatedAt: DateTime.now(),
+                editedAt: DateTime.now(),
+                readBy: msg.readBy,
+                deliveredTo: msg.deliveredTo,
+                attachments: msg.attachments,
+                reactions: msg.reactions,
+              );
+            }
+            return msg;
+          }).toList();
 
-        emit(currentState.copyWith(messages: updatedMessages));
+          emit(currentState.copyWith(messages: updatedMessages));
 
-        // Mark message list as dirty
-        _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
+          // Mark message list as dirty
+          _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
+        }
       },
     );
   }

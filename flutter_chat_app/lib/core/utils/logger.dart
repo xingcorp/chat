@@ -214,3 +214,8 @@ class AppLogger {
     }
   }
 }
+
+
+/// Global logger instance for convenience
+/// Use this for quick logging without dependency injection
+final logger = AppLogger();

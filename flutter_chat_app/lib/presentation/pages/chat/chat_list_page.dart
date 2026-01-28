@@ -1,15 +1,20 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/di/enterprise_injection.dart';
 import 'package:flutter_chat_app/core/services/date_formatter_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/presentation/pages/chat/chat_details_page.dart';
+import 'package:get_it/get_it.dart';
+
+// Service locator instance
+final getIt = GetIt.instance;
 
 /// Chat list page with BLoC integration
-class ChatListPage extends StatefulWidget {
+class ChatListPage extends BaseStatefulWidget {
   /// Constructor
   const ChatListPage({super.key});
 
@@ -17,7 +22,7 @@ class ChatListPage extends StatefulWidget {
   State<ChatListPage> createState() => _ChatListPageState();
 }
 
-class _ChatListPageState extends State<ChatListPage> {
+class _ChatListPageState extends BaseState<ChatListPage> {
   final ScrollController _scrollController = ScrollController();
   static const int _pageSize = 20;
   int _currentPage = 0;
@@ -28,7 +33,7 @@ class _ChatListPageState extends State<ChatListPage> {
     super.initState();
     _scrollController.addListener(_onScroll);
     // Load initial conversations
-    context.read<ChatBloc>().add(const ChatEvent.loadChats(page: 0, size: _pageSize));
+    context.read<ChatBloc>().add(const ChatEvent.loadChats(forceRefresh: false));
   }
 
   @override
@@ -47,27 +52,26 @@ class _ChatListPageState extends State<ChatListPage> {
     if (currentScroll >= maxScroll * 0.8) {
       final state = context.read<ChatBloc>().state;
       state.whenOrNull(
-        loaded: (chats, hasMore, currentPage) {
-          if (hasMore) {
-            setState(() {
-              _isLoadingMore = true;
-              _currentPage = currentPage + 1;
-            });
-            context.read<ChatBloc>().add(
-              ChatEvent.loadChats(page: _currentPage, size: _pageSize),
-            );
-          }
+        loaded: (chats) {
+          // Note: Pagination is handled by the repository/UseCase
+          // Just trigger a refresh to load more
+          safeSetState(() {
+            _isLoadingMore = true;
+          });
+          context.read<ChatBloc>().add(
+            const ChatEvent.loadChats(forceRefresh: false),
+          );
         },
       );
     }
   }
 
   Future<void> _onRefresh() async {
-    setState(() {
+    safeSetState(() {
       _currentPage = 0;
       _isLoadingMore = false;
     });
-    context.read<ChatBloc>().add(const ChatEvent.loadChats(page: 0, size: _pageSize));
+    context.read<ChatBloc>().add(const ChatEvent.loadChats(forceRefresh: true));
     
     // Wait for the state to update
     await Future.delayed(const Duration(milliseconds: 500));
@@ -111,24 +115,26 @@ class _ChatListPageState extends State<ChatListPage> {
         body: BlocConsumer<ChatBloc, ChatState>(
           listener: (context, state) {
             state.whenOrNull(
-              loaded: (chats, hasMore, currentPage) {
-                setState(() {
+              loaded: (chats) {
+                safeSetState(() {
                   _isLoadingMore = false;
                 });
               },
-              error: (failure, operation, retryAction) {
-                setState(() {
+              error: (message) {
+                safeSetState(() {
                   _isLoadingMore = false;
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(failure.message),
-                    action: retryAction != null
-                        ? SnackBarAction(
-                            label: context.l10n.retryOperation,
-                            onPressed: retryAction,
-                          )
-                        : null,
+                    content: Text(message),
+                    action: SnackBarAction(
+                      label: context.l10n.retryOperation,
+                      onPressed: () {
+                        context.read<ChatBloc>().add(
+                          const ChatEvent.loadChats(forceRefresh: true),
+                        );
+                      },
+                    ),
                   ),
                 );
               },
@@ -146,17 +152,17 @@ class _ChatListPageState extends State<ChatListPage> {
                   ],
                 ),
               ),
-              loading: (operation) => Center(
+              loading: () => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const CircularProgressIndicator(),
                     const SizedBox(height: 16),
-                    Text(operation ?? context.l10n.loadingConversations),
+                    Text(context.l10n.loadingConversations),
                   ],
                 ),
               ),
-              loaded: (chats, hasMore, currentPage) {
+              loaded: (chats) {
                 if (chats.isEmpty) {
                   return _buildEmptyState(context);
                 }
@@ -165,7 +171,7 @@ class _ChatListPageState extends State<ChatListPage> {
                   onRefresh: _onRefresh,
                   child: ListView.separated(
                     controller: _scrollController,
-                    itemCount: chats.length + (hasMore ? 1 : 0),
+                    itemCount: chats.length + (_isLoadingMore ? 1 : 0),
                     separatorBuilder: (context, index) => const Divider(
                       height: 1,
                       indent: 72,
@@ -193,8 +199,62 @@ class _ChatListPageState extends State<ChatListPage> {
                   ),
                 );
               },
-              error: (failure, operation, retryAction) {
-                return _buildErrorState(context, failure.message, retryAction);
+              error: (message) {
+                return _buildErrorState(
+                  context,
+                  message,
+                  () {
+                    context.read<ChatBloc>().add(
+                      const ChatEvent.loadChats(forceRefresh: true),
+                    );
+                  },
+                );
+              },
+              chatDetailsLoaded: (chat) {
+                // Not used in list view
+                return const SizedBox.shrink();
+              },
+              messagesLoading: (chats) {
+                // Not used in list view
+                return const SizedBox.shrink();
+              },
+              messagesLoaded: (chats, chatId, messages) {
+                // Not used in list view
+                return const SizedBox.shrink();
+              },
+              messageSending: (chatId, localId) {
+                // Not used in list view
+                return const SizedBox.shrink();
+              },
+              messageStatusChanged: (chatId, localId, status, serverId) {
+                // Not used in list view
+                return const SizedBox.shrink();
+              },
+              syncing: () {
+                // Show syncing indicator
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(context.l10n.syncing),
+                    ],
+                  ),
+                );
+              },
+              offline: () {
+                // Show offline indicator
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.cloud_off, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      Text(context.l10n.offline),
+                    ],
+                  ),
+                );
               },
             );
           },

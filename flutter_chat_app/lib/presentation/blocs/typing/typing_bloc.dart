@@ -4,8 +4,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
 
 part 'typing_event.dart';
 part 'typing_state.dart';
@@ -25,7 +25,7 @@ part 'typing_state.dart';
 @injectable
 class TypingBloc extends Bloc<TypingEvent, TypingState> {
   final RealtimeService _realtimeService;
-  final Logger _logger = Logger();
+  final AppLogger _logger;
 
   // Active typing timers for auto-stop
   final Map<String, Timer> _typingTimers = {};
@@ -39,7 +39,9 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
   /// Constructor
   TypingBloc({
     required RealtimeService realtimeService,
+    required AppLogger logger,
   }) : _realtimeService = realtimeService,
+       _logger = logger,
        super(TypingStateX.initial) {
     on<StartTyping>(_onStartTyping);
     on<StopTyping>(_onStopTyping);
@@ -59,7 +61,7 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
     StartTyping event,
     Emitter<TypingState> emit,
   ) async {
-    _logger.t('Starting typing indicator for chat: ${event.chatId}');
+    _logger.trace('Starting typing indicator for chat: ${event.chatId}');
 
     // Cancel existing timer for this chat
     _typingTimers[event.chatId]?.cancel();
@@ -72,11 +74,11 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
 
     result.fold(
       (failure) {
-        _logger.e('Failed to send typing indicator: ${failure.message}');
+        _logger.error('Failed to send typing indicator: ${failure.message}');
         emit(TypingStateX.error(message: _getErrorMessage(failure)));
       },
       (success) {
-        _logger.t('Typing indicator sent successfully');
+        _logger.trace('Typing indicator sent successfully');
         
         // Emit typing state
         emit(TypingStateX.typing(chatId: event.chatId));
@@ -97,7 +99,7 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
     StopTyping event,
     Emitter<TypingState> emit,
   ) async {
-    _logger.t('Stopping typing indicator for chat: ${event.chatId}');
+    _logger.trace('Stopping typing indicator for chat: ${event.chatId}');
 
     // Cancel timer
     _typingTimers[event.chatId]?.cancel();
@@ -111,11 +113,11 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
 
     result.fold(
       (failure) {
-        _logger.e('Failed to send stop typing indicator: ${failure.message}');
+        _logger.error('Failed to send stop typing indicator: ${failure.message}');
         // Don't emit error for stop typing failures
       },
       (success) {
-        _logger.t('Stop typing indicator sent successfully');
+        _logger.trace('Stop typing indicator sent successfully');
       },
     );
 
@@ -132,7 +134,7 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
     Emitter<TypingState> emit,
   ) async {
     final indicator = event.indicator;
-    _logger.t('Received typing indicator: ${indicator.userId} - ${indicator.isTyping} in ${indicator.chatId}');
+    _logger.trace('Received typing indicator: ${indicator.userId} - ${indicator.isTyping} in ${indicator.chatId}');
 
     // Get current typing users for this chat
     final chatTypingUsers = _typingUsers[indicator.chatId] ?? <TypingUser>{};
@@ -175,17 +177,17 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
     JoinChatForTyping event,
     Emitter<TypingState> emit,
   ) async {
-    _logger.i('Joining chat for typing indicators: ${event.chatId}');
+    _logger.info('Joining chat for typing indicators: ${event.chatId}');
 
     final result = await _realtimeService.joinChatRoom(event.chatId);
 
     result.fold(
       (failure) {
-        _logger.e('Failed to join chat for typing: ${failure.message}');
+        _logger.error('Failed to join chat for typing: ${failure.message}');
         emit(TypingStateX.error(message: _getErrorMessage(failure)));
       },
       (success) {
-        _logger.i('Successfully joined chat for typing: ${event.chatId}');
+        _logger.info('Successfully joined chat for typing: ${event.chatId}');
         emit(TypingStateX.joined(chatId: event.chatId));
       },
     );
@@ -199,7 +201,7 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
     LeaveChatForTyping event,
     Emitter<TypingState> emit,
   ) async {
-    _logger.i('Leaving chat for typing indicators: ${event.chatId}');
+    _logger.info('Leaving chat for typing indicators: ${event.chatId}');
 
     // Cancel any active typing timer
     _typingTimers[event.chatId]?.cancel();
@@ -212,11 +214,11 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
 
     result.fold(
       (failure) {
-        _logger.e('Failed to leave chat for typing: ${failure.message}');
+        _logger.error('Failed to leave chat for typing: ${failure.message}');
         // Don't emit error for leave failures
       },
       (success) {
-        _logger.i('Successfully left chat for typing: ${event.chatId}');
+        _logger.info('Successfully left chat for typing: ${event.chatId}');
       },
     );
 
@@ -232,7 +234,7 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
     ClearTypingIndicators event,
     Emitter<TypingState> emit,
   ) async {
-    _logger.t('Clearing typing indicators for chat: ${event.chatId}');
+    _logger.trace('Clearing typing indicators for chat: ${event.chatId}');
 
     // Cancel timer
     _typingTimers[event.chatId]?.cancel();
@@ -247,7 +249,7 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
 
   /// **Initialize typing indicator subscription - ENTERPRISE REAL-TIME**
   void _initializeTypingSubscription() {
-    _logger.i('Initializing typing indicator subscription');
+    _logger.info('Initializing typing indicator subscription');
 
     // Subscribe to typing indicators from real-time service
     _subscriptions.add(
@@ -256,12 +258,12 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
           add(ReceiveTypingIndicator(indicator: indicator));
         },
         onError: (error) {
-          _logger.e('Error in typing indicator stream: $error');
+          _logger.error('Error in typing indicator stream', error);
         },
       ),
     );
 
-    _logger.i('Typing indicator subscription initialized');
+    _logger.info('Typing indicator subscription initialized');
   }
 
   /// **Helper method to convert Failure to user-friendly error message**
@@ -279,7 +281,7 @@ class TypingBloc extends Bloc<TypingEvent, TypingState> {
 
   @override
   Future<void> close() {
-    _logger.i('Closing TypingBloc');
+    _logger.info('Closing TypingBloc');
 
     // Cancel all timers
     for (final timer in _typingTimers.values) {

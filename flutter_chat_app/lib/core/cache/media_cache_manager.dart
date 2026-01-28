@@ -10,12 +10,14 @@ import 'package:flutter_chat_app/core/utils/device_performance_tier.dart';
 import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:get_it/get_it.dart';
+import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:video_compress/video_compress.dart';
 
 /// Manager quản lý cache cho file media (hình ảnh, video...)
+@singleton
 class MediaCacheManager {
   /// Singleton instance
   static final MediaCacheManager _instance = MediaCacheManager._internal();

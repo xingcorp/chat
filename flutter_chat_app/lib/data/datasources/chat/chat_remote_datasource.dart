@@ -108,6 +108,24 @@ abstract class IChatRemoteDataSource {
     int size = 100,
   });
   
+  /// Add members to group
+  Future<void> addMembersToGroup({
+    required String conversationId,
+    required List<String> memberIds,
+  });
+  
+  /// Remove members from group
+  Future<void> removeMembersFromGroup({
+    required String conversationId,
+    required List<String> memberIds,
+  });
+  
+  /// Search conversations
+  Future<ChatListResponseDto> searchConversations({
+    required String keyword,
+    int limit = 20,
+  });
+  
   /// Subscribe to chat updates via Socket.IO
   Stream<ChatDto> subscribeToChats();
 }
@@ -501,6 +519,41 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     }
     
     return data.map((json) => MessageDto.fromJson(json as Map<String, dynamic>)).toList();
+  }
+  
+  @override
+  Future<void> addMembersToGroup({
+    required String conversationId,
+    required List<String> memberIds,
+  }) async {
+    // Use updateGroup to add members
+    await updateGroup(
+      conversationId: conversationId,
+      memberIds: memberIds,
+    );
+  }
+  
+  @override
+  Future<void> removeMembersFromGroup({
+    required String conversationId,
+    required List<String> memberIds,
+  }) async {
+    // Note: Backend API doesn't have a direct remove members endpoint
+    // This would need to be implemented by getting current members,
+    // filtering out the ones to remove, and calling updateGroup
+    // For now, throw unimplemented error
+    throw UnimplementedError('Remove members not yet implemented in backend API');
+  }
+  
+  @override
+  Future<ChatListResponseDto> searchConversations({
+    required String keyword,
+    int limit = 20,
+  }) async {
+    return getConversationList(
+      keyword: keyword,
+      size: limit,
+    );
   }
   
   @override
