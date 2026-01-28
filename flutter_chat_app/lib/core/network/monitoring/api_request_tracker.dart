@@ -147,15 +147,14 @@ class ApiRequestStats {
 }
 
 /// API request tracker for monitoring performance and errors
+/// 
+/// Uses dependency injection for logger and analytics.
+/// Injectable manages the singleton lifecycle automatically.
 @singleton
 class ApiRequestTracker {
-  // Singleton instance
-  static final ApiRequestTracker _instance = ApiRequestTracker._internal();
-  static ApiRequestTracker get instance => _instance;
-  
-  // Dependencies
-  late AppLogger _logger;
-  late AnalyticsService _analytics;
+  // Dependencies (injected via constructor)
+  final AppLogger _logger;
+  final AnalyticsService _analytics;
   
   // Storage for requests
   final LinkedHashMap<String, ApiRequestInfo> _recentRequests = LinkedHashMap();
@@ -182,26 +181,11 @@ class ApiRequestTracker {
   final Map<String, Map<int, int>> _statusCodeDistribution = {};
   int _apdexThreshold = 500; // ms - target response time
   
-  // Private constructor
-  ApiRequestTracker._internal() {
-    try {
-      _logger = AppLogger.instance;
-      _analytics = GetIt.instance<AnalyticsService>();
-      _startCleanupTimer();
-    } catch (e) {
-      // Fallback for when DI is not available (like tests)
-      // Use fallback logging when DI is not available
-      if (kDebugMode) {
-        debugPrint('Warning: Could not create ApiRequestTracker dependencies: $e');
-      }
-    }
-  }
-  
-  // For dependency injection in tests
-  @visibleForTesting
-  ApiRequestTracker.forTesting({AppLogger? logger, AnalyticsService? analytics}) {
-    _logger = logger ?? AppLogger.instance;
-    _analytics = analytics ?? GetIt.instance<AnalyticsService>();
+  /// Constructor with dependency injection
+  /// 
+  /// Dependencies are automatically injected by Injectable.
+  /// Starts cleanup timer on initialization.
+  ApiRequestTracker(this._logger, this._analytics) {
     _startCleanupTimer();
   }
   

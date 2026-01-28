@@ -11,22 +11,38 @@ import 'dart:io';
 
 /// Service class responsible for managing the Isar database instance
 /// and providing methods for database operations.
+/// 
+/// Uses @preResolve for async initialization and platform-specific implementation.
+@preResolve
 @singleton
 class DatabaseService {
   final IDatabaseImplementation _implementation;
   bool _isInitialized = false;
 
-  /// Factory constructor
-  factory DatabaseService() {
-    if (kIsWeb) {
-      return DatabaseService._withImplementation(WebDatabaseImplementation());
-    } else {
-      return DatabaseService._withImplementation(NativeDatabaseImplementation());
-    }
-  }
-  
   /// Private constructor with implementation
-  DatabaseService._withImplementation(this._implementation);
+  DatabaseService._(this._implementation);
+
+  /// Factory method for Injectable
+  /// 
+  /// Creates platform-specific implementation and initializes the database.
+  /// This method is called by Injectable during DI setup.
+  @factoryMethod
+  static Future<DatabaseService> create() async {
+    // Create platform-specific implementation
+    final implementation = kIsWeb 
+        ? WebDatabaseImplementation() 
+        : NativeDatabaseImplementation();
+    
+    // Create service instance
+    final service = DatabaseService._(implementation);
+    
+    // Initialize database
+    await service.initialize();
+    
+    debugPrint('DatabaseService created for ${kIsWeb ? "web" : "native"} platform');
+    
+    return service;
+  }
 
   /// Returns whether the database is initialized
   bool get isInitialized => _isInitialized;

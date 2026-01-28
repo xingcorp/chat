@@ -52,7 +52,7 @@ class ApiClient {
   // Internal constructor for singleton pattern
   ApiClient._() :
       _httpClient = GetIt.instance<IHttpClient>(),
-      _requestTracker = ApiRequestTracker.instance,
+      _requestTracker = GetIt.instance<ApiRequestTracker>(),
       _logger = GetIt.instance<AppLogger>(),
       _analytics = GetIt.instance<AnalyticsService>(),
       _cacheManager = ApiCacheManager.instance;
