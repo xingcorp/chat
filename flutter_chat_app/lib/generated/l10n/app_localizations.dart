@@ -251,7 +251,7 @@ abstract class AppLocalizations {
   /// **'Online'**
   String get online;
 
-  /// Offline status
+  /// Offline status message
   ///
   /// In en, this message translates to:
   /// **'Offline'**
@@ -892,6 +892,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loading more...'**
   String get loadingMore;
+
+  /// Syncing data message
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing...'**
+  String get syncing;
 
   /// Label shown on edited messages
   ///

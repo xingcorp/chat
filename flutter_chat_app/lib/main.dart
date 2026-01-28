@@ -233,13 +233,8 @@ Future<void> runMainApp() async {
   // Initialize Enterprise dependency injection
   await EnterpriseDI.initialize();
   
-  // Try to upgrade to EnhancedMessageQueueService if available
-  try {
-    await upgradeToEnhancedMessageQueue();
-    debugPrint('✓ Enhanced message queue service enabled');
-  } catch (e) {
-    debugPrint('Using standard message queue service: $e');
-  }
+  // NOTE: MessageQueueService is now registered directly in DI container
+  // The upgradeToEnhancedMessageQueue() function is deprecated and no longer needed
   
   // Bắt tất cả lỗi không xử lý trong zone
   runZonedGuarded(() {

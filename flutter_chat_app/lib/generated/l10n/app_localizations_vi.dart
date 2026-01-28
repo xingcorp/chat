@@ -433,6 +433,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get loadingMore => 'Đang tải thêm...';
 
   @override
+  String get syncing => 'Đang đồng bộ...';
+
+  @override
   String get edited => 'Đã chỉnh sửa';
 
   @override

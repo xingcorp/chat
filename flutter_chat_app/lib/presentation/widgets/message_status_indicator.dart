@@ -56,26 +56,32 @@ class MessageStatusIndicator extends StatelessWidget {
       return _buildIndicator(status!);
     }
     
-    // Ngược lại, lấy trạng thái từ service
-    final queuedMessage = messageQueueService.getMessageById(messageId);
+    // TODO: Refactor to use MessageBloc instead of MessageQueueService
+    // MessageQueueService no longer has getMessageById() and messageStatusStream
+    // This widget needs to be refactored to use BLoC pattern
+    // For now, show default sent status
+    return _buildIndicator(MessageQueueStatus.sent);
     
-    if (queuedMessage == null) {
-      // Nếu không tìm thấy tin nhắn, hiển thị đã gửi
-      return _buildIndicator(MessageQueueStatus.sent);
-    }
-    
-    // Lắng nghe cập nhật trạng thái
-    return StreamBuilder<QueuedMessage>(
-      stream: messageQueueService.messageStatusStream,
-      initialData: queuedMessage,
-      builder: (context, snapshot) {
-        // Filter chỉ lấy cập nhật cho tin nhắn này
-        if (snapshot.hasData && snapshot.data!.localId == messageId) {
-          return _buildIndicator(snapshot.data!.status);
-        }
-        return _buildIndicator(queuedMessage.status);
-      },
-    );
+    // // Ngược lại, lấy trạng thái từ service
+    // final queuedMessage = messageQueueService.getMessageById(messageId);
+    // 
+    // if (queuedMessage == null) {
+    //   // Nếu không tìm thấy tin nhắn, hiển thị đã gửi
+    //   return _buildIndicator(MessageQueueStatus.sent);
+    // }
+    // 
+    // // Lắng nghe cập nhật trạng thái
+    // return StreamBuilder<QueuedMessage>(
+    //   stream: messageQueueService.messageStatusStream,
+    //   initialData: queuedMessage,
+    //   builder: (context, snapshot) {
+    //     // Filter chỉ lấy cập nhật cho tin nhắn này
+    //     if (snapshot.hasData && snapshot.data!.localId == messageId) {
+    //       return _buildIndicator(snapshot.data!.status);
+    //     }
+    //     return _buildIndicator(queuedMessage.status);
+    //   },
+    // );
   }
   
   /// Xây dựng chỉ báo trạng thái dựa trên status

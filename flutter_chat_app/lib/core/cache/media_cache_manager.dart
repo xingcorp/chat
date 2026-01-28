@@ -17,6 +17,18 @@ import 'package:path_provider/path_provider.dart';
 import 'package:video_compress/video_compress.dart';
 
 /// Manager quản lý cache cho file media (hình ảnh, video...)
+/// 
+/// **DEPRECATED**: This service is deprecated and will be removed in a future version.
+/// Use `MediaRepository` from `lib/domain/repositories/i_media_repository.dart` instead.
+/// 
+/// MediaRepository provides:
+/// - Upload/download media with progress tracking
+/// - Automatic caching (local + remote)
+/// - Offline-first strategy
+/// - Clean Architecture compliance
+/// 
+/// For media processing (compression, thumbnails), use `MediaProcessingService`.
+@Deprecated('Use MediaRepository instead. Will be removed in v2.0.0')
 @singleton
 class MediaCacheManager {
   /// Singleton instance

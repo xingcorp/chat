@@ -16,6 +16,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -60,7 +61,7 @@ Future<void> initializeDependencies() async {
     await _registerExternalDependencies(logger);
 
     // Step 2: Initialize auto-generated dependencies
-    getIt.init();
+    configureDependencies(getIt);
 
     stopwatch.stop();
     logger.i('✅ DI initialized in ${stopwatch.elapsedMilliseconds}ms');
@@ -99,6 +100,20 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   // Connectivity - required for network monitoring
   if (!getIt.isRegistered<Connectivity>()) {
     getIt.registerSingleton<Connectivity>(Connectivity());
+  }
+
+  // HTTP Client - required for API calls
+  if (!getIt.isRegistered<http.Client>()) {
+    getIt.registerLazySingleton<http.Client>(() => http.Client());
+  }
+
+  // Base URL - required for API endpoints
+  if (!getIt.isRegistered<String>(instanceName: 'baseUrl')) {
+    const baseUrl = String.fromEnvironment(
+      'BASE_URL',
+      defaultValue: 'http://localhost:5000',
+    );
+    getIt.registerSingleton<String>(baseUrl, instanceName: 'baseUrl');
   }
 
   logger.d('✅ External dependencies registered');

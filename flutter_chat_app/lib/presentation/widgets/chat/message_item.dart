@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-import 'package:flutter_chat_app/core/services/media_service.dart';
+// TODO: Refactor to use MediaBloc instead of direct repository calls
+// import 'package:flutter_chat_app/core/services/media_service.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
@@ -33,7 +34,8 @@ class MessageItem extends StatefulWidget {
 }
 
 class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClientMixin {
-  final _mediaService = GetIt.I<MediaService>();
+  // TODO: Refactor to use MediaBloc for media loading
+  // final _mediaService = GetIt.I<MediaService>();
   
   bool _isMediaLoaded = false;
   bool _isMediaError = false;
@@ -46,7 +48,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
   @override
   void initState() {
     super.initState();
-    _processMedia();
+    // TODO: Implement media loading with MediaBloc
+    // _processMedia();
   }
   
   @override
@@ -54,70 +57,19 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     super.didUpdateWidget(oldWidget);
     if (oldWidget.message.id != widget.message.id ||
         oldWidget.message.mediaUrl != widget.message.mediaUrl) {
-      _processMedia();
+      // TODO: Implement media loading with MediaBloc
+      // _processMedia();
     }
   }
 
+  // TODO: Refactor to use MediaBloc instead of direct MediaService calls
+  /*
   Future<void> _processMedia() async {
     if (!widget.message.hasMedia) return;
 
     try {
-      // Check if we have local file cached
-      final localFile = await _mediaService.getLocalMediaFile(widget.message.id, widget.message.mediaUrl);
-      
-      if (localFile != null && await localFile.exists()) {
-        if (mounted) {
-          setState(() {
-            _localMediaFile = localFile;
-            _isMediaLoaded = true;
-            _isMediaError = false;
-          });
-        }
-        
-        // Get media dimensions if it's an image or video
-        if (widget.message.isImage || widget.message.isVideo) {
-          final dimensions = await _mediaService.getMediaDimensions(localFile);
-          if (dimensions != null && mounted) {
-            setState(() {
-              _mediaAspectRatio = dimensions.width / dimensions.height;
-            });
-          }
-        }
-      } else {
-        // We need to download the file
-        _mediaService.downloadMedia(
-          widget.message.id,
-          widget.message.mediaUrl,
-          onProgress: (progress) {
-            // Could show download progress
-          },
-          onSuccess: (file) {
-            if (mounted) {
-              setState(() {
-                _localMediaFile = file;
-                _isMediaLoaded = true;
-                _isMediaError = false;
-              });
-              
-              // Get media dimensions if it's an image or video
-              _mediaService.getMediaDimensions(file).then((dimensions) {
-                if (dimensions != null && mounted) {
-                  setState(() {
-                    _mediaAspectRatio = dimensions.width / dimensions.height;
-                  });
-                }
-              });
-            }
-          },
-          onError: (error) {
-            if (mounted) {
-              setState(() {
-                _isMediaError = true;
-              });
-            }
-          },
-        );
-      }
+      // Use MediaRepository through MediaBloc
+      // ...
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -126,6 +78,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       }
     }
   }
+  */
 
   @override
   Widget build(BuildContext context) {

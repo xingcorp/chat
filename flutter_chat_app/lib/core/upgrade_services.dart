@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 
-import 'package:flutter_chat_app/core/services/enhanced_message_queue_service.dart';
+import 'package:flutter_chat_app/core/services/message_queue_service.dart';
 import 'package:flutter_chat_app/core/services/attachment_queue_service.dart';
 import 'package:flutter_chat_app/core/services/media_cache.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
@@ -12,84 +12,34 @@ import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
 
-/// Upgrades the application to use the EnhancedMessageQueueService
+/// DEPRECATED: This file is no longer needed as MessageQueueService is now the standard.
+/// The upgrade logic has been removed as part of Clean Architecture refactoring.
 /// 
-/// This function registers all necessary services to enable the 
-/// enhanced message queue functionality.
+/// MessageQueueService is now registered directly in the DI container.
 /// 
-/// Returns true if the upgrade was successful, false otherwise.
+/// This file is kept temporarily for backward compatibility and will be removed in a future release.
+
+/// Upgrades the application to use the MessageQueueService
+/// 
+/// DEPRECATED: This function is no longer needed. MessageQueueService is now
+/// registered directly in the DI container during initialization.
+/// 
+/// Returns true if the service is already registered, false otherwise.
+@Deprecated('MessageQueueService is now registered directly in DI. This function will be removed.')
 Future<bool> upgradeToEnhancedMessageQueue() async {
   final getIt = GetIt.instance;
   
   try {
     // Check if the service is already registered
-    if (getIt.isRegistered<EnhancedMessageQueueService>()) {
-      debugPrint('EnhancedMessageQueueService is already registered');
+    if (getIt.isRegistered<MessageQueueService>()) {
+      debugPrint('MessageQueueService is already registered');
       return true;
     }
     
-    // Ensure all required dependencies are available
-    if (!getIt.isRegistered<IMessageRepository>() ||
-        !getIt.isRegistered<LocalStorageService>() ||
-        !getIt.isRegistered<ConnectivityService>() ||
-        !getIt.isRegistered<IRealtimeConnectionService>()) {
-      debugPrint('Missing required dependencies for EnhancedMessageQueueService');
-      return false;
-    }
-    
-    // Register MediaCache if not already registered
-    if (!getIt.isRegistered<MediaCache>()) {
-      // Get required dependencies from DI container
-      final performanceMonitor = getIt<PerformanceMonitor>();
-      final isolateManager = getIt<IsolateManager>();
-
-      final mediaCache = await MediaCache.create(performanceMonitor, isolateManager);
-      getIt.registerSingleton<MediaCache>(mediaCache);
-      debugPrint('Registered MediaCache service');
-    }
-    
-    // Register or retrieve IAttachmentRepository
-    if (!getIt.isRegistered<IAttachmentRepository>()) {
-      debugPrint('Warning: No IAttachmentRepository found. Some attachment features may not work.');
-      // Create a stub implementation to avoid crashes
-      getIt.registerSingleton<IAttachmentRepository>(StubAttachmentRepository());
-    }
-    
-    // Register AttachmentQueueService if not already registered
-    if (!getIt.isRegistered<AttachmentQueueService>()) {
-      final attachmentQueueService = AttachmentQueueService(
-        getIt<IAttachmentRepository>(),
-        getIt<ConnectivityService>(),
-        getIt<LocalStorageService>(),
-        getIt<MediaCache>(),
-      );
-      
-      // Initialize the service
-      await attachmentQueueService.initialize();
-      
-      getIt.registerSingleton<AttachmentQueueService>(attachmentQueueService);
-      debugPrint('Registered and initialized AttachmentQueueService');
-    }
-    
-    // Now register EnhancedMessageQueueService
-    final enhancedMessageQueueService = EnhancedMessageQueueService(
-      getIt<IMessageRepository>(),
-      getIt<LocalStorageService>(),
-      getIt<ConnectivityService>(),
-      getIt<IRealtimeConnectionService>(),
-      getIt<AttachmentQueueService>(),
-    );
-    
-    // Initialize service
-    await enhancedMessageQueueService.initialize();
-    
-    // Register service
-    getIt.registerSingleton<EnhancedMessageQueueService>(enhancedMessageQueueService);
-    debugPrint('Successfully registered and initialized EnhancedMessageQueueService');
-    
-    return true;
+    debugPrint('MessageQueueService should be registered in DI container during initialization');
+    return false;
   } catch (e, stackTrace) {
-    debugPrint('Error upgrading to EnhancedMessageQueueService: $e');
+    debugPrint('Error checking MessageQueueService registration: $e');
     debugPrint(stackTrace.toString());
     return false;
   }

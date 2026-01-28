@@ -433,6 +433,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loadingMore => 'Loading more...';
 
   @override
+  String get syncing => 'Syncing...';
+
+  @override
   String get edited => 'Edited';
 
   @override

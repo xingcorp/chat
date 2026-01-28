@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_app/core/services/media_service.dart';
+// TODO: Removed MediaService - use MediaRepository through MediaBloc instead
+// import 'package:flutter_chat_app/core/services/media_service.dart';
 import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';

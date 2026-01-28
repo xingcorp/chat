@@ -16,10 +16,13 @@ class AppException implements Exception {
 
 /// Exception thrown when a server error occurs
 class ServerException extends AppException {
+  final int? statusCode;
+  
   ServerException({
     super.message = 'Server error occurred',
     super.code,
     super.details,
+    this.statusCode,
   });
 }
 
@@ -89,6 +92,24 @@ class PermissionDeniedException extends AppException {
   PermissionDeniedException({
     super.message = 'Permission denied',
     super.code = 'PERMISSION_DENIED',
+    super.details,
+  });
+}
+
+/// Exception thrown when a file operation fails
+class FileException extends AppException {
+  const FileException({
+    super.message = 'File operation failed',
+    super.code = 'FILE_ERROR',
+    super.details,
+  });
+}
+
+/// Exception thrown when a network error occurs
+class NetworkException extends AppException {
+  const NetworkException({
+    super.message = 'Network error occurred',
+    super.code = 'NETWORK_ERROR',
     super.details,
   });
 }
