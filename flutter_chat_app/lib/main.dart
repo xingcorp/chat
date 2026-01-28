@@ -21,7 +21,7 @@ import 'package:uuid/uuid.dart';
 import 'package:flutter_chat_app/config/route/app_router.dart';
 
 // App imports - Core
-import 'package:flutter_chat_app/core/di/enterprise_injection.dart';
+import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/lifecycle/app_lifecycle_observer.dart';
 import 'package:flutter_chat_app/core/theme/app_theme.dart';
 import 'package:flutter_chat_app/core/localization/l10n_helper.dart' as l10n_helper;

@@ -8,7 +8,7 @@
 /// Author: Senior Flutter/Mobile Architect
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_chat_app/core/di/enterprise_injection.dart';
+import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Temporarily disable problematic imports

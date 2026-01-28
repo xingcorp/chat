@@ -8,7 +8,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
-import 'package:flutter_chat_app/core/di/enterprise_injection.dart';
+import 'package:flutter_chat_app/core/di/injection.dart';
 
 // Domain imports
 import 'package:flutter_chat_app/domain/entities/[entity_name].dart';

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
-import 'package:flutter_chat_app/core/di/enterprise_injection.dart';
+import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';

@@ -12,7 +12,7 @@ import 'package:uuid/uuid.dart';
 
 // App imports
 import 'package:flutter_chat_app/core/constants/app_dimensions.dart';
-import 'package:flutter_chat_app/core/di/enterprise_injection.dart';
+import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/localization/app_strings.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
