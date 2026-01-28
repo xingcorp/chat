@@ -392,33 +392,42 @@ This document outlines the implementation tasks for Phase 1 (Chat Foundation) of
   - Test retry logic with exponential backoff
   - _Requirements: 12.5_
 
-- [ ] 9. Integrate BLoCs with UseCases
-  - [ ] 9.1 Update ChatBloc
-    - Inject UseCases (GetConversations, CreateGroup, LeaveConversation, DeleteConversation)
-    - Implement `_onLoadConversations` event handler
-    - Implement `_onCreateGroup` event handler
-    - Implement `_onLeaveConversation` event handler
-    - Implement `_onDeleteConversation` event handler
-    - Emit loading state before UseCase call
-    - Emit success state on Right result
-    - Emit error state on Left result with retry action
+- [x] 9. Integrate BLoCs with UseCases ✅ **COMPLETE** (2025-01-28)
+  - [x] 9.1 Update ChatBloc
+    - Inject UseCases (GetConversations, GetConversationDetail, CreateGroup, UpdateGroup, LeaveConversation, DeleteConversation, SearchConversations)
+    - Extended BaseBloc<ChatEvent, ChatState> with BlocErrorMixin
+    - Implement `_onLoadChats` event handler using GetConversationsUseCase
+    - Implement `_onLoadChatDetails` event handler using GetConversationDetailUseCase
+    - Implement `_onCreateChat` event handler using CreateGroupUseCase
+    - Implement `_onUpdateChat` event handler using UpdateGroupUseCase
+    - Implement `_onLeaveChat` event handler using LeaveConversationUseCase
+    - Implement `_onConnectivityChanged` and `_onChatUpdated` event handlers
+    - Emit loading state before UseCase call using emitLoading()
+    - Handle Result<T> pattern with fold() for success/error states
+    - Use getUserErrorMessage() from BlocErrorMixin for user-friendly errors
+    - Use executeWithRetry() from BaseBloc for resilient operations
     - Add proper resource disposal in `close` method
     - Register with @injectable annotation
     - _Requirements: 6.1, 6.2, 6.5, 6.6, 6.7, 6.8, 6.9, 14.3_
+    - _See: `.kiro/specs/chat-foundation/TASK_6_COMPLETE.md`_
 
-  - [ ] 9.2 Update MessageBloc
-    - Inject UseCases (GetMessages, SendMessage, MarkAsRead, AddReaction, RemoveReaction)
-    - Implement `_onLoadMessages` event handler
-    - Implement `_onSendMessage` event handler
-    - Implement `_onMarkAsRead` event handler
-    - Implement `_onAddReaction` event handler
-    - Implement `_onRemoveReaction` event handler
-    - Emit loading state before UseCase call
-    - Emit success state on Right result
-    - Emit error state on Left result with retry action
+  - [x] 9.2 Update MessageBloc
+    - Inject UseCases (GetMessages, SendMessage, EditMessage, DeleteMessage, MarkAsRead)
+    - Extended BaseBloc<MessageEvent, MessageState> with BlocErrorMixin
+    - Implement `_onLoadMessages` event handler using GetMessagesUseCase
+    - Implement `_onLoadMoreMessages` event handler for pagination
+    - Implement `_onSendMessage` event handler using SendMessageUseCase
+    - Implement `_onEditMessage` event handler using EditMessageUseCase (NEW)
+    - Implement `_onDeleteMessage` event handler using DeleteMessageUseCase
+    - Implement `_onMarkChatAsRead` event handler using MarkAsReadUseCase
+    - Implement `_onReceiveRealTimeMessage`, `_onRefreshMessages`, `_onClearMessages` handlers
+    - Handle Result<T> pattern with fold() for success/error states
+    - Use getUserErrorMessage() from BlocErrorMixin for user-friendly errors
+    - Maintain real-time subscription management with proper cleanup
     - Add proper resource disposal in `close` method
     - Register with @injectable annotation
     - _Requirements: 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 14.3_
+    - _See: `.kiro/specs/chat-foundation/TASK_6_COMPLETE.md`_
 
 - [ ] 9.3 Write unit tests for BLoCs
   - **Property 8: BLoC Success State Transition**

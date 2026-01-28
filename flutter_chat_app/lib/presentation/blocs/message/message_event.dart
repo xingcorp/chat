@@ -54,6 +54,20 @@ class SendMessage extends MessageEvent {
   List<Object?> get props => [content, senderId, contentType, attachmentIds];
 }
 
+/// Sự kiện chỉnh sửa tin nhắn
+class EditMessage extends MessageEvent {
+  final String messageId;
+  final String content;
+
+  const EditMessage({
+    required this.messageId,
+    required this.content,
+  });
+
+  @override
+  List<Object?> get props => [messageId, content];
+}
+
 /// Sự kiện xóa tin nhắn
 class DeleteMessage extends MessageEvent {
   final String messageId;

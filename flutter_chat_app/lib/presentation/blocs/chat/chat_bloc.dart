@@ -1,55 +1,67 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
 
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
 import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
-import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
-import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
+import 'package:flutter_chat_app/domain/usecases/chat/create_group_usecase.dart';
+import 'package:flutter_chat_app/domain/usecases/chat/delete_conversation_usecase.dart';
+import 'package:flutter_chat_app/domain/usecases/chat/get_conversation_detail_usecase.dart';
+import 'package:flutter_chat_app/domain/usecases/chat/get_conversations_usecase.dart';
+import 'package:flutter_chat_app/domain/usecases/chat/leave_conversation_usecase.dart';
+import 'package:flutter_chat_app/domain/usecases/chat/search_conversations_usecase.dart';
+import 'package:flutter_chat_app/domain/usecases/chat/update_group_usecase.dart';
+import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/base/bloc_error_mixin.dart';
 
 part 'chat_event.dart';
 part 'chat_state.dart';
 part 'chat_bloc.freezed.dart';
 
-/// **ENTERPRISE CHAT BLOC - PHASE 2 MINIMAL VERSION**
+/// **ENTERPRISE CHAT BLOC - CLEAN ARCHITECTURE**
 ///
-/// Core functionality implemented with Either<Failure, T> pattern.
-/// Advanced features will be completed in Phase 3.
+/// Updated to use UseCases and BaseBloc core components.
+/// Follows Clean Architecture with proper separation of concerns.
 ///
 /// **Performance**: <2s for chat operations
-/// **Architecture**: Clean Architecture + BLoC pattern + Either error handling
+/// **Architecture**: Clean Architecture + BLoC pattern + Result<T> handling
 @injectable
-class ChatBloc extends Bloc<ChatEvent, ChatState> {
-  final IChatRepository _chatRepository;
-  // final IMessageRepository _messageRepository; // TODO: Use in Phase 3
-  // final ChatSyncService _chatSyncService; // TODO: Use in Phase 3
+class ChatBloc extends BaseBloc<ChatEvent, ChatState> with BlocErrorMixin {
+  // UseCases (Domain Layer)
+  final GetConversationsUseCase _getConversations;
+  final GetConversationDetailUseCase _getConversationDetail;
+  final CreateGroupUseCase _createGroup;
+  final UpdateGroupUseCase _updateGroup;
+  final LeaveConversationUseCase _leaveConversation;
+  final DeleteConversationUseCase _deleteConversation;
+  final SearchConversationsUseCase _searchConversations;
+  
+  // Services
   final ConnectivityService _connectivityService;
   final CacheSyncStrategy _cacheSyncStrategy;
   final MediaCacheManager _mediaCacheManager;
-  final Logger _logger = Logger();
-
-  // Performance monitoring
-  final Stopwatch _performanceStopwatch = Stopwatch();
 
   // Subscriptions for real-time updates
   StreamSubscription<ChatMessage>? _messageSubscription;
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
   StreamSubscription<Chat>? _chatUpdatesSubscription;
   
-  /// Constructor
+  /// Constructor with UseCases injection
   ChatBloc(
-    this._chatRepository,
-    // IMessageRepository messageRepository, // TODO: Use in Phase 3
-    // ChatSyncService chatSyncService, // TODO: Use in Phase 3
+    this._getConversations,
+    this._getConversationDetail,
+    this._createGroup,
+    this._updateGroup,
+    this._leaveConversation,
+    this._deleteConversation,
+    this._searchConversations,
     this._connectivityService,
     this._cacheSyncStrategy,
     this._mediaCacheManager,
@@ -57,40 +69,48 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<_LoadChats>(_onLoadChats);
     on<_LoadChatDetails>(_onLoadChatDetails);
     on<_CreateChat>(_onCreateChat);
+    on<_UpdateChat>(_onUpdateChat);
+    on<_LeaveChat>(_onLeaveChat);
     on<_ConnectivityChanged>(_onConnectivityChanged);
     on<_ChatUpdated>(_onChatUpdated);
   }
 
-  /// **Load chats with Either<Failure, T> pattern - ENTERPRISE READY**
+  /// **Load chats using GetConversationsUseCase - CLEAN ARCHITECTURE**
   Future<void> _onLoadChats(
     _LoadChats event,
     Emitter<ChatState> emit,
   ) async {
-    await _executeWithMonitoring('load_chats', () async {
-      // Skip if already loading
-      if (state is _Loading) {
-        return;
-      }
+    // Skip if already loading
+    if (state is _Loading) {
+      return;
+    }
 
-      emit(const ChatState.loading());
+    emitLoading(message: 'Đang tải danh sách chat...');
+    emit(const ChatState.loading());
 
-      _logger.i('Tải danh sách chat của người dùng');
+    logger.i('Loading conversations using UseCase');
 
-      // Kiểm tra xem có cần refresh cache không
-      final shouldRefresh = event.forceRefresh || _cacheSyncStrategy.shouldRefreshChatList();
+    // Check if cache refresh is needed
+    final shouldRefresh = event.forceRefresh || _cacheSyncStrategy.shouldRefreshChatList();
 
-      // Lấy danh sách chat using Either pattern
-      final result = await _chatRepository.getChats();
+    // Execute with retry for resilience
+    final result = await executeWithRetry(
+      () => _getConversations(),
+      maxRetries: 3,
+      emitLoadingState: false, // Already emitted above
+      loadingMessage: 'Đang tải danh sách chat...',
+    );
 
+    if (result != null) {
       result.fold(
         (failure) {
-          _logger.e('Lỗi khi tải danh sách chat: ${failure.message}');
-          emit(ChatState.error(message: _getErrorMessage(failure)));
+          logger.e('Failed to load conversations: ${failure.message}');
+          emit(ChatState.error(message: getUserErrorMessage(failure)));
         },
         (chats) {
-          _logger.i('Đã tải ${chats.length} chat');
+          logger.i('Loaded ${chats.length} conversations successfully');
 
-          // Reset dirty flag sau khi tải thành công
+          // Reset dirty flag after successful load
           if (shouldRefresh) {
             _cacheSyncStrategy.resetChatListDirtyFlag();
           }
@@ -98,79 +118,141 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           // Pre-cache avatars for better UX
           _prefetchAvatars(chats);
 
-          // Subscribe to real-time updates nếu chưa có
+          // Subscribe to real-time updates
           _subscribeToRealTimeUpdates();
 
           emit(ChatState.loaded(chats: chats));
         },
       );
-    });
+    }
   }
 
-  /// **Load chat details with Either<Failure, T> pattern - ENTERPRISE READY**
+  /// **Load chat details using GetConversationDetailUseCase - CLEAN ARCHITECTURE**
   Future<void> _onLoadChatDetails(
     _LoadChatDetails event,
     Emitter<ChatState> emit,
   ) async {
-    // Don't change state to loading since we might already have data
-    
-    // First try to get from local storage using Either pattern
-    final localResult = await _chatRepository.getChatById(event.chatId);
-    
-    localResult.fold(
+    logger.i('Loading conversation detail: ${event.chatId}');
+
+    // Create params for UseCase
+    final params = GetConversationDetailParams(conversationId: event.chatId);
+
+    // Execute UseCase
+    final result = await _getConversationDetail(params);
+
+    result.fold(
       (failure) {
-        _logger.w('Failed to get local chat: ${failure.message}');
-        // Continue to try server
+        logger.e('Failed to load conversation detail: ${failure.message}');
+        emit(ChatState.error(message: getUserErrorMessage(failure)));
       },
-      (localChat) {
-        if (localChat != null) {
-          emit(ChatState.chatDetailsLoaded(chat: localChat));
+      (chat) {
+        if (chat != null) {
+          logger.i('Loaded conversation detail successfully');
+          emit(ChatState.chatDetailsLoaded(chat: chat));
+        } else {
+          emit(const ChatState.error(message: 'Không tìm thấy cuộc trò chuyện'));
         }
       },
     );
-    
-    // Then try to fetch from server if online
-    if (await _connectivityService.isConnected()) {
-      final serverResult = await _chatRepository.getChatById(event.chatId);
-      
-      serverResult.fold(
-        (failure) {
-          _logger.e('Failed to get server chat: ${failure.message}');
-          emit(ChatState.error(message: _getErrorMessage(failure)));
-        },
-        (chat) {
-          if (chat != null) {
-            emit(ChatState.chatDetailsLoaded(chat: chat));
-          }
-        },
-      );
-    }
   }
 
-  /// **Create chat with Either<Failure, T> pattern - ENTERPRISE READY**
+  /// **Create chat using CreateGroupUseCase - CLEAN ARCHITECTURE**
   Future<void> _onCreateChat(
     _CreateChat event,
     Emitter<ChatState> emit,
   ) async {
-    _logger.i('Creating new chat: ${event.name}');
-    
-    // Create chat using Either pattern
-    final result = await _chatRepository.createChat(
-      name: event.name ?? (event.type == ChatType.direct ? '' : 'New Group Chat'),
-      participantIds: event.participantIds,
-      isGroup: event.type == ChatType.group,
+    logger.i('Creating new chat: ${event.name}');
+
+    emitLoading(message: 'Đang tạo cuộc trò chuyện...');
+
+    // Create params for UseCase
+    final params = CreateGroupParams(
+      name: event.name ?? 'New Group',
+      memberIds: event.participantIds,
+      description: event.description,
     );
-    
+
+    // Execute UseCase
+    final result = await _createGroup(params);
+
     result.fold(
       (failure) {
-        _logger.e('Failed to create chat: ${failure.message}');
-        emit(ChatState.error(message: _getErrorMessage(failure)));
+        logger.e('Failed to create chat: ${failure.message}');
+        emit(ChatState.error(message: getUserErrorMessage(failure)));
       },
       (chat) {
-        _logger.i('Chat created successfully: ${chat.id}');
-        
+        logger.i('Chat created successfully: ${chat.id}');
+
         // Reload chats to include the new one
-        add(const ChatEvent.loadChats());
+        add(const ChatEvent.loadChats(forceRefresh: true));
+      },
+    );
+  }
+
+  /// **Update chat using UpdateGroupUseCase - CLEAN ARCHITECTURE**
+  Future<void> _onUpdateChat(
+    _UpdateChat event,
+    Emitter<ChatState> emit,
+  ) async {
+    logger.i('Updating chat: ${event.chatId}');
+
+    emitLoading(message: 'Đang cập nhật...');
+
+    // Create params for UseCase
+    final params = UpdateGroupParams(
+      conversationId: event.chatId,
+      name: event.name,
+      imageUrl: event.avatar,
+      description: event.description,
+    );
+
+    // Execute UseCase
+    final result = await _updateGroup(params);
+
+    result.fold(
+      (failure) {
+        logger.e('Failed to update chat: ${failure.message}');
+        emit(ChatState.error(message: getUserErrorMessage(failure)));
+      },
+      (chat) {
+        logger.i('Chat updated successfully');
+
+        // Update chat in current state
+        add(ChatEvent.chatUpdated(chat: chat));
+
+        // Reload chats to reflect changes
+        add(const ChatEvent.loadChats(forceRefresh: true));
+      },
+    );
+  }
+
+  /// **Leave chat using LeaveConversationUseCase - CLEAN ARCHITECTURE**
+  Future<void> _onLeaveChat(
+    _LeaveChat event,
+    Emitter<ChatState> emit,
+  ) async {
+    logger.i('Leaving chat: ${event.chatId}');
+
+    emitLoading(message: 'Đang rời khỏi cuộc trò chuyện...');
+
+    // Create params for UseCase
+    final params = LeaveConversationParams(conversationId: event.chatId);
+
+    // Execute UseCase
+    final result = await _leaveConversation(params);
+
+    result.fold(
+      (failure) {
+        logger.e('Failed to leave chat: ${failure.message}');
+        emit(ChatState.error(message: getUserErrorMessage(failure)));
+      },
+      (success) {
+        if (success) {
+          logger.i('Left chat successfully');
+
+          // Reload chats to remove the left chat
+          add(const ChatEvent.loadChats(forceRefresh: true));
+        }
       },
     );
   }
@@ -180,19 +262,25 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     _ConnectivityChanged event,
     Emitter<ChatState> emit,
   ) async {
+    logger.i('Connectivity changed: ${event.isConnected ? "online" : "offline"}');
+    
     if (event.isConnected) {
       // Sync when connection is restored
+      logger.i('Connection restored, reloading chats');
       add(const ChatEvent.loadChats(forceRefresh: true));
     } else {
+      logger.w('Connection lost, switching to offline mode');
       emit(const ChatState.offline());
     }
   }
 
-  /// Handle chat updates
+  /// Handle chat updates from real-time events
   Future<void> _onChatUpdated(
     _ChatUpdated event,
     Emitter<ChatState> emit,
   ) async {
+    logger.d('Chat updated: ${event.chat.id}');
+    
     // Update chat in current state if loaded
     if (state is _Loaded) {
       final currentState = state as _Loaded;
@@ -201,6 +289,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }).toList();
       
       emit(ChatState.loaded(chats: updatedChats));
+      logger.i('Chat list updated with new data');
     }
   }
 
@@ -212,6 +301,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         .toList();
     
     if (avatarUrls.isNotEmpty) {
+      logger.d('Pre-fetching ${avatarUrls.length} avatars');
       _mediaCacheManager.prefetchThumbnails(avatarUrls);
     }
   }
@@ -224,49 +314,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     // _chatUpdatesSubscription = _socketService.onChatUpdated().listen((chat) {
     //   add(ChatEvent.chatUpdated(chat: chat));
     // });
-  }
-
-  /// **Helper method to convert Failure to user-friendly error message**
-  String _getErrorMessage(Failure failure) {
-    if (failure is ConnectionFailure) {
-      return 'Không có kết nối internet. Vui lòng kiểm tra lại.';
-    } else if (failure is ServerFailure) {
-      return 'Lỗi server. Vui lòng thử lại sau.';
-    } else if (failure is CacheFailure) {
-      return 'Lỗi cache. Dữ liệu có thể không được cập nhật.';
-    } else {
-      return failure.message.isNotEmpty
-          ? failure.message
-          : 'Đã xảy ra lỗi không xác định.';
-    }
-  }
-
-  /// **Performance Monitoring Wrapper**
-  ///
-  /// Wraps operations with performance monitoring and logging.
-  /// Target: <100ms for most operations, <500ms for network operations
-  Future<void> _executeWithMonitoring(
-    String operation,
-    Future<void> Function() action,
-  ) async {
-    _performanceStopwatch.reset();
-    _performanceStopwatch.start();
-
-    try {
-      await action();
-    } catch (error) {
-      _logger.e('💥 Error in $operation: $error');
-      rethrow;
-    } finally {
-      _performanceStopwatch.stop();
-      final duration = _performanceStopwatch.elapsedMilliseconds;
-
-      if (duration > 100) {
-        _logger.w('⚠️ Slow operation: $operation took ${duration}ms');
-      } else {
-        _logger.d('⚡ Fast operation: $operation took ${duration}ms');
-      }
-    }
+    logger.d('Real-time updates subscription setup (pending socket implementation)');
   }
 
   @override
