@@ -132,6 +132,56 @@ class MessageSender {
   int get hashCode => id.hashCode ^ name.hashCode ^ avatar.hashCode;
 }
 
+/// Class đại diện cho reaction của tin nhắn
+class MessageReaction {
+  /// Emoji code (e.g., "👍", "❤️", "😂")
+  final String code;
+  
+  /// ID người dùng đã react
+  final String userId;
+  
+  /// Thời gian react
+  final DateTime createdAt;
+  
+  /// Constructor
+  MessageReaction({
+    required this.code,
+    required this.userId,
+    required this.createdAt,
+  });
+  
+  /// Tạo từ JSON
+  factory MessageReaction.fromJson(Map<String, dynamic> json) {
+    return MessageReaction(
+      code: json['code'] as String,
+      userId: json['userId'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+  }
+  
+  /// Chuyển đổi thành JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'code': code,
+      'userId': userId,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+  
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    
+    return other is MessageReaction &&
+           other.code == code &&
+           other.userId == userId &&
+           other.createdAt == createdAt;
+  }
+  
+  @override
+  int get hashCode => code.hashCode ^ userId.hashCode ^ createdAt.hashCode;
+}
+
 /// Thông tin tệp đính kèm
 class MessageAttachment {
   /// ID của tệp đính kèm
@@ -219,6 +269,9 @@ class ChatMessage {
   /// Thời gian cập nhật
   final DateTime updatedAt;
   
+  /// Thời gian chỉnh sửa (nếu có)
+  final DateTime? editedAt;
+  
   /// Danh sách người đã đọc tin nhắn
   final List<String> readBy;
   
@@ -227,6 +280,9 @@ class ChatMessage {
   
   /// Danh sách tệp đính kèm
   final List<MessageAttachment> attachments;
+  
+  /// Danh sách reactions
+  final List<MessageReaction> reactions;
   
   /// Constructor
   ChatMessage({
@@ -237,9 +293,11 @@ class ChatMessage {
     required this.sender,
     required this.createdAt,
     required this.updatedAt,
+    this.editedAt,
     this.readBy = const [],
     this.deliveredTo = const [],
     this.attachments = const [],
+    this.reactions = const [],
   });
   
   /// Tạo từ JSON
@@ -266,10 +324,14 @@ class ChatMessage {
       sender: MessageSender.fromJson(json['sender'] as Map<String, dynamic>),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      editedAt: json['editedAt'] != null ? DateTime.parse(json['editedAt'] as String) : null,
       readBy: (json['readBy'] as List?)?.map((e) => e as String).toList() ?? [],
       deliveredTo: (json['deliveredTo'] as List?)?.map((e) => e as String).toList() ?? [],
       attachments: (json['attachments'] as List?)
           ?.map((e) => MessageAttachment.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
+      reactions: (json['reactions'] as List?)
+          ?.map((e) => MessageReaction.fromJson(e as Map<String, dynamic>))
           .toList() ?? [],
     );
   }
@@ -284,9 +346,11 @@ class ChatMessage {
       'sender': sender.toJson(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      if (editedAt != null) 'editedAt': editedAt!.toIso8601String(),
       'readBy': readBy,
       'deliveredTo': deliveredTo,
       'attachments': attachments.map((a) => a.toJson()).toList(),
+      'reactions': reactions.map((r) => r.toJson()).toList(),
     };
   }
   
@@ -325,9 +389,11 @@ class ChatMessage {
       other.sender == sender &&
       other.createdAt == createdAt &&
       other.updatedAt == updatedAt &&
+      other.editedAt == editedAt &&
       _listEquals(other.readBy, readBy) &&
       _listEquals(other.deliveredTo, deliveredTo) &&
-      _listEquals(other.attachments, attachments);
+      _listEquals(other.attachments, attachments) &&
+      _listEquals(other.reactions, reactions);
   }
   
   @override
@@ -339,9 +405,11 @@ class ChatMessage {
       sender.hashCode ^
       createdAt.hashCode ^
       updatedAt.hashCode ^
+      (editedAt?.hashCode ?? 0) ^
       readBy.hashCode ^
       deliveredTo.hashCode ^
-      attachments.hashCode;
+      attachments.hashCode ^
+      reactions.hashCode;
   }
   
   /// Trạng thái hiện tại của tin nhắn
