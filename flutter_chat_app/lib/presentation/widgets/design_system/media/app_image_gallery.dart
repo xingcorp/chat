@@ -35,6 +35,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/media_enums.dart';
 import 'package:photo_view/photo_view.dart';
@@ -225,7 +227,7 @@ class AppImageGalleryState extends BaseState<AppImageGallery> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      color: isDark ? Colors.grey[850] : Colors.grey[200],
+      color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
       child: const Center(
         child: CircularProgressIndicator(),
       ),
@@ -237,11 +239,11 @@ class AppImageGalleryState extends BaseState<AppImageGallery> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      color: isDark ? Colors.grey[850] : Colors.grey[200],
+      color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
       child: Icon(
         Icons.broken_image,
         size: AppDimens.iconLarge,
-        color: isDark ? Colors.white38 : Colors.black38,
+        color: isDark ? AppColors.iconDarkMode.withValues(alpha: 0.5) : AppColors.icon.withValues(alpha: 0.5),
       ),
     );
   }
@@ -257,14 +259,14 @@ class AppImageGalleryState extends BaseState<AppImageGallery> {
         children: [
           Icon(
             Icons.photo_library_outlined,
-            size: AppDimens.iconLarge * 2,
-            color: isDark ? Colors.white38 : Colors.black38,
+            size: AppDimens.iconXXLarge,
+            color: isDark ? AppColors.iconDarkMode.withValues(alpha: 0.5) : AppColors.icon.withValues(alpha: 0.5),
           ),
-          SizedBox(height: AppDimens.spaceMedium),
+          const SizedBox(height: AppDimens.spaceMedium),
           Text(
             l10n.noImagesAvailable,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: isDark ? Colors.white54 : Colors.black54,
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary,
             ),
           ),
         ],
@@ -346,7 +348,7 @@ class _LightboxViewState extends BaseState<_LightboxView> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.backgroundDarkMode,
       body: GestureDetector(
         onTap: () {
           safeSetState(() {
@@ -375,8 +377,8 @@ class _LightboxViewState extends BaseState<_LightboxView> {
                 });
               },
               scrollPhysics: const BouncingScrollPhysics(),
-              backgroundDecoration: const BoxDecoration(
-                color: Colors.black,
+              backgroundDecoration: BoxDecoration(
+                color: AppColors.backgroundDarkMode,
               ),
               loadingBuilder: (context, event) => Center(
                 child: CircularProgressIndicator(
@@ -423,7 +425,7 @@ class _LightboxViewState extends BaseState<_LightboxView> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Colors.black.withValues(alpha: 0.7),
+            AppColors.backgroundDarkMode.withValues(alpha: 0.7),
             Colors.transparent,
           ],
         ),
@@ -432,14 +434,14 @@ class _LightboxViewState extends BaseState<_LightboxView> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
+            icon: Icon(Icons.close, color: AppColors.iconDarkMode),
             onPressed: () => Navigator.of(context).pop(),
             tooltip: context.l10n.close,
           ),
           Text(
             '${_currentIndex + 1} / ${widget.images.length}',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: Colors.white,
+            style: AppTextStyles.titleMedium.copyWith(
+              color: AppColors.textPrimaryDarkMode,
             ),
           ),
           Row(
@@ -447,13 +449,13 @@ class _LightboxViewState extends BaseState<_LightboxView> {
             children: [
               if (widget.enableShare)
                 IconButton(
-                  icon: const Icon(Icons.share, color: Colors.white),
+                  icon: Icon(Icons.share, color: AppColors.iconDarkMode),
                   onPressed: () => widget.onShare?.call(widget.images[_currentIndex]),
                   tooltip: context.l10n.share,
                 ),
               if (widget.enableDownload)
                 IconButton(
-                  icon: const Icon(Icons.download, color: Colors.white),
+                  icon: Icon(Icons.download, color: AppColors.iconDarkMode),
                   onPressed: () =>
                       widget.onDownload?.call(widget.images[_currentIndex]),
                   tooltip: context.l10n.download,
@@ -484,7 +486,7 @@ class _LightboxViewState extends BaseState<_LightboxView> {
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
           colors: [
-            Colors.black.withValues(alpha: 0.7),
+            AppColors.backgroundDarkMode.withValues(alpha: 0.7),
             Colors.transparent,
           ],
         ),
@@ -496,17 +498,17 @@ class _LightboxViewState extends BaseState<_LightboxView> {
           if (currentImage.title != null)
             Text(
               currentImage.title!,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: Colors.white,
+              style: AppTextStyles.titleMedium.copyWith(
+                color: AppColors.textPrimaryDarkMode,
                 fontWeight: FontWeight.bold,
               ),
             ),
           if (currentImage.description != null) ...[
-            SizedBox(height: AppDimens.spaceSmall),
+            const SizedBox(height: AppDimens.spaceSmall),
             Text(
               currentImage.description!,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.white70,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondaryDarkMode,
               ),
             ),
           ],

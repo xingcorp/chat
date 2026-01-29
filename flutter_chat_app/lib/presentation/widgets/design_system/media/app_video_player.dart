@@ -301,7 +301,7 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
       width: double.infinity,
       height: _isFullscreen ? MediaQuery.of(context).size.height : 240,
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: AppColors.backgroundDarkMode,
         borderRadius: _isFullscreen
             ? BorderRadius.zero
             : BorderRadius.circular(AppDimens.radiusMedium),
@@ -338,7 +338,7 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
 
     // In real implementation, show actual video frame
     return Container(
-      color: Colors.black,
+      color: AppColors.backgroundDarkMode,
       child: Center(
         child: widget.thumbnailUrl != null && !_isPlaying
             ? Image.network(
@@ -347,15 +347,15 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
                 errorBuilder: (context, error, stackTrace) {
                   return Icon(
                     Icons.videocam,
-                    size: 64,
-                    color: Colors.white.withValues(alpha: 0.5),
+                    size: AppDimens.iconXXLarge,
+                    color: AppColors.iconDarkMode.withValues(alpha: 0.5),
                   );
                 },
               )
             : Icon(
                 Icons.play_circle_outline,
-                size: 64,
-                color: Colors.white.withValues(alpha: 0.5),
+                size: AppDimens.iconXXLarge,
+                color: AppColors.iconDarkMode.withValues(alpha: 0.5),
               ),
       ),
     );
@@ -363,13 +363,13 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
 
   Widget _buildLoadingState(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: AppColors.backgroundDarkMode,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
             ),
             const SizedBox(height: AppDimens.spaceMedium),
             Text(
@@ -396,7 +396,7 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
             ),
             const SizedBox(height: AppDimens.spaceMedium),
             Text(
-              _errorMessage ?? context.l10n.error,
+              _errorMessage ?? 'Error loading video',
               style: const TextStyle(color: Colors.white),
               textAlign: TextAlign.center,
             ),
@@ -418,9 +418,9 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Colors.black.withValues(alpha: 0.7),
+            AppColors.backgroundDarkMode.withValues(alpha: 0.7),
             Colors.transparent,
-            Colors.black.withValues(alpha: 0.7),
+            AppColors.backgroundDarkMode.withValues(alpha: 0.7),
           ],
           stops: const [0.0, 0.5, 1.0],
         ),
@@ -438,7 +438,7 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
               child: IconButton(
                 icon: const Icon(Icons.play_circle_filled),
                 iconSize: 72,
-                color: Colors.white,
+                color: AppColors.iconDarkMode,
                 onPressed: _togglePlayPause,
               ),
             ),
@@ -466,9 +466,9 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
           if (widget.enablePiP)
             IconButton(
               icon: const Icon(Icons.picture_in_picture_alt),
-              color: Colors.white,
+              color: AppColors.iconDarkMode,
               onPressed: _enterPiP,
-              tooltip: 'Picture in Picture',
+              tooltip: context.l10n.pictureInPicture,
             ),
 
           // Fullscreen button
@@ -476,11 +476,11 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
             icon: Icon(
               _isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
             ),
-            color: Colors.white,
+            color: AppColors.iconDarkMode,
             onPressed: _toggleFullscreen,
             tooltip: _isFullscreen
-                ? 'Exit Fullscreen'
-                : 'Enter Fullscreen',
+                ? context.l10n.exitFullscreen
+                : context.l10n.enterFullscreen,
           ),
         ],
       ),
@@ -504,7 +504,7 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
               // Play/Pause
               IconButton(
                 icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                color: Colors.white,
+                color: AppColors.iconDarkMode,
                 onPressed: _togglePlayPause,
               ),
 
@@ -541,7 +541,7 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
         overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
         activeTrackColor: AppColors.primary,
-        inactiveTrackColor: Colors.white.withValues(alpha: 0.3),
+        inactiveTrackColor: AppColors.iconDarkMode.withValues(alpha: 0.3),
         thumbColor: AppColors.primary,
         overlayColor: AppColors.primary.withValues(alpha: 0.3),
       ),
@@ -559,8 +559,8 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
 
   Widget _buildQualitySelector(BuildContext context) {
     return PopupMenuButton<VideoQuality>(
-      icon: const Icon(Icons.settings, color: Colors.white),
-      tooltip: 'Quality',
+      icon: const Icon(Icons.settings, color: AppColors.iconDarkMode),
+      tooltip: context.l10n.quality,
       onSelected: _changeQuality,
       itemBuilder: (context) {
         return widget.availableQualities.map((quality) {
@@ -571,7 +571,7 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
                 Text(_getQualityLabel(quality)),
                 if (quality == _quality) ...[
                   const SizedBox(width: AppDimens.spaceSmall),
-                  const Icon(Icons.check, size: 16),
+                  const Icon(Icons.check, size: AppDimens.iconSmall),
                 ],
               ],
             ),
@@ -590,7 +590,7 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
             _getSpeedLabel(_playbackSpeed),
             style: const TextStyle(color: Colors.white, fontSize: 12),
           ),
-          const Icon(Icons.arrow_drop_down, color: Colors.white, size: 16),
+          const Icon(Icons.arrow_drop_down, color: AppColors.iconDarkMode, size: AppDimens.iconSmall),
         ],
       ),
       tooltip: context.l10n.playbackSpeed,
@@ -604,7 +604,7 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
                 Text(_getSpeedLabel(speed)),
                 if (speed == _playbackSpeed) ...[
                   const SizedBox(width: AppDimens.spaceSmall),
-                  const Icon(Icons.check, size: 16),
+                  const Icon(Icons.check, size: AppDimens.iconSmall),
                 ],
               ],
             ),
@@ -621,7 +621,7 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
         IconButton(
           icon: Icon(
             _isMuted ? Icons.volume_off : Icons.volume_up,
-            color: Colors.white,
+            color: AppColors.iconDarkMode,
           ),
           onPressed: _toggleMute,
         ),
@@ -632,10 +632,10 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
               trackHeight: 2,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 4),
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 8),
-              activeTrackColor: Colors.white,
-              inactiveTrackColor: Colors.white.withValues(alpha: 0.3),
-              thumbColor: Colors.white,
-              overlayColor: Colors.white.withValues(alpha: 0.3),
+              activeTrackColor: AppColors.iconDarkMode,
+              inactiveTrackColor: AppColors.iconDarkMode.withValues(alpha: 0.3),
+              thumbColor: AppColors.iconDarkMode,
+              overlayColor: AppColors.iconDarkMode.withValues(alpha: 0.3),
             ),
             child: Slider(
               value: _volume,
@@ -670,13 +670,13 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
 
   String _getSpeedLabel(PlaybackSpeed speed) {
     switch (speed) {
-      case PlaybackSpeed.half:
+      case PlaybackSpeed.x050:
         return '0.5x';
-      case PlaybackSpeed.normal:
+      case PlaybackSpeed.x100:
         return '1x';
-      case PlaybackSpeed.oneAndHalf:
+      case PlaybackSpeed.x150:
         return '1.5x';
-      case PlaybackSpeed.double:
+      case PlaybackSpeed.x200:
         return '2x';
     }
   }

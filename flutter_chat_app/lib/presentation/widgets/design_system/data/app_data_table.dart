@@ -61,7 +61,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
-import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/data/data_enums.dart';
 
 /// Data table column configuration
@@ -420,7 +419,7 @@ class AppDataTableState<T> extends BaseState<AppDataTable<T>> {
                 child: TextField(
                   controller: _filterControllers[column.id],
                   decoration: InputDecoration(
-                    hintText: context.l10n.filter,
+                    hintText: 'Filter',
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: AppDimens.paddingSmall,
@@ -556,7 +555,7 @@ class AppDataTableState<T> extends BaseState<AppDataTable<T>> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            context.l10n.showingItemsOfTotal(startItem, endItem, widget.rows.length),
+            'Showing $startItem-$endItem of ${widget.rows.length}',
             style: theme.textTheme.bodySmall,
           ),
           Row(
@@ -566,10 +565,10 @@ class AppDataTableState<T> extends BaseState<AppDataTable<T>> {
                 onPressed: widget.currentPage > 0
                     ? () => _handlePageChange(widget.currentPage - 1)
                     : null,
-                tooltip: context.l10n.previousPage,
+                tooltip: 'Previous Page',
               ),
               Text(
-                context.l10n.pageOfTotal(widget.currentPage + 1, totalPages),
+                'Page ${widget.currentPage + 1} of $totalPages',
                 style: theme.textTheme.bodyMedium,
               ),
               IconButton(
@@ -577,7 +576,7 @@ class AppDataTableState<T> extends BaseState<AppDataTable<T>> {
                 onPressed: widget.currentPage < totalPages - 1
                     ? () => _handlePageChange(widget.currentPage + 1)
                     : null,
-                tooltip: context.l10n.nextPage,
+                tooltip: 'Next Page',
               ),
             ],
           ),
@@ -597,7 +596,7 @@ class AppDataTableState<T> extends BaseState<AppDataTable<T>> {
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.paddingXLarge),
         child: Text(
-          widget.emptyMessage ?? context.l10n.noDataAvailable,
+          widget.emptyMessage ?? 'No data available',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: Colors.grey,
               ),
