@@ -987,5 +987,132 @@
   "connectionLost": "Connection lost. Working offline.",
   "@connectionLost": {
     "description": "Message shown when connection is lost"
+  },
+
+  "buttonLoading": "Loading...",
+  "@buttonLoading": {
+    "description": "Accessibility label for button loading state"
+  },
+
+  "buttonDisabled": "Button disabled",
+  "@buttonDisabled": {
+    "description": "Accessibility label for disabled button"
+  },
+
+  "primaryButton": "Primary button",
+  "@primaryButton": {
+    "description": "Accessibility label for primary button"
+  },
+
+  "secondaryButton": "Secondary button",
+  "@secondaryButton": {
+    "description": "Accessibility label for secondary button"
+  },
+
+  "textButton": "Text button",
+  "@textButton": {
+    "description": "Accessibility label for text button"
+  },
+
+  "outlinedButton": "Outlined button",
+  "@outlinedButton": {
+    "description": "Accessibility label for outlined button"
+  },
+
+  "iconButton": "Icon button",
+  "@iconButton": {
+    "description": "Accessibility label for icon button"
+  },
+
+  "floatingActionButton": "Floating action button",
+  "@floatingActionButton": {
+    "description": "Accessibility label for floating action button"
+  },
+
+  "showPassword": "Show password",
+  "@showPassword": {
+    "description": "Tooltip for show password button"
+  },
+
+  "hidePassword": "Hide password",
+  "@hidePassword": {
+    "description": "Tooltip for hide password button"
+  },
+
+  "clearSearch": "Clear search",
+  "@clearSearch": {
+    "description": "Tooltip for clear search button"
+  },
+
+  "enterText": "Enter text",
+  "@enterText": {
+    "description": "Placeholder for text input"
+  },
+
+  "required": "Required",
+  "@required": {
+    "description": "Label for required fields"
+  },
+
+  "optional": "Optional",
+  "@optional": {
+    "description": "Label for optional fields"
+  },
+
+  "characterCount": "{current} / {max} characters",
+  "@characterCount": {
+    "description": "Character count display",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "50"
+      },
+      "max": {
+        "type": "int",
+        "example": "100"
+      }
+    }
+  },
+
+  "validationRequired": "This field is required",
+  "@validationRequired": {
+    "description": "Validation message for required field"
+  },
+
+  "validationEmail": "Please enter a valid email address",
+  "@validationEmail": {
+    "description": "Validation message for invalid email"
+  },
+
+  "validationMinLength": "Must be at least {length} characters",
+  "@validationMinLength": {
+    "description": "Validation message for minimum length",
+    "placeholders": {
+      "length": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+
+  "validationMaxLength": "Must be no more than {length} characters",
+  "@validationMaxLength": {
+    "description": "Validation message for maximum length",
+    "placeholders": {
+      "length": {
+        "type": "int",
+        "example": "100"
+      }
+    }
+  },
+
+  "tapToSelect": "Tap to select",
+  "@tapToSelect": {
+    "description": "Accessibility hint for tappable items"
+  },
+
+  "doubleTapToOpen": "Double tap to open",
+  "@doubleTapToOpen": {
+    "description": "Accessibility hint for items that open on double tap"
   }
 }

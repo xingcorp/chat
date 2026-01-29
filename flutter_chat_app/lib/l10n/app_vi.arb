@@ -204,5 +204,33 @@
   "messageQueued": "Tin nhắn đã được xếp hàng để gửi",
   "operationQueued": "Thao tác đã được xếp hàng. Sẽ xử lý khi có kết nối.",
   "backOnline": "Đã kết nối lại. Đang đồng bộ...",
-  "connectionLost": "Mất kết nối. Đang làm việc ngoại tuyến."
+  "connectionLost": "Mất kết nối. Đang làm việc ngoại tuyến.",
+
+  "buttonLoading": "Đang tải...",
+  "buttonDisabled": "Nút bị vô hiệu hóa",
+  "primaryButton": "Nút chính",
+  "secondaryButton": "Nút phụ",
+  "textButton": "Nút văn bản",
+  "outlinedButton": "Nút viền",
+
+  "iconButton": "Nút biểu tượng",
+  "floatingActionButton": "Nút hành động nổi",
+
+  "showPassword": "Hiện mật khẩu",
+  "hidePassword": "Ẩn mật khẩu",
+  "clearSearch": "Xóa tìm kiếm",
+  "enterText": "Nhập văn bản",
+
+  "required": "Bắt buộc",
+  "optional": "Tùy chọn",
+
+  "characterCount": "{current} / {max} ký tự",
+
+  "validationRequired": "Trường này là bắt buộc",
+  "validationEmail": "Vui lòng nhập địa chỉ email hợp lệ",
+  "validationMinLength": "Phải có ít nhất {length} ký tự",
+  "validationMaxLength": "Không được vượt quá {length} ký tự",
+
+  "tapToSelect": "Nhấn để chọn",
+  "doubleTapToOpen": "Nhấn đúp để mở"
 }

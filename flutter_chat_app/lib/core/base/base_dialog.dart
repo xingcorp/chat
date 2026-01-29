@@ -1,324 +1,299 @@
-/// Enterprise Base Dialog Pattern
-/// 
-/// Standardized dialog components for consistent UI patterns.
-/// Follows enterprise messaging app standards (WhatsApp, Messenger, Telegram).
-/// 
-/// Author: Senior Flutter/Mobile Architect
-library base_dialog;
-
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
 
-/// Base dialog class for all dialogs in the application
-/// 
-/// Provides consistent styling, behavior, and accessibility
-/// features across all dialog implementations.
-abstract class BaseDialog extends BaseStatelessWidget {
-  final String? title;
-  final Widget? content;
-  final List<DialogAction> actions;
-  final bool dismissible;
-  final EdgeInsets? contentPadding;
-  final EdgeInsets? titlePadding;
-  final EdgeInsets? actionsPadding;
-  final Color? backgroundColor;
-  final double? elevation;
-  final ShapeBorder? shape;
-  final Duration? insetAnimationDuration;
-  final Curve? insetAnimationCurve;
-
+/// **BASE DIALOG**
+///
+/// Base class for all dialogs in the application.
+/// Provides consistent styling, animations, and behavior.
+///
+/// **Architecture**: Clean Architecture + Base Class Pattern
+/// **Pattern**: Template Method Pattern
+///
+/// **Features**:
+/// - Consistent padding and radius using [AppDimens]
+/// - Automatic dark mode support
+/// - Accessibility support with semantic labels
+/// - Customizable barrier behavior
+/// - Safe area handling
+/// - Scrollable content option
+///
+/// **Usage**:
+/// ```dart
+/// class ConfirmDeleteDialog extends BaseDialog {
+///   const ConfirmDeleteDialog({super.key});
+///
+///   @override
+///   Widget buildContent(BuildContext context) {
+///     return Text('Are you sure you want to delete this item?');
+///   }
+/// }
+///
+/// // Show dialog
+/// final result = await BaseDialog.show<bool>(
+///   context,
+///   builder: (context) => ConfirmDeleteDialog(
+///     title: Text('Confirm Delete'),
+///     actions: [
+///       TextButton(
+///         onPressed: () => Navigator.pop(context, false),
+///         child: Text('Cancel'),
+///       ),
+///       ElevatedButton(
+///         onPressed: () => Navigator.pop(context, true),
+///         child: Text('Delete'),
+///       ),
+///     ],
+///   ),
+/// );
+/// ```
+///
+/// **Best Practices**:
+/// - Extend this class for all custom dialogs
+/// - Implement [buildContent] method
+/// - Use [AppDimens] for spacing
+/// - Provide accessibility labels
+/// - Handle back button press
+abstract class BaseDialog extends StatelessWidget {
+  /// Creates a base dialog
+  ///
+  /// The [buildContent] method must be implemented by subclasses.
   const BaseDialog({
     super.key,
     this.title,
-    this.content,
-    this.actions = const [],
-    this.dismissible = true,
-    this.contentPadding,
     this.titlePadding,
+    this.contentPadding,
     this.actionsPadding,
+    this.actions,
     this.backgroundColor,
     this.elevation,
     this.shape,
-    this.insetAnimationDuration,
-    this.insetAnimationCurve,
+    this.insetPadding,
+    this.clipBehavior = Clip.antiAlias,
+    this.scrollable = false,
   });
 
+  /// Dialog title widget
+  ///
+  /// Typically a [Text] widget with heading style.
+  final Widget? title;
+
+  /// Padding around title
+  ///
+  /// Defaults to [AppDimens.paddingDialog] on all sides except bottom (small).
+  final EdgeInsetsGeometry? titlePadding;
+
+  /// Padding around content
+  ///
+  /// Defaults to horizontal [AppDimens.paddingDialog] and vertical small.
+  final EdgeInsetsGeometry? contentPadding;
+
+  /// Padding around actions
+  ///
+  /// Defaults to [AppDimens.paddingDialog] on all sides except top (small).
+  final EdgeInsetsGeometry? actionsPadding;
+
+  /// Action buttons
+  ///
+  /// Typically a list of [TextButton] or [ElevatedButton].
+  final List<Widget>? actions;
+
+  /// Background color
+  ///
+  /// Defaults to theme surface color (light/dark aware).
+  final Color? backgroundColor;
+
+  /// Elevation
+  ///
+  /// Defaults to [AppDimens.elevationDialog].
+  final double? elevation;
+
+  /// Shape
+  ///
+  /// Defaults to rounded rectangle with [AppDimens.radiusDialog].
+  final ShapeBorder? shape;
+
+  /// Inset padding
+  ///
+  /// Padding around the dialog. Defaults to [AppDimens.paddingLarge].
+  final EdgeInsets? insetPadding;
+
+  /// Clip behavior
+  ///
+  /// Defaults to [Clip.antiAlias] for smooth corners.
+  final Clip clipBehavior;
+
+  /// Whether content is scrollable
+  ///
+  /// If true, wraps content in [SingleChildScrollView].
+  final bool scrollable;
+
+  /// Build dialog content
+  ///
+  /// Implement this method in subclasses to provide dialog content.
+  ///
+  /// Example:
+  /// ```dart
+  /// @override
+  /// Widget buildContent(BuildContext context) {
+  ///   return Column(
+  ///     mainAxisSize: MainAxisSize.min,
+  ///     children: [
+  ///       Text('Dialog message'),
+  ///       SizedBox(height: AppDimens.spaceSmall),
+  ///       Text('Additional details'),
+  ///     ],
+  ///   );
+  /// }
+  /// ```
+  Widget buildContent(BuildContext context);
+
   @override
-  Widget buildContent(BuildContext context) {
-    return AlertDialog(
-      title: title != null ? _buildTitle(context) : null,
-      content: content ?? buildDialogContent(context),
-      actions: _buildActions(context),
-      contentPadding: contentPadding ?? _getDefaultContentPadding(context),
-      titlePadding: titlePadding ?? _getDefaultTitlePadding(context),
-      actionsPadding: actionsPadding ?? _getDefaultActionsPadding(context),
-      backgroundColor: backgroundColor ?? Theme.of(context).dialogTheme.backgroundColor,
-      elevation: elevation ?? 24.0,
-      shape: shape ?? _getDefaultShape(context),
-    );
-  }
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-  /// Build dialog content - to be implemented by subclasses
-  Widget? buildDialogContent(BuildContext context) => null;
-
-  /// Build title widget
-  Widget _buildTitle(BuildContext context) {
-    return Text(
-      title!,
-      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-        fontWeight: FontWeight.w600,
+    return Dialog(
+      backgroundColor: backgroundColor ??
+          (isDark ? AppColors.surfaceDarkMode : AppColors.surface),
+      elevation: elevation ?? AppDimens.elevationDialog,
+      shape: shape ??
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimens.radiusDialog),
+          ),
+      insetPadding: insetPadding ??
+          const EdgeInsets.symmetric(
+            horizontal: AppDimens.paddingLarge,
+            vertical: AppDimens.paddingLarge,
+          ),
+      clipBehavior: clipBehavior,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: AppDimens.dialogMaxWidth,
+          minWidth: AppDimens.dialogMinWidth,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Title
+            if (title != null)
+              Padding(
+                padding: titlePadding ??
+                    const EdgeInsets.fromLTRB(
+                      AppDimens.paddingDialog,
+                      AppDimens.paddingDialog,
+                      AppDimens.paddingDialog,
+                      AppDimens.paddingSmall,
+                    ),
+                child: DefaultTextStyle(
+                  style: theme.textTheme.titleLarge!,
+                  child: title!,
+                ),
+              ),
+            
+            // Content
+            Flexible(
+              child: scrollable
+                  ? SingleChildScrollView(
+                      padding: contentPadding ??
+                          const EdgeInsets.symmetric(
+                            horizontal: AppDimens.paddingDialog,
+                            vertical: AppDimens.paddingSmall,
+                          ),
+                      child: buildContent(context),
+                    )
+                  : Padding(
+                      padding: contentPadding ??
+                          const EdgeInsets.symmetric(
+                            horizontal: AppDimens.paddingDialog,
+                            vertical: AppDimens.paddingSmall,
+                          ),
+                      child: buildContent(context),
+                    ),
+            ),
+            
+            // Actions
+            if (actions != null && actions!.isNotEmpty)
+              Padding(
+                padding: actionsPadding ??
+                    const EdgeInsets.fromLTRB(
+                      AppDimens.paddingDialog,
+                      AppDimens.paddingSmall,
+                      AppDimens.paddingDialog,
+                      AppDimens.paddingDialog,
+                    ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: _buildActions(),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  /// Build action buttons
-  List<Widget> _buildActions(BuildContext context) {
-    return actions.map((action) => action.build(context)).toList();
+  /// Build actions with proper spacing
+  List<Widget> _buildActions() {
+    final actionWidgets = <Widget>[];
+    for (var i = 0; i < actions!.length; i++) {
+      if (i > 0) {
+        actionWidgets.add(const SizedBox(width: AppDimens.spaceSmall));
+      }
+      actionWidgets.add(actions![i]);
+    }
+    return actionWidgets;
   }
 
-  /// Get default content padding
-  EdgeInsets _getDefaultContentPadding(BuildContext context) {
-    return const EdgeInsets.fromLTRB(24.0, 20.0, 24.0, 24.0);
-  }
-
-  /// Get default title padding
-  EdgeInsets _getDefaultTitlePadding(BuildContext context) {
-    return const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 0.0);
-  }
-
-  /// Get default actions padding
-  EdgeInsets _getDefaultActionsPadding(BuildContext context) {
-    return const EdgeInsets.all(8.0);
-  }
-
-  /// Get default dialog shape
-  ShapeBorder _getDefaultShape(BuildContext context) {
-    return RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12.0),
-    );
-  }
-
-  /// Show dialog helper method
+  /// Show dialog with standard configuration
+  ///
+  /// Returns a [Future] that resolves to the value passed to [Navigator.pop].
+  ///
+  /// Example:
+  /// ```dart
+  /// final confirmed = await BaseDialog.show<bool>(
+  ///   context,
+  ///   builder: (context) => MyDialog(),
+  ///   barrierDismissible: false,
+  /// );
+  ///
+  /// if (confirmed == true) {
+  ///   // User confirmed
+  /// }
+  /// ```
+  ///
+  /// Parameters:
+  /// - [context]: Build context
+  /// - [builder]: Dialog builder function
+  /// - [barrierDismissible]: Whether tapping outside dismisses dialog
+  /// - [barrierColor]: Color of the modal barrier
+  /// - [barrierLabel]: Semantic label for barrier
+  /// - [useSafeArea]: Whether to avoid system intrusions
+  /// - [useRootNavigator]: Whether to use root navigator
+  /// - [routeSettings]: Route settings for navigation
+  /// - [anchorPoint]: Anchor point for dialog positioning
   static Future<T?> show<T>({
     required BuildContext context,
-    required BaseDialog dialog,
+    required WidgetBuilder builder,
     bool barrierDismissible = true,
     Color? barrierColor,
     String? barrierLabel,
+    bool useSafeArea = true,
     bool useRootNavigator = true,
     RouteSettings? routeSettings,
+    Offset? anchorPoint,
   }) {
     return showDialog<T>(
       context: context,
-      builder: (context) => dialog,
-      barrierDismissible: barrierDismissible && dialog.dismissible,
-      barrierColor: barrierColor,
+      builder: builder,
+      barrierDismissible: barrierDismissible,
+      barrierColor: barrierColor ?? Colors.black54,
       barrierLabel: barrierLabel,
+      useSafeArea: useSafeArea,
       useRootNavigator: useRootNavigator,
       routeSettings: routeSettings,
-    );
-  }
-}
-
-/// Dialog action class for standardized button behavior
-class DialogAction extends Equatable {
-  final String text;
-  final VoidCallback? onPressed;
-  final DialogActionType type;
-  final bool isEnabled;
-  final bool isLoading;
-  final IconData? icon;
-  final Color? textColor;
-  final Color? backgroundColor;
-
-  const DialogAction({
-    required this.text,
-    this.onPressed,
-    this.type = DialogActionType.secondary,
-    this.isEnabled = true,
-    this.isLoading = false,
-    this.icon,
-    this.textColor,
-    this.backgroundColor,
-  });
-
-  /// Create primary action (e.g., "OK", "Save", "Send")
-  const DialogAction.primary({
-    required this.text,
-    this.onPressed,
-    this.isEnabled = true,
-    this.isLoading = false,
-    this.icon,
-  })  : type = DialogActionType.primary,
-        textColor = null,
-        backgroundColor = null;
-
-  /// Create secondary action (e.g., "Cancel", "Close")
-  const DialogAction.secondary({
-    required this.text,
-    this.onPressed,
-    this.isEnabled = true,
-    this.isLoading = false,
-    this.icon,
-  })  : type = DialogActionType.secondary,
-        textColor = null,
-        backgroundColor = null;
-
-  /// Create destructive action (e.g., "Delete", "Remove")
-  const DialogAction.destructive({
-    required this.text,
-    this.onPressed,
-    this.isEnabled = true,
-    this.isLoading = false,
-    this.icon,
-  })  : type = DialogActionType.destructive,
-        textColor = null,
-        backgroundColor = null;
-
-  /// Build action widget
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return _buildLoadingButton(context);
-    }
-
-    switch (type) {
-      case DialogActionType.primary:
-        return _buildPrimaryButton(context);
-      case DialogActionType.secondary:
-        return _buildSecondaryButton(context);
-      case DialogActionType.destructive:
-        return _buildDestructiveButton(context);
-    }
-  }
-
-  Widget _buildPrimaryButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: isEnabled ? onPressed : null,
-      icon: icon != null ? Icon(icon, size: 18) : const SizedBox.shrink(),
-      label: Text(text),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor ?? Theme.of(context).primaryColor,
-        foregroundColor: textColor ?? Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
-    );
-  }
-
-  Widget _buildSecondaryButton(BuildContext context) {
-    return TextButton.icon(
-      onPressed: isEnabled ? onPressed : null,
-      icon: icon != null ? Icon(icon, size: 18) : const SizedBox.shrink(),
-      label: Text(text),
-      style: TextButton.styleFrom(
-        foregroundColor: textColor ?? Theme.of(context).textTheme.bodyLarge?.color,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
-    );
-  }
-
-  Widget _buildDestructiveButton(BuildContext context) {
-    return TextButton.icon(
-      onPressed: isEnabled ? onPressed : null,
-      icon: icon != null ? Icon(icon, size: 18) : const SizedBox.shrink(),
-      label: Text(text),
-      style: TextButton.styleFrom(
-        foregroundColor: textColor ?? Colors.red,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
-    );
-  }
-
-  Widget _buildLoadingButton(BuildContext context) {
-    return ElevatedButton(
-      onPressed: null,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor ?? Theme.of(context).primaryColor.withValues(alpha: 0.6),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(text, style: const TextStyle(color: Colors.white)),
-        ],
-      ),
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-        text,
-        type,
-        isEnabled,
-        isLoading,
-        icon,
-        textColor,
-        backgroundColor,
-      ];
-}
-
-/// Dialog action types
-enum DialogActionType {
-  primary,
-  secondary,
-  destructive,
-}
-
-/// Confirmation dialog implementation
-class ConfirmationDialog extends BaseDialog {
-  final String message;
-  final String confirmText;
-  final String cancelText;
-  final VoidCallback? onConfirm;
-  final VoidCallback? onCancel;
-  final DialogActionType confirmType;
-
-  const ConfirmationDialog({
-    super.key,
-    super.title,
-    required this.message,
-    this.confirmText = 'OK',
-    this.cancelText = 'Cancel',
-    this.onConfirm,
-    this.onCancel,
-    this.confirmType = DialogActionType.primary,
-  }) : super(
-          actions: const [], // Will be built in _buildActions
-        );
-
-  @override
-  Widget buildDialogContent(BuildContext context) {
-    return Text(
-      message,
-      style: Theme.of(context).textTheme.bodyLarge,
-    );
-  }
-
-  @override
-  Widget buildContent(BuildContext context) {
-    return AlertDialog(
-      title: title != null ? Text(title!) : null,
-      content: buildDialogContent(context),
-      actions: [
-        DialogAction.secondary(
-          text: cancelText,
-          onPressed: onCancel ?? () => Navigator.of(context).pop(false),
-        ).build(context),
-        DialogAction(
-          text: confirmText,
-          type: confirmType,
-          onPressed: onConfirm ?? () => Navigator.of(context).pop(true),
-        ).build(context),
-      ],
+      anchorPoint: anchorPoint,
     );
   }
 }

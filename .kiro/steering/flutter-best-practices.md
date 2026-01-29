@@ -1,21 +1,19 @@
 ---
-title: Flutter Best Practices & Performance
-inclusion: conditional
-fileMatchPattern: "flutter_chat_app/**/*.dart"
-priority: medium
+inclusion: fileMatch
+fileMatchPattern: ['flutter_chat_app/**/*.dart']
 ---
 
-# Flutter Best Practices & Performance Optimization
+# Flutter Best Practices
 
-## 🎯 Critical Architecture Rules
+## MANDATORY Base Classes
 
-### Logging - ALWAYS Use AppLogger
+### 1. Logging: Use AppLogger (NOT Logger)
 ```dart
-// ❌ NEVER use Logger directly
+// ❌ FORBIDDEN
 import 'package:logger/logger.dart';
 final Logger _logger = Logger();
 
-// ✅ ALWAYS use AppLogger via DI
+// ✅ REQUIRED
 import 'package:flutter_chat_app/core/utils/logger.dart';
 
 @injectable
@@ -26,206 +24,113 @@ class MyService {
   
   void doSomething() {
     _logger.info('Operation started');
-    _logger.debug('Debug info');
-    _logger.warning('Warning message');
     _logger.error('Error occurred', error);
   }
 }
 ```
 
-### Widgets - ALWAYS Use BaseStatefulWidget
+### 2. StatefulWidget: Use BaseStatefulWidget
 ```dart
-// ❌ NEVER use StatefulWidget directly
-class MyPage extends StatefulWidget {
-  @override
-  State<MyPage> createState() => _MyPageState();
-}
-
+// ❌ FORBIDDEN
+class MyPage extends StatefulWidget { }
 class _MyPageState extends State<MyPage> {
-  void updateData() {
-    setState(() {}); // Can crash if disposed!
-  }
+  void update() => setState(() {}); // Can crash!
 }
 
-// ✅ ALWAYS use BaseStatefulWidget
+// ✅ REQUIRED
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 
 class MyPage extends BaseStatefulWidget {
   const MyPage({super.key});
-  
   @override
   State<MyPage> createState() => _MyPageState();
 }
 
 class _MyPageState extends BaseState<MyPage> {
-  // Automatic lifecycle logging
-  // Automatic WidgetsBindingObserver
-  
-  void updateData() {
-    safeSetState(() {}); // Safe - won't crash!
-  }
+  void update() => safeSetState(() {}); // Safe!
   
   @override
-  void onAppResumed() {
-    // Handle app resume
-  }
+  void onAppResumed() { /* Handle resume */ }
   
   @override
-  void onAppPaused() {
-    // Handle app pause
-  }
+  void onAppPaused() { /* Handle pause */ }
 }
 ```
 
-**Benefits:**
-- ✅ AppLogger: Consistent logging, structured context, performance tracking
-- ✅ BaseStatefulWidget: Safe setState, automatic lifecycle logging, memory leak prevention
+**Why**: BaseState provides safe setState, lifecycle logging, memory leak prevention
 
-## Performance Optimization
+## Performance Rules
 
-### Widget Optimization
+### Widget Performance
 ```dart
-// ✅ Use const constructors
+// ✅ ALWAYS use const constructors
 const Text('Hello');
 const SizedBox(height: 16);
-const Padding(padding: EdgeInsets.all(8));
 
-// ✅ Use RepaintBoundary for complex widgets
-RepaintBoundary(
-  child: ComplexAnimatedWidget(),
-)
-
-// ✅ Use ListView.builder for long lists
+// ✅ Use ListView.builder for long lists (NOT ListView)
 ListView.builder(
   itemCount: items.length,
-  itemBuilder: (context, index) => ItemWidget(items[index]),
-)
-
-// ❌ Don't use ListView with all items
-ListView(
-  children: items.map((item) => ItemWidget(item)).toList(),
-)
-
-// ✅ Use keys for list items
-ListView.builder(
   itemBuilder: (context, index) => ItemWidget(
-    key: ValueKey(items[index].id),
+    key: ValueKey(items[index].id), // Always use keys
     item: items[index],
   ),
 )
-```
 
-### Image Optimization
-```dart
-// ✅ Use CachedNetworkImage
-CachedNetworkImage(
-  imageUrl: url,
-  placeholder: (context, url) => const ShimmerLoading(),
-  errorWidget: (context, url, error) => const Icon(Icons.error),
-  memCacheWidth: 400, // Resize in memory
-  maxWidthDiskCache: 800, // Resize on disk
-)
-
-// ✅ Precache important images
-@override
-void didChangeDependencies() {
-  super.didChangeDependencies();
-  precacheImage(const AssetImage('assets/logo.png'), context);
-}
-
-// ✅ Use appropriate image formats
-// - PNG for images with transparency
-// - JPEG for photos
-// - WebP for better compression
-// - SVG for icons and logos
-```
-
-### Memory Management
-```dart
-// ✅ Dispose controllers
-@override
-void dispose() {
-  _controller.dispose();
-  _scrollController.dispose();
-  _focusNode.dispose();
-  _subscription.cancel();
-  super.dispose();
-}
-
-// ✅ Use AutomaticKeepAliveClientMixin for tabs
-class MyTab extends StatefulWidget {
-  @override
-  State<MyTab> createState() => _MyTabState();
-}
-
-class _MyTabState extends State<MyTab> 
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-  
-  @override
-  Widget build(BuildContext context) {
-    super.build(context); // Don't forget this!
-    return Container();
-  }
-}
-```
-
-### Build Optimization
-```dart
-// ✅ Extract widgets to reduce rebuilds
+// ✅ Extract widgets to prevent unnecessary rebuilds
 class MyPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const _Header(), // Extracted, won't rebuild
+        const _Header(), // Won't rebuild
         _Content(), // Only this rebuilds
       ],
     );
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header();
-  
-  @override
-  Widget build(BuildContext context) => AppBar(title: const Text('Title'));
-}
-
-// ✅ Use builder methods sparingly
-// Only when you need context or need to pass parameters
-Widget _buildHeader(String title) {
-  return AppBar(title: Text(title));
-}
+// ✅ Use RepaintBoundary for complex animations
+RepaintBoundary(child: ComplexAnimatedWidget())
 ```
 
-## Async & Isolates
-
-### Async Best Practices
+### Memory Management
 ```dart
-// ✅ Use async/await properly
+// ✅ ALWAYS dispose resources
+@override
+void dispose() {
+  _controller.dispose();
+  _scrollController.dispose();
+  _subscription.cancel();
+  super.dispose();
+}
+
+// ✅ Use CachedNetworkImage for network images
+CachedNetworkImage(
+  imageUrl: url,
+  memCacheWidth: 400,
+  maxWidthDiskCache: 800,
+)
+```
+
+## Async & Streams
+
+### Async Patterns
+```dart
+// ✅ Use async/await with proper error handling
 Future<void> loadData() async {
   try {
     final data = await repository.getData();
-    setState(() => _data = data);
+    safeSetState(() => _data = data);
   } catch (e) {
-    logger.e('Error loading data', error: e);
+    _logger.error('Error loading data', e);
   }
 }
 
 // ✅ Use Future.wait for parallel operations
-Future<void> loadMultipleData() async {
-  final results = await Future.wait([
-    repository.getUsers(),
-    repository.getMessages(),
-    repository.getSettings(),
-  ]);
-  
-  final users = results[0] as List<User>;
-  final messages = results[1] as List<Message>;
-  final settings = results[2] as Settings;
-}
+final results = await Future.wait([
+  repository.getUsers(),
+  repository.getMessages(),
+]);
 
 // ✅ Use compute for heavy computations
 Future<List<Photo>> processPhotos(List<Photo> photos) async {
@@ -233,14 +138,13 @@ Future<List<Photo>> processPhotos(List<Photo> photos) async {
 }
 
 static List<Photo> _processPhotosIsolate(List<Photo> photos) {
-  // Heavy processing here
-  return photos.map((photo) => photo.resize()).toList();
+  return photos.map((p) => p.resize()).toList();
 }
 ```
 
-### Stream Best Practices
+### Stream Patterns
 ```dart
-// ✅ Cancel stream subscriptions
+// ✅ ALWAYS cancel stream subscriptions
 late final StreamSubscription _subscription;
 
 @override
@@ -259,24 +163,17 @@ void dispose() {
 StreamBuilder<Message>(
   stream: messageStream,
   builder: (context, snapshot) {
-    if (snapshot.hasError) {
-      return ErrorWidget(snapshot.error);
-    }
-    
-    if (!snapshot.hasData) {
-      return const LoadingIndicator();
-    }
-    
+    if (snapshot.hasError) return ErrorWidget(snapshot.error);
+    if (!snapshot.hasData) return const LoadingIndicator();
     return MessageWidget(snapshot.data!);
   },
 )
 ```
 
-## Navigation
+## Navigation & Routing
 
-### GoRouter Best Practices
 ```dart
-// ✅ Define routes with type safety
+// ✅ Use GoRouter with type safety
 final router = GoRouter(
   routes: [
     GoRoute(
@@ -290,105 +187,46 @@ final router = GoRouter(
         return ChatPage(chatId: chatId);
       },
     ),
-    GoRoute(
-      path: '/profile',
-      builder: (context, state) => const ProfilePage(),
-      routes: [
-        GoRoute(
-          path: 'settings',
-          builder: (context, state) => const SettingsPage(),
-        ),
-      ],
-    ),
   ],
 );
 
-// ✅ Navigate with type safety
+// ✅ Navigate with context
 context.go('/chat/123');
-context.push('/profile/settings');
+context.push('/profile');
 context.pop();
 
 // ✅ Pass complex objects via extra
-context.push(
-  '/chat/123',
-  extra: ChatPageArgs(
-    chatId: '123',
-    initialMessage: message,
-  ),
-);
+context.push('/chat/123', extra: ChatPageArgs(chatId: '123'));
 ```
 
 ## Responsive Design
 
-### Layout Best Practices
 ```dart
 // ✅ Use LayoutBuilder for responsive layouts
 LayoutBuilder(
   builder: (context, constraints) {
     if (constraints.maxWidth > 600) {
       return DesktopLayout();
-    } else {
-      return MobileLayout();
     }
+    return MobileLayout();
   },
 )
 
 // ✅ Use MediaQuery for screen info
 final size = MediaQuery.of(context).size;
 final padding = MediaQuery.of(context).padding;
-final isLandscape = size.width > size.height;
 
-// ✅ Use Flexible and Expanded properly
+// ✅ Use Flexible/Expanded properly
 Row(
   children: [
-    Flexible(
-      flex: 1,
-      child: Container(), // Takes 1/3 of space
-    ),
-    Flexible(
-      flex: 2,
-      child: Container(), // Takes 2/3 of space
-    ),
+    Flexible(flex: 1, child: Container()),
+    Flexible(flex: 2, child: Container()),
   ],
 )
 ```
 
-## Accessibility
+## Security & Validation
 
-### A11y Best Practices
-```dart
-// ✅ Add semantic labels
-Semantics(
-  label: 'Send message button',
-  child: IconButton(
-    icon: const Icon(Icons.send),
-    onPressed: _sendMessage,
-  ),
-)
-
-// ✅ Use proper contrast ratios
-// Text: 4.5:1 minimum
-// Large text: 3:1 minimum
-
-// ✅ Support screen readers
-ExcludeSemantics(
-  child: DecorativeImage(),
-)
-
-// ✅ Make touch targets at least 48x48
-SizedBox(
-  width: 48,
-  height: 48,
-  child: IconButton(
-    icon: const Icon(Icons.close),
-    onPressed: _close,
-  ),
-)
-```
-
-## Security
-
-### Security Best Practices
 ```dart
 // ✅ Use flutter_secure_storage for sensitive data
 final storage = FlutterSecureStorage();
@@ -397,15 +235,9 @@ final token = await storage.read(key: 'token');
 
 // ✅ Validate user input
 String? validateEmail(String? value) {
-  if (value == null || value.isEmpty) {
-    return 'Email is required';
-  }
-  
+  if (value == null || value.isEmpty) return 'Email is required';
   final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-  if (!emailRegex.hasMatch(value)) {
-    return 'Invalid email format';
-  }
-  
+  if (!emailRegex.hasMatch(value)) return 'Invalid email';
   return null;
 }
 
@@ -414,58 +246,34 @@ final dio = Dio(BaseOptions(
   baseUrl: 'https://api.example.com',
   validateStatus: (status) => status! < 500,
 ));
+```$'## Critical Mistakes to Avoid
 
-// ✅ Implement certificate pinning (production)
-// See: https://pub.dev/packages/dio_http_certificate_pinning
-```
-
-## Common Pitfalls
-
-### Avoid These Mistakes
 ```dart
-// ❌ Don't use setState directly - use safeSetState from BaseState
+// ❌ FORBIDDEN: setState directly (use safeSetState from BaseState)
 setState(() => _data = data); // Can crash if disposed!
 
-// ✅ Use safeSetState from BaseState
-safeSetState(() => _data = data); // Safe!
-
-// ❌ Don't call setState after dispose (if not using BaseState)
-if (mounted) {
-  setState(() => _data = data);
-}
-
-// ❌ Don't use Logger directly - use AppLogger
+// ❌ FORBIDDEN: Logger directly (use AppLogger via DI)
 final Logger _logger = Logger();
 
-// ✅ Use AppLogger via DI
-final AppLogger _logger;
-MyClass({required AppLogger logger}) : _logger = logger;
-
-// ❌ Don't use BuildContext across async gaps
-// BAD:
+// ❌ FORBIDDEN: BuildContext across async gaps without checking
 Future<void> loadData() async {
   await Future.delayed(Duration(seconds: 1));
   Navigator.of(context).push(...); // Context might be invalid!
 }
-
-// GOOD:
+// ✅ CORRECT: Check mounted
 Future<void> loadData() async {
   await Future.delayed(Duration(seconds: 1));
-  if (mounted) {
-    Navigator.of(context).push(...);
-  }
+  if (mounted) Navigator.of(context).push(...);
 }
 
-// ❌ Don't create functions in build method
+// ❌ FORBIDDEN: Creating functions in build method
 Widget build(BuildContext context) {
-  // BAD: Creates new function every build
   return ElevatedButton(
-    onPressed: () => print('Pressed'),
+    onPressed: () => print('Pressed'), // Creates new function every build!
     child: const Text('Press'),
   );
 }
-
-// GOOD: Use method reference
+// ✅ CORRECT: Use method reference
 Widget build(BuildContext context) {
   return ElevatedButton(
     onPressed: _onPressed,
@@ -473,30 +281,35 @@ Widget build(BuildContext context) {
   );
 }
 
-void _onPressed() {
-  print('Pressed');
-}
-
-// ❌ Don't use GlobalKey unnecessarily
-// Use only when you need to access widget state from outside
-
-// ❌ Don't ignore errors
+// ❌ FORBIDDEN: Empty catch blocks
+try {
+  await operation();
+} catch (e) {} // Don't ignore errors!
+// ✅ CORRECT: Log errors
 try {
   await operation();
 } catch (e) {
-  // Don't leave empty!
-  logger.e('Operation failed', error: e);
+  _logger.error('Operation failed', e);
 }
+
+// ❌ FORBIDDEN: Unnecessary GlobalKey usage
+// Use only when you need to access widget state from outside
+
+// ❌ FORBIDDEN: ListView without builder for long lists
+ListView(children: items.map((item) => ItemWidget(item)).toList());
+// ✅ CORRECT: Use ListView.builder
+ListView.builder(
+  itemCount: items.length,
+  itemBuilder: (context, index) => ItemWidget(items[index]),
+)
 ```
 
 ## Performance Monitoring
 
-### Track Performance
 ```dart
-// ✅ Use Firebase Performance
+// ✅ Use Firebase Performance for tracking
 final trace = FirebasePerformance.instance.newTrace('load_messages');
 await trace.start();
-
 try {
   final messages = await repository.getMessages();
   trace.setMetric('message_count', messages.length);
@@ -511,56 +324,36 @@ try {
 } finally {
   Timeline.finishSync();
 }
-
-// ✅ Monitor frame rendering
-WidgetsBinding.instance.addTimingsCallback((timings) {
-  for (final timing in timings) {
-    if (timing.totalSpan.inMilliseconds > 16) {
-      logger.w('Frame took ${timing.totalSpan.inMilliseconds}ms');
-    }
-  }
-});
 ```
 
----
+## Documentation Guidelines
 
-**Remember**: Premature optimization is the root of all evil. Profile first, then optimize!
+### CRITICAL: Minimize Documentation Files
 
+**DO NOT create markdown documentation files after every fix unless explicitly requested.**
 
-## 📝 Documentation Rules
-
-### CRITICAL: Minimize Documentation Creation
-
-**Rule**: Do NOT create markdown documentation files after every fix unless explicitly requested by the user.
-
-**Why**:
-- Creates noise in the repository
-- Wastes time and resources
-- Makes git history cluttered
-- User can see the work in code changes
-
-**When to Create Documentation**:
-- ✅ User explicitly requests documentation
-- ✅ Major architectural changes that need explanation
-- ✅ Complex features that need usage guide
+**When to Create Documentation:**
+- ✅ User explicitly requests it
+- ✅ Major architectural changes requiring explanation
+- ✅ Complex features needing usage guides
 - ✅ API documentation for public interfaces
 
-**When NOT to Create Documentation**:
-- ❌ After every bug fix
-- ❌ After every refactoring
-- ❌ After every error fix
-- ❌ For routine maintenance work
+**When NOT to Create Documentation:**
+- ❌ After bug fixes
+- ❌ After refactoring
+- ❌ After error fixes
+- ❌ For routine maintenance
 
-**What to Do Instead**:
+**What to Do Instead:**
 - ✅ Write clear commit messages
 - ✅ Add inline code comments
 - ✅ Update existing documentation if needed
 - ✅ Provide verbal summary to user
 
-**Example**:
+**Examples:**
 ```
 ❌ BAD: Create INJECTABLE_FIXES_COMPLETE.md after fixing 2 files
-✅ GOOD: Fix the files, commit with clear message, tell user verbally
+✅ GOOD: Fix files, commit with clear message, summarize verbally
 
 ❌ BAD: Create PHASE_3_COMPLETE.md after fixing BLoC errors
 ✅ GOOD: Fix errors, commit, summarize in chat
@@ -569,15 +362,6 @@ WidgetsBinding.instance.addTimingsCallback((timings) {
 ✅ GOOD: Update README.md when adding new features
 ```
 
-**Commit Message Format** (instead of docs):
-```
-fix: Brief description of what was fixed
+---
 
-- Detailed point 1
-- Detailed point 2
-- Impact/results
-
-Technical details if needed.
-```
-
-This keeps the repository clean and focuses on code quality over documentation quantity.
+**Remember**: Profile first, then optimize. Keep code clean, documentation minimal.

@@ -1,0 +1,19 @@
+{
+  "name": "Enforce Base Class Patterns",
+  "version": "1.0.0",
+  "description": "Automatically remind to follow base class patterns when creating new Dart files",
+  "when": {
+    "type": "fileCreated",
+    "patterns": [
+      "flutter_chat_app/lib/presentation/blocs/**/*.dart",
+      "flutter_chat_app/lib/presentation/pages/**/*.dart",
+      "flutter_chat_app/lib/presentation/widgets/**/*.dart",
+      "flutter_chat_app/lib/domain/usecases/**/*.dart",
+      "flutter_chat_app/lib/data/repositories/**/*.dart"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A new Dart file was created. Please verify it follows the mandatory base class patterns:\n\n✅ BLoCs MUST extend BaseBloc<EventType, StateType>\n✅ States MUST extend BaseState\n✅ StatefulWidgets MUST extend BaseStatefulWidget\n✅ StatelessWidgets MUST extend BaseStatelessWidget\n✅ Use AppConstants for all UI dimensions\n✅ Use Logger instead of print()\n✅ Use context.l10n for all user-facing strings\n✅ Use @injectable for dependency injection\n✅ Use const constructors where possible\n\nReview the file and ensure compliance with .kiro/steering/base-class-patterns.md"
+  }
+}
