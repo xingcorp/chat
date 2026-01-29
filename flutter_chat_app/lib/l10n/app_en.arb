@@ -1124,5 +1124,15 @@
   "noItemsDescription": "There are no items to display",
   "@noItemsDescription": {
     "description": "Empty state description when list has no items"
+  },
+
+  "noInternetConnection": "No Internet Connection",
+  "@noInternetConnection": {
+    "description": "Title for no internet connection state"
+  },
+
+  "checkInternetConnection": "Please check your internet connection and try again",
+  "@checkInternetConnection": {
+    "description": "Message for no internet connection state"
   }
 }

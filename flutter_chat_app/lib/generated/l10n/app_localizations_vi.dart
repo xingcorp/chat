@@ -659,4 +659,10 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get noItemsDescription => 'Không có mục nào để hiển thị';
+
+  @override
+  String get noInternetConnection => 'Không có kết nối Internet';
+
+  @override
+  String get checkInternetConnection => 'Vui lòng kiểm tra kết nối internet và thử lại';
 }

@@ -659,4 +659,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noItemsDescription => 'There are no items to display';
+
+  @override
+  String get noInternetConnection => 'No Internet Connection';
+
+  @override
+  String get checkInternetConnection => 'Please check your internet connection and try again';
 }

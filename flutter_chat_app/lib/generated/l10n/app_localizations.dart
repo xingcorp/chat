@@ -1324,6 +1324,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There are no items to display'**
   String get noItemsDescription;
+
+  /// Title for no internet connection state
+  ///
+  /// In en, this message translates to:
+  /// **'No Internet Connection'**
+  String get noInternetConnection;
+
+  /// Message for no internet connection state
+  ///
+  /// In en, this message translates to:
+  /// **'Please check your internet connection and try again'**
+  String get checkInternetConnection;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

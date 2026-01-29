@@ -187,6 +187,9 @@ class AppDimens {
   
   /// Extra large icon: 48dp
   static const double iconXLarge = 48.0;
+  
+  /// Extra extra large icon: 64dp
+  static const double iconXXLarge = 64.0;
 
   // ============================================================================
   // BUTTON SIZES
