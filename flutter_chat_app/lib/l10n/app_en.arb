@@ -1114,5 +1114,15 @@
   "doubleTapToOpen": "Double tap to open",
   "@doubleTapToOpen": {
     "description": "Accessibility hint for items that open on double tap"
+  },
+
+  "noItemsFound": "No items found",
+  "@noItemsFound": {
+    "description": "Empty state title when list has no items"
+  },
+
+  "noItemsDescription": "There are no items to display",
+  "@noItemsDescription": {
+    "description": "Empty state description when list has no items"
   }
 }

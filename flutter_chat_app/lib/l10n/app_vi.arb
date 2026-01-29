@@ -232,5 +232,8 @@
   "validationMaxLength": "Không được vượt quá {length} ký tự",
 
   "tapToSelect": "Nhấn để chọn",
-  "doubleTapToOpen": "Nhấn đúp để mở"
+  "doubleTapToOpen": "Nhấn đúp để mở",
+
+  "noItemsFound": "Không tìm thấy mục nào",
+  "noItemsDescription": "Không có mục nào để hiển thị"
 }

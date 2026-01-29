@@ -590,4 +590,73 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get connectionLost => 'Mất kết nối. Đang làm việc ngoại tuyến.';
+
+  @override
+  String get buttonLoading => 'Đang tải...';
+
+  @override
+  String get buttonDisabled => 'Nút bị vô hiệu hóa';
+
+  @override
+  String get primaryButton => 'Nút chính';
+
+  @override
+  String get secondaryButton => 'Nút phụ';
+
+  @override
+  String get textButton => 'Nút văn bản';
+
+  @override
+  String get outlinedButton => 'Nút viền';
+
+  @override
+  String get iconButton => 'Nút biểu tượng';
+
+  @override
+  String get floatingActionButton => 'Nút hành động nổi';
+
+  @override
+  String get showPassword => 'Hiện mật khẩu';
+
+  @override
+  String get hidePassword => 'Ẩn mật khẩu';
+
+  @override
+  String get clearSearch => 'Xóa tìm kiếm';
+
+  @override
+  String get enterText => 'Nhập văn bản';
+
+  @override
+  String characterCount(int current, int max) {
+    return '$current / $max ký tự';
+  }
+
+  @override
+  String get validationRequired => 'Trường này là bắt buộc';
+
+  @override
+  String get validationEmail => 'Vui lòng nhập địa chỉ email hợp lệ';
+
+  @override
+  String validationMinLength(int length) {
+    return 'Phải có ít nhất $length ký tự';
+  }
+
+  @override
+  String validationMaxLength(int length) {
+    return 'Không được vượt quá $length ký tự';
+  }
+
+  @override
+  String get tapToSelect => 'Nhấn để chọn';
+
+  @override
+  String get doubleTapToOpen => 'Nhấn đúp để mở';
+
+  @override
+  String get noItemsFound => 'Không tìm thấy mục nào';
+
+  @override
+  String get noItemsDescription => 'Không có mục nào để hiển thị';
 }

@@ -590,4 +590,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectionLost => 'Connection lost. Working offline.';
+
+  @override
+  String get buttonLoading => 'Loading...';
+
+  @override
+  String get buttonDisabled => 'Button disabled';
+
+  @override
+  String get primaryButton => 'Primary button';
+
+  @override
+  String get secondaryButton => 'Secondary button';
+
+  @override
+  String get textButton => 'Text button';
+
+  @override
+  String get outlinedButton => 'Outlined button';
+
+  @override
+  String get iconButton => 'Icon button';
+
+  @override
+  String get floatingActionButton => 'Floating action button';
+
+  @override
+  String get showPassword => 'Show password';
+
+  @override
+  String get hidePassword => 'Hide password';
+
+  @override
+  String get clearSearch => 'Clear search';
+
+  @override
+  String get enterText => 'Enter text';
+
+  @override
+  String characterCount(int current, int max) {
+    return '$current / $max characters';
+  }
+
+  @override
+  String get validationRequired => 'This field is required';
+
+  @override
+  String get validationEmail => 'Please enter a valid email address';
+
+  @override
+  String validationMinLength(int length) {
+    return 'Must be at least $length characters';
+  }
+
+  @override
+  String validationMaxLength(int length) {
+    return 'Must be no more than $length characters';
+  }
+
+  @override
+  String get tapToSelect => 'Tap to select';
+
+  @override
+  String get doubleTapToOpen => 'Double tap to open';
+
+  @override
+  String get noItemsFound => 'No items found';
+
+  @override
+  String get noItemsDescription => 'There are no items to display';
 }

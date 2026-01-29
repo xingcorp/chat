@@ -1198,6 +1198,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connection lost. Working offline.'**
   String get connectionLost;
+
+  /// Accessibility label for button loading state
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get buttonLoading;
+
+  /// Accessibility label for disabled button
+  ///
+  /// In en, this message translates to:
+  /// **'Button disabled'**
+  String get buttonDisabled;
+
+  /// Accessibility label for primary button
+  ///
+  /// In en, this message translates to:
+  /// **'Primary button'**
+  String get primaryButton;
+
+  /// Accessibility label for secondary button
+  ///
+  /// In en, this message translates to:
+  /// **'Secondary button'**
+  String get secondaryButton;
+
+  /// Accessibility label for text button
+  ///
+  /// In en, this message translates to:
+  /// **'Text button'**
+  String get textButton;
+
+  /// Accessibility label for outlined button
+  ///
+  /// In en, this message translates to:
+  /// **'Outlined button'**
+  String get outlinedButton;
+
+  /// Accessibility label for icon button
+  ///
+  /// In en, this message translates to:
+  /// **'Icon button'**
+  String get iconButton;
+
+  /// Accessibility label for floating action button
+  ///
+  /// In en, this message translates to:
+  /// **'Floating action button'**
+  String get floatingActionButton;
+
+  /// Tooltip for show password button
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get showPassword;
+
+  /// Tooltip for hide password button
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get hidePassword;
+
+  /// Tooltip for clear search button
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get clearSearch;
+
+  /// Placeholder for text input
+  ///
+  /// In en, this message translates to:
+  /// **'Enter text'**
+  String get enterText;
+
+  /// Character count display
+  ///
+  /// In en, this message translates to:
+  /// **'{current} / {max} characters'**
+  String characterCount(int current, int max);
+
+  /// Validation message for required field
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required'**
+  String get validationRequired;
+
+  /// Validation message for invalid email
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email address'**
+  String get validationEmail;
+
+  /// Validation message for minimum length
+  ///
+  /// In en, this message translates to:
+  /// **'Must be at least {length} characters'**
+  String validationMinLength(int length);
+
+  /// Validation message for maximum length
+  ///
+  /// In en, this message translates to:
+  /// **'Must be no more than {length} characters'**
+  String validationMaxLength(int length);
+
+  /// Accessibility hint for tappable items
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to select'**
+  String get tapToSelect;
+
+  /// Accessibility hint for items that open on double tap
+  ///
+  /// In en, this message translates to:
+  /// **'Double tap to open'**
+  String get doubleTapToOpen;
+
+  /// Empty state title when list has no items
+  ///
+  /// In en, this message translates to:
+  /// **'No items found'**
+  String get noItemsFound;
+
+  /// Empty state description when list has no items
+  ///
+  /// In en, this message translates to:
+  /// **'There are no items to display'**
+  String get noItemsDescription;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
