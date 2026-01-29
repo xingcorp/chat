@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/forms/form_enums.dart';
 
@@ -191,7 +192,7 @@ class AppSlider extends BaseStatelessWidget {
           if (label != null) ...[
             Text(
               label!,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style: AppTextStyles.bodyMedium(context).copyWith(
                 color: isDisabled
                     ? (isDark
                         ? AppColors.textSecondaryDarkMode
@@ -207,7 +208,7 @@ class AppSlider extends BaseStatelessWidget {
               if (showMinMaxLabels && minLabel != null) ...[
                 Text(
                   minLabel!,
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: AppTextStyles.bodySmall(context).copyWith(
                     color: isDisabled
                         ? (isDark
                             ? AppColors.textSecondaryDarkMode
@@ -263,7 +264,7 @@ class AppSlider extends BaseStatelessWidget {
                 const SizedBox(width: AppDimens.spaceSmall),
                 Text(
                   maxLabel!,
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: AppTextStyles.bodySmall(context).copyWith(
                     color: isDisabled
                         ? (isDark
                             ? AppColors.textSecondaryDarkMode

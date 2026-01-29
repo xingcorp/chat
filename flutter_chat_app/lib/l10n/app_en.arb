@@ -1718,5 +1718,172 @@
   "tapToRetry": "Tap to retry",
   "@tapToRetry": {
     "description": "Hint text to retry failed operation"
+  },
+
+  "sortAscending": "Sort ascending",
+  "@sortAscending": {
+    "description": "Tooltip for sort ascending button"
+  },
+
+  "sortDescending": "Sort descending",
+  "@sortDescending": {
+    "description": "Tooltip for sort descending button"
+  },
+
+  "filterColumn": "Filter column",
+  "@filterColumn": {
+    "description": "Tooltip for filter column button"
+  },
+
+  "clearFilter": "Clear filter",
+  "@clearFilter": {
+    "description": "Button text to clear filter"
+  },
+
+  "selectAll": "Select all",
+  "@selectAll": {
+    "description": "Button text to select all items"
+  },
+
+  "deselectAll": "Deselect all",
+  "@deselectAll": {
+    "description": "Button text to deselect all items"
+  },
+
+  "selectedItems": "{count, plural, =0{No items selected} =1{1 item selected} other{{count} items selected}}",
+  "@selectedItems": {
+    "description": "Selected items count with pluralization",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "compact"
+      }
+    }
+  },
+
+  "noDataAvailable": "No data available",
+  "@noDataAvailable": {
+    "description": "Message shown when table has no data"
+  },
+
+  "rowsPerPage": "Rows per page",
+  "@rowsPerPage": {
+    "description": "Label for rows per page selector"
+  },
+
+  "pageOf": "Page {current} of {total}",
+  "@pageOf": {
+    "description": "Pagination info",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+
+  "firstPage": "First page",
+  "@firstPage": {
+    "description": "Tooltip for first page button"
+  },
+
+  "previousPage": "Previous page",
+  "@previousPage": {
+    "description": "Tooltip for previous page button"
+  },
+
+  "nextPage": "Next page",
+  "@nextPage": {
+    "description": "Tooltip for next page button"
+  },
+
+  "lastPage": "Last page",
+  "@lastPage": {
+    "description": "Tooltip for last page button"
+  },
+
+  "dropFilesHere": "Drop files here",
+  "@dropFilesHere": {
+    "description": "Text shown when dragging files over upload area"
+  },
+
+  "dragDropOrClickToUpload": "Drag & drop files here or click to browse",
+  "@dragDropOrClickToUpload": {
+    "description": "Text shown in file upload area"
+  },
+
+  "maxFilesReached": "Maximum number of files reached",
+  "@maxFilesReached": {
+    "description": "Text shown when max files limit is reached"
+  },
+
+  "maxFileSize": "Max file size: {size}",
+  "@maxFileSize": {
+    "description": "Text showing maximum file size",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+
+  "allowedFileTypes": "Allowed types: {types}",
+  "@allowedFileTypes": {
+    "description": "Text showing allowed file types",
+    "placeholders": {
+      "types": {
+        "type": "String"
+      }
+    }
+  },
+
+  "errorPickingFiles": "Error picking files",
+  "@errorPickingFiles": {
+    "description": "Error message when file picker fails"
+  },
+
+  "fileTooLarge": "{fileName} is too large. Maximum size is {maxSize}",
+  "@fileTooLarge": {
+    "description": "Error message when file exceeds size limit",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "maxSize": {
+        "type": "String"
+      }
+    }
+  },
+
+  "fileTypeNotAllowed": "{fileName} file type is not allowed",
+  "@fileTypeNotAllowed": {
+    "description": "Error message when file type is not allowed",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+
+  "remove": "Remove",
+  "@remove": {
+    "description": "Remove button text"
+  },
+
+  "noImagesAvailable": "No images available",
+  "@noImagesAvailable": {
+    "description": "Text shown when gallery is empty"
+  },
+
+  "share": "Share",
+  "@share": {
+    "description": "Share button text"
+  },
+
+  "download": "Download",
+  "@download": {
+    "description": "Download button text"
   }
 }

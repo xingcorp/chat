@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/forms/form_enums.dart';
 
@@ -132,6 +133,7 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
   OverlayEntry? _overlayEntry;
   final TextEditingController _searchController = TextEditingController();
   List<T> _filteredItems = [];
+  bool _isDisposing = false;
 
   @override
   void initState() {
@@ -141,6 +143,7 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
 
   @override
   void dispose() {
+    _isDisposing = true;
     _searchController.dispose();
     _removeOverlay();
     super.dispose();
@@ -148,9 +151,8 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDisabled = widget.onChanged == null;
 
     // Determine display text
@@ -170,7 +172,7 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
           if (widget.label != null) ...[
             Text(
               widget.label!,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style: AppTextStyles.bodyMedium(context).copyWith(
                 color: isDisabled
                     ? (isDark
                         ? AppColors.textSecondaryDarkMode
@@ -217,7 +219,7 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
                     Expanded(
                       child: Text(
                         displayText,
-                        style: theme.textTheme.bodyMedium?.copyWith(
+                        style: AppTextStyles.bodyMedium(context).copyWith(
                           color: widget.value == null
                               ? (isDark
                                   ? AppColors.textHintDarkMode
@@ -278,13 +280,15 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
   void _removeOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
-    safeSetState(() {});
+    // Only update state if not disposing
+    if (!_isDisposing && mounted) {
+      safeSetState(() {});
+    }
   }
 
   /// Creates the dropdown overlay entry.
   OverlayEntry _createOverlayEntry() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
 
     return OverlayEntry(
@@ -347,62 +351,65 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
                                 ),
                                 child: Text(
                                   l10n.noResults,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                  style: AppTextStyles.bodyMedium(context).copyWith(
                                     color: isDark
                                         ? AppColors.textSecondaryDarkMode
                                         : AppColors.textSecondary,
                                   ),
                                 ),
                               )
-                            : ListView.builder(
-                                shrinkWrap: true,
+                            : SingleChildScrollView(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: AppDimens.paddingXSmall,
                                 ),
-                                itemCount: _filteredItems.length,
-                                itemBuilder: (context, index) {
-                                  final item = _filteredItems[index];
-                                  final isSelected = item == widget.value;
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: List.generate(
+                                    _filteredItems.length,
+                                    (index) {
+                                      final item = _filteredItems[index];
+                                      final isSelected = item == widget.value;
 
-                                  return InkWell(
-                                    onTap: () => _selectItem(item),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: AppDimens.paddingMedium,
-                                        vertical: AppDimens.paddingSmall,
-                                      ),
-                                      color: isSelected
-                                          ? theme.colorScheme.primary
-                                              .withValues(alpha: 0.1)
-                                          : null,
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: widget.itemBuilder != null
-                                                ? widget.itemBuilder!(item)
-                                                : Text(
-                                                    _getItemText(item),
-                                                    style: theme
-                                                        .textTheme.bodyMedium
-                                                        ?.copyWith(
-                                                      color: isSelected
-                                                          ? theme.colorScheme
-                                                              .primary
-                                                          : null,
-                                                    ),
-                                                  ),
+                                      return InkWell(
+                                        onTap: () => _selectItem(item),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: AppDimens.paddingMedium,
+                                            vertical: AppDimens.paddingSmall,
                                           ),
-                                          if (isSelected)
-                                            Icon(
-                                              Icons.check,
-                                              size: AppDimens.iconSmall,
-                                              color: theme.colorScheme.primary,
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
+                                          color: isSelected
+                                              ? Theme.of(context).colorScheme.primary
+                                                  .withValues(alpha: 0.1)
+                                              : null,
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: widget.itemBuilder != null
+                                                    ? widget.itemBuilder!(item)
+                                                    : Text(
+                                                        _getItemText(item),
+                                                        style: AppTextStyles.bodyMedium(context)
+                                                            .copyWith(
+                                                          color: isSelected
+                                                              ? Theme.of(context).colorScheme
+                                                                  .primary
+                                                              : null,
+                                                        ),
+                                                      ),
+                                              ),
+                                              if (isSelected)
+                                                Icon(
+                                                  Icons.check,
+                                                  size: AppDimens.iconSmall,
+                                                  color: Theme.of(context).colorScheme.primary,
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
                               ),
                       ),
                     ],

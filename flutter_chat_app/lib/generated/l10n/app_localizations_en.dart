@@ -997,13 +997,108 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unsupportedFileType => 'Unsupported file type';
 
   @override
-  String get fileTooLarge => 'File is too large';
+  String fileTooLarge(String fileName, String maxSize) {
+    return '$fileName is too large. Maximum size is $maxSize';
+  }
 
   @override
   String maxFileSize(String size) {
-    return 'Maximum file size: $size';
+    return 'Max file size: $size';
   }
 
   @override
   String get tapToRetry => 'Tap to retry';
+
+  @override
+  String get sortAscending => 'Sort ascending';
+
+  @override
+  String get sortDescending => 'Sort descending';
+
+  @override
+  String get filterColumn => 'Filter column';
+
+  @override
+  String get clearFilter => 'Clear filter';
+
+  @override
+  String get selectAll => 'Select all';
+
+  @override
+  String get deselectAll => 'Deselect all';
+
+  @override
+  String selectedItems(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+      
+    );
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString items selected',
+      one: '1 item selected',
+      zero: 'No items selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noDataAvailable => 'No data available';
+
+  @override
+  String get rowsPerPage => 'Rows per page';
+
+  @override
+  String pageOf(int current, int total) {
+    return 'Page $current of $total';
+  }
+
+  @override
+  String get firstPage => 'First page';
+
+  @override
+  String get previousPage => 'Previous page';
+
+  @override
+  String get nextPage => 'Next page';
+
+  @override
+  String get lastPage => 'Last page';
+
+  @override
+  String get dropFilesHere => 'Drop files here';
+
+  @override
+  String get dragDropOrClickToUpload => 'Drag & drop files here or click to browse';
+
+  @override
+  String get maxFilesReached => 'Maximum number of files reached';
+
+  @override
+  String allowedFileTypes(String types) {
+    return 'Allowed types: $types';
+  }
+
+  @override
+  String get errorPickingFiles => 'Error picking files';
+
+  @override
+  String fileTypeNotAllowed(String fileName) {
+    return '$fileName file type is not allowed';
+  }
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get noImagesAvailable => 'No images available';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String get download => 'Download';
 }

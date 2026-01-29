@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/chat_enums.dart';
 
@@ -272,7 +273,7 @@ class AppMessageStatus extends BaseStatelessWidget {
       label: l10n.sentAt(timeText),
       child: Text(
         timeText,
-        style: theme.textTheme.labelSmall?.copyWith(
+        style: AppTextStyles.labelSmall(context).copyWith(
           color: isDark 
               ? AppColors.textSecondaryDarkMode 
               : AppColors.textSecondary,

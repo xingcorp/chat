@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/chat_enums.dart';
 
@@ -193,7 +194,7 @@ class AppVoiceWaveformState extends BaseState<AppVoiceWaveform> {
 
     return Text(
       '$currentText / $totalText',
-      style: theme.textTheme.labelSmall?.copyWith(
+      style: AppTextStyles.labelSmall(context).copyWith(
         color: theme.colorScheme.onSurface.withOpacity(isDark ? 0.7 : 0.6),
         fontSize: 11,
       ),
@@ -269,7 +270,7 @@ class AppVoiceWaveformState extends BaseState<AppVoiceWaveform> {
           const SizedBox(width: AppDimens.spaceSmall),
           Text(
             l10n.loadingAudio,
-            style: theme.textTheme.bodySmall,
+            style: AppTextStyles.bodySmall(context),
           ),
         ],
       ),
@@ -295,7 +296,7 @@ class AppVoiceWaveformState extends BaseState<AppVoiceWaveform> {
           const SizedBox(width: AppDimens.spaceSmall),
           Text(
             _errorMessage ?? l10n.errorOccurred,
-            style: theme.textTheme.bodySmall?.copyWith(
+            style: AppTextStyles.bodySmall(context).copyWith(
               color: theme.colorScheme.error,
             ),
           ),

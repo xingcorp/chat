@@ -1949,16 +1949,16 @@ abstract class AppLocalizations {
   /// **'Unsupported file type'**
   String get unsupportedFileType;
 
-  /// Error message for file size exceeding limit
+  /// Error message when file exceeds size limit
   ///
   /// In en, this message translates to:
-  /// **'File is too large'**
-  String get fileTooLarge;
+  /// **'{fileName} is too large. Maximum size is {maxSize}'**
+  String fileTooLarge(String fileName, String maxSize);
 
-  /// Maximum file size information
+  /// Text showing maximum file size
   ///
   /// In en, this message translates to:
-  /// **'Maximum file size: {size}'**
+  /// **'Max file size: {size}'**
   String maxFileSize(String size);
 
   /// Hint text to retry failed operation
@@ -1966,6 +1966,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap to retry'**
   String get tapToRetry;
+
+  /// Tooltip for sort ascending button
+  ///
+  /// In en, this message translates to:
+  /// **'Sort ascending'**
+  String get sortAscending;
+
+  /// Tooltip for sort descending button
+  ///
+  /// In en, this message translates to:
+  /// **'Sort descending'**
+  String get sortDescending;
+
+  /// Tooltip for filter column button
+  ///
+  /// In en, this message translates to:
+  /// **'Filter column'**
+  String get filterColumn;
+
+  /// Button text to clear filter
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filter'**
+  String get clearFilter;
+
+  /// Button text to select all items
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get selectAll;
+
+  /// Button text to deselect all items
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect all'**
+  String get deselectAll;
+
+  /// Selected items count with pluralization
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No items selected} =1{1 item selected} other{{count} items selected}}'**
+  String selectedItems(int count);
+
+  /// Message shown when table has no data
+  ///
+  /// In en, this message translates to:
+  /// **'No data available'**
+  String get noDataAvailable;
+
+  /// Label for rows per page selector
+  ///
+  /// In en, this message translates to:
+  /// **'Rows per page'**
+  String get rowsPerPage;
+
+  /// Pagination info
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {total}'**
+  String pageOf(int current, int total);
+
+  /// Tooltip for first page button
+  ///
+  /// In en, this message translates to:
+  /// **'First page'**
+  String get firstPage;
+
+  /// Tooltip for previous page button
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get previousPage;
+
+  /// Tooltip for next page button
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get nextPage;
+
+  /// Tooltip for last page button
+  ///
+  /// In en, this message translates to:
+  /// **'Last page'**
+  String get lastPage;
+
+  /// Text shown when dragging files over upload area
+  ///
+  /// In en, this message translates to:
+  /// **'Drop files here'**
+  String get dropFilesHere;
+
+  /// Text shown in file upload area
+  ///
+  /// In en, this message translates to:
+  /// **'Drag & drop files here or click to browse'**
+  String get dragDropOrClickToUpload;
+
+  /// Text shown when max files limit is reached
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum number of files reached'**
+  String get maxFilesReached;
+
+  /// Text showing allowed file types
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed types: {types}'**
+  String allowedFileTypes(String types);
+
+  /// Error message when file picker fails
+  ///
+  /// In en, this message translates to:
+  /// **'Error picking files'**
+  String get errorPickingFiles;
+
+  /// Error message when file type is not allowed
+  ///
+  /// In en, this message translates to:
+  /// **'{fileName} file type is not allowed'**
+  String fileTypeNotAllowed(String fileName);
+
+  /// Remove button text
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// Text shown when gallery is empty
+  ///
+  /// In en, this message translates to:
+  /// **'No images available'**
+  String get noImagesAvailable;
+
+  /// Share button text
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// Download button text
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get download;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

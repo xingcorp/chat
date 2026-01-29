@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 
 /// A customizable section divider with text.
 ///
@@ -73,7 +74,7 @@ class AppSectionDivider extends BaseStatelessWidget {
             child: Text(
               text,
               style: textStyle ??
-                  theme.textTheme.bodySmall?.copyWith(
+                  AppTextStyles.bodySmall(context).copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
             ),

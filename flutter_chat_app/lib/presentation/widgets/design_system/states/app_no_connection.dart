@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// A customizable no connection state widget.
@@ -64,7 +65,7 @@ class AppNoConnection extends BaseStatelessWidget {
             // Title
             Text(
               title ?? l10n.noInternetConnection,
-              style: theme.textTheme.titleLarge?.copyWith(
+              style: AppTextStyles.titleLarge(context).copyWith(
                 color: theme.colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
@@ -75,7 +76,7 @@ class AppNoConnection extends BaseStatelessWidget {
             // Message
             Text(
               message ?? l10n.checkInternetConnection,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style: AppTextStyles.bodyMedium(context).copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,

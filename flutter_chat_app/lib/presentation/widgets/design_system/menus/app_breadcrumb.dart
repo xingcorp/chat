@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/menus/menu_enums.dart';
 
@@ -146,11 +147,11 @@ class AppBreadcrumb extends BaseStatelessWidget {
     final isClickable = item.onTap != null && !item.isEllipsis;
     final isCurrent = isLast && !item.isEllipsis;
 
-    final defaultTextStyle = theme.textTheme.bodyMedium?.copyWith(
+    final defaultTextStyle = AppTextStyles.bodyMedium(context).copyWith(
       color: theme.colorScheme.onSurface.withOpacity(isDark ? 0.7 : 0.6),
     );
 
-    final defaultCurrentStyle = theme.textTheme.bodyMedium?.copyWith(
+    final defaultCurrentStyle = AppTextStyles.bodyMedium(context).copyWith(
       color: theme.colorScheme.onSurface,
       fontWeight: FontWeight.w600,
     );

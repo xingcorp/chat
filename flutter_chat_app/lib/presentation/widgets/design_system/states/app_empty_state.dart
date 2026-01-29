@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// A customizable empty state widget.
@@ -79,7 +80,7 @@ class AppEmptyState extends BaseStatelessWidget {
             if (title != null)
               Text(
                 title!,
-                style: theme.textTheme.titleLarge?.copyWith(
+                style: AppTextStyles.titleLarge(context).copyWith(
                   color: theme.colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
@@ -92,7 +93,7 @@ class AppEmptyState extends BaseStatelessWidget {
             if (message != null)
               Text(
                 message!,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: AppTextStyles.bodyMedium(context).copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,

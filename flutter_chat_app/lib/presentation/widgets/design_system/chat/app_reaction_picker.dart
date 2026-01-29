@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 
 /// **APP REACTION PICKER**
@@ -259,8 +260,6 @@ class AppReactionPickerState extends BaseState<AppReactionPicker>
   }
 
   Widget _buildSearchField(BuildContext context, AppLocalizations l10n) {
-    final theme = Theme.of(context);
-
     return Padding(
       padding: const EdgeInsets.all(AppDimens.paddingMedium),
       child: TextField(
@@ -285,7 +284,7 @@ class AppReactionPickerState extends BaseState<AppReactionPicker>
             vertical: AppDimens.paddingSmall,
           ),
         ),
-        style: theme.textTheme.bodyMedium,
+        style: AppTextStyles.bodyMedium(context),
         onChanged: (value) {
           safeSetState(() {
             _searchQuery = value;
@@ -318,7 +317,7 @@ class AppReactionPickerState extends BaseState<AppReactionPicker>
                   });
                 }
               },
-              labelStyle: theme.textTheme.labelMedium?.copyWith(
+              labelStyle: AppTextStyles.labelMedium(context).copyWith(
                 color: isSelected
                     ? theme.colorScheme.onPrimary
                     : theme.colorScheme.onSurface,
@@ -439,7 +438,7 @@ class AppReactionPickerState extends BaseState<AppReactionPicker>
             const SizedBox(height: AppDimens.spaceMedium),
             Text(
               l10n.noEmojisFound,
-              style: theme.textTheme.bodyLarge?.copyWith(
+              style: AppTextStyles.bodyLarge(context).copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.6),
               ),
               textAlign: TextAlign.center,

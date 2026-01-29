@@ -59,6 +59,7 @@ class AppConstants {
   static const Duration kFastAnimationDuration = Duration(milliseconds: 150);
   static const Duration kDefaultAnimationDuration = Duration(milliseconds: 300);
   static const Duration kSlowAnimationDuration = Duration(milliseconds: 500);
+  static const Duration kToastDuration = Duration(seconds: 2);
   
   // Feature flags and limits
   static const int kMaxMessageLength = 4000;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/menus/menu_enums.dart';
 
@@ -162,7 +163,7 @@ class AppContextMenu extends BaseStatelessWidget {
               Expanded(
                 child: Text(
                   item.label ?? '',
-                  style: theme.textTheme.bodyMedium?.copyWith(
+                  style: AppTextStyles.bodyMedium(context).copyWith(
                     color: isDisabled
                         ? theme.disabledColor
                         : isDestructive

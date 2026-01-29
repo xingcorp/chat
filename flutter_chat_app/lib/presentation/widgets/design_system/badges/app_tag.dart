@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 
 /// A customizable tag component for labels.
 ///
@@ -78,7 +79,7 @@ class AppTag extends BaseStatelessWidget {
           ],
           Text(
             label,
-            style: theme.textTheme.labelSmall?.copyWith(
+            style: AppTextStyles.labelSmall(context).copyWith(
               color: tagTextColor,
               fontWeight: FontWeight.w600,
             ),

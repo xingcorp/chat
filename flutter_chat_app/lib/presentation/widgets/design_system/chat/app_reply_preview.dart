@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/chat_enums.dart';
 
@@ -82,6 +84,7 @@ class AppReplyPreview extends BaseStatelessWidget {
     final l10n = AppLocalizations.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    // Pre-calculate colors for performance
     final backgroundColor = isDark
         ? theme.colorScheme.surfaceVariant.withOpacity(0.3)
         : theme.colorScheme.surfaceVariant.withOpacity(0.5);
@@ -89,85 +92,90 @@ class AppReplyPreview extends BaseStatelessWidget {
     final borderColor = isDark
         ? theme.colorScheme.primary.withOpacity(0.5)
         : theme.colorScheme.primary;
+        
+    final textColor = theme.colorScheme.onSurface.withOpacity(isDark ? 0.7 : 0.87);
+    final iconColor = theme.colorScheme.onSurface.withOpacity(isDark ? 0.7 : 0.54);
 
-    return Semantics(
-      label: l10n.replyingTo(author),
-      button: onTap != null,
-      child: Material(
-        color: theme.colorScheme.surface.withOpacity(0),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
-          child: Container(
-            padding: const EdgeInsets.all(AppDimens.paddingSmall),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
-              border: Border(
-                left: BorderSide(
-                  color: borderColor,
-                  width: AppDimens.dividerThick,
+    return RepaintBoundary(
+      child: Semantics(
+        label: l10n.replyingTo(author),
+        button: onTap != null,
+        child: Material(
+          color: theme.colorScheme.surface.withOpacity(0),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
+            child: Container(
+              padding: const EdgeInsets.all(AppDimens.paddingSmall),
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
+                border: Border(
+                  left: BorderSide(
+                    color: borderColor,
+                    width: AppDimens.dividerThick,
+                  ),
                 ),
               ),
-            ),
-            child: Row(
-              children: [
-                // Thumbnail for media messages
-                if (_shouldShowThumbnail()) ...[
-                  _buildThumbnail(context),
+              child: Row(
+                children: [
+                  // Thumbnail for media messages
+                  if (_shouldShowThumbnail()) ...[
+                    _buildThumbnail(context, theme),
+                    const SizedBox(width: AppDimens.spaceSmall),
+                  ],
+
+                  // Content type icon
+                  _buildContentTypeIcon(iconColor),
                   const SizedBox(width: AppDimens.spaceSmall),
-                ],
 
-                // Content type icon
-                _buildContentTypeIcon(context),
-                const SizedBox(width: AppDimens.spaceSmall),
-
-                // Author and message
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Author name
-                      Text(
-                        author,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+                  // Author and message
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Author name
+                        Text(
+                          author,
+                          style: AppTextStyles.labelMedium(context).copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: AppDimens.spaceXSmall),
+                        const SizedBox(height: AppDimens.spaceXSmall),
 
-                      // Message content
-                      Text(
-                        _getDisplayMessage(l10n),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(isDark ? 0.7 : 0.87),
+                        // Message content
+                        Text(
+                          _getDisplayMessage(l10n),
+                          style: AppTextStyles.bodySmall(context).copyWith(
+                            color: textColor,
+                          ),
+                          maxLines: maxLines,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: maxLines,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Close button
-                if (showCloseButton) ...[
-                  const SizedBox(width: AppDimens.spaceSmall),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: AppDimens.iconSmall),
-                    onPressed: onClose,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: AppDimens.touchTargetMin / 2,
-                      minHeight: AppDimens.touchTargetMin / 2,
+                      ],
                     ),
-                    tooltip: l10n.cancelReply,
                   ),
+
+                  // Close button
+                  if (showCloseButton) ...[
+                    const SizedBox(width: AppDimens.spaceSmall),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: AppDimens.iconSmall),
+                      onPressed: onClose,
+                      padding: const EdgeInsets.all(0),
+                      constraints: const BoxConstraints(
+                        minWidth: AppDimens.touchTargetMin / 2,
+                        minHeight: AppDimens.touchTargetMin / 2,
+                      ),
+                      tooltip: l10n.cancelReply,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -182,10 +190,8 @@ class AppReplyPreview extends BaseStatelessWidget {
             messageType == MessageType.video);
   }
 
-  /// Build thumbnail widget
-  Widget _buildThumbnail(BuildContext context) {
-    final theme = Theme.of(context);
-
+  /// Build thumbnail widget with caching
+  Widget _buildThumbnail(BuildContext context, ThemeData theme) {
     return Container(
       width: AppDimens.avatarMedium,
       height: AppDimens.avatarMedium,
@@ -195,47 +201,34 @@ class AppReplyPreview extends BaseStatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppDimens.radiusXSmall),
-        child: Image.network(
-          thumbnailUrl!,
+        child: CachedNetworkImage(
+          imageUrl: thumbnailUrl!,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Icon(
-              _getContentTypeIconData(),
-              size: AppDimens.iconSmall,
-              color: theme.colorScheme.onSurfaceVariant,
-            );
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Center(
-              child: SizedBox(
-                width: AppDimens.iconSmall,
-                height: AppDimens.iconSmall,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
-                      : null,
-                ),
-              ),
-            );
-          },
+          memCacheWidth: 100, // Resize for memory efficiency
+          maxWidthDiskCache: 200,
+          placeholder: (context, url) => Center(
+            child: SizedBox(
+              width: AppDimens.iconSmall,
+              height: AppDimens.iconSmall,
+              child: const CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+          errorWidget: (context, url, error) => Icon(
+            _getContentTypeIconData(),
+            size: AppDimens.iconSmall,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     );
   }
 
   /// Build content type icon
-  Widget _buildContentTypeIcon(BuildContext context) {
-    final theme = Theme.of(context);
-
+  Widget _buildContentTypeIcon(Color iconColor) {
     return Icon(
       _getContentTypeIconData(),
       size: AppDimens.iconSmall,
-      color: theme.colorScheme.onSurface.withOpacity(
-        theme.brightness == Brightness.dark ? 0.7 : 0.54,
-      ),
+      color: iconColor,
     );
   }
 

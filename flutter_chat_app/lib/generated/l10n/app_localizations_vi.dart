@@ -997,13 +997,108 @@ class AppLocalizationsVi extends AppLocalizations {
   String get unsupportedFileType => 'Unsupported file type';
 
   @override
-  String get fileTooLarge => 'File is too large';
+  String fileTooLarge(String fileName, String maxSize) {
+    return '$fileName quá lớn. Kích thước tối đa là $maxSize';
+  }
 
   @override
   String maxFileSize(String size) {
-    return 'Maximum file size: $size';
+    return 'Kích thước tệp tối đa: $size';
   }
 
   @override
   String get tapToRetry => 'Nhấn để thử lại';
+
+  @override
+  String get sortAscending => 'Sắp xếp tăng dần';
+
+  @override
+  String get sortDescending => 'Sắp xếp giảm dần';
+
+  @override
+  String get filterColumn => 'Lọc cột';
+
+  @override
+  String get clearFilter => 'Xóa bộ lọc';
+
+  @override
+  String get selectAll => 'Chọn tất cả';
+
+  @override
+  String get deselectAll => 'Bỏ chọn tất cả';
+
+  @override
+  String selectedItems(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+      
+    );
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString mục được chọn',
+      one: '1 mục được chọn',
+      zero: 'Không có mục nào được chọn',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noDataAvailable => 'Không có dữ liệu';
+
+  @override
+  String get rowsPerPage => 'Số hàng mỗi trang';
+
+  @override
+  String pageOf(int current, int total) {
+    return 'Trang $current / $total';
+  }
+
+  @override
+  String get firstPage => 'Trang đầu';
+
+  @override
+  String get previousPage => 'Trang trước';
+
+  @override
+  String get nextPage => 'Trang sau';
+
+  @override
+  String get lastPage => 'Trang cuối';
+
+  @override
+  String get dropFilesHere => 'Thả tệp vào đây';
+
+  @override
+  String get dragDropOrClickToUpload => 'Kéo & thả tệp vào đây hoặc nhấp để chọn';
+
+  @override
+  String get maxFilesReached => 'Đã đạt số lượng tệp tối đa';
+
+  @override
+  String allowedFileTypes(String types) {
+    return 'Loại tệp cho phép: $types';
+  }
+
+  @override
+  String get errorPickingFiles => 'Lỗi khi chọn tệp';
+
+  @override
+  String fileTypeNotAllowed(String fileName) {
+    return 'Loại tệp $fileName không được phép';
+  }
+
+  @override
+  String get remove => 'Xóa';
+
+  @override
+  String get noImagesAvailable => 'Không có hình ảnh';
+
+  @override
+  String get share => 'Chia sẻ';
+
+  @override
+  String get download => 'Tải xuống';
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/chat_enums.dart';
 
@@ -188,7 +189,7 @@ class AppTypingIndicatorState extends BaseState<AppTypingIndicator>
             Flexible(
               child: Text(
                 typingText,
-                style: theme.textTheme.bodySmall?.copyWith(
+                style: AppTextStyles.bodySmall(context).copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(isDark ? 0.7 : 0.54),
                   fontStyle: FontStyle.italic,
                 ),

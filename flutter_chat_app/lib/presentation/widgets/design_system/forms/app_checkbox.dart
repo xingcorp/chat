@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/forms/form_enums.dart';
 
@@ -197,7 +198,7 @@ class AppCheckbox extends BaseStatelessWidget {
                   Flexible(
                     child: Text(
                       label!,
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: AppTextStyles.bodyMedium(context).copyWith(
                         color: isDisabled
                             ? (isDark
                                 ? AppColors.textSecondaryDarkMode

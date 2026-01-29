@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_stateless_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// A customizable progress indicator component.
@@ -129,7 +130,7 @@ class AppProgressIndicator extends BaseStatelessWidget {
             SizedBox(height: AppDimens.spaceSmall),
             Text(
               label!,
-              style: theme.textTheme.bodySmall?.copyWith(
+              style: AppTextStyles.bodySmall(context).copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
@@ -163,7 +164,7 @@ class AppProgressIndicator extends BaseStatelessWidget {
           SizedBox(height: AppDimens.spaceSmall),
           Text(
             label!,
-            style: theme.textTheme.bodySmall?.copyWith(
+            style: AppTextStyles.bodySmall(context).copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,

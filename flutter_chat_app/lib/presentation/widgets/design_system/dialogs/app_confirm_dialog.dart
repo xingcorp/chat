@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_dialog.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 
@@ -113,7 +114,7 @@ class AppConfirmDialog extends BaseDialog {
         if (title != null) ...[
           Text(
             title!,
-            style: theme.textTheme.titleLarge?.copyWith(
+            style: AppTextStyles.titleLarge(context).copyWith(
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
@@ -122,7 +123,7 @@ class AppConfirmDialog extends BaseDialog {
         ],
         Text(
           content,
-          style: theme.textTheme.bodyMedium,
+          style: AppTextStyles.bodyMedium(context),
           textAlign: TextAlign.center,
         ),
         SizedBox(height: AppDimens.spaceLarge),

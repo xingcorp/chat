@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/chat_enums.dart';
 
@@ -385,7 +386,7 @@ class AppMessageBubble extends BaseStatelessWidget {
   ) {
     switch (messageType) {
       case MessageType.text:
-        return _buildTextContent(theme, textColor);
+        return _buildTextContent(context, theme, textColor);
       case MessageType.image:
         return _buildImageContent(context, theme, l10n, textColor);
       case MessageType.video:
@@ -399,15 +400,15 @@ class AppMessageBubble extends BaseStatelessWidget {
       case MessageType.contact:
         return _buildContactContent(context, theme, l10n, textColor);
       case MessageType.system:
-        return _buildSystemContent(theme, textColor);
+        return _buildSystemContent(context, theme, textColor);
     }
   }
 
   /// Builds text message content
-  Widget _buildTextContent(ThemeData theme, Color textColor) {
+  Widget _buildTextContent(BuildContext context, ThemeData theme, Color textColor) {
     return Text(
       message ?? '',
-      style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
+      style: AppTextStyles.bodyMedium(context).copyWith(color: textColor),
     );
   }
 
@@ -463,7 +464,7 @@ class AppMessageBubble extends BaseStatelessWidget {
           const SizedBox(height: AppDimens.spaceSmall),
           Text(
             message!,
-            style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
+            style: AppTextStyles.bodyMedium(context).copyWith(color: textColor),
           ),
         ],
       ],
@@ -516,7 +517,7 @@ class AppMessageBubble extends BaseStatelessWidget {
           const SizedBox(height: AppDimens.spaceSmall),
           Text(
             message!,
-            style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
+            style: AppTextStyles.bodyMedium(context).copyWith(color: textColor),
           ),
         ],
       ],
@@ -555,7 +556,7 @@ class AppMessageBubble extends BaseStatelessWidget {
               const SizedBox(height: AppDimens.spaceXSmall),
               Text(
                 '0:00',
-                style: theme.textTheme.bodySmall,
+                style: AppTextStyles.bodySmall(context),
               ),
             ],
           ),
@@ -595,7 +596,7 @@ class AppMessageBubble extends BaseStatelessWidget {
             children: [
               Text(
                 fileName ?? l10n.file,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: AppTextStyles.bodyMedium(context).copyWith(
                   color: textColor,
                   fontWeight: FontWeight.w500,
                 ),
@@ -606,7 +607,7 @@ class AppMessageBubble extends BaseStatelessWidget {
                 const SizedBox(height: AppDimens.spaceXSmall),
                 Text(
                   fileSize!,
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: AppTextStyles.bodySmall(context).copyWith(
                     color: textColor.withValues(alpha: 0.7),
                   ),
                 ),
@@ -637,7 +638,7 @@ class AppMessageBubble extends BaseStatelessWidget {
         Flexible(
           child: Text(
             locationName ?? l10n.location,
-            style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
+            style: AppTextStyles.bodyMedium(context).copyWith(color: textColor),
           ),
         ),
       ],
@@ -667,7 +668,7 @@ class AppMessageBubble extends BaseStatelessWidget {
         Flexible(
           child: Text(
             contactName ?? l10n.contact,
-            style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
+            style: AppTextStyles.bodyMedium(context).copyWith(color: textColor),
           ),
         ),
       ],
@@ -675,10 +676,10 @@ class AppMessageBubble extends BaseStatelessWidget {
   }
 
   /// Builds system message content
-  Widget _buildSystemContent(ThemeData theme, Color textColor) {
+  Widget _buildSystemContent(BuildContext context, ThemeData theme, Color textColor) {
     return Text(
       message ?? '',
-      style: theme.textTheme.bodySmall?.copyWith(
+      style: AppTextStyles.bodySmall(context).copyWith(
         color: textColor,
         fontStyle: FontStyle.italic,
       ),
@@ -715,7 +716,7 @@ class AppMessageBubble extends BaseStatelessWidget {
           children: [
             Text(
               replyToAuthor ?? l10n.you,
-              style: theme.textTheme.bodySmall?.copyWith(
+              style: AppTextStyles.bodySmall(context).copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w600,
               ),
@@ -723,7 +724,7 @@ class AppMessageBubble extends BaseStatelessWidget {
             const SizedBox(height: AppDimens.spaceXSmall),
             Text(
               replyToMessage ?? '',
-              style: theme.textTheme.bodySmall,
+              style: AppTextStyles.bodySmall(context),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -746,7 +747,7 @@ class AppMessageBubble extends BaseStatelessWidget {
         if (timestamp != null) ...[
           Text(
             _formatTimestamp(timestamp!),
-            style: theme.textTheme.bodySmall?.copyWith(
+            style: AppTextStyles.bodySmall(context).copyWith(
               color: textColor.withValues(alpha: 0.7),
               fontSize: 11,
             ),
