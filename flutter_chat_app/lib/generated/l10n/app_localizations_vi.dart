@@ -907,7 +907,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get stop => 'Stop';
 
   @override
-  String get playbackSpeed => 'Playback speed';
+  String get playbackSpeed => 'Tốc độ phát';
 
   @override
   String get duration => 'Duration';
@@ -1101,4 +1101,19 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get download => 'Tải xuống';
+
+  @override
+  String get errorLoadingVideo => 'Lỗi tải video';
+
+  @override
+  String get quality => 'Chất lượng';
+
+  @override
+  String get pictureInPicture => 'Hình trong hình';
+
+  @override
+  String get enterFullscreen => 'Toàn màn hình';
+
+  @override
+  String get exitFullscreen => 'Thoát toàn màn hình';
 }

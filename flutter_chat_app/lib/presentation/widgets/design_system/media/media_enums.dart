@@ -1,5 +1,8 @@
 library;
 
+import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
+
 /// **MEDIA ENUMS**
 ///
 /// Enums for media components in the design system.
@@ -12,6 +15,10 @@ library;
 /// FileUploadStatus.uploading
 /// FileType.image
 /// VideoQuality.hd720
+/// 
+/// // Get localized display name
+/// fileStatus.getDisplayName(context)
+/// fileType.getDisplayName(context)
 /// ```
 
 /// File upload status
@@ -33,19 +40,20 @@ enum FileUploadStatus {
 }
 
 extension FileUploadStatusExtension on FileUploadStatus {
-  /// Get display name
-  String get displayName {
+  /// Get localized display name
+  String getDisplayName(BuildContext context) {
+    final l10n = context.l10n;
     switch (this) {
       case FileUploadStatus.pending:
-        return 'Pending';
+        return l10n.fileUploadStatusPending;
       case FileUploadStatus.uploading:
-        return 'Uploading';
+        return l10n.fileUploadStatusUploading;
       case FileUploadStatus.completed:
-        return 'Completed';
+        return l10n.fileUploadStatusCompleted;
       case FileUploadStatus.failed:
-        return 'Failed';
+        return l10n.fileUploadStatusFailed;
       case FileUploadStatus.cancelled:
-        return 'Cancelled';
+        return l10n.fileUploadStatusCancelled;
     }
   }
 
@@ -81,21 +89,22 @@ enum FileType {
 }
 
 extension FileTypeExtension on FileType {
-  /// Get display name
-  String get displayName {
+  /// Get localized display name
+  String getDisplayName(BuildContext context) {
+    final l10n = context.l10n;
     switch (this) {
       case FileType.image:
-        return 'Image';
+        return l10n.fileTypeImage;
       case FileType.video:
-        return 'Video';
+        return l10n.fileTypeVideo;
       case FileType.audio:
-        return 'Audio';
+        return l10n.fileTypeAudio;
       case FileType.document:
-        return 'Document';
+        return l10n.fileTypeDocument;
       case FileType.archive:
-        return 'Archive';
+        return l10n.fileTypeArchive;
       case FileType.other:
-        return 'Other';
+        return l10n.fileTypeOther;
     }
   }
 
@@ -148,116 +157,82 @@ extension FileTypeExtension on FileType {
 
 /// Video quality options
 enum VideoQuality {
-  /// 360p resolution
-  sd360,
-
-  /// 480p resolution
-  sd480,
-
-  /// 720p HD resolution
-  hd720,
-
-  /// 1080p Full HD resolution
-  hd1080,
-
-  /// 1440p 2K resolution
-  hd1440,
-
-  /// 2160p 4K resolution
-  uhd4k,
-
   /// Auto quality (adaptive)
   auto,
+
+  /// 360p resolution
+  p360,
+
+  /// 480p resolution
+  p480,
+
+  /// 720p HD resolution
+  p720,
+
+  /// 1080p Full HD resolution
+  p1080,
 }
 
 extension VideoQualityExtension on VideoQuality {
   /// Get display name
   String get displayName {
     switch (this) {
-      case VideoQuality.sd360:
-        return '360p';
-      case VideoQuality.sd480:
-        return '480p';
-      case VideoQuality.hd720:
-        return '720p HD';
-      case VideoQuality.hd1080:
-        return '1080p Full HD';
-      case VideoQuality.hd1440:
-        return '1440p 2K';
-      case VideoQuality.uhd4k:
-        return '4K Ultra HD';
       case VideoQuality.auto:
         return 'Auto';
+      case VideoQuality.p360:
+        return '360p';
+      case VideoQuality.p480:
+        return '480p';
+      case VideoQuality.p720:
+        return '720p';
+      case VideoQuality.p1080:
+        return '1080p';
     }
   }
 
   /// Get resolution height
   int get height {
     switch (this) {
-      case VideoQuality.sd360:
-        return 360;
-      case VideoQuality.sd480:
-        return 480;
-      case VideoQuality.hd720:
-        return 720;
-      case VideoQuality.hd1080:
-        return 1080;
-      case VideoQuality.hd1440:
-        return 1440;
-      case VideoQuality.uhd4k:
-        return 2160;
       case VideoQuality.auto:
         return 0;
+      case VideoQuality.p360:
+        return 360;
+      case VideoQuality.p480:
+        return 480;
+      case VideoQuality.p720:
+        return 720;
+      case VideoQuality.p1080:
+        return 1080;
     }
   }
 }
 
 /// Playback speed options
 enum PlaybackSpeed {
-  /// 0.25x speed
-  x025,
-
   /// 0.5x speed
-  x050,
-
-  /// 0.75x speed
-  x075,
+  half,
 
   /// 1x normal speed
-  x100,
-
-  /// 1.25x speed
-  x125,
+  normal,
 
   /// 1.5x speed
-  x150,
-
-  /// 1.75x speed
-  x175,
+  oneAndHalf,
 
   /// 2x speed
-  x200,
+  double,
 }
 
 extension PlaybackSpeedExtension on PlaybackSpeed {
   /// Get display name
   String get displayName {
     switch (this) {
-      case PlaybackSpeed.x025:
-        return '0.25x';
-      case PlaybackSpeed.x050:
+      case PlaybackSpeed.half:
         return '0.5x';
-      case PlaybackSpeed.x075:
-        return '0.75x';
-      case PlaybackSpeed.x100:
+      case PlaybackSpeed.normal:
         return '1x';
-      case PlaybackSpeed.x125:
-        return '1.25x';
-      case PlaybackSpeed.x150:
+      case PlaybackSpeed.oneAndHalf:
         return '1.5x';
-      case PlaybackSpeed.x175:
-        return '1.75x';
-      case PlaybackSpeed.x200:
+      case PlaybackSpeed.double:
         return '2x';
     }
   }
@@ -265,21 +240,13 @@ extension PlaybackSpeedExtension on PlaybackSpeed {
   /// Get speed value
   double get value {
     switch (this) {
-      case PlaybackSpeed.x025:
-        return 0.25;
-      case PlaybackSpeed.x050:
+      case PlaybackSpeed.half:
         return 0.5;
-      case PlaybackSpeed.x075:
-        return 0.75;
-      case PlaybackSpeed.x100:
+      case PlaybackSpeed.normal:
         return 1.0;
-      case PlaybackSpeed.x125:
-        return 1.25;
-      case PlaybackSpeed.x150:
+      case PlaybackSpeed.oneAndHalf:
         return 1.5;
-      case PlaybackSpeed.x175:
-        return 1.75;
-      case PlaybackSpeed.x200:
+      case PlaybackSpeed.double:
         return 2.0;
     }
   }
@@ -298,15 +265,16 @@ enum GalleryLayoutMode {
 }
 
 extension GalleryLayoutModeExtension on GalleryLayoutMode {
-  /// Get display name
-  String get displayName {
+  /// Get localized display name
+  String getDisplayName(BuildContext context) {
+    final l10n = context.l10n;
     switch (this) {
       case GalleryLayoutMode.grid:
-        return 'Grid';
+        return l10n.galleryLayoutGrid;
       case GalleryLayoutMode.list:
-        return 'List';
+        return l10n.galleryLayoutList;
       case GalleryLayoutMode.masonry:
-        return 'Masonry';
+        return l10n.galleryLayoutMasonry;
     }
   }
 }
@@ -342,27 +310,28 @@ enum EmojiCategory {
 }
 
 extension EmojiCategoryExtension on EmojiCategory {
-  /// Get display name
-  String get displayName {
+  /// Get localized display name
+  String getDisplayName(BuildContext context) {
+    final l10n = context.l10n;
     switch (this) {
       case EmojiCategory.recent:
-        return 'Recent';
+        return l10n.emojiCategoryRecent;
       case EmojiCategory.smileys:
-        return 'Smileys & People';
+        return l10n.emojiCategorySmileys;
       case EmojiCategory.animals:
-        return 'Animals & Nature';
+        return l10n.emojiCategoryAnimals;
       case EmojiCategory.food:
-        return 'Food & Drink';
+        return l10n.emojiCategoryFood;
       case EmojiCategory.travel:
-        return 'Travel & Places';
+        return l10n.emojiCategoryTravel;
       case EmojiCategory.activities:
-        return 'Activities';
+        return l10n.emojiCategoryActivities;
       case EmojiCategory.objects:
-        return 'Objects';
+        return l10n.emojiCategoryObjects;
       case EmojiCategory.symbols:
-        return 'Symbols';
+        return l10n.emojiCategorySymbols;
       case EmojiCategory.flags:
-        return 'Flags';
+        return l10n.emojiCategoryFlags;
     }
   }
 
@@ -413,21 +382,22 @@ enum SkinTone {
 }
 
 extension SkinToneExtension on SkinTone {
-  /// Get display name
-  String get displayName {
+  /// Get localized display name
+  String getDisplayName(BuildContext context) {
+    final l10n = context.l10n;
     switch (this) {
       case SkinTone.none:
-        return 'Default';
+        return l10n.skinToneDefault;
       case SkinTone.light:
-        return 'Light';
+        return l10n.skinToneLight;
       case SkinTone.mediumLight:
-        return 'Medium Light';
+        return l10n.skinToneMediumLight;
       case SkinTone.medium:
-        return 'Medium';
+        return l10n.skinToneMedium;
       case SkinTone.mediumDark:
-        return 'Medium Dark';
+        return l10n.skinToneMediumDark;
       case SkinTone.dark:
-        return 'Dark';
+        return l10n.skinToneDark;
     }
   }
 

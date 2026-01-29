@@ -907,7 +907,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stop => 'Stop';
 
   @override
-  String get playbackSpeed => 'Playback speed';
+  String get playbackSpeed => 'Playback Speed';
 
   @override
   String get duration => 'Duration';
@@ -1101,4 +1101,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get download => 'Download';
+
+  @override
+  String get errorLoadingVideo => 'Error loading video';
+
+  @override
+  String get quality => 'Quality';
+
+  @override
+  String get pictureInPicture => 'Picture in Picture';
+
+  @override
+  String get enterFullscreen => 'Enter Fullscreen';
+
+  @override
+  String get exitFullscreen => 'Exit Fullscreen';
 }

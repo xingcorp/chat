@@ -1885,5 +1885,35 @@
   "download": "Download",
   "@download": {
     "description": "Download button text"
+  },
+
+  "errorLoadingVideo": "Error loading video",
+  "@errorLoadingVideo": {
+    "description": "Error message when video fails to load"
+  },
+
+  "quality": "Quality",
+  "@quality": {
+    "description": "Video quality selector label"
+  },
+
+  "pictureInPicture": "Picture in Picture",
+  "@pictureInPicture": {
+    "description": "Picture in picture button tooltip"
+  },
+
+  "enterFullscreen": "Enter Fullscreen",
+  "@enterFullscreen": {
+    "description": "Enter fullscreen button tooltip"
+  },
+
+  "exitFullscreen": "Exit Fullscreen",
+  "@exitFullscreen": {
+    "description": "Exit fullscreen button tooltip"
+  },
+
+  "playbackSpeed": "Playback Speed",
+  "@playbackSpeed": {
+    "description": "Playback speed selector label"
   }
 }

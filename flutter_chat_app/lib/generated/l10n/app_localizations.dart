@@ -1769,10 +1769,10 @@ abstract class AppLocalizations {
   /// **'Stop'**
   String get stop;
 
-  /// Playback speed control label
+  /// Playback speed selector label
   ///
   /// In en, this message translates to:
-  /// **'Playback speed'**
+  /// **'Playback Speed'**
   String get playbackSpeed;
 
   /// Duration label
@@ -2110,6 +2110,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Download'**
   String get download;
+
+  /// Error message when video fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading video'**
+  String get errorLoadingVideo;
+
+  /// Video quality selector label
+  ///
+  /// In en, this message translates to:
+  /// **'Quality'**
+  String get quality;
+
+  /// Picture in picture button tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Picture in Picture'**
+  String get pictureInPicture;
+
+  /// Enter fullscreen button tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Fullscreen'**
+  String get enterFullscreen;
+
+  /// Exit fullscreen button tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Fullscreen'**
+  String get exitFullscreen;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -294,5 +294,35 @@
   "remove": "Xóa",
   "noImagesAvailable": "Không có hình ảnh",
   "share": "Chia sẻ",
-  "download": "Tải xuống"
+  "download": "Tải xuống",
+
+  "errorLoadingVideo": "Lỗi tải video",
+  "@errorLoadingVideo": {
+    "description": "Error message when video fails to load"
+  },
+
+  "quality": "Chất lượng",
+  "@quality": {
+    "description": "Video quality selector label"
+  },
+
+  "pictureInPicture": "Hình trong hình",
+  "@pictureInPicture": {
+    "description": "Picture in picture button tooltip"
+  },
+
+  "enterFullscreen": "Toàn màn hình",
+  "@enterFullscreen": {
+    "description": "Enter fullscreen button tooltip"
+  },
+
+  "exitFullscreen": "Thoát toàn màn hình",
+  "@exitFullscreen": {
+    "description": "Exit fullscreen button tooltip"
+  },
+
+  "playbackSpeed": "Tốc độ phát",
+  "@playbackSpeed": {
+    "description": "Playback speed selector label"
+  }
 }
