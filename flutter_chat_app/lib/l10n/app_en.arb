@@ -121,6 +121,17 @@
     "description": "Yesterday text"
   },
 
+  "sentAt": "Sent at {time}",
+  "@sentAt": {
+    "description": "Accessibility label for message timestamp",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "2:30 PM"
+      }
+    }
+  },
+
   "today": "Today",
   "@today": {
     "description": "Today text"
@@ -1134,5 +1145,578 @@
   "checkInternetConnection": "Please check your internet connection and try again",
   "@checkInternetConnection": {
     "description": "Message for no internet connection state"
+  },
+
+  "selectOption": "Select an option",
+  "@selectOption": {
+    "description": "Placeholder for dropdown/radio selection"
+  },
+
+  "enabled": "Enabled",
+  "@enabled": {
+    "description": "Enabled state label"
+  },
+
+  "disabled": "Disabled",
+  "@disabled": {
+    "description": "Disabled state label"
+  },
+
+  "value": "Value",
+  "@value": {
+    "description": "Value label for slider"
+  },
+
+  "range": "Range",
+  "@range": {
+    "description": "Range label for slider"
+  },
+
+  "minimum": "Minimum",
+  "@minimum": {
+    "description": "Minimum value label"
+  },
+
+  "maximum": "Maximum",
+  "@maximum": {
+    "description": "Maximum value label"
+  },
+
+  "searchPlaceholder": "Search...",
+  "@searchPlaceholder": {
+    "description": "Placeholder text for search input"
+  },
+
+  "noResults": "No results found",
+  "@noResults": {
+    "description": "Message when search returns no results"
+  },
+
+  "selectDate": "Select Date",
+  "@selectDate": {
+    "description": "Date picker title"
+  },
+
+  "invalidDate": "Invalid date",
+  "@invalidDate": {
+    "description": "Error message for invalid date"
+  },
+
+  "selectTime": "Select Time",
+  "@selectTime": {
+    "description": "Time picker title"
+  },
+
+  "invalidTime": "Invalid time",
+  "@invalidTime": {
+    "description": "Error message for invalid time"
+  },
+
+  "rating": "Rating",
+  "@rating": {
+    "description": "Rating label"
+  },
+
+  "rateThis": "Rate this",
+  "@rateThis": {
+    "description": "Rating prompt"
+  },
+
+  "stars": "{count, plural, =1{1 star} other{{count} stars}}",
+  "@stars": {
+    "description": "Star count with pluralization",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "compact"
+      }
+    }
+  },
+
+  "fieldRequired": "This field is required",
+  "@fieldRequired": {
+    "description": "Validation message for required field"
+  },
+
+  "invalidInput": "Invalid input",
+  "@invalidInput": {
+    "description": "Validation message for invalid input"
+  },
+
+  "checked": "Checked",
+  "@checked": {
+    "description": "Checkbox checked state"
+  },
+
+  "unchecked": "Unchecked",
+  "@unchecked": {
+    "description": "Checkbox unchecked state"
+  },
+
+  "indeterminate": "Indeterminate",
+  "@indeterminate": {
+    "description": "Checkbox indeterminate state"
+  },
+
+  "selected": "Selected",
+  "@selected": {
+    "description": "Selected state label"
+  },
+
+  "unselected": "Unselected",
+  "@unselected": {
+    "description": "Unselected state label"
+  },
+
+  "slider": "Slider",
+  "@slider": {
+    "description": "Slider accessibility label"
+  },
+
+  "outOf": "out of",
+  "@outOf": {
+    "description": "Separator for value ranges (e.g., '5 out of 10')"
+  },
+
+  "volume": "Volume",
+  "@volume": {
+    "description": "Volume control label"
+  },
+
+  "messageBubble": "Message bubble",
+  "@messageBubble": {
+    "description": "Accessibility label for message bubble"
+  },
+
+  "textMessage": "Text message",
+  "@textMessage": {
+    "description": "Accessibility label for text message"
+  },
+
+  "imageMessage": "Image message",
+  "@imageMessage": {
+    "description": "Accessibility label for image message"
+  },
+
+  "videoMessage": "Video message",
+  "@videoMessage": {
+    "description": "Accessibility label for video message"
+  },
+
+  "audioMessage": "Audio message",
+  "@audioMessage": {
+    "description": "Accessibility label for audio message"
+  },
+
+  "fileMessage": "File message",
+  "@fileMessage": {
+    "description": "Accessibility label for file message"
+  },
+
+  "locationMessage": "Location message",
+  "@locationMessage": {
+    "description": "Accessibility label for location message"
+  },
+
+  "contactMessage": "Contact message",
+  "@contactMessage": {
+    "description": "Accessibility label for contact message"
+  },
+
+  "systemMessage": "System message",
+  "@systemMessage": {
+    "description": "Accessibility label for system message"
+  },
+
+  "delivered": "Delivered",
+  "@delivered": {
+    "description": "Message delivered status"
+  },
+
+  "read": "Read",
+  "@read": {
+    "description": "Message read status"
+  },
+
+  "failed": "Failed",
+  "@failed": {
+    "description": "Message failed status"
+  },
+
+  "pending": "Pending",
+  "@pending": {
+    "description": "Message pending status"
+  },
+
+  "replyingTo": "Replying to {author}",
+  "@replyingTo": {
+    "description": "Label for reply preview",
+    "placeholders": {
+      "author": {
+        "type": "String"
+      }
+    }
+  },
+
+  "cancelReply": "Cancel reply",
+  "@cancelReply": {
+    "description": "Button text to cancel reply"
+  },
+
+  "voiceMessage": "Voice message",
+  "@voiceMessage": {
+    "description": "Voice message label"
+  },
+
+  "file": "File",
+  "@file": {
+    "description": "File label"
+  },
+
+  "photo": "Photo",
+  "@photo": {
+    "description": "Photo label"
+  },
+
+  "video": "Video",
+  "@video": {
+    "description": "Video label"
+  },
+
+  "audio": "Audio",
+  "@audio": {
+    "description": "Audio label"
+  },
+
+  "document": "Document",
+  "@document": {
+    "description": "Document label"
+  },
+
+  "location": "Location",
+  "@location": {
+    "description": "Location label"
+  },
+
+  "contact": "Contact",
+  "@contact": {
+    "description": "Contact label"
+  },
+
+  "addReaction": "Add reaction",
+  "@addReaction": {
+    "description": "Button text to add reaction"
+  },
+
+  "removeReaction": "Remove reaction",
+  "@removeReaction": {
+    "description": "Button text to remove reaction"
+  },
+
+  "reactions": "Reactions",
+  "@reactions": {
+    "description": "Reactions label"
+  },
+
+  "recentlyUsed": "Recently used",
+  "@recentlyUsed": {
+    "description": "Recently used reactions section"
+  },
+
+  "searchEmoji": "Search emoji",
+  "@searchEmoji": {
+    "description": "Placeholder for emoji search"
+  },
+
+  "smileysAndPeople": "Smileys & People",
+  "@smileysAndPeople": {
+    "description": "Emoji category"
+  },
+
+  "gesturesAndBodyParts": "Gestures & Body Parts",
+  "@gesturesAndBodyParts": {
+    "description": "Emoji category"
+  },
+
+  "peopleAndProfessions": "People & Professions",
+  "@peopleAndProfessions": {
+    "description": "Emoji category"
+  },
+
+  "animalsAndNature": "Animals & Nature",
+  "@animalsAndNature": {
+    "description": "Emoji category"
+  },
+
+  "foodAndDrink": "Food & Drink",
+  "@foodAndDrink": {
+    "description": "Emoji category"
+  },
+
+  "activitiesAndSports": "Activities & Sports",
+  "@activitiesAndSports": {
+    "description": "Emoji category"
+  },
+
+  "activity": "Activity",
+  "@activity": {
+    "description": "Emoji category"
+  },
+
+  "travelAndPlaces": "Travel & Places",
+  "@travelAndPlaces": {
+    "description": "Emoji category"
+  },
+
+  "objects": "Objects",
+  "@objects": {
+    "description": "Emoji category"
+  },
+
+  "symbols": "Symbols",
+  "@symbols": {
+    "description": "Emoji category"
+  },
+
+  "flags": "Flags",
+  "@flags": {
+    "description": "Emoji category"
+  },
+
+  "noEmojisFound": "No emojis found",
+  "@noEmojisFound": {
+    "description": "Message when emoji search returns no results"
+  },
+
+  "isTyping": "{name} is typing...",
+  "@isTyping": {
+    "description": "Typing indicator for single user",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "John"
+      }
+    }
+  },
+
+  "areTyping": "{name1} and {name2} are typing...",
+  "@areTyping": {
+    "description": "Typing indicator for two users",
+    "placeholders": {
+      "name1": {
+        "type": "String",
+        "example": "John"
+      },
+      "name2": {
+        "type": "String",
+        "example": "Jane"
+      }
+    }
+  },
+
+  "multipleTyping": "{name} and {count} others are typing...",
+  "@multipleTyping": {
+    "description": "Typing indicator for multiple users",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "John"
+      },
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+
+  "play": "Play",
+  "@play": {
+    "description": "Play button label"
+  },
+
+  "pause": "Pause",
+  "@pause": {
+    "description": "Pause button label"
+  },
+
+  "stop": "Stop",
+  "@stop": {
+    "description": "Stop button label"
+  },
+
+  "playbackSpeed": "Playback speed",
+  "@playbackSpeed": {
+    "description": "Playback speed control label"
+  },
+
+  "duration": "Duration",
+  "@duration": {
+    "description": "Duration label"
+  },
+
+  "currentTime": "Current time",
+  "@currentTime": {
+    "description": "Current playback time label"
+  },
+
+  "loadingAudio": "Loading audio...",
+  "@loadingAudio": {
+    "description": "Loading audio message"
+  },
+
+  "remainingTime": "Remaining time",
+  "@remainingTime": {
+    "description": "Remaining playback time label"
+  },
+
+  "voiceMessage": "Voice message",
+  "@voiceMessage": {
+    "description": "Voice message label"
+  },
+
+  "recording": "Recording...",
+  "@recording": {
+    "description": "Recording status"
+  },
+
+  "recordVoiceMessage": "Record voice message",
+  "@recordVoiceMessage": {
+    "description": "Button text to record voice message"
+  },
+
+  "sendVoiceMessage": "Send voice message",
+  "@sendVoiceMessage": {
+    "description": "Button text to send voice message"
+  },
+
+  "cancelRecording": "Cancel recording",
+  "@cancelRecording": {
+    "description": "Button text to cancel recording"
+  },
+
+  "longPressToRecord": "Long press to record",
+  "@longPressToRecord": {
+    "description": "Hint text for voice recording"
+  },
+
+  "slideToCancel": "Slide to cancel",
+  "@slideToCancel": {
+    "description": "Hint text to cancel voice recording"
+  },
+
+  "releaseToSend": "Release to send",
+  "@releaseToSend": {
+    "description": "Hint text to send voice recording"
+  },
+
+  "messageOptions": "Message options",
+  "@messageOptions": {
+    "description": "Accessibility label for message options menu"
+  },
+
+  "longPressForOptions": "Long press for options",
+  "@longPressForOptions": {
+    "description": "Hint text for message long press"
+  },
+
+  "tapToView": "Tap to view",
+  "@tapToView": {
+    "description": "Hint text to view media"
+  },
+
+  "tapToDownload": "Tap to download",
+  "@tapToDownload": {
+    "description": "Hint text to download file"
+  },
+
+  "downloading": "Downloading...",
+  "@downloading": {
+    "description": "Downloading status"
+  },
+
+  "downloaded": "Downloaded",
+  "@downloaded": {
+    "description": "Downloaded status"
+  },
+
+  "downloadFailed": "Download failed",
+  "@downloadFailed": {
+    "description": "Download failed status"
+  },
+
+  "uploadFailed": "Upload failed",
+  "@uploadFailed": {
+    "description": "Upload failed status"
+  },
+
+  "uploading": "Uploading...",
+  "@uploading": {
+    "description": "Uploading status"
+  },
+
+  "uploaded": "Uploaded",
+  "@uploaded": {
+    "description": "Uploaded status"
+  },
+
+  "retryUpload": "Retry upload",
+  "@retryUpload": {
+    "description": "Button text to retry upload"
+  },
+
+  "retryDownload": "Retry download",
+  "@retryDownload": {
+    "description": "Button text to retry download"
+  },
+
+  "cancelUpload": "Cancel upload",
+  "@cancelUpload": {
+    "description": "Button text to cancel upload"
+  },
+
+  "cancelDownload": "Cancel download",
+  "@cancelDownload": {
+    "description": "Button text to cancel download"
+  },
+
+  "fileSize": "File size",
+  "@fileSize": {
+    "description": "File size label"
+  },
+
+  "fileName": "File name",
+  "@fileName": {
+    "description": "File name label"
+  },
+
+  "fileType": "File type",
+  "@fileType": {
+    "description": "File type label"
+  },
+
+  "unsupportedFileType": "Unsupported file type",
+  "@unsupportedFileType": {
+    "description": "Error message for unsupported file type"
+  },
+
+  "fileTooLarge": "File is too large",
+  "@fileTooLarge": {
+    "description": "Error message for file size exceeding limit"
+  },
+
+  "maxFileSize": "Maximum file size: {size}",
+  "@maxFileSize": {
+    "description": "Maximum file size information",
+    "placeholders": {
+      "size": {
+        "type": "String",
+        "example": "25 MB"
+      }
+    }
+  },
+
+  "tapToRetry": "Tap to retry",
+  "@tapToRetry": {
+    "description": "Hint text to retry failed operation"
   }
 }

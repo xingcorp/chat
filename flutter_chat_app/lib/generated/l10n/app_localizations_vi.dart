@@ -81,6 +81,11 @@ class AppLocalizationsVi extends AppLocalizations {
   String get yesterday => 'Hôm qua';
 
   @override
+  String sentAt(String time) {
+    return 'Đã gửi lúc $time';
+  }
+
+  @override
   String get today => 'Hôm nay';
 
   @override
@@ -665,4 +670,340 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get checkInternetConnection => 'Vui lòng kiểm tra kết nối internet và thử lại';
+
+  @override
+  String get selectOption => 'Chọn một tùy chọn';
+
+  @override
+  String get enabled => 'Bật';
+
+  @override
+  String get disabled => 'Tắt';
+
+  @override
+  String get value => 'Giá trị';
+
+  @override
+  String get range => 'Phạm vi';
+
+  @override
+  String get minimum => 'Tối thiểu';
+
+  @override
+  String get maximum => 'Tối đa';
+
+  @override
+  String get searchPlaceholder => 'Tìm kiếm...';
+
+  @override
+  String get noResults => 'Không tìm thấy kết quả';
+
+  @override
+  String get selectDate => 'Chọn ngày';
+
+  @override
+  String get invalidDate => 'Ngày không hợp lệ';
+
+  @override
+  String get selectTime => 'Chọn giờ';
+
+  @override
+  String get invalidTime => 'Giờ không hợp lệ';
+
+  @override
+  String get rating => 'Đánh giá';
+
+  @override
+  String get rateThis => 'Đánh giá';
+
+  @override
+  String stars(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+      
+    );
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString sao',
+      one: '1 sao',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fieldRequired => 'Trường này là bắt buộc';
+
+  @override
+  String get invalidInput => 'Dữ liệu không hợp lệ';
+
+  @override
+  String get checked => 'Đã chọn';
+
+  @override
+  String get unchecked => 'Chưa chọn';
+
+  @override
+  String get indeterminate => 'Không xác định';
+
+  @override
+  String get selected => 'Đã chọn';
+
+  @override
+  String get unselected => 'Chưa chọn';
+
+  @override
+  String get slider => 'Thanh trượt';
+
+  @override
+  String get outOf => 'trên';
+
+  @override
+  String get volume => 'Âm lượng';
+
+  @override
+  String get messageBubble => 'Message bubble';
+
+  @override
+  String get textMessage => 'Text message';
+
+  @override
+  String get imageMessage => 'Image message';
+
+  @override
+  String get videoMessage => 'Video message';
+
+  @override
+  String get audioMessage => 'Audio message';
+
+  @override
+  String get fileMessage => 'File message';
+
+  @override
+  String get locationMessage => 'Location message';
+
+  @override
+  String get contactMessage => 'Contact message';
+
+  @override
+  String get systemMessage => 'System message';
+
+  @override
+  String get delivered => 'Delivered';
+
+  @override
+  String get read => 'Read';
+
+  @override
+  String get failed => 'Failed';
+
+  @override
+  String get pending => 'Pending';
+
+  @override
+  String replyingTo(String author) {
+    return 'Replying to $author';
+  }
+
+  @override
+  String get cancelReply => 'Cancel reply';
+
+  @override
+  String get voiceMessage => 'Voice message';
+
+  @override
+  String get photo => 'Photo';
+
+  @override
+  String get video => 'Video';
+
+  @override
+  String get audio => 'Audio';
+
+  @override
+  String get document => 'Document';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get contact => 'Contact';
+
+  @override
+  String get addReaction => 'Add reaction';
+
+  @override
+  String get removeReaction => 'Remove reaction';
+
+  @override
+  String get reactions => 'Reactions';
+
+  @override
+  String get recentlyUsed => 'Recently used';
+
+  @override
+  String get searchEmoji => 'Search emoji';
+
+  @override
+  String get smileysAndPeople => 'Smileys & People';
+
+  @override
+  String get gesturesAndBodyParts => 'Gestures & Body Parts';
+
+  @override
+  String get peopleAndProfessions => 'People & Professions';
+
+  @override
+  String get animalsAndNature => 'Animals & Nature';
+
+  @override
+  String get foodAndDrink => 'Food & Drink';
+
+  @override
+  String get activitiesAndSports => 'Activities & Sports';
+
+  @override
+  String get activity => 'Activity';
+
+  @override
+  String get travelAndPlaces => 'Travel & Places';
+
+  @override
+  String get objects => 'Objects';
+
+  @override
+  String get symbols => 'Symbols';
+
+  @override
+  String get flags => 'Flags';
+
+  @override
+  String get noEmojisFound => 'No emojis found';
+
+  @override
+  String isTyping(String name) {
+    return '$name is typing...';
+  }
+
+  @override
+  String areTyping(String name1, String name2) {
+    return '$name1 and $name2 are typing...';
+  }
+
+  @override
+  String multipleTyping(String name, int count) {
+    return '$name and $count others are typing...';
+  }
+
+  @override
+  String get play => 'Play';
+
+  @override
+  String get pause => 'Pause';
+
+  @override
+  String get stop => 'Stop';
+
+  @override
+  String get playbackSpeed => 'Playback speed';
+
+  @override
+  String get duration => 'Duration';
+
+  @override
+  String get currentTime => 'Current time';
+
+  @override
+  String get loadingAudio => 'Loading audio...';
+
+  @override
+  String get remainingTime => 'Remaining time';
+
+  @override
+  String get recording => 'Recording...';
+
+  @override
+  String get recordVoiceMessage => 'Record voice message';
+
+  @override
+  String get sendVoiceMessage => 'Send voice message';
+
+  @override
+  String get cancelRecording => 'Cancel recording';
+
+  @override
+  String get longPressToRecord => 'Long press to record';
+
+  @override
+  String get slideToCancel => 'Slide to cancel';
+
+  @override
+  String get releaseToSend => 'Release to send';
+
+  @override
+  String get messageOptions => 'Message options';
+
+  @override
+  String get longPressForOptions => 'Long press for options';
+
+  @override
+  String get tapToView => 'Tap to view';
+
+  @override
+  String get tapToDownload => 'Tap to download';
+
+  @override
+  String get downloading => 'Downloading...';
+
+  @override
+  String get downloaded => 'Downloaded';
+
+  @override
+  String get downloadFailed => 'Download failed';
+
+  @override
+  String get uploadFailed => 'Upload failed';
+
+  @override
+  String get uploading => 'Uploading...';
+
+  @override
+  String get uploaded => 'Uploaded';
+
+  @override
+  String get retryUpload => 'Retry upload';
+
+  @override
+  String get retryDownload => 'Retry download';
+
+  @override
+  String get cancelUpload => 'Cancel upload';
+
+  @override
+  String get cancelDownload => 'Cancel download';
+
+  @override
+  String get fileSize => 'File size';
+
+  @override
+  String get fileName => 'File name';
+
+  @override
+  String get fileType => 'File type';
+
+  @override
+  String get unsupportedFileType => 'Unsupported file type';
+
+  @override
+  String get fileTooLarge => 'File is too large';
+
+  @override
+  String maxFileSize(String size) {
+    return 'Maximum file size: $size';
+  }
+
+  @override
+  String get tapToRetry => 'Nhấn để thử lại';
 }

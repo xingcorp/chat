@@ -1,128 +1,391 @@
 ---
-title: Project Architecture & Guidelines
 inclusion: always
-priority: high
-version: 2.0
-lastUpdated: 2025-01-27
 ---
 
-# Sharitek Office Management - Project Architecture
+# Project Architecture & Guidelines
 
-> **Critical Rules**: This project follows **Clean Architecture** with strict layer separation.
-> - Domain layer MUST NOT import Flutter/infrastructure packages
-> - Presentation layer MUST NOT import data models directly
-> - ALWAYS use `Either<Failure, T>` for error handling
-> - NEVER use `print()` - use Logger instead
-> - ALWAYS run code generation after model changes
+## Critical Architecture Rules
 
-## 🏗️ Project Structure
+**MANDATORY - Clean Architecture with strict layer separation:**
 
-**Monorepo** với 2 ứng dụng chính:
-- **Backend**: NestJS (TypeScript) - `src/`
-- **Frontend**: Flutter (Dart) - `flutter_chat_app/`
+1. **Domain Layer Isolation**: NEVER import Flutter/infrastructure packages in `lib/domain/`
+2. **Presentation Layer**: NEVER import data models directly - use domain entities only
+3. **Error Handling**: ALWAYS use `Either<Failure, T>` pattern for operations that can fail
+4. **Logging**: NEVER use `print()` - ALWAYS use Logger service
+5. **Code Generation**: ALWAYS run `dart run build_runner build --delete-conflicting-outputs` after modifying models, BLoCs, or DI annotations
+6. **Base Classes**: ALWAYS extend base classes (`BaseBloc`, `BaseState`, `BaseStatefulWidget`, `BaseStatelessWidget`)
+7. **Design System**: ALWAYS use design system components (`AppText`, `AppButton`, etc.) - NEVER use Flutter widgets directly
+8. **Internationalization**: ALWAYS use `context.l10n` for user-facing text - NEVER hardcode strings
 
-## 📱 Flutter Chat App
+## Mandatory Base Classes
 
-### Architecture Pattern
-**Clean Architecture** với 3 tầng:
-```
-Presentation (BLoC) → Domain (UseCases) → Data (Repositories)
-```
+**ALL code MUST use these base classes. NO exceptions.**
 
-### Key Principles
-- **Offline-first**: Isar database + sync queue
-- **State Management**: BLoC pattern với `Either<Failure, T>` error handling
-- **DI**: GetIt + Injectable (`@injectable`, `@singleton`, `@lazySingleton`)
-- **Real-time**: Socket.IO với EnhancedSocketManager
-- **Multi-platform**: Mobile, Web, Desktop (separate entry points)
-- **Multi-flavor**: Staging, Production (FlavorConfig)
+### 1. BLoC - MUST Extend BaseBloc
 
-### Code Style & Conventions
-
-**File Naming:**
-- Files: `snake_case.dart` (e.g., `user_repository.dart`, `login_page.dart`)
-- Max 400 lines per file (warning threshold)
-
-**Class Naming:**
-- Classes: `PascalCase`
-- Repository interfaces: `MessageRepository` (no suffix)
-- Repository implementations: `MessageRepositoryImpl` (with `Impl`)
-- Use cases: `GetUserMessages`, `SendMessage` (action verb + noun)
-- BLoCs: `FeatureNameBloc`
-- Widgets: `MessageBubble` (no "Widget" suffix)
-- Pages: `ChatDetailPage` (with "Page" suffix)
-
-**Code Patterns:**
 ```dart
-// ✅ CORRECT - Widget with const constructor
+// ✅ CORRECT
+@injectable
+class ChatBloc extends BaseBloc<ChatEvent, ChatState> {
+  final IRepository _repository;
+  final Logger _logger;
+  
+  ChatBloc({
+    required IRepository repository,
+    required Logger logger,
+  }) : _repository = repository,
+       _logger = logger,
+       super(const ChatState.initial()) {
+    on<ChatEvent>(_onEvent);
+  }
+}
+
+// ❌ FORBIDDEN
+class ChatBloc extends Bloc<ChatEvent, ChatState> { }
+```
+
+**BaseBloc provides:**
+- Automatic error handling and logging
+- Performance monitoring and analytics
+- Crash reporting integration
+- Helper methods: `emitLoading()`, `emitError()`, `emitSuccess()`
+
+### 2. State - MUST Extend BaseState
+
+```dart
+// ✅ CORRECT
+@freezed
+class ChatState extends BaseState with _$ChatState {
+  const factory ChatState.initial() = ChatInitial;
+  const factory ChatState.loading({String? message}) = ChatLoading;
+  const factory ChatState.loaded({required Data data}) = ChatLoaded;
+  const factory ChatState.error({required String message}) = ChatError;
+}
+
+// ❌ FORBIDDEN
+abstract class ChatState extends Equatable { }
+```
+
+### 3. StatefulWidget - MUST Extend BaseStatefulWidget
+
+```dart
+// ✅ CORRECT
 class MyWidget extends BaseStatefulWidget {
-  const MyWidget({super.key});  // ALWAYS use const
+  const MyWidget({super.key});
   
   @override
   MyWidgetState createState() => MyWidgetState();
 }
 
-// ✅ CORRECT - Package imports only
-import 'package:flutter_chat_app/core/...';
-
-// ❌ WRONG - Relative imports
-import '../../core/...';
-
-// ✅ CORRECT - Single quotes
-final String message = 'Hello';
-
-// ❌ WRONG - Double quotes
-final String message = "Hello";
-
-// ✅ CORRECT - Type annotations for public APIs
-final String name = 'John';
-
-// ❌ WRONG - Missing type annotation
-final name = 'John';
-
-// ✅ CORRECT - Use logger
-logger.info('User logged in');
-
-// ❌ WRONG - Using print
-print('User logged in');
-
-// ✅ CORRECT - Null-safe operators
-final value = nullableValue ?? defaultValue;
-final result = nullableObject?.method();
-
-// ❌ WRONG - Null assertion operator
-final value = nullableValue!;
-
-// ✅ CORRECT - Type checking with is
-if (object is String) {
-  // Smart cast works here
+class MyWidgetState extends BaseState<MyWidget> {
+  @override
+  void onAppResumed() { }
+  
+  void _update() {
+    safeSetState(() { }); // Use safeSetState, not setState
+  }
+  
+  @override
+  Widget build(BuildContext context) => Container();
 }
 
-// ❌ WRONG - Type casting with as
-final str = object as String;
-
-// ✅ CORRECT - Prefer final
-final count = 10;
-
-// ⚠️ WARNING - Use var only if reassigned
-var count = 10;
-count = 20;
+// ❌ FORBIDDEN
+class MyWidget extends StatefulWidget { }
 ```
+
+### 4. StatelessWidget - MUST Extend BaseStatelessWidget
+
+```dart
+// ✅ CORRECT
+class MyWidget extends BaseStatelessWidget {
+  const MyWidget({super.key});
+  
+  @override
+  Widget buildContent(BuildContext context) => Container();
+}
+
+// ❌ FORBIDDEN
+class MyWidget extends StatelessWidget { }
+```
+
+### 5. Design System Components - MANDATORY
+
+```dart
+// ✅ CORRECT
+AppText(context.l10n.title, style: AppTextStyle.headlineLarge)
+AppButton(label: context.l10n.save, onPressed: _save)
+AppTextField(label: context.l10n.email, controller: _controller)
+AppListView(items: items, itemBuilder: (item) => ...)
+
+// ❌ FORBIDDEN
+Text('Title')
+ElevatedButton(child: Text('Save'), onPressed: _save)
+TextField(decoration: InputDecoration(labelText: 'Email'))
+ListView.builder(itemBuilder: (context, index) => ...)
+```
+
+### 6. Localization - MANDATORY
+
+```dart
+// ✅ CORRECT
+AppText(context.l10n.welcome)
+AppButton(label: context.l10n.save)
+errorText: context.l10n.fieldRequired
+
+// ❌ FORBIDDEN
+AppText('Welcome')
+AppButton(label: 'Save')
+errorText: 'This field is required'
+```
+
+---
+
+## Project Structure
+
+**Monorepo with 2 applications:**
+- **Backend**: NestJS (TypeScript) - `src/`
+- **Frontend**: Flutter (Dart) - `flutter_chat_app/`
+
+---
+
+## Flutter Application Architecture
+
+### Clean Architecture Layers
+
+```
+┌─────────────────────────────────────────┐
+│  Presentation (UI + BLoC)               │  ← User interaction
+├─────────────────────────────────────────┤
+│  Domain (Entities + UseCases)           │  ← Business logic
+├─────────────────────────────────────────┤
+│  Data (Models + Repositories + Sources) │  ← Data access
+└─────────────────────────────────────────┘
+```
+
+**Data Flow**: `User Action → BLoC Event → UseCase → Repository → DataSource → API`
+
+### Core Principles
+
+- **Offline-First**: Isar database with sync queue for offline operations
+- **State Management**: BLoC pattern with `Either<Failure, T>` error handling
+- **Dependency Injection**: GetIt + Injectable (`@injectable`, `@singleton`, `@lazySingleton`)
+- **Real-time Communication**: Socket.IO with EnhancedSocketManager
+- **Multi-Platform**: Separate entry points for Mobile, Web, Desktop
+- **Multi-Flavor**: Staging and Production configurations via FlavorConfig
 
 ### Directory Structure
+
 ```
-lib/
-├── core/              # Infrastructure (DI, network, storage, services)
-├── data/              # Data layer (models, datasources, repositories impl)
+flutter_chat_app/lib/
+├── core/              # Infrastructure (DI, network, storage, base classes)
+├── data/              # Data layer (models, datasources, repository implementations)
 ├── domain/            # Business logic (entities, usecases, repository interfaces)
-├── presentation/      # UI (blocs, pages, widgets)
-├── config/            # App configuration
-└── main*.dart         # Entry points (staging, production, mobile, web, desktop)
+├── presentation/      # UI layer (blocs, pages, widgets)
+├── config/            # App configuration (routes, themes, constants)
+└── main*.dart         # Entry points (main.dart, main_staging.dart, main_production.dart)
 ```
 
-### BLoC Pattern
+### Naming Conventions
 
-**Event Design (using Freezed):**
+**Flutter (Dart):**
+- Files: `snake_case.dart` (e.g., `user_repository.dart`, `chat_page.dart`)
+- Classes: `PascalCase` (e.g., `UserRepository`, `ChatBloc`)
+- Variables/Methods: `camelCase` (e.g., `getUserMessages`, `isLoading`)
+- Constants: `camelCase` or `SCREAMING_SNAKE_CASE` (e.g., `kDefaultPadding`, `API_KEY`)
+- Private members: `_prefixWithUnderscore` (e.g., `_repository`, `_handleEvent`)
+- Repository interfaces: No suffix (e.g., `IAuthRepository`)
+- Repository implementations: `Impl` suffix (e.g., `AuthRepositoryImpl`)
+- Use cases: Action verb + noun (e.g., `GetUserMessages`, `SendMessage`)
+- BLoCs: Feature + `Bloc` (e.g., `AuthBloc`, `ChatBloc`)
+- Widgets: Descriptive name, no suffix (e.g., `MessageBubble`, `UserAvatar`)
+- Pages: Feature + `Page` (e.g., `ChatDetailPage`, `LoginPage`)
+
+**Backend (TypeScript):**
+- Files: `kebab-case.ts` (e.g., `user.service.ts`, `auth.module.ts`)
+- Classes: `PascalCase` (e.g., `UserService`, `AuthModule`)
+- Variables/Methods: `camelCase` (e.g., `findUserById`, `isAuthenticated`)
+- Constants: `SCREAMING_SNAKE_CASE` (e.g., `MAX_RETRY_ATTEMPTS`)
+- Private members: `private` keyword (e.g., `private readonly userRepo`)
+
+### Flutter Code Style Rules
+
+**MANDATORY BASE CLASSES:**
+- **BLoCs**: MUST extend `BaseBloc<Event, State>`, NOT `Bloc`
+- **States**: MUST extend `BaseState` with `@freezed`
+- **StatefulWidgets**: MUST extend `BaseStatefulWidget`
+- **StatelessWidgets**: MUST extend `BaseStatelessWidget`
+- **Cubits**: MUST extend `BaseCubit<State>`
+
+**ALWAYS:**
+- Use `const` constructors wherever possible for performance
+- Use package imports: `import 'package:flutter_chat_app/core/...'`
+- Use single quotes for strings: `'Hello'`
+- Annotate types for public APIs: `final String name = 'John'`
+- Use Logger service: `logger.i('User logged in')`
+- Use null-safe operators: `value ?? defaultValue`, `object?.method()`
+- Use type checking with `is`: `if (object is String) { }`
+- Prefer `final` over `var` for immutable variables
+- Dispose resources in `close()` or `dispose()` methods
+- Use design system components: `AppText`, `AppButton`, `AppTextField`
+- Use localization: `context.l10n.keyName` for ALL user-facing text
+
+**NEVER:**
+- Use relative imports: `import '../../core/...'`
+- Use double quotes for strings: `"Hello"`
+- Use `print()` or `debugPrint()` - use Logger instead
+- Use null assertion operator `!` - use null-safe operators
+- Use type casting with `as` - use `is` checks with smart casts
+- Use `var` for variables that won't be reassigned
+- Extend `Bloc` directly - use `BaseBloc`
+- Extend `StatefulWidget` directly - use `BaseStatefulWidget`
+- Extend `StatelessWidget` directly - use `BaseStatelessWidget`
+- Use `Text` widget - use `AppText`
+- Use Flutter widgets directly - use design system components
+- Hardcode strings - use `context.l10n`
+
+**Example:**
+```dart
+// ✅ CORRECT
+class MyWidget extends BaseStatefulWidget {
+  const MyWidget({super.key});
+  
+  @override
+  MyWidgetState createState() => MyWidgetState();
+}
+
+import 'package:flutter_chat_app/core/base/base_widget.dart';
+
+final String message = 'Hello';
+final value = nullableValue ?? defaultValue;
+
+if (object is String) {
+  print(object.toUpperCase()); // Smart cast works
+}
+
+logger.i('Operation completed');
+
+// ❌ WRONG
+class MyWidget extends StatefulWidget { } // Use BaseStatefulWidget
+
+import '../../core/base/base_widget.dart'; // Use package imports
+
+final String message = "Hello"; // Use single quotes
+
+final value = nullableValue!; // Avoid null assertion
+
+final str = object as String; // Use 'is' check instead
+
+print('Operation completed'); // Use logger
+```
+
+---
+
+## State Management with BLoC Pattern
+
+### MANDATORY Base Classes
+
+**CRITICAL: All BLoCs MUST extend `BaseBloc`, NOT `Bloc` directly.**
+
+```dart
+// ✅ CORRECT - Extend BaseBloc
+@injectable
+class ChatBloc extends BaseBloc<ChatEvent, ChatState> {
+  final IMessageRepository _repository;
+  final Logger _logger;
+  
+  ChatBloc({
+    required IMessageRepository repository,
+    required Logger logger,
+  }) : _repository = repository,
+       _logger = logger,
+       super(const ChatState.initial()) {
+    on<ChatMessageSent>(_onMessageSent);
+  }
+  
+  Future<void> _onMessageSent(
+    ChatMessageSent event,
+    Emitter<ChatState> emit,
+  ) async {
+    // Use BaseBloc helper methods
+    emitLoading(message: 'Sending message...');
+    
+    final result = await _repository.sendMessage(event.message);
+    
+    result.fold(
+      (failure) => emitError(failure.message, error: failure),
+      (message) => emit(ChatState.messageSent(message)),
+    );
+  }
+}
+
+// ❌ WRONG - Don't extend Bloc directly
+@injectable
+class ChatBloc extends Bloc<ChatEvent, ChatState> {
+  // Missing: error handling, logging, analytics, performance monitoring
+}
+```
+
+**BaseBloc provides:**
+- Automatic error handling and logging
+- Performance monitoring
+- Analytics integration
+- Crash reporting
+- Lifecycle management
+- Helper methods: `emitLoading()`, `emitError()`, `emitSuccess()`
+
+### MANDATORY State Pattern
+
+**CRITICAL: All States MUST extend `BaseState` and use Freezed.**
+
+```dart
+// ✅ CORRECT - Extend BaseState with Freezed
+@freezed
+class ChatState extends BaseState with _$ChatState {
+  const factory ChatState.initial() = ChatInitial;
+  const factory ChatState.loading({String? message}) = ChatLoading;
+  const factory ChatState.loaded({
+    required List<Message> messages,
+  }) = ChatLoaded;
+  const factory ChatState.messageSent({
+    required Message message,
+  }) = ChatMessageSent;
+  const factory ChatState.error({
+    required String message,
+    Object? error,
+    VoidCallback? retryAction,
+  }) = ChatError;
+}
+
+// ❌ WRONG - Don't use Equatable or plain classes
+abstract class ChatState extends Equatable {
+  const ChatState();
+}
+
+class ChatInitial extends ChatState {
+  @override
+  List<Object> get props => [];
+}
+```
+
+### When to Use BLoC vs Cubit
+
+**Use BLoC when:**
+- Complex business logic with multiple event types
+- Need to track/transform events
+- Multiple events can lead to the same state
+- Need event history or debugging
+- **MUST extend `BaseBloc`**
+
+**Use Cubit when:**
+- Simple state changes (counters, toggles)
+- Direct state mutations without events
+- Less boilerplate needed
+- **MUST extend `BaseCubit`**
+
+### BLoC Event Pattern (Freezed)
+
+**Events define user actions and system events:**
+
 ```dart
 @freezed
 class AuthEvent with _$AuthEvent {
@@ -132,15 +395,20 @@ class AuthEvent with _$AuthEvent {
   }) = AuthLoginRequested;
   
   const factory AuthEvent.logoutRequested() = AuthLogoutRequested;
-  
   const factory AuthEvent.checkAuthStatus() = AuthCheckRequested;
+  const factory AuthEvent.tokenRefreshed({
+    required String token,
+  }) = AuthTokenRefreshed;
 }
 ```
 
-**State Design (using Freezed):**
+### BLoC State Pattern (Freezed)
+
+**States MUST extend BaseState:**
+
 ```dart
 @freezed
-class AuthState with _$AuthState {
+class AuthState extends BaseState with _$AuthState {
   const factory AuthState.initial() = AuthInitial;
   const factory AuthState.loading({String? operation}) = AuthLoading;
   const factory AuthState.authenticated({
@@ -156,76 +424,124 @@ class AuthState with _$AuthState {
 }
 ```
 
-**BLoC Implementation:**
+### BLoC Implementation Pattern
+
+**MUST extend BaseBloc:**
+
 ```dart
 @injectable
-class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
+class AuthBloc extends BaseBloc<AuthEvent, AuthState> {
   final IAuthRepository _repository;
+  final Logger _logger;
   
-  AuthBloc({required IAuthRepository repository})
-      : _repository = repository,
-        super(const AuthState.initial()) {
+  AuthBloc({
+    required IAuthRepository repository,
+    required Logger logger,
+  }) : _repository = repository,
+       _logger = logger,
+       super(const AuthState.initial()) {
     on<AuthLoginRequested>(_onLoginRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
+    on<AuthCheckRequested>(_onCheckAuthStatus);
   }
   
   Future<void> _onLoginRequested(
     AuthLoginRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthState.loading(operation: 'login'));
+    // Use BaseBloc helper method
+    emitLoading(message: 'Logging in...');
+    
+    _logger.i('Login attempt for: ${event.email}');
     
     final result = await _repository.login(event.email, event.password);
     
     result.fold(
-      (failure) => emit(AuthState.error(
-        failure: failure,
-        operation: 'login',
-        retryAction: () => add(event),
-      )),
-      (user) => emit(AuthState.authenticated(
-        user: user,
-        isOnboarded: true,
-      )),
+      (failure) {
+        _logger.e('Login failed', error: failure);
+        emitError(
+          failure.message,
+          error: failure,
+          retryAction: () => add(event),
+        );
+      },
+      (user) {
+        _logger.i('Login successful', data: {'userId': user.id});
+        emit(AuthState.authenticated(user: user, isOnboarded: true));
+      },
     );
+  }
+  
+  Future<void> _onLogoutRequested(
+    AuthLogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emitLoading(message: 'Logging out...');
+    
+    final result = await _repository.logout();
+    
+    result.fold(
+      (failure) => emitError(failure.message, error: failure),
+      (_) => emit(const AuthState.unauthenticated()),
+    );
+  }
+  
+  @override
+  Future<void> close() {
+    // Cleanup resources
+    _logger.d('AuthBloc closed');
+    return super.close();
   }
 }
 ```
 
-**Cubit for Simple State (Alternative):**
+### Cubit Pattern (Simpler Alternative)
+
+**MUST extend BaseCubit:**
+
 ```dart
 @injectable
-class CounterCubit extends Cubit<int> {
-  CounterCubit() : super(0);
+class CounterCubit extends BaseCubit<int> {
+  final Logger _logger;
   
-  void increment() => emit(state + 1);
-  void decrement() => emit(state - 1);
-  void reset() => emit(0);
+  CounterCubit({required Logger logger})
+      : _logger = logger,
+        super(0);
+  
+  void increment() {
+    _logger.d('Counter incremented');
+    emit(state + 1);
+  }
+  
+  void decrement() {
+    _logger.d('Counter decremented');
+    emit(state - 1);
+  }
+  
+  void reset() {
+    _logger.d('Counter reset');
+    emit(0);
+  }
 }
-
-// Use Cubit when:
-// - State changes are simple and direct
-// - No need for explicit events
-// - Less boilerplate needed
-
-// Use BLoC when:
-// - Complex business logic
-// - Need to track/transform events
-// - Multiple events → same state
 ```
 
-**Widget Integration:**
+### Widget Integration Patterns
+
+**1. BlocProvider - Provides BLoC to widget tree:**
+
 ```dart
-// BlocProvider
 BlocProvider(
-  create: (context) => getIt<AuthBloc>()
-    ..add(const AuthEvent.checkAuthStatus()),
+  create: (context) => getIt<AuthBloc>()..add(const AuthEvent.checkAuthStatus()),
   child: const AuthPage(),
 )
+```
 
-// BlocBuilder - rebuilds on state change
+**2. BlocBuilder - Rebuilds UI on state changes:**
+
+```dart
+```dart
 BlocBuilder<AuthBloc, AuthState>(
-  buildWhen: (prev, current) => prev != current, // Optional optimization
+  buildWhen: (prev, current) => prev != current,
   builder: (context, state) {
     return state.when(
       initial: () => const LoadingIndicator(),
@@ -239,8 +555,12 @@ BlocBuilder<AuthBloc, AuthState>(
     );
   },
 )
+```
 
-// BlocListener - for side effects (navigation, snackbars)
+**3. BlocListener - For side effects (navigation, snackbars):**
+
+```dart
+```dart
 BlocListener<AuthBloc, AuthState>(
   listener: (context, state) {
     state.whenOrNull(
@@ -253,18 +573,26 @@ BlocListener<AuthBloc, AuthState>(
   },
   child: const AuthPage(),
 )
+```
 
-// BlocConsumer - combines Builder + Listener
+**4. BlocConsumer - Combines Builder + Listener:**
+
+```dart
+```dart
 BlocConsumer<AuthBloc, AuthState>(
   listener: (context, state) {
-    // Side effects
+    // Handle side effects
   },
   builder: (context, state) {
-    // UI
+    // Build UI
   },
 )
+```
 
-// BlocSelector - rebuild only when specific value changes
+**5. BlocSelector - Rebuild only when specific value changes:**
+
+```dart
+```dart
 BlocSelector<ChatBloc, ChatState, bool>(
   selector: (state) => state.isLoading,
   builder: (context, isLoading) {
@@ -273,36 +601,67 @@ BlocSelector<ChatBloc, ChatState, bool>(
 )
 ```
 
-**Stream Integration:**
+### Stream Integration with BLoC
+
+**Handle real-time streams in BLoC:**
+
 ```dart
-class MessageBloc extends Bloc<MessageEvent, MessageState> {
-  final ChatService _chatService;
+@injectable
+class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
+  final IChatService _chatService;
+  final Logger _logger;
   late final StreamSubscription<Message> _messageSubscription;
   
-  MessageBloc({required ChatService chatService}) 
-      : _chatService = chatService,
-        super(const MessageState.initial()) {
-    // Subscribe to real-time stream
+  MessageBloc({
+    required IChatService chatService,
+    required Logger logger,
+  }) : _chatService = chatService,
+       _logger = logger,
+       super(const MessageState.initial()) {
+    // Subscribe to real-time message stream
     _messageSubscription = _chatService.messageStream.listen(
-      (message) => add(MessageEvent.received(message)),
+      (message) {
+        _logger.d('New message received', data: {'messageId': message.id});
+        add(MessageEvent.received(message));
+      },
+      onError: (error) {
+        _logger.e('Message stream error', error: error);
+        emitError('Failed to receive messages', error: error);
+      },
     );
     
     on<MessageReceivedEvent>(_onMessageReceived);
   }
   
+  Future<void> _onMessageReceived(
+    MessageReceivedEvent event,
+    Emitter<MessageState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is MessageLoaded) {
+      emit(MessageLoaded(
+        messages: [...currentState.messages, event.message],
+      ));
+    }
+  }
+  
   @override
   Future<void> close() {
-    _messageSubscription.cancel(); // ALWAYS cleanup
+    _messageSubscription.cancel(); // CRITICAL: Always cleanup
+    _logger.d('MessageBloc closed, subscription cancelled');
     return super.close();
   }
 }
 ```
 
-### Error Handling Pattern
+---
 
-**Failure Classes (Domain Layer):**
+## Error Handling Pattern
+
+### Failure Classes (Domain Layer)
+
+Define failures in `lib/core/error/failures.dart`:
 ```dart
-// lib/core/error/failures.dart
 abstract class Failure extends Equatable {
   final String message;
   final String code;
@@ -340,51 +699,42 @@ class ValidationFailure extends Failure {
     String code = 'validation_error',
   }) : super(message: message, code: code);
 }
-
-class UnexpectedFailure extends Failure {
-  const UnexpectedFailure({
-    required String message,
-    String code = 'unexpected_error',
-  }) : super(message: message, code: code);
-}
 ```
 
-**Exception Classes (Data Layer):**
+### Exception Classes (Data Layer)
+
+Define exceptions in `lib/core/error/exceptions.dart`:
 ```dart
-// lib/core/error/exceptions.dart
 class ServerException implements Exception {
   final String message;
   final int? statusCode;
   
-  const ServerException({
-    required this.message,
-    this.statusCode,
-  });
-  
-  @override
-  String toString() => 'ServerException: $message (Status: $statusCode)';
+  const ServerException({required this.message, this.statusCode});
 }
 
 class NetworkException implements Exception {
   final String message;
   
   const NetworkException({this.message = 'No internet connection'});
-  
-  @override
-  String toString() => 'NetworkException: $message';
 }
 
 class CacheException implements Exception {
   final String message;
   
   const CacheException({required this.message});
-  
-  @override
-  String toString() => 'CacheException: $message';
 }
 ```
 
-**Repository Error Handling:**
+### Repository Error Handling Pattern
+
+**Key Steps:**
+1. Check network connectivity first
+2. Try remote data source
+3. Cache successful results locally
+4. Convert exceptions to failures
+5. Return `Either<Failure, T>`
+
+```dart
 ```dart
 @LazySingleton(as: IAuthRepository)
 class AuthRepositoryImpl implements IAuthRepository {
@@ -402,37 +752,26 @@ class AuthRepositoryImpl implements IAuthRepository {
   
   @override
   Future<Either<Failure, User>> login(String email, String password) async {
-    // Check network connectivity
     if (!await _networkInfo.isConnected) {
       return const Left(NetworkFailure());
     }
     
     try {
-      // Try remote data source
       final userModel = await _remoteDataSource.login(email, password);
-      
-      // Cache user data
       await _localDataSource.cacheUser(userModel);
-      
-      // Return success
       return Right(userModel.toEntity());
-      
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
-      
     } on NetworkException catch (e) {
       return Left(NetworkFailure(message: e.message));
-      
     } catch (e) {
-      return Left(UnexpectedFailure(
-        message: 'Unexpected error: $e',
-      ));
+      return Left(UnexpectedFailure(message: 'Unexpected error: $e'));
     }
   }
 }
 ```
 
-**BLoC Error Handling:**
+### BLoC Error Handling Pattern
 ```dart
 Future<void> _onLoginRequested(
   AuthLoginRequested event,
@@ -580,9 +919,23 @@ flutter gen-l10n
 - **Queue**: Bull for background jobs
 - **Validation**: class-validator decorators
 
+---
+
+## Backend (NestJS) Architecture
+
+### Key Principles
+
+- **GraphQL-First**: Code-first approach with decorators
+- **Dependency Injection**: NestJS built-in `@Injectable()`
+- **Real-time**: Socket.IO with Redis adapter
+- **Multi-Database**: PostgreSQL (TypeORM), DynamoDB, Redis
+- **Background Jobs**: Bull queue system
+- **Validation**: class-validator decorators
+
 ### Code Style
+
 ```typescript
-// ✅ CORRECT
+// Service pattern
 @Injectable()
 export class UserService {
   constructor(
@@ -595,15 +948,12 @@ export class UserService {
   }
 }
 
-// File naming: kebab-case
-// user.service.ts, auth.module.ts
-
-// Path aliases
-import { OfficeUser } from '@models/entities';  // ✅
-import { RedisService } from '@core/common/redis.service';  // ✅
+// File naming: kebab-case (user.service.ts, auth.module.ts)
+// Path aliases: @models/*, @common/*, @core/*, @modules/*
 ```
 
-### GraphQL Pattern
+### GraphQL Patterns
+
 ```typescript
 // ObjectType
 @ObjectType()
@@ -613,12 +963,9 @@ export class User {
   
   @Field()
   email: string;
-  
-  @Field({ nullable: true })
-  displayName?: string;
 }
 
-// InputType
+// InputType with validation
 @InputType()
 export class CreateUserInput {
   @Field()
@@ -648,184 +995,186 @@ export class UserResolver {
 ```
 
 ### Path Aliases
-```typescript
+
+```
 @common/*      → src/common/*
-@helpers/*     → src/helpers/*
 @models/*      → src/models/*
-@utils/*       → src/utils/*
-@services/*    → src/services/*
 @core/*        → src/modules/core/*
 @modules/*     → src/modules/*
-@middlewares/* → src/middlewares/*
-@decorators/*  → src/decorators/*
+@services/*    → src/services/*
 ```
 
-## 🔄 Communication Flow
+---
 
-### Flutter → Backend
-1. **GraphQL**: Queries/Mutations qua HTTP
-2. **Socket.IO**: Real-time events
-3. **Firebase**: Shared services (Auth, Storage, Messaging)
+## Communication & Data Flow
 
-### Data Flow
+### Flutter ↔ Backend Communication
+
+1. **GraphQL**: HTTP queries/mutations for data operations
+2. **Socket.IO**: Real-time bidirectional events
+3. **Firebase**: Shared services (Auth, Storage, Push Notifications)
+
+### Data Flow Pattern
+
 ```
 User Action → BLoC Event → UseCase → Repository → DataSource → API
                 ↓
             State Update → UI Rebuild
 ```
 
-### Offline-first Flow
+### Offline-First Flow
+
 ```
-1. Check connectivity
-2. If offline: Save to Isar DB + Queue for sync
-3. When online: Sync queued operations
-4. Handle conflicts if needed
+1. Check network connectivity
+2. If offline: Save to Isar DB + Add to sync queue
+3. When online: Process sync queue
+4. Handle conflicts with last-write-wins or custom strategy
 ```
-
-## 🎯 Common Tasks
-
-### Add New Feature (Flutter)
-```bash
-# 1. Create domain entities
-lib/domain/entities/my_feature.dart
-
-# 2. Create repository interface
-lib/domain/repositories/my_feature_repository.dart
-
-# 3. Create use cases
-lib/domain/usecases/my_feature/get_my_feature.dart
-
-# 4. Create data models
-lib/data/models/my_feature_model.dart
-
-# 5. Create data sources
-lib/data/datasources/my_feature_remote_datasource.dart
-lib/data/datasources/my_feature_local_datasource.dart
-
-# 6. Implement repository
-lib/data/repositories/my_feature_repository_impl.dart
-
-# 7. Create BLoC
-lib/presentation/blocs/my_feature/my_feature_bloc.dart
-lib/presentation/blocs/my_feature/my_feature_event.dart
-lib/presentation/blocs/my_feature/my_feature_state.dart
-
-# 8. Create UI
-lib/presentation/pages/my_feature/my_feature_page.dart
-
-# 9. Register in DI
-lib/core/di/enterprise_injection.dart
-
-# 10. Generate code
-dart run build_runner build --delete-conflicting-outputs
-```
-
-### Add New Module (Backend)
-```bash
-# 1. Create module directory
-src/modules/my-feature/
-
-# 2. Create files
-my-feature.module.ts
-my-feature.service.ts
-my-feature.resolver.ts
-my-feature.args.ts
-my-feature.response.ts
-
-# 3. Register in app.module.ts
-imports: [MyFeatureModule]
-```
-
-## 🚨 Important Notes
-
-### Flutter
-- **ALWAYS** use `const` constructors where possible
-- **NEVER** use relative imports (use package imports)
-- **ALWAYS** annotate public API types
-- **NEVER** use `print()` (use Logger)
-- **ALWAYS** handle errors with `Either<Failure, T>`
-- **ALWAYS** dispose resources (StreamSubscriptions, Controllers)
-- **ALWAYS** run code generation after model changes
-
-### Backend
-- **ALWAYS** use path aliases (@common, @modules, etc.)
-- **ALWAYS** validate inputs with class-validator
-- **ALWAYS** use dependency injection
-- **ALWAYS** handle errors properly
-- **ALWAYS** log important operations
-- **NEVER** expose sensitive data in responses
-
-## 🔍 Debugging
-
-### Flutter
-```bash
-# Run with logs
-flutter run --verbose
-
-# Check performance
-# Enable overlay in PerformanceService
-
-# Analyze code
-flutter analyze
-
-# Check dependencies
-flutter pub outdated
-```
-
-### Backend
-```bash
-# Run in dev mode
-npm run start:dev
-
-# Check logs
-# Logger automatically logs to console
-
-# Test GraphQL
-# Open http://localhost:5000/graphql
-```
-
-## 📚 Key Files
-
-### Flutter
-- `lib/main.dart` - Main entry point
-- `lib/core/di/enterprise_injection.dart` - DI setup
-- `lib/config/route/app_router.dart` - Routing
-- `pubspec.yaml` - Dependencies
-- `analysis_options.yaml` - Linting rules
-
-### Backend
-- `src/main.ts` - Main entry point
-- `src/app.module.ts` - Root module
-- `package.json` - Dependencies
-- `tsconfig.json` - TypeScript config
-
-## 🎨 Naming Conventions
-
-### Flutter
-- Files: `snake_case.dart`
-- Classes: `PascalCase`
-- Variables/Methods: `camelCase`
-- Constants: `camelCase` or `SCREAMING_SNAKE_CASE`
-- Private: `_prefixWithUnderscore`
-
-### Backend
-- Files: `kebab-case.ts`
-- Classes: `PascalCase`
-- Variables/Methods: `camelCase`
-- Constants: `SCREAMING_SNAKE_CASE`
-- Private: `private` keyword
 
 ---
 
-**Last Updated**: 2025-01-27
-**Maintainer**: Senior Flutter/Mobile Architect
+## Adding New Features
 
+### Flutter Feature Checklist
 
-### Repository Pattern
+**Follow this order:**
 
-**Domain Interface:**
+1. **Domain Layer** (Business logic - no dependencies on Flutter/infrastructure)
+   - Create entity: `lib/domain/entities/my_feature.dart`
+   - Create repository interface: `lib/domain/repositories/i_my_feature_repository.dart`
+   - Create use cases: `lib/domain/usecases/my_feature/get_my_feature.dart`
+
+2. **Data Layer** (Implementation details)
+   - Create model with mapper: `lib/data/models/my_feature_model.dart`
+   - Create remote data source: `lib/data/datasources/my_feature_remote_datasource.dart`
+   - Create local data source: `lib/data/datasources/my_feature_local_datasource.dart`
+   - Implement repository: `lib/data/repositories/my_feature_repository_impl.dart`
+
+3. **Presentation Layer** (UI and state management)
+   - Create BLoC: `lib/presentation/blocs/my_feature/my_feature_bloc.dart`
+   - Create events: `lib/presentation/blocs/my_feature/my_feature_event.dart`
+   - Create states: `lib/presentation/blocs/my_feature/my_feature_state.dart`
+   - Create page: `lib/presentation/pages/my_feature/my_feature_page.dart`
+   - Create widgets: `lib/presentation/widgets/my_feature/`
+
+4. **Configuration**
+   - Register in DI: `lib/core/di/enterprise_injection.dart`
+   - Add localization strings: `lib/l10n/app_en.arb`, `lib/l10n/app_vi.arb`
+   - Update routing if needed: `lib/config/route/app_router.dart`
+
+5. **Code Generation**
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   flutter gen-l10n
+   ```
+
+6. **Testing**
+   - Unit tests for use cases and repositories
+   - BLoC tests with bloc_test package
+   - Widget tests for UI components
+
+### Backend Module Checklist
+
+1. Create module directory: `src/modules/my-feature/`
+2. Create files:
+   - `my-feature.module.ts` - Module definition
+   - `my-feature.service.ts` - Business logic
+   - `my-feature.resolver.ts` - GraphQL resolver
+   - `my-feature.args.ts` - Input types
+   - `my-feature.response.ts` - Output types
+3. Register in `src/app.module.ts`: `imports: [MyFeatureModule]`
+
+---
+
+## Code Generation
+
+### When to Run
+
+Run code generation after modifying:
+- Isar models (`@collection`)
+- Freezed classes (`@freezed`)
+- Injectable services (`@injectable`, `@singleton`, `@lazySingleton`)
+- JSON serializable classes (`@JsonSerializable`)
+
+```bash
+# Standard build
+dart run build_runner build --delete-conflicting-outputs
+
+# Watch mode (auto-rebuild on changes)
+dart run build_runner watch --delete-conflicting-outputs
+
+# Clean and rebuild
+dart run build_runner clean
+dart run build_runner build --delete-conflicting-outputs
+
+# Localization
+flutter gen-l10n
+```
+
+---
+
+## Performance Targets
+
+- **Startup time**: < 2 seconds
+- **Memory usage**: < 150MB baseline
+- **Auth operations**: < 100ms
+- **Message delivery**: < 100ms
+- **UI rendering**: 60fps (16ms per frame)
+
+---
+
+## Critical Layer Separation Rules
+
+### FORBIDDEN Imports
+
 ```dart
-// lib/domain/repositories/auth_repository.dart
+// ❌ Domain layer importing Flutter
+// lib/domain/entities/user.dart
+import 'package:flutter/material.dart'; // FORBIDDEN
+
+// ❌ Domain layer importing infrastructure
+// lib/domain/usecases/get_user.dart
+import 'package:http/http.dart'; // FORBIDDEN
+import 'package:isar/isar.dart'; // FORBIDDEN
+
+// ❌ Presentation importing data models
+// lib/presentation/pages/home_page.dart
+import 'package:flutter_chat_app/data/models/user_model.dart'; // FORBIDDEN
+
+// ✅ Presentation importing domain entities
+import 'package:flutter_chat_app/domain/entities/user.dart'; // CORRECT
+```
+
+### Allowed Imports by Layer
+
+**Domain Layer** (`lib/domain/`):
+- ✅ Other domain files
+- ✅ `dartz` (for `Either`)
+- ✅ `equatable` (for value equality)
+- ❌ Flutter packages
+- ❌ Data layer
+- ❌ Presentation layer
+- ❌ Infrastructure (http, database, etc.)
+
+**Data Layer** (`lib/data/`):
+- ✅ Domain layer (entities, repository interfaces)
+- ✅ Infrastructure packages (http, isar, etc.)
+- ✅ JSON serialization packages
+- ❌ Flutter UI packages
+- ❌ Presentation layer
+
+**Presentation Layer** (`lib/presentation/`):
+- ✅ Domain layer (entities, use cases, repository interfaces)
+- ✅ Flutter packages
+- ✅ BLoC packages
+- ❌ Data layer (models, data sources)
+
+---
+
+### Repository Pattern Example
+
+**Domain Interface** (`lib/domain/repositories/i_auth_repository.dart`):
+```dart
 abstract class IAuthRepository {
   Future<Either<Failure, User>> login(String email, String password);
   Future<Either<Failure, User>> register({
@@ -840,9 +1189,8 @@ abstract class IAuthRepository {
 }
 ```
 
-**Data Implementation:**
+**Data Implementation** (`lib/data/repositories/auth_repository_impl.dart`):
 ```dart
-// lib/data/repositories/auth_repository_impl.dart
 @LazySingleton(as: IAuthRepository)
 class AuthRepositoryImpl implements IAuthRepository {
   final IAuthRemoteDataSource _remoteDataSource;
@@ -876,162 +1224,11 @@ class AuthRepositoryImpl implements IAuthRepository {
 }
 ```
 
-## 🚨 Critical Rules & Warnings
+---
 
-### Layer Separation (ENFORCED)
-```dart
-// ❌ FORBIDDEN - Domain importing Flutter
-// lib/domain/entities/user.dart
-import 'package:flutter/material.dart'; // ERROR!
+## Testing Patterns
 
-// ❌ FORBIDDEN - Presentation importing Data Models
-// lib/presentation/pages/home_page.dart
-import 'package:flutter_chat_app/data/models/user_model.dart'; // ERROR!
-
-// ✅ CORRECT - Presentation importing Domain Entities
-import 'package:flutter_chat_app/domain/entities/user.dart';
-
-// ❌ FORBIDDEN - Domain importing infrastructure
-// lib/domain/usecases/get_user.dart
-import 'package:http/http.dart'; // ERROR!
-import 'package:sqflite/sqflite.dart'; // ERROR!
-```
-
-### Hardcoded Strings (WARNING)
-```dart
-// ❌ WARNING - Hardcoded UI strings
-Text('Welcome to the app'); // Use localization!
-
-// ✅ CORRECT - Localized strings
-Text(context.l10n.welcomeMessage);
-
-// ✅ OK - Non-UI strings (constants, keys)
-const String apiKey = 'API_KEY';
-const String cacheKey = 'user_cache';
-```
-
-### RTL Support (INFO)
-```dart
-// ⚠️ INFO - Use start/end instead of left/right
-Padding(
-  padding: EdgeInsets.only(left: 16), // Consider RTL!
-);
-
-// ✅ BETTER - RTL-aware
-Padding(
-  padding: EdgeInsets.only(start: 16),
-);
-```
-
-### State Management (WARNING)
-```dart
-// ❌ WARNING - setState in presentation layer
-// lib/presentation/pages/chat_page.dart
-setState(() {
-  messages.add(newMessage);
-});
-
-// ✅ CORRECT - Use BLoC
-context.read<ChatBloc>().add(ChatEvent.messageReceived(newMessage));
-```
-
-### Code Quality Rules
-```dart
-// ❌ WARNING - Broad exception catch
-try {
-  await someOperation();
-} catch (e) { // Too broad!
-  // Handle
-}
-
-// ✅ CORRECT - Specific exception handling
-try {
-  await someOperation();
-} on ServerException catch (e) {
-  // Handle server error
-} on NetworkException catch (e) {
-  // Handle network error
-} catch (e) {
-  // Handle unexpected error
-  logger.e('Unexpected error', error: e);
-}
-
-// ⚠️ INFO - Prefer final for locals
-var count = 10; // Consider using final
-
-// ✅ BETTER
-final count = 10;
-
-// ✅ OK - Only if reassigned
-var count = 10;
-count = 20;
-```
-
-### Documentation (INFO)
-```dart
-// ⚠️ INFO - Add doc comments for public APIs
-class UserRepository {
-  Future<User> getUser(String id) async {
-    // Implementation
-  }
-}
-
-// ✅ BETTER - With documentation
-/// Repository for managing user data.
-///
-/// Provides methods to fetch, create, update, and delete users.
-class UserRepository {
-  /// Fetches a user by their unique [id].
-  ///
-  /// Returns [User] if found, throws [UserNotFoundException] otherwise.
-  Future<User> getUser(String id) async {
-    // Implementation
-  }
-}
-```
-
-### TODO Comments (INFO)
-```dart
-// ⚠️ INFO - Add context to TODOs
-// TODO: Fix this
-
-// ✅ BETTER - With context
-// TODO(john): Implement retry logic for failed requests (#123)
-// TODO(#456): Add pagination support
-```
-
-## 🔧 Code Generation
-
-### When to Run
-```bash
-# After creating/modifying:
-# - Isar models (@collection)
-# - Freezed classes (@freezed)
-# - Injectable services (@injectable)
-# - JSON serializable classes (@JsonSerializable)
-
-dart run build_runner build --delete-conflicting-outputs
-
-# Watch mode (auto-rebuild)
-dart run build_runner watch --delete-conflicting-outputs
-
-# Clean before build
-dart run build_runner clean
-dart run build_runner build --delete-conflicting-outputs
-```
-
-### Localization Generation
-```bash
-# After modifying ARB files
-flutter gen-l10n
-
-# Or run with app
-flutter run # Auto-generates
-```
-
-## 🧪 Testing Patterns
-
-### BLoC Testing
+### BLoC Testing with bloc_test
 ```dart
 import 'package:bloc_test/bloc_test.dart';
 
@@ -1222,46 +1419,115 @@ void main() {
 
 ### Before Committing
 - [ ] Run `flutter analyze` - no errors
-- [ ] Run `dart run build_runner build` if models changed
+---
+
+## Pre-Commit Checklist
+
+### Before Committing Code
+- [ ] Run `flutter analyze` - no errors
+- [ ] Run `dart run build_runner build` if models/BLoCs/DI changed
 - [ ] Run tests: `flutter test`
-- [ ] Check for `print()` statements - use Logger
-- [ ] Check for hardcoded strings - use l10n
-- [ ] Check for `!` null assertions - use null-safe operators
-- [ ] Check for `as` type casts - use `is` checks
+- [ ] No `print()` statements - use Logger
+- [ ] No hardcoded UI strings - use `context.l10n`
+- [ ] No `!` null assertions - use null-safe operators (`??`, `?.`)
+- [ ] No `as` type casts - use `is` checks
 - [ ] Verify layer separation - no forbidden imports
+- [ ] **All BLoCs extend `BaseBloc`, NOT `Bloc`**
+- [ ] **All States extend `BaseState`**
+- [ ] **All StatefulWidgets extend `BaseStatefulWidget`**
+- [ ] **All StatelessWidgets extend `BaseStatelessWidget`**
+- [ ] **All text uses `AppText`, NOT `Text`**
+- [ ] **All UI components use design system (`App*`), NOT Flutter widgets**
 - [ ] Add/update tests for new features
 - [ ] Update documentation if needed
 
-### Adding New Feature
-- [ ] Create domain entities
-- [ ] Create repository interface in domain
-- [ ] Create use cases
-- [ ] Create data models with mappers
-- [ ] Create data sources (remote + local)
-- [ ] Implement repository
-- [ ] Create BLoC/Cubit with events/states
-- [ ] Create UI pages/widgets
-- [ ] Register dependencies in DI
-- [ ] Run code generation
-- [ ] Write tests (unit + widget)
-- [ ] Add localization strings
-- [ ] Update routing if needed
-
 ### Code Review Checklist
-- [ ] Follows Clean Architecture
-- [ ] No layer violations
-- [ ] Proper error handling with Either<Failure, T>
-- [ ] Uses dependency injection
-- [ ] Has unit tests
-- [ ] Uses localization for UI strings
-- [ ] No hardcoded values
+- [ ] Follows Clean Architecture (domain → data → presentation)
+- [ ] No layer violations (check imports)
+- [ ] Proper error handling with `Either<Failure, T>`
+- [ ] Uses dependency injection (`@injectable`, `@singleton`, `@lazySingleton`)
+- [ ] **BLoCs extend `BaseBloc<Event, State>`** ← CRITICAL
+- [ ] **States extend `BaseState`** ← CRITICAL
+- [ ] **Widgets extend `BaseStatefulWidget` or `BaseStatelessWidget`** ← CRITICAL
+- [ ] **Uses `AppText` instead of `Text`** ← CRITICAL
+- [ ] **Uses design system components (`App*`)** ← CRITICAL
+- [ ] **Uses `context.l10n` for ALL user-facing text** ← CRITICAL
+- [ ] **Uses `AppColors` for colors** ← CRITICAL
+- [ ] **Uses `AppDimens` for dimensions** ← CRITICAL
+- [ ] Has unit tests (use cases, repositories)
+- [ ] Has BLoC tests (with `bloc_test` package)
 - [ ] Proper null safety
-- [ ] Performance optimized
-- [ ] Documented public APIs
+- [ ] Performance optimized (const constructors, efficient rebuilds)
+- [ ] Documented public APIs (doc comments)
 
 ---
 
-**Version**: 2.0
-**Last Updated**: 2025-01-27
-**Maintainer**: Senior Flutter/Mobile Architect
-**Based on**: Cursor Rules + Clean Architecture + BLoC Pattern
+## Quick Reference
+
+### Key Commands
+
+```bash
+# Flutter
+flutter analyze                                              # Check for errors
+flutter test                                                 # Run tests
+dart run build_runner build --delete-conflicting-outputs    # Generate code
+flutter gen-l10n                                            # Generate localizations
+flutter run --flavor staging                                # Run staging flavor
+flutter run --flavor production                             # Run production flavor
+
+# Backend
+npm run start:dev                                           # Run in development
+npm run test                                                # Run tests
+npm run build                                               # Build for production
+```
+
+### Key Directories
+
+```
+flutter_chat_app/lib/
+├── core/          # Base classes, DI, network, storage, constants
+├── domain/        # Entities, use cases, repository interfaces (NO Flutter imports)
+├── data/          # Models, data sources, repository implementations
+├── presentation/  # BLoCs, pages, widgets (UI layer)
+└── config/        # Routes, themes, app configuration
+
+src/
+├── common/        # Shared utilities, constants
+├── models/        # TypeORM entities
+├── modules/       # Feature modules (GraphQL resolvers, services)
+└── services/      # External services (AWS, Redis, etc.)
+```
+
+### Key Patterns
+
+**Base Classes (MANDATORY)**:
+- BLoCs: `extends BaseBloc<Event, State>` (NOT `Bloc`)
+- States: `extends BaseState` with `@freezed`
+- StatefulWidgets: `extends BaseStatefulWidget`
+- StatelessWidgets: `extends BaseStatelessWidget`
+- Cubits: `extends BaseCubit<State>`
+
+**Design System (MANDATORY)**:
+- Text: `AppText(context.l10n.text, style: AppTextStyle.bodyMedium)`
+- Buttons: `AppButton(label: context.l10n.save, onPressed: _save)`
+- Inputs: `AppTextField(label: context.l10n.email, controller: _controller)`
+- Lists: `AppListView(items: items, itemBuilder: ...)`
+- Cards: `AppCard(child: ...)`
+
+**Error Handling**: `Either<Failure, T>` → `result.fold((failure) => ..., (success) => ...)`
+
+**Localization (MANDATORY)**: `context.l10n.keyName` (NO hardcoded strings)
+
+**Logging**: `logger.i()`, `logger.e()`, `logger.w()` (NO `print()`)
+
+**Colors**: `AppColors.textPrimaryDarkMode`, `AppColors.backgroundDarkMode` (NO `Colors.*`)
+
+**Dimensions**: `AppDimens.paddingMedium`, `AppDimens.spaceSmall` (NO hardcoded numbers)
+
+**DI Annotations**: `@injectable`, `@singleton`, `@lazySingleton`
+
+---
+
+**Document Version**: 2.2  
+**Last Updated**: 2025-01-29  
+**Maintained By**: Senior Flutter/Mobile Architect

@@ -239,6 +239,12 @@ abstract class AppLocalizations {
   /// **'Yesterday'**
   String get yesterday;
 
+  /// Accessibility label for message timestamp
+  ///
+  /// In en, this message translates to:
+  /// **'Sent at {time}'**
+  String sentAt(String time);
+
   /// Today text
   ///
   /// In en, this message translates to:
@@ -1073,7 +1079,7 @@ abstract class AppLocalizations {
   /// **'Gallery'**
   String get gallery;
 
-  /// File option
+  /// File label
   ///
   /// In en, this message translates to:
   /// **'File'**
@@ -1336,6 +1342,630 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please check your internet connection and try again'**
   String get checkInternetConnection;
+
+  /// Placeholder for dropdown/radio selection
+  ///
+  /// In en, this message translates to:
+  /// **'Select an option'**
+  String get selectOption;
+
+  /// Enabled state label
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get enabled;
+
+  /// Disabled state label
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get disabled;
+
+  /// Value label for slider
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get value;
+
+  /// Range label for slider
+  ///
+  /// In en, this message translates to:
+  /// **'Range'**
+  String get range;
+
+  /// Minimum value label
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum'**
+  String get minimum;
+
+  /// Maximum value label
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum'**
+  String get maximum;
+
+  /// Placeholder text for search input
+  ///
+  /// In en, this message translates to:
+  /// **'Search...'**
+  String get searchPlaceholder;
+
+  /// Message when search returns no results
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get noResults;
+
+  /// Date picker title
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date'**
+  String get selectDate;
+
+  /// Error message for invalid date
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid date'**
+  String get invalidDate;
+
+  /// Time picker title
+  ///
+  /// In en, this message translates to:
+  /// **'Select Time'**
+  String get selectTime;
+
+  /// Error message for invalid time
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid time'**
+  String get invalidTime;
+
+  /// Rating label
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get rating;
+
+  /// Rating prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Rate this'**
+  String get rateThis;
+
+  /// Star count with pluralization
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 star} other{{count} stars}}'**
+  String stars(int count);
+
+  /// Validation message for required field
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required'**
+  String get fieldRequired;
+
+  /// Validation message for invalid input
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid input'**
+  String get invalidInput;
+
+  /// Checkbox checked state
+  ///
+  /// In en, this message translates to:
+  /// **'Checked'**
+  String get checked;
+
+  /// Checkbox unchecked state
+  ///
+  /// In en, this message translates to:
+  /// **'Unchecked'**
+  String get unchecked;
+
+  /// Checkbox indeterminate state
+  ///
+  /// In en, this message translates to:
+  /// **'Indeterminate'**
+  String get indeterminate;
+
+  /// Selected state label
+  ///
+  /// In en, this message translates to:
+  /// **'Selected'**
+  String get selected;
+
+  /// Unselected state label
+  ///
+  /// In en, this message translates to:
+  /// **'Unselected'**
+  String get unselected;
+
+  /// Slider accessibility label
+  ///
+  /// In en, this message translates to:
+  /// **'Slider'**
+  String get slider;
+
+  /// Separator for value ranges (e.g., '5 out of 10')
+  ///
+  /// In en, this message translates to:
+  /// **'out of'**
+  String get outOf;
+
+  /// Volume control label
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get volume;
+
+  /// Accessibility label for message bubble
+  ///
+  /// In en, this message translates to:
+  /// **'Message bubble'**
+  String get messageBubble;
+
+  /// Accessibility label for text message
+  ///
+  /// In en, this message translates to:
+  /// **'Text message'**
+  String get textMessage;
+
+  /// Accessibility label for image message
+  ///
+  /// In en, this message translates to:
+  /// **'Image message'**
+  String get imageMessage;
+
+  /// Accessibility label for video message
+  ///
+  /// In en, this message translates to:
+  /// **'Video message'**
+  String get videoMessage;
+
+  /// Accessibility label for audio message
+  ///
+  /// In en, this message translates to:
+  /// **'Audio message'**
+  String get audioMessage;
+
+  /// Accessibility label for file message
+  ///
+  /// In en, this message translates to:
+  /// **'File message'**
+  String get fileMessage;
+
+  /// Accessibility label for location message
+  ///
+  /// In en, this message translates to:
+  /// **'Location message'**
+  String get locationMessage;
+
+  /// Accessibility label for contact message
+  ///
+  /// In en, this message translates to:
+  /// **'Contact message'**
+  String get contactMessage;
+
+  /// Accessibility label for system message
+  ///
+  /// In en, this message translates to:
+  /// **'System message'**
+  String get systemMessage;
+
+  /// Message delivered status
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get delivered;
+
+  /// Message read status
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get read;
+
+  /// Message failed status
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get failed;
+
+  /// Message pending status
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get pending;
+
+  /// Label for reply preview
+  ///
+  /// In en, this message translates to:
+  /// **'Replying to {author}'**
+  String replyingTo(String author);
+
+  /// Button text to cancel reply
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel reply'**
+  String get cancelReply;
+
+  /// Voice message label
+  ///
+  /// In en, this message translates to:
+  /// **'Voice message'**
+  String get voiceMessage;
+
+  /// Photo label
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get photo;
+
+  /// Video label
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get video;
+
+  /// Audio label
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get audio;
+
+  /// Document label
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get document;
+
+  /// Location label
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get location;
+
+  /// Contact label
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get contact;
+
+  /// Button text to add reaction
+  ///
+  /// In en, this message translates to:
+  /// **'Add reaction'**
+  String get addReaction;
+
+  /// Button text to remove reaction
+  ///
+  /// In en, this message translates to:
+  /// **'Remove reaction'**
+  String get removeReaction;
+
+  /// Reactions label
+  ///
+  /// In en, this message translates to:
+  /// **'Reactions'**
+  String get reactions;
+
+  /// Recently used reactions section
+  ///
+  /// In en, this message translates to:
+  /// **'Recently used'**
+  String get recentlyUsed;
+
+  /// Placeholder for emoji search
+  ///
+  /// In en, this message translates to:
+  /// **'Search emoji'**
+  String get searchEmoji;
+
+  /// Emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Smileys & People'**
+  String get smileysAndPeople;
+
+  /// Emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Gestures & Body Parts'**
+  String get gesturesAndBodyParts;
+
+  /// Emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'People & Professions'**
+  String get peopleAndProfessions;
+
+  /// Emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Animals & Nature'**
+  String get animalsAndNature;
+
+  /// Emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Food & Drink'**
+  String get foodAndDrink;
+
+  /// Emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Activities & Sports'**
+  String get activitiesAndSports;
+
+  /// Emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get activity;
+
+  /// Emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Travel & Places'**
+  String get travelAndPlaces;
+
+  /// Emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Objects'**
+  String get objects;
+
+  /// Emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols'**
+  String get symbols;
+
+  /// Emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Flags'**
+  String get flags;
+
+  /// Message when emoji search returns no results
+  ///
+  /// In en, this message translates to:
+  /// **'No emojis found'**
+  String get noEmojisFound;
+
+  /// Typing indicator for single user
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is typing...'**
+  String isTyping(String name);
+
+  /// Typing indicator for two users
+  ///
+  /// In en, this message translates to:
+  /// **'{name1} and {name2} are typing...'**
+  String areTyping(String name1, String name2);
+
+  /// Typing indicator for multiple users
+  ///
+  /// In en, this message translates to:
+  /// **'{name} and {count} others are typing...'**
+  String multipleTyping(String name, int count);
+
+  /// Play button label
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get play;
+
+  /// Pause button label
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get pause;
+
+  /// Stop button label
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stop;
+
+  /// Playback speed control label
+  ///
+  /// In en, this message translates to:
+  /// **'Playback speed'**
+  String get playbackSpeed;
+
+  /// Duration label
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get duration;
+
+  /// Current playback time label
+  ///
+  /// In en, this message translates to:
+  /// **'Current time'**
+  String get currentTime;
+
+  /// Loading audio message
+  ///
+  /// In en, this message translates to:
+  /// **'Loading audio...'**
+  String get loadingAudio;
+
+  /// Remaining playback time label
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining time'**
+  String get remainingTime;
+
+  /// Recording status
+  ///
+  /// In en, this message translates to:
+  /// **'Recording...'**
+  String get recording;
+
+  /// Button text to record voice message
+  ///
+  /// In en, this message translates to:
+  /// **'Record voice message'**
+  String get recordVoiceMessage;
+
+  /// Button text to send voice message
+  ///
+  /// In en, this message translates to:
+  /// **'Send voice message'**
+  String get sendVoiceMessage;
+
+  /// Button text to cancel recording
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel recording'**
+  String get cancelRecording;
+
+  /// Hint text for voice recording
+  ///
+  /// In en, this message translates to:
+  /// **'Long press to record'**
+  String get longPressToRecord;
+
+  /// Hint text to cancel voice recording
+  ///
+  /// In en, this message translates to:
+  /// **'Slide to cancel'**
+  String get slideToCancel;
+
+  /// Hint text to send voice recording
+  ///
+  /// In en, this message translates to:
+  /// **'Release to send'**
+  String get releaseToSend;
+
+  /// Accessibility label for message options menu
+  ///
+  /// In en, this message translates to:
+  /// **'Message options'**
+  String get messageOptions;
+
+  /// Hint text for message long press
+  ///
+  /// In en, this message translates to:
+  /// **'Long press for options'**
+  String get longPressForOptions;
+
+  /// Hint text to view media
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to view'**
+  String get tapToView;
+
+  /// Hint text to download file
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to download'**
+  String get tapToDownload;
+
+  /// Downloading status
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading...'**
+  String get downloading;
+
+  /// Downloaded status
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded'**
+  String get downloaded;
+
+  /// Download failed status
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed'**
+  String get downloadFailed;
+
+  /// Upload failed status
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed'**
+  String get uploadFailed;
+
+  /// Uploading status
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading...'**
+  String get uploading;
+
+  /// Uploaded status
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded'**
+  String get uploaded;
+
+  /// Button text to retry upload
+  ///
+  /// In en, this message translates to:
+  /// **'Retry upload'**
+  String get retryUpload;
+
+  /// Button text to retry download
+  ///
+  /// In en, this message translates to:
+  /// **'Retry download'**
+  String get retryDownload;
+
+  /// Button text to cancel upload
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel upload'**
+  String get cancelUpload;
+
+  /// Button text to cancel download
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel download'**
+  String get cancelDownload;
+
+  /// File size label
+  ///
+  /// In en, this message translates to:
+  /// **'File size'**
+  String get fileSize;
+
+  /// File name label
+  ///
+  /// In en, this message translates to:
+  /// **'File name'**
+  String get fileName;
+
+  /// File type label
+  ///
+  /// In en, this message translates to:
+  /// **'File type'**
+  String get fileType;
+
+  /// Error message for unsupported file type
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported file type'**
+  String get unsupportedFileType;
+
+  /// Error message for file size exceeding limit
+  ///
+  /// In en, this message translates to:
+  /// **'File is too large'**
+  String get fileTooLarge;
+
+  /// Maximum file size information
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum file size: {size}'**
+  String maxFileSize(String size);
+
+  /// Hint text to retry failed operation
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to retry'**
+  String get tapToRetry;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

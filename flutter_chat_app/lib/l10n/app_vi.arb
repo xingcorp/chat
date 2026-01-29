@@ -25,6 +25,7 @@
   "noMessages": "Chưa có tin nhắn",
   "loadMore": "Tải thêm",
   "yesterday": "Hôm qua",
+  "sentAt": "Đã gửi lúc {time}",
   "today": "Hôm nay",
   "online": "Trực tuyến",
   "offline": "Ngoại tuyến",
@@ -238,5 +239,34 @@
   "noItemsDescription": "Không có mục nào để hiển thị",
 
   "noInternetConnection": "Không có kết nối Internet",
-  "checkInternetConnection": "Vui lòng kiểm tra kết nối internet và thử lại"
+  "checkInternetConnection": "Vui lòng kiểm tra kết nối internet và thử lại",
+
+  "selectOption": "Chọn một tùy chọn",
+  "enabled": "Bật",
+  "disabled": "Tắt",
+  "value": "Giá trị",
+  "range": "Phạm vi",
+  "minimum": "Tối thiểu",
+  "maximum": "Tối đa",
+  "searchPlaceholder": "Tìm kiếm...",
+  "noResults": "Không tìm thấy kết quả",
+  "selectDate": "Chọn ngày",
+  "invalidDate": "Ngày không hợp lệ",
+  "selectTime": "Chọn giờ",
+  "invalidTime": "Giờ không hợp lệ",
+  "rating": "Đánh giá",
+  "rateThis": "Đánh giá",
+  "stars": "{count, plural, =1{1 sao} other{{count} sao}}",
+  "fieldRequired": "Trường này là bắt buộc",
+  "invalidInput": "Dữ liệu không hợp lệ",
+  "checked": "Đã chọn",
+  "unchecked": "Chưa chọn",
+  "indeterminate": "Không xác định",
+  "selected": "Đã chọn",
+  "unselected": "Chưa chọn",
+
+  "slider": "Thanh trượt",
+  "outOf": "trên",
+  "volume": "Âm lượng",
+  "tapToRetry": "Nhấn để thử lại"
 }
