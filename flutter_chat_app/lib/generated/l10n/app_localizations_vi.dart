@@ -1116,4 +1116,16 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get exitFullscreen => 'Thoát toàn màn hình';
+
+  @override
+  String get loop => 'Lặp lại';
+
+  @override
+  String get rewind10Seconds => 'Tua lại 10 giây';
+
+  @override
+  String get forward10Seconds => 'Tua tới 10 giây';
+
+  @override
+  String get errorLoadingAudio => 'Lỗi tải âm thanh';
 }

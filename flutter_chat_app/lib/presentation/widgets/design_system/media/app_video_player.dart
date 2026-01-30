@@ -79,10 +79,10 @@ class AppVideoPlayer extends BaseStatefulWidget {
     this.initialQuality = VideoQuality.auto,
     this.availableQualities = const [
       VideoQuality.auto,
-      VideoQuality.p360,
-      VideoQuality.p480,
-      VideoQuality.p720,
-      VideoQuality.p1080,
+      VideoQuality.sd360,
+      VideoQuality.sd480,
+      VideoQuality.hd720,
+      VideoQuality.hd1080,
     ],
     this.enablePiP = true,
     this.onVideoEnd,
@@ -654,30 +654,10 @@ class AppVideoPlayerState extends BaseState<AppVideoPlayer>
   }
 
   String _getQualityLabel(VideoQuality quality) {
-    switch (quality) {
-      case VideoQuality.auto:
-        return 'Auto';
-      case VideoQuality.p360:
-        return '360p';
-      case VideoQuality.p480:
-        return '480p';
-      case VideoQuality.p720:
-        return '720p';
-      case VideoQuality.p1080:
-        return '1080p';
-    }
+    return quality.displayName;
   }
 
   String _getSpeedLabel(PlaybackSpeed speed) {
-    switch (speed) {
-      case PlaybackSpeed.x050:
-        return '0.5x';
-      case PlaybackSpeed.x100:
-        return '1x';
-      case PlaybackSpeed.x150:
-        return '1.5x';
-      case PlaybackSpeed.x200:
-        return '2x';
-    }
+    return speed.displayName;
   }
 }

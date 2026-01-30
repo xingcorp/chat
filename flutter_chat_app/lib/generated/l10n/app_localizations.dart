@@ -2140,6 +2140,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Exit Fullscreen'**
   String get exitFullscreen;
+
+  /// Loop button tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Loop'**
+  String get loop;
+
+  /// Rewind 10 seconds button tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Rewind 10 seconds'**
+  String get rewind10Seconds;
+
+  /// Forward 10 seconds button tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Forward 10 seconds'**
+  String get forward10Seconds;
+
+  /// Error message when audio fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading audio'**
+  String get errorLoadingAudio;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

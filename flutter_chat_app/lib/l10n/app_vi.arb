@@ -324,5 +324,25 @@
   "playbackSpeed": "Tốc độ phát",
   "@playbackSpeed": {
     "description": "Playback speed selector label"
+  },
+
+  "loop": "Lặp lại",
+  "@loop": {
+    "description": "Loop button tooltip"
+  },
+
+  "rewind10Seconds": "Tua lại 10 giây",
+  "@rewind10Seconds": {
+    "description": "Rewind 10 seconds button tooltip"
+  },
+
+  "forward10Seconds": "Tua tới 10 giây",
+  "@forward10Seconds": {
+    "description": "Forward 10 seconds button tooltip"
+  },
+
+  "errorLoadingAudio": "Lỗi tải âm thanh",
+  "@errorLoadingAudio": {
+    "description": "Error message when audio fails to load"
   }
 }

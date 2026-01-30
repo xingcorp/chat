@@ -1915,5 +1915,25 @@
   "playbackSpeed": "Playback Speed",
   "@playbackSpeed": {
     "description": "Playback speed selector label"
+  },
+
+  "loop": "Loop",
+  "@loop": {
+    "description": "Loop button tooltip"
+  },
+
+  "rewind10Seconds": "Rewind 10 seconds",
+  "@rewind10Seconds": {
+    "description": "Rewind 10 seconds button tooltip"
+  },
+
+  "forward10Seconds": "Forward 10 seconds",
+  "@forward10Seconds": {
+    "description": "Forward 10 seconds button tooltip"
+  },
+
+  "errorLoadingAudio": "Error loading audio",
+  "@errorLoadingAudio": {
+    "description": "Error message when audio fails to load"
   }
 }

@@ -1116,4 +1116,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exitFullscreen => 'Exit Fullscreen';
+
+  @override
+  String get loop => 'Loop';
+
+  @override
+  String get rewind10Seconds => 'Rewind 10 seconds';
+
+  @override
+  String get forward10Seconds => 'Forward 10 seconds';
+
+  @override
+  String get errorLoadingAudio => 'Error loading audio';
 }
