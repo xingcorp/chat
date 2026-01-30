@@ -3,10 +3,12 @@ import 'dart:io';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter_chat_app/domain/entities/attachment.dart';
 import 'package:flutter_chat_app/domain/repositories/i_media_repository.dart';
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
 
 part 'media_event.dart';
 part 'media_state.dart';
@@ -25,24 +27,22 @@ part 'media_state.dart';
 ///
 /// **Architecture**: Clean Architecture + BLoC pattern + Either error handling
 @injectable
-class MediaBloc extends Bloc<MediaEvent, MediaState> {
+class MediaBloc extends BaseBloc<MediaEvent, MediaState> {
   final IMediaRepository _mediaRepository;
-  final Logger _logger = Logger();
+  final AppLogger _logger;
 
   /// Constructor
   MediaBloc({
     required IMediaRepository mediaRepository,
-  }) : _mediaRepository = mediaRepository,
-       super(MediaStateX.initial) {
+    required AppLogger logger,
+  })  : _mediaRepository = mediaRepository,
+        _logger = logger,
+        super(MediaStateX.initial) {
     on<UploadMedia>(_onUploadMedia);
     on<DownloadMedia>(_onDownloadMedia);
     on<GetCachedMedia>(_onGetCachedMedia);
-    on<CompressImage>(_onCompressImage);
-    on<GenerateThumbnail>(_onGenerateThumbnail);
-    on<DeleteMedia>(_onDeleteMedia);
     on<ClearMediaCache>(_onClearMediaCache);
     on<GetCacheSize>(_onGetCacheSize);
-    on<ValidateMedia>(_onValidateMedia);
     on<ClearMediaError>(_onClearMediaError);
   }
 
@@ -61,10 +61,24 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
       progress: 0.0,
     ));
 
+    // Determine attachment type from file extension
+    final fileName = event.file.path.split('/').last.toLowerCase();
+    AttachmentType type = AttachmentType.other;
+    if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png') || fileName.endsWith('.gif')) {
+      type = AttachmentType.image;
+    } else if (fileName.endsWith('.mp4') || fileName.endsWith('.mov') || fileName.endsWith('.avi')) {
+      type = AttachmentType.video;
+    } else if (fileName.endsWith('.mp3') || fileName.endsWith('.wav') || fileName.endsWith('.m4a')) {
+      type = AttachmentType.audio;
+    } else if (fileName.endsWith('.pdf') || fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+      type = AttachmentType.document;
+    }
+
     final result = await _mediaRepository.uploadMedia(
-      messageId: event.messageId,
+      filePath: event.file.path,
+      type: type,
       chatId: event.chatId,
-      file: event.file,
+      messageId: event.messageId,
       onProgress: (progress) {
         emit(MediaStateX.uploading(
           fileName: event.file.path.split('/').last,
@@ -78,9 +92,9 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
         _logger.e('Failed to upload media: ${failure.message}');
         emit(MediaStateX.error(message: _getErrorMessage(failure)));
       },
-      (uploadResult) {
-        _logger.i('Media uploaded successfully: ${uploadResult.id}');
-        emit(MediaStateX.uploadSuccess(result: uploadResult));
+      (attachment) {
+        _logger.i('Media uploaded successfully: ${attachment.id}');
+        emit(MediaStateX.uploadSuccess(result: attachment));
       },
     );
   }
@@ -100,10 +114,26 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
       progress: 0.0,
     ));
 
+    // Determine attachment type from URL extension
+    final urlLower = event.url.toLowerCase();
+    AttachmentType type = AttachmentType.other;
+    if (urlLower.contains('.jpg') || urlLower.contains('.jpeg') || urlLower.contains('.png') || urlLower.contains('.gif')) {
+      type = AttachmentType.image;
+    } else if (urlLower.contains('.mp4') || urlLower.contains('.mov') || urlLower.contains('.avi')) {
+      type = AttachmentType.video;
+    } else if (urlLower.contains('.mp3') || urlLower.contains('.wav') || urlLower.contains('.m4a')) {
+      type = AttachmentType.audio;
+    } else if (urlLower.contains('.pdf') || urlLower.contains('.doc') || urlLower.contains('.docx')) {
+      type = AttachmentType.document;
+    }
+
+    // Generate attachmentId from messageId or URL
+    final attachmentId = event.messageId ?? event.url.hashCode.toString();
+
     final result = await _mediaRepository.downloadMedia(
       url: event.url,
-      messageId: event.messageId,
-      useCache: event.useCache,
+      attachmentId: attachmentId,
+      type: type,
       onProgress: (progress) {
         emit(MediaStateX.downloading(
           url: event.url,
@@ -117,13 +147,9 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
         _logger.e('Failed to download media: ${failure.message}');
         emit(MediaStateX.error(message: _getErrorMessage(failure)));
       },
-      (file) {
-        if (file != null) {
-          _logger.i('Media downloaded successfully: ${file.path}');
-          emit(MediaStateX.downloadSuccess(file: file));
-        } else {
-          emit(MediaStateX.error(message: 'Không thể tải xuống media'));
-        }
+      (filePath) {
+        _logger.i('Media downloaded successfully: $filePath');
+        emit(MediaStateX.downloadSuccess(file: File(filePath)));
       },
     );
   }
@@ -136,24 +162,24 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
     GetCachedMedia event,
     Emitter<MediaState> emit,
   ) async {
-    _logger.t('Getting cached media: ${event.url}');
+    _logger.d('Getting cached media: ${event.url}');
 
     emit(MediaStateX.loading);
 
-    final result = await _mediaRepository.getCachedMedia(
-      event.url,
-      key: event.key,
-    );
+    // Use key as attachmentId, or generate from URL
+    final attachmentId = event.key ?? event.url.hashCode.toString();
+
+    final result = await _mediaRepository.getCachedMediaPath(attachmentId);
 
     result.fold(
       (failure) {
         _logger.w('Failed to get cached media: ${failure.message}');
         emit(MediaStateX.error(message: _getErrorMessage(failure)));
       },
-      (file) {
-        if (file != null) {
-          _logger.t('Cached media retrieved: ${file.path}');
-          emit(MediaStateX.cacheSuccess(file: file));
+      (filePath) {
+        if (filePath != null) {
+          _logger.d('Cached media retrieved: $filePath');
+          emit(MediaStateX.cacheSuccess(file: File(filePath)));
         } else {
           emit(MediaStateX.error(message: 'Media không có trong cache'));
         }
@@ -161,110 +187,7 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
     );
   }
 
-  /// **Compress image - OFFLINE OPERATION**
-  ///
-  /// **Performance**: <1s for typical images
-  /// **Strategy**: Local processing with progress indication
-  Future<void> _onCompressImage(
-    CompressImage event,
-    Emitter<MediaState> emit,
-  ) async {
-    _logger.i('Compressing image: ${event.file.path}');
 
-    emit(MediaStateX.processing(
-      operation: 'Đang nén ảnh...',
-      progress: 0.5, // Indeterminate progress
-    ));
-
-    final result = await _mediaRepository.compressImage(
-      event.file,
-      quality: event.quality,
-    );
-
-    result.fold(
-      (failure) {
-        _logger.e('Failed to compress image: ${failure.message}');
-        emit(MediaStateX.error(message: _getErrorMessage(failure)));
-      },
-      (compressedFile) {
-        if (compressedFile != null) {
-          _logger.i('Image compressed successfully: ${compressedFile.path}');
-          emit(MediaStateX.compressionSuccess(file: compressedFile));
-        } else {
-          emit(MediaStateX.error(message: 'Không thể nén ảnh'));
-        }
-      },
-    );
-  }
-
-  /// **Generate thumbnail - OFFLINE OPERATION**
-  ///
-  /// **Performance**: <500ms for thumbnail generation
-  /// **Strategy**: Local processing with progress indication
-  Future<void> _onGenerateThumbnail(
-    GenerateThumbnail event,
-    Emitter<MediaState> emit,
-  ) async {
-    _logger.i('Generating thumbnail: ${event.file.path}');
-
-    emit(MediaStateX.processing(
-      operation: 'Đang tạo thumbnail...',
-      progress: 0.5, // Indeterminate progress
-    ));
-
-    final result = await _mediaRepository.generateThumbnail(
-      event.file,
-      size: event.size,
-    );
-
-    result.fold(
-      (failure) {
-        _logger.e('Failed to generate thumbnail: ${failure.message}');
-        emit(MediaStateX.error(message: _getErrorMessage(failure)));
-      },
-      (thumbnailFile) {
-        if (thumbnailFile != null) {
-          _logger.i('Thumbnail generated successfully: ${thumbnailFile.path}');
-          emit(MediaStateX.thumbnailSuccess(file: thumbnailFile));
-        } else {
-          emit(MediaStateX.error(message: 'Không thể tạo thumbnail'));
-        }
-      },
-    );
-  }
-
-  /// **Delete media - ONLINE-FIRST STRATEGY**
-  ///
-  /// **Performance**: <2s for deletion process
-  /// **Strategy**: Server deletion with local cache cleanup
-  Future<void> _onDeleteMedia(
-    DeleteMedia event,
-    Emitter<MediaState> emit,
-  ) async {
-    _logger.i('Deleting media: ${event.mediaId}');
-
-    emit(MediaStateX.processing(
-      operation: 'Đang xóa media...',
-      progress: 0.5,
-    ));
-
-    final result = await _mediaRepository.deleteMedia(event.mediaId);
-
-    result.fold(
-      (failure) {
-        _logger.e('Failed to delete media: ${failure.message}');
-        emit(MediaStateX.error(message: _getErrorMessage(failure)));
-      },
-      (success) {
-        if (success) {
-          _logger.i('Media deleted successfully: ${event.mediaId}');
-          emit(MediaStateX.deleteSuccess(mediaId: event.mediaId));
-        } else {
-          emit(MediaStateX.error(message: 'Không thể xóa media'));
-        }
-      },
-    );
-  }
 
   /// **Clear media cache - OFFLINE OPERATION**
   ///
@@ -288,13 +211,9 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
         _logger.e('Failed to clear media cache: ${failure.message}');
         emit(MediaStateX.error(message: _getErrorMessage(failure)));
       },
-      (success) {
-        if (success) {
-          _logger.i('Media cache cleared successfully');
-          emit(MediaStateX.cacheClearSuccess);
-        } else {
-          emit(MediaStateX.error(message: 'Không thể xóa cache'));
-        }
+      (_) {
+        _logger.i('Media cache cleared successfully');
+        emit(MediaStateX.cacheClearSuccess);
       },
     );
   }
@@ -307,7 +226,7 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
     GetCacheSize event,
     Emitter<MediaState> emit,
   ) async {
-    _logger.t('Getting cache size');
+    _logger.d('Getting cache size');
 
     emit(MediaStateX.loading);
 
@@ -319,37 +238,8 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
         emit(MediaStateX.error(message: _getErrorMessage(failure)));
       },
       (size) {
-        _logger.t('Cache size: $size bytes');
+        _logger.d('Cache size: $size bytes');
         emit(MediaStateX.cacheSizeResult(sizeInBytes: size));
-      },
-    );
-  }
-
-  /// **Validate media file - OFFLINE OPERATION**
-  ///
-  /// **Performance**: <200ms for file validation
-  /// **Strategy**: Local file validation
-  Future<void> _onValidateMedia(
-    ValidateMedia event,
-    Emitter<MediaState> emit,
-  ) async {
-    _logger.t('Validating media file: ${event.file.path}');
-
-    emit(MediaStateX.processing(
-      operation: 'Đang kiểm tra file...',
-      progress: 0.5,
-    ));
-
-    final result = await _mediaRepository.validateMedia(event.file);
-
-    result.fold(
-      (failure) {
-        _logger.e('Failed to validate media: ${failure.message}');
-        emit(MediaStateX.error(message: _getErrorMessage(failure)));
-      },
-      (validationResult) {
-        _logger.t('Media validation result: ${validationResult.isValid}');
-        emit(MediaStateX.validationResult(result: validationResult));
       },
     );
   }
@@ -359,7 +249,7 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
     ClearMediaError event,
     Emitter<MediaState> emit,
   ) async {
-    _logger.t('Clearing media error state');
+    _logger.d('Clearing media error state');
     emit(MediaStateX.initial);
   }
 

@@ -59,7 +59,7 @@ class MediaRemoteDataSourceImpl implements IMediaRemoteDataSource {
     try {
       final file = File(filePath);
       if (!await file.exists()) {
-        throw const FileException('File not found');
+        throw FileException(message: 'File not found');
       }
       
       final uri = Uri.parse('$_baseUrl/api/media/upload');
@@ -108,7 +108,7 @@ class MediaRemoteDataSourceImpl implements IMediaRemoteDataSource {
         );
       }
     } on SocketException {
-      throw const NetworkException();
+      throw NetworkException();
     } catch (e) {
       if (e is ServerException || e is NetworkException || e is FileException) {
         rethrow;
@@ -154,7 +154,7 @@ class MediaRemoteDataSourceImpl implements IMediaRemoteDataSource {
       await sink.close();
       return savePath;
     } on SocketException {
-      throw const NetworkException();
+      throw NetworkException();
     } catch (e) {
       if (e is ServerException || e is NetworkException) {
         rethrow;
@@ -172,7 +172,7 @@ class MediaRemoteDataSourceImpl implements IMediaRemoteDataSource {
       if (response.statusCode == 200) {
         return AttachmentModel.fromJson(response.body);
       } else if (response.statusCode == 404) {
-        throw const ServerException(message: 'Attachment not found');
+        throw ServerException(message: 'Attachment not found');
       } else {
         throw ServerException(
           message: 'Failed to get attachment',
@@ -180,7 +180,7 @@ class MediaRemoteDataSourceImpl implements IMediaRemoteDataSource {
         );
       }
     } on SocketException {
-      throw const NetworkException();
+      throw NetworkException();
     } catch (e) {
       if (e is ServerException || e is NetworkException) {
         rethrow;
@@ -204,7 +204,7 @@ class MediaRemoteDataSourceImpl implements IMediaRemoteDataSource {
         );
       }
     } on SocketException {
-      throw const NetworkException();
+      throw NetworkException();
     } catch (e) {
       if (e is ServerException || e is NetworkException) {
         rethrow;
@@ -237,7 +237,7 @@ class MediaRemoteDataSourceImpl implements IMediaRemoteDataSource {
         );
       }
     } on SocketException {
-      throw const NetworkException();
+      throw NetworkException();
     } catch (e) {
       if (e is ServerException || e is NetworkException) {
         rethrow;

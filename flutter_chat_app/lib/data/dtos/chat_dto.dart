@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter_chat_app/domain/entities/chat.dart';
 
 part 'chat_dto.freezed.dart';
 part 'chat_dto.g.dart';
@@ -101,4 +102,48 @@ class ChatListResponseDto with _$ChatListResponseDto {
 
   factory ChatListResponseDto.fromJson(Map<String, dynamic> json) =>
       _$ChatListResponseDtoFromJson(json);
+}
+
+/// **Mapper Extensions**
+///
+/// Convert DTOs to Domain Entities
+
+extension ChatDtoMapper on ChatDto {
+  /// Convert ChatDto to Chat entity
+  Chat toDomain() {
+    return Chat(
+      id: id,
+      name: name,
+      avatarUrl: imageUrl,
+      lastMessageTime: lastMessageAt != null 
+          ? DateTime.fromMillisecondsSinceEpoch(lastMessageAt!)
+          : null,
+      lastMessagePreview: null, // Not available in DTO
+      unreadCount: members.firstOrNull?.unreadCount ?? 0,
+      type: _mapChatType(type),
+      participantIds: members.map((m) => m.userId).toList(),
+    );
+  }
+  
+  /// Map string type to ChatType enum
+  ChatType _mapChatType(String type) {
+    switch (type.toLowerCase()) {
+      case 'direct':
+      case 'private':
+        return ChatType.direct;
+      case 'group':
+        return ChatType.group;
+      case 'channel':
+        return ChatType.channel;
+      default:
+        return ChatType.direct;
+    }
+  }
+}
+
+extension ChatListResponseDtoMapper on ChatListResponseDto {
+  /// Convert list of ChatDto to list of Chat entities
+  List<Chat> toDomainList() {
+    return conversations.map((dto) => dto.toDomain()).toList();
+  }
 }

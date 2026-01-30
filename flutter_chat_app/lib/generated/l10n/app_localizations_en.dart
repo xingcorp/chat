@@ -348,6 +348,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contacts => 'Contacts';
 
   @override
+  String get settings => 'Settings';
+
+  @override
   String get groups => 'Groups';
 
   @override

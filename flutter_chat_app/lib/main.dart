@@ -26,12 +26,13 @@ import 'package:flutter_chat_app/core/localization/l10n_helper.dart' as l10n_hel
 import 'package:flutter_chat_app/core/monitoring/analytics_manager.dart';
 import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/services/animation_service.dart';
 import 'package:flutter_chat_app/core/services/chat_message_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/core/services/device_capability_service.dart';
 import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
 import 'package:flutter_chat_app/core/services/performance_service.dart';
 import 'package:flutter_chat_app/core/theme/app_theme.dart';
-import 'package:flutter_chat_app/core/utils/logger.dart';
 
 // App imports - Data
 import 'package:flutter_chat_app/data/models/chat_model.dart';
@@ -111,124 +112,87 @@ Future<void> runMainApp() async {
     ),
   );
   
-  try {
-    // Khởi tạo Firebase services với flavor-specific configuration
-    final firebaseServiceManager = FirebaseServiceManager(logger);
-    await firebaseServiceManager.initializeServices();
-
-    // Log Firebase configuration summary
-    final configSummary = firebaseServiceManager.getConfigurationSummary();
-    logger.i('Firebase configuration: $configSummary');
-
-  } catch (e) {
-    debugPrint('Firebase initialization failed: $e');
-  }
-  
   // Tải biến môi trường
   await dotenv.load(fileName: '.env');
   
-  // Đăng ký và khởi tạo dependency injection
-  configureDependencies();
-  
-  // Tùy thuộc vào nền tảng, chúng ta sẽ khởi động các dịch vụ phù hợp
-  if (kIsWeb) {
-    await _initializeWebServices();
-  } else {
-    if (Platform.isAndroid || Platform.isIOS) {
-      await _initializeMobileServices();
-    } else {
-      await _initializeDesktopServices();
-    }
-  }
-  
-  // Khởi tạo SharedPreferences
-  final sharedPreferences = await SharedPreferences.getInstance();
-  
-  // Khởi tạo các managers cache
-  // Note: AppCacheManager is registered in DI and will be injected where needed
-
-  // TODO: Register these services in DI later
-  // Khởi tạo và bắt đầu preload dữ liệu (if available)
-  // try {
-  //   final preloadManager = getIt<PreloadManager>();
-  //   unawaited(preloadManager.preloadEssentialData());
-  // } catch (e) {
-  //   print('PreloadManager not available: $e');
-  // }
-
-  // Khởi tạo background sync worker (if available)
-  // try {
-  //   final backgroundSyncWorker = getIt<BackgroundSyncWorker>();
-  // } catch (e) {
-  //   print('BackgroundSyncWorker not available: $e');
-  // }
-
-  // Khởi tạo cache stats (if available)
-  // try {
-  //   final cacheStats = getIt<CacheStats>();
-  // } catch (e) {
-  //   print('CacheStats not available: $e');
-  // }
-  
-  // Khởi tạo monitoring services nếu có
-  CrashReporter? crashReporter;
-  PerformanceMonitor? performanceMonitor;
-  AnalyticsManager? analyticsManager;
-  
-  try {
-    crashReporter = await GetIt.I.getAsync<CrashReporter>();
-    performanceMonitor = await GetIt.I.getAsync<PerformanceMonitor>();
-    analyticsManager = await GetIt.I.getAsync<AnalyticsManager>();
-    
-    // Bắt đầu tracking hiệu suất ứng dụng
-    await performanceMonitor.startTrace(TraceType.appStartup);
-    
-    // Dừng trace sau khi app khởi động
-    Future.delayed(const Duration(seconds: 5), () async {
-      await performanceMonitor?.stopTrace(TraceType.appStartup);
-      
-      // Log sự kiện khởi động ứng dụng
-      await analyticsManager?.logEvent('app_started', {
-        'startup_time': DateTime.now().toIso8601String(),
-      });
-    });
-  } catch (e) {
-    // Log lỗi nếu không khởi tạo được monitoring services
-    debugPrint('Could not initialize monitoring services: $e');
-  }
-  
-  // Khởi tạo PerformanceService
-  final performanceService = GetIt.I<PerformanceService>();
-  await performanceService.initialize();
-  
-  // Nếu đang trong chế độ debug, bật overlay hiệu suất khi khởi động
-  if (kDebugMode) {
-    // Cung cấp thời gian cho các widget khác khởi tạo
-    Future.delayed(const Duration(seconds: 2), () {
-      performanceService.showPerformanceOverlay = true;
-    });
-  }
-  
-  // Initialize Enterprise dependency injection
+  // Đăng ký và khởi tạo dependency injection (CRITICAL - must be synchronous)
   await configureDependencies();
   
-  // NOTE: MessageQueueService is now registered directly in DI container
-  // The upgradeToEnhancedMessageQueue() function is deprecated and no longer needed
-  
-  // Bắt tất cả lỗi không xử lý trong zone
+  // Start app immediately for fast startup
   runZonedGuarded(() {
     runApp(
       ScreenUtilInit(
         designSize: const Size(375, 812), // iPhone X design size
         minTextAdapt: true,
         splitScreenMode: true,
-        builder: (context, child) => MyApp(sharedPreferences: sharedPreferences),
+        builder: (context, child) => const MyApp(),
       ),
     );
   }, (error, stackTrace) {
-    debugPrint('Unhandled error: $error\n$stackTrace');
-    crashReporter?.recordError(error, stackTrace, reason: 'unhandled_error');
+    logger.e('Unhandled error', error: error, stackTrace: stackTrace);
+    // Crash reporter will be initialized in background
   });
+
+  // Initialize non-critical services in background
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _initializeNonCriticalServices();
+  });
+}
+
+/// Initialize non-critical services after app starts
+Future<void> _initializeNonCriticalServices() async {
+  final logger = getIt<Logger>();
+  
+  try {
+    // Initialize Firebase in background
+    final firebaseServiceManager = FirebaseServiceManager(logger);
+    await firebaseServiceManager.initializeServices();
+    logger.i('Firebase initialized: ${firebaseServiceManager.getConfigurationSummary()}');
+  } catch (e) {
+    logger.e('Firebase initialization failed', error: e);
+  }
+
+  try {
+    // Initialize monitoring services
+    await GetIt.I.getAsync<CrashReporter>();
+    final performanceMonitor = await GetIt.I.getAsync<PerformanceMonitor>();
+    final analyticsManager = await GetIt.I.getAsync<AnalyticsManager>();
+    
+    // Track app startup
+    await performanceMonitor.startTrace(TraceType.appStartup);
+    await performanceMonitor.stopTrace(TraceType.appStartup);
+    
+    await analyticsManager.logEvent('app_started', {
+      'startup_time': DateTime.now().toIso8601String(),
+    });
+  } catch (e) {
+    logger.e('Monitoring services initialization failed', error: e);
+  }
+
+  try {
+    // Initialize PerformanceService
+    final performanceService = GetIt.I<PerformanceService>();
+    await performanceService.initialize();
+    
+    if (kDebugMode) {
+      performanceService.showPerformanceOverlay = true;
+    }
+  } catch (e) {
+    logger.e('PerformanceService initialization failed', error: e);
+  }
+
+  // Initialize platform-specific services
+  try {
+    if (kIsWeb) {
+      await _initializeWebServices();
+    } else if (Platform.isAndroid || Platform.isIOS) {
+      await _initializeMobileServices();
+    } else {
+      await _initializeDesktopServices();
+    }
+  } catch (e) {
+    logger.e('Platform services initialization failed', error: e);
+  }
 }
 
 Future<void> _initializeWebServices() async {
@@ -294,16 +258,11 @@ Future<void> _initializeDesktopServices() async {
 }
 
 /// Widget gốc của ứng dụng
-class MyApp extends StatelessWidget {
-  final SharedPreferences sharedPreferences;
-  
-  const MyApp({
-    super.key,
-    required this.sharedPreferences,
-  });
+class MyApp extends BaseStatelessWidget {
+  const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildContent(BuildContext context) {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AppBloc>(
@@ -378,14 +337,14 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class IsarTestScreen extends StatefulWidget {
+class IsarTestScreen extends BaseStatefulWidget {
   const IsarTestScreen({super.key});
 
   @override
-  State<IsarTestScreen> createState() => _IsarTestScreenState();
+  IsarTestScreenState createState() => IsarTestScreenState();
 }
 
-class _IsarTestScreenState extends State<IsarTestScreen> {
+class IsarTestScreenState extends BaseState<IsarTestScreen> {
   final _repository = GetIt.I<OfflineFirstRepository>();
   final _uuid = const Uuid();
   bool _isLoading = false;
@@ -415,7 +374,7 @@ class _IsarTestScreenState extends State<IsarTestScreen> {
   }
 
   Future<void> _createTestData() async {
-    setState(() {
+    safeSetState(() {
       _isLoading = true;
       _statusMessage = 'Creating test data...';
     });
@@ -452,27 +411,27 @@ class _IsarTestScreenState extends State<IsarTestScreen> {
 
       // Load messages for the chat
       _repository.getMessagesForChat(chat.serverId).listen((messages) {
-        setState(() {
+        safeSetState(() {
           _messages = messages;
         });
       });
 
-      setState(() {
+      safeSetState(() {
         _statusMessage = 'Test data created successfully';
       });
     } catch (e) {
-      setState(() {
+      safeSetState(() {
         _statusMessage = 'Error creating test data: $e';
       });
     } finally {
-      setState(() {
+      safeSetState(() {
         _isLoading = false;
       });
     }
   }
 
   Future<void> _clearData() async {
-    setState(() {
+    safeSetState(() {
       _isLoading = true;
       _statusMessage = 'Clearing data...';
     });
@@ -481,16 +440,16 @@ class _IsarTestScreenState extends State<IsarTestScreen> {
       final databaseService = GetIt.I<DatabaseService>();
       await databaseService.clearAllData();
       
-      setState(() {
+      safeSetState(() {
         _messages = [];
         _statusMessage = 'Data cleared successfully';
       });
     } catch (e) {
-      setState(() {
+      safeSetState(() {
         _statusMessage = 'Error clearing data: $e';
       });
     } finally {
-      setState(() {
+      safeSetState(() {
         _isLoading = false;
       });
     }
@@ -599,14 +558,14 @@ Future<void> setupServices() async {
 }
 
 /// Màn hình chính
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends BaseStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends BaseState<HomeScreen> {
   int _currentIndex = 0;
   
   @override
@@ -616,25 +575,25 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
-          setState(() {
+          safeSetState(() {
             _currentIndex = index;
           });
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.chat_outlined),
-            selectedIcon: Icon(Icons.chat),
-            label: 'Chats',
+            icon: const Icon(Icons.chat_outlined),
+            selectedIcon: const Icon(Icons.chat),
+            label: context.l10n.chats,
           ),
           NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            selectedIcon: Icon(Icons.people),
-            label: 'Contacts',
+            icon: const Icon(Icons.people_outline),
+            selectedIcon: const Icon(Icons.people),
+            label: context.l10n.contacts,
           ),
           NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
+            icon: const Icon(Icons.settings_outlined),
+            selectedIcon: const Icon(Icons.settings),
+            label: context.l10n.settings,
           ),
         ],
       ),

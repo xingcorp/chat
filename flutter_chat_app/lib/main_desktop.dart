@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 // Third-party package imports
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 // App imports
@@ -18,8 +17,8 @@ import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
-import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
+import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/main.dart' show MyApp;
 
 Future<void> main() async {
@@ -34,10 +33,7 @@ Future<void> main() async {
   // Initialize services for desktop
   await _initializeDesktopServices();
   
-  // Initialize SharedPreferences
-  final sharedPreferences = await SharedPreferences.getInstance();
-  
-  runApp(MyApp(sharedPreferences: sharedPreferences));
+  runApp(const MyApp());
 }
 
 Future<void> _initializeDesktopServices() async {
@@ -387,7 +383,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                                   ),
                                   Expanded(
                                     child: TextField(
-                                      decoration: InputDecoration(
+                                      decoration: const InputDecoration(
                                         hintText: AppStrings.typeMessage,
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.all(Radius.circular(24.0)),
@@ -430,7 +426,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.all(AppDimensions.paddingDefault),
-                          child: Text(
+                          child: const Text(
                             'Users',
                             style: TextStyle(
                               fontSize: 20,
@@ -441,7 +437,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                         
                         Expanded(
                           child: _users.isEmpty
-                              ? Center(child: Text('Chưa có người dùng nào'))
+                              ? const Center(child: Text('Chưa có người dùng nào'))
                               : ListView.builder(
                                   itemCount: _users.length,
                                   itemBuilder: (context, index) {

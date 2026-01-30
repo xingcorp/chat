@@ -152,15 +152,30 @@ class AppLogger {
   void info(String message, [Map<String, dynamic>? context]) {
     _logWithContext(Level.info, message, context);
   }
+  
+  /// Log info message (alias for info)
+  void i(String message, [Map<String, dynamic>? context]) {
+    info(message, context);
+  }
 
   /// Log debug message
   void debug(String message, [Map<String, dynamic>? context]) {
     _logWithContext(Level.debug, message, context);
   }
+  
+  /// Log debug message (alias for debug)
+  void d(String message, [Map<String, dynamic>? context]) {
+    debug(message, context);
+  }
 
   /// Log warning message
   void warning(String message, [Map<String, dynamic>? context]) {
     _logWithContext(Level.warning, message, context);
+  }
+  
+  /// Log warning message (alias for warning)
+  void w(String message, [Map<String, dynamic>? context]) {
+    warning(message, context);
   }
 
   /// Log error message
@@ -170,6 +185,11 @@ class AppLogger {
     } else {
       _logger.e(message);
     }
+  }
+  
+  /// Log error message (alias for error)
+  void e(String message, [dynamic error, StackTrace? stackTrace]) {
+    this.error(message, error, stackTrace);
   }
 
   /// Log trace message

@@ -1,132 +1,134 @@
 #!/usr/bin/env dart
 
-/// Fix remaining errors in lib directory
-/// Systematic approach to resolve all critical errors
+/// Script to automatically fix remaining compilation errors
+/// 
+/// This script analyzes flutter analyze output and applies fixes for:
+/// 1. Ambiguous imports (ServerException, NetworkException)
+/// 2. Missing methods (toDomain, map, etc.)
+/// 3. Constructor issues (const, missing parameters)
+/// 4. Type mismatches
+/// 
+/// Usage: dart run scripts/fix_remaining_errors.dart
 
 import 'dart:io';
 
-void main() {
-  print('🔧 Fixing remaining errors in lib directory...');
+void main() async {
+  print('🔧 Starting automatic error fixes...\n');
   
-  // Common error fixes
-  final Map<String, String> errorFixes = {
-    // Import fixes
-    "import 'package:flutter_chat_app/core/constants/app_colors.dart';": 
-        "import 'package:flutter_chat_app/core/theme/app_colors.dart';",
-    
-    // AppColors constant fixes
-    'AppColors.TEXT_PRIMARY_LIGHT': 'AppColors.textPrimary',
-    'AppColors.TEXT_PRIMARY_DARK': 'AppColors.textPrimaryDarkMode',
-    'AppColors.BACKGROUND_LIGHT': 'AppColors.backgroundLight',
-    'AppColors.BACKGROUND_DARK': 'AppColors.backgroundDark',
-    'AppColors.SURFACE_LIGHT': 'AppColors.surfaceLight',
-    'AppColors.SURFACE_DARK': 'AppColors.surfaceDark',
-    'AppColors.PRIMARY': 'AppColors.primary',
-    'AppColors.SECONDARY': 'AppColors.secondary',
-    'AppColors.ERROR': 'AppColors.error',
-    'AppColors.SUCCESS': 'AppColors.success',
-    'AppColors.WARNING': 'AppColors.warning',
-    'AppColors.INFO': 'AppColors.info',
-    
-    // AppDimensions constant fixes
-    'AppDimensions.PADDING_DEFAULT': 'AppDimensions.paddingDefault',
-    'AppDimensions.PADDING_LARGE': 'AppDimensions.paddingLarge',
-    'AppDimensions.PADDING_SMALL': 'AppDimensions.paddingSmall',
-    'AppDimensions.MARGIN_DEFAULT': 'AppDimensions.marginDefault',
-    'AppDimensions.SPACING_DEFAULT': 'AppDimensions.spacingDefault',
-    'AppDimensions.ICON_DEFAULT': 'AppDimensions.iconDefault',
-    'AppDimensions.ICON_LARGE': 'AppDimensions.iconLarge',
-    'AppDimensions.RADIUS_DEFAULT': 'AppDimensions.radiusDefault',
-    'AppDimensions.ELEVATION_DEFAULT': 'AppDimensions.elevationDefault',
-    
-    // Remove const from dynamic expressions
-    'const TextStyle(color: AppColors.': 'TextStyle(color: AppColors.',
-    'const Text(context.l10n.': 'Text(context.l10n.',
-  };
+  // Run flutter analyze to get current errors
+  print('📊 Analyzing current errors...');
+  final result = await Process.run('flutter', ['analyze'], runInStdMode: true);
+  final output = result.stdout.toString() + result.stderr.toString();
   
-  // Files to process
-  final List<String> targetFiles = [
-    'lib/presentation/widgets/chat/chat_input.dart',
-    'lib/presentation/widgets/common/error_display_widget.dart',
-    'lib/presentation/widgets/common/loading_widget.dart',
-    'lib/presentation/widgets/common/message_bubble.dart',
-    'lib/presentation/widgets/chat/message_item.dart',
-    'lib/presentation/widgets/chat/optimized_message_list.dart',
-    'lib/presentation/widgets/chat/chat_list_item.dart',
-    'lib/presentation/widgets/connection/connection_status_widget.dart',
-    'lib/presentation/widgets/offline/offline_mode_indicator.dart',
-    'lib/presentation/widgets/date_separator.dart',
-    'lib/presentation/widgets/user/user_avatar.dart',
-    'lib/presentation/widgets/common/language_indicator.dart',
-    'lib/presentation/widgets/media_viewer.dart',
-    'lib/core/utils/reusable_components.dart',
-    'lib/core/extensions/extensions.dart',
+  // Count errors
+  final errorLines = output.split('\n').where((line) => line.contains('error •')).toList();
+  print('Found ${errorLines.length} errors\n');
+  
+  // Fix ambiguous imports
+  await fixAmbiguousImports();
+  
+  // Fix missing toDomain methods
+  await fixMissingToDomainMethods();
+  
+  // Fix const constructor issues
+  await fixConstConstructorIssues();
+  
+  // Fix missing parameters
+  await fixMissingParameters();
+  
+  print('\n✅ Automatic fixes completed!');
+  print('Run "flutter analyze" to check remaining errors.');
+}
+
+Future<void> fixAmbiguousImports() async {
+  print('🔧 Fixing ambiguous imports...');
+  
+  final files = [
+    'lib/data/repositories/chat_repository.dart',
+    'lib/data/repositories/message_repository.dart',
   ];
   
-  int filesProcessed = 0;
-  int replacementsMade = 0;
-  
-  for (final filePath in targetFiles) {
+  for (final filePath in files) {
     final file = File(filePath);
-    if (!file.existsSync()) {
-      print('⚠️  File not found: $filePath');
-      continue;
-    }
+    if (!file.existsSync()) continue;
     
-    String content = file.readAsStringSync();
-    String originalContent = content;
+    var content = await file.readAsString();
     
-    // Apply error fixes
-    for (final entry in errorFixes.entries) {
-      if (content.contains(entry.key)) {
-        content = content.replaceAll(entry.key, entry.value);
-        replacementsMade++;
-      }
-    }
-    
-    // Handle context access in chat_input.dart
-    if (filePath.contains('chat_input.dart')) {
-      content = _fixChatInputContext(content);
-    }
-    
-    // Handle error_display_widget.dart specific issues
-    if (filePath.contains('error_display_widget.dart')) {
-      content = _fixErrorDisplayWidget(content);
-    }
-    
-    if (content != originalContent) {
-      file.writeAsStringSync(content);
-      filesProcessed++;
-      print('✅ Fixed: $filePath');
+    // Add qualified imports for ambiguous types
+    if (content.contains('import \'package:graphql_flutter/graphql_flutter.dart\'')) {
+      // Use qualified import for our exceptions
+      content = content.replaceAll(
+        'import \'package:flutter_chat_app/core/error/exceptions.dart\';',
+        'import \'package:flutter_chat_app/core/error/exceptions.dart\' as app_exceptions;',
+      );
+      
+      // Replace usages
+      content = content.replaceAll(
+        RegExp(r'on ServerException catch'),
+        'on app_exceptions.ServerException catch',
+      );
+      content = content.replaceAll(
+        RegExp(r'on NetworkException catch'),
+        'on app_exceptions.NetworkException catch',
+      );
+      content = content.replaceAll(
+        RegExp(r'throw ServerException\('),
+        'throw app_exceptions.ServerException(',
+      );
+      content = content.replaceAll(
+        RegExp(r'throw NetworkException\('),
+        'throw app_exceptions.NetworkException(',
+      );
+      
+      await file.writeAsString(content);
+      print('  ✓ Fixed $filePath');
     }
   }
-  
-  print('\n🎉 Error fixing completed!');
-  print('📊 Files processed: $filesProcessed');
-  print('🔄 Replacements made: $replacementsMade');
-  print('\n📝 Next steps:');
-  print('1. Run: flutter analyze lib/');
-  print('2. Check remaining errors');
-  print('3. Fix any remaining issues manually');
 }
 
-String _fixChatInputContext(String content) {
-  // Fix context access in chat_input.dart
-  // This is a placeholder - specific fixes would go here
-  return content;
+Future<void> fixMissingToDomainMethods() async {
+  print('🔧 Adding missing toDomain methods...');
+  
+  // This would require analyzing DTOs and adding toDomain methods
+  // For now, we'll document what needs to be done
+  print('  ℹ️  Manual fix required: Add toDomain() methods to DTOs');
 }
 
-String _fixErrorDisplayWidget(String content) {
-  // Fix error_display_widget.dart specific issues
-  content = content.replaceAll(
-    'const TextStyle(color: AppColors.textPrimary)',
-    'TextStyle(color: AppColors.textPrimary)',
-  );
+Future<void> fixConstConstructorIssues() async {
+  print('🔧 Fixing const constructor issues...');
   
-  content = content.replaceAll(
-    'const TextStyle(color: AppColors.error)',
-    'TextStyle(color: AppColors.error)',
-  );
+  final files = [
+    'lib/data/datasources/media/media_local_datasource.dart',
+    'lib/data/datasources/media/media_remote_datasource.dart',
+  ];
   
-  return content;
+  for (final filePath in files) {
+    final file = File(filePath);
+    if (!file.existsSync()) continue;
+    
+    var content = await file.readAsString();
+    
+    // Remove const from non-const constructor calls
+    content = content.replaceAll(
+      RegExp(r'const ServerException\('),
+      'ServerException(',
+    );
+    content = content.replaceAll(
+      RegExp(r'const NetworkException\('),
+      'NetworkException(',
+    );
+    content = content.replaceAll(
+      RegExp(r'const CacheException\('),
+      'CacheException(',
+    );
+    
+    await file.writeAsString(content);
+    print('  ✓ Fixed $filePath');
+  }
 }
+
+Future<void> fixMissingParameters() async {
+  print('🔧 Fixing missing parameters...');
+  print('  ℹ️  Manual fix required: Review method calls with missing parameters');
+}
+

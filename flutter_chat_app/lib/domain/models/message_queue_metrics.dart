@@ -192,3 +192,8 @@ class MessageQueueMetrics {
     """;
   }
 } 
+
+  /// Increment cancelled message count
+  void incrementCancelled() {
+    totalFailed++; // Count cancelled as failed for metrics
+  }

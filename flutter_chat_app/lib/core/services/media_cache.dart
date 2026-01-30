@@ -40,6 +40,17 @@ class MediaCache {
     _cache[key] = media;
     _logger.debug('Cached media: $key (${media.data.length} bytes)');
   }
+  
+  /// Put file into cache (alias for put)
+  Future<void> putFile(String key, Uint8List data, {String? mimeType}) async {
+    final media = CachedMedia(
+      url: key,
+      data: data,
+      cachedAt: DateTime.now(),
+      mimeType: mimeType,
+    );
+    await put(key, media);
+  }
 
   /// Remove media from cache
   Future<void> remove(String key) async {

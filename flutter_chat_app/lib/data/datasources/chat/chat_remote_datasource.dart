@@ -126,6 +126,78 @@ abstract class IChatRemoteDataSource {
     int limit = 20,
   });
   
+  /// Alias methods for compatibility
+  Future<ChatListResponseDto> getChats({
+    int size = 25,
+    int page = 0,
+    String? keyword,
+    String? type,
+  }) => getConversationList(size: size, page: page, keyword: keyword, type: type);
+  
+  Future<ChatDto> getChatById(String chatId) => getConversationDetail(conversationId: chatId);
+  
+  Future<ChatDto> createGroupChat({
+    required String name,
+    String? imgUrl,
+    String? description,
+    required String groupType,
+    required List<String> memberIds,
+  }) => createGroup(
+    name: name,
+    imgUrl: imgUrl,
+    description: description,
+    groupType: groupType,
+    memberIds: memberIds,
+  );
+  
+  Future<ChatDto> createDirectChat({
+    required String receiverId,
+  }) => getConversationDetail(receiverId: receiverId);
+  
+  Future<ChatDto> updateChat({
+    required String conversationId,
+    String? name,
+    String? imgUrl,
+    String? description,
+  }) => updateGroup(
+    conversationId: conversationId,
+    name: name,
+    imgUrl: imgUrl,
+    description: description,
+  );
+  
+  Future<Map<String, dynamic>> deleteChat(String chatId) => deleteConversation(chatId);
+  
+  Future<MessageListResponseDto> getChatMessages({
+    required String conversationId,
+    int size = 100,
+    Map<String, dynamic>? lastKey,
+  }) => getMessageList(
+    conversationId: conversationId,
+    size: size,
+    lastKey: lastKey,
+  );
+  
+  Future<void> addUsersToChat({
+    required String conversationId,
+    required List<String> userIds,
+  }) => addMembersToGroup(
+    conversationId: conversationId,
+    memberIds: userIds,
+  );
+  
+  Future<void> removeUsersFromChat({
+    required String conversationId,
+    required List<String> userIds,
+  }) => removeMembersFromGroup(
+    conversationId: conversationId,
+    memberIds: userIds,
+  );
+  
+  Future<String> leaveChat(String chatId) => leaveConversation(chatId);
+  
+  Future<ChatDto> getChatDetails(String chatId) => getConversationDetail(conversationId: chatId);
+  
   /// Subscribe to chat updates via Socket.IO
   Stream<ChatDto> subscribeToChats();
 }
@@ -564,4 +636,87 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         .on<Map<String, dynamic>>('chat_updated')
         .map((data) => ChatDto.fromJson(data));
   }
+  
+  // Implement alias methods
+  @override
+  Future<ChatListResponseDto> getChats({
+    int size = 25,
+    int page = 0,
+    String? keyword,
+    String? type,
+  }) => getConversationList(size: size, page: page, keyword: keyword, type: type);
+  
+  @override
+  Future<ChatDto> getChatById(String chatId) => getConversationDetail(conversationId: chatId);
+  
+  @override
+  Future<ChatDto> createGroupChat({
+    required String name,
+    String? imgUrl,
+    String? description,
+    required String groupType,
+    required List<String> memberIds,
+  }) => createGroup(
+    name: name,
+    imgUrl: imgUrl,
+    description: description,
+    groupType: groupType,
+    memberIds: memberIds,
+  );
+  
+  @override
+  Future<ChatDto> createDirectChat({
+    required String receiverId,
+  }) => getConversationDetail(receiverId: receiverId);
+  
+  @override
+  Future<ChatDto> updateChat({
+    required String conversationId,
+    String? name,
+    String? imgUrl,
+    String? description,
+  }) => updateGroup(
+    conversationId: conversationId,
+    name: name,
+    imgUrl: imgUrl,
+    description: description,
+  );
+  
+  @override
+  Future<Map<String, dynamic>> deleteChat(String chatId) => deleteConversation(chatId);
+  
+  @override
+  Future<MessageListResponseDto> getChatMessages({
+    required String conversationId,
+    int size = 100,
+    Map<String, dynamic>? lastKey,
+  }) => getMessageList(
+    conversationId: conversationId,
+    size: size,
+    lastKey: lastKey,
+  );
+  
+  @override
+  Future<void> addUsersToChat({
+    required String conversationId,
+    required List<String> userIds,
+  }) => addMembersToGroup(
+    conversationId: conversationId,
+    memberIds: userIds,
+  );
+  
+  @override
+  Future<void> removeUsersFromChat({
+    required String conversationId,
+    required List<String> userIds,
+  }) => removeMembersFromGroup(
+    conversationId: conversationId,
+    memberIds: userIds,
+  );
+  
+  @override
+  Future<String> leaveChat(String chatId) => leaveConversation(chatId);
+  
+  @override
+  Future<ChatDto> getChatDetails(String chatId) => getConversationDetail(conversationId: chatId);
 }

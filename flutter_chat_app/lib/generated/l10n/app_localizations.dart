@@ -719,6 +719,12 @@ abstract class AppLocalizations {
   /// **'Contacts'**
   String get contacts;
 
+  /// Settings section title
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
   /// Groups section title
   ///
   /// In en, this message translates to:

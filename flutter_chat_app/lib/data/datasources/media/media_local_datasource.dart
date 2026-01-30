@@ -114,7 +114,13 @@ class MediaLocalDataSourceImpl implements IMediaLocalDataSource {
         return '.mp4';
       case AttachmentType.audio:
         return '.mp3';
-      case AttachmentType.file:
+      case AttachmentType.document:
+        return '.pdf';
+      case AttachmentType.location:
+        return '.json';
+      case AttachmentType.contact:
+        return '.vcf';
+      case AttachmentType.other:
         return '.bin';
     }
   }
@@ -128,7 +134,7 @@ class MediaLocalDataSourceImpl implements IMediaLocalDataSource {
     try {
       final sourceFile = File(sourceFilePath);
       if (!await sourceFile.exists()) {
-        throw const CacheException(message: 'Source file not found');
+        throw CacheException(message: 'Source file not found');
       }
       
       final cacheDir = await _getCacheDirectory();

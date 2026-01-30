@@ -1,113 +1,224 @@
-# Requirements Document
+# Error Resolution - Systematic Fix
 
-## Introduction
+## Overview
 
-This spec addresses the critical compilation failure in the Flutter chat app project, which currently has 742 errors preventing the application from building. The errors span multiple categories including dependency injection, missing imports, type system issues, constructor problems, design system widget issues, and test failures. This systematic fix will restore the project to a compilable and runnable state while maintaining clean architecture principles and project patterns.
+Fix 2048 analysis issues in Flutter project systematically, prioritizing critical errors that block compilation.
 
-## Glossary
+**Current Status**: 
+- **161 Errors** (compilation blockers)
+- **~1887 Warnings/Info** (code quality issues)
 
-- **System**: The Flutter chat application codebase
-- **DI_System**: The dependency injection configuration using Injectable and GetIt
-- **Design_System**: The custom UI component library with App* prefixed widgets
-- **Error_Category**: A classification of errors by root cause (DI, imports, types, constructors, widgets, tests)
-- **Clean_Architecture**: The architectural pattern with Domain, Data, and Presentation layers
-- **BaseBloc**: The mandatory base class for all BLoC state management
-- **Compilation**: The process of building the Flutter application from source code
+## Problem Statement
 
-## Requirements
+The project has accumulated technical debt with:
+1. Type mismatches and undefined methods
+2. Missing required parameters
+3. Deprecated API usage
+4. Code quality issues (const, imports, unused variables)
+5. Architecture violations (hardcoded strings, missing base classes)
 
-### Requirement 1: Fix Dependency Injection Configuration
+## User Stories
 
-**User Story:** As a developer, I want the dependency injection system to work correctly, so that all services and repositories can be properly instantiated.
+### Epic 1: Critical Errors (P0 - Blocks Compilation)
 
-#### Acceptance Criteria
+**US-1.1: Fix Type Mismatches**
+- As a developer, I need all type assignments to be correct
+- So that the code compiles without errors
+- **Acceptance**: No `argument_type_not_assignable` errors
 
-1. WHEN the DI configuration is regenerated, THE System SHALL resolve all InvalidType errors in injection.config.dart
-2. WHEN a service requires dependencies, THE DI_System SHALL provide all required parameters (localDataSource, remoteDataSource, logger, etc.)
-3. WHEN undefined named parameters are referenced, THE System SHALL either add the missing services or remove invalid references
-4. THE System SHALL successfully run `dart run build_runner build --delete-conflicting-outputs` without errors
-5. WHEN the app initializes, THE DI_System SHALL register all services without runtime exceptions
+**US-1.2: Fix Undefined Methods/Properties**
+- As a developer, I need all method calls to exist
+- So that the code compiles
+- **Acceptance**: No `undefined_method`, `undefined_named_parameter` errors
 
-### Requirement 2: Restore Missing Files and Fix Import Issues
+**US-1.3: Fix Constructor Issues**
+- As a developer, I need all constructors to be properly called
+- So that objects can be instantiated
+- **Acceptance**: No `const_with_non_const`, `extra_positional_arguments` errors
 
-**User Story:** As a developer, I want all import statements to resolve correctly, so that the codebase has no missing dependencies.
+**US-1.4: Fix Missing Required Parameters**
+- As a developer, I need all required parameters to be provided
+- So that functions can be called correctly
+- **Acceptance**: No `missing_required_argument` errors
 
-#### Acceptance Criteria
+### Epic 2: High Priority Warnings (P1 - Affects Functionality)
 
-1. WHEN a file imports a missing package, THE System SHALL either restore the missing file or refactor to remove the dependency
-2. WHEN multiple files define the same type (ChatType, ContentType), THE System SHALL consolidate definitions or use qualified imports
-3. WHEN the dartz package is missing, THE System SHALL add it to pubspec.yaml or replace Either types with alternative error handling
-4. THE System SHALL have no "Target of URI doesn't exist" errors after fixes
-5. THE System SHALL have no ambiguous import errors after fixes
+**US-2.1: Fix Unused Variables/Fields**
+- As a developer, I need to remove or use all declared variables
+- So that code is clean and maintainable
+- **Acceptance**: No `unused_field`, `unused_local_variable`, `unused_import` warnings
 
-### Requirement 3: Resolve Type System Issues
+**US-2.2: Fix Deprecated API Usage**
+- As a developer, I need to migrate from deprecated APIs
+- So that code works with current dependencies
+- **Acceptance**: No `deprecated_member_use` warnings
 
-**User Story:** As a developer, I want all type declarations and usages to be correct, so that the Dart analyzer accepts the code.
+**US-2.3: Fix Invalid Visibility Usage**
+- As a developer, I need to respect visibility modifiers
+- So that internal APIs are not misused
+- **Acceptance**: No `invalid_use_of_visible_for_testing_member` warnings
 
-#### Acceptance Criteria
+### Epic 3: Code Quality Issues (P2 - Improves Maintainability)
 
-1. WHEN PersistentBottomSheetController is used, THE System SHALL provide the correct type parameter
-2. WHEN a class is referenced but undefined (MediaCache, ChatRemoteDataSource), THE System SHALL either create the class or remove references
-3. WHEN a method override has incorrect signature, THE System SHALL match the parent class signature exactly
-4. WHEN return types mismatch, THE System SHALL correct the return type or the returned value
-5. THE System SHALL have zero type-related analyzer errors after fixes
+**US-3.1: Add Missing Const Constructors**
+- As a developer, I need to use const where possible
+- So that app performance is optimized
+- **Acceptance**: No `prefer_const_constructors` info messages
 
-### Requirement 4: Fix Constructor and Parameter Issues
+**US-3.2: Fix Import Organization**
+- As a developer, I need properly organized imports
+- So that code is readable
+- **Acceptance**: No `directives_ordering`, `always_use_package_imports` info
 
-**User Story:** As a developer, I want all class constructors to be valid, so that objects can be instantiated correctly.
+**US-3.3: Fix Documentation Issues**
+- As a developer, I need proper documentation
+- So that code is understandable
+- **Acceptance**: No `dangling_library_doc_comments`, `unintended_html_in_doc_comment` info
 
-#### Acceptance Criteria
+**US-3.4: Remove Unnecessary Code**
+- As a developer, I need to remove dead code
+- So that codebase is clean
+- **Acceptance**: No `noop_primitive_operations`, `unnecessary_*` info
 
-1. WHEN a constructor is missing required parameters, THE System SHALL add the parameters or make them optional
-2. WHEN undefined named parameters are used, THE System SHALL either add the parameter to the constructor or remove the usage
-3. WHEN a const constructor calls a non-const super constructor, THE System SHALL either remove const or make super const
-4. WHEN extra positional arguments are provided, THE System SHALL remove the extra arguments or add parameters
-5. THE System SHALL have zero constructor-related errors after fixes
+### Epic 4: Architecture Compliance (P2 - Follows Standards)
 
-### Requirement 5: Fix Design System Widget Issues
+**US-4.1: Enforce Base Class Usage**
+- As a developer, I need all widgets to extend base classes
+- So that architecture is consistent
+- **Acceptance**: All widgets extend `BaseStatefulWidget`/`BaseStatelessWidget`
 
-**User Story:** As a developer, I want all design system widgets to work correctly, so that the UI can be built without errors.
+**US-4.2: Enforce Localization**
+- As a developer, I need all strings to use `context.l10n`
+- So that app is properly internationalized
+- **Acceptance**: No hardcoded user-facing strings
 
-#### Acceptance Criteria
+**US-4.3: Enforce Design System**
+- As a developer, I need all UI to use design system components
+- So that UI is consistent
+- **Acceptance**: No direct Flutter widget usage
 
-1. WHEN a design system widget has undefined named parameters, THE System SHALL add the parameters to the widget constructor
-2. WHEN localization keys are missing, THE System SHALL add them to app_en.arb and app_vi.arb files
-3. WHEN widget constructors have type mismatches, THE System SHALL correct the parameter types
-4. WHEN new widgets are added, THE System SHALL follow the mandatory App* naming convention
-5. THE System SHALL have zero design system widget errors after fixes
+## Success Criteria
 
-### Requirement 6: Fix Test File Issues
+### Phase 1: Critical Errors (Week 1)
+- [ ] 0 compilation errors
+- [ ] All type mismatches fixed
+- [ ] All undefined methods fixed
+- [ ] All constructor issues fixed
+- [ ] Project compiles successfully
 
-**User Story:** As a developer, I want all test files to compile and run, so that automated testing can verify functionality.
+### Phase 2: High Priority Warnings (Week 2)
+- [ ] <10 unused variable warnings
+- [ ] 0 deprecated API usage
+- [ ] 0 visibility violations
+- [ ] All tests pass
 
-#### Acceptance Criteria
+### Phase 3: Code Quality (Week 3)
+- [ ] <100 info messages
+- [ ] All imports organized
+- [ ] Const constructors added where possible
+- [ ] Documentation cleaned up
 
-1. WHEN test files have broken setup, THE System SHALL fix the test initialization code
-2. WHEN mock implementations are missing, THE System SHALL create the necessary mocks
-3. WHEN test imports are broken, THE System SHALL fix the import paths
-4. THE System SHALL successfully run `flutter test` without compilation errors
-5. WHEN tests are fixed, THE System SHALL maintain test coverage for critical functionality
+### Phase 4: Architecture Compliance (Week 4)
+- [ ] All widgets use base classes
+- [ ] All strings localized
+- [ ] All UI uses design system
+- [ ] <50 total issues remaining
 
-### Requirement 7: Verify Compilation and Runtime
+## Technical Approach
 
-**User Story:** As a developer, I want the application to compile and run successfully, so that development can continue.
+### Error Categories & Fix Strategy
 
-#### Acceptance Criteria
+#### Category A: Type & Method Errors (161 errors)
+**Files Affected**: 
+- `lib/core/services/attachment_queue_service.dart`
+- `lib/core/services/chat_message_service.dart`
+- `lib/data/datasources/chat/chat_local_datasource.dart`
+- `lib/data/datasources/media/*`
+- `lib/data/repositories/chat_repository.dart`
 
-1. WHEN `flutter analyze` is run, THE System SHALL report zero errors
-2. WHEN `flutter build` is run, THE System SHALL complete successfully
-3. WHEN the app is launched, THE System SHALL start without runtime exceptions
-4. WHEN navigation occurs, THE System SHALL render all screens without errors
-5. THE System SHALL maintain all existing functionality after fixes
+**Fix Strategy**:
+1. Analyze each error context
+2. Fix type mismatches (File → Uint8List conversions)
+3. Add missing methods or update method calls
+4. Fix constructor signatures
+5. Add missing required parameters
 
-### Requirement 8: Maintain Architecture and Patterns
+#### Category B: Unused Code (~50 warnings)
+**Fix Strategy**:
+1. Remove unused imports
+2. Use or remove unused variables
+3. Remove unused fields
+4. Clean up dead code
 
-**User Story:** As a developer, I want all fixes to follow project standards, so that code quality and consistency are maintained.
+#### Category C: Deprecated APIs (~20 warnings)
+**Fix Strategy**:
+1. Replace `MediaCacheManager` with `MediaRepository`
+2. Update deprecated method calls
+3. Migrate to new APIs
 
-#### Acceptance Criteria
+#### Category D: Code Quality (~1800 info)
+**Fix Strategy**:
+1. Add const constructors (bulk fix with regex)
+2. Organize imports (automated with `dart fix`)
+3. Fix documentation comments
+4. Remove unnecessary operations
 
-1. WHEN fixing BLoCs, THE System SHALL ensure they extend BaseBloc
-2. WHEN fixing States, THE System SHALL ensure they extend BaseState with @freezed
-3. WHEN fixing widgets, THE System SHALL ensure they extend BaseStatefulWidget or BaseStatelessWidget
-4. WHEN adding UI text, THE System SHALL use context.l10n for localization
-5. WHEN fixing imports, THE System SHALL maintain clean architecture layer separation (no domain importing Flutter)
+### Automation Tools
+
+```bash
+# Auto-fix many issues
+dart fix --apply
+
+# Format code
+dart format lib/
+
+# Organize imports
+flutter pub run import_sorter:main
+
+# Check progress
+flutter analyze --no-pub | grep -c "error •"
+```
+
+## Dependencies
+
+- Dart SDK 3.x
+- Flutter SDK
+- All project dependencies up to date
+
+## Risks & Mitigation
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Breaking changes during fixes | High | Fix in isolated branches, test thoroughly |
+| Regression in functionality | High | Run all tests after each category fix |
+| Time estimation too optimistic | Medium | Focus on P0 errors first, defer P2 issues |
+| Merge conflicts | Medium | Fix in small batches, merge frequently |
+
+## Out of Scope
+
+- Adding new features
+- Refactoring architecture (beyond base class compliance)
+- Performance optimization (beyond const constructors)
+- Adding new tests (only fix existing test failures)
+
+## Metrics
+
+Track progress daily:
+- Total issues: 2048 → Target: <50
+- Errors: 161 → Target: 0
+- Warnings: ~50 → Target: <10
+- Info: ~1800 → Target: <100
+
+## Timeline
+
+- **Week 1**: Fix all 161 errors (P0)
+- **Week 2**: Fix high priority warnings (P1)
+- **Week 3**: Fix code quality issues (P2)
+- **Week 4**: Architecture compliance & final cleanup
+
+---
+
+**Priority**: P0 (Critical)  
+**Estimated Effort**: 4 weeks  
+**Team**: 1 Senior Developer  
+**Status**: Ready for Implementation

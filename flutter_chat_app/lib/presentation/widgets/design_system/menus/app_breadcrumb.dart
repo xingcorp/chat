@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
-import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/menus/menu_enums.dart';
 
 /// **APP BREADCRUMB**
@@ -128,7 +127,7 @@ class AppBreadcrumb extends BaseStatelessWidget {
     // Show first item, ellipsis, and last (maxItems - 2) items
     final result = <BreadcrumbItem>[];
     result.add(items.first);
-    result.add(BreadcrumbItem(label: '...', isEllipsis: true));
+    result.add(const BreadcrumbItem(label: '...', isEllipsis: true));
 
     final remainingCount = maxItems! - 2;
     final startIndex = items.length - remainingCount;
@@ -141,14 +140,14 @@ class AppBreadcrumb extends BaseStatelessWidget {
     BuildContext context,
     BreadcrumbItem item,
     ThemeData theme,
-    bool isDark,
-    {required bool isLast},
-  ) {
+    bool isDark, {
+    required bool isLast,
+  }) {
     final isClickable = item.onTap != null && !item.isEllipsis;
     final isCurrent = isLast && !item.isEllipsis;
 
     final defaultTextStyle = AppTextStyles.bodyMedium.copyWith(
-      color: theme.colorScheme.onSurface.withOpacity(isDark ? 0.7 : 0.6),
+      color: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.7 : 0.6),
     );
 
     final defaultCurrentStyle = AppTextStyles.bodyMedium.copyWith(
@@ -194,10 +193,10 @@ class AppBreadcrumb extends BaseStatelessWidget {
           ),
           child: Text(
             item.label,
-            style: (textStyle ?? defaultTextStyle)?.copyWith(
+            style: (textStyle ?? defaultTextStyle).copyWith(
               color: theme.colorScheme.primary,
               decoration: TextDecoration.underline,
-              decorationColor: theme.colorScheme.primary.withOpacity(0.3),
+              decorationColor: theme.colorScheme.primary.withValues(alpha: 0.3),
             ),
           ),
         ),
@@ -207,7 +206,7 @@ class AppBreadcrumb extends BaseStatelessWidget {
 
   Widget _buildSeparator(BuildContext context, ThemeData theme, bool isDark) {
     final color = separatorColor ??
-        theme.colorScheme.onSurface.withOpacity(isDark ? 0.4 : 0.3);
+        theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.4 : 0.3);
 
     Widget separatorWidget;
 

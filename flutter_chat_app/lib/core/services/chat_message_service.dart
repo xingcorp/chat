@@ -225,19 +225,22 @@ class ChatMessageService {
   /// Gửi tin nhắn
   Future<String> sendMessage({
     required String chatId,
+    required String senderId,
+    required String recipientId,
     required String content,
     required ContentType contentType,
     List<String> attachmentIds = const [],
   }) async {
     // Thêm tin nhắn vào hàng đợi
-    final localId = await _messageQueueService.enqueueMessage(
+    final queuedMessage = await _messageQueueService.enqueueMessage(
       chatId: chatId,
-      message: content,
+      senderId: senderId,
+      recipientId: recipientId,
+      content: content,
       contentType: contentType,
-      attachmentIds: attachmentIds,
     );
     
-    return localId;
+    return queuedMessage.localId;
   }
   
   /// Hủy tin nhắn đang chờ gửi

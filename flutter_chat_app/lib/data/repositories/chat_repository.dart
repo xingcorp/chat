@@ -17,12 +17,14 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
-import 'package:flutter_chat_app/core/error/exceptions.dart';
+import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/data/datasources/chat/chat_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/chat/chat_remote_datasource.dart';
+import 'package:flutter_chat_app/data/dtos/chat_dto.dart';
+import 'package:flutter_chat_app/data/dtos/message_dto.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
@@ -81,7 +83,7 @@ class ChatRepositoryImpl implements IChatRepository {
           final remoteResult = await _remoteDataSource.getChats();
           
           // Remote success, convert models to domain entities
-          final remoteChats = remoteResult.map((model) => model.toDomain()).toList();
+          final remoteChats = remoteResult.toDomainList();
           _logger.i('Synced ${remoteChats.length} remote chats');
 
           // Save remote chats to local storage
@@ -91,15 +93,15 @@ class ChatRepositoryImpl implements IChatRepository {
           final updatedChats = await _localDataSource.getChats();
           return Right(updatedChats);
           
-        } on ServerException catch (e) {
+        } on app_exceptions.ServerException catch (e) {
           _logger.w('Server error, using cached data', error: e);
           return Right(localChats);
-        } on NetworkException catch (e) {
+        } on app_exceptions.NetworkException catch (e) {
           _logger.w('Network error, using cached data', error: e);
           return Right(localChats);
         }
         
-      } on CacheException catch (e) {
+      } on app_exceptions.CacheException catch (e) {
         _logger.e('Cache error', error: e);
         return const Left(CacheFailure(message: 'Unable to load chats'));
       } catch (e, stackTrace) {
@@ -147,15 +149,15 @@ class ChatRepositoryImpl implements IChatRepository {
             return const Right(null);
           }
 
-        } on ServerException catch (e) {
+        } on app_exceptions.ServerException catch (e) {
           _logger.e('Server error fetching chat', error: e);
           return const Right(null);
-        } on NetworkException catch (e) {
+        } on app_exceptions.NetworkException catch (e) {
           _logger.e('Network error fetching chat', error: e);
           return const Right(null);
         }
         
-      } on CacheException catch (e) {
+      } on app_exceptions.CacheException catch (e) {
         _logger.e('Cache error', error: e);
         return const Left(CacheFailure(message: 'Unable to load chat'));
       } catch (e, stackTrace) {
@@ -193,8 +195,14 @@ class ChatRepositoryImpl implements IChatRepository {
 
         // 2. Try to create on remote
         final remoteResult = isGroup
-            ? await _remoteDataSource.createGroupChat(name, participantIds)
-            : await _remoteDataSource.createDirectChat(participantIds.first);
+            ? await _remoteDataSource.createGroupChat(
+                name: name,
+                groupType: 'private', // Default to private group
+                memberIds: participantIds,
+              )
+            : await _remoteDataSource.createDirectChat(
+                receiverId: participantIds.first,
+              );
         
         // Remote datasource returns ChatModel, not Either
         try {
@@ -252,9 +260,9 @@ class ChatRepositoryImpl implements IChatRepository {
         // 2. Try to update on remote
         try {
           final remoteResult = await _remoteDataSource.updateChat(
-            chatId,
+            conversationId: chatId,
             name: name,
-            avatarUrl: avatarUrl,
+            imgUrl: avatarUrl,
           );
         
           // Remote success, update local with server version
@@ -343,13 +351,12 @@ class ChatRepositoryImpl implements IChatRepository {
         // 2. Try to get newer messages from remote
         try {
           final remoteResult = await _remoteDataSource.getChatMessages(
-            chatId,
-            limit: limit,
-            before: before,
+            conversationId: chatId,
+            size: limit,
           );
 
           // Remote success, convert models to domain entities
-          final remoteMessages = remoteResult.map((model) => model.toDomain()).toList();
+          final remoteMessages = remoteResult.messages.map((model) => model.toDomain()).toList();
           debugPrint('✅ Synced ${remoteMessages.length} remote messages');
 
           // Save remote messages to local
@@ -390,7 +397,13 @@ class ChatRepositoryImpl implements IChatRepository {
         debugPrint('✅ Message saved locally (pending)');
         
         // 2. Try to send to remote
-        final remoteResult = await _remoteDataSource.sendMessage(message);
+        final remoteResult = await _remoteDataSource.sendMessage(
+          conversationId: message.chatId,
+          type: message.contentType.toString().split('.').last,
+          message: message.content,
+          createdAt: message.timestamp.millisecondsSinceEpoch,
+          urls: message.attachments.isNotEmpty ? message.attachments : null,
+        );
         
         try {
           // Remote success, convert MessageModel to ChatMessage

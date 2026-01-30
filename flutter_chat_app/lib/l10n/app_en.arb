@@ -572,6 +572,11 @@
     "description": "Contacts section title"
   },
 
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings section title"
+  },
+
   "groups": "Groups",
   "@groups": {
     "description": "Groups section title"

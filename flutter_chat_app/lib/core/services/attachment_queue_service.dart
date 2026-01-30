@@ -3,15 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
-import 'package:injectable/injectable.dart';
-import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
+import 'package:injectable/injectable.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/local_storage_service.dart';
 import 'package:flutter_chat_app/core/services/media_cache.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/domain/entities/attachment_queue_status.dart';
 import 'package:flutter_chat_app/domain/entities/message_error_type.dart';
 import 'package:flutter_chat_app/domain/events/message_queue_event.dart';
@@ -52,6 +51,9 @@ class AttachmentQueueService {
   /// Service quản lý cache media
   final MediaCache _mediaCache;
   
+  /// Logger service
+  final AppLogger _logger;
+  
   /// Danh sách các attachment đang chờ xử lý
   final List<QueuedAttachment> _pendingAttachments = [];
   
@@ -91,6 +93,7 @@ class AttachmentQueueService {
     this._connectivityService,
     this._localStorageService,
     this._mediaCache,
+    this._logger,
   );
   
   /// Stream cập nhật trạng thái tập tin đính kèm
@@ -169,7 +172,7 @@ class AttachmentQueueService {
             // Kiểm tra xem file còn tồn tại không
             final file = File(attachment.filePath);
             if (!file.existsSync()) {
-              debugPrint('File không tồn tại, bỏ qua: ${attachment.filePath}');
+              _logger.w('File không tồn tại, bỏ qua: ${attachment.filePath}');
               continue;
             }
             
@@ -184,14 +187,14 @@ class AttachmentQueueService {
               _pendingAttachments.add(attachment);
             }
           } catch (e) {
-            debugPrint('Lỗi phân tích attachment: $e');
+            _logger.e('Lỗi phân tích attachment', e);
           }
         }
         
-        debugPrint('Đã khôi phục ${_pendingAttachments.length} attachments');
+        _logger.i('Đã khôi phục ${_pendingAttachments.length} attachments');
       }
     } catch (e) {
-      debugPrint('Lỗi khôi phục hàng đợi attachment: $e');
+      _logger.e('Lỗi khôi phục hàng đợi attachment', e);
     }
   }
   
@@ -215,7 +218,7 @@ class AttachmentQueueService {
       // Lưu vào bộ nhớ
       await _localStorageService.setString(_storageKey, queueJson);
     } catch (e) {
-      debugPrint('Lỗi lưu hàng đợi attachment: $e');
+      _logger.e('Lỗi lưu hàng đợi attachment', e);
     }
   }
   
@@ -267,7 +270,7 @@ class AttachmentQueueService {
       // Kiểm tra kết nối mạng
       final isConnected = await _connectivityService.isConnected();
       if (!isConnected) {
-        debugPrint('Không có kết nối mạng, bỏ qua xử lý hàng đợi');
+        _logger.d('Không có kết nối mạng, bỏ qua xử lý hàng đợi');
         
         // Đánh dấu các attachment đang xử lý sang trạng thái chờ mạng
         _updateAttachmentsWaitingForNetwork();
@@ -282,7 +285,7 @@ class AttachmentQueueService {
       _checkScheduledRetries();
       
     } catch (e) {
-      debugPrint('Lỗi xử lý hàng đợi: $e');
+      _logger.e('Lỗi xử lý hàng đợi', e);
     } finally {
       _isProcessing = false;
     }
@@ -382,7 +385,7 @@ class AttachmentQueueService {
         .toList();
         
     if (retryAttachments.isNotEmpty) {
-      debugPrint('Tìm thấy ${retryAttachments.length} attachments cần thử lại');
+      _logger.d('Tìm thấy ${retryAttachments.length} attachments cần thử lại');
       _ensureProcessing();
     }
   }
@@ -449,14 +452,13 @@ class AttachmentQueueService {
         serverId: successAttachment.serverId,
       );
       
-      debugPrint('Tải lên attachment thành công: ${successAttachment.localId}');
+      _logger.i('Tải lên attachment thành công: ${successAttachment.localId}');
       
       // Lưu vào cache để sử dụng sau này
       await _cacheAttachment(successAttachment);
       
     } catch (e, stackTrace) {
-      debugPrint('Lỗi tải lên attachment: $e');
-      debugPrint(stackTrace.toString());
+      _logger.e('Lỗi tải lên attachment', e, stackTrace);
       
       // Phân loại lỗi
       final errorType = _categorizeError(e);
@@ -491,7 +493,7 @@ class AttachmentQueueService {
           errorType: errorType,
         );
         
-        debugPrint('Attachment lỗi vĩnh viễn: ${failedAttachment.localId}');
+        _logger.w('Attachment lỗi vĩnh viễn: ${failedAttachment.localId}');
       } else {
         // Lên lịch thử lại với độ trễ tăng dần
         final delayMs = _calculateRetryDelay(retryCount, errorType);
@@ -527,7 +529,7 @@ class AttachmentQueueService {
           error: retryAttachment.errorMessage,
         );
         
-        debugPrint('Attachment lên lịch thử lại: ${retryAttachment.localId} lúc $nextRetryTime');
+        _logger.d('Attachment lên lịch thử lại: ${retryAttachment.localId} lúc $nextRetryTime');
       }
     }
     
@@ -627,14 +629,15 @@ class AttachmentQueueService {
         
         // Đọc file
         final file = File(attachment.filePath);
+        final bytes = await file.readAsBytes();
         
         // Lưu vào cache
-        await _mediaCache.putFile(cacheKey, file);
+        await _mediaCache.putFile(cacheKey, bytes);
         
-        debugPrint('Đã lưu attachment vào cache: $cacheKey');
+        _logger.d('Đã lưu attachment vào cache: $cacheKey');
       }
     } catch (e) {
-      debugPrint('Lỗi cache attachment: $e');
+      _logger.e('Lỗi cache attachment', e);
     }
   }
   

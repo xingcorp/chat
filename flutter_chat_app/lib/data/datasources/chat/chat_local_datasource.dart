@@ -380,13 +380,18 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   Future<List<ChatMessage>> getChatMessages(String chatId, {int limit = 20, String? before}) async {
     try {
       // Get messages using database service
-      final messageModels = await _databaseService.getMessagesForChat(chatId, limit: limit);
+      final messageModels = await _databaseService.getMessagesForChat(chatId);
 
       // Convert MessageModel to ChatMessage domain entity using toDomain method
       var messages = messageModels.map((model) => model.toDomain()).toList();
 
       // Sort by creation time (newest first)
       messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      
+      // Apply limit
+      if (messages.length > limit) {
+        messages = messages.take(limit).toList();
+      }
 
       // Apply pagination if needed
       if (before != null) {

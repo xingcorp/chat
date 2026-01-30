@@ -27,10 +27,7 @@ Future<void> main() async {
   // Initialize services for web
   await _initializeWebServices();
   
-  // Initialize SharedPreferences
-  final sharedPreferences = await SharedPreferences.getInstance();
-  
-  runApp(MyApp(sharedPreferences: sharedPreferences));
+  runApp(const MyApp());
 }
 
 Future<void> _initializeWebServices() async {

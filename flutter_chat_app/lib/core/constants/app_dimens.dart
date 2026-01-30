@@ -190,6 +190,14 @@ class AppDimens {
   
   /// Extra extra large icon: 64dp
   static const double iconXXLarge = 64.0;
+  
+  // Aliases for consistency with design system
+  static const double iconSizeXSmall = iconXSmall;
+  static const double iconSizeSmall = iconSmall;
+  static const double iconSizeMedium = iconMedium;
+  static const double iconSizeLarge = iconLarge;
+  static const double iconSizeXLarge = iconXLarge;
+  static const double iconSizeXXLarge = iconXXLarge;
 
   // ============================================================================
   // BUTTON SIZES
@@ -237,6 +245,13 @@ class AppDimens {
   
   /// Huge avatar: 120dp
   static const double avatarHuge = 120.0;
+  
+  // Aliases for consistency with design system
+  static const double avatarSizeXSmall = avatarXSmall;
+  static const double avatarSizeSmall = avatarSmall;
+  static const double avatarSizeMedium = avatarMedium;
+  static const double avatarSizeLarge = avatarLarge;
+  static const double avatarSizeXLarge = avatarXLarge;
 
   // ============================================================================
   // INPUT SIZES

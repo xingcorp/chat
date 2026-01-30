@@ -27,10 +27,7 @@ Future<void> main() async {
   // Initialize services for mobile
   await _initializeMobileServices();
   
-  // Initialize SharedPreferences
-  final sharedPreferences = await SharedPreferences.getInstance();
-  
-  runApp(MyApp(sharedPreferences: sharedPreferences));
+  runApp(const MyApp());
 }
 
 Future<void> _initializeMobileServices() async {

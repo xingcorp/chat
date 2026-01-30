@@ -34,7 +34,7 @@ class MediaUploading extends MediaState {
 
 /// **Upload success state**
 class MediaUploadSuccess extends MediaState {
-  final MediaUploadResult result;
+  final Attachment result;
 
   const MediaUploadSuccess({required this.result});
 
@@ -179,7 +179,7 @@ extension MediaStateX on MediaState {
   }) =>
       MediaUploading(fileName: fileName, progress: progress);
 
-  static MediaUploadSuccess uploadSuccess({required MediaUploadResult result}) =>
+  static MediaUploadSuccess uploadSuccess({required Attachment result}) =>
       MediaUploadSuccess(result: result);
 
   static MediaDownloading downloading({

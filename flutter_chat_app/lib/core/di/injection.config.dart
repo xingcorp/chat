@@ -249,6 +249,14 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.singleton<_i428.IntegrationHub>(
         () => _i428.IntegrationHub(gh<_i665.DatabaseService>()));
+    gh.lazySingletonAsync<_i567.AttachmentQueueService>(
+        () async => _i567.AttachmentQueueService(
+              gh<_i817.IAttachmentRepository>(),
+              gh<_i47.ConnectivityService>(),
+              await getAsync<_i527.LocalStorageService>(),
+              gh<_i393.MediaCache>(),
+              gh<_i221.AppLogger>(),
+            ));
     gh.lazySingleton<_i788.GraphQLClientWrapperImpl>(
         () => _i788.GraphQLClientWrapperImpl(
               gh<_i128.GraphQLClient>(),
@@ -348,18 +356,19 @@ extension GetItInjectableX on _i174.GetIt {
           connectivityService: gh<_i47.ConnectivityService>(),
           performanceMonitor: gh<_i794.PerformanceMonitor>(),
         ));
+    gh.lazySingletonAsync<_i556.MessageQueueService>(
+        () async => _i556.MessageQueueService(
+              gh<_i572.IMessageRepository>(),
+              await getAsync<_i527.LocalStorageService>(),
+              gh<_i47.ConnectivityService>(),
+              gh<_i287.IRealtimeConnectionService>(),
+              await getAsync<_i567.AttachmentQueueService>(),
+            ));
     gh.factory<_i473.PermissionsRepository>(
         () => _i760.PermissionsRepositoryImpl(
               gh<_i656.PermissionsDataSource>(),
               gh<_i460.SharedPreferences>(),
               gh<_i221.AppLogger>(),
-            ));
-    gh.lazySingletonAsync<_i567.AttachmentQueueService>(
-        () async => _i567.AttachmentQueueService(
-              gh<_i817.IAttachmentRepository>(),
-              gh<_i47.ConnectivityService>(),
-              await getAsync<_i527.LocalStorageService>(),
-              gh<_i393.MediaCache>(),
             ));
     gh.lazySingleton<_i790.UserRepositoryImpl>(() => _i790.UserRepositoryImpl(
           localDataSource: gh<_i439.UserLocalDataSource>(),
@@ -370,8 +379,8 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i198.RequestPermissionUseCase>(() =>
         _i198.RequestPermissionUseCase(gh<_i473.PermissionsRepository>()));
-    gh.factory<_i921.MediaBloc>(
-        () => _i921.MediaBloc(mediaRepository: gh<_i394.IMediaRepository>()));
+    gh.factoryAsync<_i379.MessageQueueBloc>(() async =>
+        _i379.MessageQueueBloc(await getAsync<_i556.MessageQueueService>()));
     gh.singleton<_i264.OfflineFirstRepositoryImpl>(
         () => _i264.OfflineFirstRepositoryImpl(
               gh<_i665.DatabaseService>(),
@@ -390,6 +399,17 @@ extension GetItInjectableX on _i174.GetIt {
               connectivityAnalyzer: gh<_i286.ConnectivityAnalyzerService>(),
               connectivityService: gh<_i47.ConnectivityService>(),
             ));
+    gh.lazySingletonAsync<_i1060.ChatMessageService>(
+        () async => _i1060.ChatMessageService(
+              await getAsync<_i556.MessageQueueService>(),
+              gh<_i706.RealtimeMessagingService>(),
+              gh<_i976.SocketIOEventMapper>(),
+              gh<_i572.IMessageRepository>(),
+            ));
+    gh.factory<_i921.MediaBloc>(() => _i921.MediaBloc(
+          mediaRepository: gh<_i394.IMediaRepository>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
     gh.singleton<_i179.PermissionsService>(() => _i179.PermissionsService(
           gh<_i473.PermissionsRepository>(),
           gh<_i198.RequestPermissionUseCase>(),
@@ -400,14 +420,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i242.AppLogger>(),
           gh<_i343.AnalyticsService>(),
         ));
-    gh.lazySingletonAsync<_i556.MessageQueueService>(
-        () async => _i556.MessageQueueService(
-              gh<_i572.IMessageRepository>(),
-              await getAsync<_i527.LocalStorageService>(),
-              gh<_i47.ConnectivityService>(),
-              gh<_i287.IRealtimeConnectionService>(),
-              await getAsync<_i567.AttachmentQueueService>(),
-            ));
     gh.lazySingleton<_i557.ApiClient>(() => _i557.ApiClient(
           httpClient: gh<_i924.IHttpClient>(),
           requestTracker: gh<_i1005.ApiRequestTracker>(),
@@ -423,8 +435,6 @@ extension GetItInjectableX on _i174.GetIt {
           realtimeConnectionService: gh<_i357.RealtimeConnectionService>(),
           connectivityAnalyzerService: gh<_i286.ConnectivityAnalyzerService>(),
         ));
-    gh.factoryAsync<_i379.MessageQueueBloc>(() async =>
-        _i379.MessageQueueBloc(await getAsync<_i556.MessageQueueService>()));
     gh.lazySingleton<_i98.GraphQLSubscriptionService>(
         () => _i98.GraphQLSubscriptionService(
               gh<_i357.RealtimeConnectionService>(),
@@ -434,13 +444,6 @@ extension GetItInjectableX on _i174.GetIt {
           analyticsService: gh<_i343.AnalyticsService>(),
           logger: gh<_i974.Logger>(),
         ));
-    gh.lazySingletonAsync<_i1060.ChatMessageService>(
-        () async => _i1060.ChatMessageService(
-              await getAsync<_i556.MessageQueueService>(),
-              gh<_i706.RealtimeMessagingService>(),
-              gh<_i976.SocketIOEventMapper>(),
-              gh<_i572.IMessageRepository>(),
-            ));
     gh.singleton<_i301.EnhancedSocketManager>(() => _i301.EnhancedSocketManager(
           gh<_i498.SocketManager>(),
           gh<_i604.SocketAnalytics>(),

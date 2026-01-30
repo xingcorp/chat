@@ -107,6 +107,8 @@
   "confirmDelete": "Bạn có chắc chắn muốn xóa tin nhắn này?",
   "chats": "Trò chuyện",
   "contacts": "Danh bạ",
+
+  "settings": "Cài đặt",
   "groups": "Nhóm",
   "welcomeToChat": "Chào mừng đến với Flutter Chat App",
 

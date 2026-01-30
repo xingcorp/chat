@@ -148,5 +148,7 @@
         "type": "String"
       }
     }
-  }
+  },
+  "contacts": "Danh bạ",
+  "settings": "Cài đặt"
 }

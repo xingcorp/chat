@@ -1397,6 +1397,52 @@ class MessageQueueService {
     return found;
   }
   
+  /// Hủy tin nhắn đang chờ gửi
+  Future<bool> cancelMessage(String messageId) async {
+    bool found = false;
+    
+    // Tìm trong hàng đợi
+    final queuedMessage = _messageQueue.where((msg) => msg.localId == messageId).firstOrNull;
+    if (queuedMessage != null) {
+      // Xóa khỏi hàng đợi
+      _messageQueue.remove(messageId);
+      
+      // Cập nhật trạng thái thành cancelled
+      final cancelledMessage = queuedMessage.copyWithStatus(
+        status: MessageQueueStatus.cancelled,
+        errorMessage: 'Message cancelled by user',
+      );
+      
+      // Thông báo trạng thái đã thay đổi
+      _notifyMessageStatusChanged(cancelledMessage);
+      
+      found = true;
+    }
+    
+    // Kiểm tra trong danh sách đang gửi
+    if (_sendingMessages.containsKey(messageId)) {
+      final sendingMessage = _sendingMessages[messageId]!;
+      _sendingMessages.remove(messageId);
+      
+      // Cập nhật trạng thái
+      final cancelledMessage = sendingMessage.copyWithStatus(
+        status: MessageQueueStatus.cancelled,
+        errorMessage: 'Message cancelled by user',
+      );
+      
+      _notifyMessageStatusChanged(cancelledMessage);
+      found = true;
+    }
+    
+    if (found) {
+      await _saveQueue();
+      _emitEvent(MessageQueueEventType.messageCancelled, messageId: messageId);
+      _metrics.incrementCancelled();
+    }
+    
+    return found;
+  }
+  
   /// Lấy tin nhắn từ ID
   EnhancedQueuedMessage? getMessage(String messageId) {
     // Tìm trong hàng đợi

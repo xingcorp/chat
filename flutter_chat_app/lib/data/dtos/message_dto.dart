@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 
 part 'message_dto.freezed.dart';
 part 'message_dto.g.dart';
@@ -138,4 +139,79 @@ class LastKeyDto with _$LastKeyDto {
 
   factory LastKeyDto.fromJson(Map<String, dynamic> json) =>
       _$LastKeyDtoFromJson(json);
+}
+
+/// **Mapper Extensions**
+///
+/// Convert DTOs to domain entities
+
+extension MessageDtoMapper on MessageDto {
+  /// Convert MessageDto to ChatMessage domain entity
+  ChatMessage toDomain() {
+    // Parse content type from string
+    ContentType contentType = ContentType.text;
+    try {
+      contentType = ContentType.values.firstWhere(
+        (e) => e.toString().split('.').last.toLowerCase() == type.toLowerCase(),
+        orElse: () => ContentType.text,
+      );
+    } catch (_) {
+      contentType = ContentType.text;
+    }
+
+    // Convert sender
+    final messageSender = sender != null
+        ? MessageSender(
+            id: sender!.id,
+            name: sender!.fullName,
+            avatar: sender!.avatarUrl,
+          )
+        : MessageSender(
+            id: senderId,
+            name: 'Unknown',
+            avatar: null,
+          );
+
+    // Convert reactions
+    final messageReactions = reactions.map((r) {
+      return MessageReaction(
+        code: r.code,
+        userId: r.userId,
+        createdAt: DateTime.now(), // Backend doesn't provide timestamp
+      );
+    }).toList();
+
+    // Convert attachments from URLs
+    final messageAttachments = urls.map((url) {
+      return MessageAttachment(
+        id: url.hashCode.toString(),
+        url: url,
+        type: type,
+        size: 0, // Backend doesn't provide size
+        name: fileName ?? url.split('/').last,
+      );
+    }).toList();
+
+    return ChatMessage(
+      id: id,
+      chatId: chatId,
+      content: content,
+      contentType: contentType,
+      sender: messageSender,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(editAt ?? createdAt),
+      editedAt: editAt != null ? DateTime.fromMillisecondsSinceEpoch(editAt!) : null,
+      readBy: readerIds,
+      deliveredTo: const [], // Backend doesn't track delivery separately
+      attachments: messageAttachments,
+      reactions: messageReactions,
+    );
+  }
+}
+
+extension MessageListResponseDtoMapper on MessageListResponseDto {
+  /// Convert message list to domain entities
+  List<ChatMessage> toDomainList() {
+    return messages.map((dto) => dto.toDomain()).toList();
+  }
 }

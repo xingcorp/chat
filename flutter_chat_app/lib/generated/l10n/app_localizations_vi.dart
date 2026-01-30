@@ -348,6 +348,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get contacts => 'Danh bạ';
 
   @override
+  String get settings => 'Cài đặt';
+
+  @override
   String get groups => 'Nhóm';
 
   @override
