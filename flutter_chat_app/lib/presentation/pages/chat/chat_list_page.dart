@@ -320,7 +320,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
               ),
       ),
       title: Text(
-        chat.name,
+        chat.name ?? '',
         style: const TextStyle(
           fontWeight: FontWeight.bold,
         ),

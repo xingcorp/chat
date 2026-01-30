@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
+import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat/chat_bloc.dart';
 
@@ -119,9 +120,9 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     // Trigger create group event
     context.read<ChatBloc>().add(
           ChatEvent.createChat(
+            type: ChatType.group,
             name: groupName,
             participantIds: _selectedUserIds,
-            isGroup: true,
           ),
         );
   }
@@ -143,7 +144,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       child: BlocConsumer<ChatBloc, ChatState>(
         listener: (context, state) {
           state.maybeWhen(
-            loaded: (chats, hasMore) {
+            loaded: (chats) {
               // Group created successfully
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

@@ -1,11 +1,8 @@
 import 'dart:async';
 
-import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
-import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/usecases/message/delete_message_usecase.dart';
@@ -14,7 +11,6 @@ import 'package:flutter_chat_app/domain/usecases/message/get_messages_usecase.da
 import 'package:flutter_chat_app/domain/usecases/message/mark_as_read_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/send_message_usecase.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
-import 'package:flutter_chat_app/presentation/blocs/base/bloc_error_mixin.dart';
 
 part 'message_event.dart';
 part 'message_state.dart';
@@ -29,7 +25,7 @@ part 'message_state.dart';
 /// - Error handling: Comprehensive with user-friendly messages
 /// - Real-time updates: <100ms delivery
 @injectable
-class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
+class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   // UseCases (Domain Layer)
   final GetMessagesUseCase _getMessages;
   final SendMessageUseCase _sendMessage;
@@ -39,23 +35,29 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   
   // Services
   final CacheSyncStrategy _cacheSyncStrategy;
-  final MediaCacheManager _mediaCacheManager;
   final RealtimeService _realtimeService;
 
   // Map chat ID -> StreamSubscription
   final Map<String, StreamSubscription?> _messageSubscriptions = {};
 
   /// Constructor with UseCases injection
-  MessageBloc(
-    this._getMessages,
-    this._sendMessage,
-    this._editMessage,
-    this._deleteMessage,
-    this._markAsRead,
-    this._cacheSyncStrategy,
-    this._mediaCacheManager,
-    this._realtimeService,
-  ) : super(const MessageInitial()) {
+  MessageBloc({
+    required GetMessagesUseCase getMessages,
+    required SendMessageUseCase sendMessage,
+    required EditMessageUseCase editMessage,
+    required DeleteMessageUseCase deleteMessage,
+    required MarkAsReadUseCase markAsRead,
+    required CacheSyncStrategy cacheSyncStrategy,
+    required RealtimeService realtimeService,
+    required super.logger,
+  })  : _getMessages = getMessages,
+        _sendMessage = sendMessage,
+        _editMessage = editMessage,
+        _deleteMessage = deleteMessage,
+        _markAsRead = markAsRead,
+        _cacheSyncStrategy = cacheSyncStrategy,
+        _realtimeService = realtimeService,
+        super(const MessageInitial()) {
     on<LoadMessages>(_onLoadMessages);
     on<LoadMoreMessages>(_onLoadMoreMessages);
     on<SendMessage>(_onSendMessage);
@@ -91,11 +93,11 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     result.fold(
       (failure) {
-        logger.e('Failed to load messages: ${failure.message}');
-        emit(MessagesError(
-          chatId: event.chatId,
-          error: getUserErrorMessage(failure),
-        ));
+        logger.e('Failed to load messages', error: failure);
+        emitError(
+          'Failed to load messages',
+          error: failure,
+        );
       },
       (messages) {
         logger.i('Loaded ${messages.length} messages for chat ${event.chatId}');
@@ -148,14 +150,10 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     result.fold(
       (failure) {
-        logger.e('Failed to load more messages: ${failure.message}');
+        logger.e('Failed to load more messages', error: failure);
 
-        // Emit error state but preserve current messages
-        emit(MessagesError(
-          chatId: currentState.chatId,
-          error: 'Không thể tải thêm tin nhắn: ${getUserErrorMessage(failure)}',
-          previousMessages: currentState.messages,
-        ));
+        // Don't emit error for pagination - just log it
+        // User can retry by scrolling again
       },
       (nextMessages) {
         logger.i('Loaded ${nextMessages.length} more messages');
@@ -196,14 +194,13 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     result.fold(
       (failure) {
-        logger.e('Failed to send message: ${failure.message}');
+        logger.e('Failed to send message', error: failure);
 
-        // Emit error state with current messages preserved
-        emit(MessagesError(
-          chatId: currentState.chatId,
-          error: 'Không thể gửi tin nhắn: ${getUserErrorMessage(failure)}',
-          previousMessages: currentState.messages,
-        ));
+        // Use BaseBloc helper method
+        emitError(
+          'Failed to send message',
+          error: failure,
+        );
       },
       (newMessage) {
         logger.i('Message sent successfully: ${newMessage.id}');
@@ -239,14 +236,13 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     result.fold(
       (failure) {
-        logger.e('Failed to edit message: ${failure.message}');
+        logger.e('Failed to edit message', error: failure);
 
-        // Emit error state but preserve current messages
-        emit(MessagesError(
-          chatId: currentState.chatId,
-          error: 'Không thể chỉnh sửa tin nhắn: ${getUserErrorMessage(failure)}',
-          previousMessages: currentState.messages,
-        ));
+        // Use BaseBloc helper method
+        emitError(
+          'Failed to edit message',
+          error: failure,
+        );
       },
       (success) {
         if (success) {

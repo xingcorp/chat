@@ -41,7 +41,7 @@ class AppAlertDialog extends BaseDialog {
   /// Creates an [AppAlertDialog].
   const AppAlertDialog({
     required this.content,
-    this.title,
+    String? title,
     this.icon,
     this.iconColor,
     this.actions = const [],

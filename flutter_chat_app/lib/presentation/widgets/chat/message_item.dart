@@ -7,12 +7,12 @@ import 'package:timeago/timeago.dart' as timeago;
 // TODO: Refactor to use MediaBloc instead of direct repository calls
 // import 'package:flutter_chat_app/core/services/media_service.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/domain/entities/chat_message.dart' as domain;
 import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/presentation/widgets/message_status_indicator.dart';
 
 class MessageItem extends StatefulWidget {
-  final ChatMessage message;
+  final domain.ChatMessage message;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final bool isLastInGroup;
@@ -273,19 +273,19 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
   }
 
   /// Map MessageStatus to MessageQueueStatus
-  MessageQueueStatus _mapMessageStatusToQueueStatus(MessageStatus status) {
+  MessageQueueStatus _mapMessageStatusToQueueStatus(domain.MessageStatus status) {
     switch (status) {
-      case MessageStatus.pending:
+      case domain.MessageStatus.pending:
         return MessageQueueStatus.pending;
-      case MessageStatus.sending:
+      case domain.MessageStatus.sending:
         return MessageQueueStatus.sending;
-      case MessageStatus.sent:
+      case domain.MessageStatus.sent:
         return MessageQueueStatus.sent;
-      case MessageStatus.delivered:
+      case domain.MessageStatus.delivered:
         return MessageQueueStatus.delivered;
-      case MessageStatus.read:
+      case domain.MessageStatus.read:
         return MessageQueueStatus.delivered; // Map read to delivered for now
-      case MessageStatus.failed:
+      case domain.MessageStatus.failed:
         return MessageQueueStatus.failed;
     }
   }

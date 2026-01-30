@@ -43,8 +43,8 @@ class AppModalBottomSheet extends BaseBottomSheet {
   /// Creates an [AppModalBottomSheet].
   const AppModalBottomSheet({
     required this.builder,
-    this.title,
-    this.showCloseButton = true,
+    String? title,
+    bool showCloseButton = true,
     this.initialChildSize = 0.5,
     this.minChildSize = 0.25,
     this.maxChildSize = 0.95,

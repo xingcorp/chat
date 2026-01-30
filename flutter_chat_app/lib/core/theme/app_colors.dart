@@ -5,6 +5,9 @@ class AppColors {
   /// Primary brand color
   static const Color primary = Color(0xFF2196F3);
   
+  /// Primary brand color (dark mode) - same as primary for consistency
+  static const Color primaryDarkMode = Color(0xFF2196F3);
+  
   /// Secondary brand color
   static const Color secondary = Color(0xFFFF9800);
   

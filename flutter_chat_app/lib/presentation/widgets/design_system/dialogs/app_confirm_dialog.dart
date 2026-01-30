@@ -35,7 +35,7 @@ class AppConfirmDialog extends BaseDialog {
   /// Creates an [AppConfirmDialog].
   const AppConfirmDialog({
     required this.content,
-    this.title,
+    String? title,
     this.icon,
     this.iconColor,
     this.confirmText,
@@ -134,18 +134,19 @@ class AppConfirmDialog extends BaseDialog {
               onPressed: () => Navigator.of(context).pop(false),
               text: cancelText ?? l10n.cancel,
             ),
-            SizedBox(width: AppDimens.spaceSmall),
-            isDestructive
-                ? AppButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    text: confirmText ?? l10n.ok,
-                    backgroundColor: theme.colorScheme.error,
-                    foregroundColor: theme.colorScheme.onError,
-                  )
-                : AppButton.primary(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    text: confirmText ?? l10n.ok,
-                  ),
+            const SizedBox(width: AppDimens.spaceSmall),
+            if (isDestructive)
+              AppButton.primary(
+                onPressed: () => Navigator.of(context).pop(true),
+                text: confirmText ?? l10n.ok,
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+              )
+            else
+              AppButton.primary(
+                onPressed: () => Navigator.of(context).pop(true),
+                text: confirmText ?? l10n.ok,
+              ),
           ],
         ),
       ],
