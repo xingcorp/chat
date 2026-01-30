@@ -13,20 +13,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix 6">
-      <change beforePath="$PROJECT_DIR$/../.kiro/specs/design-system-advanced-components/tasks.md" beforeDir="false" afterPath="$PROJECT_DIR$/../.kiro/specs/design-system-advanced-components/tasks.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.dart_tool/package_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config_subset" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config_subset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/translations/en.json" beforeDir="false" afterPath="$PROJECT_DIR$/assets/translations/en.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/translations/vi.json" beforeDir="false" afterPath="$PROJECT_DIR$/assets/translations/vi.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/l10n/app_en.arb" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/app_en.arb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/l10n/app_vi.arb" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/app_vi.arb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/design_system/data/app_data_table.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/design_system/data/app_data_table.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/design_system/data/data.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/design_system/data/data.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/design_system/media/app_audio_player.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/design_system/media/app_audio_player.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/design_system/media/app_image_gallery.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/design_system/media/app_image_gallery.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/message_queue_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/message_queue_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/mappers/chat_mapper.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/mappers/chat_mapper.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/models/chat_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/models/chat_model.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main_desktop.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_desktop.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main_mobile.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_mobile.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main_web.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_web.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat/chat_bubble.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat/chat_bubble.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/design_system/chat/chat_enums.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/design_system/chat/chat_enums.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

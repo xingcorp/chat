@@ -1,21 +1,9 @@
-import 'package:isar/isar.dart';
 import 'dart:convert';
 
-import 'package:flutter_chat_app/domain/entities/chat.dart' as domain;
+import 'package:flutter_chat_app/domain/entities/chat.dart';
+import 'package:isar/isar.dart';
 
 part 'chat_model.g.dart';
-
-/// Type of chat
-enum ChatType {
-  /// One-to-one chat
-  direct,
-  
-  /// Group chat
-  group,
-  
-  /// Broadcast channel
-  channel
-}
 
 /// Model class representing a chat conversation
 @collection
@@ -341,29 +329,17 @@ class ChatModel {
   }
 
   /// Convert ChatModel to domain Chat entity
-  domain.Chat toDomain() {
-    return domain.Chat(
+  Chat toDomain() {
+    return Chat(
       id: serverId,
       name: name,
       avatarUrl: avatarUrl,
       lastMessageTime: lastMessageTime,
       lastMessagePreview: lastMessagePreview,
       unreadCount: unreadCount,
-      type: _mapToDomainChatType(type),
+      type: type,
       participantIds: participantIds,
     );
-  }
-
-  /// Map data layer ChatType to domain layer ChatType
-  static domain.ChatType _mapToDomainChatType(ChatType dataType) {
-    switch (dataType) {
-      case ChatType.direct:
-        return domain.ChatType.direct;
-      case ChatType.group:
-        return domain.ChatType.group;
-      case ChatType.channel:
-        return domain.ChatType.channel;
-    }
   }
 
   /// Get chat display name

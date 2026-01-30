@@ -11,12 +11,15 @@
 /// // Message type
 /// final type = MessageType.text;
 ///
-/// // Message status
+/// // Message status (imported from domain)
 /// final status = MessageStatus.read;
 ///
 /// // Message alignment
 /// final alignment = MessageAlignment.right;
 /// ```
+
+// Export MessageStatus from domain for convenience
+export 'package:flutter_chat_app/domain/entities/chat_message.dart' show MessageStatus;
 
 /// Message content type.
 ///
@@ -45,29 +48,6 @@ enum MessageType {
 
   /// System message (e.g., "User joined the chat")
   system,
-}
-
-/// Message delivery and read status.
-///
-/// Represents the lifecycle of a message from sending to being read.
-enum MessageStatus {
-  /// Message is being sent (spinner)
-  sending,
-
-  /// Message sent to server (single checkmark)
-  sent,
-
-  /// Message delivered to recipient (double checkmark)
-  delivered,
-
-  /// Message read by recipient (double checkmark, blue)
-  read,
-
-  /// Message failed to send (error icon)
-  failed,
-
-  /// Message is pending (queued for sending)
-  pending,
 }
 
 /// Message bubble alignment.

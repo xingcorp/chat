@@ -1,12 +1,14 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat/media_preview.dart';
 
 /// Loại nội dung tin nhắn
@@ -20,15 +22,6 @@ enum ChatMessageType {
   sticker,
   contact,
   system,
-}
-
-/// Trạng thái gửi tin nhắn
-enum MessageStatus {
-  sending, // Đang gửi
-  sent, // Đã gửi nhưng chưa đến máy chủ
-  delivered, // Đã gửi đến máy chủ
-  read, // Đã đọc
-  failed, // Gửi thất bại
 }
 
 /// Widget hiển thị tin nhắn chat

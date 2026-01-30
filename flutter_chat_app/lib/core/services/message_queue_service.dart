@@ -3,17 +3,17 @@ import 'dart:convert';
 import 'dart:isolate';
 import 'dart:math';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
-import 'package:uuid/uuid.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:crypto/crypto.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:uuid/uuid.dart';
 
+import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart';
 import 'package:flutter_chat_app/core/services/attachment_queue_service.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/local_storage_service.dart';
-import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/entities/message_error_type.dart';
 import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
@@ -22,30 +22,6 @@ import 'package:flutter_chat_app/domain/models/message_queue_metrics.dart';
 import 'package:flutter_chat_app/domain/models/queued_attachment.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
-
-/// Enum định nghĩa các loại nội dung tin nhắn
-enum ContentType {
-  /// Văn bản thông thường
-  text,
-  
-  /// Hình ảnh
-  image,
-  
-  /// Video
-  video,
-  
-  /// Âm thanh
-  audio,
-  
-  /// Vị trí
-  location,
-  
-  /// Liên hệ
-  contact,
-  
-  /// Tập tin
-  file,
-}
 
 /// Enum định nghĩa các mức độ ưu tiên của tin nhắn trong hàng đợi
 enum MessagePriority {
