@@ -29,8 +29,8 @@ class ConnectivityAnalyzerService {
   /// Plugin kết nối
   final Connectivity _connectivity;
   
-  /// Constructor
-  ConnectivityAnalyzerService(this._connectivity);
+  /// Private constructor
+  ConnectivityAnalyzerService._(this._connectivity);
   
   /// Stream thông báo thay đổi kết nối
   final BehaviorSubject<List<ConnectivityResult>> _connectivityStream = BehaviorSubject();
@@ -68,13 +68,11 @@ class ConnectivityAnalyzerService {
   /// Timer để kiểm tra định kỳ
   Timer? _periodicCheckTimer;
   
-  /// Private constructor
-  ConnectivityAnalyzerService._();
-  
   /// Async factory method to create and initialize the service
   @preResolve
   static Future<ConnectivityAnalyzerService> create() async {
-    final service = ConnectivityAnalyzerService._();
+    final connectivity = Connectivity();
+    final service = ConnectivityAnalyzerService._(connectivity);
     await service._initialize();
     return service;
   }

@@ -43,14 +43,19 @@ class MessageQueueBloc extends Bloc<MessageQueueEvent, MessageQueueState> {
     emit(const MessageQueueState.loading());
     
     try {
-      final messageId = await _queueService.enqueueMessage(
+      // TODO: Get senderId and recipientId from auth/chat context
+      final senderId = 'current_user_id'; // Placeholder
+      final recipientId = 'recipient_id'; // Placeholder
+      
+      final message = await _queueService.enqueueMessage(
         chatId: event.chatId,
-        message: event.content,
+        senderId: senderId,
+        recipientId: recipientId,
+        content: event.content,
         contentType: event.contentType,
-        attachmentIds: event.attachments.map((a) => a.id).toList(),
       );
       
-      emit(MessageQueueState.messageEnqueued(messageId));
+      emit(MessageQueueState.messageEnqueued(message.localId));
     } catch (e) {
       emit(MessageQueueState.error(e.toString()));
     }

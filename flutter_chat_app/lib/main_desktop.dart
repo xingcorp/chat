@@ -383,12 +383,12 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                                   ),
                                   Expanded(
                                     child: TextField(
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                         hintText: AppStrings.typeMessage,
-                                        border: OutlineInputBorder(
+                                        border: const OutlineInputBorder(
                                           borderRadius: BorderRadius.all(Radius.circular(24.0)),
                                         ),
-                                        contentPadding: EdgeInsets.symmetric(
+                                        contentPadding: const EdgeInsets.symmetric(
                                           horizontal: AppDimensions.paddingDefault,
                                           vertical: AppDimensions.paddingSmall,
                                         ),

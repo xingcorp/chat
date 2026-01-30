@@ -178,7 +178,7 @@ class ChatRepositoryImpl implements IChatRepository {
   }) async {
     return await _executeWithMonitoring('create_chat', () async {
       try {
-        debugPrint('💬 Creating chat: $name (isGroup: $isGroup)');
+        _logger.i('Creating chat', error: {'name': name, 'isGroup': isGroup});
 
         // Create chat entity from parameters
         final chat = Chat(
@@ -259,17 +259,23 @@ class ChatRepositoryImpl implements IChatRepository {
 
         // 2. Try to update on remote
         try {
-          final remoteResult = await _remoteDataSource.updateChat(
+          await _remoteDataSource.updateChat(
             conversationId: chatId,
             name: name,
             imgUrl: avatarUrl,
           );
         
-          // Remote success, update local with server version
-          final serverChat = remoteResult.toDomain();
-          await _localDataSource.saveChat(serverChat);
-          debugPrint('✅ Chat updated successfully on remote and synced locally');
-          return Right(serverChat);
+          // Remote success, fetch updated chat from remote
+          final updatedRemote = await _remoteDataSource.getChatById(chatId);
+          if (updatedRemote != null) {
+            final serverChat = updatedRemote.toDomain();
+            await _localDataSource.saveChat(serverChat);
+            debugPrint('✅ Chat updated successfully on remote and synced locally');
+            return Right(serverChat);
+          }
+          
+          // If fetch failed, return local version
+          return Right(updatedChat);
 
         } catch (e) {
           // Remote failed, handle conflict resolution
@@ -304,8 +310,8 @@ class ChatRepositoryImpl implements IChatRepository {
         try {
           final remoteResult = await _remoteDataSource.deleteChat(chatId);
         
-          if (remoteResult) {
-            debugPrint('✅ Chat deleted successfully on remote');
+          if (remoteResult.isNotEmpty) {
+            _logger.i('Chat deleted successfully on remote', data: {'chatId': chatId});
             return const Right(true);
           } else {
             debugPrint('⚠️  Remote delete failed, but local delete succeeded');
@@ -397,27 +403,23 @@ class ChatRepositoryImpl implements IChatRepository {
         debugPrint('✅ Message saved locally (pending)');
         
         // 2. Try to send to remote
-        final remoteResult = await _remoteDataSource.sendMessage(
+        await _remoteDataSource.sendMessage(
           conversationId: message.chatId,
           type: message.contentType.toString().split('.').last,
           message: message.content,
-          createdAt: message.timestamp.millisecondsSinceEpoch,
-          urls: message.attachments.isNotEmpty ? message.attachments : null,
+          createdAt: message.createdAt.millisecondsSinceEpoch,
+          urls: message.attachments.map((a) => a.url).toList(),
         );
         
         try {
-          // Remote success, convert MessageModel to ChatMessage
-          final sentMessage = remoteResult.toDomain();
-
-          // Update local with server version
-          await _localDataSource.saveMessage(sentMessage.chatId, sentMessage);
+          // Remote success, update local status
           await _localDataSource.updateMessageStatus(
-            sentMessage.chatId,
-            sentMessage.id,
+            message.chatId,
+            message.id,
             MessageQueueStatus.sent,
           );
           debugPrint('✅ Message sent successfully');
-          return Right(sentMessage);
+          return Right(message);
 
         } catch (e) {
           // Remote failed, update status to failed
@@ -514,27 +516,25 @@ class ChatRepositoryImpl implements IChatRepository {
         debugPrint('👥 Adding ${userIds.length} participants to chat: $chatId');
 
         // Try remote operation first
-        final remoteResult = await _remoteDataSource.addUsersToChat(chatId, userIds);
+        await _remoteDataSource.addUsersToChat(
+          conversationId: chatId,
+          userIds: userIds,
+        );
 
-        if (remoteResult) {
-          debugPrint('✅ Participants added successfully');
+        debugPrint('✅ Participants added successfully');
 
-          // Update local chat data
-          final chat = await _localDataSource.getChatById(chatId);
-          if (chat != null) {
-            // In real implementation, would update participants list
-            await _localDataSource.saveChat(chat);
-          }
-
-          return const Right(true);
-        } else {
-          debugPrint('❌ Failed to add participants');
-          return Left(ServerFailure(message: 'Failed to add participants'));
+        // Update local chat data
+        final chat = await _localDataSource.getChatById(chatId);
+        if (chat != null) {
+          // In real implementation, would update participants list
+          await _localDataSource.saveChat(chat);
         }
+
+        return const Right(true);
 
       } catch (e) {
         debugPrint('❌ Add participants failed: $e');
-        return Left(ServerFailure(message: 'Failed to add participants: $e'));
+        return const Left(ServerFailure(message: 'Failed to add participants'));
       }
     });
   }
@@ -552,27 +552,25 @@ class ChatRepositoryImpl implements IChatRepository {
         debugPrint('👥 Removing ${userIds.length} participants from chat: $chatId');
 
         // Try remote operation first
-        final remoteResult = await _remoteDataSource.removeUsersFromChat(chatId, userIds);
+        await _remoteDataSource.removeUsersFromChat(
+          conversationId: chatId,
+          userIds: userIds,
+        );
 
-        if (remoteResult) {
-          debugPrint('✅ Participants removed successfully');
+        debugPrint('✅ Participants removed successfully');
 
-          // Update local chat data
-          final chat = await _localDataSource.getChatById(chatId);
-          if (chat != null) {
-            // In real implementation, would update participants list
-            await _localDataSource.saveChat(chat);
-          }
-
-          return const Right(true);
-        } else {
-          debugPrint('❌ Failed to remove participants');
-          return Left(ServerFailure(message: 'Failed to remove participants'));
+        // Update local chat data
+        final chat = await _localDataSource.getChatById(chatId);
+        if (chat != null) {
+          // In real implementation, would update participants list
+          await _localDataSource.saveChat(chat);
         }
+
+        return const Right(true);
 
       } catch (e) {
         debugPrint('❌ Remove participants failed: $e');
-        return Left(ServerFailure(message: 'Failed to remove participants: $e'));
+        return const Left(ServerFailure(message: 'Failed to remove participants'));
       }
     });
   }
@@ -589,7 +587,7 @@ class ChatRepositoryImpl implements IChatRepository {
         // Try remote operation first
         final remoteResult = await _remoteDataSource.leaveChat(chatId);
 
-        if (remoteResult) {
+        if (remoteResult.isNotEmpty) {
           debugPrint('✅ Left chat successfully');
 
           // Remove from local storage

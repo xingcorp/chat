@@ -1,7 +1,7 @@
 part of 'media_bloc.dart';
 
 /// **Abstract class for Media BLoC states**
-abstract class MediaState extends Equatable {
+abstract class MediaState extends base.BaseState {
   const MediaState();
 
   @override

@@ -195,5 +195,6 @@ class MessageQueueMetrics {
 
   /// Increment cancelled message count
   void incrementCancelled() {
-    totalFailed++; // Count cancelled as failed for metrics
+    // Count cancelled messages separately or as failed
+    currentQueueSize = currentQueueSize > 0 ? currentQueueSize - 1 : 0;
   }

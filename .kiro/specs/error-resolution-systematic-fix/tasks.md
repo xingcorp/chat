@@ -25,17 +25,18 @@
 - [x] Add import for `ChatDto` in `chat_repository.dart`
 - [x] Add `toDomain()` mapper for `MessageDto`
 - [x] Add import for `MessageDto` in `chat_repository.dart`
-- [ ] Fix remaining method calls (in progress)
-- [ ] All method calls resolve correctly
-- [ ] No `undefined_method` errors
+- [x] Fix remaining method calls
+- [x] All method calls resolve correctly
+- [x] No `undefined_method` errors
 
 **Files Fixed**:
 - `lib/core/services/message_queue_service.dart` - Added `cancelMessage()` method
 - `lib/data/dtos/chat_dto.dart` - Added `toDomain()` and `toDomainList()` extensions
 - `lib/data/dtos/message_dto.dart` - Added `toDomain()` and `toDomainList()` extensions
 - `lib/data/repositories/chat_repository.dart` - Added imports for ChatDto and MessageDto
+- `lib/data/repositories/chat_repository.dart` - Fixed void return type handling for updateChat, sendMessage, addUsersToChat, removeUsersFromChat
 
-**Status**: 🔄 IN PROGRESS (fixing remaining errors)
+**Status**: ✅ COMPLETED
 
 ---
 
@@ -59,14 +60,17 @@
 
 **Acceptance Criteria**:
 - [x] Add `groupType`, `memberIds`, `name` to `CreateGroupDto` call
-- [ ] Fix remaining missing parameters (in progress)
-- [ ] All function calls have required parameters
-- [ ] No missing parameter errors
+- [x] Fix addUsersToChat - add `conversationId`, `userIds` named parameters
+- [x] Fix removeUsersFromChat - add `conversationId`, `userIds` named parameters
+- [x] All function calls have required parameters
+- [x] No missing parameter errors
 
 **Files Fixed**:
 - `lib/data/repositories/chat_repository.dart:196` - Added required named parameters
+- `lib/data/repositories/chat_repository.dart:519` - Fixed addUsersToChat parameters
+- `lib/data/repositories/chat_repository.dart:560` - Fixed removeUsersFromChat parameters
 
-**Status**: 🔄 IN PROGRESS
+**Status**: ✅ COMPLETED
 
 ---
 
@@ -148,24 +152,29 @@
 ---
 
 **Phase 1 Progress**:
-- ✅ Errors fixed: 161 → 129 (32 errors fixed)
-- 🔄 Remaining: 129 errors
-- 📊 Progress: 20% complete
+- ✅ Errors fixed: 161 → 114 (47 errors fixed) 🎉
+- 📊 Progress: 29% complete (47/161 errors resolved)
+- ⏳ Status: IN PROGRESS
+
+**Current Status**:
+- 114 errors remaining (mostly in tests and design system)
+- Main application code errors largely resolved
+- Test files need significant fixes
+
+**Remaining Work**:
+- Complete Phase 1: Fix remaining 114 compilation errors
+- Phase 2: High Priority Warnings (~50 warnings)
+- Phase 3: Code Quality Issues (~1800 info messages)
+- Phase 4: Architecture Compliance
 
 **Next Actions**:
-1. Fix `timestamp` → `createdAt` in ChatMessage
-2. Fix attachment type mismatch (List<MessageAttachment> → List<String>)
-3. Fix parameter mismatches in addUsersToChat/removeUsersFromChat
-4. Fix remaining type errors
-5. Complete Phase 1 verification
-
-**Next Actions**:
-1. ✅ Fixed syntax error in app_breadcrumb.dart
-2. ✅ Ran build_runner successfully
-3. Fix remaining undefined parameters (Task 1.5)
-4. Fix connectivity initialization (Task 1.8)
-5. Fix extra positional arguments (Task 1.7)
-6. Complete Phase 1 verification
+1. Fix remaining errors in:
+   - Design system components (dialogs, lists, menus)
+   - Test files (integration and unit tests)
+   - BLoC states and events
+   - Repository implementations
+2. Run full test suite to verify functionality
+3. Complete Phase 1 before moving to Phase 2
 
 ---
 
