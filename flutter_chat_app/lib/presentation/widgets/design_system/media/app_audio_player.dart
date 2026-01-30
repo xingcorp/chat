@@ -535,7 +535,7 @@ class AppAudioPlayerState extends BaseState<AppAudioPlayer> {
       padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingLarge),
       child: Column(
         children: [
-          Icon(
+          const Icon(
             Icons.error_outline,
             size: AppDimens.iconXLarge,
             color: AppColors.error,

@@ -1733,6 +1733,54 @@ abstract class AppLocalizations {
   /// **'No emojis found'**
   String get noEmojisFound;
 
+  /// Placeholder text for emoji search input
+  ///
+  /// In en, this message translates to:
+  /// **'Search emojis'**
+  String get searchEmojis;
+
+  /// Message when there are no recent emojis
+  ///
+  /// In en, this message translates to:
+  /// **'No recent emojis'**
+  String get noRecentEmojis;
+
+  /// Recent emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get recent;
+
+  /// Smileys emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Smileys'**
+  String get smileys;
+
+  /// Animals emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Animals'**
+  String get animals;
+
+  /// Food emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Food'**
+  String get food;
+
+  /// Travel emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Travel'**
+  String get travel;
+
+  /// Activities emoji category
+  ///
+  /// In en, this message translates to:
+  /// **'Activities'**
+  String get activities;
+
   /// Typing indicator for single user
   ///
   /// In en, this message translates to:
@@ -2045,6 +2093,24 @@ abstract class AppLocalizations {
   /// **'Next page'**
   String get nextPage;
 
+  /// Text showing current page items range
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {start}-{end} of {total}'**
+  String showingItems(int start, int end, int total);
+
+  /// Text showing current page number
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {total}'**
+  String pageInfo(int current, int total);
+
+  /// Placeholder text for filter input
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get filter;
+
   /// Tooltip for last page button
   ///
   /// In en, this message translates to:
@@ -2164,6 +2230,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error loading audio'**
   String get errorLoadingAudio;
+
+  /// Button text to deselect all items
+  ///
+  /// In en, this message translates to:
+  /// **'Select none'**
+  String get selectNone;
+
+  /// Hint text for pasting OTP code
+  ///
+  /// In en, this message translates to:
+  /// **'Paste code'**
+  String get pasteCode;
+
+  /// Error message when maximum number of tags is reached
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum tags reached'**
+  String get maxTagsReached;
+
+  /// Error message when trying to add a duplicate tag
+  ///
+  /// In en, this message translates to:
+  /// **'Tag already exists'**
+  String get duplicateTag;
+
+  /// Placeholder text for tag input
+  ///
+  /// In en, this message translates to:
+  /// **'Add tag'**
+  String get addTag;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

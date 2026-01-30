@@ -2,22 +2,9 @@
 ///
 /// Barrel file exporting all data display components.
 ///
-/// **Components**:
-/// - AppDataTable: Sortable, filterable data table
-/// - AppTimeline: Vertical timeline for events
-/// - AppCarousel: Horizontal scrollable carousel
-/// - AppCalendar: Calendar with date selection
-/// - AppAccordion: Collapsible sections
-///
 /// **Usage**:
 /// ```dart
 /// import 'package:flutter_chat_app/presentation/widgets/design_system/data/data.dart';
-///
-/// AppDataTable<User>(...)
-/// AppTimeline(...)
-/// AppCarousel(...)
-/// AppCalendar(...)
-/// AppAccordion(...)
 /// ```
 
 library;

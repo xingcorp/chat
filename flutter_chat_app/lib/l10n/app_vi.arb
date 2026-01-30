@@ -282,6 +282,9 @@
   "firstPage": "Trang đầu",
   "previousPage": "Trang trước",
   "nextPage": "Trang sau",
+  "showingItems": "Hiển thị {start}-{end} trong tổng số {total}",
+  "pageInfo": "Trang {current} / {total}",
+  "filter": "Lọc",
   "lastPage": "Trang cuối",
   "dropFilesHere": "Thả tệp vào đây",
   "dragDropOrClickToUpload": "Kéo & thả tệp vào đây hoặc nhấp để chọn",
@@ -344,5 +347,39 @@
   "errorLoadingAudio": "Lỗi tải âm thanh",
   "@errorLoadingAudio": {
     "description": "Error message when audio fails to load"
+  },
+
+  "searchEmojis": "Tìm kiếm emoji",
+  "noRecentEmojis": "Không có emoji gần đây",
+  "recent": "Gần đây",
+  "smileys": "Mặt cười",
+  "animals": "Động vật",
+  "food": "Đồ ăn",
+  "travel": "Du lịch",
+  "activities": "Hoạt động",
+
+  "selectNone": "Bỏ chọn tất cả",
+  "@selectNone": {
+    "description": "Button text to deselect all items"
+  },
+
+  "pasteCode": "Dán mã",
+  "@pasteCode": {
+    "description": "Hint text for pasting OTP code"
+  },
+
+  "maxTagsReached": "Đã đạt số lượng thẻ tối đa",
+  "@maxTagsReached": {
+    "description": "Error message when maximum number of tags is reached"
+  },
+
+  "duplicateTag": "Thẻ đã tồn tại",
+  "@duplicateTag": {
+    "description": "Error message when trying to add a duplicate tag"
+  },
+
+  "addTag": "Thêm thẻ",
+  "@addTag": {
+    "description": "Placeholder text for tag input"
   }
 }

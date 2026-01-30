@@ -1,63 +1,152 @@
 {
-  "app": {
-    "title": "Ứng dụng Chat Flutter"
+  "appTitle": "Ứng dụng Chat Flutter",
+  "ok": "OK",
+  "cancel": "Hủy",
+  "save": "Lưu",
+  "delete": "Xóa",
+  "edit": "Sửa",
+  "loading": "Đang tải...",
+  "error": "Đã xảy ra lỗi",
+  "retry": "Thử lại",
+  "send": "Gửi",
+  "close": "Đóng",
+  "login": "Đăng nhập",
+  "logout": "Đăng xuất",
+  "register": "Đăng ký",
+  "forgotPassword": "Quên mật khẩu",
+  "username": "Tên đăng nhập",
+  "password": "Mật khẩu",
+  "email": "Email",
+  "confirmPassword": "Xác nhận mật khẩu",
+  "newMessage": "Tin nhắn mới",
+  "typeMessage": "Nhập tin nhắn...",
+  "noMessages": "Chưa có tin nhắn",
+  "loadMore": "Tải thêm",
+  "yesterday": "Hôm qua",
+  "today": "Hôm nay",
+  "online": "Trực tuyến",
+  "offline": "Ngoại tuyến",
+  "connecting": "Đang kết nối...",
+  "reconnecting": "Đang kết nối lại...",
+  "poor": "Kết nối kém",
+  "good": "Kết nối tốt",
+  "excellent": "Kết nối rất tốt",
+  "testData": "Dữ liệu kiểm thử",
+  "createTestData": "Tạo dữ liệu kiểm thử",
+  "clearData": "Xóa dữ liệu",
+  "dataCleared": "Đã xóa dữ liệu",
+  "users": "Người dùng",
+  "chats": "Cuộc trò chuyện",
+  "messages": "Tin nhắn",
+  "noUsers": "Chưa có người dùng",
+  "noChats": "Chưa có cuộc trò chuyện",
+  "connectionError": "Lỗi kết nối",
+  "databaseError": "Lỗi cơ sở dữ liệu",
+  "syncError": "Lỗi đồng bộ hóa",
+  "uploadError": "Lỗi tải lên",
+  "downloadError": "Lỗi tải xuống",
+  "play": "Phát",
+  "pause": "Tạm dừng",
+  "loop": "Lặp lại",
+  "rewind10Seconds": "Tua lại 10 giây",
+  "forward10Seconds": "Tua tới 10 giây",
+  "playbackSpeed": "Tốc độ phát",
+  "quality": "Chất lượng",
+  "pictureInPicture": "Hình trong hình",
+  "enterFullscreen": "Toàn màn hình",
+  "exitFullscreen": "Thoát toàn màn hình",
+  "errorLoadingAudio": "Lỗi tải âm thanh",
+  "share": "Chia sẻ",
+  "download": "Tải xuống",
+  "noImagesAvailable": "Không có hình ảnh",
+  "remove": "Xóa",
+  "dropFilesHere": "Thả tệp vào đây",
+  "dragDropOrClickToUpload": "Kéo thả tệp hoặc nhấp để tải lên",
+  "maxFilesReached": "Đã đạt số lượng tệp tối đa",
+  "errorPickingFiles": "Lỗi chọn tệp",
+  "searchEmojis": "Tìm kiếm emoji",
+  "noEmojisFound": "Không tìm thấy emoji",
+  "noRecentEmojis": "Không có emoji gần đây",
+  "recent": "Gần đây",
+  "smileys": "Mặt cười & Con người",
+  "animals": "Động vật & Thiên nhiên",
+  "food": "Đồ ăn & Đồ uống",
+  "travel": "Du lịch & Địa điểm",
+  "activities": "Hoạt động",
+  "objects": "Đồ vật",
+  "symbols": "Biểu tượng",
+  "flags": "Cờ",
+  "filter": "Lọc",
+  "noDataAvailable": "Không có dữ liệu",
+  "previousPage": "Trang trước",
+  "nextPage": "Trang sau",
+  "showingItems": "Hiển thị {start} đến {end} trong tổng số {total} mục",
+  "@showingItems": {
+    "placeholders": {
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
   },
-  "common": {
-    "ok": "OK",
-    "cancel": "Hủy",
-    "save": "Lưu",
-    "delete": "Xóa",
-    "edit": "Sửa",
-    "loading": "Đang tải...",
-    "error": "Đã xảy ra lỗi",
-    "retry": "Thử lại",
-    "send": "Gửi",
-    "close": "Đóng"
+  "pageInfo": "Trang {current} / {total}",
+  "@pageInfo": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
   },
-  "auth": {
-    "login": "Đăng nhập",
-    "logout": "Đăng xuất",
-    "register": "Đăng ký",
-    "forgotPassword": "Quên mật khẩu",
-    "username": "Tên đăng nhập",
-    "password": "Mật khẩu",
-    "email": "Email",
-    "confirmPassword": "Xác nhận mật khẩu"
+  "bold": "Đậm",
+  "italic": "Nghiêng",
+  "underline": "Gạch chân",
+  "strikethrough": "Gạch ngang",
+  "bulletList": "Danh sách dấu đầu dòng",
+  "numberedList": "Danh sách đánh số",
+  "insertLink": "Chèn liên kết",
+  "undo": "Hoàn tác",
+  "redo": "Làm lại",
+  "linkUrl": "URL liên kết",
+  "linkText": "Văn bản liên kết",
+  "mention": "Nhắc đến",
+  "searchUsers": "Tìm kiếm người dùng...",
+  "noUsersFound": "Không tìm thấy người dùng",
+  "typeToSearch": "Nhập để tìm kiếm...",
+  "noSuggestionsFound": "Không tìm thấy gợi ý",
+  "selectAll": "Chọn tất cả",
+  "selectNone": "Bỏ chọn tất cả",
+  "selected": "đã chọn",
+  "maxSelectionsReached": "Đã đạt số lượng chọn tối đa",
+  "addTag": "Thêm thẻ",
+  "pressEnterToAdd": "Nhấn Enter để thêm",
+  "duplicateTag": "Thẻ đã tồn tại",
+  "maxTagsReached": "Đã đạt số lượng thẻ tối đa",
+  "enterCode": "Nhập mã",
+  "verificationCode": "Mã xác thực",
+  "invalidCode": "Mã không hợp lệ",
+  "pasteCode": "Dán mã",
+  "maxFileSize": "Kích thước tệp tối đa: {size}",
+  "@maxFileSize": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
   },
-  "chat": {
-    "newMessage": "Tin nhắn mới",
-    "typeMessage": "Nhập tin nhắn...",
-    "noMessages": "Chưa có tin nhắn",
-    "loadMore": "Tải thêm",
-    "yesterday": "Hôm qua",
-    "today": "Hôm nay"
-  },
-  "connection": {
-    "online": "Trực tuyến",
-    "offline": "Ngoại tuyến",
-    "connecting": "Đang kết nối...",
-    "reconnecting": "Đang kết nối lại...",
-    "poor": "Kết nối kém",
-    "good": "Kết nối tốt",
-    "excellent": "Kết nối rất tốt"
-  },
-  "database": {
-    "testData": "Dữ liệu kiểm thử",
-    "createTestData": "Tạo dữ liệu kiểm thử",
-    "clearData": "Xóa dữ liệu",
-    "dataCleared": "Đã xóa dữ liệu",
-    "users": "Người dùng",
-    "chats": "Cuộc trò chuyện",
-    "messages": "Tin nhắn",
-    "noUsers": "Chưa có người dùng",
-    "noChats": "Chưa có cuộc trò chuyện",
-    "noMessages": "Chưa có tin nhắn"
-  },
-  "errors": {
-    "connectionError": "Lỗi kết nối",
-    "databaseError": "Lỗi cơ sở dữ liệu",
-    "syncError": "Lỗi đồng bộ hóa",
-    "uploadError": "Lỗi tải lên",
-    "downloadError": "Lỗi tải xuống"
+  "allowedFileTypes": "Loại cho phép: {types}",
+  "@allowedFileTypes": {
+    "placeholders": {
+      "types": {
+        "type": "String"
+      }
+    }
   }
 }

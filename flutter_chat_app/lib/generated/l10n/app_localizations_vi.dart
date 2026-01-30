@@ -883,6 +883,30 @@ class AppLocalizationsVi extends AppLocalizations {
   String get noEmojisFound => 'No emojis found';
 
   @override
+  String get searchEmojis => 'Tìm kiếm emoji';
+
+  @override
+  String get noRecentEmojis => 'Không có emoji gần đây';
+
+  @override
+  String get recent => 'Gần đây';
+
+  @override
+  String get smileys => 'Mặt cười';
+
+  @override
+  String get animals => 'Động vật';
+
+  @override
+  String get food => 'Đồ ăn';
+
+  @override
+  String get travel => 'Du lịch';
+
+  @override
+  String get activities => 'Hoạt động';
+
+  @override
   String isTyping(String name) {
     return '$name is typing...';
   }
@@ -1066,6 +1090,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get nextPage => 'Trang sau';
 
   @override
+  String showingItems(int start, int end, int total) {
+    return 'Hiển thị $start-$end trong tổng số $total';
+  }
+
+  @override
+  String pageInfo(int current, int total) {
+    return 'Trang $current / $total';
+  }
+
+  @override
+  String get filter => 'Lọc';
+
+  @override
   String get lastPage => 'Trang cuối';
 
   @override
@@ -1128,4 +1165,19 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get errorLoadingAudio => 'Lỗi tải âm thanh';
+
+  @override
+  String get selectNone => 'Bỏ chọn tất cả';
+
+  @override
+  String get pasteCode => 'Dán mã';
+
+  @override
+  String get maxTagsReached => 'Đã đạt số lượng thẻ tối đa';
+
+  @override
+  String get duplicateTag => 'Thẻ đã tồn tại';
+
+  @override
+  String get addTag => 'Thêm thẻ';
 }

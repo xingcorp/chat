@@ -1488,6 +1488,46 @@
     "description": "Message when emoji search returns no results"
   },
 
+  "searchEmojis": "Search emojis",
+  "@searchEmojis": {
+    "description": "Placeholder text for emoji search input"
+  },
+
+  "noRecentEmojis": "No recent emojis",
+  "@noRecentEmojis": {
+    "description": "Message when there are no recent emojis"
+  },
+
+  "recent": "Recent",
+  "@recent": {
+    "description": "Recent emoji category"
+  },
+
+  "smileys": "Smileys",
+  "@smileys": {
+    "description": "Smileys emoji category"
+  },
+
+  "animals": "Animals",
+  "@animals": {
+    "description": "Animals emoji category"
+  },
+
+  "food": "Food",
+  "@food": {
+    "description": "Food emoji category"
+  },
+
+  "travel": "Travel",
+  "@travel": {
+    "description": "Travel emoji category"
+  },
+
+  "activities": "Activities",
+  "@activities": {
+    "description": "Activities emoji category"
+  },
+
   "isTyping": "{name} is typing...",
   "@isTyping": {
     "description": "Typing indicator for single user",
@@ -1799,6 +1839,40 @@
     "description": "Tooltip for next page button"
   },
 
+  "showingItems": "Showing {start}-{end} of {total}",
+  "@showingItems": {
+    "description": "Text showing current page items range",
+    "placeholders": {
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+
+  "pageInfo": "Page {current} of {total}",
+  "@pageInfo": {
+    "description": "Text showing current page number",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+
+  "filter": "Filter",
+  "@filter": {
+    "description": "Placeholder text for filter input"
+  },
+
   "lastPage": "Last page",
   "@lastPage": {
     "description": "Tooltip for last page button"
@@ -1935,5 +2009,30 @@
   "errorLoadingAudio": "Error loading audio",
   "@errorLoadingAudio": {
     "description": "Error message when audio fails to load"
+  },
+
+  "selectNone": "Select none",
+  "@selectNone": {
+    "description": "Button text to deselect all items"
+  },
+
+  "pasteCode": "Paste code",
+  "@pasteCode": {
+    "description": "Hint text for pasting OTP code"
+  },
+
+  "maxTagsReached": "Maximum tags reached",
+  "@maxTagsReached": {
+    "description": "Error message when maximum number of tags is reached"
+  },
+
+  "duplicateTag": "Tag already exists",
+  "@duplicateTag": {
+    "description": "Error message when trying to add a duplicate tag"
+  },
+
+  "addTag": "Add tag",
+  "@addTag": {
+    "description": "Placeholder text for tag input"
   }
 }

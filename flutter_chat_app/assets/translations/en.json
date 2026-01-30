@@ -1,63 +1,152 @@
 {
-  "app": {
-    "title": "Flutter Chat App"
+  "appTitle": "Flutter Chat App",
+  "ok": "OK",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "edit": "Edit",
+  "loading": "Loading...",
+  "error": "An error occurred",
+  "retry": "Retry",
+  "send": "Send",
+  "close": "Close",
+  "login": "Login",
+  "logout": "Logout",
+  "register": "Register",
+  "forgotPassword": "Forgot Password",
+  "username": "Username",
+  "password": "Password",
+  "email": "Email",
+  "confirmPassword": "Confirm Password",
+  "newMessage": "New Message",
+  "typeMessage": "Type a message...",
+  "noMessages": "No messages yet",
+  "loadMore": "Load More",
+  "yesterday": "Yesterday",
+  "today": "Today",
+  "online": "Online",
+  "offline": "Offline",
+  "connecting": "Connecting...",
+  "reconnecting": "Reconnecting...",
+  "poor": "Poor connection",
+  "good": "Good connection",
+  "excellent": "Excellent connection",
+  "testData": "Test Data",
+  "createTestData": "Create Test Data",
+  "clearData": "Clear Data",
+  "dataCleared": "Data cleared",
+  "users": "Users",
+  "chats": "Chats",
+  "messages": "Messages",
+  "noUsers": "No users yet",
+  "noChats": "No chats yet",
+  "connectionError": "Connection error",
+  "databaseError": "Database error",
+  "syncError": "Sync error",
+  "uploadError": "Upload error",
+  "downloadError": "Download error",
+  "play": "Play",
+  "pause": "Pause",
+  "loop": "Loop",
+  "rewind10Seconds": "Rewind 10 seconds",
+  "forward10Seconds": "Forward 10 seconds",
+  "playbackSpeed": "Playback speed",
+  "quality": "Quality",
+  "pictureInPicture": "Picture in picture",
+  "enterFullscreen": "Enter fullscreen",
+  "exitFullscreen": "Exit fullscreen",
+  "errorLoadingAudio": "Error loading audio",
+  "share": "Share",
+  "download": "Download",
+  "noImagesAvailable": "No images available",
+  "remove": "Remove",
+  "dropFilesHere": "Drop files here",
+  "dragDropOrClickToUpload": "Drag & drop files here or click to upload",
+  "maxFilesReached": "Maximum number of files reached",
+  "errorPickingFiles": "Error picking files",
+  "searchEmojis": "Search emojis",
+  "noEmojisFound": "No emojis found",
+  "noRecentEmojis": "No recent emojis",
+  "recent": "Recent",
+  "smileys": "Smileys & People",
+  "animals": "Animals & Nature",
+  "food": "Food & Drink",
+  "travel": "Travel & Places",
+  "activities": "Activities",
+  "objects": "Objects",
+  "symbols": "Symbols",
+  "flags": "Flags",
+  "filter": "Filter",
+  "noDataAvailable": "No data available",
+  "previousPage": "Previous page",
+  "nextPage": "Next page",
+  "showingItems": "Showing {start} to {end} of {total} items",
+  "@showingItems": {
+    "placeholders": {
+      "start": {
+        "type": "int"
+      },
+      "end": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
   },
-  "common": {
-    "ok": "OK",
-    "cancel": "Cancel",
-    "save": "Save",
-    "delete": "Delete",
-    "edit": "Edit",
-    "loading": "Loading...",
-    "error": "An error occurred",
-    "retry": "Retry",
-    "send": "Send",
-    "close": "Close"
+  "pageInfo": "Page {current} of {total}",
+  "@pageInfo": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
   },
-  "auth": {
-    "login": "Login",
-    "logout": "Logout",
-    "register": "Register",
-    "forgotPassword": "Forgot Password",
-    "username": "Username",
-    "password": "Password",
-    "email": "Email",
-    "confirmPassword": "Confirm Password"
+  "bold": "Bold",
+  "italic": "Italic",
+  "underline": "Underline",
+  "strikethrough": "Strikethrough",
+  "bulletList": "Bullet list",
+  "numberedList": "Numbered list",
+  "insertLink": "Insert link",
+  "undo": "Undo",
+  "redo": "Redo",
+  "linkUrl": "Link URL",
+  "linkText": "Link text",
+  "mention": "Mention",
+  "searchUsers": "Search users...",
+  "noUsersFound": "No users found",
+  "typeToSearch": "Type to search...",
+  "noSuggestionsFound": "No suggestions found",
+  "selectAll": "Select all",
+  "selectNone": "Select none",
+  "selected": "selected",
+  "maxSelectionsReached": "Maximum selections reached",
+  "addTag": "Add tag",
+  "pressEnterToAdd": "Press Enter to add",
+  "duplicateTag": "Tag already exists",
+  "maxTagsReached": "Maximum tags reached",
+  "enterCode": "Enter code",
+  "verificationCode": "Verification code",
+  "invalidCode": "Invalid code",
+  "pasteCode": "Paste code",
+  "maxFileSize": "Max file size: {size}",
+  "@maxFileSize": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
   },
-  "chat": {
-    "newMessage": "New Message",
-    "typeMessage": "Type a message...",
-    "noMessages": "No messages yet",
-    "loadMore": "Load More",
-    "yesterday": "Yesterday",
-    "today": "Today"
-  },
-  "connection": {
-    "online": "Online",
-    "offline": "Offline",
-    "connecting": "Connecting...",
-    "reconnecting": "Reconnecting...",
-    "poor": "Poor connection",
-    "good": "Good connection",
-    "excellent": "Excellent connection"
-  },
-  "database": {
-    "testData": "Test Data",
-    "createTestData": "Create Test Data",
-    "clearData": "Clear Data",
-    "dataCleared": "Data cleared",
-    "users": "Users",
-    "chats": "Chats",
-    "messages": "Messages",
-    "noUsers": "No users yet",
-    "noChats": "No chats yet",
-    "noMessages": "No messages yet"
-  },
-  "errors": {
-    "connectionError": "Connection error",
-    "databaseError": "Database error",
-    "syncError": "Sync error",
-    "uploadError": "Upload error",
-    "downloadError": "Download error"
+  "allowedFileTypes": "Allowed types: {types}",
+  "@allowedFileTypes": {
+    "placeholders": {
+      "types": {
+        "type": "String"
+      }
+    }
   }
-} 
+}

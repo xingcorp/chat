@@ -883,6 +883,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noEmojisFound => 'No emojis found';
 
   @override
+  String get searchEmojis => 'Search emojis';
+
+  @override
+  String get noRecentEmojis => 'No recent emojis';
+
+  @override
+  String get recent => 'Recent';
+
+  @override
+  String get smileys => 'Smileys';
+
+  @override
+  String get animals => 'Animals';
+
+  @override
+  String get food => 'Food';
+
+  @override
+  String get travel => 'Travel';
+
+  @override
+  String get activities => 'Activities';
+
+  @override
   String isTyping(String name) {
     return '$name is typing...';
   }
@@ -1066,6 +1090,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nextPage => 'Next page';
 
   @override
+  String showingItems(int start, int end, int total) {
+    return 'Showing $start-$end of $total';
+  }
+
+  @override
+  String pageInfo(int current, int total) {
+    return 'Page $current of $total';
+  }
+
+  @override
+  String get filter => 'Filter';
+
+  @override
   String get lastPage => 'Last page';
 
   @override
@@ -1128,4 +1165,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorLoadingAudio => 'Error loading audio';
+
+  @override
+  String get selectNone => 'Select none';
+
+  @override
+  String get pasteCode => 'Paste code';
+
+  @override
+  String get maxTagsReached => 'Maximum tags reached';
+
+  @override
+  String get duplicateTag => 'Tag already exists';
+
+  @override
+  String get addTag => 'Add tag';
 }

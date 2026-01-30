@@ -251,7 +251,6 @@ class AppImageGalleryState extends BaseState<AppImageGallery> {
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final l10n = context.l10n;
 
     return Center(
       child: Column(
@@ -264,7 +263,7 @@ class AppImageGalleryState extends BaseState<AppImageGallery> {
           ),
           const SizedBox(height: AppDimens.spaceMedium),
           Text(
-            l10n.noImagesAvailable,
+            context.l10n.noImagesAvailable,
             style: AppTextStyles.bodyLarge.copyWith(
               color: isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary,
             ),
@@ -377,7 +376,7 @@ class _LightboxViewState extends BaseState<_LightboxView> {
                 });
               },
               scrollPhysics: const BouncingScrollPhysics(),
-              backgroundDecoration: BoxDecoration(
+              backgroundDecoration: const BoxDecoration(
                 color: AppColors.backgroundDarkMode,
               ),
               loadingBuilder: (context, event) => Center(
@@ -434,7 +433,7 @@ class _LightboxViewState extends BaseState<_LightboxView> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.close, color: AppColors.iconDarkMode),
+            icon: const Icon(Icons.close, color: AppColors.iconDarkMode),
             onPressed: () => Navigator.of(context).pop(),
             tooltip: context.l10n.close,
           ),
@@ -449,13 +448,13 @@ class _LightboxViewState extends BaseState<_LightboxView> {
             children: [
               if (widget.enableShare)
                 IconButton(
-                  icon: Icon(Icons.share, color: AppColors.iconDarkMode),
+                  icon: const Icon(Icons.share, color: AppColors.iconDarkMode),
                   onPressed: () => widget.onShare?.call(widget.images[_currentIndex]),
                   tooltip: context.l10n.share,
                 ),
               if (widget.enableDownload)
                 IconButton(
-                  icon: Icon(Icons.download, color: AppColors.iconDarkMode),
+                  icon: const Icon(Icons.download, color: AppColors.iconDarkMode),
                   onPressed: () =>
                       widget.onDownload?.call(widget.images[_currentIndex]),
                   tooltip: context.l10n.download,
