@@ -311,7 +311,7 @@ class ChatRepositoryImpl implements IChatRepository {
           final remoteResult = await _remoteDataSource.deleteChat(chatId);
         
           if (remoteResult.isNotEmpty) {
-            _logger.i('Chat deleted successfully on remote', data: {'chatId': chatId});
+            _logger.i('Chat deleted successfully on remote: $chatId');
             return const Right(true);
           } else {
             debugPrint('⚠️  Remote delete failed, but local delete succeeded');

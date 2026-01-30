@@ -237,8 +237,6 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i888.ConnectivityServiceImpl>(
         () => _i888.ConnectivityServiceImpl(gh<_i895.Connectivity>()));
-    gh.lazySingleton<_i286.ConnectivityAnalyzerService>(
-        () => _i286.ConnectivityAnalyzerService(gh<_i895.Connectivity>()));
     gh.singleton<_i47.ConnectivityService>(
         () => _i47.ConnectivityService(gh<_i895.Connectivity>()));
     gh.factory<_i222.UserBloc>(

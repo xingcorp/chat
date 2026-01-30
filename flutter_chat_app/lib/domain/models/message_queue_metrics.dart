@@ -191,10 +191,11 @@ class MessageQueueMetrics {
     - Running since: ${startTime.toString()}
     """;
   }
-} 
-
+  
   /// Increment cancelled message count
   void incrementCancelled() {
     // Count cancelled messages separately or as failed
+    totalFailed++;
     currentQueueSize = currentQueueSize > 0 ? currentQueueSize - 1 : 0;
   }
+}
