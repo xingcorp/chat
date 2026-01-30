@@ -70,7 +70,7 @@ class AppErrorState extends BaseStatelessWidget {
             // Title
             Text(
               title ?? l10n.errorOccurred,
-              style: AppTextStyles.titleLarge(context).copyWith(
+              style: AppTextStyles.titleLarge.copyWith(
                 color: theme.colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
@@ -80,7 +80,7 @@ class AppErrorState extends BaseStatelessWidget {
               SizedBox(height: AppDimens.spaceSmall),
               Text(
                 message!,
-                style: AppTextStyles.bodyMedium(context).copyWith(
+                style: AppTextStyles.bodyMedium.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,

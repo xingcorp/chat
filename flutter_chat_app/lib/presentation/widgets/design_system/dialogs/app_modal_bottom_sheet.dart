@@ -49,16 +49,17 @@ class AppModalBottomSheet extends BaseBottomSheet {
     this.minChildSize = 0.25,
     this.maxChildSize = 0.95,
     super.key,
-  });
+  }) : _titleText = title,
+       _showCloseButton = showCloseButton;
 
   /// Builder for the bottom sheet content.
   final WidgetBuilder builder;
 
-  /// The title of the bottom sheet.
-  final String? title;
+  /// The title text of the bottom sheet (stored internally).
+  final String? _titleText;
 
-  /// Whether to show the close button.
-  final bool showCloseButton;
+  /// Whether to show the close button (stored internally).
+  final bool _showCloseButton;
 
   /// Initial size of the bottom sheet (0.0 to 1.0).
   final double initialChildSize;
@@ -97,13 +98,13 @@ class AppModalBottomSheet extends BaseBottomSheet {
   }
 
   /// Shows a persistent modal bottom sheet.
-  static PersistentBottomSheetController<T> showPersistent<T>({
+  static PersistentBottomSheetController showPersistent({
     required BuildContext context,
     required WidgetBuilder builder,
     String? title,
     bool showCloseButton = true,
   }) {
-    return BaseBottomSheet.showPersistent<T>(
+    return BaseBottomSheet.showPersistent(
       context: context,
       builder: (context) => AppModalBottomSheet(
         builder: builder,
@@ -123,7 +124,7 @@ class AppModalBottomSheet extends BaseBottomSheet {
       builder: (context, scrollController) {
         return Column(
           children: [
-            if (title != null || showCloseButton) ...[
+            if (_titleText != null || _showCloseButton) ...[
               Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: AppDimens.paddingMedium,
@@ -131,16 +132,16 @@ class AppModalBottomSheet extends BaseBottomSheet {
                 ),
                 child: Row(
                   children: [
-                    if (title != null)
+                    if (_titleText != null)
                       Expanded(
                         child: Text(
-                          title!,
+                          _titleText!,
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
                       ),
-                    if (showCloseButton)
+                    if (_showCloseButton)
                       IconButton(
                         icon: const Icon(Icons.close),
                         onPressed: () => Navigator.of(context).pop(),

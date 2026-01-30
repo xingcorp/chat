@@ -72,7 +72,6 @@ void main() {
     'lib/main_desktop.dart',
     'lib/main_web.dart',
     'lib/main_mobile.dart',
-    'lib/enterprise_main.dart',
   ];
   
   int filesProcessed = 0;

@@ -65,7 +65,7 @@ class AppNoConnection extends BaseStatelessWidget {
             // Title
             Text(
               title ?? l10n.noInternetConnection,
-              style: AppTextStyles.titleLarge(context).copyWith(
+              style: AppTextStyles.titleLarge.copyWith(
                 color: theme.colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
@@ -76,7 +76,7 @@ class AppNoConnection extends BaseStatelessWidget {
             // Message
             Text(
               message ?? l10n.checkInternetConnection,
-              style: AppTextStyles.bodyMedium(context).copyWith(
+              style: AppTextStyles.bodyMedium.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,

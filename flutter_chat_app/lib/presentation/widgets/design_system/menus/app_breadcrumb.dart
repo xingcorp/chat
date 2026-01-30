@@ -147,11 +147,11 @@ class AppBreadcrumb extends BaseStatelessWidget {
     final isClickable = item.onTap != null && !item.isEllipsis;
     final isCurrent = isLast && !item.isEllipsis;
 
-    final defaultTextStyle = AppTextStyles.bodyMedium(context).copyWith(
+    final defaultTextStyle = AppTextStyles.bodyMedium.copyWith(
       color: theme.colorScheme.onSurface.withOpacity(isDark ? 0.7 : 0.6),
     );
 
-    final defaultCurrentStyle = AppTextStyles.bodyMedium(context).copyWith(
+    final defaultCurrentStyle = AppTextStyles.bodyMedium.copyWith(
       color: theme.colorScheme.onSurface,
       fontWeight: FontWeight.w600,
     );
@@ -169,7 +169,6 @@ class AppBreadcrumb extends BaseStatelessWidget {
     if (!isClickable) {
       return Semantics(
         label: isCurrent ? 'Current page: ${item.label}' : item.label,
-        current: isCurrent,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingXSmall),
           child: Text(

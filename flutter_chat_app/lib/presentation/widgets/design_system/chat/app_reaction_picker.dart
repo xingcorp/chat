@@ -284,7 +284,7 @@ class AppReactionPickerState extends BaseState<AppReactionPicker>
             vertical: AppDimens.paddingSmall,
           ),
         ),
-        style: AppTextStyles.bodyMedium(context),
+        style: AppTextStyles.bodyMedium,
         onChanged: (value) {
           safeSetState(() {
             _searchQuery = value;
@@ -317,7 +317,7 @@ class AppReactionPickerState extends BaseState<AppReactionPicker>
                   });
                 }
               },
-              labelStyle: AppTextStyles.labelMedium(context).copyWith(
+              labelStyle: AppTextStyles.labelMedium.copyWith(
                 color: isSelected
                     ? theme.colorScheme.onPrimary
                     : theme.colorScheme.onSurface,
@@ -438,7 +438,7 @@ class AppReactionPickerState extends BaseState<AppReactionPicker>
             const SizedBox(height: AppDimens.spaceMedium),
             Text(
               l10n.noEmojisFound,
-              style: AppTextStyles.bodyLarge(context).copyWith(
+              style: AppTextStyles.bodyLarge.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.6),
               ),
               textAlign: TextAlign.center,

@@ -85,7 +85,7 @@ class AppBanner extends BaseStatelessWidget {
             Expanded(
               child: Text(
                 message,
-                style: AppTextStyles.bodyMedium(context).copyWith(
+                style: AppTextStyles.bodyMedium.copyWith(
                   color: foregroundColor,
                 ),
               ),

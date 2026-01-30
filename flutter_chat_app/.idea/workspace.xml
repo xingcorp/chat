@@ -12,22 +12,33 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix 6">
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix(core): resolve systematic compilation errors and consolidate domain models&#10;&#10;- Restore missing `MediaCache` service with LRU memory caching and size limits&#10;- Consolidate `ChatType` and `MessageStatus` definitions into domain entities to resolve ambiguous imports&#10;- Remove redundant enum definitions in data and presentation layers (ChatType, MessageStatus, ContentType)&#10;- Fix base class imports across design system components (transitioning to consolidated `base_widget.dart`)&#10;- Implement comprehensive error resolution strategy documentation including design, requirements, and phased task plan&#10;- Add missing domain entity exports to `chat_enums.dart` for improved API ergonomics&#10;- Update data mappers and entry point files (mobile, web, desktop) with proper domain imports&#10;- Delete obsolete project hooks&#10;&#10;Files fixed/updated:&#10;- lib/core/services/media_cache.dart: New service for media caching&#10;- lib/domain/entities/chat.dart: Primary source for ChatType&#10;- lib/presentation/widgets/design_system/chat/chat_enums.dart: Export domain status&#10;- lib/data/models/chat_model.dart: Use domain ChatType&#10;- lib/presentation/widgets/chat/chat_bubble.dart: Use domain MessageStatus&#10;- Various design system widgets: Fixed base class imports&#10;&#10;Phase 1 Progress: ✅ Foundation - Missing Files and Imports resolved.">
+      <change beforePath="$PROJECT_DIR$/../.kiro/specs/error-resolution-systematic-fix/tasks.md" beforeDir="false" afterPath="$PROJECT_DIR$/../.kiro/specs/error-resolution-systematic-fix/tasks.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.dart_tool/package_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config_subset" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config_subset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/message_queue_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/message_queue_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/mappers/chat_mapper.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/mappers/chat_mapper.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/models/chat_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/models/chat_model.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main_desktop.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_desktop.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main_mobile.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_mobile.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main_web.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_web.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat/chat_bubble.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat/chat_bubble.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/design_system/chat/chat_enums.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/design_system/chat/chat_enums.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/base/base_bottom_sheet.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/base/base_bottom_sheet.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/cache/background_sync_worker.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/cache/background_sync_worker.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/cache/enterprise_background_sync_worker.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/di/injection.config.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/injection.config.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/enterprise_integration_hub.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/integration_hub.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/error/exceptions.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/error/exceptions.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/background_sync_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/background_sync_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/enterprise_app_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/app_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/enterprise_background_sync_service.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/enterprise_integration_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/integration_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/datasources/chat/chat_remote_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/chat/chat_remote_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/datasources/message/message_remote_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/message/message_remote_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/repositories/chat_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/chat_repository.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/enterprise_main.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/bloc/chat/enterprise_chat_bloc_simple.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/design_system/dialogs/app_alert_dialog.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/design_system/dialogs/app_alert_dialog.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/design_system/dialogs/app_confirm_dialog.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/design_system/dialogs/app_confirm_dialog.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/design_system/dialogs/app_modal_bottom_sheet.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/design_system/dialogs/app_modal_bottom_sheet.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/design_system/media/media.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/design_system/media/media.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/design_system/menus/app_breadcrumb.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/design_system/menus/app_breadcrumb.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/complete_l10n_migration.dart" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/complete_l10n_migration.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/core/di/enterprise_injection_test.dart" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -204,14 +215,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00011" summary="feat: enhance performance monitoring and animation handling with new configurations and optimizations">
-      <option name="closed" value="true" />
-      <created>1744796326029</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1744796326029</updated>
     </task>
     <task id="LOCAL-00012" summary="refactor: update connectivity handling and improve performance monitoring across services">
       <option name="closed" value="true" />
@@ -597,7 +600,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753852148810</updated>
     </task>
-    <option name="localTasksCounter" value="60" />
+    <task id="LOCAL-00060" summary="fix(core): resolve systematic compilation errors and consolidate domain models&#10;&#10;- Restore missing `MediaCache` service with LRU memory caching and size limits&#10;- Consolidate `ChatType` and `MessageStatus` definitions into domain entities to resolve ambiguous imports&#10;- Remove redundant enum definitions in data and presentation layers (ChatType, MessageStatus, ContentType)&#10;- Fix base class imports across design system components (transitioning to consolidated `base_widget.dart`)&#10;- Implement comprehensive error resolution strategy documentation including design, requirements, and phased task plan&#10;- Add missing domain entity exports to `chat_enums.dart` for improved API ergonomics&#10;- Update data mappers and entry point files (mobile, web, desktop) with proper domain imports&#10;- Delete obsolete project hooks&#10;&#10;Files fixed/updated:&#10;- lib/core/services/media_cache.dart: New service for media caching&#10;- lib/domain/entities/chat.dart: Primary source for ChatType&#10;- lib/presentation/widgets/design_system/chat/chat_enums.dart: Export domain status&#10;- lib/data/models/chat_model.dart: Use domain ChatType&#10;- lib/presentation/widgets/chat/chat_bubble.dart: Use domain MessageStatus&#10;- Various design system widgets: Fixed base class imports&#10;&#10;Phase 1 Progress: ✅ Foundation - Missing Files and Imports resolved.">
+      <option name="closed" value="true" />
+      <created>1769761586267</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1769761586267</updated>
+    </task>
+    <option name="localTasksCounter" value="61" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -694,7 +705,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: add localization support with localization service and locale management in Flutter app" />
     <MESSAGE value="feat: enhance localization support with new service patterns, utilities, and error handling guidelines" />
     <MESSAGE value="add rules" />
     <MESSAGE value="fix multi" />
@@ -719,7 +729,8 @@
     <MESSAGE value="fix 4" />
     <MESSAGE value="fix 5" />
     <MESSAGE value="fix 6" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix 6" />
+    <MESSAGE value="fix(core): resolve systematic compilation errors and consolidate domain models&#10;&#10;- Restore missing `MediaCache` service with LRU memory caching and size limits&#10;- Consolidate `ChatType` and `MessageStatus` definitions into domain entities to resolve ambiguous imports&#10;- Remove redundant enum definitions in data and presentation layers (ChatType, MessageStatus, ContentType)&#10;- Fix base class imports across design system components (transitioning to consolidated `base_widget.dart`)&#10;- Implement comprehensive error resolution strategy documentation including design, requirements, and phased task plan&#10;- Add missing domain entity exports to `chat_enums.dart` for improved API ergonomics&#10;- Update data mappers and entry point files (mobile, web, desktop) with proper domain imports&#10;- Delete obsolete project hooks&#10;&#10;Files fixed/updated:&#10;- lib/core/services/media_cache.dart: New service for media caching&#10;- lib/domain/entities/chat.dart: Primary source for ChatType&#10;- lib/presentation/widgets/design_system/chat/chat_enums.dart: Export domain status&#10;- lib/data/models/chat_model.dart: Use domain ChatType&#10;- lib/presentation/widgets/chat/chat_bubble.dart: Use domain MessageStatus&#10;- Various design system widgets: Fixed base class imports&#10;&#10;Phase 1 Progress: ✅ Foundation - Missing Files and Imports resolved." />
+    <option name="LAST_COMMIT_MESSAGE" value="fix(core): resolve systematic compilation errors and consolidate domain models&#10;&#10;- Restore missing `MediaCache` service with LRU memory caching and size limits&#10;- Consolidate `ChatType` and `MessageStatus` definitions into domain entities to resolve ambiguous imports&#10;- Remove redundant enum definitions in data and presentation layers (ChatType, MessageStatus, ContentType)&#10;- Fix base class imports across design system components (transitioning to consolidated `base_widget.dart`)&#10;- Implement comprehensive error resolution strategy documentation including design, requirements, and phased task plan&#10;- Add missing domain entity exports to `chat_enums.dart` for improved API ergonomics&#10;- Update data mappers and entry point files (mobile, web, desktop) with proper domain imports&#10;- Delete obsolete project hooks&#10;&#10;Files fixed/updated:&#10;- lib/core/services/media_cache.dart: New service for media caching&#10;- lib/domain/entities/chat.dart: Primary source for ChatType&#10;- lib/presentation/widgets/design_system/chat/chat_enums.dart: Export domain status&#10;- lib/data/models/chat_model.dart: Use domain ChatType&#10;- lib/presentation/widgets/chat/chat_bubble.dart: Use domain MessageStatus&#10;- Various design system widgets: Fixed base class imports&#10;&#10;Phase 1 Progress: ✅ Foundation - Missing Files and Imports resolved." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

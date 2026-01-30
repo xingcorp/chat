@@ -163,7 +163,7 @@ class AppContextMenu extends BaseStatelessWidget {
               Expanded(
                 child: Text(
                   item.label ?? '',
-                  style: AppTextStyles.bodyMedium(context).copyWith(
+                  style: AppTextStyles.bodyMedium.copyWith(
                     color: isDisabled
                         ? theme.disabledColor
                         : isDestructive

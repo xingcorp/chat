@@ -318,7 +318,7 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
   }
   
   @override
-  Stream<ChatMessage> subscribeToMessages(String chatId) {
+  Stream<MessageDto> subscribeToMessages(String chatId) {
     // Ensure connection
     if (!_realtimeService.isConnected) {
       _realtimeService.connect();
@@ -330,11 +330,14 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
       data: {'conversationId': chatId},
     );
     
-    // Listen to 'message:sent' event and map to ChatMessage
+    // Listen to 'message:sent' event and map to MessageDto
     return _realtimeService.messages
         .where((msg) => msg.type == 'message:sent')
         .where((msg) => msg.data['conversationId'] == chatId)
-        .map((msg) => _eventMapper.mapMessageSent(msg.data));
+        .map((msg) {
+          final chatMessage = _eventMapper.mapMessageSent(msg.data);
+          return _chatMessageToDto(chatMessage);
+        });
   }
   
   @override
@@ -366,17 +369,20 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
   }
   
   @override
-  Stream<ChatMessage> subscribeToMessageEdits(String chatId) {
+  Stream<MessageDto> subscribeToMessageEdits(String chatId) {
     // Ensure connection
     if (!_realtimeService.isConnected) {
       _realtimeService.connect();
     }
     
-    // Listen to 'message:edit' event and map to ChatMessage
+    // Listen to 'message:edit' event and map to MessageDto
     return _realtimeService.messages
         .where((msg) => msg.type == 'message:edit')
         .where((msg) => msg.data['conversationId'] == chatId)
-        .map((msg) => _eventMapper.mapMessageEdit(msg.data));
+        .map((msg) {
+          final chatMessage = _eventMapper.mapMessageEdit(msg.data);
+          return _chatMessageToDto(chatMessage);
+        });
   }
   
   @override
@@ -405,5 +411,38 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
         .where((msg) => msg.type == 'message:typing')
         .where((msg) => msg.data['conversationId'] == chatId)
         .map((msg) => _eventMapper.mapTypingIndicator(msg.data));
+  }
+  
+  /// Helper method to convert ChatMessage (domain entity) to MessageDto (data DTO)
+  MessageDto _chatMessageToDto(ChatMessage message) {
+    return MessageDto(
+      id: message.id,
+      content: message.content,
+      urls: message.attachments.map((a) => a.url).toList(),
+      type: message.contentType.toString().split('.').last,
+      createdAt: message.createdAt.millisecondsSinceEpoch,
+      editAt: message.editedAt?.millisecondsSinceEpoch,
+      deletedAt: null, // Not available in ChatMessage
+      replyMessageId: null, // Not available in ChatMessage
+      replyMessage: null, // Not available in ChatMessage
+      forwardedFromMessageId: null, // Not available in ChatMessage
+      fileName: message.attachments.isNotEmpty ? message.attachments.first.name : null,
+      senderId: message.sender.id,
+      sender: SenderDto(
+        id: message.sender.id,
+        fullName: message.sender.name,
+        avatarUrl: message.sender.avatar,
+      ),
+      chatId: message.chatId,
+      readerIds: message.readBy,
+      reactions: message.reactions
+          .map((r) => ReactionDto(
+                code: r.code,
+                userId: r.userId,
+                user: null, // User info not available in MessageReaction
+              ))
+          .toList(),
+      mentionTo: [], // Not available in ChatMessage
+    );
   }
 }

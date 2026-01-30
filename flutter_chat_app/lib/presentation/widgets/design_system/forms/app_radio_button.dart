@@ -238,7 +238,7 @@ class AppRadioGroup<T> extends BaseStatelessWidget {
                         Flexible(
                           child: Text(
                             radioButton.label,
-                            style: AppTextStyles.bodyMedium(context).copyWith(
+                            style: AppTextStyles.bodyMedium.copyWith(
                               color: isDisabled
                                   ? (isDark
                                       ? AppColors.textSecondaryDarkMode

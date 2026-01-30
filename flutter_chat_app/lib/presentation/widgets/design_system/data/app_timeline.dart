@@ -277,7 +277,7 @@ class AppTimeline extends BaseStatelessWidget {
               padding: const EdgeInsets.only(bottom: AppDimens.paddingXSmall),
               child: Text(
                 _formatTimestamp(event.timestamp!),
-                style: AppTextStyles.bodySmall(context).copyWith(
+                style: AppTextStyles.bodySmall.copyWith(
                   color: isDark
                       ? AppColors.textSecondaryDarkMode
                       : AppColors.textSecondary,
@@ -289,7 +289,7 @@ class AppTimeline extends BaseStatelessWidget {
               padding: const EdgeInsets.only(bottom: AppDimens.paddingXSmall),
               child: Text(
                 event.title!,
-                style: AppTextStyles.titleMedium(context).copyWith(
+                style: AppTextStyles.titleMedium.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -297,7 +297,7 @@ class AppTimeline extends BaseStatelessWidget {
           if (event.description != null)
             Text(
               event.description!,
-              style: AppTextStyles.bodyMedium(context).copyWith(
+              style: AppTextStyles.bodyMedium.copyWith(
                 color: isDark
                     ? AppColors.textSecondaryDarkMode
                     : AppColors.textSecondary,

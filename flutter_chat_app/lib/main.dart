@@ -109,7 +109,7 @@ Future<void> runMainApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize environment manager
-  final logger = AppLogger.instance;
+  final logger = getIt<Logger>();
   final environmentManager = EnvironmentManager(logger);
   await environmentManager.initialize();
 
@@ -149,8 +149,8 @@ Future<void> runMainApp() async {
   // Tải biến môi trường
   await dotenv.load(fileName: '.env');
   
-  // Đăng ký và khởi tạo Enterprise dependency injection
-  await EnterpriseDI.initialize();
+  // Đăng ký và khởi tạo dependency injection
+  configureDependencies();
   
   // Tùy thuộc vào nền tảng, chúng ta sẽ khởi động các dịch vụ phù hợp
   if (kIsWeb) {
@@ -167,12 +167,12 @@ Future<void> runMainApp() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   
   // Khởi tạo các managers cache
-  final appCacheManager = EnterpriseDI.get<AppCacheManager>();
+  final appCacheManager = getIt<AppCacheManager>();
 
-  // TODO: Register these services in EnterpriseDI later
+  // TODO: Register these services in DI later
   // Khởi tạo và bắt đầu preload dữ liệu (if available)
   // try {
-  //   final preloadManager = EnterpriseDI.get<PreloadManager>();
+  //   final preloadManager = getIt<PreloadManager>();
   //   unawaited(preloadManager.preloadEssentialData());
   // } catch (e) {
   //   print('PreloadManager not available: $e');
@@ -180,14 +180,14 @@ Future<void> runMainApp() async {
 
   // Khởi tạo background sync worker (if available)
   // try {
-  //   final backgroundSyncWorker = EnterpriseDI.get<BackgroundSyncWorker>();
+  //   final backgroundSyncWorker = getIt<BackgroundSyncWorker>();
   // } catch (e) {
   //   print('BackgroundSyncWorker not available: $e');
   // }
 
   // Khởi tạo cache stats (if available)
   // try {
-  //   final cacheStats = EnterpriseDI.get<CacheStats>();
+  //   final cacheStats = getIt<CacheStats>();
   // } catch (e) {
   //   print('CacheStats not available: $e');
   // }
@@ -232,7 +232,7 @@ Future<void> runMainApp() async {
   }
   
   // Initialize Enterprise dependency injection
-  await EnterpriseDI.initialize();
+  await configureDependencies();
   
   // NOTE: MessageQueueService is now registered directly in DI container
   // The upgradeToEnhancedMessageQueue() function is deprecated and no longer needed
@@ -256,58 +256,58 @@ Future<void> runMainApp() async {
 Future<void> _initializeWebServices() async {
   // Initialize web-specific services
   // NOTE: Isar database not supported on web platform
-  // final databaseService = EnterpriseDI.get<DatabaseService>();
+  // final databaseService = getIt<DatabaseService>();
   // await databaseService.initialize();
 
   // TODO: Register these services in EnterpriseDI
   // Khởi tạo dịch vụ kết nối thời gian thực
-  // final realtimeConnectionService = EnterpriseDI.get<RealtimeConnectionService>();
+  // final realtimeConnectionService = getIt<RealtimeConnectionService>();
   // await realtimeConnectionService.initialize();
 
   // Khởi tạo dịch vụ tin nhắn chat
-  // final chatMessageService = EnterpriseDI.get<ChatMessageService>();
+  // final chatMessageService = getIt<ChatMessageService>();
   // await chatMessageService.initialize();
 }
 
 Future<void> _initializeMobileServices() async {
   // Initialize mobile-specific services
-  final databaseService = EnterpriseDI.get<DatabaseService>();
+  final databaseService = getIt<DatabaseService>();
   await databaseService.initialize();
 
   // TODO: Register these services in EnterpriseDI
   // Khởi tạo dịch vụ kết nối thời gian thực
-  // final realtimeConnectionService = EnterpriseDI.get<RealtimeConnectionService>();
+  // final realtimeConnectionService = getIt<RealtimeConnectionService>();
   // await realtimeConnectionService.initialize();
 
   // Khởi tạo dịch vụ hàng đợi tin nhắn (standard or enhanced)
-  // if (EnterpriseDI.isRegistered<EnhancedMessageQueueService>()) {
-  //   final enhancedMessageQueueService = EnterpriseDI.get<EnhancedMessageQueueService>();
+  // if (getIt.isRegistered<EnhancedMessageQueueService>()) {
+  //   final enhancedMessageQueueService = getIt<EnhancedMessageQueueService>();
   //   await enhancedMessageQueueService.initialize();
   //   debugPrint('Using EnhancedMessageQueueService for mobile platform');
   // } else {
-  //   final messageQueueService = EnterpriseDI.get<MessageQueueService>();
+  //   final messageQueueService = getIt<MessageQueueService>();
   //   await messageQueueService.initialize();
   //   debugPrint('Using standard MessageQueueService for mobile platform');
   // }
 
   // TODO: Register ChatMessageService in EnterpriseDI
   // Khởi tạo dịch vụ tin nhắn chat
-  // final chatMessageService = EnterpriseDI.get<ChatMessageService>();
+  // final chatMessageService = getIt<ChatMessageService>();
   // await chatMessageService.initialize();
 }
 
 Future<void> _initializeDesktopServices() async {
   // Initialize desktop-specific services
-  final databaseService = EnterpriseDI.get<DatabaseService>();
+  final databaseService = getIt<DatabaseService>();
   await databaseService.initialize();
 
   // TODO: Register these services in EnterpriseDI
   // Khởi tạo dịch vụ kết nối thời gian thực
-  // final realtimeConnectionService = EnterpriseDI.get<RealtimeConnectionService>();
+  // final realtimeConnectionService = getIt<RealtimeConnectionService>();
   // await realtimeConnectionService.initialize();
 
   // Khởi tạo dịch vụ hàng đợi tin nhắn
-  // final messageQueueService = EnterpriseDI.get<MessageQueueService>();
+  // final messageQueueService = getIt<MessageQueueService>();
   // await messageQueueService.initialize();
   
   // Khởi tạo dịch vụ tin nhắn chat

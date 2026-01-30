@@ -408,7 +408,7 @@ class AppMessageBubble extends BaseStatelessWidget {
   Widget _buildTextContent(BuildContext context, ThemeData theme, Color textColor) {
     return Text(
       message ?? '',
-      style: AppTextStyles.bodyMedium(context).copyWith(color: textColor),
+      style: AppTextStyles.bodyMedium.copyWith(color: textColor),
     );
   }
 
@@ -464,7 +464,7 @@ class AppMessageBubble extends BaseStatelessWidget {
           const SizedBox(height: AppDimens.spaceSmall),
           Text(
             message!,
-            style: AppTextStyles.bodyMedium(context).copyWith(color: textColor),
+            style: AppTextStyles.bodyMedium.copyWith(color: textColor),
           ),
         ],
       ],
@@ -517,7 +517,7 @@ class AppMessageBubble extends BaseStatelessWidget {
           const SizedBox(height: AppDimens.spaceSmall),
           Text(
             message!,
-            style: AppTextStyles.bodyMedium(context).copyWith(color: textColor),
+            style: AppTextStyles.bodyMedium.copyWith(color: textColor),
           ),
         ],
       ],
@@ -556,7 +556,7 @@ class AppMessageBubble extends BaseStatelessWidget {
               const SizedBox(height: AppDimens.spaceXSmall),
               Text(
                 '0:00',
-                style: AppTextStyles.bodySmall(context),
+                style: AppTextStyles.bodySmall,
               ),
             ],
           ),
@@ -596,7 +596,7 @@ class AppMessageBubble extends BaseStatelessWidget {
             children: [
               Text(
                 fileName ?? l10n.file,
-                style: AppTextStyles.bodyMedium(context).copyWith(
+                style: AppTextStyles.bodyMedium.copyWith(
                   color: textColor,
                   fontWeight: FontWeight.w500,
                 ),
@@ -607,7 +607,7 @@ class AppMessageBubble extends BaseStatelessWidget {
                 const SizedBox(height: AppDimens.spaceXSmall),
                 Text(
                   fileSize!,
-                  style: AppTextStyles.bodySmall(context).copyWith(
+                  style: AppTextStyles.bodySmall.copyWith(
                     color: textColor.withValues(alpha: 0.7),
                   ),
                 ),
@@ -638,7 +638,7 @@ class AppMessageBubble extends BaseStatelessWidget {
         Flexible(
           child: Text(
             locationName ?? l10n.location,
-            style: AppTextStyles.bodyMedium(context).copyWith(color: textColor),
+            style: AppTextStyles.bodyMedium.copyWith(color: textColor),
           ),
         ),
       ],
@@ -668,7 +668,7 @@ class AppMessageBubble extends BaseStatelessWidget {
         Flexible(
           child: Text(
             contactName ?? l10n.contact,
-            style: AppTextStyles.bodyMedium(context).copyWith(color: textColor),
+            style: AppTextStyles.bodyMedium.copyWith(color: textColor),
           ),
         ),
       ],
@@ -679,7 +679,7 @@ class AppMessageBubble extends BaseStatelessWidget {
   Widget _buildSystemContent(BuildContext context, ThemeData theme, Color textColor) {
     return Text(
       message ?? '',
-      style: AppTextStyles.bodySmall(context).copyWith(
+      style: AppTextStyles.bodySmall.copyWith(
         color: textColor,
         fontStyle: FontStyle.italic,
       ),
@@ -716,7 +716,7 @@ class AppMessageBubble extends BaseStatelessWidget {
           children: [
             Text(
               replyToAuthor ?? l10n.you,
-              style: AppTextStyles.bodySmall(context).copyWith(
+              style: AppTextStyles.bodySmall.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w600,
               ),
@@ -724,7 +724,7 @@ class AppMessageBubble extends BaseStatelessWidget {
             const SizedBox(height: AppDimens.spaceXSmall),
             Text(
               replyToMessage ?? '',
-              style: AppTextStyles.bodySmall(context),
+              style: AppTextStyles.bodySmall,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -747,7 +747,7 @@ class AppMessageBubble extends BaseStatelessWidget {
         if (timestamp != null) ...[
           Text(
             _formatTimestamp(timestamp!),
-            style: AppTextStyles.bodySmall(context).copyWith(
+            style: AppTextStyles.bodySmall.copyWith(
               color: textColor.withValues(alpha: 0.7),
               fontSize: 11,
             ),

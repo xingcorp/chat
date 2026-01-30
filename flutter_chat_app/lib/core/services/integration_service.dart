@@ -101,7 +101,7 @@ enum MediaEventType { fileStored, fileDeleted }
 /// 
 /// Orchestrates all enterprise components for messaging app functionality
 @singleton
-class EnterpriseIntegrationService {
+class IntegrationService {
   // Core services
   final DatabaseService _databaseService;
   late IsarOfflineFirstManager _offlineManager;
@@ -125,7 +125,7 @@ class EnterpriseIntegrationService {
   /// **Constructor**
   /// 
   /// Initializes with dependency injection following SOLID principles
-  EnterpriseIntegrationService(this._databaseService);
+  IntegrationService(this._databaseService);
   
   /// **Initialize Enterprise Integration**
   /// 

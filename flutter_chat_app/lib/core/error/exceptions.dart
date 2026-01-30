@@ -98,7 +98,7 @@ class PermissionDeniedException extends AppException {
 
 /// Exception thrown when a file operation fails
 class FileException extends AppException {
-  const FileException({
+  FileException({
     super.message = 'File operation failed',
     super.code = 'FILE_ERROR',
     super.details,
@@ -107,7 +107,7 @@ class FileException extends AppException {
 
 /// Exception thrown when a network error occurs
 class NetworkException extends AppException {
-  const NetworkException({
+  NetworkException({
     super.message = 'Network error occurred',
     super.code = 'NETWORK_ERROR',
     super.details,

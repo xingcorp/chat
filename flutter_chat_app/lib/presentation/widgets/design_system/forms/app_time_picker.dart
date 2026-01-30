@@ -141,7 +141,7 @@ class AppTimePicker extends BaseStatelessWidget {
           if (label != null) ...[
             Text(
               label!,
-              style: AppTextStyles.bodyMedium(context).copyWith(
+              style: AppTextStyles.bodyMedium.copyWith(
                 color: isDisabled
                     ? (isDark
                         ? AppColors.textSecondaryDarkMode
@@ -196,7 +196,7 @@ class AppTimePicker extends BaseStatelessWidget {
                   Expanded(
                     child: Text(
                       displayText,
-                      style: AppTextStyles.bodyMedium(context).copyWith(
+                      style: AppTextStyles.bodyMedium.copyWith(
                         color: selectedTime == null
                             ? (isDark
                                 ? AppColors.textHintDarkMode

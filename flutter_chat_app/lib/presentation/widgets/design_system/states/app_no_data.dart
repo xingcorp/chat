@@ -71,7 +71,7 @@ class AppNoData extends BaseStatelessWidget {
             if (title != null)
               Text(
                 title!,
-                style: AppTextStyles.titleLarge(context).copyWith(
+                style: AppTextStyles.titleLarge.copyWith(
                   color: theme.colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
@@ -84,7 +84,7 @@ class AppNoData extends BaseStatelessWidget {
             if (message != null)
               Text(
                 message!,
-                style: AppTextStyles.bodyMedium(context).copyWith(
+                style: AppTextStyles.bodyMedium.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,

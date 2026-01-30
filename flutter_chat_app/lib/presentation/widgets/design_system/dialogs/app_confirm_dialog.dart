@@ -42,10 +42,10 @@ class AppConfirmDialog extends BaseDialog {
     this.cancelText,
     this.isDestructive = false,
     super.key,
-  });
+  }) : _titleText = title;
 
-  /// The title of the dialog.
-  final String? title;
+  /// The title text of the dialog (stored internally).
+  final String? _titleText;
 
   /// The content of the dialog.
   final String content;
@@ -111,10 +111,10 @@ class AppConfirmDialog extends BaseDialog {
           ),
           SizedBox(height: AppDimens.spaceMedium),
         ],
-        if (title != null) ...[
+        if (_titleText != null) ...[
           Text(
-            title!,
-            style: AppTextStyles.titleLarge(context).copyWith(
+            _titleText!,
+            style: AppTextStyles.titleLarge.copyWith(
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
@@ -123,7 +123,7 @@ class AppConfirmDialog extends BaseDialog {
         ],
         Text(
           content,
-          style: AppTextStyles.bodyMedium(context),
+          style: AppTextStyles.bodyMedium,
           textAlign: TextAlign.center,
         ),
         SizedBox(height: AppDimens.spaceLarge),

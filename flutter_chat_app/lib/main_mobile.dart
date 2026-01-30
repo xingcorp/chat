@@ -22,7 +22,7 @@ Future<void> main() async {
   await dotenv.load(fileName: '.env');
   
   // Configure Enterprise dependencies
-  await EnterpriseDI.initialize();
+  await configureDependencies();
   
   // Initialize services for mobile
   await _initializeMobileServices();
@@ -35,7 +35,7 @@ Future<void> main() async {
 
 Future<void> _initializeMobileServices() async {
   // Initialize database service
-  final databaseService = EnterpriseDI.get<DatabaseService>();
+  final databaseService = getIt<DatabaseService>();
   await databaseService.initialize();
 
   // Initialize any mobile-specific services here
@@ -53,7 +53,7 @@ class MobileHomeScreen extends StatefulWidget {
 }
 
 class _MobileHomeScreenState extends State<MobileHomeScreen> {
-  final _repository = EnterpriseDI.get<OfflineFirstRepository>();
+  final _repository = getIt<OfflineFirstRepository>();
   final _uuid = const Uuid();
   bool _isLoading = false;
   String _statusMessage = 'Ready';

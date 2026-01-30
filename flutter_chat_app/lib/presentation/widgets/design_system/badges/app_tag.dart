@@ -79,7 +79,7 @@ class AppTag extends BaseStatelessWidget {
           ],
           Text(
             label,
-            style: AppTextStyles.labelSmall(context).copyWith(
+            style: AppTextStyles.labelSmall.copyWith(
               color: tagTextColor,
               fontWeight: FontWeight.w600,
             ),

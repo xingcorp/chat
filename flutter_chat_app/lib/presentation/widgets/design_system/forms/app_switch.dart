@@ -180,7 +180,7 @@ class AppSwitch extends BaseStatelessWidget {
                         if (label != null)
                           Text(
                             label!,
-                            style: AppTextStyles.bodyMedium(context).copyWith(
+                            style: AppTextStyles.bodyMedium.copyWith(
                               color: isDisabled
                                   ? (isDark
                                       ? AppColors.textSecondaryDarkMode
@@ -194,7 +194,7 @@ class AppSwitch extends BaseStatelessWidget {
                           const SizedBox(height: AppDimens.spaceXSmall),
                           Text(
                             description!,
-                            style: AppTextStyles.bodySmall(context).copyWith(
+                            style: AppTextStyles.bodySmall.copyWith(
                               color: isDisabled
                                   ? (isDark
                                       ? AppColors.textSecondaryDarkMode

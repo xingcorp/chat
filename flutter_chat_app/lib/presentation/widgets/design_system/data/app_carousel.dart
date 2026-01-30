@@ -279,7 +279,7 @@ class _AppCarouselState extends BaseState<AppCarousel> {
         ),
         child: Text(
           '${_currentPage + 1}/${widget.items.length}',
-          style: AppTextStyles.bodySmall(context).copyWith(
+          style: AppTextStyles.bodySmall.copyWith(
             color: isDark ? Colors.white : Colors.black,
             fontWeight: FontWeight.w600,
           ),

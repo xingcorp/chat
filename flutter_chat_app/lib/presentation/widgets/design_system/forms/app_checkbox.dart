@@ -198,7 +198,7 @@ class AppCheckbox extends BaseStatelessWidget {
                   Flexible(
                     child: Text(
                       label!,
-                      style: AppTextStyles.bodyMedium(context).copyWith(
+                      style: AppTextStyles.bodyMedium.copyWith(
                         color: isDisabled
                             ? (isDark
                                 ? AppColors.textSecondaryDarkMode

@@ -194,7 +194,7 @@ class AppVoiceWaveformState extends BaseState<AppVoiceWaveform> {
 
     return Text(
       '$currentText / $totalText',
-      style: AppTextStyles.labelSmall(context).copyWith(
+      style: AppTextStyles.labelSmall.copyWith(
         color: theme.colorScheme.onSurface.withOpacity(isDark ? 0.7 : 0.6),
         fontSize: 11,
       ),
@@ -270,7 +270,7 @@ class AppVoiceWaveformState extends BaseState<AppVoiceWaveform> {
           const SizedBox(width: AppDimens.spaceSmall),
           Text(
             l10n.loadingAudio,
-            style: AppTextStyles.bodySmall(context),
+            style: AppTextStyles.bodySmall,
           ),
         ],
       ),
@@ -296,7 +296,7 @@ class AppVoiceWaveformState extends BaseState<AppVoiceWaveform> {
           const SizedBox(width: AppDimens.spaceSmall),
           Text(
             _errorMessage ?? l10n.errorOccurred,
-            style: AppTextStyles.bodySmall(context).copyWith(
+            style: AppTextStyles.bodySmall.copyWith(
               color: theme.colorScheme.error,
             ),
           ),

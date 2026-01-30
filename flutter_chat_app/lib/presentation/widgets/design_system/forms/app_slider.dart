@@ -192,7 +192,7 @@ class AppSlider extends BaseStatelessWidget {
           if (label != null) ...[
             Text(
               label!,
-              style: AppTextStyles.bodyMedium(context).copyWith(
+              style: AppTextStyles.bodyMedium.copyWith(
                 color: isDisabled
                     ? (isDark
                         ? AppColors.textSecondaryDarkMode
@@ -208,7 +208,7 @@ class AppSlider extends BaseStatelessWidget {
               if (showMinMaxLabels && minLabel != null) ...[
                 Text(
                   minLabel!,
-                  style: AppTextStyles.bodySmall(context).copyWith(
+                  style: AppTextStyles.bodySmall.copyWith(
                     color: isDisabled
                         ? (isDark
                             ? AppColors.textSecondaryDarkMode
@@ -264,7 +264,7 @@ class AppSlider extends BaseStatelessWidget {
                 const SizedBox(width: AppDimens.spaceSmall),
                 Text(
                   maxLabel!,
-                  style: AppTextStyles.bodySmall(context).copyWith(
+                  style: AppTextStyles.bodySmall.copyWith(
                     color: isDisabled
                         ? (isDark
                             ? AppColors.textSecondaryDarkMode

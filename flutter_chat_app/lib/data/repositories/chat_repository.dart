@@ -1,7 +1,7 @@
-/// **ENTERPRISE CHAT REPOSITORY IMPLEMENTATION**
+/// **CHAT REPOSITORY IMPLEMENTATION**
 /// 
 /// Production-ready repository implementation for messaging apps with
-/// WhatsApp/Telegram/Zalo-level performance and enterprise standards.
+/// WhatsApp/Telegram/Zalo-level performance.
 /// 
 /// **Features:**
 /// - Clean Architecture compliance with SOLID principles
@@ -10,28 +10,33 @@
 /// - Offline-first architecture with intelligent sync
 /// - Real-time updates with conflict resolution
 /// - Memory-efficient operations and caching strategies
-/// - Enterprise logging and metrics collection
+/// - Comprehensive logging and metrics collection
 
 import 'package:flutter/foundation.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
 
+import 'package:flutter_chat_app/core/error/exceptions.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
+import 'package:flutter_chat_app/data/datasources/chat/chat_local_datasource.dart';
+import 'package:flutter_chat_app/data/datasources/chat/chat_remote_datasource.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
-import 'package:flutter_chat_app/data/datasources/chat/chat_local_datasource.dart';
-import 'package:flutter_chat_app/data/datasources/chat/chat_remote_datasource.dart';
 
-/// **ENTERPRISE CHAT REPOSITORY**
+/// **CHAT REPOSITORY**
 /// 
-/// Production-ready repository with enterprise patterns and performance optimization
-@lazySingleton
-class EnterpriseChatRepositoryImpl implements IChatRepository {
+/// Production-ready repository with clean architecture patterns
+@LazySingleton(as: IChatRepository)
+class ChatRepositoryImpl implements IChatRepository {
   final ChatLocalDataSource _localDataSource;
-  final ChatRemoteDataSource _remoteDataSource;
+  final IChatRemoteDataSource _remoteDataSource;
+  final INetworkInfo _networkInfo;
+  final Logger _logger;
 
   // Performance metrics
   final Map<String, int> _operationCounts = {};
@@ -39,11 +44,16 @@ class EnterpriseChatRepositoryImpl implements IChatRepository {
 
   /// **Constructor**
   ///
-  /// Initializes repository with dependency injection following SOLID principles
-  EnterpriseChatRepositoryImpl(
-    this._localDataSource,
-    this._remoteDataSource,
-  );
+  /// Initializes repository with dependency injection
+  ChatRepositoryImpl({
+    required ChatLocalDataSource localDataSource,
+    required IChatRemoteDataSource remoteDataSource,
+    required INetworkInfo networkInfo,
+    required Logger logger,
+  })  : _localDataSource = localDataSource,
+        _remoteDataSource = remoteDataSource,
+        _networkInfo = networkInfo,
+        _logger = logger;
   
   /// **Get Chats**
   /// 
@@ -51,22 +61,28 @@ class EnterpriseChatRepositoryImpl implements IChatRepository {
   /// Performance target: <10ms for local, <500ms for remote
   @override
   Future<Either<Failure, List<Chat>>> getChats() async {
-    return await _executeWithMonitoring('get_chats', () async {
+    return _executeWithMonitoring('get_chats', () async {
       try {
-        debugPrint('📋 Getting chats with enterprise strategy...');
+        _logger.i('Getting chats with offline-first strategy');
         
         // **OFFLINE-FIRST STRATEGY**
         // 1. Get local chats immediately for instant UI
         final localChats = await _localDataSource.getChats();
-        debugPrint('✅ Loaded ${localChats.length} local chats');
+        _logger.d('Loaded ${localChats.length} local chats');
         
-        // 2. Try to sync with remote if available
+        // 2. Check network connectivity
+        if (!await _networkInfo.isConnected) {
+          _logger.w('No internet connection, using cached data');
+          return Right(localChats);
+        }
+        
+        // 3. Try to sync with remote if available
         try {
           final remoteResult = await _remoteDataSource.getChats();
           
           // Remote success, convert models to domain entities
           final remoteChats = remoteResult.map((model) => model.toDomain()).toList();
-          debugPrint('✅ Synced ${remoteChats.length} remote chats');
+          _logger.i('Synced ${remoteChats.length} remote chats');
 
           // Save remote chats to local storage
           await _localDataSource.saveChats(remoteChats);
@@ -74,15 +90,21 @@ class EnterpriseChatRepositoryImpl implements IChatRepository {
           // Return updated local data
           final updatedChats = await _localDataSource.getChats();
           return Right(updatedChats);
-        } catch (e) {
-          // Network error, return local data
-          debugPrint('⚠️  Network error, using local data: $e');
+          
+        } on ServerException catch (e) {
+          _logger.w('Server error, using cached data', error: e);
+          return Right(localChats);
+        } on NetworkException catch (e) {
+          _logger.w('Network error, using cached data', error: e);
           return Right(localChats);
         }
         
-      } catch (e) {
-        debugPrint('❌ Get chats failed: $e');
-        return Left(CacheFailure(message: 'Failed to get chats: $e'));
+      } on CacheException catch (e) {
+        _logger.e('Cache error', error: e);
+        return const Left(CacheFailure(message: 'Unable to load chats'));
+      } catch (e, stackTrace) {
+        _logger.e('Unexpected error getting chats', error: e, stackTrace: stackTrace);
+        return const Left(UnexpectedFailure(message: 'An unexpected error occurred'));
       }
     });
   }
@@ -92,16 +114,22 @@ class EnterpriseChatRepositoryImpl implements IChatRepository {
   /// Ultra-fast chat lookup with O(log n) performance using unique index.
   @override
   Future<Either<Failure, Chat?>> getChatById(String id) async {
-    return await _executeWithMonitoring('get_chat_by_id', () async {
+    return _executeWithMonitoring('get_chat_by_id', () async {
       try {
-        debugPrint('🔍 Getting chat by ID: $id');
+        _logger.d('Getting chat by ID: $id');
         
         // Try local first for instant response
         final localChat = await _localDataSource.getChatById(id);
         
         if (localChat != null) {
-          debugPrint('✅ Found chat locally');
+          _logger.d('Found chat locally');
           return Right(localChat);
+        }
+        
+        // Check network connectivity
+        if (!await _networkInfo.isConnected) {
+          _logger.w('No internet connection, chat not found locally');
+          return const Right(null);
         }
         
         // If not found locally, try remote
@@ -112,21 +140,27 @@ class EnterpriseChatRepositoryImpl implements IChatRepository {
             // Convert to domain entity and save to local for future access
             final remoteChat = remoteResult.toDomain();
             await _localDataSource.saveChat(remoteChat);
-            debugPrint('✅ Found chat remotely and cached locally');
+            _logger.i('Found chat remotely and cached locally');
             return Right(remoteChat);
           } else {
-            debugPrint('❌ Chat not found remotely');
+            _logger.d('Chat not found remotely');
             return const Right(null);
           }
 
-        } catch (e) {
-          debugPrint('❌ Remote chat lookup failed: $e');
+        } on ServerException catch (e) {
+          _logger.e('Server error fetching chat', error: e);
+          return const Right(null);
+        } on NetworkException catch (e) {
+          _logger.e('Network error fetching chat', error: e);
           return const Right(null);
         }
         
-      } catch (e) {
-        debugPrint('❌ Get chat by ID failed: $e');
-        return Left(CacheFailure(message: 'Failed to get chat: $e'));
+      } on CacheException catch (e) {
+        _logger.e('Cache error', error: e);
+        return const Left(CacheFailure(message: 'Unable to load chat'));
+      } catch (e, stackTrace) {
+        _logger.e('Unexpected error getting chat', error: e, stackTrace: stackTrace);
+        return const Left(UnexpectedFailure(message: 'An unexpected error occurred'));
       }
     });
   }

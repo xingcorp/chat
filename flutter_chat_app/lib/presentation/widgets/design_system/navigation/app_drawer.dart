@@ -143,7 +143,7 @@ class AppDrawerHeader extends BaseStatelessWidget {
             if (name != null)
               Text(
                 name!,
-                style: AppTextStyles.titleLarge(context).copyWith(
+                style: AppTextStyles.titleLarge.copyWith(
                   color: theme.colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
@@ -152,7 +152,7 @@ class AppDrawerHeader extends BaseStatelessWidget {
               SizedBox(height: AppDimens.spaceXSmall),
               Text(
                 email!,
-                style: AppTextStyles.bodyMedium(context).copyWith(
+                style: AppTextStyles.bodyMedium.copyWith(
                   color: theme.colorScheme.onPrimary.withOpacity(0.8),
                 ),
               ),

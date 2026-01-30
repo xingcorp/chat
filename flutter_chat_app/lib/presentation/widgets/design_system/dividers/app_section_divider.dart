@@ -74,7 +74,7 @@ class AppSectionDivider extends BaseStatelessWidget {
             child: Text(
               text,
               style: textStyle ??
-                  AppTextStyles.bodySmall(context).copyWith(
+                  AppTextStyles.bodySmall.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
             ),

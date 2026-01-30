@@ -21,7 +21,7 @@ import 'database_service.dart';
 /// 
 /// Orchestrates enterprise app functionality with performance monitoring
 @singleton
-class EnterpriseAppService {
+class AppService {
   // Core services
   final DatabaseService _databaseService;
   
@@ -42,7 +42,7 @@ class EnterpriseAppService {
   /// **Constructor**
   /// 
   /// Initializes with dependency injection following SOLID principles
-  EnterpriseAppService(this._databaseService);
+  AppService(this._databaseService);
   
   /// **Initialize Enterprise App**
   /// 

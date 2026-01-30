@@ -130,7 +130,7 @@ class AppProgressIndicator extends BaseStatelessWidget {
             SizedBox(height: AppDimens.spaceSmall),
             Text(
               label!,
-              style: AppTextStyles.bodySmall(context).copyWith(
+              style: AppTextStyles.bodySmall.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
@@ -164,7 +164,7 @@ class AppProgressIndicator extends BaseStatelessWidget {
           SizedBox(height: AppDimens.spaceSmall),
           Text(
             label!,
-            style: AppTextStyles.bodySmall(context).copyWith(
+            style: AppTextStyles.bodySmall.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,

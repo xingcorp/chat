@@ -333,7 +333,7 @@ class _TooltipOverlay extends StatelessWidget {
                       Text(
                         message!,
                         style: textStyle ??
-                            AppTextStyles.bodySmall(context).copyWith(
+                            AppTextStyles.bodySmall.copyWith(
                               color: isDark
                                   ? AppColors.textPrimaryDarkMode
                                   : AppColors.textPrimary,

@@ -204,7 +204,7 @@ abstract class BaseBottomSheet extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.close),
                         onPressed: () => Navigator.of(context).pop(),
-                        tooltip: 'Close',
+                        tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                         constraints: const BoxConstraints(
                           minWidth: AppDimens.iconButtonSize,
                           minHeight: AppDimens.iconButtonSize,
@@ -326,7 +326,7 @@ abstract class BaseBottomSheet extends StatelessWidget {
   /// - [constraints]: Size constraints
   /// - [enableDrag]: Whether bottom sheet can be dragged
   /// - [transitionAnimationController]: Custom animation controller
-  static PersistentBottomSheetController<T> showPersistent<T>({
+  static PersistentBottomSheetController showPersistent({
     required BuildContext context,
     required WidgetBuilder builder,
     Color? backgroundColor,
@@ -337,7 +337,7 @@ abstract class BaseBottomSheet extends StatelessWidget {
     bool enableDrag = true,
     AnimationController? transitionAnimationController,
   }) {
-    return showBottomSheet<T>(
+    return showBottomSheet(
       context: context,
       builder: builder,
       backgroundColor: backgroundColor,

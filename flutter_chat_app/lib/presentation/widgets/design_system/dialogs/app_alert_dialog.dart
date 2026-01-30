@@ -46,10 +46,10 @@ class AppAlertDialog extends BaseDialog {
     this.iconColor,
     this.actions = const [],
     super.key,
-  });
+  }) : _titleText = title;
 
-  /// The title of the dialog.
-  final String? title;
+  /// The title text of the dialog (stored internally).
+  final String? _titleText;
 
   /// The content of the dialog.
   final String content;
@@ -99,9 +99,9 @@ class AppAlertDialog extends BaseDialog {
           ),
           SizedBox(height: AppDimens.spaceMedium),
         ],
-        if (title != null) ...[
+        if (_titleText != null) ...[
           Text(
-            title!,
+            _titleText!,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

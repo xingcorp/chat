@@ -273,7 +273,7 @@ class AppMessageStatus extends BaseStatelessWidget {
       label: l10n.sentAt(timeText),
       child: Text(
         timeText,
-        style: AppTextStyles.labelSmall(context).copyWith(
+        style: AppTextStyles.labelSmall.copyWith(
           color: isDark 
               ? AppColors.textSecondaryDarkMode 
               : AppColors.textSecondary,

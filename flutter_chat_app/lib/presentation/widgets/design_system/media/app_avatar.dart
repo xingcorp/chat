@@ -283,7 +283,7 @@ class AppAvatar extends BaseStatelessWidget {
       return Center(
         child: Text(
           _getInitials(initials!),
-          style: AppTextStyles.titleLarge(context).copyWith(
+          style: AppTextStyles.titleLarge.copyWith(
             color: foregroundColor ?? theme.colorScheme.onPrimaryContainer,
             fontWeight: FontWeight.bold,
             fontSize: _getFontSize(size),

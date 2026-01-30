@@ -18,18 +18,18 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
 import 'package:flutter_chat_app/core/services/database_service.dart';
-import 'package:flutter_chat_app/core/services/enterprise_integration_service.dart';
+import 'package:flutter_chat_app/core/services/integration_service.dart';
 
 /// **ENTERPRISE INTEGRATION HUB**
 /// 
 /// Orchestrates all enterprise components for messaging app
 /// Uses Injectable DI for proper dependency management
 @singleton
-class EnterpriseIntegrationHub {
+class IntegrationHub {
   final DatabaseService _database;
   
   // Core components
-  EnterpriseIntegrationService? _integrationService;
+  IntegrationService? _integrationService;
   
   // Integration state
   bool _isInitialized = false;
@@ -46,7 +46,7 @@ class EnterpriseIntegrationHub {
   final StreamController<Map<String, dynamic>> _healthEventController = StreamController.broadcast();
   
   /// Constructor for dependency injection
-  EnterpriseIntegrationHub(this._database);
+  IntegrationHub(this._database);
   
   /// **Initialize Enterprise Integration Hub**
   /// 
@@ -125,7 +125,7 @@ class EnterpriseIntegrationHub {
     debugPrint('🔄 Initializing Enterprise Integration Service...');
     
     try {
-      _integrationService = EnterpriseIntegrationService(_database);
+      _integrationService = IntegrationService(_database);
       await _integrationService!.initialize();
       
       _componentStatus['integration_service'] = 'healthy';

@@ -138,7 +138,7 @@ class AppReplyPreview extends BaseStatelessWidget {
                         // Author name
                         Text(
                           author,
-                          style: AppTextStyles.labelMedium(context).copyWith(
+                          style: AppTextStyles.labelMedium.copyWith(
                             color: theme.colorScheme.primary,
                             fontWeight: FontWeight.w600,
                           ),
@@ -150,7 +150,7 @@ class AppReplyPreview extends BaseStatelessWidget {
                         // Message content
                         Text(
                           _getDisplayMessage(l10n),
-                          style: AppTextStyles.bodySmall(context).copyWith(
+                          style: AppTextStyles.bodySmall.copyWith(
                             color: textColor,
                           ),
                           maxLines: maxLines,

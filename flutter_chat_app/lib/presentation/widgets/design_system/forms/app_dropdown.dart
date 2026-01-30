@@ -172,7 +172,7 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
           if (widget.label != null) ...[
             Text(
               widget.label!,
-              style: AppTextStyles.bodyMedium(context).copyWith(
+              style: AppTextStyles.bodyMedium.copyWith(
                 color: isDisabled
                     ? (isDark
                         ? AppColors.textSecondaryDarkMode
@@ -219,7 +219,7 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
                     Expanded(
                       child: Text(
                         displayText,
-                        style: AppTextStyles.bodyMedium(context).copyWith(
+                        style: AppTextStyles.bodyMedium.copyWith(
                           color: widget.value == null
                               ? (isDark
                                   ? AppColors.textHintDarkMode
@@ -351,7 +351,7 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
                                 ),
                                 child: Text(
                                   l10n.noResults,
-                                  style: AppTextStyles.bodyMedium(context).copyWith(
+                                  style: AppTextStyles.bodyMedium.copyWith(
                                     color: isDark
                                         ? AppColors.textSecondaryDarkMode
                                         : AppColors.textSecondary,
@@ -388,7 +388,7 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
                                                     ? widget.itemBuilder!(item)
                                                     : Text(
                                                         _getItemText(item),
-                                                        style: AppTextStyles.bodyMedium(context)
+                                                        style: AppTextStyles.bodyMedium
                                                             .copyWith(
                                                           color: isSelected
                                                               ? Theme.of(context).colorScheme

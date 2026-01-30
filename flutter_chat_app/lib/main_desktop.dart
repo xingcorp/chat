@@ -29,7 +29,7 @@ Future<void> main() async {
   await dotenv.load(fileName: '.env');
   
   // Configure Enterprise dependencies
-  await EnterpriseDI.initialize();
+  await configureDependencies();
   
   // Initialize services for desktop
   await _initializeDesktopServices();
@@ -42,7 +42,7 @@ Future<void> main() async {
 
 Future<void> _initializeDesktopServices() async {
   // Initialize database service
-  final databaseService = EnterpriseDI.get<DatabaseService>();
+  final databaseService = getIt<DatabaseService>();
   await databaseService.initialize();
 
   // Initialize any desktop-specific services here
@@ -60,7 +60,7 @@ class DesktopHomeScreen extends StatefulWidget {
 }
 
 class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
-  final _repository = EnterpriseDI.get<OfflineFirstRepository>();
+  final _repository = getIt<OfflineFirstRepository>();
   final _uuid = const Uuid();
   bool _isLoading = false;
   String _statusMessage = 'Ready';

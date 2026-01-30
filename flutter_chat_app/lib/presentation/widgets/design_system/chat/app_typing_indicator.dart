@@ -189,7 +189,7 @@ class AppTypingIndicatorState extends BaseState<AppTypingIndicator>
             Flexible(
               child: Text(
                 typingText,
-                style: AppTextStyles.bodySmall(context).copyWith(
+                style: AppTextStyles.bodySmall.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(isDark ? 0.7 : 0.54),
                   fontStyle: FontStyle.italic,
                 ),

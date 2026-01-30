@@ -157,7 +157,7 @@ class AppDatePicker extends BaseStatelessWidget {
           if (label != null) ...[
             Text(
               label!,
-              style: AppTextStyles.bodyMedium(context).copyWith(
+              style: AppTextStyles.bodyMedium.copyWith(
                 color: isDisabled
                     ? (isDark
                         ? AppColors.textSecondaryDarkMode
@@ -212,7 +212,7 @@ class AppDatePicker extends BaseStatelessWidget {
                   Expanded(
                     child: Text(
                       displayText,
-                      style: AppTextStyles.bodyMedium(context).copyWith(
+                      style: AppTextStyles.bodyMedium.copyWith(
                         color: selectedDate == null
                             ? (isDark
                                 ? AppColors.textHintDarkMode
