@@ -8,38 +8,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Third-party package imports
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:get_it/get_it.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
 
-// App imports - Config
-import 'package:flutter_chat_app/config/route/app_router.dart';
-
 // App imports - Core
+import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/config/environment_manager.dart';
+import 'package:flutter_chat_app/core/config/flavor_config.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
-import 'package:flutter_chat_app/core/lifecycle/app_lifecycle_observer.dart';
-import 'package:flutter_chat_app/core/theme/app_theme.dart';
 import 'package:flutter_chat_app/core/localization/l10n_helper.dart' as l10n_helper;
-
-// App imports - Services
-import 'package:flutter_chat_app/core/services/database_service.dart';
-import 'package:flutter_chat_app/core/services/performance_service.dart';
-import 'package:flutter_chat_app/core/services/chat_message_service.dart';
-import 'package:flutter_chat_app/core/services/animation_service.dart';
-import 'package:flutter_chat_app/core/services/device_capability_service.dart';
-
-// App imports - Cache
-import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
-
-// App imports - Monitoring
 import 'package:flutter_chat_app/core/monitoring/analytics_manager.dart';
 import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/services/chat_message_service.dart';
+import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
+import 'package:flutter_chat_app/core/services/performance_service.dart';
+import 'package:flutter_chat_app/core/theme/app_theme.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 
 // App imports - Data
 import 'package:flutter_chat_app/data/models/chat_model.dart';
@@ -49,29 +41,15 @@ import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 
 // App imports - Presentation
-import 'package:flutter_chat_app/presentation/blocs/app/app_bloc.dart';
-import 'package:flutter_chat_app/presentation/blocs/auth/auth_bloc.dart';
-import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
-import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
-import 'package:flutter_chat_app/presentation/widgets/app_wrapper.dart';
-
-// App imports - Localization
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
-
-// App imports - Upgrade
-import 'package:flutter_chat_app/core/upgrade_services.dart';
-
-// App imports - Flavor Configuration
-import 'package:flutter_chat_app/core/config/flavor_config.dart';
-import 'package:flutter_chat_app/core/config/environment_manager.dart';
-import 'package:flutter_chat_app/core/config/firebase_config.dart';
-import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
-
-// Import home screens from respective platform files
-import 'package:flutter_chat_app/presentation/pages/home/web_home_screen.dart';
-import 'package:flutter_chat_app/main_mobile.dart' show MobileHomeScreen;
 import 'package:flutter_chat_app/main_desktop.dart' show DesktopHomeScreen;
+import 'package:flutter_chat_app/main_mobile.dart' show MobileHomeScreen;
+import 'package:flutter_chat_app/presentation/blocs/app/app_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/auth/auth_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
+import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
+import 'package:flutter_chat_app/presentation/pages/home/web_home_screen.dart';
 
 /// **MAIN ENTRY POINT - ENTERPRISE FLUTTER CHAT APP**
 ///
@@ -140,7 +118,7 @@ Future<void> runMainApp() async {
 
     // Log Firebase configuration summary
     final configSummary = firebaseServiceManager.getConfigurationSummary();
-    logger.info('Firebase configuration: $configSummary');
+    logger.i('Firebase configuration: $configSummary');
 
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
@@ -167,7 +145,7 @@ Future<void> runMainApp() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   
   // Khởi tạo các managers cache
-  final appCacheManager = getIt<AppCacheManager>();
+  // Note: AppCacheManager is registered in DI and will be injected where needed
 
   // TODO: Register these services in DI later
   // Khởi tạo và bắt đầu preload dữ liệu (if available)

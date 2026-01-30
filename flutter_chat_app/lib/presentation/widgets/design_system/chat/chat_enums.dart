@@ -18,7 +18,10 @@
 /// final alignment = MessageAlignment.right;
 /// ```
 
-// Export MessageStatus from domain for convenience
+// Import MessageStatus from domain
+import 'package:flutter_chat_app/domain/entities/chat_message.dart' show MessageStatus;
+
+// Export MessageStatus for convenience
 export 'package:flutter_chat_app/domain/entities/chat_message.dart' show MessageStatus;
 
 /// Message content type.
