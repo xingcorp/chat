@@ -157,7 +157,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     result.fold(
       (failure) {
-        logger.e('Failed to load more messages', failure);
+        logger.e('Failed to load more messages', error: failure);
 
         // Don't emit error for pagination - just log it
         // User can retry by scrolling again
@@ -201,7 +201,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     result.fold(
       (failure) {
-        logger.e('Failed to send message', failure);
+        logger.e('Failed to send message', error: failure);
         emit(MessagesError(
           chatId: currentState.chatId,
           error: failure.toString(),
@@ -242,7 +242,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     result.fold(
       (failure) {
-        logger.e('Failed to edit message', failure);
+        logger.e('Failed to edit message', error: failure);
         emit(MessagesError(
           chatId: currentState.chatId,
           error: failure.toString(),
@@ -298,7 +298,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     result.fold(
       (failure) {
-        logger.e('Failed to delete message', failure);
+        logger.e('Failed to delete message', error: failure);
         emit(MessagesError(
           chatId: currentState.chatId,
           error: failure.toString(),
@@ -428,7 +428,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     _realtimeService.joinChatRoom(chatId).then((result) {
       result.fold(
         (failure) {
-          logger.e('Failed to join chat room $chatId', failure);
+          logger.e('Failed to join chat room $chatId', error: failure);
         },
         (success) {
           logger.i('Successfully joined chat room: $chatId');

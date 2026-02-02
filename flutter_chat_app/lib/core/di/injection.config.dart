@@ -454,15 +454,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i1005.ApiRequestTracker>(),
           gh<_i931.ApiCacheManager>(),
         ));
-    gh.lazySingleton<_i64.IChatRemoteDataSource>(
-        () => _i64.ChatRemoteDataSourceImpl(
-              gh<_i788.GraphQLClientWrapper>(),
-              gh<_i301.EnhancedSocketManager>(),
-            ));
-    gh.factory<_i313.TypingBloc>(() => _i313.TypingBloc(
-          realtimeService: gh<_i301.RealtimeService>(),
-          logger: gh<_i221.AppLogger>(),
-        ));
     gh.factory<_i230.MessageBloc>(() => _i230.MessageBloc(
           getMessages: gh<_i467.GetMessagesUseCase>(),
           sendMessage: gh<_i67.SendMessageUseCase>(),
@@ -471,7 +462,16 @@ extension GetItInjectableX on _i174.GetIt {
           markAsRead: gh<_i848.MarkAsReadUseCase>(),
           cacheSyncStrategy: gh<_i514.CacheSyncStrategy>(),
           realtimeService: gh<_i301.RealtimeService>(),
-          logger: gh<dynamic>(),
+          logger: gh<_i974.Logger>(),
+        ));
+    gh.lazySingleton<_i64.IChatRemoteDataSource>(
+        () => _i64.ChatRemoteDataSourceImpl(
+              gh<_i788.GraphQLClientWrapper>(),
+              gh<_i301.EnhancedSocketManager>(),
+            ));
+    gh.factory<_i313.TypingBloc>(() => _i313.TypingBloc(
+          realtimeService: gh<_i301.RealtimeService>(),
+          logger: gh<_i221.AppLogger>(),
         ));
     gh.lazySingleton<_i425.IChatRepository>(() => _i415.ChatRepositoryImpl(
           localDataSource: gh<_i832.ChatLocalDataSource>(),

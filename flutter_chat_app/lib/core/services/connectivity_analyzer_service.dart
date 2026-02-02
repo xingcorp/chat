@@ -69,6 +69,7 @@ class ConnectivityAnalyzerService {
   Timer? _periodicCheckTimer;
   
   /// Async factory method to create and initialize the service
+  @injectable
   @preResolve
   static Future<ConnectivityAnalyzerService> create() async {
     final connectivity = Connectivity();
