@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
 
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
@@ -10,14 +13,14 @@ import 'package:flutter_chat_app/domain/usecases/message/edit_message_usecase.da
 import 'package:flutter_chat_app/domain/usecases/message/get_messages_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/mark_as_read_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/send_message_usecase.dart';
-import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/base/bloc_error_mixin.dart';
 
 part 'message_event.dart';
 part 'message_state.dart';
 
 /// **ENTERPRISE MESSAGE BLOC - CLEAN ARCHITECTURE**
 ///
-/// Updated to use UseCases and BaseBloc core components.
+/// Updated to use UseCases and proper dependency injection.
 /// Follows Clean Architecture with proper separation of concerns.
 ///
 /// **Performance Targets:**
@@ -25,7 +28,7 @@ part 'message_state.dart';
 /// - Error handling: Comprehensive with user-friendly messages
 /// - Real-time updates: <100ms delivery
 @injectable
-class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
+class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   // UseCases (Domain Layer)
   final GetMessagesUseCase _getMessages;
   final SendMessageUseCase _sendMessage;
@@ -36,6 +39,10 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   // Services
   final CacheSyncStrategy _cacheSyncStrategy;
   final RealtimeService _realtimeService;
+  
+  // Logger (injected via DI) - must be Logger for BlocErrorMixin
+  @override
+  final Logger logger;
 
   // Map chat ID -> StreamSubscription
   final Map<String, StreamSubscription?> _messageSubscriptions = {};
@@ -49,7 +56,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     required MarkAsReadUseCase markAsRead,
     required CacheSyncStrategy cacheSyncStrategy,
     required RealtimeService realtimeService,
-    required super.logger,
+    required this.logger,
   })  : _getMessages = getMessages,
         _sendMessage = sendMessage,
         _editMessage = editMessage,
@@ -94,10 +101,10 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     result.fold(
       (failure) {
         logger.e('Failed to load messages', error: failure);
-        emitError(
-          'Failed to load messages',
-          error: failure,
-        );
+        emit(MessagesError(
+          chatId: event.chatId,
+          error: failure.toString(),
+        ));
       },
       (messages) {
         logger.i('Loaded ${messages.length} messages for chat ${event.chatId}');
@@ -150,7 +157,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     result.fold(
       (failure) {
-        logger.e('Failed to load more messages', error: failure);
+        logger.e('Failed to load more messages', failure);
 
         // Don't emit error for pagination - just log it
         // User can retry by scrolling again
@@ -194,13 +201,12 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     result.fold(
       (failure) {
-        logger.e('Failed to send message', error: failure);
-
-        // Use BaseBloc helper method
-        emitError(
-          'Failed to send message',
-          error: failure,
-        );
+        logger.e('Failed to send message', failure);
+        emit(MessagesError(
+          chatId: currentState.chatId,
+          error: failure.toString(),
+          previousMessages: currentState.messages,
+        ));
       },
       (newMessage) {
         logger.i('Message sent successfully: ${newMessage.id}');
@@ -236,45 +242,42 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     result.fold(
       (failure) {
-        logger.e('Failed to edit message', error: failure);
-
-        // Use BaseBloc helper method
-        emitError(
-          'Failed to edit message',
-          error: failure,
-        );
+        logger.e('Failed to edit message', failure);
+        emit(MessagesError(
+          chatId: currentState.chatId,
+          error: failure.toString(),
+          previousMessages: currentState.messages,
+        ));
       },
-      (success) {
-        if (success) {
-          logger.i('Message edited successfully');
-          
-          // Update message in list with new content
-          final updatedMessages = currentState.messages.map((msg) {
-            if (msg.id == event.messageId) {
-              // Create updated message with new content
-              return ChatMessage(
-                id: msg.id,
-                chatId: msg.chatId,
-                sender: msg.sender,
-                content: event.content, // Use new content
-                contentType: msg.contentType,
-                createdAt: msg.createdAt,
-                updatedAt: DateTime.now(),
-                editedAt: DateTime.now(),
-                readBy: msg.readBy,
-                deliveredTo: msg.deliveredTo,
-                attachments: msg.attachments,
-                reactions: msg.reactions,
-              );
-            }
-            return msg;
-          }).toList();
+      (_) {
+        logger.i('Message edited successfully');
+        
+        // Update message in list with new content
+        final updatedMessages = currentState.messages.map((msg) {
+          if (msg.id == event.messageId) {
+            // Create updated message with new content
+            return ChatMessage(
+              id: msg.id,
+              chatId: msg.chatId,
+              sender: msg.sender,
+              content: event.content, // Use new content
+              contentType: msg.contentType,
+              createdAt: msg.createdAt,
+              updatedAt: DateTime.now(),
+              editedAt: DateTime.now(),
+              readBy: msg.readBy,
+              deliveredTo: msg.deliveredTo,
+              attachments: msg.attachments,
+              reactions: msg.reactions,
+            );
+          }
+          return msg;
+        }).toList();
 
-          emit(currentState.copyWith(messages: updatedMessages));
+        emit(currentState.copyWith(messages: updatedMessages));
 
-          // Mark message list as dirty
-          _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
-        }
+        // Mark message list as dirty
+        _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
       },
     );
   }
@@ -295,30 +298,26 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     result.fold(
       (failure) {
-        logger.e('Failed to delete message: ${failure.message}');
-
-        // Emit error state but preserve current messages
+        logger.e('Failed to delete message', failure);
         emit(MessagesError(
           chatId: currentState.chatId,
-          error: 'Không thể xóa tin nhắn: ${getUserErrorMessage(failure)}',
+          error: failure.toString(),
           previousMessages: currentState.messages,
         ));
       },
-      (success) {
-        if (success) {
-          logger.i('Message deleted successfully');
-          
-          // Remove message from list
-          final updatedMessages = currentState.messages
-              .where((msg) => msg.id != event.messageId)
-              .toList();
+      (_) {
+        logger.i('Message deleted successfully');
+        
+        // Remove message from list
+        final updatedMessages = currentState.messages
+            .where((msg) => msg.id != event.messageId)
+            .toList();
 
-          emit(currentState.copyWith(messages: updatedMessages));
+        emit(currentState.copyWith(messages: updatedMessages));
 
-          // Mark message list as dirty
-          _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
-          _cacheSyncStrategy.markChatListDirty();
-        }
+        // Mark message list as dirty
+        _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
+        _cacheSyncStrategy.markChatListDirty();
       },
     );
   }
@@ -335,16 +334,14 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     result.fold(
       (failure) {
-        logger.e('Failed to mark chat as read: ${failure.message}');
+        logger.w('Failed to mark chat as read: ${failure.toString()}');
         // Don't emit error for this operation, it's not critical
       },
-      (success) {
-        if (success) {
-          logger.i('Chat marked as read successfully');
-          
-          // Mark chat list as dirty (unread count changed)
-          _cacheSyncStrategy.markChatListDirty();
-        }
+      (_) {
+        logger.i('Chat marked as read successfully');
+        
+        // Mark chat list as dirty (unread count changed)
+        _cacheSyncStrategy.markChatListDirty();
       },
     );
   }
@@ -408,7 +405,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     _realtimeService.leaveChatRoom(chatId).then((result) {
       result.fold(
         (failure) {
-          logger.w('Failed to leave chat room $chatId: ${failure.message}');
+          logger.w('Failed to leave chat room $chatId: ${failure.toString()}');
         },
         (success) {
           logger.d('Successfully left chat room: $chatId');
@@ -431,7 +428,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     _realtimeService.joinChatRoom(chatId).then((result) {
       result.fold(
         (failure) {
-          logger.e('Failed to join chat room $chatId: ${failure.message}');
+          logger.e('Failed to join chat room $chatId', failure);
         },
         (success) {
           logger.i('Successfully joined chat room: $chatId');
@@ -464,4 +461,4 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     _messageSubscriptions.clear();
     return super.close();
   }
-} 
+}

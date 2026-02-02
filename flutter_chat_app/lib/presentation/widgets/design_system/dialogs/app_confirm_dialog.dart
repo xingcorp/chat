@@ -135,18 +135,10 @@ class AppConfirmDialog extends BaseDialog {
               text: cancelText ?? l10n.cancel,
             ),
             const SizedBox(width: AppDimens.spaceSmall),
-            if (isDestructive)
-              AppButton.primary(
-                onPressed: () => Navigator.of(context).pop(true),
-                text: confirmText ?? l10n.ok,
-                backgroundColor: theme.colorScheme.error,
-                foregroundColor: theme.colorScheme.onError,
-              )
-            else
-              AppButton.primary(
-                onPressed: () => Navigator.of(context).pop(true),
-                text: confirmText ?? l10n.ok,
-              ),
+            AppButton.primary(
+              onPressed: () => Navigator.of(context).pop(true),
+              text: confirmText ?? l10n.ok,
+            ),
           ],
         ),
       ],

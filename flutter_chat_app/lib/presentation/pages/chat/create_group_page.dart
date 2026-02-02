@@ -154,18 +154,12 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
               );
               Navigator.pop(context);
             },
-            error: (message, retryAction) {
+            error: (message) {
               // Show error message
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(message),
                   backgroundColor: Colors.red,
-                  action: retryAction != null
-                      ? SnackBarAction(
-                          label: context.l10n.retry,
-                          onPressed: retryAction,
-                        )
-                      : null,
                 ),
               );
             },
