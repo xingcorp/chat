@@ -221,7 +221,7 @@ class _AppPopoverState extends BaseState<AppPopover>
     widget.onShow?.call();
   }
 
-  void _hidePopover() async {
+  Future<void> _hidePopover() async {
     if (!_isShowing) return;
 
     await _animationController.reverse();
@@ -234,7 +234,7 @@ class _AppPopoverState extends BaseState<AppPopover>
   }
 
   @override
-  Widget buildContent(BuildContext context) {
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: _togglePopover,
       child: widget.child,
@@ -307,8 +307,8 @@ class _PopoverOverlay extends StatelessWidget {
             child: Container(
               color: barrierColor ??
                   (isDark
-                      ? Colors.black.withOpacity(0.3)
-                      : Colors.black.withOpacity(0.2)),
+                      ? Colors.black.withValues(alpha: 0.3)
+                      : Colors.black.withValues(alpha: 0.2)),
             ),
           ),
         ),

@@ -167,31 +167,55 @@
 
 ---
 
+### Task 1.11: Fix Design System Widget Errors 🆕
+
+**Acceptance Criteria**:
+- [x] Fix `app_popover.dart` - Change `buildContent` to `build` method
+- [x] Fix `app_list_view.dart` - Remove undefined parameters from ListView.separated
+- [x] All design system widgets compile without errors
+
+**Files Fixed**:
+- `lib/presentation/widgets/design_system/menus/app_popover.dart` - Changed `buildContent()` to `build()`, fixed async return type
+- `lib/presentation/widgets/design_system/lists/app_list_view.dart` - Already fixed (parameters commented out)
+
+**Status**: ✅ COMPLETED
+
+---
+
 **Phase 1 Progress**:
-- ✅ Errors fixed: 161 → 84 (77 errors fixed) 🎉
-- 📊 Progress: 48% complete (77/161 errors resolved)
+- ✅ Errors fixed: 161 → 79 (82 errors fixed - 51% reduction) 🎉
+- 📊 Progress: 51% complete (82/161 errors resolved)
 - ⏳ Status: IN PROGRESS
 
 **Current Status**:
-- 84 errors remaining (mostly in tests and design system)
+- 79 errors remaining (mostly in test files)
 - Main application code errors largely resolved
-- Test files need significant fixes
-- Design system components need updates
+- Test files need significant fixes (chat_flow_integration_test.dart, media_repository_impl_test.dart)
+- Design system components fixed
+
+**Error Breakdown by Type**:
+- 21 missing_required_argument (mostly in tests)
+- 10 const_with_non_const (test mocks)
+- 8 undefined_named_parameter (test setup)
+- 7 argument_type_not_assignable (type mismatches)
+- 4 undefined_method (missing test methods)
+- 4 not_enough_positional_arguments (test constructors)
+- Others: 25 various errors
 
 **Remaining Work**:
-- Complete Phase 1: Fix remaining 84 compilation errors
+- Complete Phase 1: Fix remaining 79 compilation errors
+- Focus on test files (integration and unit tests)
+- Fix remaining type mismatches and parameter issues
 - Phase 2: High Priority Warnings (~50 warnings)
 - Phase 3: Code Quality Issues (~1800 info messages)
 - Phase 4: Architecture Compliance
 
 **Next Actions**:
-1. Fix remaining errors in:
-   - Design system components (dialogs, lists, menus)
-   - Test files (integration and unit tests)
-   - BLoC states and events
-   - Repository implementations
-2. Run full test suite to verify functionality
-3. Complete Phase 1 before moving to Phase 2
+1. Fix test file errors (chat_flow_integration_test.dart - 30+ errors)
+2. Fix media_repository_impl_test.dart errors
+3. Fix remaining widget test errors
+4. Run full test suite to verify functionality
+5. Complete Phase 1 before moving to Phase 2
 
 ---
 

@@ -173,18 +173,14 @@ class _AppTooltipState extends BaseState<AppTooltip> {
     _hideTimer?.cancel();
     if (_isShowing) return;
 
-    _showTimer = Timer(widget.showDelay, () {
-      _showTooltip();
-    });
+    _showTimer = Timer(widget.showDelay, _showTooltip);
   }
 
   void _scheduleHide() {
     _showTimer?.cancel();
     if (!_isShowing) return;
 
-    _hideTimer = Timer(widget.hideDelay, () {
-      _hideTooltip();
-    });
+    _hideTimer = Timer(widget.hideDelay, _hideTooltip);
   }
 
   void _showTooltip() {
@@ -227,7 +223,7 @@ class _AppTooltipState extends BaseState<AppTooltip> {
   }
 
   @override
-  Widget buildContent(BuildContext context) {
+  Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: widget.enableHover ? (_) => _scheduleShow() : null,
       onExit: widget.enableHover ? (_) => _scheduleHide() : null,
@@ -321,11 +317,11 @@ class _TooltipOverlay extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: bgColor,
                     borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         color: AppColors.shadow,
                         blurRadius: AppDimens.elevationMedium,
-                        offset: const Offset(0, 2),
+                        offset: Offset(0, 2),
                       ),
                     ],
                   ),
@@ -354,7 +350,6 @@ class _TooltipOverlay extends StatelessWidget {
     if (position != TooltipPosition.auto) return position;
 
     // Auto-detect best position based on available space
-    final targetCenter = targetPosition + Offset(targetSize.width / 2, 0);
     final spaceAbove = targetPosition.dy;
     final spaceBelow = screenSize.height - (targetPosition.dy + targetSize.height);
     final spaceLeft = targetPosition.dx;
@@ -388,8 +383,24 @@ class _TooltipOverlay extends StatelessWidget {
         dx = targetPosition.dx + (targetSize.width / 2) - (maxWidth / 2);
         dy = targetPosition.dy - marginValue.top - 50; // Approximate height
         break;
+      case TooltipPosition.topLeft:
+        dx = targetPosition.dx;
+        dy = targetPosition.dy - marginValue.top - 50; // Approximate height
+        break;
+      case TooltipPosition.topRight:
+        dx = targetPosition.dx + targetSize.width - maxWidth;
+        dy = targetPosition.dy - marginValue.top - 50; // Approximate height
+        break;
       case TooltipPosition.bottom:
         dx = targetPosition.dx + (targetSize.width / 2) - (maxWidth / 2);
+        dy = targetPosition.dy + targetSize.height + marginValue.bottom;
+        break;
+      case TooltipPosition.bottomLeft:
+        dx = targetPosition.dx;
+        dy = targetPosition.dy + targetSize.height + marginValue.bottom;
+        break;
+      case TooltipPosition.bottomRight:
+        dx = targetPosition.dx + targetSize.width - maxWidth;
         dy = targetPosition.dy + targetSize.height + marginValue.bottom;
         break;
       case TooltipPosition.left:

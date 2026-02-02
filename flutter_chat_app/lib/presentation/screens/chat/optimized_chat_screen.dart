@@ -91,7 +91,8 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
   final _messageController = TextEditingController();
   final _scrollController = AutoScrollController();
   final _isolateManager = GetIt.I<IsolateManager>();
-  final _mediaService = GetIt.I<MediaService>();
+  // TODO: MediaService has been deprecated, use MediaRepository instead
+  // final _mediaService = GetIt.I<MediaService>();
   
   bool _isAttachmentMenuOpen = false;
   bool _isRecording = false;
