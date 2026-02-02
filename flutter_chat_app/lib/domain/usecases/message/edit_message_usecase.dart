@@ -1,83 +1,71 @@
-/// Edit Message Use Case
-///
-/// Edits an existing message content.
-/// Validates permissions and handles edit logic.
-///
-/// Author: Senior Flutter/Mobile Architect
-library edit_message_usecase;
-
-import 'package:equatable/equatable.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/usecases/usecase.dart';
-import 'package:flutter_chat_app/core/utils/result.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:injectable/injectable.dart';
 
-/// Parameters for editing a message
-class EditMessageParams extends Equatable {
-  final String messageId;
-  final String newContent;
-
-  const EditMessageParams({
-    required this.messageId,
-    required this.newContent,
-  });
-
-  @override
-  List<Object> get props => [messageId, newContent];
-}
-
-/// Edit message use case implementation
+/// Edit Message Use Case
 ///
-/// Edits an existing message with validation.
-/// Only the message sender can edit their messages.
+/// Edits an existing message content.
+/// Implements online-first strategy for real-time sync.
+///
+/// **Requirements**: 2.10, 2.16, 2.17, 2.18
 @injectable
-class EditMessageUseCase implements UseCase<bool, EditMessageParams> {
+class EditMessageUseCase {
   final IMessageRepository _repository;
+  final AppLogger _logger;
 
-  const EditMessageUseCase(this._repository);
+  const EditMessageUseCase({
+    required IMessageRepository repository,
+    required AppLogger logger,
+  })  : _repository = repository,
+        _logger = logger;
 
-  @override
-  Future<Result<bool>> call(EditMessageParams params) async {
-    // Validate input
-    final validationResult = _validateParams(params);
-    if (validationResult != null) {
-      return Result.failure(validationResult);
+  /// Execute use case to edit a message
+  ///
+  /// [messageId] - ID of the message to edit
+  /// [content] - New message content
+  ///
+  /// Returns Either<Failure, bool>
+  /// - Left: Failure (NetworkFailure, ServerFailure, ValidationFailure, etc.)
+  /// - Right: true if successfully edited
+  Future<Either<Failure, bool>> call({
+    required String messageId,
+    required String content,
+  }) async {
+    _logger.info('EditMessageUseCase: Starting operation', {
+      'messageId': messageId,
+    });
+
+    // Validate inputs
+    if (messageId.trim().isEmpty) {
+      _logger.error('EditMessageUseCase: Validation failed - empty messageId');
+      return const Left(ValidationFailure(message: 'Message ID cannot be empty'));
     }
 
-    // Edit message through repository
-    final result = await _repository.updateMessage(
-      params.messageId,
-      params.newContent,
-    );
-
-    // Convert Either to Result
-    return result.fold(
-      (failure) => Result.failure(failure),
-      (success) => Result.success(success),
-    );
-  }
-
-  /// Validate parameters
-  ValidationFailure? _validateParams(EditMessageParams params) {
-    final errors = <String>[];
-
-    // Message ID validation
-    if (params.messageId.isEmpty) {
-      errors.add('Message ID cannot be empty');
+    if (content.trim().isEmpty) {
+      _logger.error('EditMessageUseCase: Validation failed - empty content');
+      return const Left(ValidationFailure(message: 'Message content cannot be empty'));
     }
 
-    // Content validation
-    if (params.newContent.isEmpty) {
-      errors.add('Message content cannot be empty');
-    } else if (params.newContent.length > 10000) {
-      errors.add('Message content cannot exceed 10000 characters');
-    }
+    try {
+      final result = await _repository.updateMessage(messageId, content);
 
-    if (errors.isNotEmpty) {
-      return ValidationFailure(message: errors.join(', '));
+      return result.fold(
+        (failure) {
+          _logger.error('EditMessageUseCase: Failed', failure);
+          return Left(failure);
+        },
+        (success) {
+          _logger.info('EditMessageUseCase: Success', {
+            'messageId': messageId,
+          });
+          return Right(success);
+        },
+      );
+    } catch (e, stackTrace) {
+      _logger.error('EditMessageUseCase: Unexpected error', e, stackTrace);
+      return Left(UnexpectedFailure(message: e.toString()));
     }
-
-    return null;
   }
 }

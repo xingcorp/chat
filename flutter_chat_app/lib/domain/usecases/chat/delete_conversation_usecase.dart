@@ -1,66 +1,62 @@
-/// Delete Conversation Use Case
-///
-/// Deletes a conversation permanently.
-/// Validates input and handles deletion logic.
-///
-/// Author: Senior Flutter/Mobile Architect
-library delete_conversation_usecase;
-
-import 'package:equatable/equatable.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/usecases/usecase.dart';
-import 'package:flutter_chat_app/core/utils/result.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
 import 'package:injectable/injectable.dart';
 
-/// Parameters for deleting a conversation
-class DeleteConversationParams extends Equatable {
-  final String conversationId;
-
-  const DeleteConversationParams({
-    required this.conversationId,
-  });
-
-  @override
-  List<Object> get props => [conversationId];
-}
-
-/// Delete conversation use case implementation
+/// Delete Conversation Use Case
 ///
-/// Permanently deletes a conversation and all its messages.
-/// This action cannot be undone.
+/// Deletes a conversation from user's chat list.
+/// Implements remote-only strategy for server confirmation.
+///
+/// **Requirements**: 2.6, 2.16, 2.17, 2.18
 @injectable
-class DeleteConversationUseCase 
-    implements UseCase<bool, DeleteConversationParams> {
+class DeleteConversationUseCase {
   final IChatRepository _repository;
+  final AppLogger _logger;
 
-  const DeleteConversationUseCase(this._repository);
+  const DeleteConversationUseCase({
+    required IChatRepository repository,
+    required AppLogger logger,
+  })  : _repository = repository,
+        _logger = logger;
 
-  @override
-  Future<Result<bool>> call(DeleteConversationParams params) async {
+  /// Execute use case to delete a conversation
+  ///
+  /// [conversationId] - ID of the conversation to delete
+  ///
+  /// Returns Either<Failure, bool>
+  /// - Left: Failure (NetworkFailure, ServerFailure, ValidationFailure, etc.)
+  /// - Right: true if successfully deleted
+  Future<Either<Failure, bool>> call(String conversationId) async {
+    _logger.info('DeleteConversationUseCase: Starting operation', {
+      'conversationId': conversationId,
+    });
+
     // Validate input
-    final validationResult = _validateParams(params);
-    if (validationResult != null) {
-      return Result.failure(validationResult);
+    if (conversationId.trim().isEmpty) {
+      _logger.error('DeleteConversationUseCase: Validation failed - empty conversationId');
+      return const Left(ValidationFailure(message: 'Conversation ID cannot be empty'));
     }
 
-    // Delete conversation through repository
-    final result = await _repository.deleteChat(params.conversationId);
+    try {
+      final result = await _repository.deleteChat(conversationId);
 
-    // Convert Either to Result
-    return result.fold(
-      (failure) => Result.failure(failure),
-      (success) => Result.success(success),
-    );
-  }
-
-  /// Validate parameters
-  ValidationFailure? _validateParams(DeleteConversationParams params) {
-    if (params.conversationId.isEmpty) {
-      return const ValidationFailure(
-        message: 'Conversation ID cannot be empty',
+      return result.fold(
+        (failure) {
+          _logger.error('DeleteConversationUseCase: Failed', failure);
+          return Left(failure);
+        },
+        (success) {
+          _logger.info('DeleteConversationUseCase: Success', {
+            'conversationId': conversationId,
+          });
+          return Right(success);
+        },
       );
+    } catch (e, stackTrace) {
+      _logger.error('DeleteConversationUseCase: Unexpected error', e, stackTrace);
+      return Left(UnexpectedFailure(message: e.toString()));
     }
-    return null;
   }
 }

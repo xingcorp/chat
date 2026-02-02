@@ -1,87 +1,74 @@
-/// Search Conversations Use Case
-///
-/// Searches conversations by keyword.
-/// Implements offline-first search with server fallback.
-///
-/// Author: Senior Flutter/Mobile Architect
-library search_conversations_usecase;
-
-import 'package:equatable/equatable.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/usecases/usecase.dart';
-import 'package:flutter_chat_app/core/utils/result.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
 import 'package:injectable/injectable.dart';
 
-/// Parameters for searching conversations
-class SearchConversationsParams extends Equatable {
-  final String keyword;
-  final int limit;
-
-  const SearchConversationsParams({
-    required this.keyword,
-    this.limit = 20,
-  });
-
-  @override
-  List<Object> get props => [keyword, limit];
-}
-
-/// Search conversations use case implementation
+/// Search Conversations Use Case
 ///
-/// Searches conversations by keyword with offline-first strategy.
-/// Returns cached results immediately and syncs with server.
+/// Searches conversations by name or content.
+/// Implements local-first strategy for instant results.
+///
+/// **Requirements**: 2.7, 2.16, 2.17, 2.18
 @injectable
-class SearchConversationsUseCase 
-    implements UseCase<List<Chat>, SearchConversationsParams> {
+class SearchConversationsUseCase {
   final IChatRepository _repository;
+  final AppLogger _logger;
 
-  const SearchConversationsUseCase(this._repository);
+  const SearchConversationsUseCase({
+    required IChatRepository repository,
+    required AppLogger logger,
+  })  : _repository = repository,
+        _logger = logger;
 
-  @override
-  Future<Result<List<Chat>>> call(SearchConversationsParams params) async {
+  /// Execute use case to search conversations
+  ///
+  /// [query] - Search query string
+  /// [limit] - Maximum number of results (default: 20)
+  ///
+  /// Returns Either<Failure, List<Chat>>
+  /// - Left: Failure (NetworkFailure, ServerFailure, ValidationFailure, etc.)
+  /// - Right: List of matching Chat entities
+  Future<Either<Failure, List<Chat>>> call({
+    required String query,
+    int limit = 20,
+  }) async {
+    _logger.info('SearchConversationsUseCase: Starting operation', {
+      'query': query,
+      'limit': limit,
+    });
+
     // Validate input
-    final validationResult = _validateParams(params);
-    if (validationResult != null) {
-      return Result.failure(validationResult);
+    if (query.trim().isEmpty) {
+      _logger.error('SearchConversationsUseCase: Validation failed - empty query');
+      return const Left(ValidationFailure(message: 'Search query cannot be empty'));
     }
 
-    // Search conversations through repository
-    final result = await _repository.searchChats(
-      params.keyword,
-      limit: params.limit,
-    );
-
-    // Convert Either to Result
-    return result.fold(
-      (failure) => Result.failure(failure),
-      (conversations) => Result.success(conversations),
-    );
-  }
-
-  /// Validate parameters
-  ValidationFailure? _validateParams(SearchConversationsParams params) {
-    final errors = <String>[];
-
-    // Keyword validation
-    if (params.keyword.isEmpty) {
-      errors.add('Search keyword cannot be empty');
-    } else if (params.keyword.length < 2) {
-      errors.add('Search keyword must be at least 2 characters');
+    if (limit <= 0) {
+      _logger.error('SearchConversationsUseCase: Validation failed - invalid limit');
+      return const Left(ValidationFailure(message: 'Limit must be greater than 0'));
     }
 
-    // Limit validation
-    if (params.limit < 1) {
-      errors.add('Limit must be at least 1');
-    } else if (params.limit > 100) {
-      errors.add('Limit cannot exceed 100');
-    }
+    try {
+      final result = await _repository.searchChats(query, limit: limit);
 
-    if (errors.isNotEmpty) {
-      return ValidationFailure(message: errors.join(', '));
+      return result.fold(
+        (failure) {
+          _logger.error('SearchConversationsUseCase: Failed', failure);
+          return Left(failure);
+        },
+        (conversations) {
+          _logger.info('SearchConversationsUseCase: Success', {
+            'query': query,
+            'resultCount': conversations.length,
+          });
+          return Right(conversations);
+        },
+      );
+    } catch (e, stackTrace) {
+      _logger.error('SearchConversationsUseCase: Unexpected error', e, stackTrace);
+      return Left(UnexpectedFailure(message: e.toString()));
     }
-
-    return null;
   }
 }

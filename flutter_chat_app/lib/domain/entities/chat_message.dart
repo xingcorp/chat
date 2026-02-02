@@ -272,6 +272,21 @@ class ChatMessage {
   /// Thời gian chỉnh sửa (nếu có)
   final DateTime? editedAt;
   
+  /// Thời gian xóa (nếu có)
+  final DateTime? deletedAt;
+  
+  /// Danh sách URLs (cho image, video, file)
+  final List<String> urls;
+  
+  /// Tên file (cho file attachments)
+  final String? fileName;
+  
+  /// ID tin nhắn được forward từ đâu
+  final String? forwardedFromMessageId;
+  
+  /// Danh sách user được mention
+  final List<MessageSender> mentionTo;
+  
   /// Danh sách người đã đọc tin nhắn
   final List<String> readBy;
   
@@ -294,6 +309,11 @@ class ChatMessage {
     required this.createdAt,
     required this.updatedAt,
     this.editedAt,
+    this.deletedAt,
+    this.urls = const [],
+    this.fileName,
+    this.forwardedFromMessageId,
+    this.mentionTo = const [],
     this.readBy = const [],
     this.deliveredTo = const [],
     this.attachments = const [],
@@ -325,6 +345,13 @@ class ChatMessage {
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       editedAt: json['editedAt'] != null ? DateTime.parse(json['editedAt'] as String) : null,
+      deletedAt: json['deletedAt'] != null ? DateTime.parse(json['deletedAt'] as String) : null,
+      urls: (json['urls'] as List?)?.map((e) => e as String).toList() ?? [],
+      fileName: json['fileName'] as String?,
+      forwardedFromMessageId: json['forwardedFromMessageId'] as String?,
+      mentionTo: (json['mentionTo'] as List?)
+          ?.map((e) => MessageSender.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
       readBy: (json['readBy'] as List?)?.map((e) => e as String).toList() ?? [],
       deliveredTo: (json['deliveredTo'] as List?)?.map((e) => e as String).toList() ?? [],
       attachments: (json['attachments'] as List?)
@@ -347,6 +374,11 @@ class ChatMessage {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       if (editedAt != null) 'editedAt': editedAt!.toIso8601String(),
+      if (deletedAt != null) 'deletedAt': deletedAt!.toIso8601String(),
+      'urls': urls,
+      'fileName': fileName,
+      'forwardedFromMessageId': forwardedFromMessageId,
+      'mentionTo': mentionTo.map((m) => m.toJson()).toList(),
       'readBy': readBy,
       'deliveredTo': deliveredTo,
       'attachments': attachments.map((a) => a.toJson()).toList(),
@@ -390,6 +422,11 @@ class ChatMessage {
       other.createdAt == createdAt &&
       other.updatedAt == updatedAt &&
       other.editedAt == editedAt &&
+      other.deletedAt == deletedAt &&
+      _listEquals(other.urls, urls) &&
+      other.fileName == fileName &&
+      other.forwardedFromMessageId == forwardedFromMessageId &&
+      _listEquals(other.mentionTo, mentionTo) &&
       _listEquals(other.readBy, readBy) &&
       _listEquals(other.deliveredTo, deliveredTo) &&
       _listEquals(other.attachments, attachments) &&
@@ -406,6 +443,11 @@ class ChatMessage {
       createdAt.hashCode ^
       updatedAt.hashCode ^
       (editedAt?.hashCode ?? 0) ^
+      (deletedAt?.hashCode ?? 0) ^
+      urls.hashCode ^
+      (fileName?.hashCode ?? 0) ^
+      (forwardedFromMessageId?.hashCode ?? 0) ^
+      mentionTo.hashCode ^
       readBy.hashCode ^
       deliveredTo.hashCode ^
       attachments.hashCode ^
@@ -461,7 +503,7 @@ class ChatMessage {
   }
 
   /// Kiểm tra tin nhắn đã bị xóa
-  bool get isDeleted => status == MessageStatus.failed; // Temporary mapping
+  bool get isDeleted => deletedAt != null;
 
   /// Kiểm tra tin nhắn đã được đọc bởi người dùng hiện tại
   bool get isReadByCurrentUser => readBy.contains('current_user_id'); // Replace with actual logic

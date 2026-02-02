@@ -103,7 +103,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         logger.e('Failed to load messages', error: failure);
         emit(MessagesError(
           chatId: event.chatId,
-          error: failure.toString(),
+          error: failure.message,
         ));
       },
       (messages) {
@@ -204,7 +204,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         logger.e('Failed to send message', error: failure);
         emit(MessagesError(
           chatId: currentState.chatId,
-          error: failure.toString(),
+          error: failure.message,
           previousMessages: currentState.messages,
         ));
       },
@@ -245,7 +245,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         logger.e('Failed to edit message', error: failure);
         emit(MessagesError(
           chatId: currentState.chatId,
-          error: failure.toString(),
+          error: failure.message,
           previousMessages: currentState.messages,
         ));
       },
@@ -301,7 +301,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         logger.e('Failed to delete message', error: failure);
         emit(MessagesError(
           chatId: currentState.chatId,
-          error: failure.toString(),
+          error: failure.message,
           previousMessages: currentState.messages,
         ));
       },

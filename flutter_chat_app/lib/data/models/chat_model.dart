@@ -19,9 +19,21 @@ class ChatModel {
   /// Name of the chat (for groups and channels)
   final String? name;
 
+  /// Description of the chat (for groups)
+  final String? description;
+
   /// Type of the chat
   @enumValue
   final ChatType type;
+
+  /// Group type (Public/Private) - only for group chats
+  final String? groupType;
+
+  /// ID of the creator (for groups)
+  final String? creatorId;
+
+  /// Members data as JSON string (contains full member info)
+  final String? membersJson;
 
   /// ID of the last message in the chat
   final String? lastMessageId;
@@ -35,10 +47,10 @@ class ChatModel {
   /// Number of unread messages
   final int unreadCount;
 
-  /// List of participant user IDs
+  /// List of participant user IDs (backward compatibility)
   final List<String> participantIds;
 
-  /// ID of the admin user (for groups and channels)
+  /// ID of the admin user (for groups and channels) - backward compatibility
   final String? adminId;
 
   /// URL to the chat's avatar/image
@@ -65,7 +77,11 @@ class ChatModel {
     this.id = 0,
     required this.serverId,
     this.name,
+    this.description,
     required this.type,
+    this.groupType,
+    this.creatorId,
+    this.membersJson,
     this.lastMessageId,
     this.lastMessagePreview,
     this.lastMessageTime,
@@ -82,12 +98,22 @@ class ChatModel {
 
   /// Create a chat from a map (legacy format)
   factory ChatModel.fromMap(Map<String, dynamic> map) {
+    // Extract members and convert to JSON string
+    String? membersJson;
+    if (map['members'] != null) {
+      membersJson = jsonEncode(map['members']);
+    }
+
     return ChatModel(
       serverId: map['id'] as String,
       name: map['name'] as String?,
+      description: map['description'] as String?,
       type: ChatType.values.firstWhere(
           (e) => e.name == (map['type'] as String),
           orElse: () => ChatType.direct),
+      groupType: map['groupType'] as String?,
+      creatorId: map['creatorId'] as String?,
+      membersJson: membersJson,
       lastMessageId: map['lastMessageId'] as String?,
       lastMessagePreview: map['lastMessagePreview'] as String?,
       lastMessageTime: map['lastMessageTime'] != null
@@ -112,7 +138,11 @@ class ChatModel {
     return {
       'id': serverId,
       'name': name,
+      'description': description,
       'type': type.name,
+      'groupType': groupType,
+      'creatorId': creatorId,
+      'members': membersJson != null ? jsonDecode(membersJson!) : null,
       'lastMessageId': lastMessageId,
       'lastMessagePreview': lastMessagePreview,
       'lastMessageTime': lastMessageTime?.toIso8601String(),
@@ -133,7 +163,11 @@ class ChatModel {
     int? id,
     String? serverId,
     String? name,
+    String? description,
     ChatType? type,
+    String? groupType,
+    String? creatorId,
+    String? membersJson,
     String? lastMessageId,
     String? lastMessagePreview,
     DateTime? lastMessageTime,
@@ -151,7 +185,11 @@ class ChatModel {
       id: id ?? this.id,
       serverId: serverId ?? this.serverId,
       name: name ?? this.name,
+      description: description ?? this.description,
       type: type ?? this.type,
+      groupType: groupType ?? this.groupType,
+      creatorId: creatorId ?? this.creatorId,
+      membersJson: membersJson ?? this.membersJson,
       lastMessageId: lastMessageId ?? this.lastMessageId,
       lastMessagePreview: lastMessagePreview ?? this.lastMessagePreview,
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
@@ -328,12 +366,57 @@ class ChatModel {
     }
   }
 
+  /// Get members as list
+  @ignore
+  List<Map<String, dynamic>> get membersList {
+    if (membersJson == null) return [];
+    try {
+      final decoded = jsonDecode(membersJson!);
+      if (decoded is List) {
+        return List<Map<String, dynamic>>.from(decoded);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   /// Convert ChatModel to domain Chat entity
   Chat toDomain() {
+    // Parse members from JSON
+    final members = membersList.map((m) {
+      return ConversationMember(
+        id: m['id'] as String? ?? '',
+        userId: m['userId'] as String? ?? '',
+        fullName: m['fullName'] as String?,
+        avatarUrl: m['avatarUrl'] as String?,
+        isAdmin: m['admin'] as bool? ?? false,
+        isConnected: m['connected'] as bool? ?? false,
+        isHidden: m['hide'] as bool? ?? false,
+        unreadCount: m['unreadCount'] as int? ?? 0,
+        lastMessageReadId: m['lastMessageReadId'] as String?,
+        viewMessagesFrom: m['viewMessagesFrom'] != null
+            ? DateTime.parse(m['viewMessagesFrom'] as String)
+            : null,
+      );
+    }).toList();
+
+    // Parse groupType
+    GroupType? parsedGroupType;
+    if (groupType != null) {
+      parsedGroupType = groupType!.toLowerCase() == 'public'
+          ? GroupType.public
+          : GroupType.private;
+    }
+
     return Chat(
       id: serverId,
       name: name,
       avatarUrl: avatarUrl,
+      description: description,
+      groupType: parsedGroupType,
+      creatorId: creatorId,
+      members: members,
       lastMessageTime: lastMessageTime,
       lastMessagePreview: lastMessagePreview,
       unreadCount: unreadCount,

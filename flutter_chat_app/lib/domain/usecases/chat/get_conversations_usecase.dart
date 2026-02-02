@@ -1,37 +1,53 @@
+import 'package:dartz/dartz.dart';
+import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter_chat_app/domain/entities/chat.dart';
+import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
+import 'package:injectable/injectable.dart';
+
 /// Get Conversations Use Case
 ///
 /// Retrieves list of conversations for the current user.
 /// Implements offline-first strategy through repository.
 ///
-/// Author: Senior Flutter/Mobile Architect
-library get_conversations_usecase;
-
-import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/usecases/usecase.dart';
-import 'package:flutter_chat_app/core/utils/result.dart';
-import 'package:flutter_chat_app/domain/entities/chat.dart';
-import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
-import 'package:injectable/injectable.dart';
-
-/// Get conversations use case implementation
-///
-/// Retrieves all conversations for the current user with offline-first support.
-/// Returns cached data immediately and syncs with server in background.
+/// **Requirements**: 2.1, 2.16, 2.17, 2.18
 @injectable
-class GetConversationsUseCase implements NoParamsUseCase<List<Chat>> {
+class GetConversationsUseCase {
   final IChatRepository _repository;
+  final AppLogger _logger;
 
-  const GetConversationsUseCase(this._repository);
+  const GetConversationsUseCase({
+    required IChatRepository repository,
+    required AppLogger logger,
+  })  : _repository = repository,
+        _logger = logger;
 
-  @override
-  Future<Result<List<Chat>>> call() async {
-    // Get conversations from repository (offline-first)
-    final result = await _repository.getChats();
+  /// Execute use case to get conversations
+  ///
+  /// Returns Either<Failure, List<Chat>>
+  /// - Left: Failure (NetworkFailure, ServerFailure, etc.)
+  /// - Right: List of Chat entities
+  Future<Either<Failure, List<Chat>>> call() async {
+    _logger.info('GetConversationsUseCase: Starting operation');
 
-    // Convert Either to Result
-    return result.fold(
-      (failure) => Result.failure(failure),
-      (conversations) => Result.success(conversations),
-    );
+    try {
+      final result = await _repository.getChats();
+
+      return result.fold(
+        (failure) {
+          _logger.error('GetConversationsUseCase: Failed', failure);
+          return Left(failure);
+        },
+        (conversations) {
+          _logger.info('GetConversationsUseCase: Success', {
+            'count': conversations.length,
+          });
+          return Right(conversations);
+        },
+      );
+    } catch (e, stackTrace) {
+      _logger.error('GetConversationsUseCase: Unexpected error', e, stackTrace);
+      return Left(UnexpectedFailure(message: e.toString()));
+    }
   }
 }

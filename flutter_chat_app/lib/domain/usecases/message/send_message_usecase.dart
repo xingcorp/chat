@@ -1,114 +1,93 @@
-/// Send Message Use Case
-///
-/// Sends a new message to a conversation.
-/// Implements online-first strategy with offline queue support.
-///
-/// Author: Senior Flutter/Mobile Architect
-library send_message_usecase;
-
-import 'package:equatable/equatable.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/usecases/usecase.dart';
-import 'package:flutter_chat_app/core/utils/result.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:injectable/injectable.dart';
 
-/// Parameters for sending a message
-class SendMessageParams extends Equatable {
-  final String conversationId;
-  final String content;
-  final String senderId;
-  final String contentType;
-  final List<String> attachmentIds;
-
-  const SendMessageParams({
-    required this.conversationId,
-    required this.content,
-    required this.senderId,
-    this.contentType = 'text',
-    this.attachmentIds = const [],
-  });
-
-  @override
-  List<Object> get props => [
-        conversationId,
-        content,
-        senderId,
-        contentType,
-        attachmentIds,
-      ];
-}
-
-/// Send message use case implementation
+/// Send Message Use Case
 ///
-/// Sends a new message with validation and offline support.
-/// Message is saved locally immediately and synced when online.
+/// Sends a new message to a conversation.
+/// Implements online-first strategy with offline queuing.
+///
+/// **Requirements**: 2.9, 2.16, 2.17, 2.18
 @injectable
-class SendMessageUseCase 
-    implements UseCase<ChatMessage, SendMessageParams> {
+class SendMessageUseCase {
   final IMessageRepository _repository;
+  final AppLogger _logger;
 
-  const SendMessageUseCase(this._repository);
+  const SendMessageUseCase({
+    required IMessageRepository repository,
+    required AppLogger logger,
+  })  : _repository = repository,
+        _logger = logger;
 
-  @override
-  Future<Result<ChatMessage>> call(SendMessageParams params) async {
-    // Validate input
-    final validationResult = _validateParams(params);
-    if (validationResult != null) {
-      return Result.failure(validationResult);
+  /// Execute use case to send a message
+  ///
+  /// [conversationId] - ID of the conversation
+  /// [content] - Message content
+  /// [type] - Message type (TEXT, IMAGE, VIDEO, etc.)
+  /// [urls] - Optional list of attachment URLs
+  /// [fileName] - Optional file name for attachments
+  ///
+  /// Returns Either<Failure, ChatMessage>
+  /// - Left: Failure (NetworkFailure, ServerFailure, ValidationFailure, etc.)
+  /// - Right: Sent ChatMessage entity
+  Future<Either<Failure, ChatMessage>> call({
+    required String conversationId,
+    required String content,
+    required String senderId,
+    required String type,
+    List<String> urls = const [],
+    String? fileName,
+  }) async {
+    _logger.info('SendMessageUseCase: Starting operation', {
+      'conversationId': conversationId,
+      'type': type,
+      'hasAttachments': urls.isNotEmpty,
+    });
+
+    // Validate inputs
+    if (conversationId.trim().isEmpty) {
+      _logger.error('SendMessageUseCase: Validation failed - empty conversationId');
+      return const Left(ValidationFailure(message: 'Conversation ID cannot be empty'));
     }
 
-    // Send message through repository
-    final result = await _repository.sendMessage(
-      chatId: params.conversationId,
-      content: params.content,
-      senderId: params.senderId,
-      contentType: params.contentType,
-      attachmentIds: params.attachmentIds,
-    );
-
-    // Convert Either to Result
-    return result.fold(
-      (failure) => Result.failure(failure),
-      (message) => Result.success(message),
-    );
-  }
-
-  /// Validate parameters
-  ValidationFailure? _validateParams(SendMessageParams params) {
-    final errors = <String>[];
-
-    // Conversation ID validation
-    if (params.conversationId.isEmpty) {
-      errors.add('Conversation ID cannot be empty');
+    if (content.trim().isEmpty && urls.isEmpty) {
+      _logger.error('SendMessageUseCase: Validation failed - empty content and no attachments');
+      return const Left(ValidationFailure(message: 'Message must have content or attachments'));
     }
 
-    // Sender ID validation
-    if (params.senderId.isEmpty) {
-      errors.add('Sender ID cannot be empty');
+    if (senderId.trim().isEmpty) {
+      _logger.error('SendMessageUseCase: Validation failed - empty senderId');
+      return const Left(ValidationFailure(message: 'Sender ID cannot be empty'));
     }
 
-    // Content validation
-    if (params.content.isEmpty && params.attachmentIds.isEmpty) {
-      errors.add('Message must have content or attachments');
-    }
+    try {
+      final result = await _repository.sendMessage(
+        chatId: conversationId,
+        content: content,
+        senderId: senderId,
+        contentType: type,
+        attachmentIds: urls,
+      );
 
-    // Content length validation
-    if (params.content.length > 10000) {
-      errors.add('Message content cannot exceed 10000 characters');
+      return result.fold(
+        (failure) {
+          _logger.error('SendMessageUseCase: Failed', failure);
+          return Left(failure);
+        },
+        (message) {
+          _logger.info('SendMessageUseCase: Success', {
+            'messageId': message.id,
+            'conversationId': conversationId,
+          });
+          return Right(message);
+        },
+      );
+    } catch (e, stackTrace) {
+      _logger.error('SendMessageUseCase: Unexpected error', e, stackTrace);
+      return Left(UnexpectedFailure(message: e.toString()));
     }
-
-    // Content type validation
-    final validTypes = ['text', 'image', 'video', 'audio', 'file', 'location'];
-    if (!validTypes.contains(params.contentType.toLowerCase())) {
-      errors.add('Invalid content type: ${params.contentType}');
-    }
-
-    if (errors.isNotEmpty) {
-      return ValidationFailure(message: errors.join(', '));
-    }
-
-    return null;
   }
 }

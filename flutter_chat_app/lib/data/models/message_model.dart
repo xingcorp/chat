@@ -77,6 +77,24 @@ class MessageModel {
   /// Timestamp when the message was updated
   final DateTime? updatedAt;
 
+  /// Timestamp when the message was edited
+  final DateTime? editedAt;
+
+  /// Timestamp when the message was deleted
+  final DateTime? deletedAt;
+
+  /// List of URLs (for images, videos, files)
+  final List<String> urls;
+
+  /// File name (for file attachments)
+  final String? fileName;
+
+  /// ID of the message this was forwarded from
+  final String? forwardedFromMessageId;
+
+  /// IDs of users mentioned in the message (stored as JSON)
+  final String? mentionToJson;
+
   /// Message that this message is replying to
   final String? replyToMessageId;
 
@@ -108,6 +126,12 @@ class MessageModel {
     this.status = MessageStatus.pending,
     required this.createdAt,
     this.updatedAt,
+    this.editedAt,
+    this.deletedAt,
+    this.urls = const [],
+    this.fileName,
+    this.forwardedFromMessageId,
+    this.mentionToJson,
     this.replyToMessageId,
     this.metadata,
     this.isDeleted = false,
@@ -118,6 +142,12 @@ class MessageModel {
 
   /// Create a message from a map (legacy format)
   factory MessageModel.fromMap(Map<String, dynamic> map) {
+    // Extract mentionTo and convert to JSON string
+    String? mentionToJson;
+    if (map['mentionTo'] != null) {
+      mentionToJson = jsonEncode(map['mentionTo']);
+    }
+
     return MessageModel(
       serverId: map['id'] as String?,
       localId: map['localId'] as String,
@@ -135,6 +165,16 @@ class MessageModel {
       updatedAt: map['updatedAt'] != null
           ? DateTime.parse(map['updatedAt'] as String)
           : null,
+      editedAt: map['editedAt'] != null
+          ? DateTime.parse(map['editedAt'] as String)
+          : null,
+      deletedAt: map['deletedAt'] != null
+          ? DateTime.parse(map['deletedAt'] as String)
+          : null,
+      urls: List<String>.from(map['urls'] ?? []),
+      fileName: map['fileName'] as String?,
+      forwardedFromMessageId: map['forwardedFromMessageId'] as String?,
+      mentionToJson: mentionToJson,
       replyToMessageId: map['replyToMessageId'] as String?,
       metadata: map['metadata'] as String?,
       isDeleted: map['isDeleted'] as bool? ?? false,
@@ -157,6 +197,12 @@ class MessageModel {
       'status': status.name,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'editedAt': editedAt?.toIso8601String(),
+      'deletedAt': deletedAt?.toIso8601String(),
+      'urls': urls,
+      'fileName': fileName,
+      'forwardedFromMessageId': forwardedFromMessageId,
+      'mentionTo': mentionToJson != null ? jsonDecode(mentionToJson!) : null,
       'replyToMessageId': replyToMessageId,
       'metadata': metadata,
       'isDeleted': isDeleted,
@@ -179,6 +225,12 @@ class MessageModel {
     MessageStatus? status,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? editedAt,
+    DateTime? deletedAt,
+    List<String>? urls,
+    String? fileName,
+    String? forwardedFromMessageId,
+    String? mentionToJson,
     String? replyToMessageId,
     String? metadata,
     bool? isDeleted,
@@ -198,6 +250,12 @@ class MessageModel {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      editedAt: editedAt ?? this.editedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      urls: urls ?? this.urls,
+      fileName: fileName ?? this.fileName,
+      forwardedFromMessageId: forwardedFromMessageId ?? this.forwardedFromMessageId,
+      mentionToJson: mentionToJson ?? this.mentionToJson,
       replyToMessageId: replyToMessageId ?? this.replyToMessageId,
       metadata: metadata ?? this.metadata,
       isDeleted: isDeleted ?? this.isDeleted,
@@ -498,6 +556,21 @@ class MessageModel {
     return map['path'] as String?;
   }
 
+  /// Get mentioned users as list
+  @ignore
+  List<Map<String, dynamic>> get mentionToList {
+    if (mentionToJson == null) return [];
+    try {
+      final decoded = jsonDecode(mentionToJson!);
+      if (decoded is List) {
+        return List<Map<String, dynamic>>.from(decoded);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   /// Convert MessageModel to domain ChatMessage entity
   ChatMessage toDomain() {
     // Convert MessageType to ContentType (mapping data layer to domain layer)
@@ -538,14 +611,24 @@ class MessageModel {
       avatar: null, // This should be populated from user data
     );
 
+    // Parse mentionTo from JSON
+    final mentionedUsers = mentionToList.map((m) {
+      return MessageSender(
+        id: m['id'] as String? ?? '',
+        name: m['name'] as String? ?? 'Unknown',
+        avatar: m['avatar'] as String?,
+      );
+    }).toList();
+
     // Create attachments if this is a media message
     final attachments = <MessageAttachment>[];
-    if (isMultimedia && mediaPath != null) {
+    if (isMultimedia && (mediaPath != null || urls.isNotEmpty)) {
+      final url = urls.isNotEmpty ? urls.first : (mediaPath ?? '');
       attachments.add(MessageAttachment(
         id: '$localId-attachment',
         type: _getAttachmentTypeString(type),
-        url: mediaPath!,
-        name: 'attachment',
+        url: url,
+        name: fileName ?? 'attachment',
         size: fileSize ?? 0,
       ));
     }
@@ -558,6 +641,12 @@ class MessageModel {
       sender: sender,
       createdAt: createdAt,
       updatedAt: updatedAt ?? createdAt,
+      editedAt: editedAt,
+      deletedAt: deletedAt,
+      urls: urls,
+      fileName: fileName,
+      forwardedFromMessageId: forwardedFromMessageId,
+      mentionTo: mentionedUsers,
       readBy: readBy,
       deliveredTo: status == MessageStatus.delivered || status == MessageStatus.read
           ? [senderId]

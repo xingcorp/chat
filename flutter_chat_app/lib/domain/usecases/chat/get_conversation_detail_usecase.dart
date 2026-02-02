@@ -1,67 +1,58 @@
-/// Get Conversation Detail Use Case
-///
-/// Retrieves detailed information for a specific conversation.
-/// Implements online-first strategy to get latest data.
-///
-/// Author: Senior Flutter/Mobile Architect
-library get_conversation_detail_usecase;
-
-import 'package:equatable/equatable.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/usecases/usecase.dart';
-import 'package:flutter_chat_app/core/utils/result.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
 import 'package:injectable/injectable.dart';
 
-/// Parameters for getting conversation detail
-class GetConversationDetailParams extends Equatable {
-  final String conversationId;
-
-  const GetConversationDetailParams({
-    required this.conversationId,
-  });
-
-  @override
-  List<Object> get props => [conversationId];
-}
-
-/// Get conversation detail use case implementation
+/// Get Conversation Detail Use Case
 ///
 /// Retrieves detailed information for a specific conversation.
-/// Uses online-first strategy to ensure fresh data.
+/// Implements online-first strategy for fresh data.
+///
+/// **Requirements**: 2.2, 2.16, 2.17, 2.18
 @injectable
-class GetConversationDetailUseCase 
-    implements UseCase<Chat?, GetConversationDetailParams> {
+class GetConversationDetailUseCase {
   final IChatRepository _repository;
+  final AppLogger _logger;
 
-  const GetConversationDetailUseCase(this._repository);
+  const GetConversationDetailUseCase({
+    required IChatRepository repository,
+    required AppLogger logger,
+  })  : _repository = repository,
+        _logger = logger;
 
-  @override
-  Future<Result<Chat?>> call(GetConversationDetailParams params) async {
-    // Validate input
-    final validationResult = _validateParams(params);
-    if (validationResult != null) {
-      return Result.failure(validationResult);
-    }
+  /// Execute use case to get conversation detail
+  ///
+  /// [conversationId] - ID of the conversation to retrieve
+  ///
+  /// Returns Either<Failure, Chat?>
+  /// - Left: Failure (NetworkFailure, ServerFailure, etc.)
+  /// - Right: Chat entity or null if not found
+  Future<Either<Failure, Chat?>> call(String conversationId) async {
+    _logger.info('GetConversationDetailUseCase: Starting operation', {
+      'conversationId': conversationId,
+    });
 
-    // Get conversation detail from repository
-    final result = await _repository.getChatById(params.conversationId);
+    try {
+      final result = await _repository.getChatById(conversationId);
 
-    // Convert Either to Result
-    return result.fold(
-      (failure) => Result.failure(failure),
-      (conversation) => Result.success(conversation),
-    );
-  }
-
-  /// Validate parameters
-  ValidationFailure? _validateParams(GetConversationDetailParams params) {
-    if (params.conversationId.isEmpty) {
-      return const ValidationFailure(
-        message: 'Conversation ID cannot be empty',
+      return result.fold(
+        (failure) {
+          _logger.error('GetConversationDetailUseCase: Failed', failure);
+          return Left(failure);
+        },
+        (conversation) {
+          _logger.info('GetConversationDetailUseCase: Success', {
+            'conversationId': conversationId,
+            'found': conversation != null,
+          });
+          return Right(conversation);
+        },
       );
+    } catch (e, stackTrace) {
+      _logger.error('GetConversationDetailUseCase: Unexpected error', e, stackTrace);
+      return Left(UnexpectedFailure(message: e.toString()));
     }
-    return null;
   }
 }
