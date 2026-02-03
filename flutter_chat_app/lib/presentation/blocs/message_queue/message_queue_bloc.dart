@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart' as service;
-import 'package:flutter_chat_app/domain/entities/attachment.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
+import 'package:flutter_chat_app/shared/domain/entities/attachment.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart' as domain;
 
 part 'message_queue_event.dart';

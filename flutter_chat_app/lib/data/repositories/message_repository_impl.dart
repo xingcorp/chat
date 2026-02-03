@@ -9,7 +9,7 @@ import 'package:flutter_chat_app/data/datasources/message/message_local_datasour
 import 'package:flutter_chat_app/data/datasources/message/message_remote_datasource.dart';
 import 'package:flutter_chat_app/data/mappers/message_mapper.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';

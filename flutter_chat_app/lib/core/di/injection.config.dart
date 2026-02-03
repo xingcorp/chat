@@ -20,9 +20,10 @@ import 'package:isar/isar.dart' as _i338;
 import 'package:logger/logger.dart' as _i974;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
-import '../../data/datasources/auth/auth_remote_datasource.dart' as _i60;
-import '../../data/datasources/chat/chat_local_datasource.dart' as _i832;
-import '../../data/datasources/chat/chat_remote_datasource.dart' as _i64;
+import '../../features/chat/data/datasources/chat/chat_local_datasource.dart'
+    as _i832;
+import '../../features/chat/data/datasources/chat/chat_remote_datasource.dart'
+    as _i64;
 import '../../data/datasources/media/media_local_datasource.dart' as _i982;
 import '../../data/datasources/media/media_remote_datasource.dart' as _i966;
 import '../../data/datasources/message/message_local_datasource.dart' as _i75;
@@ -31,30 +32,34 @@ import '../../data/datasources/permissions_datasource.dart' as _i656;
 import '../../data/datasources/user/user_local_datasource.dart' as _i439;
 import '../../data/datasources/user/user_remote_datasource.dart' as _i404;
 import '../../data/mappers/socket_io_event_mapper.dart' as _i976;
-import '../../data/repositories/auth_repository_impl.dart' as _i895;
-import '../../data/repositories/chat_repository.dart' as _i415;
+import '../../features/chat/data/repositories/chat_repository.dart' as _i415;
 import '../../data/repositories/media_repository_impl.dart' as _i872;
 import '../../data/repositories/message_repository_impl.dart' as _i564;
 import '../../data/repositories/offline_first_repository.dart' as _i264;
 import '../../data/repositories/permissions_repository_impl.dart' as _i760;
 import '../../data/repositories/user_repository_impl.dart' as _i790;
 import '../../data/services/graphql/graphql_client_wrapper.dart' as _i923;
-import '../../domain/repositories/auth_repository.dart' as _i1073;
 import '../../domain/repositories/i_attachment_repository.dart' as _i817;
-import '../../domain/repositories/i_chat_repository.dart' as _i425;
+import '../../features/chat/domain/repositories/i_chat_repository.dart' as _i425;
 import '../../domain/repositories/i_media_repository.dart' as _i394;
 import '../../domain/repositories/i_message_repository.dart' as _i572;
 import '../../domain/repositories/permissions_repository.dart' as _i473;
 import '../../domain/repositories/user_repository.dart' as _i271;
-import '../../domain/usecases/chat/create_group_usecase.dart' as _i43;
-import '../../domain/usecases/chat/delete_conversation_usecase.dart' as _i388;
-import '../../domain/usecases/chat/edit_group_usecase.dart' as _i286;
-import '../../domain/usecases/chat/get_conversation_detail_usecase.dart'
+import '../../features/chat/domain/usecases/chat/create_group_usecase.dart'
+    as _i43;
+import '../../features/chat/domain/usecases/chat/delete_conversation_usecase.dart'
+    as _i388;
+import '../../features/chat/domain/usecases/chat/edit_group_usecase.dart' as _i286;
+import '../../features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart'
     as _i65;
-import '../../domain/usecases/chat/get_conversations_usecase.dart' as _i582;
-import '../../domain/usecases/chat/leave_conversation_usecase.dart' as _i838;
-import '../../domain/usecases/chat/search_conversations_usecase.dart' as _i537;
-import '../../domain/usecases/chat/update_group_usecase.dart' as _i681;
+import '../../features/chat/domain/usecases/chat/get_conversations_usecase.dart'
+    as _i582;
+import '../../features/chat/domain/usecases/chat/leave_conversation_usecase.dart'
+    as _i838;
+import '../../features/chat/domain/usecases/chat/search_conversations_usecase.dart'
+    as _i537;
+import '../../features/chat/domain/usecases/chat/update_group_usecase.dart'
+    as _i681;
 import '../../domain/usecases/message/add_reaction_usecase.dart' as _i409;
 import '../../domain/usecases/message/delete_message_usecase.dart' as _i434;
 import '../../domain/usecases/message/edit_message_usecase.dart' as _i203;
@@ -64,8 +69,13 @@ import '../../domain/usecases/message/remove_reaction_usecase.dart' as _i539;
 import '../../domain/usecases/message/search_messages_usecase.dart' as _i148;
 import '../../domain/usecases/message/send_message_usecase.dart' as _i67;
 import '../../domain/usecases/request_permission_usecase.dart' as _i198;
-import '../../presentation/blocs/auth/auth_bloc.dart' as _i141;
-import '../../presentation/blocs/chat/chat_bloc.dart' as _i142;
+import '../../features/auth/data/datasources/auth/auth_remote_datasource.dart'
+    as _i1025;
+import '../../features/auth/data/repositories/auth_repository_impl.dart'
+    as _i153;
+import '../../features/auth/domain/repositories/auth_repository.dart' as _i787;
+import '../../features/auth/presentation/blocs/auth/auth_bloc.dart' as _i331;
+import '../../features/chat/presentation/blocs/chat/chat_bloc.dart' as _i142;
 import '../../presentation/blocs/connection/connection_bloc.dart' as _i81;
 import '../../presentation/blocs/locale/locale_cubit.dart' as _i128;
 import '../../presentation/blocs/media/media_bloc.dart' as _i921;
@@ -204,8 +214,8 @@ extension GetItInjectableX on _i174.GetIt {
         _i914.MessagingService(webSocketClient: gh<_i777.WebSocketClient>()));
     gh.singleton<_i706.RealtimeMessagingService>(
         () => _i706.RealtimeMessagingService(gh<_i932.NetworkInfo>()));
-    gh.lazySingleton<_i60.AuthRemoteDataSourceImpl>(
-        () => _i60.AuthRemoteDataSourceImpl(gh<_i923.GraphQLClientWrapper>()));
+    gh.lazySingleton<_i1025.AuthRemoteDataSourceImpl>(() =>
+        _i1025.AuthRemoteDataSourceImpl(gh<_i923.GraphQLClientWrapper>()));
     gh.singleton<_i794.PerformanceMonitor>(
         () => _i794.PerformanceMonitor(gh<_i346.FirebasePerformance>()));
     gh.singleton<_i808.IntegrationService>(
@@ -243,13 +253,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i910.PerformanceService(gh<_i346.FirebasePerformance>()));
     gh.factory<_i88.RealtimeMessageBloc>(
         () => _i88.RealtimeMessageBloc(gh<_i706.RealtimeMessagingService>()));
-    gh.lazySingleton<_i1073.IAuthRepository>(() => _i895.AuthRepositoryImpl(
-          authRemoteDataSource: gh<_i60.AuthRemoteDataSource>(),
-          userLocalDataSource: gh<_i439.UserLocalDataSource>(),
-          networkInfo: gh<_i932.NetworkInfo>(),
-          logger: gh<_i974.Logger>(),
-          performanceMonitor: gh<_i794.PerformanceMonitor>(),
-        ));
     gh.factory<_i498.SocketManager>(() => _i498.SocketManager(
           serverUrl: gh<String>(),
           options: gh<Map<String, dynamic>>(),
@@ -312,10 +315,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i855.AnimationService>(() => _i855.AnimationService(
           gh<_i98.DeviceCapabilityService>(),
           gh<_i794.PerformanceMonitor>(),
-        ));
-    gh.factory<_i141.AuthBloc>(() => _i141.AuthBloc(
-          authRepository: gh<_i1073.IAuthRepository>(),
-          preferences: gh<_i460.SharedPreferences>(),
         ));
     gh.singleton<_i686.IsolateManager>(() => _i686.IsolateManager(
           gh<_i794.PerformanceMonitor>(),
@@ -400,6 +399,17 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i460.SharedPreferences>(),
               gh<_i221.AppLogger>(),
             ));
+    gh.lazySingleton<_i787.IAuthRepository>(() => _i153.AuthRepositoryImpl(
+          authRemoteDataSource: gh<_i1025.AuthRemoteDataSource>(),
+          userLocalDataSource: gh<_i439.UserLocalDataSource>(),
+          networkInfo: gh<_i932.NetworkInfo>(),
+          logger: gh<_i974.Logger>(),
+          performanceMonitor: gh<_i794.PerformanceMonitor>(),
+        ));
+    gh.factory<_i331.AuthBloc>(() => _i331.AuthBloc(
+          authRepository: gh<_i787.IAuthRepository>(),
+          preferences: gh<_i460.SharedPreferences>(),
+        ));
     gh.factory<_i198.RequestPermissionUseCase>(() =>
         _i198.RequestPermissionUseCase(gh<_i473.PermissionsRepository>()));
     gh.factoryAsync<_i379.MessageQueueBloc>(() async =>

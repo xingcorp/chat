@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../mocks/mock_services.dart';
 import 'package:flutter_chat_app/presentation/widgets/virtualized_message_list.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 import '../test_config.dart';
 

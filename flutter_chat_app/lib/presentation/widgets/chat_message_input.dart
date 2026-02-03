@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/presentation/blocs/message_queue/message_queue_bloc.dart';
 import 'package:flutter_chat_app/presentation/widgets/attachment_preview.dart';
 

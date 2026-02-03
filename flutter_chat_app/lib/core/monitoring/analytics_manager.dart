@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_chat_app/domain/entities/chat.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 

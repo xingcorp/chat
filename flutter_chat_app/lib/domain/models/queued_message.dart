@@ -1,5 +1,5 @@
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 
 /// Model representing a message in the message queue
 class QueuedMessage {

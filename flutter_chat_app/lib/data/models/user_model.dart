@@ -1,4 +1,4 @@
-import 'package:flutter_chat_app/domain/entities/user.dart';
+import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:isar/isar.dart';
 
 part 'user_model.g.dart';

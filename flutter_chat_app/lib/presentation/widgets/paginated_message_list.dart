@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/presentation/widgets/date_separator.dart';
 import 'package:flutter_chat_app/presentation/widgets/message_item.dart';
 import 'package:flutter_chat_app/core/services/date_formatter_service.dart';

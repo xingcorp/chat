@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:flutter_chat_app/domain/entities/attachment_queue_status.dart';
-import 'package:flutter_chat_app/domain/entities/message_error_type.dart';
+import 'package:flutter_chat_app/shared/domain/entities/attachment_queue_status.dart';
+import 'package:flutter_chat_app/shared/domain/entities/message_error_type.dart';
 
 /// Enum định nghĩa các loại tập tin đính kèm
 enum AttachmentType {

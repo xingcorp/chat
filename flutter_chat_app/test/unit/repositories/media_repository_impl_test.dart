@@ -8,7 +8,7 @@ import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.d
 import 'package:flutter_chat_app/data/datasources/media/media_remote_datasource.dart';
 import 'package:flutter_chat_app/data/models/attachment_model.dart';
 import 'package:flutter_chat_app/data/repositories/media_repository_impl.dart';
-import 'package:flutter_chat_app/domain/entities/attachment.dart';
+import 'package:flutter_chat_app/shared/domain/entities/attachment.dart';
 
 // Mock classes
 class MockMediaRemoteDataSource extends Mock implements IMediaRemoteDataSource {}

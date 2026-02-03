@@ -18,7 +18,7 @@ import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
-import 'package:flutter_chat_app/domain/entities/chat.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/main.dart' show MyApp;
 
 Future<void> main() async {

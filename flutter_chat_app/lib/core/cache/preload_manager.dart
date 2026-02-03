@@ -5,7 +5,7 @@ import 'package:flutter_chat_app/core/cache/cache_stats.dart';
 import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';

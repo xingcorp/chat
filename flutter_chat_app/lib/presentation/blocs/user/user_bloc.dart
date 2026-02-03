@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/domain/entities/user.dart';
+import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';

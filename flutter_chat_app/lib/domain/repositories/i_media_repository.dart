@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/domain/entities/attachment.dart';
+import 'package:flutter_chat_app/shared/domain/entities/attachment.dart';
 
 /// Repository interface for media operations
 /// 

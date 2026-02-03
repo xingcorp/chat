@@ -21,7 +21,7 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
 import '../../../core/services/realtime_messaging_service.dart';
-import '../../../domain/entities/chat_message.dart';
+import '../../../shared/domain/entities/chat_message.dart';
 
 /// **REALTIME MESSAGE EVENTS**
 abstract class RealtimeMessageEvent extends Equatable {

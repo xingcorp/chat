@@ -18,7 +18,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/network/websocket_client.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/interfaces/i_chat_room_manager.dart';
 import 'package:flutter_chat_app/domain/interfaces/i_connection_manager.dart';
 import 'package:flutter_chat_app/domain/interfaces/i_message_receiver.dart';

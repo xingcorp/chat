@@ -13,7 +13,7 @@ import 'package:lottie/lottie.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/app_localizations.dart';
-import 'package:flutter_chat_app/domain/entities/permission_entity.dart';
+import 'package:flutter_chat_app/shared/domain/entities/permission_entity.dart';
 import 'package:flutter_chat_app/presentation/blocs/permissions/permissions_bloc.dart';
 import 'package:flutter_chat_app/presentation/widgets/permissions/permission_card_widget.dart';
 

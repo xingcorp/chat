@@ -1,5 +1,5 @@
 // import 'package:isar/isar.dart'; // DISABLED - Isar v4 compatibility
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 /// **ENTERPRISE ISAR CHAT MESSAGE MODEL**
 ///

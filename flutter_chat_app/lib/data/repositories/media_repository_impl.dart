@@ -5,7 +5,7 @@ import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/media/media_remote_datasource.dart';
-import 'package:flutter_chat_app/domain/entities/attachment.dart';
+import 'package:flutter_chat_app/shared/domain/entities/attachment.dart';
 import 'package:flutter_chat_app/domain/repositories/i_media_repository.dart';
 
 /// Implementation of media repository with offline-first strategy

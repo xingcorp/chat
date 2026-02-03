@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter_chat_app/domain/entities/attachment.dart';
+import 'package:flutter_chat_app/shared/domain/entities/attachment.dart';
 
 /// Data model for Attachment with JSON serialization
 class AttachmentModel extends Attachment {

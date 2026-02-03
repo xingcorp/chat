@@ -13,7 +13,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
-import 'package:flutter_chat_app/domain/entities/permission_entity.dart';
+import 'package:flutter_chat_app/shared/domain/entities/permission_entity.dart';
 import 'package:flutter_chat_app/domain/repositories/permissions_repository.dart';
 import 'package:flutter_chat_app/domain/usecases/request_permission_usecase.dart';
 

@@ -15,7 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_chat_app/core/constants/storage_keys.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/data/datasources/permissions_datasource.dart';
-import 'package:flutter_chat_app/domain/entities/permission_entity.dart';
+import 'package:flutter_chat_app/shared/domain/entities/permission_entity.dart';
 import 'package:flutter_chat_app/domain/repositories/permissions_repository.dart';
 
 @Injectable(as: PermissionsRepository)

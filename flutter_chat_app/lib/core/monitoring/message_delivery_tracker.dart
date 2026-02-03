@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
-import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
+import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';

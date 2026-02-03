@@ -39,7 +39,7 @@ import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
-import 'package:flutter_chat_app/domain/entities/chat.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 
 // App imports - Presentation
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
@@ -47,7 +47,7 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/main_desktop.dart' show DesktopHomeScreen;
 import 'package:flutter_chat_app/main_mobile.dart' show MobileHomeScreen;
 import 'package:flutter_chat_app/presentation/blocs/app/app_bloc.dart';
-import 'package:flutter_chat_app/presentation/blocs/auth/auth_bloc.dart';
+import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
 import 'package:flutter_chat_app/presentation/pages/home/web_home_screen.dart';

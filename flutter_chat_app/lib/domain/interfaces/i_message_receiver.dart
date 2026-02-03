@@ -6,7 +6,7 @@
 /// **Architecture:** Clean Architecture + SOLID principles
 
 import 'package:flutter_chat_app/core/services/messaging_service.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 /// **Message Receiver Interface**
 ///

@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:flutter_chat_app/domain/entities/chat.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 
 part 'chat_dto.freezed.dart';
 part 'chat_dto.g.dart';

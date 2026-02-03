@@ -13,7 +13,7 @@ import 'package:injectable/injectable.dart';
 // App imports
 import 'package:flutter_chat_app/core/services/permissions_service.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
-import 'package:flutter_chat_app/domain/entities/permission_entity.dart';
+import 'package:flutter_chat_app/shared/domain/entities/permission_entity.dart';
 
 // Events
 abstract class PermissionsEvent extends Equatable {

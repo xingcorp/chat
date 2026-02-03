@@ -7,7 +7,7 @@ import 'package:logger/logger.dart';
 
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/usecases/message/delete_message_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/edit_message_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/get_messages_usecase.dart';

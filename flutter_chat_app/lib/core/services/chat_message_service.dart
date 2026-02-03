@@ -5,7 +5,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_messaging_service.dart';
 import 'package:flutter_chat_app/data/mappers/socket_io_event_mapper.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 
 /// Composite subscription helper

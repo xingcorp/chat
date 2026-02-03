@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_chat_app/core/error/exceptions.dart';
 import 'package:flutter_chat_app/data/models/attachment_model.dart';
-import 'package:flutter_chat_app/domain/entities/attachment.dart';
+import 'package:flutter_chat_app/shared/domain/entities/attachment.dart';
 
 /// Interface for remote media data source
 abstract class IMediaRemoteDataSource {

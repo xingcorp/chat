@@ -1,11 +1,19 @@
+import 'dart:convert';
+import 'dart:ffi' show Abi;
+import 'dart:io';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/services/offline_queue_service.dart';
 import 'package:flutter_chat_app/core/services/offline_operation_processor.dart';
+import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/data/models/offline_operation_model.dart';
-import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
+import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:isar/isar.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -32,19 +40,28 @@ import 'offline_sync_integration_test.mocks.dart';
   INetworkInfo,
 ])
 void main() {
+  final bool forceRunIsarTests = Platform.environment['RUN_ISAR_TESTS'] == 'true';
+  final bool skipIsarTests =
+      !forceRunIsarTests && Platform.isMacOS && Abi.current() == Abi.macosArm64;
+
   late Isar isar;
+  late Directory isarDir;
   late MockIMessageRepository mockMessageRepository;
   late MockIChatRepository mockChatRepository;
   late MockINetworkInfo mockNetworkInfo;
   late AppLogger logger;
   late OfflineOperationProcessor processor;
   late OfflineQueueService offlineQueueService;
+  late ChatMessage mockMessage;
 
   setUp(() async {
     // Setup real Isar database (in-memory)
-    isar = await Isar.open(
-      [OfflineOperationModelSchema],
-      directory: '',
+    isarDir = Directory.systemTemp.createTempSync(
+      'isar_offline_sync_test_',
+    );
+    isar = Isar.open(
+      schemas: [OfflineOperationModelSchema],
+      directory: isarDir.path,
       name: 'test_offline_${DateTime.now().millisecondsSinceEpoch}',
     );
 
@@ -53,8 +70,21 @@ void main() {
     mockChatRepository = MockIChatRepository();
     mockNetworkInfo = MockINetworkInfo();
 
+    when(mockNetworkInfo.onConnectivityChanged)
+        .thenAnswer((_) => Stream<List<ConnectivityResult>>.empty());
+
     // Setup logger
     logger = AppLogger();
+
+    mockMessage = ChatMessage(
+      id: 'msg-1',
+      chatId: 'test-chat',
+      content: 'Mock message',
+      contentType: ContentType.text,
+      sender: MessageSender(id: 'user-1', name: 'User 1'),
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
 
     // Setup processor
     processor = OfflineOperationProcessor(
@@ -75,9 +105,12 @@ void main() {
   tearDown(() async {
     offlineQueueService.dispose();
     await isar.close(deleteFromDisk: true);
+    await isarDir.delete(recursive: true);
   });
 
-  group('Integration Test: Offline Sync', () {
+  group(
+    'Integration Test: Offline Sync',
+    () {
     test('should queue multiple operations offline', () async {
       // Arrange
       when(mockNetworkInfo.isConnected).thenAnswer((_) async => false);
@@ -85,16 +118,18 @@ void main() {
       // Act - Queue 5 operations
       final operationIds = <String>[];
       for (var i = 0; i < 5; i++) {
+        final timestamp = DateTime.now();
         final operationId = await offlineQueueService.addOperation(
           OfflineOperationModel(
+            operationId: 'op-queue-$i-${timestamp.millisecondsSinceEpoch}',
             type: OperationType.sendMessage,
-            data: {
+            data: jsonEncode({
               'chatId': 'test-chat',
               'content': 'Message $i',
               'senderId': 'user-1',
               'contentType': 'text',
-            },
-            timestamp: DateTime.now(),
+            }),
+            timestamp: timestamp,
           ),
         );
         operationIds.add(operationId);
@@ -114,13 +149,14 @@ void main() {
 
       final operation1 = await offlineQueueService.addOperation(
         OfflineOperationModel(
+          operationId: 'op-1-${DateTime.now().millisecondsSinceEpoch}',
           type: OperationType.sendMessage,
-          data: {
+          data: jsonEncode({
             'chatId': 'test-chat',
             'content': 'First message',
             'senderId': 'user-1',
             'contentType': 'text',
-          },
+          }),
           timestamp: DateTime.now(),
         ),
       );
@@ -129,13 +165,14 @@ void main() {
 
       final operation2 = await offlineQueueService.addOperation(
         OfflineOperationModel(
+          operationId: 'op-2-${DateTime.now().millisecondsSinceEpoch}',
           type: OperationType.sendMessage,
-          data: {
+          data: jsonEncode({
             'chatId': 'test-chat',
             'content': 'Second message',
             'senderId': 'user-1',
             'contentType': 'text',
-          },
+          }),
           timestamp: DateTime.now(),
         ),
       );
@@ -144,13 +181,14 @@ void main() {
 
       final operation3 = await offlineQueueService.addOperation(
         OfflineOperationModel(
+          operationId: 'op-3-${DateTime.now().millisecondsSinceEpoch}',
           type: OperationType.sendMessage,
-          data: {
+          data: jsonEncode({
             'chatId': 'test-chat',
             'content': 'Third message',
             'senderId': 'user-1',
             'contentType': 'text',
-          },
+          }),
           timestamp: DateTime.now(),
         ),
       );
@@ -162,7 +200,8 @@ void main() {
         content: anyNamed('content'),
         senderId: anyNamed('senderId'),
         contentType: anyNamed('contentType'),
-      )).thenAnswer((_) async => const Right(/* Mock message */));
+        attachmentIds: anyNamed('attachmentIds'),
+      )).thenAnswer((_) async => Right(mockMessage));
 
       // Act - Process queue
       await offlineQueueService.processQueue();
@@ -194,13 +233,14 @@ void main() {
 
       final operationId = await offlineQueueService.addOperation(
         OfflineOperationModel(
+          operationId: 'op-retry-${DateTime.now().millisecondsSinceEpoch}',
           type: OperationType.sendMessage,
-          data: {
+          data: jsonEncode({
             'chatId': 'test-chat',
             'content': 'Test message',
             'senderId': 'user-1',
             'contentType': 'text',
-          },
+          }),
           timestamp: DateTime.now(),
         ),
       );
@@ -212,6 +252,7 @@ void main() {
         content: anyNamed('content'),
         senderId: anyNamed('senderId'),
         contentType: anyNamed('contentType'),
+        attachmentIds: anyNamed('attachmentIds'),
       )).thenAnswer((_) async => const Left(ServerFailure(message: 'Failed')));
 
       // Act - First attempt (should fail)
@@ -232,7 +273,8 @@ void main() {
         content: anyNamed('content'),
         senderId: anyNamed('senderId'),
         contentType: anyNamed('contentType'),
-      )).thenAnswer((_) async => const Right(/* Mock message */));
+        attachmentIds: anyNamed('attachmentIds'),
+      )).thenAnswer((_) async => Right(mockMessage));
 
       await offlineQueueService.processQueue();
 
@@ -246,9 +288,15 @@ void main() {
       // local cache matches backend data
       // TODO: Implement with real cache verification
     });
-  });
+    },
+    skip: skipIsarTests
+        ? 'Skipped on macOS arm64 (Isar native lib not available in flutter test). Set RUN_ISAR_TESTS=true to force run.'
+        : false,
+  );
 
-  group('Property Test: Offline Queue', () {
+  group(
+    'Property Test: Offline Queue',
+    () {
     test('Property 11: Offline operations are always queued', () async {
       // Run 100 iterations
       for (var i = 0; i < 100; i++) {
@@ -258,13 +306,14 @@ void main() {
         // Act
         await offlineQueueService.addOperation(
           OfflineOperationModel(
+            operationId: 'op-prop11-$i-${DateTime.now().millisecondsSinceEpoch}',
             type: OperationType.sendMessage,
-            data: {
+            data: jsonEncode({
               'chatId': 'test-chat-$i',
               'content': 'Message $i',
               'senderId': 'user-1',
               'contentType': 'text',
-            },
+            }),
             timestamp: DateTime.now(),
           ),
         );
@@ -288,14 +337,15 @@ void main() {
 
           await offlineQueueService.addOperation(
             OfflineOperationModel(
+              operationId: 'op-prop12-$iteration-$i-${timestamp.millisecondsSinceEpoch}',
               type: OperationType.sendMessage,
-              data: {
+              data: jsonEncode({
                 'chatId': 'test-chat',
                 'content': 'Iteration $iteration Message $i',
                 'senderId': 'user-1',
                 'contentType': 'text',
                 'timestamp': timestamp.millisecondsSinceEpoch,
-              },
+              }),
               timestamp: timestamp,
             ),
           );
@@ -310,7 +360,8 @@ void main() {
           content: anyNamed('content'),
           senderId: anyNamed('senderId'),
           contentType: anyNamed('contentType'),
-        )).thenAnswer((_) async => const Right(/* Mock message */));
+          attachmentIds: anyNamed('attachmentIds'),
+        )).thenAnswer((_) async => Right(mockMessage));
 
         // Act
         await offlineQueueService.processQueue();
@@ -331,12 +382,16 @@ void main() {
         expect(capturedContents[2], contains('Message 2'));
 
         // Cleanup
-        await isar.writeTxn(() async {
-          await isar.offlineOperationModels.clear();
+        isar.write((isar) {
+          isar.offlineOperationModels.clear();
         });
 
         reset(mockMessageRepository);
       }
     });
-  });
+    },
+    skip: skipIsarTests
+        ? 'Skipped on macOS arm64 (Isar native lib not available in flutter test). Set RUN_ISAR_TESTS=true to force run.'
+        : false,
+  );
 }

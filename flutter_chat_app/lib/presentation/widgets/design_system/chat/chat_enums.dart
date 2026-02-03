@@ -19,10 +19,10 @@
 /// ```
 
 // Import MessageStatus from domain
-import 'package:flutter_chat_app/domain/entities/chat_message.dart' show MessageStatus;
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' show MessageStatus;
 
 // Export MessageStatus for convenience
-export 'package:flutter_chat_app/domain/entities/chat_message.dart' show MessageStatus;
+export 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' show MessageStatus;
 
 /// Message content type.
 ///

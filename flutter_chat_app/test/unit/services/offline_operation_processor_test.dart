@@ -4,9 +4,9 @@ import 'package:flutter_chat_app/core/services/offline_operation_processor.dart'
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/data/models/offline_operation_model.dart';
-import 'package:flutter_chat_app/domain/entities/chat.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -136,8 +136,8 @@ void main() {
       );
 
       when(mockMessageRepository.updateMessage(
-        anyNamed('messageId'),
-        anyNamed('newContent'),
+        any,
+        any,
       )).thenAnswer((_) async => const Right(true));
 
       // Act
@@ -160,8 +160,8 @@ void main() {
       );
 
       when(mockMessageRepository.updateMessage(
-        anyNamed('messageId'),
-        anyNamed('newContent'),
+        any,
+        any,
       )).thenAnswer(
         (_) async => const Left(ServerFailure(message: 'Update failed')),
       );
@@ -184,7 +184,7 @@ void main() {
         timestamp: DateTime.now(),
       );
 
-      when(mockMessageRepository.deleteMessage(anyNamed('messageId')))
+      when(mockMessageRepository.deleteMessage(any))
           .thenAnswer((_) async => const Right(true));
 
       // Act
@@ -301,7 +301,7 @@ void main() {
         timestamp: DateTime.now(),
       );
 
-      when(mockChatRepository.leaveChat(anyNamed('chatId')))
+      when(mockChatRepository.leaveChat(any))
           .thenAnswer((_) async => const Right(true));
 
       // Act
@@ -322,7 +322,7 @@ void main() {
         timestamp: DateTime.now(),
       );
 
-      when(mockMessageRepository.markChatAsRead(anyNamed('chatId')))
+      when(mockMessageRepository.markChatAsRead(any))
           .thenAnswer((_) async => const Right(null));
 
       // Act
@@ -334,7 +334,7 @@ void main() {
   });
 
   group('OfflineOperationProcessor - AddReaction', () {
-    test('should throw UnimplementedError for addReaction', () async {
+    test('should process addReaction operation successfully', () async {
       // Arrange
       final operation = OfflineOperationModel(
         operationId: 'op-11',
@@ -343,11 +343,21 @@ void main() {
         timestamp: DateTime.now(),
       );
 
-      // Act & Assert
-      expect(
-        () => processor.processOperation(operation),
-        throwsA(isA<UnimplementedError>()),
-      );
+      when(mockMessageRepository.updateReaction(
+        messageId: anyNamed('messageId'),
+        code: anyNamed('code'),
+        act: anyNamed('act'),
+      )).thenAnswer((_) async => const Right(true));
+
+      // Act
+      await processor.processOperation(operation);
+
+      // Assert
+      verify(mockMessageRepository.updateReaction(
+        messageId: 'msg-1',
+        code: '👍',
+        act: 'ADD',
+      )).called(1);
     });
   });
 }

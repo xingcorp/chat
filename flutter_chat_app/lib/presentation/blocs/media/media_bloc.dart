@@ -7,7 +7,7 @@ import 'package:injectable/injectable.dart';
 
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
-import 'package:flutter_chat_app/domain/entities/attachment.dart';
+import 'package:flutter_chat_app/shared/domain/entities/attachment.dart';
 import 'package:flutter_chat_app/domain/repositories/i_media_repository.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/base_state.dart' as base;

@@ -4,7 +4,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart';
 import 'package:flutter_chat_app/data/models/attachment_model.dart';
-import 'package:flutter_chat_app/domain/entities/attachment.dart';
+import 'package:flutter_chat_app/shared/domain/entities/attachment.dart';
 
 /// Interface for local media data source
 abstract class IMediaLocalDataSource {

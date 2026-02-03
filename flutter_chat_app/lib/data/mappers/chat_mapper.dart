@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_chat_app/data/dtos/chat_dto.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
-import 'package:flutter_chat_app/domain/entities/chat.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 
 /// **Chat Mapper**
 ///

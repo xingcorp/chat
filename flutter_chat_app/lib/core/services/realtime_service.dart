@@ -6,8 +6,8 @@ import 'package:flutter_chat_app/core/network/models/socket_connection_state.dar
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/data/dtos/message_dto.dart';
 import 'package:flutter_chat_app/data/mappers/message_mapper.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/domain/entities/user.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:rxdart/rxdart.dart';

@@ -14,9 +14,9 @@ import 'package:flutter_chat_app/core/network/realtime/realtime_connection_servi
 import 'package:flutter_chat_app/core/services/attachment_queue_service.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/local_storage_service.dart';
-import 'package:flutter_chat_app/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/domain/entities/message_error_type.dart';
-import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/message_error_type.dart';
+import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/domain/events/message_queue_event.dart';
 import 'package:flutter_chat_app/domain/models/message_queue_metrics.dart';
 import 'package:flutter_chat_app/domain/models/queued_attachment.dart';

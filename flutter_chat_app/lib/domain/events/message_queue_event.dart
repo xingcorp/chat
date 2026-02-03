@@ -1,4 +1,4 @@
-import 'package:flutter_chat_app/domain/entities/message_error_type.dart';
+import 'package:flutter_chat_app/shared/domain/entities/message_error_type.dart';
 
 /// Các loại sự kiện của message queue
 enum MessageQueueEventType {

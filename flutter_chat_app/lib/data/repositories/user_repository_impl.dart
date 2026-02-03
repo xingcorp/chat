@@ -4,7 +4,7 @@ import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
-import 'package:flutter_chat_app/domain/entities/user.dart';
+import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
 import 'package:injectable/injectable.dart';
 

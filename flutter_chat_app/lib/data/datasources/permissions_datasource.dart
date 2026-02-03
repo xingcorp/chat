@@ -7,7 +7,7 @@ import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:app_settings/app_settings.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:injectable/injectable.dart';
-import '../../domain/entities/permission_entity.dart';
+import '../../shared/domain/entities/permission_entity.dart';
 
 /// Abstract datasource interface
 abstract class PermissionsDataSource {

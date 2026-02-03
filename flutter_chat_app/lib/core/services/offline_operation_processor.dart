@@ -1,6 +1,6 @@
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/data/models/offline_operation_model.dart';
-import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
+import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:injectable/injectable.dart';
 

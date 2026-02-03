@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter_chat_app/domain/entities/chat.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:isar/isar.dart';
 
 part 'chat_model.g.dart';

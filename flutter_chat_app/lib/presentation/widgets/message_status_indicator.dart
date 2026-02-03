@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
-import 'package:flutter_chat_app/domain/entities/message_queue_status.dart';
+import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 
 /// Widget hiển thị trạng thái của tin nhắn
 class MessageStatusIndicator extends StatelessWidget {

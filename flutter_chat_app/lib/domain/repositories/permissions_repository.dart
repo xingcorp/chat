@@ -2,7 +2,7 @@
 // Định nghĩa contract cho permissions management
 // Tuân thủ Dependency Inversion Principle
 
-import '../entities/permission_entity.dart';
+import 'package:flutter_chat_app/shared/domain/entities/permission_entity.dart';
 
 /// Repository interface cho permissions management
 /// Được implement bởi data layer
