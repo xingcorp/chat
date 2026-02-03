@@ -6,10 +6,10 @@
 /// Author: Senior Flutter/Mobile Architect
 library update_group_usecase;
 
+import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/usecases/usecase.dart';
-import 'package:flutter_chat_app/core/utils/result.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/domain/entities/chat.dart';
 import 'package:flutter_chat_app/domain/repositories/i_chat_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -37,17 +37,29 @@ class UpdateGroupParams extends Equatable {
 /// Updates group conversation information with validation.
 /// At least one field must be provided for update.
 @injectable
-class UpdateGroupUseCase implements UseCase<Chat, UpdateGroupParams> {
+class UpdateGroupUseCase {
   final IChatRepository _repository;
+  final AppLogger _logger;
 
-  const UpdateGroupUseCase(this._repository);
+  const UpdateGroupUseCase({
+    required IChatRepository repository,
+    required AppLogger logger,
+  })  : _repository = repository,
+        _logger = logger;
 
-  @override
-  Future<Result<Chat>> call(UpdateGroupParams params) async {
+  Future<Either<Failure, Chat>> call(UpdateGroupParams params) async {
+    _logger.info('UpdateGroupUseCase: Starting operation', {
+      'conversationId': params.conversationId,
+      'hasName': params.name != null,
+      'hasImageUrl': params.imageUrl != null,
+      'hasDescription': params.description != null,
+    });
+
     // Validate input
     final validationResult = _validateParams(params);
     if (validationResult != null) {
-      return Result.failure(validationResult);
+      _logger.error('UpdateGroupUseCase: Validation failed', validationResult);
+      return Left(validationResult);
     }
 
     // Update group through repository
@@ -57,10 +69,18 @@ class UpdateGroupUseCase implements UseCase<Chat, UpdateGroupParams> {
       avatarUrl: params.imageUrl,
     );
 
-    // Convert Either to Result
+    // Convert Either to Either
     return result.fold(
-      (failure) => Result.failure(failure),
-      (chat) => Result.success(chat),
+      (failure) {
+        _logger.error('UpdateGroupUseCase: Failed', failure);
+        return Left(failure);
+      },
+      (chat) {
+        _logger.info('UpdateGroupUseCase: Success', {
+          'conversationId': params.conversationId,
+        });
+        return Right(chat);
+      },
     );
   }
 

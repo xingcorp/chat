@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
-import 'package:flutter_chat_app/core/monitoring/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/core/network/cache/api_cache_manager.dart';
 import 'package:flutter_chat_app/core/network/http/http_client_interface.dart';
 import 'package:flutter_chat_app/core/network/monitoring/api_request_tracker.dart';

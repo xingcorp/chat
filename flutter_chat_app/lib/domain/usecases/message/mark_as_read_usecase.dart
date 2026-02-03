@@ -6,10 +6,10 @@
 /// Author: Senior Flutter/Mobile Architect
 library mark_as_read_usecase;
 
+import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/usecases/usecase.dart';
-import 'package:flutter_chat_app/core/utils/result.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:injectable/injectable.dart';
 
@@ -30,26 +30,43 @@ class MarkAsReadParams extends Equatable {
 /// Marks all messages in a conversation as read.
 /// Sends read receipts to other participants.
 @injectable
-class MarkAsReadUseCase implements UseCase<void, MarkAsReadParams> {
+class MarkAsReadUseCase {
   final IMessageRepository _repository;
+  final AppLogger _logger;
 
-  const MarkAsReadUseCase(this._repository);
+  const MarkAsReadUseCase({
+    required IMessageRepository repository,
+    required AppLogger logger,
+  })  : _repository = repository,
+        _logger = logger;
 
-  @override
-  Future<Result<void>> call(MarkAsReadParams params) async {
+  Future<Either<Failure, void>> call(MarkAsReadParams params) async {
+    _logger.info('MarkAsReadUseCase: Starting operation', {
+      'conversationId': params.conversationId,
+    });
+
     // Validate input
     final validationResult = _validateParams(params);
     if (validationResult != null) {
-      return Result.failure(validationResult);
+      _logger.error('MarkAsReadUseCase: Validation failed', validationResult);
+      return Left(validationResult);
     }
 
     // Mark messages as read through repository
     final result = await _repository.markChatAsRead(params.conversationId);
 
-    // Convert Either to Result
+    // Convert Either to Either
     return result.fold(
-      (failure) => Result.failure(failure),
-      (_) => const Result.success(null),
+      (failure) {
+        _logger.error('MarkAsReadUseCase: Failed', failure);
+        return Left(failure);
+      },
+      (_) {
+        _logger.info('MarkAsReadUseCase: Success', {
+          'conversationId': params.conversationId,
+        });
+        return const Right(null);
+      },
     );
   }
 

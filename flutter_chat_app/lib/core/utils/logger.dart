@@ -1,7 +1,6 @@
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
-import 'package:injectable/injectable.dart';
 
 /// Cấp độ log
 enum LogLevel {
@@ -171,6 +170,15 @@ class AppLogger {
   /// Log warning message
   void warning(String message, [Map<String, dynamic>? context]) {
     _logWithContext(Level.warning, message, context);
+  }
+
+  /// Log warning message (compat alias for legacy callers)
+  void warn(String message, [dynamic error, StackTrace? stackTrace]) {
+    if (error != null) {
+      _logger.w(message, error: error, stackTrace: stackTrace);
+    } else {
+      _logger.w(message);
+    }
   }
   
   /// Log warning message (alias for warning)

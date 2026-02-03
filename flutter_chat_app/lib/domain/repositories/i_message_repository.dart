@@ -87,4 +87,27 @@ abstract class IMessageRepository {
   /// **Performance**: Background process, non-blocking UI
   /// **Use Case**: App startup, connectivity restored, periodic sync
   Future<Either<Failure, void>> syncMessages(String chatId, {int limit = 50});
+
+  /// **Search messages**
+  ///
+  /// Uses backend chatSearch query with filters.
+  Future<Either<Failure, List<ChatMessage>>> searchMessages({
+    required String keyword,
+    List<String>? conversationIds,
+    List<String>? senderIds,
+    List<String>? messageTypes,
+    int? from,
+    int? to,
+    int page = 0,
+    int size = 100,
+  });
+
+  /// **Update reaction**
+  ///
+  /// Uses backend chatMessageUpdateReaction mutation.
+  Future<Either<Failure, bool>> updateReaction({
+    required String messageId,
+    required String code,
+    required String act,
+  });
 }

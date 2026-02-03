@@ -252,19 +252,55 @@ class OfflineOperationProcessor {
   Future<void> _processAddReaction(OfflineOperationModel operation) async {
     final data = operation.dataMap;
 
-    // Note: Reaction operations not yet implemented in repository
-    // This is a placeholder for future implementation
-    _logger.warning('Add reaction operation not yet implemented');
-    throw UnimplementedError('Add reaction operation not yet implemented');
+    final messageId = data['messageId'] as String?;
+    final code = data['code'] as String?;
+
+    if (messageId == null || messageId.isEmpty || code == null || code.isEmpty) {
+      throw Exception('Add reaction failed: invalid payload');
+    }
+
+    final result = await _messageRepository.updateReaction(
+      messageId: messageId,
+      code: code,
+      act: 'ADD',
+    );
+
+    result.fold(
+      (failure) {
+        _logger.error('Add reaction failed: ${failure.message}');
+        throw Exception('Add reaction failed: ${failure.message}');
+      },
+      (_) {
+        _logger.info('Reaction added successfully');
+      },
+    );
   }
 
   /// Process remove reaction operation
   Future<void> _processRemoveReaction(OfflineOperationModel operation) async {
     final data = operation.dataMap;
 
-    // Note: Reaction operations not yet implemented in repository
-    // This is a placeholder for future implementation
-    _logger.warning('Remove reaction operation not yet implemented');
-    throw UnimplementedError('Remove reaction operation not yet implemented');
+    final messageId = data['messageId'] as String?;
+    final code = data['code'] as String?;
+
+    if (messageId == null || messageId.isEmpty || code == null || code.isEmpty) {
+      throw Exception('Remove reaction failed: invalid payload');
+    }
+
+    final result = await _messageRepository.updateReaction(
+      messageId: messageId,
+      code: code,
+      act: 'REMOVE',
+    );
+
+    result.fold(
+      (failure) {
+        _logger.error('Remove reaction failed: ${failure.message}');
+        throw Exception('Remove reaction failed: ${failure.message}');
+      },
+      (_) {
+        _logger.info('Reaction removed successfully');
+      },
+    );
   }
 }

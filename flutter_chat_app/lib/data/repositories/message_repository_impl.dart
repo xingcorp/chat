@@ -25,7 +25,7 @@ import 'package:uuid/uuid.dart';
 /// - Offline operations: Immediate response
 ///
 /// **Architecture:** Clean Architecture + SOLID principles + BaseRepository pattern
-@lazySingleton
+@LazySingleton(as: IMessageRepository)
 class MessageRepositoryImpl extends BaseRepository implements IMessageRepository {
   final MessageLocalDataSource _localDataSource;
   final IMessageRemoteDataSource _remoteDataSource;
@@ -72,7 +72,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
           logger.t('Retrieved message from cache: $messageId');
           return cachedMessage.toDomain();
         }
-        
+
         // Check local database
         final messages = await _localDataSource.getMessagesForChat('all');
         
@@ -303,6 +303,77 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         logger.i('Marked chat as read locally: $chatId');
       },
       operationName: 'markChatAsRead',
+    );
+  }
+
+  @override
+  Future<Either<Failure, List<ChatMessage>>> searchMessages({
+    required String keyword,
+    List<String>? conversationIds,
+    List<String>? senderIds,
+    List<String>? messageTypes,
+    int? from,
+    int? to,
+    int page = 0,
+    int size = 100,
+  }) async {
+    return executeOnlineFirst<List<ChatMessage>>(
+      remoteDataSource: () async {
+        final dtos = await _remoteDataSource.searchMessages(
+          keyword: keyword,
+          conversationIds: conversationIds,
+          senderIds: senderIds,
+          messageTypes: messageTypes,
+          from: from,
+          to: to,
+          page: page,
+          size: size,
+        );
+
+        return dtos.map((dto) => MessageMapper.toEntity(dto)).toList();
+      },
+      localDataSource: () async {
+        final chatId = (conversationIds != null && conversationIds.isNotEmpty)
+            ? conversationIds.first
+            : '';
+
+        if (chatId.isEmpty) {
+          return <ChatMessage>[];
+        }
+
+        final localMessages = await _localDataSource.getMessagesForChat(chatId);
+        final q = keyword.toLowerCase();
+
+        return localMessages
+            .where((m) => m.content.toLowerCase().contains(q))
+            .take(size)
+            .map((m) => m.toDomain())
+            .toList();
+      },
+      operationName: 'searchMessages',
+    );
+  }
+
+  @override
+  Future<Either<Failure, bool>> updateReaction({
+    required String messageId,
+    required String code,
+    required String act,
+  }) async {
+    return executeOnlineFirst<bool>(
+      remoteDataSource: () async {
+        await _remoteDataSource.updateReaction(
+          messageId: messageId,
+          code: code,
+          act: act,
+        );
+
+        return true;
+      },
+      localDataSource: () async {
+        return false;
+      },
+      operationName: 'updateReaction',
     );
   }
 

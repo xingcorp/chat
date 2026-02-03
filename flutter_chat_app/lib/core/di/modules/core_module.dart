@@ -11,12 +11,14 @@
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter_chat_app/core/network/cache/api_cache_manager.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/services/production_logger.dart';
 import 'package:flutter_chat_app/core/config/environment_manager.dart';
 import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Register core infrastructure services
 /// 
@@ -31,6 +33,15 @@ Future<void> registerCoreModule(GetIt getIt) async {
     getIt.registerSingleton<AppLogger>(
       AppLogger(),
     );
+  }
+
+  // 2.1 ApiCacheManager - API cache layer
+  if (!getIt.isRegistered<ApiCacheManager>()) {
+    await ApiCacheManager.init(
+      logger: getIt<AppLogger>(),
+      prefs: getIt<SharedPreferences>(),
+    );
+    getIt.registerSingleton<ApiCacheManager>(ApiCacheManager.instance);
   }
   
   // 3. ProductionLogger - Production logging

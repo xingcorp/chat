@@ -29,8 +29,9 @@ class ConnectivityAnalyzerService {
   /// Plugin kết nối
   final Connectivity _connectivity;
   
-  /// Private constructor
-  ConnectivityAnalyzerService._(this._connectivity);
+  ConnectivityAnalyzerService(this._connectivity) {
+    unawaited(_initialize());
+  }
   
   /// Stream thông báo thay đổi kết nối
   final BehaviorSubject<List<ConnectivityResult>> _connectivityStream = BehaviorSubject();
@@ -67,16 +68,6 @@ class ConnectivityAnalyzerService {
   
   /// Timer để kiểm tra định kỳ
   Timer? _periodicCheckTimer;
-  
-  /// Async factory method to create and initialize the service
-  @injectable
-  @preResolve
-  static Future<ConnectivityAnalyzerService> create() async {
-    final connectivity = Connectivity();
-    final service = ConnectivityAnalyzerService._(connectivity);
-    await service._initialize();
-    return service;
-  }
   
   /// Stream theo dõi trạng thái kết nối (ConnectivityResult)
   Stream<List<ConnectivityResult>> get connectivityStream => _connectivityStream.stream;
@@ -128,18 +119,17 @@ class ConnectivityAnalyzerService {
   
   /// Xử lý khi kết nối thay đổi
   Future<void> _handleConnectivityChange(List<ConnectivityResult> results) async {
-    // Chỉ xử lý nếu danh sách kết quả không rỗng
-    if (results.isEmpty) {
-        results = [ConnectivityResult.none]; // Coi như none nếu rỗng
-    }
+    final normalizedResults = results.isEmpty
+        ? <ConnectivityResult>[ConnectivityResult.none]
+        : results;
     
-    final representativeResult = _getPrimaryConnectivity(results); // Use helper
+    final representativeResult = _getPrimaryConnectivity(normalizedResults); // Use helper
         
     debugPrint('Kết nối thay đổi (List): $results -> Representative: $representativeResult');
 
     // Cập nhật trạng thái và thông báo
-    _currentConnectivity = results;
-    _connectivityStream.add(results);
+    _currentConnectivity = normalizedResults;
+    _connectivityStream.add(normalizedResults);
     
     // Nếu không có kết nối nào (tất cả là none hoặc list rỗng), cập nhật chất lượng mạng và thông báo
     if (representativeResult == ConnectivityResult.none) {

@@ -6,10 +6,10 @@
 /// Author: Senior Flutter/Mobile Architect
 library delete_message_usecase;
 
+import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/usecases/usecase.dart';
-import 'package:flutter_chat_app/core/utils/result.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:injectable/injectable.dart';
 
@@ -30,26 +30,44 @@ class DeleteMessageParams extends Equatable {
 /// Deletes a message with validation.
 /// Only the message sender or group admin can delete messages.
 @injectable
-class DeleteMessageUseCase implements UseCase<bool, DeleteMessageParams> {
+class DeleteMessageUseCase {
   final IMessageRepository _repository;
+  final AppLogger _logger;
 
-  const DeleteMessageUseCase(this._repository);
+  const DeleteMessageUseCase({
+    required IMessageRepository repository,
+    required AppLogger logger,
+  })  : _repository = repository,
+        _logger = logger;
 
-  @override
-  Future<Result<bool>> call(DeleteMessageParams params) async {
+  Future<Either<Failure, bool>> call(DeleteMessageParams params) async {
+    _logger.info('DeleteMessageUseCase: Starting operation', {
+      'messageId': params.messageId,
+    });
+
     // Validate input
     final validationResult = _validateParams(params);
     if (validationResult != null) {
-      return Result.failure(validationResult);
+      _logger.error('DeleteMessageUseCase: Validation failed', validationResult);
+      return Left(validationResult);
     }
 
     // Delete message through repository
     final result = await _repository.deleteMessage(params.messageId);
 
-    // Convert Either to Result
+    // Convert Either to Either
     return result.fold(
-      (failure) => Result.failure(failure),
-      (success) => Result.success(success),
+      (failure) {
+        _logger.error('DeleteMessageUseCase: Failed', failure);
+        return Left(failure);
+      },
+      (success) {
+        _logger.info('DeleteMessageUseCase: Success', {
+          'messageId': params.messageId,
+          'deleted': success,
+        });
+        return Right(success);
+      },
     );
   }
 
