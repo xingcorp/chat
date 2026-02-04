@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
+import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
@@ -40,9 +41,10 @@ abstract class GraphQLClientWrapper {
 class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
   final GraphQLClient _client;
   final NetworkInfo _networkInfo;
+  final TokenRepository? _tokenRepository;
 
   /// Constructor
-  GraphQLClientWrapperImpl(this._client, this._networkInfo);
+  GraphQLClientWrapperImpl(this._client, this._networkInfo, [this._tokenRepository]);
 
   /// Get the underlying GraphQLClient instance
   @override
@@ -51,25 +53,44 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
   /// Factory method to create a GraphQL client
   static Future<GraphQLClient> createClient({
     String? token,
+    Future<String?> Function()? accessTokenProvider,
     ValueNotifier<GraphQLClient>? clientNotifier,
   }) async {
+    final resolvedToken = accessTokenProvider != null
+        ? await accessTokenProvider()
+        : token;
+
     final httpLink = HttpLink(
       dotenv.env['GRAPHQL_API_URL'] ?? '${AppConstants.apiBaseUrl}/graphql',
     );
 
     final authLink = AuthLink(
-      getToken: () => token != null ? 'Bearer $token' : null,
+      getToken: () async {
+        final currentToken = accessTokenProvider != null
+            ? await accessTokenProvider()
+            : resolvedToken;
+        if (currentToken == null || currentToken.isEmpty) {
+          return null;
+        }
+        return 'Bearer $currentToken';
+      },
     );
 
     // Create a WebSocket link for subscriptions
     final websocketLink = WebSocketLink(
       dotenv.env['GRAPHQL_WS_URL'] ?? 'ws://localhost:3000/graphql',
       config: SocketClientConfig(
-        initialPayload: token != null
-            ? <String, dynamic>{
-                'Authorization': 'Bearer $token',
-              }
-            : null,
+        initialPayload: () async {
+          final currentToken = accessTokenProvider != null
+              ? await accessTokenProvider()
+              : resolvedToken;
+          if (currentToken == null || currentToken.isEmpty) {
+            return null;
+          }
+          return <String, dynamic>{
+            'Authorization': 'Bearer $currentToken',
+          };
+        },
         autoReconnect: true,
         inactivityTimeout: const Duration(seconds: 30),
       ),
@@ -125,25 +146,48 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
       throw app_exceptions.NoInternetException();
     }
 
+    final options = QueryOptions(
+      document: gql(queryString),
+      variables: variables ?? {},
+      fetchPolicy: fetchPolicy,
+      operationName: operationName,
+    );
+
     try {
-      final options = QueryOptions(
-        document: gql(queryString),
-        variables: variables ?? {},
-        fetchPolicy: fetchPolicy,
-        operationName: operationName,
-      );
-
-      final result = await _client.query(options);
-
-      if (result.hasException) {
-        _handleGraphQLException(result.exception!);
-      }
-
-      return result.data ?? {};
+      return await _queryWithRetry(options);
+    } on app_exceptions.NoInternetException {
+      rethrow;
+    } on app_exceptions.AuthException {
+      rethrow;
     } catch (e) {
-      if (e is app_exceptions.NoInternetException) rethrow;
       throw app_exceptions.ServerException(message: e.toString());
     }
+  }
+
+  Future<Map<String, dynamic>> _queryWithRetry(
+    QueryOptions options, {
+    bool didRetry = false,
+  }) async {
+    final result = await _client.query(options);
+
+    if (result.hasException) {
+      try {
+        _handleGraphQLException(result.exception!);
+      } on app_exceptions.AuthException {
+        if (didRetry) {
+          rethrow;
+        }
+
+        final refreshedToken = await _tokenRepository?.refreshAccessToken();
+        if (refreshedToken != null && refreshedToken.isNotEmpty) {
+          return _queryWithRetry(options, didRetry: true);
+        }
+
+        rethrow;
+      }
+    }
+
+    return result.data ?? {};
   }
 
   @override
@@ -157,25 +201,48 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
       throw app_exceptions.NoInternetException();
     }
 
+    final options = MutationOptions(
+      document: gql(mutationString),
+      variables: variables ?? {},
+      fetchPolicy: fetchPolicy,
+      operationName: operationName,
+    );
+
     try {
-      final options = MutationOptions(
-        document: gql(mutationString),
-        variables: variables ?? {},
-        fetchPolicy: fetchPolicy,
-        operationName: operationName,
-      );
-
-      final result = await _client.mutate(options);
-
-      if (result.hasException) {
-        _handleGraphQLException(result.exception!);
-      }
-
-      return result.data ?? {};
+      return await _mutateWithRetry(options);
+    } on app_exceptions.NoInternetException {
+      rethrow;
+    } on app_exceptions.AuthException {
+      rethrow;
     } catch (e) {
-      if (e is app_exceptions.NoInternetException) rethrow;
       throw app_exceptions.ServerException(message: e.toString());
     }
+  }
+
+  Future<Map<String, dynamic>> _mutateWithRetry(
+    MutationOptions options, {
+    bool didRetry = false,
+  }) async {
+    final result = await _client.mutate(options);
+
+    if (result.hasException) {
+      try {
+        _handleGraphQLException(result.exception!);
+      } on app_exceptions.AuthException {
+        if (didRetry) {
+          rethrow;
+        }
+
+        final refreshedToken = await _tokenRepository?.refreshAccessToken();
+        if (refreshedToken != null && refreshedToken.isNotEmpty) {
+          return _mutateWithRetry(options, didRetry: true);
+        }
+
+        rethrow;
+      }
+    }
+
+    return result.data ?? {};
   }
 
   @override
@@ -201,7 +268,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
   void _handleGraphQLException(OperationException exception) {
     if (exception.linkException != null) {
       throw app_exceptions.ServerException(
-        message: 'Network error: ${exception.linkException.toString()}',
+        message: 'Network error: ${exception.linkException}',
       );
     }
 

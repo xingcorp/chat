@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_chat_app/core/constants/storage_keys.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,8 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 @lazySingleton
 class TokenManager {
   /// Keys dùng trong SharedPreferences
-  static const String _accessTokenKey = 'auth_access_token';
-  static const String _refreshTokenKey = 'auth_refresh_token';
+  static const String _accessTokenKey = StorageKeys.accessToken;
+  static const String _refreshTokenKey = StorageKeys.refreshToken;
+  static const String _legacyAccessTokenKey = 'auth_access_token';
+  static const String _legacyRefreshTokenKey = 'auth_refresh_token';
   static const String _expiryTimeKey = 'auth_expiry_time';
   static const String _userDataKey = 'auth_user_data';
   
@@ -21,7 +24,7 @@ class TokenManager {
   final StreamController<bool> _authChangedController = StreamController<bool>.broadcast();
   
   /// Đối tượng quản lý callback refresh token
-  final Completer<bool>? _refreshingCompleter = null;
+  Completer<bool>? _refreshingCompleter;
   
   /// Flag đánh dấu đang refresh token
   bool _isRefreshing = false;
@@ -45,8 +48,10 @@ class TokenManager {
     DateTime? expiryTime,
     Map<String, dynamic>? userData,
   }) async {
-    await _prefs.setString(_accessTokenKey, accessToken);
-    await _prefs.setString(_refreshTokenKey, refreshToken);
+    await Future.wait([
+      _prefs.setString(_accessTokenKey, accessToken),
+      _prefs.setString(_refreshTokenKey, refreshToken),
+    ]);
     
     if (expiryTime != null) {
       await _prefs.setInt(_expiryTimeKey, expiryTime.millisecondsSinceEpoch);
@@ -69,12 +74,40 @@ class TokenManager {
       }
     }
     
-    return _prefs.getString(_accessTokenKey);
+    final token = _prefs.getString(_accessTokenKey);
+    if (token != null && token.isNotEmpty) {
+      return token;
+    }
+
+    final legacy = _prefs.getString(_legacyAccessTokenKey);
+    if (legacy != null && legacy.isNotEmpty) {
+      await Future.wait([
+        _prefs.setString(_accessTokenKey, legacy),
+        _prefs.remove(_legacyAccessTokenKey),
+      ]);
+      return legacy;
+    }
+
+    return null;
   }
   
   /// Lấy refresh token
   Future<String?> getRefreshToken() async {
-    return _prefs.getString(_refreshTokenKey);
+    final token = _prefs.getString(_refreshTokenKey);
+    if (token != null && token.isNotEmpty) {
+      return token;
+    }
+
+    final legacy = _prefs.getString(_legacyRefreshTokenKey);
+    if (legacy != null && legacy.isNotEmpty) {
+      await Future.wait([
+        _prefs.setString(_refreshTokenKey, legacy),
+        _prefs.remove(_legacyRefreshTokenKey),
+      ]);
+      return legacy;
+    }
+
+    return null;
   }
   
   /// Lấy thời gian hết hạn của token
@@ -130,6 +163,7 @@ class TokenManager {
     
     _isRefreshing = true;
     final completer = Completer<bool>();
+    _refreshingCompleter = completer;
     
     try {
       // TODO: Gọi API refresh token
@@ -138,31 +172,28 @@ class TokenManager {
       
       debugPrint('Refreshing token...');
       
-      // Giả lập thành công - TODO: Implement actual refresh logic
-      // Refresh token thành công, lưu token mới
-      await setTokens(
-        accessToken: 'new_access_token',
-        refreshToken: 'new_refresh_token',
-        expiryTime: DateTime.now().add(const Duration(hours: 1)),
-      );
-
-      completer.complete(true);
-      return true;
+      completer.complete(false);
+      return false;
     } catch (e) {
       debugPrint('Error refreshing token: $e');
       completer.complete(false);
       return false;
     } finally {
       _isRefreshing = false;
+      _refreshingCompleter = null;
     }
   }
   
   /// Xóa tất cả token, đăng xuất
   Future<void> clearTokens() async {
-    await _prefs.remove(_accessTokenKey);
-    await _prefs.remove(_refreshTokenKey);
-    await _prefs.remove(_expiryTimeKey);
-    await _prefs.remove(_userDataKey);
+    await Future.wait([
+      _prefs.remove(_accessTokenKey),
+      _prefs.remove(_legacyAccessTokenKey),
+      _prefs.remove(_refreshTokenKey),
+      _prefs.remove(_legacyRefreshTokenKey),
+      _prefs.remove(_expiryTimeKey),
+      _prefs.remove(_userDataKey),
+    ]);
     
     _notifyAuthChanged(false);
   }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter_chat_app/core/constants/storage_keys.dart';
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 
@@ -43,8 +44,8 @@ abstract class AuthLocalDataSource {
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   final SecureStorage _secureStorage;
   
-  static const String _authTokenKey = 'auth_token';
-  static const String _refreshTokenKey = 'refresh_token';
+  static const String _authTokenKey = StorageKeys.accessToken;
+  static const String _refreshTokenKey = StorageKeys.refreshToken;
   static const String _currentUserKey = 'current_user';
   
   /// Constructor
