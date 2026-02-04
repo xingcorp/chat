@@ -48,6 +48,10 @@ yarn.lock
 package-lock.json
 .vscode/settings.json
 
+# Flutter (generated)
+flutter_chat_app/.dart_tool/package_config.json
+flutter_chat_app/.flutter-plugins-dependencies
+
 assets/*
 
 /src/services/typesense/typesense-data

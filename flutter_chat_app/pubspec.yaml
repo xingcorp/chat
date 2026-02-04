@@ -150,6 +150,8 @@ flutter:
     - assets/translations/
     - assets/animations/
     - .env
+    - .env.staging
+    - .env.production
 
   # Production-optimized fonts (temporarily disabled)
   # fonts:

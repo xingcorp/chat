@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/core/config/flavor_config.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
@@ -13,13 +13,17 @@ import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_chat_app/main.dart' show MyApp;
-import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Load environment variables
-  await dotenv.load(fileName: '.env');
+  if (!FlavorConfig.isInitialized) {
+    FlavorConfig.initializeFromEnvironment();
+  }
+  final envFileName =
+      FlavorConfig.instance.isProduction ? '.env.production' : '.env.staging';
+  await dotenv.load(fileName: envFileName);
   
   // Configure Enterprise dependencies
   await configureDependencies();

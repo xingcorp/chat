@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 
 // App imports
 import 'package:flutter_chat_app/core/constants/app_dimensions.dart';
+import 'package:flutter_chat_app/core/config/flavor_config.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/localization/app_strings.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
@@ -25,7 +26,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Load environment variables
-  await dotenv.load(fileName: '.env');
+  if (!FlavorConfig.isInitialized) {
+    FlavorConfig.initializeFromEnvironment();
+  }
+  final envFileName =
+      FlavorConfig.instance.isProduction ? '.env.production' : '.env.staging';
+  await dotenv.load(fileName: envFileName);
   
   // Configure Enterprise dependencies
   await configureDependencies();

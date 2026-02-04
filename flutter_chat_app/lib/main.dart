@@ -3,12 +3,11 @@ import 'dart:async';
 import 'dart:io' show Platform;
 
 // Flutter imports
-import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // Third-party package imports
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -87,9 +86,17 @@ Future<void> main() async {
 Future<void> runMainApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  if (!FlavorConfig.isInitialized) {
+    FlavorConfig.initializeFromEnvironment();
+  }
+
+  final envFileName = await _loadDotenvForFlavor();
+  _validateDotenvConfiguration(envFileName);
+
+  await configureDependencies();
+
   // Initialize environment manager
-  final logger = getIt<Logger>();
-  final environmentManager = EnvironmentManager(logger);
+  final environmentManager = getIt<EnvironmentManager>();
   await environmentManager.initialize();
 
   // Print environment info in debug mode
@@ -112,12 +119,6 @@ Future<void> runMainApp() async {
     ),
   );
   
-  // Tải biến môi trường
-  await dotenv.load(fileName: '.env');
-  
-  // Đăng ký và khởi tạo dependency injection (CRITICAL - must be synchronous)
-  await configureDependencies();
-  
   // Start app immediately for fast startup
   runZonedGuarded(() {
     runApp(
@@ -129,7 +130,7 @@ Future<void> runMainApp() async {
       ),
     );
   }, (error, stackTrace) {
-    logger.e('Unhandled error', error: error, stackTrace: stackTrace);
+    getIt<Logger>().e('Unhandled error', error: error, stackTrace: stackTrace);
     // Crash reporter will be initialized in background
   });
 
@@ -137,6 +138,67 @@ Future<void> runMainApp() async {
   WidgetsBinding.instance.addPostFrameCallback((_) {
     _initializeNonCriticalServices();
   });
+}
+
+Future<String> _loadDotenvForFlavor() async {
+  final fileName = FlavorConfig.instance.isProduction
+      ? '.env.production'
+      : '.env.staging';
+  await dotenv.load(fileName: fileName);
+  return fileName;
+}
+
+void _validateDotenvConfiguration(String envFileName) {
+  final requiredKeys = <String>[
+    'GRAPHQL_API_URL',
+    'GRAPHQL_WS_URL',
+    'SOCKET_URL',
+  ];
+
+  final missingKeys = <String>[];
+  for (final key in requiredKeys) {
+    final value = (dotenv.env[key] ?? '').trim();
+    if (value.isEmpty) {
+      missingKeys.add(key);
+    }
+  }
+
+  if (missingKeys.isNotEmpty) {
+    final message =
+        'Missing required environment keys in $envFileName: ${missingKeys.join(', ')}';
+    if (kReleaseMode) {
+      throw StateError(message);
+    }
+    if (kDebugMode) {
+      debugPrint(message);
+    }
+  }
+
+  final placeholderKeys = <String>[];
+  for (final key in requiredKeys) {
+    final value = (dotenv.env[key] ?? '').trim();
+    if (value.isNotEmpty && _looksLikePlaceholderUrl(value)) {
+      placeholderKeys.add(key);
+    }
+  }
+
+  if (placeholderKeys.isNotEmpty) {
+    final message =
+        'Placeholder environment values detected in $envFileName: ${placeholderKeys.join(', ')}';
+    if (kReleaseMode) {
+      throw StateError(message);
+    }
+    if (kDebugMode) {
+      debugPrint(message);
+    }
+  }
+}
+
+bool _looksLikePlaceholderUrl(String value) {
+  final lower = value.toLowerCase();
+  return lower.contains('example.com') ||
+      lower.contains('localhost') ||
+      lower.contains('enterprise-chat.com');
 }
 
 /// Initialize non-critical services after app starts
