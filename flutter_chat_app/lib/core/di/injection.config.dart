@@ -173,7 +173,7 @@ extension GetItInjectableX on _i174.GetIt {
       environment,
       environmentFilter,
     );
-    gh.singleton<_i163.MediaCacheManager>(() => _i163.MediaCacheManager());
+    gh.lazySingleton<_i163.MediaCacheManager>(() => _i163.MediaCacheManager());
     gh.singleton<_i514.CacheSyncStrategy>(() => _i514.CacheSyncStrategy());
     gh.singleton<_i995.ProtoConverter>(() => _i995.ProtoConverter());
     gh.singleton<_i260.SystemResourceMonitor>(
@@ -194,7 +194,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i982.MediaLocalDataSourceImpl>(
         () => _i982.MediaLocalDataSourceImpl());
     gh.singleton<_i777.WebSocketClient>(() => _i777.WebSocketClient(
-          serverUrl: gh<String>(),
+          serverUrl: gh<String>(instanceName: 'socketUrl'),
           options: gh<Map<String, dynamic>>(),
           reconnectConfig: gh<_i459.RetryConfig>(),
         ));
@@ -243,11 +243,13 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.singleton<_i567.ConnectionPoolManager>(() => _i567.ConnectionPoolManager(
           connectionFactory: gh<_i567.ConnectionFactory>(),
-          maxPoolSize: gh<int>(),
-          maxConnectionLifetime: gh<int>(),
-          maxIdleTime: gh<int>(),
-          cleanupInterval: gh<int>(),
-          healthCheckInterval: gh<int>(),
+          maxPoolSize: gh<int>(instanceName: 'connectionPoolMaxPoolSize'),
+          maxConnectionLifetime:
+              gh<int>(instanceName: 'connectionPoolMaxConnectionLifetime'),
+          maxIdleTime: gh<int>(instanceName: 'connectionPoolMaxIdleTime'),
+          cleanupInterval: gh<int>(instanceName: 'connectionPoolCleanupInterval'),
+          healthCheckInterval:
+              gh<int>(instanceName: 'connectionPoolHealthCheckInterval'),
         ));
     gh.singleton<_i604.EnhancedCacheManager>(() => _i604.EnhancedCacheManager(
           localStorage: gh<_i329.LocalStorage>(),
@@ -260,7 +262,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i88.RealtimeMessageBloc>(
         () => _i88.RealtimeMessageBloc(gh<_i706.RealtimeMessagingService>()));
     gh.factory<_i498.SocketManager>(() => _i498.SocketManager(
-          serverUrl: gh<String>(),
+          serverUrl: gh<String>(instanceName: 'socketUrl'),
           options: gh<Map<String, dynamic>>(),
           logger: gh<_i974.Logger>(),
           analytics: gh<_i343.AnalyticsService>(),
@@ -432,9 +434,9 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i357.RealtimeConnectionService>(
         () => _i357.RealtimeConnectionService(
-              webSocketUrl: gh<String>(),
-              httpUrl: gh<String>(),
-              authToken: gh<String>(),
+              webSocketUrl: gh<String>(instanceName: 'graphQlWsUrl'),
+              httpUrl: gh<String>(instanceName: 'graphQlApiUrl'),
+              authToken: gh<String>(instanceName: 'authToken'),
               connectivityAnalyzer: gh<_i286.ConnectivityAnalyzerService>(),
               connectivityService: gh<_i47.ConnectivityService>(),
             ));

@@ -277,10 +277,13 @@ class WebDatabaseImplementation implements IDatabaseImplementation {
       UserModelSchema,
       OfflineOperationModelSchema,
     ];
-    
+
+    await Isar.initialize();
+
     _isar = Isar.open(
       schemas: schemas,
       directory: Isar.sqliteInMemory,
+      engine: IsarEngine.sqlite,
       inspector: kDebugMode,
       name: 'chat_app_db',
     );
