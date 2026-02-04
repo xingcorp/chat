@@ -131,7 +131,7 @@ void main() {
         chatId: any(named: 'chatId'),
         messageId: any(named: 'messageId'),
         onProgress: any(named: 'onProgress'),
-      )).thenThrow(const NetworkException(message: 'Connection timeout'));
+      )).thenThrow(NetworkException(message: 'Connection timeout'));
 
       // Act
       final result = await repository.uploadMedia(
@@ -153,7 +153,7 @@ void main() {
         chatId: any(named: 'chatId'),
         messageId: any(named: 'messageId'),
         onProgress: any(named: 'onProgress'),
-      )).thenThrow(const ServerException(message: 'Upload failed'));
+      )).thenThrow(ServerException(message: 'Upload failed'));
 
       // Act
       final result = await repository.uploadMedia(
@@ -175,7 +175,7 @@ void main() {
         chatId: any(named: 'chatId'),
         messageId: any(named: 'messageId'),
         onProgress: any(named: 'onProgress'),
-      )).thenThrow(const FileException(message: 'Invalid file'));
+      )).thenThrow(FileException(message: 'Invalid file'));
 
       // Act
       final result = await repository.uploadMedia(
@@ -202,7 +202,7 @@ void main() {
         sourceFilePath: any(named: 'sourceFilePath'),
         attachmentId: any(named: 'attachmentId'),
         type: any(named: 'type'),
-      )).thenThrow(const CacheException(message: 'Cache failed'));
+      )).thenThrow(CacheException(message: 'Cache failed'));
 
       // Act
       final result = await repository.uploadMedia(
@@ -311,7 +311,7 @@ void main() {
         url: any(named: 'url'),
         savePath: any(named: 'savePath'),
         onProgress: any(named: 'onProgress'),
-      )).thenThrow(const NetworkException(message: 'Download failed'));
+      )).thenThrow(NetworkException(message: 'Download failed'));
 
       // Act
       final result = await repository.downloadMedia(
@@ -357,7 +357,7 @@ void main() {
     test('should return CacheFailure when CacheException is thrown', () async {
       // Arrange
       when(() => mockLocalDataSource.getCachedMediaPath(any()))
-          .thenThrow(const CacheException(message: 'Cache error'));
+          .thenThrow(CacheException(message: 'Cache error'));
 
       // Act
       final result = await repository.getCachedMediaPath(tAttachmentId);
@@ -386,7 +386,7 @@ void main() {
     test('should return CacheFailure when deletion fails', () async {
       // Arrange
       when(() => mockLocalDataSource.deleteCachedMedia(any()))
-          .thenThrow(const CacheException(message: 'Delete failed'));
+          .thenThrow(CacheException(message: 'Delete failed'));
 
       // Act
       final result = await repository.deleteCachedMedia(tAttachmentId);
@@ -413,7 +413,7 @@ void main() {
     test('should return CacheFailure when clear fails', () async {
       // Arrange
       when(() => mockLocalDataSource.clearMediaCache())
-          .thenThrow(const CacheException(message: 'Clear failed'));
+          .thenThrow(CacheException(message: 'Clear failed'));
 
       // Act
       final result = await repository.clearMediaCache();
@@ -442,7 +442,7 @@ void main() {
     test('should return CacheFailure when getting size fails', () async {
       // Arrange
       when(() => mockLocalDataSource.getCacheSize())
-          .thenThrow(const CacheException(message: 'Size calculation failed'));
+          .thenThrow(CacheException(message: 'Size calculation failed'));
 
       // Act
       final result = await repository.getCacheSize();
@@ -574,7 +574,7 @@ void main() {
       when(() => mockRemoteDataSource.getMessageAttachments(any()))
           .thenAnswer((_) async => tAttachmentModels);
       when(() => mockLocalDataSource.saveAttachmentMetadata(any()))
-          .thenThrow(const CacheException(message: 'Cache failed'));
+          .thenThrow(CacheException(message: 'Cache failed'));
 
       // Act
       final result = await repository.getMessageAttachments(tMessageId);

@@ -20,6 +20,8 @@ import 'package:isar/isar.dart' as _i338;
 import 'package:logger/logger.dart' as _i974;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
+import '../network/auth/token_repository.dart' as _i1113;
+
 import '../../features/chat/data/datasources/chat/chat_local_datasource.dart'
     as _i832;
 import '../../features/chat/data/datasources/chat/chat_remote_datasource.dart'
@@ -131,7 +133,7 @@ import '../services/connectivity_analyzer_service.dart' as _i286;
 import '../services/connectivity_service.dart' as _i47;
 import '../services/database_service.dart' as _i665;
 import '../services/device_capability_service.dart' as _i98;
-import '../services/graphql_subscription_service.dart' as _i98;
+import '../services/graphql_subscription_service.dart' as _i1006;
 import '../services/integration_service.dart' as _i808;
 import '../services/local_storage_service.dart' as _i527;
 import '../services/localization_service.dart' as _i999;
@@ -181,7 +183,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i976.SocketIOEventMapper>(() => _i976.SocketIOEventMapper());
     gh.lazySingletonAsync<_i527.LocalStorageService>(
         () => _i527.LocalStorageService.init());
-    gh.lazySingleton<_i745.AuthService>(() => _i745.AuthService());
+    gh.lazySingleton<_i745.AuthService>(
+        () => _i745.AuthService(gh<_i1113.TokenRepository>()));
     gh.lazySingleton<_i200.BackgroundSyncService>(
         () => _i200.BackgroundSyncService());
     gh.lazySingleton<_i695.MediaProcessingServiceFactory>(
@@ -215,7 +218,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i706.RealtimeMessagingService>(
         () => _i706.RealtimeMessagingService(gh<_i932.NetworkInfo>()));
     gh.lazySingleton<_i1025.AuthRemoteDataSourceImpl>(() =>
-        _i1025.AuthRemoteDataSourceImpl(gh<_i923.GraphQLClientWrapper>()));
+        _i1025.AuthRemoteDataSourceImpl(
+          gh<_i923.GraphQLClientWrapper>(),
+          gh<_i1113.TokenRepository>(),
+        ));
     gh.singleton<_i794.PerformanceMonitor>(
         () => _i794.PerformanceMonitor(gh<_i346.FirebasePerformance>()));
     gh.singleton<_i808.IntegrationService>(
@@ -470,8 +476,8 @@ extension GetItInjectableX on _i174.GetIt {
           realtimeConnectionService: gh<_i357.RealtimeConnectionService>(),
           connectivityAnalyzerService: gh<_i286.ConnectivityAnalyzerService>(),
         ));
-    gh.lazySingleton<_i98.GraphQLSubscriptionService>(
-        () => _i98.GraphQLSubscriptionService(
+    gh.lazySingleton<_i1006.GraphQLSubscriptionService>(
+        () => _i1006.GraphQLSubscriptionService(
               gh<_i357.RealtimeConnectionService>(),
               gh<_i128.GraphQLClient>(),
             ));

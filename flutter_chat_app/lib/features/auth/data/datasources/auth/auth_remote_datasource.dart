@@ -1,4 +1,5 @@
 import 'package:flutter_chat_app/core/exceptions/exceptions.dart';
+import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/services/graphql/graphql_client_wrapper.dart';
 import 'package:injectable/injectable.dart';
@@ -51,9 +52,52 @@ abstract class AuthRemoteDataSource {
 @lazySingleton
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final GraphQLClientWrapper _client;
+  final TokenRepository _tokenRepository;
   
   /// Constructor
-  AuthRemoteDataSourceImpl(this._client);
+  AuthRemoteDataSourceImpl(this._client, this._tokenRepository);
+
+  UserModel _mapApiUserToUserModel(Map<String, dynamic> user) {
+    final serverId = (user['id'] ?? '').toString();
+    final email = user['email'] as String?;
+    final username = (user['username'] as String?) ??
+        (email != null && email.contains('@') ? email.split('@').first : null) ??
+        serverId;
+    final displayName = (user['fullname'] as String?) ??
+        (user['name'] as String?) ??
+        (user['displayName'] as String?) ??
+        username;
+    final avatarUrl = (user['avatarUrl'] as String?) ?? (user['avatar'] as String?);
+    final isOnline = user['isOnline'] as bool? ?? false;
+
+    final lastSeenRaw = user['lastSeen'];
+    DateTime lastSeen;
+    if (lastSeenRaw is String) {
+      lastSeen = DateTime.tryParse(lastSeenRaw) ?? DateTime.now();
+    } else {
+      lastSeen = DateTime.now();
+    }
+
+    final statusRaw = user['statusMessage'] ?? user['status'];
+    final statusMessage = statusRaw is String ? statusRaw : statusRaw?.toString();
+
+    final rolesRaw = user['roles'];
+    final roles = rolesRaw is List
+        ? rolesRaw.map((e) => e.toString()).toList()
+        : const <String>[];
+
+    return UserModel(
+      serverId: serverId,
+      username: username,
+      displayName: displayName,
+      avatarUrl: avatarUrl,
+      email: email,
+      isOnline: isOnline,
+      lastSeen: lastSeen,
+      statusMessage: statusMessage,
+      roles: roles,
+    );
+  }
   
   @override
   Future<UserModel> login(String email, String password) async {
@@ -62,16 +106,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         '''
         mutation Login(\$email: String!, \$password: String!) {
           login(email: \$email, password: \$password) {
+            accessToken
+            refreshToken
             user {
               id
+              fullname
               email
-              name
-              avatar
-              status
-              createdAt
-              updatedAt
+              avatarUrl
             }
-            token
           }
         }
         ''',
@@ -87,11 +129,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
       
-      final token = result.data?['login']['token'] as String;
-      // Store token for future requests
-      await _client.setToken(token);
-      
-      return UserModel.fromJson(result.data?['login']['user']);
+      final loginData = result.data?['login'] as Map<String, dynamic>?;
+      if (loginData == null) {
+        throw ServerException(message: 'Login failed');
+      }
+
+      final accessToken = loginData['accessToken'] as String?;
+      final refreshToken = loginData['refreshToken'] as String?;
+      if (accessToken == null || accessToken.isEmpty) {
+        throw ServerException(message: 'Login failed');
+      }
+
+      await _tokenRepository.saveTokens(
+        AuthTokens(
+          accessToken: accessToken,
+          refreshToken: refreshToken ?? '',
+        ),
+      );
+
+      final userData = loginData['user'] as Map<String, dynamic>?;
+      if (userData == null) {
+        throw ServerException(message: 'Login failed');
+      }
+
+      return _mapApiUserToUserModel(userData);
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException(message: 'Login failed: $e');
@@ -139,11 +200,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
       
-      final token = result.data?['register']['token'] as String;
-      // Store token for future requests
-      await _client.setToken(token);
-      
-      return UserModel.fromJson(result.data?['register']['user']);
+      final registerData = result.data?['register'] as Map<String, dynamic>?;
+      if (registerData == null) {
+        throw ServerException(message: 'Registration failed');
+      }
+
+      final token = registerData['token'] as String?;
+      if (token != null && token.isNotEmpty) {
+        await _tokenRepository.saveAccessToken(token);
+      }
+
+      final userData = registerData['user'] as Map<String, dynamic>?;
+      if (userData == null) {
+        throw ServerException(message: 'Registration failed');
+      }
+
+      return _mapApiUserToUserModel(userData);
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException(message: 'Registration failed: $e');
@@ -161,8 +233,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         ''',
       );
       
-      // Clear the stored token
-      await _client.clearToken();
+      await _tokenRepository.clear();
       
       if (result.hasException) {
         return false;
@@ -170,8 +241,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       
       return result.data?['logout'] ?? false;
     } catch (e) {
-      // Even if server logout fails, clear the token
-      await _client.clearToken();
+      await _tokenRepository.clear();
       return false;
     }
   }
@@ -321,7 +391,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         return null;
       }
       
-      return UserModel.fromJson(result.data?['user']);
+      final userData = result.data?['user'] as Map<String, dynamic>?;
+      if (userData == null) {
+        return null;
+      }
+
+      return _mapApiUserToUserModel(userData);
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException(message: 'Failed to refresh user: $e');
@@ -330,32 +405,102 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   
   @override
   Future<String?> getAccessToken() async {
-    return _client.getToken();
+    return _tokenRepository.getAccessToken();
   }
   
   @override
   Future<String?> refreshToken() async {
     try {
-      final result = await _client.mutate(
-        '''
-        mutation RefreshToken {
-          refreshToken {
-            token
-          }
-        }
-        ''',
-      );
-      
-      if (result.hasException) {
+      final currentRefreshToken = await _tokenRepository.getRefreshToken();
+      if (currentRefreshToken == null || currentRefreshToken.isEmpty) {
         return null;
       }
-      
-      final token = result.data?['refreshToken']['token'] as String?;
-      if (token != null) {
-        await _client.setToken(token);
+
+      Future<String?> attemptStorePair(
+        Map<String, dynamic>? data,
+        String refreshFallback,
+      ) async {
+        final accessToken = data?['accessToken'] as String?;
+        final refreshToken = data?['refreshToken'] as String?;
+        if (accessToken == null || accessToken.isEmpty) {
+          return null;
+        }
+
+        await _tokenRepository.saveTokens(
+          AuthTokens(
+            accessToken: accessToken,
+            refreshToken: refreshToken ?? refreshFallback,
+          ),
+        );
+        return accessToken;
       }
-      
-      return token;
+
+      try {
+        final result = await _client.mutate(
+          '''
+          mutation RefreshToken(\$refreshToken: String!) {
+            refreshToken(refreshToken: \$refreshToken) {
+              accessToken
+              refreshToken
+            }
+          }
+          ''',
+          variables: {
+            'refreshToken': currentRefreshToken,
+          },
+        );
+
+        final refreshData = result.data?['refreshToken'] as Map<String, dynamic>?;
+        final token = await attemptStorePair(refreshData, currentRefreshToken);
+        if (token != null) {
+          return token;
+        }
+      } catch (_) {}
+
+      try {
+        final result = await _client.mutate(
+          '''
+          mutation IdentityRefreshToken(\$refreshToken: String!) {
+            identityRefreshToken(refreshToken: \$refreshToken) {
+              accessToken
+              refreshToken
+            }
+          }
+          ''',
+          variables: {
+            'refreshToken': currentRefreshToken,
+          },
+        );
+
+        final refreshData = result.data?['identityRefreshToken'] as Map<String, dynamic>?;
+        final token = await attemptStorePair(refreshData, currentRefreshToken);
+        if (token != null) {
+          return token;
+        }
+      } catch (_) {}
+
+      try {
+        final result = await _client.mutate(
+          '''
+          mutation RefreshToken {
+            refreshToken {
+              token
+            }
+          }
+          ''',
+        );
+
+        final token = (result.data?['refreshToken'] as Map<String, dynamic>?)?['token']
+            as String?;
+        if (token == null || token.isEmpty) {
+          return null;
+        }
+
+        await _tokenRepository.saveAccessToken(token);
+        return token;
+      } catch (_) {}
+
+      return null;
     } catch (e) {
       return null;
     }

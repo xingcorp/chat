@@ -89,14 +89,11 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     emit(MessagesLoading(chatId: event.chatId));
 
-    // Create params for UseCase
-    final params = GetMessagesParams(
+    // Execute UseCase
+    final result = await _getMessages(
       conversationId: event.chatId,
       limit: event.limit,
     );
-
-    // Execute UseCase
-    final result = await _getMessages(params);
 
     result.fold(
       (failure) {
@@ -145,15 +142,12 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         ? currentState.messages.last.id
         : null;
 
-    // Create params for UseCase
-    final params = GetMessagesParams(
+    // Execute UseCase
+    final result = await _getMessages(
       conversationId: currentState.chatId,
       limit: event.limit,
       cursor: lastMessageId,
     );
-
-    // Execute UseCase
-    final result = await _getMessages(params);
 
     result.fold(
       (failure) {
@@ -187,17 +181,14 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     logger.i('Sending message in chat: ${currentState.chatId}');
 
-    // Create params for UseCase
-    final params = SendMessageParams(
+    // Execute UseCase
+    final result = await _sendMessage(
       conversationId: currentState.chatId,
       content: event.content,
       senderId: event.senderId,
-      contentType: event.contentType,
-      attachmentIds: event.attachmentIds,
+      type: event.contentType,
+      urls: event.attachmentIds,
     );
-
-    // Execute UseCase
-    final result = await _sendMessage(params);
 
     result.fold(
       (failure) {
@@ -231,14 +222,11 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     logger.i('Editing message: ${event.messageId}');
 
-    // Create params for UseCase
-    final params = EditMessageParams(
-      messageId: event.messageId,
-      newContent: event.content,
-    );
-
     // Execute UseCase
-    final result = await _editMessage(params);
+    final result = await _editMessage(
+      messageId: event.messageId,
+      content: event.content,
+    );
 
     result.fold(
       (failure) {

@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
 
 /// Interface cho dịch vụ xác thực
 abstract class IAuthService {
@@ -27,21 +27,26 @@ abstract class IAuthService {
 class AuthService implements IAuthService {
   /// Logger
   final Logger _logger = Logger();
-  
-  /// Key cho access token trong shared preferences
-  static const String _accessTokenKey = 'access_token';
-  
-  /// Key cho refresh token trong shared preferences
-  static const String _refreshTokenKey = 'refresh_token';
+
+  final TokenRepository _tokenRepository;
   
   /// Stream controller cho sự kiện đăng nhập/đăng xuất
   final StreamController<bool> _authStateController = StreamController<bool>.broadcast();
+
+  StreamSubscription<AuthTokens?>? _tokensSubscription;
   
   /// Stream theo dõi trạng thái đăng nhập
   Stream<bool> get authStateStream => _authStateController.stream;
   
   /// Constructor
-  AuthService();
+  AuthService(this._tokenRepository) {
+    _tokensSubscription = _tokenRepository.tokensStream.listen((tokens) {
+      final isLoggedIn = tokens != null && tokens.accessToken.isNotEmpty;
+      if (!_authStateController.isClosed) {
+        _authStateController.add(isLoggedIn);
+      }
+    });
+  }
   
   @override
   Future<bool> isLoggedIn() async {
@@ -52,8 +57,7 @@ class AuthService implements IAuthService {
   @override
   Future<String?> getAccessToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_accessTokenKey);
+      return _tokenRepository.getAccessToken();
     } catch (e) {
       _logger.e('Lỗi khi lấy access token: $e');
       return null;
@@ -63,8 +67,7 @@ class AuthService implements IAuthService {
   @override
   Future<String?> getRefreshToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_refreshTokenKey);
+      return _tokenRepository.getRefreshToken();
     } catch (e) {
       _logger.e('Lỗi khi lấy refresh token: $e');
       return null;
@@ -74,8 +77,7 @@ class AuthService implements IAuthService {
   /// Lưu access token
   Future<bool> saveAccessToken(String token) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_accessTokenKey, token);
+      await _tokenRepository.saveAccessToken(token);
       return true;
     } catch (e) {
       _logger.e('Lỗi khi lưu access token: $e');
@@ -86,8 +88,7 @@ class AuthService implements IAuthService {
   /// Lưu refresh token
   Future<bool> saveRefreshToken(String token) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_refreshTokenKey, token);
+      await _tokenRepository.saveRefreshToken(token);
       return true;
     } catch (e) {
       _logger.e('Lỗi khi lưu refresh token: $e');
@@ -98,22 +99,12 @@ class AuthService implements IAuthService {
   @override
   Future<bool> refreshToken() async {
     try {
-      final refreshToken = await getRefreshToken();
-      if (refreshToken == null || refreshToken.isEmpty) {
-        _logger.w('Không thể làm mới token: Refresh token không tồn tại');
-        return false;
+      final newAccessToken = await _tokenRepository.refreshAccessToken();
+      final ok = newAccessToken != null && newAccessToken.isNotEmpty;
+      if (ok) {
+        _logger.i('Đã làm mới token thành công');
       }
-      
-      // TODO: Gọi API để làm mới token
-      // Đây chỉ là mã giả, cần thay thế bằng logic thực tế
-      final newAccessToken = 'new_access_token';
-      final newRefreshToken = 'new_refresh_token';
-      
-      await saveAccessToken(newAccessToken);
-      await saveRefreshToken(newRefreshToken);
-      
-      _logger.i('Đã làm mới token thành công');
-      return true;
+      return ok;
     } catch (e) {
       _logger.e('Lỗi khi làm mới token: $e');
       return false;
@@ -123,9 +114,7 @@ class AuthService implements IAuthService {
   @override
   Future<void> logout() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_accessTokenKey);
-      await prefs.remove(_refreshTokenKey);
+      await _tokenRepository.clear();
       
       _authStateController.add(false);
       _logger.i('Đã đăng xuất thành công');
@@ -141,6 +130,7 @@ class AuthService implements IAuthService {
   
   /// Đóng tài nguyên
   void dispose() {
+    _tokensSubscription?.cancel();
     _authStateController.close();
   }
 } 

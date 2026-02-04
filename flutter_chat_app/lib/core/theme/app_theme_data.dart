@@ -236,7 +236,7 @@ class AppThemeData {
       ),
       
       // Card Theme
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: surfaceColor,
         elevation: AppDimens.elevationCard,
         shape: RoundedRectangleBorder(
@@ -247,7 +247,7 @@ class AppThemeData {
       ),
       
       // Dialog Theme
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: surfaceColor,
         elevation: AppDimens.elevationDialog,
         shape: RoundedRectangleBorder(
@@ -316,7 +316,7 @@ class AppThemeData {
       ),
       
       // Tab Bar Theme
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelColor: primaryColor,
         unselectedLabelColor: textSecondaryColor,
         indicatorColor: primaryColor,

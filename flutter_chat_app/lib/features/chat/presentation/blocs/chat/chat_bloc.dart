@@ -127,10 +127,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     logger.i('Loading conversation detail: ${event.chatId}');
 
     // Create params for UseCase
-    final params = GetConversationDetailParams(conversationId: event.chatId);
+    final conversationId = event.chatId;
 
     // Execute UseCase
-    final result = await _getConversationDetail(params);
+    final result = await _getConversationDetail(conversationId);
 
     result.fold(
       (failure) {
@@ -224,10 +224,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     emit(const ChatState.loading());
 
     // Create params for UseCase
-    final params = LeaveConversationParams(conversationId: event.chatId);
+    final conversationId = event.chatId;
 
     // Execute UseCase
-    final result = await _leaveConversation(params);
+    final result = await _leaveConversation(conversationId);
 
     result.fold(
       (failure) {
