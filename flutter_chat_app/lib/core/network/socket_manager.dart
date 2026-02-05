@@ -293,8 +293,6 @@ class SocketManager {
 
   void _attachListener(_SocketListenerRegistration registration) {
     if (_socket == null) {
-      _logger.d(
-          'Deferring listener registration for event \'${registration.event}\' - Socket is null');
       return;
     }
     _socket!.on(registration.event, registration.listener);

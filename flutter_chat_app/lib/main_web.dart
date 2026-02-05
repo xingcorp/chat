@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_chat_app/core/config/flavor_config.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
@@ -31,7 +32,14 @@ Future<void> main() async {
   // Initialize services for web
   await _initializeWebServices();
   
-  runApp(const MyApp());
+  runApp(
+    ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) => const MyApp(),
+    ),
+  );
 }
 
 Future<void> _initializeWebServices() async {

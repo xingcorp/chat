@@ -21,6 +21,9 @@ import 'package:flutter_chat_app/core/network/cache/api_cache_manager.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_remote_datasource.dart';
+import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.dart';
+import 'package:flutter_chat_app/data/datasources/media/media_remote_datasource.dart';
+import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_local_datasource.dart';
 import 'package:flutter_chat_app/core/services/production_logger.dart';
 import 'package:flutter_chat_app/core/config/environment_manager.dart';
 import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
@@ -75,7 +78,25 @@ Future<void> registerCoreModule(GetIt getIt) async {
       () => getIt<MessageRemoteDataSourceImpl>(),
     );
   }
-  
+
+  if (!getIt.isRegistered<ChatLocalDataSource>()) {
+    getIt.registerLazySingleton<ChatLocalDataSource>(
+      () => getIt<ChatLocalDataSourceImpl>(),
+    );
+  }
+
+  if (!getIt.isRegistered<IMediaLocalDataSource>()) {
+    getIt.registerLazySingleton<IMediaLocalDataSource>(
+      () => getIt<MediaLocalDataSourceImpl>(),
+    );
+  }
+
+  if (!getIt.isRegistered<IMediaRemoteDataSource>()) {
+    getIt.registerLazySingleton<IMediaRemoteDataSource>(
+      () => getIt<MediaRemoteDataSourceImpl>(),
+    );
+  }
+
   // 3. ProductionLogger - Production logging
   if (!getIt.isRegistered<ProductionLogger>()) {
     getIt.registerSingleton<ProductionLogger>(
@@ -106,6 +127,10 @@ Future<void> registerCoreModule(GetIt getIt) async {
         logger: getIt<Logger>(),
       ),
     );
+  }
+
+  if (!getIt.isRegistered<INetworkInfo>()) {
+    getIt.registerLazySingleton<INetworkInfo>(() => getIt<NetworkInfo>());
   }
   
   // 6. DatabaseService - Async initialization with @preResolve
