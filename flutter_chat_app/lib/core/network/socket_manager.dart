@@ -13,6 +13,9 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 class SocketManager {
   /// Socket.IO client instance
   io.Socket? _socket;
+
+  final List<_SocketListenerRegistration> _listenerRegistrations =
+      <_SocketListenerRegistration>[];
   
   /// Server URL for WebSocket connection
   final String _serverUrl;
@@ -104,6 +107,8 @@ class SocketManager {
       _socket = io.io(_serverUrl, mergedOptions);
       
       _setupEventHandlers();
+
+      _attachRegisteredListeners();
       
       _socket!.connect();
 
@@ -246,7 +251,7 @@ class SocketManager {
   Stream<T> on<T>(String event) {
     final controller = StreamController<T>.broadcast();
     
-    final listener = (data) {
+    void listener(dynamic data) {
        if (!controller.isClosed) {
          try {
            controller.add(data as T);
@@ -258,16 +263,17 @@ class SocketManager {
            controller.addError(e, stackTrace);
          }
        }
-     };
+     }
 
-    if (_socket != null) {
-      _socket!.on(event, listener);
-      _logger.d('Registered listener for event: $event');
-    } else {
-       _logger.w('Cannot register listener for event \'$event\' - Socket is null');
-    }
+    final registration = _SocketListenerRegistration(
+      event: event,
+      listener: listener,
+    );
+    _listenerRegistrations.add(registration);
+    _attachListener(registration);
     
     controller.onCancel = () {
+      _listenerRegistrations.remove(registration);
       if (_socket != null) {
         _socket!.off(event, listener);
         _logger.d('Unregistered listener for event: $event');
@@ -276,6 +282,23 @@ class SocketManager {
     };
     
     return controller.stream;
+  }
+
+  void _attachRegisteredListeners() {
+    if (_socket == null) return;
+    for (final registration in _listenerRegistrations) {
+      _attachListener(registration);
+    }
+  }
+
+  void _attachListener(_SocketListenerRegistration registration) {
+    if (_socket == null) {
+      _logger.d(
+          'Deferring listener registration for event \'${registration.event}\' - Socket is null');
+      return;
+    }
+    _socket!.on(registration.event, registration.listener);
+    _logger.d('Registered listener for event: ${registration.event}');
   }
   
   /// Emit an event to the server
@@ -320,7 +343,18 @@ class SocketManager {
   /// Dispose resources
   void dispose() {
     _logger.d('Disposing SocketManager');
+    _listenerRegistrations.clear();
     disconnect();
     _connectionStateController.close();
   }
-} 
+}
+
+class _SocketListenerRegistration {
+  final String event;
+  final void Function(dynamic) listener;
+
+  const _SocketListenerRegistration({
+    required this.event,
+    required this.listener,
+  });
+}

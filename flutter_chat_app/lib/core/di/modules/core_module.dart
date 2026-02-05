@@ -9,10 +9,18 @@
 /// the Injectable generator and to have fine-grained control.
 
 import 'package:get_it/get_it.dart';
+import 'package:isar/isar.dart';
+import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/core/services/device_capability_service.dart';
+import 'package:flutter_chat_app/core/network/graphql_client.dart' as core_graphql;
+import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
+import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/core/network/cache/api_cache_manager.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
+import 'package:flutter_chat_app/data/datasources/message/message_local_datasource.dart';
+import 'package:flutter_chat_app/data/datasources/message/message_remote_datasource.dart';
 import 'package:flutter_chat_app/core/services/production_logger.dart';
 import 'package:flutter_chat_app/core/config/environment_manager.dart';
 import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
@@ -43,11 +51,47 @@ Future<void> registerCoreModule(GetIt getIt) async {
     );
     getIt.registerSingleton<ApiCacheManager>(ApiCacheManager.instance);
   }
+
+  if (!getIt.isRegistered<AppCacheManager>()) {
+    final appCacheManager = AppCacheManager();
+    await appCacheManager.initialize();
+    getIt.registerSingleton<AppCacheManager>(appCacheManager);
+  }
+
+  if (!getIt.isRegistered<core_graphql.GraphQLClientWrapper>()) {
+    getIt.registerLazySingleton<core_graphql.GraphQLClientWrapper>(
+      () => getIt<core_graphql.GraphQLClientWrapperImpl>(),
+    );
+  }
+
+  if (!getIt.isRegistered<MessageLocalDataSource>()) {
+    getIt.registerLazySingleton<MessageLocalDataSource>(
+      () => MessageLocalDataSourceImpl(getIt<LocalStorage>()),
+    );
+  }
+
+  if (!getIt.isRegistered<IMessageRemoteDataSource>()) {
+    getIt.registerLazySingleton<IMessageRemoteDataSource>(
+      () => getIt<MessageRemoteDataSourceImpl>(),
+    );
+  }
   
   // 3. ProductionLogger - Production logging
   if (!getIt.isRegistered<ProductionLogger>()) {
     getIt.registerSingleton<ProductionLogger>(
       ProductionLogger(),
+    );
+  }
+
+  if (!getIt.isRegistered<DeviceCapabilityService>()) {
+    getIt.registerSingleton<DeviceCapabilityService>(
+      DeviceCapabilityService(),
+    );
+  }
+
+  if (!getIt.isRegistered<SocketRateLimiter>()) {
+    getIt.registerSingleton<SocketRateLimiter>(
+      SocketRateLimiter(logger: getIt<Logger>()),
     );
   }
   
@@ -68,6 +112,9 @@ Future<void> registerCoreModule(GetIt getIt) async {
   if (!getIt.isRegistered<DatabaseService>()) {
     final databaseService = await DatabaseService.create();
     getIt.registerSingleton<DatabaseService>(databaseService);
+    if (!getIt.isRegistered<Isar>()) {
+      getIt.registerSingleton<Isar>(databaseService.isar);
+    }
   }
   
   // 7. EnvironmentManager - Environment configuration
