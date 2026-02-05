@@ -217,127 +217,136 @@ class WebHomeBody extends StatelessWidget {
   }
 
   Widget _buildMainContent(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 120,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            context.l10n.welcomeToChat,
-            style: Theme.of(context).textTheme.headlineMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Web version of Flutter Chat App with enterprise features',
-            style: Theme.of(context).textTheme.bodyLarge,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          
-          // Feature cards
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              _buildFeatureCard(
-                context,
-                Icons.palette,
-                'Dynamic Themes',
-                'Material Design 3 with dynamic colors',
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.chat_bubble_outline,
+                    size: 120,
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    context.l10n.welcomeToChat,
+                    style: Theme.of(context).textTheme.headlineMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Web version of Flutter Chat App with enterprise features',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    children: [
+                      _buildFeatureCard(
+                        context,
+                        Icons.palette,
+                        'Dynamic Themes',
+                        'Material Design 3 with dynamic colors',
+                      ),
+                      _buildFeatureCard(
+                        context,
+                        Icons.language,
+                        'Internationalization',
+                        'Multi-language support with RTL',
+                      ),
+                      _buildFeatureCard(
+                        context,
+                        Icons.speed,
+                        'Performance',
+                        'Optimized for web browsers',
+                      ),
+                      _buildFeatureCard(
+                        context,
+                        Icons.security,
+                        'Enterprise Ready',
+                        'Production-grade features',
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              _buildFeatureCard(
-                context,
-                Icons.language,
-                'Internationalization',
-                'Multi-language support with RTL',
-              ),
-              _buildFeatureCard(
-                context,
-                Icons.speed,
-                'Performance',
-                'Optimized for web browsers',
-              ),
-              _buildFeatureCard(
-                context,
-                Icons.security,
-                'Enterprise Ready',
-                'Production-grade features',
-              ),
-            ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildRightPanel(BuildContext context) {
-    return Column(
-      children: [
-        // Performance metrics
-        Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Performance',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              BlocBuilder<ThemeCubit, ThemeState>(
-                builder: (context, state) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Theme: ${state.themeMode.name}'),
-                      if (state.lastSwitchDuration != null)
-                        Text('Switch: ${state.lastSwitchDuration!.inMilliseconds}ms'),
-                      Text('Status: ${state.isPerformanceOptimal ? '✅' : '⚠️'}'),
-                    ],
-                  );
-                },
-              ),
-            ],
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Performance metrics
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Performance',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                BlocBuilder<ThemeCubit, ThemeState>(
+                  builder: (context, state) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Theme: ${state.themeMode.name}'),
+                        if (state.lastSwitchDuration != null)
+                          Text('Switch: ${state.lastSwitchDuration!.inMilliseconds}ms'),
+                        Text('Status: ${state.isPerformanceOptimal ? '✅' : '⚠️'}'),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-        
-        const Divider(),
-        
-        // Locale info
-        Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Localization',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              BlocBuilder<LocaleCubit, LocaleState>(
-                builder: (context, state) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Language: ${state.effectiveLocale.languageCode.toUpperCase()}'),
-                      Text('RTL: ${state.isRtl ? 'Yes' : 'No'}'),
-                      if (state.lastSwitchDuration != null)
-                        Text('Switch: ${state.lastSwitchDuration!.inMilliseconds}ms'),
-                    ],
-                  );
-                },
-              ),
-            ],
+          
+          const Divider(),
+          
+          // Locale info
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Localization',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                BlocBuilder<LocaleCubit, LocaleState>(
+                  builder: (context, state) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Language: ${state.effectiveLocale.languageCode.toUpperCase()}'),
+                        Text('RTL: ${state.isRtl ? 'Yes' : 'No'}'),
+                        if (state.lastSwitchDuration != null)
+                          Text('Switch: ${state.lastSwitchDuration!.inMilliseconds}ms'),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
