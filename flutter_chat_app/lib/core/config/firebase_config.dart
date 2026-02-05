@@ -37,11 +37,17 @@ class FirebaseConfigManager {
       final config = FlavorConfig.instance;
       final firebaseOptions = _getFirebaseOptions(config.flavor);
 
-      // Initialize with flavor-specific name to avoid conflicts
-      await Firebase.initializeApp(
-        name: 'oxii-chat-${config.flavor.name}',
-        options: firebaseOptions,
-      );
+      if (kIsWeb) {
+        await Firebase.initializeApp(
+          options: firebaseOptions,
+        );
+      } else {
+        // Initialize with flavor-specific name to avoid conflicts
+        await Firebase.initializeApp(
+          name: 'oxii-chat-${config.flavor.name}',
+          options: firebaseOptions,
+        );
+      }
 
       _isInitialized = true;
       _logger.info('Firebase initialized for ${config.flavor.name} environment');
@@ -222,6 +228,9 @@ class FirebaseConfigManager {
 
     try {
       final config = FlavorConfig.instance;
+      if (kIsWeb) {
+        return Firebase.app();
+      }
       return Firebase.app('oxii-chat-${config.flavor.name}');
     } catch (e) {
       _logger.error('Failed to get Firebase app: $e');

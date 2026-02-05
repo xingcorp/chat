@@ -31,6 +31,7 @@ import 'package:flutter_chat_app/core/network/connectivity/connectivity_service.
 import 'package:flutter_chat_app/core/error/retry_config.dart' as app_retry;
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart'
     as token_module;
+import 'package:flutter_chat_app/core/config/firebase_config.dart';
 import 'package:flutter_chat_app/core/network/graphql_client.dart' as core_graphql;
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/network/http/dio_http_client.dart';
@@ -245,6 +246,10 @@ Future<void> _registerExternalDependencies(Logger logger) async {
 
   if (!getIt.isRegistered<app_retry.RetryConfig>()) {
     getIt.registerSingleton<app_retry.RetryConfig>(app_retry.RetryConfig.realtime);
+  }
+
+  if (kIsWeb && !FirebaseConfigManager.isInitialized) {
+    await FirebaseConfigManager.initialize();
   }
 
   if (!getIt.isRegistered<FirebasePerformance>()) {
