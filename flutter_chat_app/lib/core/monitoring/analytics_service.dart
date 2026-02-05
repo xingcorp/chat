@@ -68,7 +68,7 @@ enum AnalyticsEvent {
 }
 
 /// Lớp dịch vụ quản lý analytics
-@singleton
+@lazySingleton
 class AnalyticsService {
   /// Logger
   final _logger = Logger();

@@ -57,7 +57,7 @@ class SocketManager {
   
   /// Constructor
   SocketManager({
-    required String serverUrl,
+    @Named('socketUrl') required String serverUrl,
     Map<String, dynamic> options = const {},
     Logger? logger,
     AnalyticsService? analytics,

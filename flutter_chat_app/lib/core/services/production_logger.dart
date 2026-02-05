@@ -47,7 +47,7 @@ class ProductionLogger {
     );
 
     // Initialize file logging if enabled
-    if (_config.enableFileLogging) {
+    if (_config.enableFileLogging && !kIsWeb) {
       await _initializeFileLogging();
     }
 
@@ -100,6 +100,9 @@ class ProductionLogger {
 
   /// **Initialize file logging**
   Future<void> _initializeFileLogging() async {
+    if (kIsWeb) {
+      return;
+    }
     try {
       final directory = await getApplicationDocumentsDirectory();
       final logDir = Directory('${directory.path}/logs');
@@ -229,12 +232,13 @@ class ProductionLogger {
   /// **Send log to remote logging service**
   Future<void> _sendToRemoteLogging(Level level, String message, Map<String, dynamic>? context, Object? error, StackTrace? stackTrace) async {
     try {
+      final platformName = kIsWeb ? 'web' : Platform.operatingSystem;
       final logData = {
         'timestamp': DateTime.now().toIso8601String(),
         'level': level.name,
         'message': message,
         'environment': ProductionConfig.environment.name,
-        'platform': Platform.operatingSystem,
+        'platform': platformName,
         'version': '1.0.0', // TODO: Get from package info
         if (context != null) 'context': context,
         if (error != null) 'error': error.toString(),
@@ -293,12 +297,13 @@ class ProductionLogger {
 
   /// **Log crash or fatal error**
   void logCrash(Object error, StackTrace stackTrace, {Map<String, dynamic>? context}) {
+    final platformName = kIsWeb ? 'web' : Platform.operatingSystem;
     final crashData = {
       'error': error.toString(),
       'stack_trace': stackTrace.toString(),
       'timestamp': DateTime.now().toIso8601String(),
       'environment': ProductionConfig.environment.name,
-      'platform': Platform.operatingSystem,
+      'platform': platformName,
       ...?context,
     };
 

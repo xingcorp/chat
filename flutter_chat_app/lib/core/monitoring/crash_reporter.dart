@@ -8,7 +8,7 @@ import 'package:logger/logger.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// Service quản lý báo cáo lỗi trong ứng dụng
-@singleton
+@lazySingleton
 class CrashReporter {
   /// Logger
   final _logger = Logger();

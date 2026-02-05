@@ -141,17 +141,17 @@ class RealtimeConnectionService {
   
   /// Constructor
   RealtimeConnectionService({
-    required String webSocketUrl,
-    required String httpUrl,
-    required String authToken,
+    @Named('graphQlWsUrl') required String webSocketUrl,
+    @Named('graphQlApiUrl') required String httpUrl,
+    @Named('authToken') required String authToken,
     required ConnectivityAnalyzerService connectivityAnalyzer,
     required ConnectivityService connectivityService,
   })  : _webSocketUrl = webSocketUrl,
        _httpUrl = httpUrl,
        _authToken = authToken,
        _connectivityAnalyzer = connectivityAnalyzer,
-       _dio = Dio(),
        _connectivityService = connectivityService,
+       _dio = Dio(),
        _httpClient = http.Client() {
     // Thiết lập timeout cho Dio
     _dio.options.connectTimeout = const Duration(seconds: 10);

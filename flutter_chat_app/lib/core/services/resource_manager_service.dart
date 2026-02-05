@@ -41,6 +41,14 @@ class ResourceManagerService {
   }
   
   Future<void> _initService() async {
+    if (kIsWeb) {
+      _cacheDirectory = 'media_cache';
+      _tempDirectory = 'temp';
+      _cacheManager = DefaultCacheManager();
+      _cacheSizeSubject.add(0);
+      return;
+    }
+
     // Initialize directories
     final appDir = await getApplicationDocumentsDirectory();
     _cacheDirectory = path.join(appDir.path, 'media_cache');
@@ -379,6 +387,7 @@ class ResourceManagerService {
   
   /// Cleans up old cache files based on age and total size
   Future<void> cleanupCache({bool force = false}) async {
+    if (kIsWeb) return;
     try {
       final cacheDir = Directory(_cacheDirectory);
       if (!await cacheDir.exists()) return;
@@ -428,6 +437,7 @@ class ResourceManagerService {
   
   /// Clears temporary files
   Future<void> clearTempFiles() async {
+    if (kIsWeb) return;
     try {
       final tempDir = Directory(_tempDirectory);
       if (await tempDir.exists()) {
@@ -441,6 +451,7 @@ class ResourceManagerService {
   
   /// Clears all cached and temporary files
   Future<void> clearAllCache() async {
+    if (kIsWeb) return;
     try {
       await _cacheManager.emptyCache();
       await clearTempFiles();
@@ -459,6 +470,10 @@ class ResourceManagerService {
   
   /// Updates the current cache size
   Future<void> _updateCacheSize() async {
+    if (kIsWeb) {
+      _cacheSizeSubject.add(0);
+      return;
+    }
     try {
       final cacheDir = Directory(_cacheDirectory);
       if (await cacheDir.exists()) {
@@ -474,6 +489,7 @@ class ResourceManagerService {
   
   /// Calculates the size of a directory in bytes
   Future<int> _calculateDirectorySize(Directory directory) async {
+    if (kIsWeb) return 0;
     int totalSize = 0;
     try {
       final files = directory.listSync(recursive: true, followLinks: false);
@@ -490,6 +506,7 @@ class ResourceManagerService {
   
   /// Schedules periodic cache cleanup
   void _scheduleCacheCleanup() {
+    if (kIsWeb) return;
     // Run cache cleanup every 24 hours
     Timer.periodic(const Duration(hours: 24), (timer) {
       cleanupCache();

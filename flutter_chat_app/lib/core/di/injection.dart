@@ -14,6 +14,9 @@ library injection;
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
@@ -242,6 +245,20 @@ Future<void> _registerExternalDependencies(Logger logger) async {
 
   if (!getIt.isRegistered<app_retry.RetryConfig>()) {
     getIt.registerSingleton<app_retry.RetryConfig>(app_retry.RetryConfig.realtime);
+  }
+
+  if (!getIt.isRegistered<FirebasePerformance>()) {
+    getIt.registerLazySingleton<FirebasePerformance>(
+        () => FirebasePerformance.instance);
+  }
+
+  if (!getIt.isRegistered<FirebaseAnalytics>()) {
+    getIt.registerLazySingleton<FirebaseAnalytics>(() => FirebaseAnalytics.instance);
+  }
+
+  if (!getIt.isRegistered<FirebaseCrashlytics>()) {
+    getIt.registerLazySingleton<FirebaseCrashlytics>(
+        () => FirebaseCrashlytics.instance);
   }
 
   if (!getIt.isRegistered<int>(instanceName: 'connectionPoolMaxPoolSize')) {

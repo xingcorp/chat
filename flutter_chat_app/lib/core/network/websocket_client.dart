@@ -110,7 +110,7 @@ class WebSocketClient {
 
   /// **Constructor**
   WebSocketClient({
-    required String serverUrl,
+    @Named('socketUrl') required String serverUrl,
     Map<String, dynamic>? options,
     RetryConfig? reconnectConfig,
   }) : _serverUrl = serverUrl,

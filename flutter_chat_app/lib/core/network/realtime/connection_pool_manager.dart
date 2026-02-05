@@ -68,10 +68,13 @@ class ConnectionPoolManager {
   /// Constructor
   ConnectionPoolManager({
     required ConnectionFactory connectionFactory,
-    int maxPoolSize = 5,
+    @Named('connectionPoolMaxPoolSize') int maxPoolSize = 5,
+    @Named('connectionPoolMaxConnectionLifetime')
     int maxConnectionLifetime = 3600000, // 1 giờ
-    int maxIdleTime = 600000, // 10 phút
+    @Named('connectionPoolMaxIdleTime') int maxIdleTime = 600000, // 10 phút
+    @Named('connectionPoolCleanupInterval')
     int cleanupInterval = 60000, // 1 phút
+    @Named('connectionPoolHealthCheckInterval')
     int healthCheckInterval = 30000, // 30 giây
   })  : _connectionFactory = connectionFactory,
         _maxPoolSize = maxPoolSize,

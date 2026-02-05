@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:hive/hive.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
@@ -53,6 +54,13 @@ class NetworkResponseCache {
   /// Khởi tạo cache
   Future<void> _initialize() async {
     try {
+      if (kIsWeb) {
+        await Hive.initFlutter();
+        _cacheBox = await Hive.openBox<String>('network_cache');
+        _cleanExpiredCache();
+        return;
+      }
+
       final appDir = await getApplicationDocumentsDirectory();
       final cacheDir = Directory('${appDir.path}/network_cache');
       

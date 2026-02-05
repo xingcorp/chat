@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -49,8 +50,13 @@ class MediaLocalDataSourceImpl implements IMediaLocalDataSource {
   final Map<String, AttachmentModel> _metadataCache = {};
   bool _metadataLoaded = false;
   
+  final Map<String, String> _webCachedPaths = {};
+  
   /// Get media cache directory
   Future<Directory> _getCacheDirectory() async {
+    if (kIsWeb) {
+      throw CacheException(message: 'Media cache directory is not available on web');
+    }
     final appDir = await getApplicationDocumentsDirectory();
     final cacheDir = Directory(path.join(appDir.path, _cacheDir));
     
@@ -70,6 +76,11 @@ class MediaLocalDataSourceImpl implements IMediaLocalDataSource {
   /// Load metadata from file
   Future<void> _loadMetadata() async {
     if (_metadataLoaded) return;
+
+    if (kIsWeb) {
+      _metadataLoaded = true;
+      return;
+    }
     
     try {
       final file = await _getMetadataFile();
@@ -89,6 +100,9 @@ class MediaLocalDataSourceImpl implements IMediaLocalDataSource {
   
   /// Save metadata to file
   Future<void> _saveMetadata() async {
+    if (kIsWeb) {
+      return;
+    }
     try {
       final file = await _getMetadataFile();
       final attachments = _metadataCache.values.toList();
@@ -131,6 +145,10 @@ class MediaLocalDataSourceImpl implements IMediaLocalDataSource {
     required String attachmentId,
     required AttachmentType type,
   }) async {
+    if (kIsWeb) {
+      _webCachedPaths[attachmentId] = sourceFilePath;
+      return sourceFilePath;
+    }
     try {
       final sourceFile = File(sourceFilePath);
       if (!await sourceFile.exists()) {
@@ -154,6 +172,9 @@ class MediaLocalDataSourceImpl implements IMediaLocalDataSource {
   
   @override
   Future<String?> getCachedMediaPath(String attachmentId) async {
+    if (kIsWeb) {
+      return _webCachedPaths[attachmentId];
+    }
     try {
       await _loadMetadata();
       
@@ -177,6 +198,11 @@ class MediaLocalDataSourceImpl implements IMediaLocalDataSource {
   
   @override
   Future<void> deleteCachedMedia(String attachmentId) async {
+    if (kIsWeb) {
+      _webCachedPaths.remove(attachmentId);
+      _metadataCache.remove(attachmentId);
+      return;
+    }
     try {
       await _loadMetadata();
       
@@ -201,6 +227,11 @@ class MediaLocalDataSourceImpl implements IMediaLocalDataSource {
   
   @override
   Future<void> clearMediaCache() async {
+    if (kIsWeb) {
+      _webCachedPaths.clear();
+      _metadataCache.clear();
+      return;
+    }
     try {
       final cacheDir = await _getCacheDirectory();
       
@@ -218,6 +249,9 @@ class MediaLocalDataSourceImpl implements IMediaLocalDataSource {
   
   @override
   Future<int> getCacheSize() async {
+    if (kIsWeb) {
+      return 0;
+    }
     try {
       final cacheDir = await _getCacheDirectory();
       
@@ -240,6 +274,9 @@ class MediaLocalDataSourceImpl implements IMediaLocalDataSource {
   
   @override
   Future<bool> isMediaCached(String attachmentId) async {
+    if (kIsWeb) {
+      return _webCachedPaths.containsKey(attachmentId);
+    }
     final cachedPath = await getCachedMediaPath(attachmentId);
     return cachedPath != null;
   }

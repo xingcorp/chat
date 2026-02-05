@@ -29,7 +29,7 @@ import 'package:video_compress/video_compress.dart';
 /// 
 /// For media processing (compression, thumbnails), use `MediaProcessingService`.
 @Deprecated('Use MediaRepository instead. Will be removed in v2.0.0')
-@singleton
+@lazySingleton
 class MediaCacheManager {
   /// Singleton instance
   static final MediaCacheManager _instance = MediaCacheManager._internal();
@@ -114,6 +114,9 @@ class MediaCacheManager {
     int? height,
     bool useIsolate = true,
   }) async {
+    if (kIsWeb) {
+      return _cacheManager.getMediaFile(url);
+    }
     // Tạo key dựa vào URL và kích thước yêu cầu
     final cacheKey = _generateCacheKey(url, width, height);
     
@@ -134,15 +137,15 @@ class MediaCacheManager {
           width: width,
           height: height,
         );
-        
+
         // Lưu vào file tạm
         final tempDir = await getTemporaryDirectory();
         final tempFile = File('${tempDir.path}/${path.basename(cacheKey)}');
         await tempFile.writeAsBytes(optimizedBytes);
-        
+
         // Lưu vào cache
         await _cacheManager.cacheFile(cacheKey, optimizedBytes);
-        
+
         return tempFile;
       } else {
         // Xử lý trong main thread nếu không dùng isolate
@@ -202,6 +205,9 @@ class MediaCacheManager {
     int size = thumbnailSizeMedium,
     bool useIsolate = true,
   }) async {
+    if (kIsWeb) {
+      return _cacheManager.getMediaFile(imageUrl);
+    }
     final thumbnailCacheKey = '${imageUrl}_thumb_$size';
     
     try {
@@ -220,15 +226,15 @@ class MediaCacheManager {
           originalFile.path,
           size: size,
         );
-        
+
         // Lưu vào file tạm
         final tempDir = await getTemporaryDirectory();
         final tempFile = File('${tempDir.path}/${path.basename(thumbnailCacheKey)}');
         await tempFile.writeAsBytes(thumbnailBytes);
-        
+
         // Lưu thumbnail vào cache
         await _cacheManager.cacheFile(thumbnailCacheKey, thumbnailBytes, thumbnail: true);
-        
+
         return tempFile;
       } else {
         // Xử lý trong main thread
@@ -283,6 +289,9 @@ class MediaCacheManager {
     bool preloadFullImages = false,
     bool prioritize = false,
   }) async {
+    if (kIsWeb) {
+      return;
+    }
     if (imageUrls.isEmpty) return;
     
     // Lọc bỏ các URL đã có trong hàng đợi hoặc đang được tiền tải
@@ -386,6 +395,9 @@ class MediaCacheManager {
   
   /// Tối ưu hình ảnh trước khi tải lên
   Future<File> optimizeForUpload(File imageFile, {int quality = defaultCompressQuality}) async {
+    if (kIsWeb) {
+      return imageFile;
+    }
     try {
       final targetPath = await _getTemporaryFilePath('.jpg');
       
@@ -423,6 +435,9 @@ class MediaCacheManager {
   
   /// Nén video trước khi tải lên
   Future<MediaInfo?> compressVideo(File videoFile) async {
+    if (kIsWeb) {
+      return null;
+    }
     try {
       _logger.t('Bắt đầu nén video: ${videoFile.path}');
       final info = await VideoCompress.compressVideo(
@@ -451,6 +466,9 @@ class MediaCacheManager {
   
   /// Tiền tải thumbnail cho danh sách URLs
   Future<void> prefetchThumbnails(List<String> imageUrls, {int size = thumbnailSizeSmall}) async {
+    if (kIsWeb) {
+      return;
+    }
     // Chỉ tiền tải tối đa 10 thumbnail để tránh quá tải
     final urlsToLoad = imageUrls.take(10).toList();
     
@@ -508,6 +526,10 @@ class MediaCacheManager {
   
   /// Tạo đường dẫn file tạm
   Future<String> _getTemporaryFilePath(String extension) async {
+    if (kIsWeb) {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      return 'media_$timestamp$extension';
+    }
     final tempDir = await getTemporaryDirectory();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     return path.join(tempDir.path, 'media_$timestamp$extension');
@@ -515,6 +537,9 @@ class MediaCacheManager {
   
   /// Lấy thumbnail cho video
   Future<File> getVideoThumbnail(String videoUrl, {int quality = 50}) async {
+    if (kIsWeb) {
+      return _cacheManager.getMediaFile(videoUrl);
+    }
     final thumbnailCacheKey = '${videoUrl}_video_thumb';
     
     try {

@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_chat_app/core/cache/cache_stats.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -60,17 +60,22 @@ class AppCacheManager {
     
     // Khởi tạo SharedPreferences
     _prefs = await SharedPreferences.getInstance();
-    
+
     // Khởi tạo Hive
-    final appDir = await getApplicationDocumentsDirectory();
-    final hiveCacheDir = Directory('${appDir.path}/hive_cache');
-    if (!await hiveCacheDir.exists()) {
-      await hiveCacheDir.create(recursive: true);
+    if (kIsWeb) {
+      await Hive.initFlutter();
+      _apiCacheBox = await Hive.openBox<String>('${keyPrefix}api_cache');
+    } else {
+      final appDir = await getApplicationDocumentsDirectory();
+      final hiveCacheDir = Directory('${appDir.path}/hive_cache');
+      if (!await hiveCacheDir.exists()) {
+        await hiveCacheDir.create(recursive: true);
+      }
+
+      // Đăng ký Hive adapters
+      Hive.init(hiveCacheDir.path);
+      _apiCacheBox = await Hive.openBox<String>('${keyPrefix}api_cache');
     }
-    
-    // Đăng ký Hive adapters
-    Hive.init(hiveCacheDir.path);
-    _apiCacheBox = await Hive.openBox<String>('${keyPrefix}api_cache');
     
     // Khởi tạo cache managers với config phù hợp
     _defaultCacheManager = CacheManager(
@@ -318,6 +323,20 @@ class AppCacheManager {
     int totalSize = 0;
     
     try {
+      if (kIsWeb) {
+        if (_apiCacheBox.isOpen) {
+          for (final key in _apiCacheBox.keys) {
+            final value = _apiCacheBox.get(key);
+            if (value != null) {
+              totalSize += value.length;
+            }
+          }
+        }
+
+        _logger.t('Tổng kích thước cache: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)}MB');
+        return totalSize;
+      }
+
       // Tính kích thước của cache directories
       final tempDir = await getTemporaryDirectory();
       final cacheDirs = [

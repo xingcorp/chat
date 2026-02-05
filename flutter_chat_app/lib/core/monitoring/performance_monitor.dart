@@ -53,7 +53,7 @@ const Map<TraceType, String> _traceNames = {
 };
 
 /// Performance monitoring management class
-@singleton
+@lazySingleton
 class PerformanceMonitor {
   /// Logger
   final _logger = Logger();

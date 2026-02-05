@@ -12,33 +12,20 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix(core): resolve systematic compilation errors and consolidate domain models&#10;&#10;- Restore missing `MediaCache` service with LRU memory caching and size limits&#10;- Consolidate `ChatType` and `MessageStatus` definitions into domain entities to resolve ambiguous imports&#10;- Remove redundant enum definitions in data and presentation layers (ChatType, MessageStatus, ContentType)&#10;- Fix base class imports across design system components (transitioning to consolidated `base_widget.dart`)&#10;- Implement comprehensive error resolution strategy documentation including design, requirements, and phased task plan&#10;- Add missing domain entity exports to `chat_enums.dart` for improved API ergonomics&#10;- Update data mappers and entry point files (mobile, web, desktop) with proper domain imports&#10;- Delete obsolete project hooks&#10;&#10;Files fixed/updated:&#10;- lib/core/services/media_cache.dart: New service for media caching&#10;- lib/domain/entities/chat.dart: Primary source for ChatType&#10;- lib/presentation/widgets/design_system/chat/chat_enums.dart: Export domain status&#10;- lib/data/models/chat_model.dart: Use domain ChatType&#10;- lib/presentation/widgets/chat/chat_bubble.dart: Use domain MessageStatus&#10;- Various design system widgets: Fixed base class imports&#10;&#10;Phase 1 Progress: ✅ Foundation - Missing Files and Imports resolved.">
-      <change beforePath="$PROJECT_DIR$/../.kiro/specs/error-resolution-systematic-fix/tasks.md" beforeDir="false" afterPath="$PROJECT_DIR$/../.kiro/specs/error-resolution-systematic-fix/tasks.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.flutter-plugins-dependencies" beforeDir="false" afterPath="$PROJECT_DIR$/.flutter-plugins-dependencies" afterDir="false" />
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix: update DI configuration and initialize Isar database&#10;&#10;- Updated `MediaCacheManager` to `lazySingleton` in DI&#10;- Added `instanceName` identifiers to `String` and `int` dependencies in `injection.config.dart` to resolve DI ambiguity (e.g., `socketUrl`, `authToken`, connection pool settings)&#10;- Explicitly called `Isar.initialize()` and set `IsarEngine.sqlite` in `DatabaseService`&#10;- Fixed `Isar.open` to use the SQLite engine for in-memory storage">
+      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config_subset" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config_subset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/translations/en.json" beforeDir="false" afterPath="$PROJECT_DIR$/assets/translations/en.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/translations/vi.json" beforeDir="false" afterPath="$PROJECT_DIR$/assets/translations/vi.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/constants/app_dimens.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/constants/app_dimens.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/cache/media_cache_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/cache/media_cache_manager.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/core/di/injection.config.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/injection.config.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/chat_message_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/chat_message_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/media_cache.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/media_cache.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/theme/app_theme_extensions.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/theme/app_theme_extensions.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/utils/logger.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/utils/logger.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/datasources/chat/chat_remote_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/chat/chat_remote_datasource.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/repositories/chat_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/chat_repository.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/realtime/connection_pool_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/realtime/connection_pool_manager.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/socket_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/socket_manager.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/websocket_client.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/websocket_client.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/services/realtime_connection_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/realtime_connection_service.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/l10n/app_en.arb" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/app_en.arb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/l10n/app_vi.arb" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/app_vi.arb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main_desktop.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_desktop.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main_mobile.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_mobile.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main_web.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_web.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/media/media_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/media/media_bloc.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/media/media_event.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/media/media_event.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/media/media_state.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/media/media_state.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/fix_remaining_errors.dart" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/fix_remaining_errors.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -127,23 +114,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Flutter.main_web.executor&quot;: &quot;Debug&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;consolidation/phase1-repository-unification&quot;,
-    &quot;io.flutter.reload.alreadyRun&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Volumes/DoanBHSST9/FlutterGithubOXII/chat/flutter_chat_app&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;flutter.settings&quot;,
-    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Flutter.main_web.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "refactor/feature-first",
+    "io.flutter.reload.alreadyRun": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Volumes/DoanBHSST9/FlutterGithubOXII/chat/flutter_chat_app",
+    "settings.editor.selected.configurable": "flutter.settings",
+    "show.migrate.to.gradle.popup": "false"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/docs/tempt" />
@@ -190,6 +178,17 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="flutter_chat_app" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="flutter_chat_app" />
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
     <configuration default="true" type="TestNG">
       <option name="TEST_OBJECT" value="CLASS" />
       <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%" />
@@ -215,22 +214,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00012" summary="refactor: update connectivity handling and improve performance monitoring across services">
-      <option name="closed" value="true" />
-      <created>1744797366930</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1744797366930</updated>
-    </task>
-    <task id="LOCAL-00013" summary="refactor: improve connectivity handling and enhance cache management across services">
-      <option name="closed" value="true" />
-      <created>1744802456934</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1744802456934</updated>
     </task>
     <task id="LOCAL-00014" summary="feat: add connectivity change stream and improve HTTP client configuration">
       <option name="closed" value="true" />
@@ -608,7 +591,23 @@
       <option name="project" value="LOCAL" />
       <updated>1769761586267</updated>
     </task>
-    <option name="localTasksCounter" value="61" />
+    <task id="LOCAL-00061" summary="fix(core): resolve systematic compilation errors and consolidate domain models&#10;&#10;- Restore missing `MediaCache` service with LRU memory caching and size limits&#10;- Consolidate `ChatType` and `MessageStatus` definitions into domain entities to resolve ambiguous imports&#10;- Remove redundant enum definitions in data and presentation layers (ChatType, MessageStatus, ContentType)&#10;- Fix base class imports across design system components (transitioning to consolidated `base_widget.dart`)&#10;- Implement comprehensive error resolution strategy documentation including design, requirements, and phased task plan&#10;- Add missing domain entity exports to `chat_enums.dart` for improved API ergonomics&#10;- Update data mappers and entry point files (mobile, web, desktop) with proper domain imports&#10;- Delete obsolete project hooks&#10;&#10;Files fixed/updated:&#10;- lib/core/services/media_cache.dart: New service for media caching&#10;- lib/domain/entities/chat.dart: Primary source for ChatType&#10;- lib/presentation/widgets/design_system/chat/chat_enums.dart: Export domain status&#10;- lib/data/models/chat_model.dart: Use domain ChatType&#10;- lib/presentation/widgets/chat/chat_bubble.dart: Use domain MessageStatus&#10;- Various design system widgets: Fixed base class imports&#10;&#10;Phase 1 Progress: ✅ Foundation - Missing Files and Imports resolved.">
+      <option name="closed" value="true" />
+      <created>1770205433187</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1770205433187</updated>
+    </task>
+    <task id="LOCAL-00062" summary="fix: update DI configuration and initialize Isar database&#10;&#10;- Updated `MediaCacheManager` to `lazySingleton` in DI&#10;- Added `instanceName` identifiers to `String` and `int` dependencies in `injection.config.dart` to resolve DI ambiguity (e.g., `socketUrl`, `authToken`, connection pool settings)&#10;- Explicitly called `Isar.initialize()` and set `IsarEngine.sqlite` in `DatabaseService`&#10;- Fixed `Isar.open` to use the SQLite engine for in-memory storage">
+      <option name="closed" value="true" />
+      <created>1770207847424</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1770207847424</updated>
+    </task>
+    <option name="localTasksCounter" value="63" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -705,7 +704,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: enhance localization support with new service patterns, utilities, and error handling guidelines" />
     <MESSAGE value="add rules" />
     <MESSAGE value="fix multi" />
     <MESSAGE value="run done" />
@@ -730,7 +728,8 @@
     <MESSAGE value="fix 5" />
     <MESSAGE value="fix 6" />
     <MESSAGE value="fix(core): resolve systematic compilation errors and consolidate domain models&#10;&#10;- Restore missing `MediaCache` service with LRU memory caching and size limits&#10;- Consolidate `ChatType` and `MessageStatus` definitions into domain entities to resolve ambiguous imports&#10;- Remove redundant enum definitions in data and presentation layers (ChatType, MessageStatus, ContentType)&#10;- Fix base class imports across design system components (transitioning to consolidated `base_widget.dart`)&#10;- Implement comprehensive error resolution strategy documentation including design, requirements, and phased task plan&#10;- Add missing domain entity exports to `chat_enums.dart` for improved API ergonomics&#10;- Update data mappers and entry point files (mobile, web, desktop) with proper domain imports&#10;- Delete obsolete project hooks&#10;&#10;Files fixed/updated:&#10;- lib/core/services/media_cache.dart: New service for media caching&#10;- lib/domain/entities/chat.dart: Primary source for ChatType&#10;- lib/presentation/widgets/design_system/chat/chat_enums.dart: Export domain status&#10;- lib/data/models/chat_model.dart: Use domain ChatType&#10;- lib/presentation/widgets/chat/chat_bubble.dart: Use domain MessageStatus&#10;- Various design system widgets: Fixed base class imports&#10;&#10;Phase 1 Progress: ✅ Foundation - Missing Files and Imports resolved." />
-    <option name="LAST_COMMIT_MESSAGE" value="fix(core): resolve systematic compilation errors and consolidate domain models&#10;&#10;- Restore missing `MediaCache` service with LRU memory caching and size limits&#10;- Consolidate `ChatType` and `MessageStatus` definitions into domain entities to resolve ambiguous imports&#10;- Remove redundant enum definitions in data and presentation layers (ChatType, MessageStatus, ContentType)&#10;- Fix base class imports across design system components (transitioning to consolidated `base_widget.dart`)&#10;- Implement comprehensive error resolution strategy documentation including design, requirements, and phased task plan&#10;- Add missing domain entity exports to `chat_enums.dart` for improved API ergonomics&#10;- Update data mappers and entry point files (mobile, web, desktop) with proper domain imports&#10;- Delete obsolete project hooks&#10;&#10;Files fixed/updated:&#10;- lib/core/services/media_cache.dart: New service for media caching&#10;- lib/domain/entities/chat.dart: Primary source for ChatType&#10;- lib/presentation/widgets/design_system/chat/chat_enums.dart: Export domain status&#10;- lib/data/models/chat_model.dart: Use domain ChatType&#10;- lib/presentation/widgets/chat/chat_bubble.dart: Use domain MessageStatus&#10;- Various design system widgets: Fixed base class imports&#10;&#10;Phase 1 Progress: ✅ Foundation - Missing Files and Imports resolved." />
+    <MESSAGE value="fix: update DI configuration and initialize Isar database&#10;&#10;- Updated `MediaCacheManager` to `lazySingleton` in DI&#10;- Added `instanceName` identifiers to `String` and `int` dependencies in `injection.config.dart` to resolve DI ambiguity (e.g., `socketUrl`, `authToken`, connection pool settings)&#10;- Explicitly called `Isar.initialize()` and set `IsarEngine.sqlite` in `DatabaseService`&#10;- Fixed `Isar.open` to use the SQLite engine for in-memory storage" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: update DI configuration and initialize Isar database&#10;&#10;- Updated `MediaCacheManager` to `lazySingleton` in DI&#10;- Added `instanceName` identifiers to `String` and `int` dependencies in `injection.config.dart` to resolve DI ambiguity (e.g., `socketUrl`, `authToken`, connection pool settings)&#10;- Explicitly called `Isar.initialize()` and set `IsarEngine.sqlite` in `DatabaseService`&#10;- Fixed `Isar.open` to use the SQLite engine for in-memory storage" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
