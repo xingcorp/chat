@@ -14,6 +14,7 @@ import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/services/permissions_service.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/shared/domain/entities/permission_entity.dart';
+import 'package:rxdart/rxdart.dart';
 
 // Events
 abstract class PermissionsEvent extends Equatable {
@@ -38,6 +39,15 @@ class PermissionsCheckEvent extends PermissionsEvent {
 
 class PermissionsCheckAllEvent extends PermissionsEvent {
   const PermissionsCheckAllEvent();
+}
+
+class PermissionsStreamUpdatedEvent extends PermissionsEvent {
+  const PermissionsStreamUpdatedEvent(this.permissions);
+
+  final Map<PermissionType, PermissionEntity> permissions;
+
+  @override
+  List<Object?> get props => [permissions];
 }
 
 class PermissionsRequestEvent extends PermissionsEvent {
@@ -184,26 +194,26 @@ class PermissionsBloc extends Bloc<PermissionsEvent, PermissionsState> {
     on<PermissionsInitializeEvent>(_onInitialize);
     on<PermissionsCheckEvent>(_onCheck);
     on<PermissionsCheckAllEvent>(_onCheckAll);
+    on<PermissionsStreamUpdatedEvent>(_onStreamUpdated);
     on<PermissionsRequestEvent>(_onRequest);
     on<PermissionsRequestBatchEvent>(_onRequestBatch);
     on<PermissionsOpenSettingsEvent>(_onOpenSettings);
     on<PermissionsResetEvent>(_onReset);
     
     // Listen to permissions service stream
-    _permissionsSubscription = _permissionsService.permissionsStream.listen(
-      (permissions) {
-        if (state is! PermissionsRequestingState && 
-            state is! PermissionsRequestBatchingState) {
-          add(const PermissionsCheckAllEvent());
-        }
-      },
-    );
+    _permissionsSubscription = _permissionsService.permissionsStream
+        .debounceTime(const Duration(milliseconds: 300))
+        .listen((permissions) {
+      add(PermissionsStreamUpdatedEvent(permissions));
+    });
   }
 
   final PermissionsService _permissionsService;
   final AppLogger _logger;
   
   StreamSubscription<Map<PermissionType, PermissionEntity>>? _permissionsSubscription;
+  bool _isCheckingAll = false;
+  int? _lastPermissionsSignature;
 
   Future<void> _onInitialize(
     PermissionsInitializeEvent event,
@@ -213,9 +223,7 @@ class PermissionsBloc extends Bloc<PermissionsEvent, PermissionsState> {
       emit(const PermissionsLoadingState());
       
       await _permissionsService.initialize();
-      
-      // Load current permissions
-      add(const PermissionsCheckAllEvent());
+      // Permissions will be pushed via permissionsStream.
       
     } catch (e) {
       _logger.error('Error initializing permissions: $e');
@@ -224,6 +232,25 @@ class PermissionsBloc extends Bloc<PermissionsEvent, PermissionsState> {
         currentPermissions: const {},
       ));
     }
+  }
+
+  Future<void> _onStreamUpdated(
+    PermissionsStreamUpdatedEvent event,
+    Emitter<PermissionsState> emit,
+  ) async {
+    if (state is PermissionsRequestingState) return;
+    if (state is PermissionsRequestBatchingState) return;
+
+    final signature = _computePermissionsSignature(event.permissions);
+    if (_lastPermissionsSignature == signature && state is PermissionsLoadedState) {
+      return;
+    }
+    _lastPermissionsSignature = signature;
+
+    emit(PermissionsLoadedState(
+      permissions: event.permissions,
+      summary: _buildSummary(event.permissions),
+    ));
   }
 
   Future<void> _onCheck(
@@ -259,8 +286,9 @@ class PermissionsBloc extends Bloc<PermissionsEvent, PermissionsState> {
     Emitter<PermissionsState> emit,
   ) async {
     try {
-      final summary = await _permissionsService.getPermissionSummary();
-      
+      if (_isCheckingAll) return;
+      _isCheckingAll = true;
+
       // Get all permissions
       const allTypes = PermissionType.values;
       final permissions = <PermissionType, PermissionEntity>{};
@@ -271,7 +299,7 @@ class PermissionsBloc extends Bloc<PermissionsEvent, PermissionsState> {
       
       emit(PermissionsLoadedState(
         permissions: permissions,
-        summary: summary,
+        summary: _buildSummary(permissions),
       ));
       
     } catch (e) {
@@ -280,7 +308,63 @@ class PermissionsBloc extends Bloc<PermissionsEvent, PermissionsState> {
         message: 'Không thể kiểm tra permissions: $e',
         currentPermissions: _getCurrentPermissions(),
       ));
+    } finally {
+      _isCheckingAll = false;
     }
+  }
+
+  int _computePermissionsSignature(Map<PermissionType, PermissionEntity> permissions) {
+    final entries = permissions.entries.toList()
+      ..sort((a, b) => a.key.index.compareTo(b.key.index));
+    return entries.fold<int>(0, (acc, e) {
+      // Stable-ish hash from type + status
+      return acc ^ ((e.key.index + 1) * 31) ^ ((e.value.status.index + 1) * 131);
+    });
+  }
+
+  PermissionStatusSummary _buildSummary(Map<PermissionType, PermissionEntity> permissions) {
+    final granted = <PermissionType>[];
+    final denied = <PermissionType>[];
+    final permanentlyDenied = <PermissionType>[];
+    final critical = <PermissionType>[];
+    final important = <PermissionType>[];
+    final optional = <PermissionType>[];
+
+    for (final entry in permissions.entries) {
+      final type = entry.key;
+      final permission = entry.value;
+
+      if (permission.isGranted) {
+        granted.add(type);
+      } else if (permission.isPermanentlyDenied) {
+        permanentlyDenied.add(type);
+      } else {
+        denied.add(type);
+      }
+
+      switch (permission.priority) {
+        case PermissionPriority.critical:
+          critical.add(type);
+          break;
+        case PermissionPriority.important:
+          important.add(type);
+          break;
+        case PermissionPriority.optional:
+          optional.add(type);
+          break;
+      }
+    }
+
+    return PermissionStatusSummary(
+      granted: granted,
+      denied: denied,
+      permanentlyDenied: permanentlyDenied,
+      critical: critical,
+      important: important,
+      optional: optional,
+      allCriticalGranted: critical.every((type) => granted.contains(type)),
+      allImportantGranted: important.every((type) => granted.contains(type)),
+    );
   }
 
   Future<void> _onRequest(

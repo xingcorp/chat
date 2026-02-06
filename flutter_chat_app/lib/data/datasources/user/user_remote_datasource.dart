@@ -46,7 +46,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
           displayName
           email
           bio
-          avatarUrl
+          avatar { location }
           isOnline
           lastSeen
           createdAt
@@ -72,7 +72,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
           username
           displayName
           bio
-          avatarUrl
+          avatar { location }
           isOnline
           lastSeen
           createdAt
@@ -98,7 +98,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
           id
           username
           displayName
-          avatarUrl
+          avatar { location }
           isOnline
           lastSeen
         }
@@ -124,7 +124,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
           id
           username
           displayName
-          avatarUrl
+          avatar { location }
           isOnline
           lastSeen
         }
@@ -172,7 +172,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
           displayName
           email
           bio
-          avatarUrl
+          avatar { location }
           isOnline
           lastSeen
           createdAt

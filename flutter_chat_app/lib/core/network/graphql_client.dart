@@ -3,6 +3,7 @@ import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:injectable/injectable.dart';
@@ -42,9 +43,15 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
   final GraphQLClient _client;
   final NetworkInfo _networkInfo;
   final TokenRepository? _tokenRepository;
+  final AppLogger _logger;
 
   /// Constructor
-  GraphQLClientWrapperImpl(this._client, this._networkInfo, [this._tokenRepository]);
+  GraphQLClientWrapperImpl(
+    this._client,
+    this._networkInfo, [
+    this._tokenRepository,
+    AppLogger? logger,
+  ]) : _logger = logger ?? AppLogger();
 
   /// Get the underlying GraphQLClient instance
   @override
@@ -142,7 +149,18 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     FetchPolicy? fetchPolicy,
     String? operationName,
   }) async {
+    final op = operationName ?? 'UnnamedQuery';
+    final endpoint = dotenv.env['GRAPHQL_API_URL'] ?? '${AppConstants.apiBaseUrl}/graphql';
+    final stopwatch = Stopwatch()..start();
+
     if (!await _networkInfo.isConnected) {
+      _logger.warning(
+        'GraphQL query blocked: no internet',
+        {
+          'operation': op,
+          'endpoint': endpoint,
+        },
+      );
       throw app_exceptions.NoInternetException();
     }
 
@@ -154,12 +172,43 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     );
 
     try {
-      return await _queryWithRetry(options);
+      _logger.debug(
+        'GraphQL query start',
+        {
+          'operation': op,
+          'endpoint': endpoint,
+          'hasVariables': (variables ?? {}).isNotEmpty,
+        },
+      );
+
+      final data = await _queryWithRetry(options);
+      stopwatch.stop();
+      _logger.debug(
+        'GraphQL query success',
+        {
+          'operation': op,
+          'endpoint': endpoint,
+          'durationMs': stopwatch.elapsedMilliseconds,
+        },
+      );
+      return data;
     } on app_exceptions.NoInternetException {
+      stopwatch.stop();
       rethrow;
     } on app_exceptions.AuthException {
+      stopwatch.stop();
       rethrow;
     } catch (e) {
+      stopwatch.stop();
+      _logger.error(
+        'GraphQL query failed',
+        {
+          'operation': op,
+          'endpoint': endpoint,
+          'durationMs': stopwatch.elapsedMilliseconds,
+          'error': e.toString(),
+        },
+      );
       throw app_exceptions.ServerException(message: e.toString());
     }
   }
@@ -197,7 +246,18 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     FetchPolicy? fetchPolicy,
     String? operationName,
   }) async {
+    final op = operationName ?? 'UnnamedMutation';
+    final endpoint = dotenv.env['GRAPHQL_API_URL'] ?? '${AppConstants.apiBaseUrl}/graphql';
+    final stopwatch = Stopwatch()..start();
+
     if (!await _networkInfo.isConnected) {
+      _logger.warning(
+        'GraphQL mutation blocked: no internet',
+        {
+          'operation': op,
+          'endpoint': endpoint,
+        },
+      );
       throw app_exceptions.NoInternetException();
     }
 
@@ -209,12 +269,43 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     );
 
     try {
-      return await _mutateWithRetry(options);
+      _logger.debug(
+        'GraphQL mutation start',
+        {
+          'operation': op,
+          'endpoint': endpoint,
+          'hasVariables': (variables ?? {}).isNotEmpty,
+        },
+      );
+
+      final data = await _mutateWithRetry(options);
+      stopwatch.stop();
+      _logger.debug(
+        'GraphQL mutation success',
+        {
+          'operation': op,
+          'endpoint': endpoint,
+          'durationMs': stopwatch.elapsedMilliseconds,
+        },
+      );
+      return data;
     } on app_exceptions.NoInternetException {
+      stopwatch.stop();
       rethrow;
     } on app_exceptions.AuthException {
+      stopwatch.stop();
       rethrow;
     } catch (e) {
+      stopwatch.stop();
+      _logger.error(
+        'GraphQL mutation failed',
+        {
+          'operation': op,
+          'endpoint': endpoint,
+          'durationMs': stopwatch.elapsedMilliseconds,
+          'error': e.toString(),
+        },
+      );
       throw app_exceptions.ServerException(message: e.toString());
     }
   }

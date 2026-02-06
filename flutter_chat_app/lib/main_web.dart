@@ -25,6 +25,8 @@ Future<void> main() async {
   final envFileName =
       FlavorConfig.instance.isProduction ? '.env.production' : '.env.staging';
   await dotenv.load(fileName: envFileName);
+  debugPrint('Loaded env file: $envFileName');
+  debugPrint("GRAPHQL_API_URL: ${dotenv.env['GRAPHQL_API_URL']}");
   
   // Configure Enterprise dependencies
   await configureDependencies();

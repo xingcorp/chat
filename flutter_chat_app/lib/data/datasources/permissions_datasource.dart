@@ -2,7 +2,7 @@
 // Platform-specific implementation cho permissions
 // Sử dụng permission_handler package
 
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:app_settings/app_settings.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -29,15 +29,26 @@ class MobilePermissionsDataSource implements PermissionsDataSource {
   
   final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
 
+  bool get _isAndroid => defaultTargetPlatform == TargetPlatform.android;
+  bool get _isIOS => defaultTargetPlatform == TargetPlatform.iOS;
+
   @override
   Future<PermissionStatus> checkPermission(PermissionType type) async {
+    if (kIsWeb) {
+      return PermissionStatus.unknown;
+    }
+
     final permission = _mapToPermissionHandler(type);
     if (permission == null) {
       return PermissionStatus.unknown;
     }
-    
-    final status = await permission.status;
-    return _mapFromPermissionHandler(status);
+
+    try {
+      final status = await permission.status;
+      return _mapFromPermissionHandler(status);
+    } catch (_) {
+      return PermissionStatus.unknown;
+    }
   }
 
   @override
@@ -55,22 +66,30 @@ class MobilePermissionsDataSource implements PermissionsDataSource {
 
   @override
   Future<PermissionStatus> requestPermission(PermissionType type) async {
+    if (kIsWeb) {
+      return PermissionStatus.unknown;
+    }
+
     final permission = _mapToPermissionHandler(type);
     if (permission == null) {
       return PermissionStatus.unknown;
     }
     
     // Kiểm tra platform-specific requirements
-    if (Platform.isAndroid && type == PermissionType.notification) {
+    if (!kIsWeb && _isAndroid && type == PermissionType.notification) {
       final androidInfo = await _deviceInfo.androidInfo;
       if (androidInfo.version.sdkInt < 33) {
         // Android < 13 không cần request notification permission
         return PermissionStatus.granted;
       }
     }
-    
-    final status = await permission.request();
-    return _mapFromPermissionHandler(status);
+
+    try {
+      final status = await permission.request();
+      return _mapFromPermissionHandler(status);
+    } catch (_) {
+      return PermissionStatus.unknown;
+    }
   }
 
   @override
@@ -107,10 +126,14 @@ class MobilePermissionsDataSource implements PermissionsDataSource {
   @override
   Future<bool> openAppSettings() async {
     try {
-      if (Platform.isAndroid) {
+      if (kIsWeb) {
+        return false;
+      }
+
+      if (_isAndroid) {
         await AppSettings.openAppSettings();
         return true;
-      } else if (Platform.isIOS) {
+      } else if (_isIOS) {
         await AppSettings.openAppSettings();
         return true;
       }
@@ -122,18 +145,27 @@ class MobilePermissionsDataSource implements PermissionsDataSource {
 
   @override
   Future<bool> canRequestPermission(PermissionType type) async {
+    if (kIsWeb) {
+      return false;
+    }
+
     final permission = _mapToPermissionHandler(type);
     if (permission == null) return false;
-    
-    final status = await permission.status;
-    return status != ph.PermissionStatus.granted &&
-           status != ph.PermissionStatus.permanentlyDenied &&
-           status != ph.PermissionStatus.restricted;
+
+    try {
+      final status = await permission.status;
+      return status != ph.PermissionStatus.granted &&
+          status != ph.PermissionStatus.permanentlyDenied &&
+          status != ph.PermissionStatus.restricted;
+    } catch (_) {
+      return false;
+    }
   }
 
   @override
   Future<bool> shouldShowRequestRationale(PermissionType type) async {
-    if (!Platform.isAndroid) return false;
+    if (kIsWeb) return false;
+    if (!_isAndroid) return false;
     
     final permission = _mapToPermissionHandler(type);
     if (permission == null) return false;
@@ -143,10 +175,14 @@ class MobilePermissionsDataSource implements PermissionsDataSource {
 
   @override
   Future<bool> isPermissionSupported(PermissionType type) async {
+    if (kIsWeb) {
+      return false;
+    }
+
     // Kiểm tra platform support
-    if (Platform.isAndroid) {
+    if (_isAndroid) {
       return _isAndroidPermissionSupported(type);
-    } else if (Platform.isIOS) {
+    } else if (_isIOS) {
       return _isIOSPermissionSupported(type);
     }
     return false;
@@ -155,10 +191,14 @@ class MobilePermissionsDataSource implements PermissionsDataSource {
   @override
   Future<bool> isRunningOnEmulator() async {
     try {
-      if (Platform.isAndroid) {
+      if (kIsWeb) {
+        return false;
+      }
+
+      if (_isAndroid) {
         final androidInfo = await _deviceInfo.androidInfo;
         return !androidInfo.isPhysicalDevice;
-      } else if (Platform.isIOS) {
+      } else if (_isIOS) {
         final iosInfo = await _deviceInfo.iosInfo;
         return !iosInfo.isPhysicalDevice;
       }
@@ -170,9 +210,13 @@ class MobilePermissionsDataSource implements PermissionsDataSource {
 
   @override
   String getPlatformPermissionName(PermissionType type) {
-    if (Platform.isAndroid) {
+    if (kIsWeb) {
+      return type.name;
+    }
+
+    if (_isAndroid) {
       return _getAndroidPermissionName(type);
-    } else if (Platform.isIOS) {
+    } else if (_isIOS) {
       return _getIOSPermissionName(type);
     }
     return type.name;
@@ -186,22 +230,28 @@ class MobilePermissionsDataSource implements PermissionsDataSource {
       case PermissionType.microphone:
         return ph.Permission.microphone;
       case PermissionType.storage:
-        return Platform.isAndroid ? ph.Permission.storage : ph.Permission.photos;
+        if (kIsWeb) return null;
+        return _isAndroid ? ph.Permission.storage : ph.Permission.photos;
       case PermissionType.notification:
         return ph.Permission.notification;
       case PermissionType.contacts:
+        if (kIsWeb) return null;
         return ph.Permission.contacts;
       case PermissionType.location:
         return ph.Permission.location;
       case PermissionType.phone:
+        if (kIsWeb) return null;
         return ph.Permission.phone;
       case PermissionType.calendar:
+        if (kIsWeb) return null;
         return ph.Permission.calendarFullAccess;
       case PermissionType.sms:
+        if (kIsWeb) return null;
         return ph.Permission.sms;
       case PermissionType.biometric:
         return null; // Handled separately
       case PermissionType.bluetooth:
+        if (kIsWeb) return null;
         return ph.Permission.bluetooth;
     }
   }

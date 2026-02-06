@@ -43,8 +43,6 @@ import 'package:flutter_chat_app/core/network/realtime/models/realtime_connectio
 import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart'
     as realtime;
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
-import 'package:flutter_chat_app/data/services/graphql/graphql_client_wrapper.dart'
-    as legacy_graphql;
 import 'package:flutter_chat_app/features/auth/data/datasources/auth/auth_remote_datasource.dart'
     as auth_ds;
 import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart'
@@ -53,6 +51,8 @@ import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.da
     as user_remote_ds;
 import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.dart'
     as media_local_ds;
+import 'package:flutter_chat_app/data/datasources/permissions_datasource.dart';
+import 'package:flutter_chat_app/data/datasources/permissions/web_permissions_datasource.dart';
 
 import 'injection.config.dart';
 import 'modules/core_module.dart';
@@ -101,6 +101,15 @@ Future<void> configureDependencies() async {
 
     // Step 3: Initialize auto-generated dependencies (feature services)
     getIt.init();
+
+    if (kIsWeb) {
+      if (getIt.isRegistered<PermissionsDataSource>()) {
+        await getIt.unregister<PermissionsDataSource>();
+      }
+      getIt.registerLazySingleton<PermissionsDataSource>(
+        () => WebPermissionsDataSource(),
+      );
+    }
 
     if (!getIt.isRegistered<auth_ds.AuthRemoteDataSource>()) {
       getIt.registerLazySingleton<auth_ds.AuthRemoteDataSource>(
@@ -203,8 +212,11 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   }
 
   if (!getIt.isRegistered<token_module.TokenStorage>()) {
+    final prefs = getIt<SharedPreferences>();
     getIt.registerSingleton<token_module.TokenStorage>(
-      token_module.SecureTokenStorage(getIt<SecureStorage>()),
+      kIsWeb
+          ? token_module.SharedPreferencesTokenStorage(prefs)
+          : token_module.SecureTokenStorage(getIt<SecureStorage>()),
     );
   }
 
@@ -257,6 +269,15 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   final socketUrl = socketUrlRaw.isNotEmpty
       ? socketUrlRaw
       : 'ws://localhost:3000';
+
+  logger.i('Resolved endpoints (dotenv):');
+  logger.i('  API_BASE_URL=$apiBaseUrl');
+  logger.i('  GRAPHQL_API_URL(raw)=$graphQlApiUrlRaw');
+  logger.i('  GRAPHQL_WS_URL(raw)=$graphQlWsUrlRaw');
+  logger.i('  SOCKET_URL(raw)=$socketUrlRaw');
+  logger.i('  graphQlApiUrl=$graphQlApiUrl');
+  logger.i('  graphQlWsUrl=$graphQlWsUrl');
+  logger.i('  socketUrl=$socketUrl');
 
   if (!getIt.isRegistered<String>(instanceName: 'socketUrl')) {
     getIt.registerSingleton<String>(socketUrl, instanceName: 'socketUrl');
@@ -325,32 +346,21 @@ Future<void> _registerExternalDependencies(Logger logger) async {
         () async => getIt<realtime.IRealtimeConnectionService>());
   }
 
+  final authToken =
+      ((await getIt<token_module.TokenRepository>().getAccessToken()) ?? '')
+          .trim();
+
+  if (!getIt.isRegistered<String>(instanceName: 'authToken')) {
+    getIt.registerSingleton<String>(authToken, instanceName: 'authToken');
+  }
+
   if (!getIt.isRegistered<GraphQLClient>()) {
+    // Create a GraphQL client with the current token
     final client = await core_graphql.GraphQLClientWrapperImpl.createClient(
       accessTokenProvider:
           () => getIt<token_module.TokenRepository>().getAccessToken(),
     );
     getIt.registerSingleton<GraphQLClient>(client);
-  }
-
-  if (!getIt.isRegistered<legacy_graphql.GraphQLClientWrapper>()) {
-    final prefs = getIt<SharedPreferences>();
-    final endpoint = graphQlApiUrl.isNotEmpty
-        ? graphQlApiUrl
-        : (apiBaseUrl.isNotEmpty ? '$apiBaseUrl/graphql' : 'http://localhost:3000/graphql');
-    final wrapper = await legacy_graphql.GraphQLClientWrapper.create(
-      endpoint: endpoint,
-      preferences: prefs,
-      secureStorage: getIt<SecureStorage>(),
-    );
-    getIt.registerSingleton<legacy_graphql.GraphQLClientWrapper>(wrapper);
-  }
-
-  final authToken = ((await getIt<token_module.TokenRepository>().getAccessToken()) ?? '')
-      .trim();
-
-  if (!getIt.isRegistered<String>(instanceName: 'authToken')) {
-    getIt.registerSingleton<String>(authToken, instanceName: 'authToken');
   }
 
   if (!getIt.isRegistered<realtime_models.RealtimeConnectionConfig>()) {

@@ -47,7 +47,7 @@ class ChatQueries {
           creator {
             id
             fullname
-            avatarUrl
+            avatar { location }
           }
           members {
             id
@@ -60,7 +60,7 @@ class ChatQueries {
             user {
               id
               fullname
-              avatarUrl
+              avatar { location }
               email
             }
           }
@@ -100,7 +100,7 @@ class ChatQueries {
         creator {
           id
           fullname
-          avatarUrl
+          avatar { location }
         }
         members {
           id
@@ -113,7 +113,7 @@ class ChatQueries {
           user {
             id
             fullname
-            avatarUrl
+            avatar { location }
             email
           }
         }
@@ -159,7 +159,7 @@ class ChatQueries {
             sender {
               id
               fullname
-              avatarUrl
+              avatar { location }
             }
           }
           forwardedFromMessageId
@@ -168,7 +168,7 @@ class ChatQueries {
           sender {
             id
             fullname
-            avatarUrl
+            avatar { location }
           }
           conversationId
           readerIds
@@ -217,7 +217,7 @@ class ChatQueries {
         sender {
           id
           fullname
-          avatarUrl
+          avatar { location }
         }
         conversationId
       }
@@ -255,7 +255,7 @@ class ChatMutations {
         creator {
           id
           fullname
-          avatarUrl
+          avatar { location }
         }
         members {
           id
@@ -264,7 +264,7 @@ class ChatMutations {
           user {
             id
             fullname
-            avatarUrl
+            avatar { location }
           }
         }
       }
@@ -303,7 +303,7 @@ class ChatMutations {
           user {
             id
             fullname
-            avatarUrl
+            avatar { location }
           }
         }
       }
@@ -375,7 +375,7 @@ class ChatMutations {
         sender {
           id
           fullname
-          avatarUrl
+          avatar { location }
         }
         conversationId
         replyMessageId
@@ -502,7 +502,7 @@ class ChatSubscriptions {
         sender {
           id
           fullname
-          avatarUrl
+          avatar { location }
         }
         conversationId
       }

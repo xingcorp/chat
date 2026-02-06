@@ -12,15 +12,23 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix(di): register user and media data sources&#10;&#10;- Explicitly register `UserLocalDataSource`, `UserRemoteDataSource`, and `IMediaLocalDataSource` as lazy singletons in the DI container&#10;- Add necessary imports for user and media data source implementations&#10;- Implement manual registration checks to ensure singleton instances are only registered if not already present&#10;&#10;Files updated:&#10;- lib/core/di/injection.dart: Added manual DI registrations for user and media data sources">
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat(auth): transition authentication from email to phone-based login&#10;&#10;- Replace `email` with `phone` across authentication layers including `AuthRepository`, `AuthRemoteDataSource`, and `AuthUseCase`&#10;- Update GraphQL mutation to use `identityOfficeLogin` with `UserLoginArgs` (phone/password)&#10;- Refactor `AuthLoginRequested` event and `LoginParams` to utilize `phone` instead of `email`&#10;- Update `LoginPage` UI to include phone-specific input field and keyboard type&#10;- Remove email format validation logic in favor of phone-based validation&#10;- Enhance `UserModel` mapping to handle complex `avatar` objects from the backend response&#10;&#10;Files updated:&#10;- lib/features/auth/data/datasources/auth/auth_remote_datasource.dart&#10;- lib/features/auth/data/repositories/auth_repository_impl.dart&#10;- lib/features/auth/domain/repositories/auth_repository.dart&#10;- lib/features/auth/domain/usecases/auth/login_usecase.dart&#10;- lib/features/auth/presentation/blocs/auth/auth_bloc.dart&#10;- lib/features/auth/presentation/blocs/auth/auth_event.dart&#10;- lib/features/auth/presentation/pages/auth/login_page.dart">
+      <change beforePath="$PROJECT_DIR$/.env.staging" beforeDir="false" afterPath="$PROJECT_DIR$/.env.staging" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/di/injection.config.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/injection.config.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/di/injection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/injection.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/auth/token_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/auth/token_repository.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/graphql_client.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/graphql_client.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/datasources/permissions_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/permissions_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/datasources/user/user_remote_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/datasources/user/user_remote_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/graphql/chat_operations.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/graphql/chat_operations.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/models/user_model.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/models/user_model.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/services/graphql/graphql_client_wrapper.dart" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/features/auth/data/datasources/auth/auth_remote_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/data/datasources/auth/auth_remote_datasource.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/auth/data/repositories/auth_repository_impl.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/data/repositories/auth_repository_impl.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/auth/domain/repositories/auth_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/domain/repositories/auth_repository.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/auth/domain/usecases/auth/login_usecase.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/domain/usecases/auth/login_usecase.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/auth/presentation/blocs/auth/auth_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/presentation/blocs/auth/auth_bloc.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/auth/presentation/blocs/auth/auth_event.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/presentation/blocs/auth/auth_event.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/auth/presentation/pages/auth/login_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/presentation/pages/auth/login_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/data/datasources/chat/chat_remote_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/data/datasources/chat/chat_remote_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main_web.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_web.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/permissions/permissions_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/permissions/permissions_bloc.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -162,8 +170,9 @@
       <method v="2" />
     </configuration>
     <configuration name="main_web" type="FlutterRunConfigurationType" factoryName="Flutter">
-      <option name="additionalArgs" value="--web-hostname=localhost --web-port=8080 --web-browser-flag &quot;--disable-web-security&quot;" />
-      <option name="filePath" value="$PROJECT_DIR$/lib/main.dart" />
+      <option name="additionalArgs" value="--web-hostname=localhost --dart-define=FLAVOR=staging --web-port=8080 --web-browser-flag &quot;--disable-web-security&quot;" />
+      <option name="buildFlavor" value="staging" />
+      <option name="filePath" value="$PROJECT_DIR$/lib/main_web.dart" />
       <method v="2" />
     </configuration>
     <configuration default="true" type="JUnit" factoryName="JUnit">
@@ -209,14 +218,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00021" summary="feat: add comprehensive error handling and security guidelines to improve code quality and consistency">
-      <option name="closed" value="true" />
-      <created>1746673214543</created>
-      <option name="number" value="00021" />
-      <option name="presentableId" value="LOCAL-00021" />
-      <option name="project" value="LOCAL" />
-      <updated>1746673214543</updated>
     </task>
     <task id="LOCAL-00022" summary="feat: add comprehensive guidelines for AI readiness, media handling, offline sync, real-time messaging, and worker pool scaling">
       <option name="closed" value="true" />
@@ -602,7 +603,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770350533669</updated>
     </task>
-    <option name="localTasksCounter" value="70" />
+    <task id="LOCAL-00070" summary="feat(auth): transition authentication from email to phone-based login&#10;&#10;- Replace `email` with `phone` across authentication layers including `AuthRepository`, `AuthRemoteDataSource`, and `AuthUseCase`&#10;- Update GraphQL mutation to use `identityOfficeLogin` with `UserLoginArgs` (phone/password)&#10;- Refactor `AuthLoginRequested` event and `LoginParams` to utilize `phone` instead of `email`&#10;- Update `LoginPage` UI to include phone-specific input field and keyboard type&#10;- Remove email format validation logic in favor of phone-based validation&#10;- Enhance `UserModel` mapping to handle complex `avatar` objects from the backend response&#10;&#10;Files updated:&#10;- lib/features/auth/data/datasources/auth/auth_remote_datasource.dart&#10;- lib/features/auth/data/repositories/auth_repository_impl.dart&#10;- lib/features/auth/domain/repositories/auth_repository.dart&#10;- lib/features/auth/domain/usecases/auth/login_usecase.dart&#10;- lib/features/auth/presentation/blocs/auth/auth_bloc.dart&#10;- lib/features/auth/presentation/blocs/auth/auth_event.dart&#10;- lib/features/auth/presentation/pages/auth/login_page.dart">
+      <option name="closed" value="true" />
+      <created>1770371300173</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
+      <option name="project" value="LOCAL" />
+      <updated>1770371300173</updated>
+    </task>
+    <option name="localTasksCounter" value="71" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -699,7 +708,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix bug 4" />
     <MESSAGE value="fix bug 5" />
     <MESSAGE value="fix bug 6" />
     <MESSAGE value="fix bug 7" />
@@ -724,7 +732,8 @@
     <MESSAGE value="fix(web): improve scrolling and layout responsiveness in web home screen&#10;&#10;- Wrap main content in `LayoutBuilder`, `SingleChildScrollView`, and `ConstrainedBox` to prevent overflow and ensure vertical scrollability&#10;- Wrap right panel in `SingleChildScrollView` to handle content overflow in the sidebar&#10;- Center main content vertically within the available viewport space" />
     <MESSAGE value="feat: implement GoRouter navigation with centralized auth state management&#10;&#10;- Replace manual navigation with `GoRouter` using a `refreshListenable` to reactively handle authentication and onboarding state changes&#10;- Transition `MaterialApp` to `MaterialApp.router` and implement a unified redirection logic in `AppRouter`&#10;- Update `AuthRepositoryImpl` to determine login status via access tokens instead of local user objects&#10;- Enhance `AuthBloc` to trigger `AuthCheckRequested` on app start and emit `AuthError` with metadata for failed login attempts&#10;- Refactor `LoginPage` into a `StatefulWidget` with form controllers, loading states, and Bloc integration&#10;- Update dependency injection to explicitly register `AuthRemoteDataSource`&#10;- Connect `PermissionsOnboardingPage` completion to `AuthBloc` via `AuthOnboardingCompleted` event&#10;- Centralize app entry point in `main.dart` with necessary providers for `AuthBloc`, `PermissionsBloc`, and theme/locale cubits&#10;&#10;Files updated:&#10;- lib/config/route/app_router.dart: New router configuration with auth-based redirection&#10;- lib/features/auth/data/repositories/auth_repository_impl.dart: Token-based auth check&#10;- lib/features/auth/presentation/blocs/auth/auth_bloc.dart: Improved error handling and check logic&#10;- lib/features/auth/presentation/pages/auth/login_page.dart: UI and Bloc integration&#10;- lib/main.dart: Router initialization and provider setup&#10;- lib/presentation/pages/permissions/permissions_onboarding_page.dart: Navigation fix&#10;- lib/core/di/injection.dart: DI registration updates" />
     <MESSAGE value="fix(di): register user and media data sources&#10;&#10;- Explicitly register `UserLocalDataSource`, `UserRemoteDataSource`, and `IMediaLocalDataSource` as lazy singletons in the DI container&#10;- Add necessary imports for user and media data source implementations&#10;- Implement manual registration checks to ensure singleton instances are only registered if not already present&#10;&#10;Files updated:&#10;- lib/core/di/injection.dart: Added manual DI registrations for user and media data sources" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix(di): register user and media data sources&#10;&#10;- Explicitly register `UserLocalDataSource`, `UserRemoteDataSource`, and `IMediaLocalDataSource` as lazy singletons in the DI container&#10;- Add necessary imports for user and media data source implementations&#10;- Implement manual registration checks to ensure singleton instances are only registered if not already present&#10;&#10;Files updated:&#10;- lib/core/di/injection.dart: Added manual DI registrations for user and media data sources" />
+    <MESSAGE value="feat(auth): transition authentication from email to phone-based login&#10;&#10;- Replace `email` with `phone` across authentication layers including `AuthRepository`, `AuthRemoteDataSource`, and `AuthUseCase`&#10;- Update GraphQL mutation to use `identityOfficeLogin` with `UserLoginArgs` (phone/password)&#10;- Refactor `AuthLoginRequested` event and `LoginParams` to utilize `phone` instead of `email`&#10;- Update `LoginPage` UI to include phone-specific input field and keyboard type&#10;- Remove email format validation logic in favor of phone-based validation&#10;- Enhance `UserModel` mapping to handle complex `avatar` objects from the backend response&#10;&#10;Files updated:&#10;- lib/features/auth/data/datasources/auth/auth_remote_datasource.dart&#10;- lib/features/auth/data/repositories/auth_repository_impl.dart&#10;- lib/features/auth/domain/repositories/auth_repository.dart&#10;- lib/features/auth/domain/usecases/auth/login_usecase.dart&#10;- lib/features/auth/presentation/blocs/auth/auth_bloc.dart&#10;- lib/features/auth/presentation/blocs/auth/auth_event.dart&#10;- lib/features/auth/presentation/pages/auth/login_page.dart" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(auth): transition authentication from email to phone-based login&#10;&#10;- Replace `email` with `phone` across authentication layers including `AuthRepository`, `AuthRemoteDataSource`, and `AuthUseCase`&#10;- Update GraphQL mutation to use `identityOfficeLogin` with `UserLoginArgs` (phone/password)&#10;- Refactor `AuthLoginRequested` event and `LoginParams` to utilize `phone` instead of `email`&#10;- Update `LoginPage` UI to include phone-specific input field and keyboard type&#10;- Remove email format validation logic in favor of phone-based validation&#10;- Enhance `UserModel` mapping to handle complex `avatar` objects from the backend response&#10;&#10;Files updated:&#10;- lib/features/auth/data/datasources/auth/auth_remote_datasource.dart&#10;- lib/features/auth/data/repositories/auth_repository_impl.dart&#10;- lib/features/auth/domain/repositories/auth_repository.dart&#10;- lib/features/auth/domain/usecases/auth/login_usecase.dart&#10;- lib/features/auth/presentation/blocs/auth/auth_bloc.dart&#10;- lib/features/auth/presentation/blocs/auth/auth_event.dart&#10;- lib/features/auth/presentation/pages/auth/login_page.dart" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

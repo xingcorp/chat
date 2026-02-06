@@ -1,7 +1,7 @@
 import 'package:flutter_chat_app/core/exceptions/exceptions.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
+import 'package:flutter_chat_app/core/network/graphql_client.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
-import 'package:flutter_chat_app/data/services/graphql/graphql_client_wrapper.dart';
 import 'package:injectable/injectable.dart';
 
 /// Interface for remote authentication operations
@@ -122,7 +122,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
               fullname
               phone
               email
-              avatarUrl
               avatar { location }
             }
           }
@@ -134,15 +133,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             'password': password,
           },
         },
+        operationName: 'IdentityOfficeLogin',
       );
-      
-      if (result.hasException) {
-        throw ServerException(
-          message: result.exception?.graphqlErrors.first.message ?? 'Login failed',
-        );
-      }
-      
-      final loginData = result.data?['identityOfficeLogin'] as Map<String, dynamic>?;
+
+      final loginData = result['identityOfficeLogin'] as Map<String, dynamic>?;
       if (loginData == null) {
         throw ServerException(message: 'Login failed');
       }
@@ -206,14 +200,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           },
         },
       );
-      
-      if (result.hasException) {
-        throw ServerException(
-          message: result.exception?.graphqlErrors.first.message ?? 'Registration failed',
-        );
-      }
-      
-      final registerData = result.data?['register'] as Map<String, dynamic>?;
+
+      final registerData = result['register'] as Map<String, dynamic>?;
       if (registerData == null) {
         throw ServerException(message: 'Registration failed');
       }
@@ -244,15 +232,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           logout
         }
         ''',
+        operationName: 'Logout',
       );
       
       await _tokenRepository.clear();
-      
-      if (result.hasException) {
-        return false;
-      }
-      
-      return result.data?['logout'] ?? false;
+
+      return result['logout'] == true;
     } catch (e) {
       await _tokenRepository.clear();
       return false;
@@ -271,15 +256,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         variables: {
           'email': email,
         },
+        operationName: 'ForgotPassword',
       );
-      
-      if (result.hasException) {
-        throw ServerException(
-          message: result.exception?.graphqlErrors.first.message ?? 'Failed to send reset email',
-        );
-      }
-      
-      return result.data?['forgotPassword'] ?? false;
+
+      return result['forgotPassword'] == true;
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException(message: 'Failed to send reset email: $e');
@@ -299,15 +279,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           'code': code,
           'newPassword': newPassword,
         },
+        operationName: 'ResetPassword',
       );
-      
-      if (result.hasException) {
-        throw ServerException(
-          message: result.exception?.graphqlErrors.first.message ?? 'Failed to reset password',
-        );
-      }
-      
-      return result.data?['resetPassword'] ?? false;
+
+      return result['resetPassword'] == true;
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException(message: 'Failed to reset password: $e');
@@ -330,15 +305,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           'currentPassword': currentPassword,
           'newPassword': newPassword,
         },
+        operationName: 'ChangePassword',
       );
-      
-      if (result.hasException) {
-        throw ServerException(
-          message: result.exception?.graphqlErrors.first.message ?? 'Failed to change password',
-        );
-      }
-      
-      return result.data?['changePassword'] ?? false;
+
+      return result['changePassword'] == true;
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException(message: 'Failed to change password: $e');
@@ -357,15 +327,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         variables: {
           'code': code,
         },
+        operationName: 'VerifyEmail',
       );
-      
-      if (result.hasException) {
-        throw ServerException(
-          message: result.exception?.graphqlErrors.first.message ?? 'Failed to verify email',
-        );
-      }
-      
-      return result.data?['verifyEmail'] ?? false;
+
+      return result['verifyEmail'] == true;
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException(message: 'Failed to verify email: $e');
@@ -392,19 +357,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         variables: {
           'id': userId,
         },
+        operationName: 'GetUser',
       );
-      
-      if (result.hasException) {
-        throw ServerException(
-          message: result.exception?.graphqlErrors.first.message ?? 'Failed to refresh user',
-        );
-      }
-      
-      if (result.data?['user'] == null) {
-        return null;
-      }
-      
-      final userData = result.data?['user'] as Map<String, dynamic>?;
+
+      final userData = result['user'] as Map<String, dynamic>?;
       if (userData == null) {
         return null;
       }
@@ -461,9 +417,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           variables: {
             'refreshToken': currentRefreshToken,
           },
+          operationName: 'RefreshToken',
         );
 
-        final refreshData = result.data?['refreshToken'] as Map<String, dynamic>?;
+        final refreshData = result['refreshToken'] as Map<String, dynamic>?;
         final token = await attemptStorePair(refreshData, currentRefreshToken);
         if (token != null) {
           return token;
@@ -483,9 +440,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           variables: {
             'refreshToken': currentRefreshToken,
           },
+          operationName: 'IdentityRefreshToken',
         );
 
-        final refreshData = result.data?['identityRefreshToken'] as Map<String, dynamic>?;
+        final refreshData = result['identityRefreshToken'] as Map<String, dynamic>?;
         final token = await attemptStorePair(refreshData, currentRefreshToken);
         if (token != null) {
           return token;
@@ -501,10 +459,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             }
           }
           ''',
+          operationName: 'RefreshTokenNoArgs',
         );
 
-        final token = (result.data?['refreshToken'] as Map<String, dynamic>?)?['token']
-            as String?;
+        final token = (result['refreshToken'] as Map<String, dynamic>?)?['token'] as String?;
         if (token == null || token.isEmpty) {
           return null;
         }
@@ -531,13 +489,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         variables: {
           'token': token,
         },
+        operationName: 'UpdateDeviceToken',
       );
-      
-      if (result.hasException) {
-        return false;
-      }
-      
-      return result.data?['updateDeviceToken'] ?? false;
+
+      return result['updateDeviceToken'] == true;
     } catch (e) {
       return false;
     }

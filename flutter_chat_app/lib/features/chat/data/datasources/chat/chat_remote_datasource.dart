@@ -235,6 +235,7 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     final result = await _client.query(
       ChatQueries.getConversationList,
       variables: variables,
+      operationName: 'GetConversationList',
     );
     
     final data = result['data']?['chatConversationList'] as Map<String, dynamic>?;
@@ -262,6 +263,7 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     final result = await _client.query(
       ChatQueries.getConversationDetail,
       variables: variables,
+      operationName: 'GetConversationDetail',
     );
     
     final data = result['data']?['chatConversationDetail'] as Map<String, dynamic>?;

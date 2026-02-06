@@ -70,6 +70,50 @@ class SecureTokenStorage implements TokenStorage {
   }
 }
 
+class SharedPreferencesTokenStorage implements TokenStorage {
+  final SharedPreferences _prefs;
+
+  SharedPreferencesTokenStorage(this._prefs);
+
+  @override
+  Future<String?> readAccessToken() async {
+    return _prefs.getString(StorageKeys.accessToken);
+  }
+
+  @override
+  Future<String?> readRefreshToken() async {
+    return _prefs.getString(StorageKeys.refreshToken);
+  }
+
+  @override
+  Future<void> writeAccessToken(String token) async {
+    await _prefs.setString(StorageKeys.accessToken, token);
+  }
+
+  @override
+  Future<void> writeRefreshToken(String token) async {
+    await _prefs.setString(StorageKeys.refreshToken, token);
+  }
+
+  @override
+  Future<String?> readString(String key) async {
+    return _prefs.getString(key);
+  }
+
+  @override
+  Future<void> removeKey(String key) async {
+    await _prefs.remove(key);
+  }
+
+  @override
+  Future<void> clear() async {
+    await Future.wait([
+      _prefs.remove(StorageKeys.accessToken),
+      _prefs.remove(StorageKeys.refreshToken),
+    ]);
+  }
+}
+
 abstract class TokenRepository {
   Stream<AuthTokens?> get tokensStream;
 

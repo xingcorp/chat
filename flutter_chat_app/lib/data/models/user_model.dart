@@ -55,11 +55,23 @@ class UserModel {
 
   /// Create a user from a map
   factory UserModel.fromMap(Map<String, dynamic> map) {
+    final avatarUrlRaw = map['avatarUrl'] as String?;
+    String? avatarUrl = avatarUrlRaw;
+    if (avatarUrl == null || avatarUrl.isEmpty) {
+      final avatarRaw = map['avatar'];
+      if (avatarRaw is String) {
+        avatarUrl = avatarRaw;
+      } else if (avatarRaw is Map) {
+        final location = avatarRaw['location'];
+        avatarUrl = location is String ? location : location?.toString();
+      }
+    }
+
     return UserModel(
       serverId: map['id'] as String,
       username: map['username'] as String,
       displayName: map['displayName'] as String,
-      avatarUrl: map['avatarUrl'] as String?,
+      avatarUrl: avatarUrl,
       email: map['email'] as String?,
       isOnline: map['isOnline'] as bool? ?? false,
       lastSeen: DateTime.parse(map['lastSeen'] as String),

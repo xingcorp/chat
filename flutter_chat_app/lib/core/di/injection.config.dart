@@ -33,7 +33,6 @@ import '../../data/repositories/message_repository_impl.dart' as _i564;
 import '../../data/repositories/offline_first_repository.dart' as _i264;
 import '../../data/repositories/permissions_repository_impl.dart' as _i760;
 import '../../data/repositories/user_repository_impl.dart' as _i790;
-import '../../data/services/graphql/graphql_client_wrapper.dart' as _i923;
 import '../../domain/repositories/i_attachment_repository.dart' as _i817;
 import '../../domain/repositories/i_media_repository.dart' as _i394;
 import '../../domain/repositories/i_message_repository.dart' as _i572;
@@ -210,7 +209,7 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i656.MobilePermissionsDataSource());
     gh.lazySingleton<_i1025.AuthRemoteDataSourceImpl>(
         () => _i1025.AuthRemoteDataSourceImpl(
-              gh<_i923.GraphQLClientWrapper>(),
+              gh<_i788.GraphQLClientWrapper>(),
               gh<_i328.TokenRepository>(),
             ));
     gh.lazySingleton<_i329.LocalStorage>(
