@@ -47,6 +47,12 @@ import 'package:flutter_chat_app/data/services/graphql/graphql_client_wrapper.da
     as legacy_graphql;
 import 'package:flutter_chat_app/features/auth/data/datasources/auth/auth_remote_datasource.dart'
     as auth_ds;
+import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart'
+    as user_local_ds;
+import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart'
+    as user_remote_ds;
+import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.dart'
+    as media_local_ds;
 
 import 'injection.config.dart';
 import 'modules/core_module.dart';
@@ -99,6 +105,24 @@ Future<void> configureDependencies() async {
     if (!getIt.isRegistered<auth_ds.AuthRemoteDataSource>()) {
       getIt.registerLazySingleton<auth_ds.AuthRemoteDataSource>(
         () => getIt<auth_ds.AuthRemoteDataSourceImpl>(),
+      );
+    }
+
+    if (!getIt.isRegistered<user_local_ds.UserLocalDataSource>()) {
+      getIt.registerLazySingleton<user_local_ds.UserLocalDataSource>(
+        () => getIt<user_local_ds.UserLocalDataSourceImpl>(),
+      );
+    }
+
+    if (!getIt.isRegistered<user_remote_ds.UserRemoteDataSource>()) {
+      getIt.registerLazySingleton<user_remote_ds.UserRemoteDataSource>(
+        () => getIt<user_remote_ds.UserRemoteDataSourceImpl>(),
+      );
+    }
+
+    if (!getIt.isRegistered<media_local_ds.IMediaLocalDataSource>()) {
+      getIt.registerLazySingleton<media_local_ds.IMediaLocalDataSource>(
+        () => getIt<media_local_ds.MediaLocalDataSourceImpl>(),
       );
     }
 
