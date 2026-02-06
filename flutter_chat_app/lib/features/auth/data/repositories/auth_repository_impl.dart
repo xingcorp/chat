@@ -45,9 +45,13 @@ class AuthRepositoryImpl extends BaseRepository
   Future<Either<Failure, bool>> isLoggedIn() async {
     return handleCacheOperation(
       () async {
-        // Check if there's a current user in local storage
-        final currentUser = await _userLocalDataSource.getCurrentUser();
-        final isLoggedIn = currentUser != null;
+        final token = await _authRemoteDataSource.getAccessToken();
+        final isLoggedIn = token != null && token.trim().isNotEmpty;
+
+        if (!isLoggedIn) {
+          await _userLocalDataSource.clearCurrentUser();
+        }
+
         logger.t('Login status check: $isLoggedIn');
         return isLoggedIn;
       },

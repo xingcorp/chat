@@ -13,6 +13,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
 
@@ -43,13 +44,12 @@ import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 // App imports - Presentation
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter_chat_app/main_desktop.dart' show DesktopHomeScreen;
-import 'package:flutter_chat_app/main_mobile.dart' show MobileHomeScreen;
+import 'package:flutter_chat_app/config/route/app_router.dart';
 import 'package:flutter_chat_app/presentation/blocs/app/app_bloc.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
-import 'package:flutter_chat_app/presentation/pages/home/web_home_screen.dart';
+import 'package:flutter_chat_app/presentation/blocs/permissions/permissions_bloc.dart';
 
 /// **MAIN ENTRY POINT - ENTERPRISE FLUTTER CHAT APP**
 ///
@@ -331,7 +331,7 @@ class MyApp extends BaseStatelessWidget {
           create: (context) => GetIt.I<AppBloc>(),
         ),
         BlocProvider<AuthBloc>(
-          create: (context) => GetIt.I<AuthBloc>(),
+          create: (context) => GetIt.I<AuthBloc>()..add(const AuthCheckRequested()),
         ),
         BlocProvider<LocaleCubit>(
           create: (context) => GetIt.I<LocaleCubit>(),
@@ -339,63 +339,70 @@ class MyApp extends BaseStatelessWidget {
         BlocProvider<ThemeCubit>(
           create: (context) => GetIt.I<ThemeCubit>(),
         ),
+        BlocProvider<PermissionsBloc>(
+          create: (context) => GetIt.I<PermissionsBloc>(),
+        ),
       ],
-      child: BlocBuilder<ThemeCubit, ThemeState>(
-        builder: (context, themeState) {
-          return BlocBuilder<LocaleCubit, LocaleState>(
-            builder: (context, localeState) {
-              // Initialize L10nHelper with current locale
-              l10n_helper.L10nHelper.initialize(localeState.locale ?? const Locale('en'));
-
-              return MaterialApp(
-                title: 'Flutter Chat App',
-                debugShowCheckedModeBanner: false,
-
-                // **ENTERPRISE THEME INTEGRATION**
-                theme: AppTheme.lightTheme,
-                darkTheme: AppTheme.darkTheme,
-                themeMode: themeState.themeMode, // Use enhanced ThemeCubit
-
-                // **ENTERPRISE I18N INTEGRATION**
-                locale: localeState.locale,
-                supportedLocales: L10n.all,
-                localizationsDelegates: const [
-                  AppLocalizations.delegate,
-                  GlobalMaterialLocalizations.delegate,
-                  GlobalWidgetsLocalizations.delegate,
-                  GlobalCupertinoLocalizations.delegate,
-                ],
-
-                // **RTL SUPPORT**
-                builder: (context, child) {
-                  return Directionality(
-                    textDirection: localeState.isRtl
-                        ? TextDirection.rtl
-                        : TextDirection.ltr,
-                    child: child!,
-                  );
-                },
-
-                // ... rest of your app configuration
-                home: _buildHomeScreen(),
-              );
-            },
-          );
-        },
-      ),
+      child: const _AppView(),
     );
   }
+}
 
-  Widget _buildHomeScreen() {
-    if (kIsWeb) {
-      return const WebHomeScreen();
-    } else {
-      if (Platform.isAndroid || Platform.isIOS) {
-        return const MobileHomeScreen();
-      } else {
-        return const DesktopHomeScreen();
-      }
+class _AppView extends StatefulWidget {
+  const _AppView();
+
+  @override
+  State<_AppView> createState() => _AppViewState();
+}
+
+class _AppViewState extends State<_AppView> {
+  late final GoRouter _router;
+  bool _routerInitialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_routerInitialized) {
+      _router = AppRouter.router(context);
+      _routerInitialized = true;
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        return BlocBuilder<LocaleCubit, LocaleState>(
+          builder: (context, localeState) {
+            l10n_helper.L10nHelper.initialize(localeState.locale ?? const Locale('en'));
+
+            return MaterialApp.router(
+              title: 'Flutter Chat App',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeState.themeMode,
+              locale: localeState.locale,
+              supportedLocales: L10n.all,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              builder: (context, child) {
+                return Directionality(
+                  textDirection:
+                      localeState.isRtl ? TextDirection.rtl : TextDirection.ltr,
+                  child: child!,
+                );
+              },
+              routerConfig: _router,
+            );
+          },
+        );
+      },
+    );
   }
 }
 

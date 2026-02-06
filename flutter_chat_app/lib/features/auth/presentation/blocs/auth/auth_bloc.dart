@@ -243,8 +243,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
 
     result.fold(
       (failure) {
-        // Login failed - emit unauthenticated state
-        emit(const AuthUnauthenticated.unauthenticated());
+        emit(AuthError(
+          failure: failure,
+          operation: 'login',
+          retryAction: () => add(event),
+          fieldErrors: failure is ValidationFailure ? failure.fieldErrors : null,
+        ));
       },
       (user) {
         // Login successful - save to preferences and emit authenticated state

@@ -96,6 +96,12 @@ Future<void> configureDependencies() async {
     // Step 3: Initialize auto-generated dependencies (feature services)
     getIt.init();
 
+    if (!getIt.isRegistered<auth_ds.AuthRemoteDataSource>()) {
+      getIt.registerLazySingleton<auth_ds.AuthRemoteDataSource>(
+        () => getIt<auth_ds.AuthRemoteDataSourceImpl>(),
+      );
+    }
+
     if (getIt.isRegistered<core_graphql.GraphQLClientWrapperImpl>()) {
       await getIt.unregister<core_graphql.GraphQLClientWrapperImpl>();
     }
