@@ -239,7 +239,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
     emit(const AuthLoading(operation: 'login'));
 
     // Perform login via repository
-    final result = await _authRepository.login(event.email, event.password);
+    final result = await _authRepository.login(event.phone, event.password);
 
     result.fold(
       (failure) {

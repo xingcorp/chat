@@ -15,16 +15,16 @@ import 'package:flutter_chat_app/features/auth/domain/repositories/auth_reposito
 
 /// Login use case parameters
 class LoginParams extends Equatable {
-  final String email;
+  final String phone;
   final String password;
 
   const LoginParams({
-    required this.email,
+    required this.phone,
     required this.password,
   });
 
   @override
-  List<Object> get props => [email, password];
+  List<Object> get props => [phone, password];
 }
 
 /// Login use case implementation
@@ -45,7 +45,7 @@ class LoginUseCase implements UseCase<User, LoginParams> {
     }
 
     // Attempt login through repository using Either pattern
-    final result = await repository.login(params.email, params.password);
+    final result = await repository.login(params.phone, params.password);
 
     return result.fold(
       (failure) => Result.failure(failure),
@@ -61,11 +61,9 @@ class LoginUseCase implements UseCase<User, LoginParams> {
   ValidationFailure? _validateParams(LoginParams params) {
     final errors = <String>[];
 
-    // Email validation
-    if (params.email.isEmpty) {
-      errors.add('Email không được để trống');
-    } else if (!_isValidEmail(params.email)) {
-      errors.add('Email không hợp lệ');
+    // Phone validation
+    if (params.phone.isEmpty) {
+      errors.add('Số điện thoại không được để trống');
     }
 
     // Password validation
@@ -80,11 +78,6 @@ class LoginUseCase implements UseCase<User, LoginParams> {
     }
 
     return null;
-  }
-
-  /// Validate email format
-  bool _isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
   /// Map exceptions to appropriate failures

@@ -12,8 +12,15 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix(web): improve scrolling and layout responsiveness in web home screen&#10;&#10;- Wrap main content in `LayoutBuilder`, `SingleChildScrollView`, and `ConstrainedBox` to prevent overflow and ensure vertical scrollability&#10;- Wrap right panel in `SingleChildScrollView` to handle content overflow in the sidebar&#10;- Center main content vertically within the available viewport space">
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix(di): register user and media data sources&#10;&#10;- Explicitly register `UserLocalDataSource`, `UserRemoteDataSource`, and `IMediaLocalDataSource` as lazy singletons in the DI container&#10;- Add necessary imports for user and media data source implementations&#10;- Implement manual registration checks to ensure singleton instances are only registered if not already present&#10;&#10;Files updated:&#10;- lib/core/di/injection.dart: Added manual DI registrations for user and media data sources">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/auth/data/datasources/auth/auth_remote_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/data/datasources/auth/auth_remote_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/auth/data/repositories/auth_repository_impl.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/data/repositories/auth_repository_impl.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/auth/domain/repositories/auth_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/domain/repositories/auth_repository.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/auth/domain/usecases/auth/login_usecase.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/domain/usecases/auth/login_usecase.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/auth/presentation/blocs/auth/auth_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/presentation/blocs/auth/auth_bloc.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/auth/presentation/blocs/auth/auth_event.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/presentation/blocs/auth/auth_event.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/auth/presentation/pages/auth/login_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/auth/presentation/pages/auth/login_page.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -202,22 +209,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00019" summary="feat: add core and feature layer rules to .cursor-rules.yaml for improved code quality guidelines">
-      <option name="closed" value="true" />
-      <created>1746626909796</created>
-      <option name="number" value="00019" />
-      <option name="presentableId" value="LOCAL-00019" />
-      <option name="project" value="LOCAL" />
-      <updated>1746626909796</updated>
-    </task>
-    <task id="LOCAL-00020" summary="feat: enhance clean code and optimization guidelines with additional best practices and examples">
-      <option name="closed" value="true" />
-      <created>1746672877733</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
-      <option name="project" value="LOCAL" />
-      <updated>1746672877733</updated>
     </task>
     <task id="LOCAL-00021" summary="feat: add comprehensive error handling and security guidelines to improve code quality and consistency">
       <option name="closed" value="true" />
@@ -595,7 +586,23 @@
       <option name="project" value="LOCAL" />
       <updated>1770291682315</updated>
     </task>
-    <option name="localTasksCounter" value="68" />
+    <task id="LOCAL-00068" summary="feat: implement GoRouter navigation with centralized auth state management&#10;&#10;- Replace manual navigation with `GoRouter` using a `refreshListenable` to reactively handle authentication and onboarding state changes&#10;- Transition `MaterialApp` to `MaterialApp.router` and implement a unified redirection logic in `AppRouter`&#10;- Update `AuthRepositoryImpl` to determine login status via access tokens instead of local user objects&#10;- Enhance `AuthBloc` to trigger `AuthCheckRequested` on app start and emit `AuthError` with metadata for failed login attempts&#10;- Refactor `LoginPage` into a `StatefulWidget` with form controllers, loading states, and Bloc integration&#10;- Update dependency injection to explicitly register `AuthRemoteDataSource`&#10;- Connect `PermissionsOnboardingPage` completion to `AuthBloc` via `AuthOnboardingCompleted` event&#10;- Centralize app entry point in `main.dart` with necessary providers for `AuthBloc`, `PermissionsBloc`, and theme/locale cubits&#10;&#10;Files updated:&#10;- lib/config/route/app_router.dart: New router configuration with auth-based redirection&#10;- lib/features/auth/data/repositories/auth_repository_impl.dart: Token-based auth check&#10;- lib/features/auth/presentation/blocs/auth/auth_bloc.dart: Improved error handling and check logic&#10;- lib/features/auth/presentation/pages/auth/login_page.dart: UI and Bloc integration&#10;- lib/main.dart: Router initialization and provider setup&#10;- lib/presentation/pages/permissions/permissions_onboarding_page.dart: Navigation fix&#10;- lib/core/di/injection.dart: DI registration updates">
+      <option name="closed" value="true" />
+      <created>1770350084328</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
+      <option name="project" value="LOCAL" />
+      <updated>1770350084328</updated>
+    </task>
+    <task id="LOCAL-00069" summary="fix(di): register user and media data sources&#10;&#10;- Explicitly register `UserLocalDataSource`, `UserRemoteDataSource`, and `IMediaLocalDataSource` as lazy singletons in the DI container&#10;- Add necessary imports for user and media data source implementations&#10;- Implement manual registration checks to ensure singleton instances are only registered if not already present&#10;&#10;Files updated:&#10;- lib/core/di/injection.dart: Added manual DI registrations for user and media data sources">
+      <option name="closed" value="true" />
+      <created>1770350533669</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1770350533669</updated>
+    </task>
+    <option name="localTasksCounter" value="70" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -692,8 +699,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix bug 2" />
-    <MESSAGE value="fix bug 3" />
     <MESSAGE value="fix bug 4" />
     <MESSAGE value="fix bug 5" />
     <MESSAGE value="fix bug 6" />
@@ -717,7 +722,9 @@
     <MESSAGE value="fix(core): improve Firebase initialization for web platform&#10;&#10;- Update `FirebaseConfigManager` to initialize Firebase without a named instance on web to prevent compatibility issues&#10;- Modify `FirebaseConfigManager.app` to return the default Firebase instance when running on web&#10;- Add conditional call to `FirebaseConfigManager.initialize()` within the dependency injection setup for web platforms&#10;- Ensure `FirebaseConfigManager` tracks initialization state via `isInitialized` check before re-initializing on web&#10;&#10;Files updated:&#10;- lib/core/di/injection.dart: Added web-specific Firebase initialization&#10;- lib/core/config/firebase_config.dart: Refactored initialization and app retrieval logic for web support" />
     <MESSAGE value="fix(core): implement socket listener persistence and expand DI registrations&#10;&#10;- **SocketManager**: Implement deferred event listener registration to ensure listeners are attached even if the socket is not yet initialized or reconnects&#10;- **SocketManager**: Add `_SocketListenerRegistration` tracking to manage active listeners and cleanup on disposal&#10;- **DI/CoreModule**: Register additional core services including `AppCacheManager`, `DeviceCapabilityService`, and `SocketRateLimiter`&#10;- **DI/CoreModule**: Add lazy singleton registrations for `GraphQLClientWrapper`, `MessageLocalDataSource`, and `IMessageRemoteDataSource`&#10;- **DI/CoreModule**: Explicitly register `Isar` instance from `DatabaseService` into the dependency graph&#10;&#10;Files updated:&#10;- lib/core/network/socket_manager.dart: Added listener persistence logic&#10;- lib/core/di/modules/core_module.dart: Expanded service registrations for caching, data sources, and network utilities" />
     <MESSAGE value="fix(web): improve scrolling and layout responsiveness in web home screen&#10;&#10;- Wrap main content in `LayoutBuilder`, `SingleChildScrollView`, and `ConstrainedBox` to prevent overflow and ensure vertical scrollability&#10;- Wrap right panel in `SingleChildScrollView` to handle content overflow in the sidebar&#10;- Center main content vertically within the available viewport space" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix(web): improve scrolling and layout responsiveness in web home screen&#10;&#10;- Wrap main content in `LayoutBuilder`, `SingleChildScrollView`, and `ConstrainedBox` to prevent overflow and ensure vertical scrollability&#10;- Wrap right panel in `SingleChildScrollView` to handle content overflow in the sidebar&#10;- Center main content vertically within the available viewport space" />
+    <MESSAGE value="feat: implement GoRouter navigation with centralized auth state management&#10;&#10;- Replace manual navigation with `GoRouter` using a `refreshListenable` to reactively handle authentication and onboarding state changes&#10;- Transition `MaterialApp` to `MaterialApp.router` and implement a unified redirection logic in `AppRouter`&#10;- Update `AuthRepositoryImpl` to determine login status via access tokens instead of local user objects&#10;- Enhance `AuthBloc` to trigger `AuthCheckRequested` on app start and emit `AuthError` with metadata for failed login attempts&#10;- Refactor `LoginPage` into a `StatefulWidget` with form controllers, loading states, and Bloc integration&#10;- Update dependency injection to explicitly register `AuthRemoteDataSource`&#10;- Connect `PermissionsOnboardingPage` completion to `AuthBloc` via `AuthOnboardingCompleted` event&#10;- Centralize app entry point in `main.dart` with necessary providers for `AuthBloc`, `PermissionsBloc`, and theme/locale cubits&#10;&#10;Files updated:&#10;- lib/config/route/app_router.dart: New router configuration with auth-based redirection&#10;- lib/features/auth/data/repositories/auth_repository_impl.dart: Token-based auth check&#10;- lib/features/auth/presentation/blocs/auth/auth_bloc.dart: Improved error handling and check logic&#10;- lib/features/auth/presentation/pages/auth/login_page.dart: UI and Bloc integration&#10;- lib/main.dart: Router initialization and provider setup&#10;- lib/presentation/pages/permissions/permissions_onboarding_page.dart: Navigation fix&#10;- lib/core/di/injection.dart: DI registration updates" />
+    <MESSAGE value="fix(di): register user and media data sources&#10;&#10;- Explicitly register `UserLocalDataSource`, `UserRemoteDataSource`, and `IMediaLocalDataSource` as lazy singletons in the DI container&#10;- Add necessary imports for user and media data source implementations&#10;- Implement manual registration checks to ensure singleton instances are only registered if not already present&#10;&#10;Files updated:&#10;- lib/core/di/injection.dart: Added manual DI registrations for user and media data sources" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix(di): register user and media data sources&#10;&#10;- Explicitly register `UserLocalDataSource`, `UserRemoteDataSource`, and `IMediaLocalDataSource` as lazy singletons in the DI container&#10;- Add necessary imports for user and media data source implementations&#10;- Implement manual registration checks to ensure singleton instances are only registered if not already present&#10;&#10;Files updated:&#10;- lib/core/di/injection.dart: Added manual DI registrations for user and media data sources" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

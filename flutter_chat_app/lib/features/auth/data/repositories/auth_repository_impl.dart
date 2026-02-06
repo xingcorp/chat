@@ -68,10 +68,10 @@ class AuthRepositoryImpl extends BaseRepository
   /// **Performance**: <2s for login process (enterprise standard)
   /// **Strategy**: Input validation → Network operation → Local storage
   @override
-  Future<Either<Failure, User>> login(String email, String password) async {
+  Future<Either<Failure, User>> login(String phone, String password) async {
     // Step 1: Validate input parameters
     final validationResult = validateInput({
-      'email': email,
+      'phone': phone,
       'password': password,
     }, operationName: 'login');
 
@@ -82,42 +82,28 @@ class AuthRepositoryImpl extends BaseRepository
       );
     }
 
-    // Step 2: Additional email validation
-    if (!_isValidEmail(email)) {
-      return Left(ValidationFailure(
-        message: 'Invalid email format',
-        code: 'invalid_email',
-        fieldErrors: {'email': 'Email không hợp lệ'},
-      ));
-    }
-
-    // Step 3: Execute network operation with retry logic
+    // Step 2: Execute network operation with retry logic
     return handleNetworkOperation(
       () async {
-        logger.i('Attempting login for user: $email');
+        logger.i('Attempting login for user: $phone');
 
         // Attempt to login
-        final userModel = await _authRemoteDataSource.login(email, password);
+        final userModel = await _authRemoteDataSource.login(phone, password);
 
         // Save user to local storage
         await _userLocalDataSource.saveUser(userModel);
         await _userLocalDataSource.saveCurrentUser(userModel);
 
-        logger.i('Login successful for user: $email');
+        logger.i('Login successful for user: $phone');
         return userModel.toDomain();
       },
       operationName: 'login',
       maxRetries: 2,
       context: {
-        'email': email,
+        'phone': phone,
         'operation_type': 'authentication',
       },
     );
-  }
-
-  /// **Validate Email Format**
-  bool _isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
   /// **Register a new user - ONLINE-FIRST STRATEGY**

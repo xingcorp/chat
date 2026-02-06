@@ -24,7 +24,7 @@ abstract class IAuthRepository {
   /// **Performance**: <2s for login process (enterprise standard)
   /// **Security**: Proper credential validation and token management
   /// **Critical**: Core authentication functionality
-  Future<Either<Failure, User>> login(String email, String password);
+  Future<Either<Failure, User>> login(String phone, String password);
 
   /// **Register a new user**
   ///

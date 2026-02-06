@@ -14,12 +14,12 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -72,13 +72,13 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 48),
 
                   TextFormField(
-                    controller: _emailController,
+                    controller: _phoneController,
                     decoration: const InputDecoration(
-                      labelText: 'Email',
+                      labelText: 'Số điện thoại',
                       border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.email),
+                      prefixIcon: Icon(Icons.phone),
                     ),
-                    keyboardType: TextInputType.emailAddress,
+                    keyboardType: TextInputType.phone,
                     enabled: !isLoading,
                   ),
                   const SizedBox(height: 16),
@@ -99,12 +99,12 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: isLoading
                         ? null
                         : () {
-                            final email = _emailController.text.trim();
+                            final phone = _phoneController.text.trim();
                             final password = _passwordController.text;
 
                             context.read<AuthBloc>().add(
                                   AuthLoginRequested(
-                                    email: email,
+                                    phone: phone,
                                     password: password,
                                   ),
                                 );

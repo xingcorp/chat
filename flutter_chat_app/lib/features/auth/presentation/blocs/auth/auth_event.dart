@@ -47,16 +47,16 @@ class AuthOnboardingCompleted extends AuthEvent {
 
 /// **Event đăng nhập với email và password**
 class AuthLoginRequested extends AuthEvent {
-  final String email;
+  final String phone;
   final String password;
 
   const AuthLoginRequested({
-    required this.email,
+    required this.phone,
     required this.password,
   });
 
   @override
-  List<Object> get props => [email, password];
+  List<Object> get props => [phone, password];
 }
 
 /// **Event đăng ký tài khoản mới**

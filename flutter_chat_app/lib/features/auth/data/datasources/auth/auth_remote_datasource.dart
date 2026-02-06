@@ -7,7 +7,7 @@ import 'package:injectable/injectable.dart';
 /// Interface for remote authentication operations
 abstract class AuthRemoteDataSource {
   /// Login with email and password
-  Future<UserModel> login(String email, String password);
+  Future<UserModel> login(String phone, String password);
   
   /// Register a new user
   Future<UserModel> register({
@@ -67,7 +67,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         (user['name'] as String?) ??
         (user['displayName'] as String?) ??
         username;
-    final avatarUrl = (user['avatarUrl'] as String?) ?? (user['avatar'] as String?);
+    String? avatarUrl = user['avatarUrl'] as String?;
+    if (avatarUrl == null) {
+      final avatarRaw = user['avatar'];
+      if (avatarRaw is String) {
+        avatarUrl = avatarRaw;
+      } else if (avatarRaw is Map) {
+        final location = avatarRaw['location'];
+        avatarUrl = location is String ? location : location?.toString();
+      }
+    }
     final isOnline = user['isOnline'] as bool? ?? false;
 
     final lastSeenRaw = user['lastSeen'];
@@ -100,26 +109,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
   
   @override
-  Future<UserModel> login(String email, String password) async {
+  Future<UserModel> login(String phone, String password) async {
     try {
       final result = await _client.mutate(
         '''
-        mutation Login(\$email: String!, \$password: String!) {
-          login(email: \$email, password: \$password) {
+        mutation IdentityOfficeLogin(\$credential: UserLoginArgs!) {
+          identityOfficeLogin(credential: \$credential) {
             accessToken
             refreshToken
             user {
               id
               fullname
+              phone
               email
               avatarUrl
+              avatar { location }
             }
           }
         }
         ''',
         variables: {
-          'email': email,
-          'password': password,
+          'credential': {
+            'phone': phone,
+            'password': password,
+          },
         },
       );
       
@@ -129,7 +142,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
       
-      final loginData = result.data?['login'] as Map<String, dynamic>?;
+      final loginData = result.data?['identityOfficeLogin'] as Map<String, dynamic>?;
       if (loginData == null) {
         throw ServerException(message: 'Login failed');
       }
