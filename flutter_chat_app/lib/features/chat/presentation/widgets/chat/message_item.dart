@@ -148,7 +148,9 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                   const SizedBox(width: 4.0),
                 
                 // Message status indicator for own messages
-                if (isCurrentUser)
+                if (isCurrentUser &&
+                    GetIt.instance.isRegistered<MessageQueueService>() &&
+                    GetIt.instance.isReadySync<MessageQueueService>())
                   RepaintBoundary(
                     child: MessageStatusIndicator(
                       messageId: widget.message.id,
@@ -291,8 +293,23 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
   }
 
   BorderRadius _getBubbleBorderRadius(bool isFromCurrentUser) {
-    // Implementation of _getBubbleBorderRadius method
-    // This method should return the appropriate BorderRadius for the message bubble
-    throw UnimplementedError();
+    const radius = Radius.circular(16.0);
+    const smallRadius = Radius.circular(4.0);
+
+    if (isFromCurrentUser) {
+      return const BorderRadius.only(
+        topLeft: radius,
+        topRight: radius,
+        bottomLeft: radius,
+        bottomRight: smallRadius,
+      );
+    }
+
+    return const BorderRadius.only(
+      topLeft: radius,
+      topRight: radius,
+      bottomLeft: smallRadius,
+      bottomRight: radius,
+    );
   }
 }

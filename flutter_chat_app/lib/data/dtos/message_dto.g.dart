@@ -68,14 +68,17 @@ _$SenderDtoImpl _$$SenderDtoImplFromJson(Map<String, dynamic> json) =>
     _$SenderDtoImpl(
       id: json['id'] as String,
       fullName: json['fullname'] as String,
-      avatarUrl: json['avatarUrl'] as String?,
+      imageUrls: (json['imageUrls'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$$SenderDtoImplToJson(_$SenderDtoImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'fullname': instance.fullName,
-      'avatarUrl': instance.avatarUrl,
+      'imageUrls': instance.imageUrls,
     };
 
 _$ReplyMessageDtoImpl _$$ReplyMessageDtoImplFromJson(
@@ -99,31 +102,38 @@ Map<String, dynamic> _$$ReplyMessageDtoImplToJson(
 _$ReactionDtoImpl _$$ReactionDtoImplFromJson(Map<String, dynamic> json) =>
     _$ReactionDtoImpl(
       code: json['code'] as String,
-      userId: json['userId'] as String,
-      user: json['user'] == null
-          ? null
-          : UserReactionDto.fromJson(json['user'] as Map<String, dynamic>),
+      reactorIds: (json['reactorIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      reactors: (json['reactors'] as List<dynamic>?)
+              ?.map((e) => UserReactionDto.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$$ReactionDtoImplToJson(_$ReactionDtoImpl instance) =>
     <String, dynamic>{
       'code': instance.code,
-      'userId': instance.userId,
-      'user': instance.user,
+      'reactorIds': instance.reactorIds,
+      'reactors': instance.reactors,
     };
 
 _$UserReactionDtoImpl _$$UserReactionDtoImplFromJson(
         Map<String, dynamic> json) =>
     _$UserReactionDtoImpl(
-      id: json['id'] as String,
       fullName: json['fullname'] as String,
+      imageUrls: (json['imageUrls'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$$UserReactionDtoImplToJson(
         _$UserReactionDtoImpl instance) =>
     <String, dynamic>{
-      'id': instance.id,
       'fullname': instance.fullName,
+      'imageUrls': instance.imageUrls,
     };
 
 _$MentionDtoImpl _$$MentionDtoImplFromJson(Map<String, dynamic> json) =>

@@ -48,7 +48,7 @@ class SenderDto with _$SenderDto {
   const factory SenderDto({
     required String id,
     @JsonKey(name: 'fullname') required String fullName,
-    String? avatarUrl,
+    @Default([]) List<String> imageUrls,
   }) = _SenderDto;
 
   factory SenderDto.fromJson(Map<String, dynamic> json) =>
@@ -77,8 +77,8 @@ class ReplyMessageDto with _$ReplyMessageDto {
 class ReactionDto with _$ReactionDto {
   const factory ReactionDto({
     required String code,
-    required String userId,
-    UserReactionDto? user,
+    @Default([]) List<String> reactorIds,
+    @Default([]) List<UserReactionDto> reactors,
   }) = _ReactionDto;
 
   factory ReactionDto.fromJson(Map<String, dynamic> json) =>
@@ -91,8 +91,8 @@ class ReactionDto with _$ReactionDto {
 @freezed
 class UserReactionDto with _$UserReactionDto {
   const factory UserReactionDto({
-    required String id,
     @JsonKey(name: 'fullname') required String fullName,
+    @Default([]) List<String> imageUrls,
   }) = _UserReactionDto;
 
   factory UserReactionDto.fromJson(Map<String, dynamic> json) =>
@@ -164,7 +164,7 @@ extension MessageDtoMapper on MessageDto {
         ? MessageSender(
             id: sender!.id,
             name: sender!.fullName,
-            avatar: sender!.avatarUrl,
+            avatar: sender!.imageUrls.isNotEmpty ? sender!.imageUrls.first : null,
           )
         : MessageSender(
             id: senderId,
@@ -173,13 +173,18 @@ extension MessageDtoMapper on MessageDto {
           );
 
     // Convert reactions
-    final messageReactions = reactions.map((r) {
-      return MessageReaction(
-        code: r.code,
-        userId: r.userId,
-        createdAt: DateTime.now(), // Backend doesn't provide timestamp
-      );
-    }).toList();
+    final messageReactions = <MessageReaction>[];
+    for (final r in reactions) {
+      for (final reactorId in r.reactorIds) {
+        messageReactions.add(
+          MessageReaction(
+            code: r.code,
+            userId: reactorId,
+            createdAt: DateTime.now(), // Backend doesn't provide timestamp
+          ),
+        );
+      }
+    }
 
     // Convert attachments from URLs
     final messageAttachments = urls.map((url) {

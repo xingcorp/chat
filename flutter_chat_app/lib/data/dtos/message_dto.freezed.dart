@@ -597,7 +597,7 @@ mixin _$SenderDto {
   String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'fullname')
   String get fullName => throw _privateConstructorUsedError;
-  String? get avatarUrl => throw _privateConstructorUsedError;
+  List<String> get imageUrls => throw _privateConstructorUsedError;
 
   /// Serializes this SenderDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -617,7 +617,7 @@ abstract class $SenderDtoCopyWith<$Res> {
   $Res call(
       {String id,
       @JsonKey(name: 'fullname') String fullName,
-      String? avatarUrl});
+      List<String> imageUrls});
 }
 
 /// @nodoc
@@ -637,7 +637,7 @@ class _$SenderDtoCopyWithImpl<$Res, $Val extends SenderDto>
   $Res call({
     Object? id = null,
     Object? fullName = null,
-    Object? avatarUrl = freezed,
+    Object? imageUrls = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -648,10 +648,10 @@ class _$SenderDtoCopyWithImpl<$Res, $Val extends SenderDto>
           ? _value.fullName
           : fullName // ignore: cast_nullable_to_non_nullable
               as String,
-      avatarUrl: freezed == avatarUrl
-          ? _value.avatarUrl
-          : avatarUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
+      imageUrls: null == imageUrls
+          ? _value.imageUrls
+          : imageUrls // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ) as $Val);
   }
 }
@@ -667,7 +667,7 @@ abstract class _$$SenderDtoImplCopyWith<$Res>
   $Res call(
       {String id,
       @JsonKey(name: 'fullname') String fullName,
-      String? avatarUrl});
+      List<String> imageUrls});
 }
 
 /// @nodoc
@@ -685,7 +685,7 @@ class __$$SenderDtoImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? fullName = null,
-    Object? avatarUrl = freezed,
+    Object? imageUrls = null,
   }) {
     return _then(_$SenderDtoImpl(
       id: null == id
@@ -696,10 +696,10 @@ class __$$SenderDtoImplCopyWithImpl<$Res>
           ? _value.fullName
           : fullName // ignore: cast_nullable_to_non_nullable
               as String,
-      avatarUrl: freezed == avatarUrl
-          ? _value.avatarUrl
-          : avatarUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
+      imageUrls: null == imageUrls
+          ? _value._imageUrls
+          : imageUrls // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 }
@@ -710,7 +710,8 @@ class _$SenderDtoImpl implements _SenderDto {
   const _$SenderDtoImpl(
       {required this.id,
       @JsonKey(name: 'fullname') required this.fullName,
-      this.avatarUrl});
+      final List<String> imageUrls = const []})
+      : _imageUrls = imageUrls;
 
   factory _$SenderDtoImpl.fromJson(Map<String, dynamic> json) =>
       _$$SenderDtoImplFromJson(json);
@@ -720,12 +721,18 @@ class _$SenderDtoImpl implements _SenderDto {
   @override
   @JsonKey(name: 'fullname')
   final String fullName;
+  final List<String> _imageUrls;
   @override
-  final String? avatarUrl;
+  @JsonKey()
+  List<String> get imageUrls {
+    if (_imageUrls is EqualUnmodifiableListView) return _imageUrls;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_imageUrls);
+  }
 
   @override
   String toString() {
-    return 'SenderDto(id: $id, fullName: $fullName, avatarUrl: $avatarUrl)';
+    return 'SenderDto(id: $id, fullName: $fullName, imageUrls: $imageUrls)';
   }
 
   @override
@@ -736,13 +743,14 @@ class _$SenderDtoImpl implements _SenderDto {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.fullName, fullName) ||
                 other.fullName == fullName) &&
-            (identical(other.avatarUrl, avatarUrl) ||
-                other.avatarUrl == avatarUrl));
+            const DeepCollectionEquality()
+                .equals(other._imageUrls, _imageUrls));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, fullName, avatarUrl);
+  int get hashCode => Object.hash(runtimeType, id, fullName,
+      const DeepCollectionEquality().hash(_imageUrls));
 
   /// Create a copy of SenderDto
   /// with the given fields replaced by the non-null parameter values.
@@ -764,7 +772,7 @@ abstract class _SenderDto implements SenderDto {
   const factory _SenderDto(
       {required final String id,
       @JsonKey(name: 'fullname') required final String fullName,
-      final String? avatarUrl}) = _$SenderDtoImpl;
+      final List<String> imageUrls}) = _$SenderDtoImpl;
 
   factory _SenderDto.fromJson(Map<String, dynamic> json) =
       _$SenderDtoImpl.fromJson;
@@ -775,7 +783,7 @@ abstract class _SenderDto implements SenderDto {
   @JsonKey(name: 'fullname')
   String get fullName;
   @override
-  String? get avatarUrl;
+  List<String> get imageUrls;
 
   /// Create a copy of SenderDto
   /// with the given fields replaced by the non-null parameter values.
@@ -1004,8 +1012,8 @@ ReactionDto _$ReactionDtoFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$ReactionDto {
   String get code => throw _privateConstructorUsedError;
-  String get userId => throw _privateConstructorUsedError;
-  UserReactionDto? get user => throw _privateConstructorUsedError;
+  List<String> get reactorIds => throw _privateConstructorUsedError;
+  List<UserReactionDto> get reactors => throw _privateConstructorUsedError;
 
   /// Serializes this ReactionDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1023,9 +1031,8 @@ abstract class $ReactionDtoCopyWith<$Res> {
           ReactionDto value, $Res Function(ReactionDto) then) =
       _$ReactionDtoCopyWithImpl<$Res, ReactionDto>;
   @useResult
-  $Res call({String code, String userId, UserReactionDto? user});
-
-  $UserReactionDtoCopyWith<$Res>? get user;
+  $Res call(
+      {String code, List<String> reactorIds, List<UserReactionDto> reactors});
 }
 
 /// @nodoc
@@ -1044,37 +1051,23 @@ class _$ReactionDtoCopyWithImpl<$Res, $Val extends ReactionDto>
   @override
   $Res call({
     Object? code = null,
-    Object? userId = null,
-    Object? user = freezed,
+    Object? reactorIds = null,
+    Object? reactors = null,
   }) {
     return _then(_value.copyWith(
       code: null == code
           ? _value.code
           : code // ignore: cast_nullable_to_non_nullable
               as String,
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String,
-      user: freezed == user
-          ? _value.user
-          : user // ignore: cast_nullable_to_non_nullable
-              as UserReactionDto?,
+      reactorIds: null == reactorIds
+          ? _value.reactorIds
+          : reactorIds // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      reactors: null == reactors
+          ? _value.reactors
+          : reactors // ignore: cast_nullable_to_non_nullable
+              as List<UserReactionDto>,
     ) as $Val);
-  }
-
-  /// Create a copy of ReactionDto
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $UserReactionDtoCopyWith<$Res>? get user {
-    if (_value.user == null) {
-      return null;
-    }
-
-    return $UserReactionDtoCopyWith<$Res>(_value.user!, (value) {
-      return _then(_value.copyWith(user: value) as $Val);
-    });
   }
 }
 
@@ -1086,10 +1079,8 @@ abstract class _$$ReactionDtoImplCopyWith<$Res>
       __$$ReactionDtoImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String code, String userId, UserReactionDto? user});
-
-  @override
-  $UserReactionDtoCopyWith<$Res>? get user;
+  $Res call(
+      {String code, List<String> reactorIds, List<UserReactionDto> reactors});
 }
 
 /// @nodoc
@@ -1106,22 +1097,22 @@ class __$$ReactionDtoImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? code = null,
-    Object? userId = null,
-    Object? user = freezed,
+    Object? reactorIds = null,
+    Object? reactors = null,
   }) {
     return _then(_$ReactionDtoImpl(
       code: null == code
           ? _value.code
           : code // ignore: cast_nullable_to_non_nullable
               as String,
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String,
-      user: freezed == user
-          ? _value.user
-          : user // ignore: cast_nullable_to_non_nullable
-              as UserReactionDto?,
+      reactorIds: null == reactorIds
+          ? _value._reactorIds
+          : reactorIds // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      reactors: null == reactors
+          ? _value._reactors
+          : reactors // ignore: cast_nullable_to_non_nullable
+              as List<UserReactionDto>,
     ));
   }
 }
@@ -1130,21 +1121,38 @@ class __$$ReactionDtoImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ReactionDtoImpl implements _ReactionDto {
   const _$ReactionDtoImpl(
-      {required this.code, required this.userId, this.user});
+      {required this.code,
+      final List<String> reactorIds = const [],
+      final List<UserReactionDto> reactors = const []})
+      : _reactorIds = reactorIds,
+        _reactors = reactors;
 
   factory _$ReactionDtoImpl.fromJson(Map<String, dynamic> json) =>
       _$$ReactionDtoImplFromJson(json);
 
   @override
   final String code;
+  final List<String> _reactorIds;
   @override
-  final String userId;
+  @JsonKey()
+  List<String> get reactorIds {
+    if (_reactorIds is EqualUnmodifiableListView) return _reactorIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_reactorIds);
+  }
+
+  final List<UserReactionDto> _reactors;
   @override
-  final UserReactionDto? user;
+  @JsonKey()
+  List<UserReactionDto> get reactors {
+    if (_reactors is EqualUnmodifiableListView) return _reactors;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_reactors);
+  }
 
   @override
   String toString() {
-    return 'ReactionDto(code: $code, userId: $userId, user: $user)';
+    return 'ReactionDto(code: $code, reactorIds: $reactorIds, reactors: $reactors)';
   }
 
   @override
@@ -1153,13 +1161,18 @@ class _$ReactionDtoImpl implements _ReactionDto {
         (other.runtimeType == runtimeType &&
             other is _$ReactionDtoImpl &&
             (identical(other.code, code) || other.code == code) &&
-            (identical(other.userId, userId) || other.userId == userId) &&
-            (identical(other.user, user) || other.user == user));
+            const DeepCollectionEquality()
+                .equals(other._reactorIds, _reactorIds) &&
+            const DeepCollectionEquality().equals(other._reactors, _reactors));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, code, userId, user);
+  int get hashCode => Object.hash(
+      runtimeType,
+      code,
+      const DeepCollectionEquality().hash(_reactorIds),
+      const DeepCollectionEquality().hash(_reactors));
 
   /// Create a copy of ReactionDto
   /// with the given fields replaced by the non-null parameter values.
@@ -1180,8 +1193,8 @@ class _$ReactionDtoImpl implements _ReactionDto {
 abstract class _ReactionDto implements ReactionDto {
   const factory _ReactionDto(
       {required final String code,
-      required final String userId,
-      final UserReactionDto? user}) = _$ReactionDtoImpl;
+      final List<String> reactorIds,
+      final List<UserReactionDto> reactors}) = _$ReactionDtoImpl;
 
   factory _ReactionDto.fromJson(Map<String, dynamic> json) =
       _$ReactionDtoImpl.fromJson;
@@ -1189,9 +1202,9 @@ abstract class _ReactionDto implements ReactionDto {
   @override
   String get code;
   @override
-  String get userId;
+  List<String> get reactorIds;
   @override
-  UserReactionDto? get user;
+  List<UserReactionDto> get reactors;
 
   /// Create a copy of ReactionDto
   /// with the given fields replaced by the non-null parameter values.
@@ -1207,9 +1220,9 @@ UserReactionDto _$UserReactionDtoFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$UserReactionDto {
-  String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'fullname')
   String get fullName => throw _privateConstructorUsedError;
+  List<String> get imageUrls => throw _privateConstructorUsedError;
 
   /// Serializes this UserReactionDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1227,7 +1240,8 @@ abstract class $UserReactionDtoCopyWith<$Res> {
           UserReactionDto value, $Res Function(UserReactionDto) then) =
       _$UserReactionDtoCopyWithImpl<$Res, UserReactionDto>;
   @useResult
-  $Res call({String id, @JsonKey(name: 'fullname') String fullName});
+  $Res call(
+      {@JsonKey(name: 'fullname') String fullName, List<String> imageUrls});
 }
 
 /// @nodoc
@@ -1245,18 +1259,18 @@ class _$UserReactionDtoCopyWithImpl<$Res, $Val extends UserReactionDto>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
     Object? fullName = null,
+    Object? imageUrls = null,
   }) {
     return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
       fullName: null == fullName
           ? _value.fullName
           : fullName // ignore: cast_nullable_to_non_nullable
               as String,
+      imageUrls: null == imageUrls
+          ? _value.imageUrls
+          : imageUrls // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ) as $Val);
   }
 }
@@ -1269,7 +1283,8 @@ abstract class _$$UserReactionDtoImplCopyWith<$Res>
       __$$UserReactionDtoImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String id, @JsonKey(name: 'fullname') String fullName});
+  $Res call(
+      {@JsonKey(name: 'fullname') String fullName, List<String> imageUrls});
 }
 
 /// @nodoc
@@ -1285,18 +1300,18 @@ class __$$UserReactionDtoImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
     Object? fullName = null,
+    Object? imageUrls = null,
   }) {
     return _then(_$UserReactionDtoImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
       fullName: null == fullName
           ? _value.fullName
           : fullName // ignore: cast_nullable_to_non_nullable
               as String,
+      imageUrls: null == imageUrls
+          ? _value._imageUrls
+          : imageUrls // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 }
@@ -1305,20 +1320,28 @@ class __$$UserReactionDtoImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$UserReactionDtoImpl implements _UserReactionDto {
   const _$UserReactionDtoImpl(
-      {required this.id, @JsonKey(name: 'fullname') required this.fullName});
+      {@JsonKey(name: 'fullname') required this.fullName,
+      final List<String> imageUrls = const []})
+      : _imageUrls = imageUrls;
 
   factory _$UserReactionDtoImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserReactionDtoImplFromJson(json);
 
   @override
-  final String id;
-  @override
   @JsonKey(name: 'fullname')
   final String fullName;
+  final List<String> _imageUrls;
+  @override
+  @JsonKey()
+  List<String> get imageUrls {
+    if (_imageUrls is EqualUnmodifiableListView) return _imageUrls;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_imageUrls);
+  }
 
   @override
   String toString() {
-    return 'UserReactionDto(id: $id, fullName: $fullName)';
+    return 'UserReactionDto(fullName: $fullName, imageUrls: $imageUrls)';
   }
 
   @override
@@ -1326,14 +1349,16 @@ class _$UserReactionDtoImpl implements _UserReactionDto {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$UserReactionDtoImpl &&
-            (identical(other.id, id) || other.id == id) &&
             (identical(other.fullName, fullName) ||
-                other.fullName == fullName));
+                other.fullName == fullName) &&
+            const DeepCollectionEquality()
+                .equals(other._imageUrls, _imageUrls));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, fullName);
+  int get hashCode => Object.hash(
+      runtimeType, fullName, const DeepCollectionEquality().hash(_imageUrls));
 
   /// Create a copy of UserReactionDto
   /// with the given fields replaced by the non-null parameter values.
@@ -1354,18 +1379,17 @@ class _$UserReactionDtoImpl implements _UserReactionDto {
 
 abstract class _UserReactionDto implements UserReactionDto {
   const factory _UserReactionDto(
-          {required final String id,
-          @JsonKey(name: 'fullname') required final String fullName}) =
-      _$UserReactionDtoImpl;
+      {@JsonKey(name: 'fullname') required final String fullName,
+      final List<String> imageUrls}) = _$UserReactionDtoImpl;
 
   factory _UserReactionDto.fromJson(Map<String, dynamic> json) =
       _$UserReactionDtoImpl.fromJson;
 
   @override
-  String get id;
-  @override
   @JsonKey(name: 'fullname')
   String get fullName;
+  @override
+  List<String> get imageUrls;
 
   /// Create a copy of UserReactionDto
   /// with the given fields replaced by the non-null parameter values.

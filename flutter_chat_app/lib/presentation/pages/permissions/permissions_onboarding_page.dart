@@ -7,9 +7,6 @@ import 'package:flutter/material.dart';
 
 // Third-party package imports
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
-
-// App imports
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/app_localizations.dart';
@@ -239,41 +236,40 @@ class _PermissionsOnboardingPageState extends State<PermissionsOnboardingPage>
   }
 
   Widget _buildCompletionPage(BuildContext context, PermissionsState state) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Success animation
-          Lottie.asset(
-            'assets/animations/success.json',
-            width: 200,
-            height: 200,
-            repeat: false,
-          ),
-          const SizedBox(height: 32),
-          Text(
-            AppLocalizations.of(context).permissionsOnboardingComplete,
-            style: AppTextStyles.headlineMedium.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.check_circle,
+              size: 120,
+              color: AppColors.success,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            AppLocalizations.of(context).permissionsOnboardingCompleteDescription,
-            style: AppTextStyles.bodyLarge.copyWith(
-              color: AppColors.textSecondary,
+            const SizedBox(height: 32),
+            Text(
+              AppLocalizations.of(context).permissionsOnboardingComplete,
+              style: AppTextStyles.headlineMedium.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 48),
-          
-          // Summary của permissions
-          if (state is PermissionsLoadedState || state is PermissionsSuccessState)
-            _buildPermissionsSummary(context, state),
-        ],
+            const SizedBox(height: 16),
+            Text(
+              AppLocalizations.of(context).permissionsOnboardingCompleteDescription,
+              style: AppTextStyles.bodyLarge.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 48),
+
+            if (state is PermissionsLoadedState || state is PermissionsSuccessState)
+              _buildPermissionsSummary(context, state),
+          ],
+        ),
       ),
     );
   }

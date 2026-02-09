@@ -419,7 +419,7 @@ mixin _$CreatorDto {
   String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'fullname')
   String get fullName => throw _privateConstructorUsedError;
-  String? get avatarUrl => throw _privateConstructorUsedError;
+  List<String> get imageUrls => throw _privateConstructorUsedError;
 
   /// Serializes this CreatorDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -440,7 +440,7 @@ abstract class $CreatorDtoCopyWith<$Res> {
   $Res call(
       {String id,
       @JsonKey(name: 'fullname') String fullName,
-      String? avatarUrl});
+      List<String> imageUrls});
 }
 
 /// @nodoc
@@ -460,7 +460,7 @@ class _$CreatorDtoCopyWithImpl<$Res, $Val extends CreatorDto>
   $Res call({
     Object? id = null,
     Object? fullName = null,
-    Object? avatarUrl = freezed,
+    Object? imageUrls = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -471,10 +471,10 @@ class _$CreatorDtoCopyWithImpl<$Res, $Val extends CreatorDto>
           ? _value.fullName
           : fullName // ignore: cast_nullable_to_non_nullable
               as String,
-      avatarUrl: freezed == avatarUrl
-          ? _value.avatarUrl
-          : avatarUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
+      imageUrls: null == imageUrls
+          ? _value.imageUrls
+          : imageUrls // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ) as $Val);
   }
 }
@@ -490,7 +490,7 @@ abstract class _$$CreatorDtoImplCopyWith<$Res>
   $Res call(
       {String id,
       @JsonKey(name: 'fullname') String fullName,
-      String? avatarUrl});
+      List<String> imageUrls});
 }
 
 /// @nodoc
@@ -508,7 +508,7 @@ class __$$CreatorDtoImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? fullName = null,
-    Object? avatarUrl = freezed,
+    Object? imageUrls = null,
   }) {
     return _then(_$CreatorDtoImpl(
       id: null == id
@@ -519,10 +519,10 @@ class __$$CreatorDtoImplCopyWithImpl<$Res>
           ? _value.fullName
           : fullName // ignore: cast_nullable_to_non_nullable
               as String,
-      avatarUrl: freezed == avatarUrl
-          ? _value.avatarUrl
-          : avatarUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
+      imageUrls: null == imageUrls
+          ? _value._imageUrls
+          : imageUrls // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 }
@@ -533,7 +533,8 @@ class _$CreatorDtoImpl implements _CreatorDto {
   const _$CreatorDtoImpl(
       {required this.id,
       @JsonKey(name: 'fullname') required this.fullName,
-      this.avatarUrl});
+      final List<String> imageUrls = const []})
+      : _imageUrls = imageUrls;
 
   factory _$CreatorDtoImpl.fromJson(Map<String, dynamic> json) =>
       _$$CreatorDtoImplFromJson(json);
@@ -543,12 +544,18 @@ class _$CreatorDtoImpl implements _CreatorDto {
   @override
   @JsonKey(name: 'fullname')
   final String fullName;
+  final List<String> _imageUrls;
   @override
-  final String? avatarUrl;
+  @JsonKey()
+  List<String> get imageUrls {
+    if (_imageUrls is EqualUnmodifiableListView) return _imageUrls;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_imageUrls);
+  }
 
   @override
   String toString() {
-    return 'CreatorDto(id: $id, fullName: $fullName, avatarUrl: $avatarUrl)';
+    return 'CreatorDto(id: $id, fullName: $fullName, imageUrls: $imageUrls)';
   }
 
   @override
@@ -559,13 +566,14 @@ class _$CreatorDtoImpl implements _CreatorDto {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.fullName, fullName) ||
                 other.fullName == fullName) &&
-            (identical(other.avatarUrl, avatarUrl) ||
-                other.avatarUrl == avatarUrl));
+            const DeepCollectionEquality()
+                .equals(other._imageUrls, _imageUrls));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, fullName, avatarUrl);
+  int get hashCode => Object.hash(runtimeType, id, fullName,
+      const DeepCollectionEquality().hash(_imageUrls));
 
   /// Create a copy of CreatorDto
   /// with the given fields replaced by the non-null parameter values.
@@ -587,7 +595,7 @@ abstract class _CreatorDto implements CreatorDto {
   const factory _CreatorDto(
       {required final String id,
       @JsonKey(name: 'fullname') required final String fullName,
-      final String? avatarUrl}) = _$CreatorDtoImpl;
+      final List<String> imageUrls}) = _$CreatorDtoImpl;
 
   factory _CreatorDto.fromJson(Map<String, dynamic> json) =
       _$CreatorDtoImpl.fromJson;
@@ -598,7 +606,7 @@ abstract class _CreatorDto implements CreatorDto {
   @JsonKey(name: 'fullname')
   String get fullName;
   @override
-  String? get avatarUrl;
+  List<String> get imageUrls;
 
   /// Create a copy of CreatorDto
   /// with the given fields replaced by the non-null parameter values.
@@ -936,7 +944,7 @@ mixin _$UserDto {
   String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'fullname')
   String get fullName => throw _privateConstructorUsedError;
-  String? get avatarUrl => throw _privateConstructorUsedError;
+  List<String> get imageUrls => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
 
   /// Serializes this UserDto to a JSON map.
@@ -956,7 +964,7 @@ abstract class $UserDtoCopyWith<$Res> {
   $Res call(
       {String id,
       @JsonKey(name: 'fullname') String fullName,
-      String? avatarUrl,
+      List<String> imageUrls,
       String? email});
 }
 
@@ -977,7 +985,7 @@ class _$UserDtoCopyWithImpl<$Res, $Val extends UserDto>
   $Res call({
     Object? id = null,
     Object? fullName = null,
-    Object? avatarUrl = freezed,
+    Object? imageUrls = null,
     Object? email = freezed,
   }) {
     return _then(_value.copyWith(
@@ -989,10 +997,10 @@ class _$UserDtoCopyWithImpl<$Res, $Val extends UserDto>
           ? _value.fullName
           : fullName // ignore: cast_nullable_to_non_nullable
               as String,
-      avatarUrl: freezed == avatarUrl
-          ? _value.avatarUrl
-          : avatarUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
+      imageUrls: null == imageUrls
+          ? _value.imageUrls
+          : imageUrls // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       email: freezed == email
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
@@ -1011,7 +1019,7 @@ abstract class _$$UserDtoImplCopyWith<$Res> implements $UserDtoCopyWith<$Res> {
   $Res call(
       {String id,
       @JsonKey(name: 'fullname') String fullName,
-      String? avatarUrl,
+      List<String> imageUrls,
       String? email});
 }
 
@@ -1030,7 +1038,7 @@ class __$$UserDtoImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? fullName = null,
-    Object? avatarUrl = freezed,
+    Object? imageUrls = null,
     Object? email = freezed,
   }) {
     return _then(_$UserDtoImpl(
@@ -1042,10 +1050,10 @@ class __$$UserDtoImplCopyWithImpl<$Res>
           ? _value.fullName
           : fullName // ignore: cast_nullable_to_non_nullable
               as String,
-      avatarUrl: freezed == avatarUrl
-          ? _value.avatarUrl
-          : avatarUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
+      imageUrls: null == imageUrls
+          ? _value._imageUrls
+          : imageUrls // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       email: freezed == email
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
@@ -1060,8 +1068,9 @@ class _$UserDtoImpl implements _UserDto {
   const _$UserDtoImpl(
       {required this.id,
       @JsonKey(name: 'fullname') required this.fullName,
-      this.avatarUrl,
-      this.email});
+      final List<String> imageUrls = const [],
+      this.email})
+      : _imageUrls = imageUrls;
 
   factory _$UserDtoImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserDtoImplFromJson(json);
@@ -1071,14 +1080,21 @@ class _$UserDtoImpl implements _UserDto {
   @override
   @JsonKey(name: 'fullname')
   final String fullName;
+  final List<String> _imageUrls;
   @override
-  final String? avatarUrl;
+  @JsonKey()
+  List<String> get imageUrls {
+    if (_imageUrls is EqualUnmodifiableListView) return _imageUrls;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_imageUrls);
+  }
+
   @override
   final String? email;
 
   @override
   String toString() {
-    return 'UserDto(id: $id, fullName: $fullName, avatarUrl: $avatarUrl, email: $email)';
+    return 'UserDto(id: $id, fullName: $fullName, imageUrls: $imageUrls, email: $email)';
   }
 
   @override
@@ -1089,14 +1105,15 @@ class _$UserDtoImpl implements _UserDto {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.fullName, fullName) ||
                 other.fullName == fullName) &&
-            (identical(other.avatarUrl, avatarUrl) ||
-                other.avatarUrl == avatarUrl) &&
+            const DeepCollectionEquality()
+                .equals(other._imageUrls, _imageUrls) &&
             (identical(other.email, email) || other.email == email));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, fullName, avatarUrl, email);
+  int get hashCode => Object.hash(runtimeType, id, fullName,
+      const DeepCollectionEquality().hash(_imageUrls), email);
 
   /// Create a copy of UserDto
   /// with the given fields replaced by the non-null parameter values.
@@ -1118,7 +1135,7 @@ abstract class _UserDto implements UserDto {
   const factory _UserDto(
       {required final String id,
       @JsonKey(name: 'fullname') required final String fullName,
-      final String? avatarUrl,
+      final List<String> imageUrls,
       final String? email}) = _$UserDtoImpl;
 
   factory _UserDto.fromJson(Map<String, dynamic> json) = _$UserDtoImpl.fromJson;
@@ -1129,7 +1146,7 @@ abstract class _UserDto implements UserDto {
   @JsonKey(name: 'fullname')
   String get fullName;
   @override
-  String? get avatarUrl;
+  List<String> get imageUrls;
   @override
   String? get email;
 

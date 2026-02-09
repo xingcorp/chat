@@ -24,6 +24,7 @@ import 'package:logger/logger.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../constants/app_constants.dart';
 import '../network/network_info.dart';
@@ -194,7 +195,17 @@ class RealtimeMessagingService {
 
   /// Initialize service
   void _initializeService() {
-    _serverUrl = AppConstants.websocketUrl;
+    final socketUrlRaw = (dotenv.env['SOCKET_URL'] ?? dotenv.env['WEBSOCKET_URL'] ?? '').trim();
+    String socketUrl = socketUrlRaw.isNotEmpty ? socketUrlRaw : AppConstants.websocketUrl;
+
+    if (socketUrl.startsWith('wss://')) {
+      socketUrl = socketUrl.replaceFirst('wss://', 'https://');
+    } else if (socketUrl.startsWith('ws://')) {
+      socketUrl = socketUrl.replaceFirst('ws://', 'http://');
+    }
+
+    socketUrl = socketUrl.replaceFirst(RegExp(r'/+$'), '');
+    _serverUrl = socketUrl;
     _connectionOptions = {
       'transports': ['websocket'],
       'timeout': AppConstants.websocketTimeoutSeconds * 1000,

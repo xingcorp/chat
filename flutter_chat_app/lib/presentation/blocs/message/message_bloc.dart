@@ -109,12 +109,12 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         // Reset dirty flag after successful load
         _cacheSyncStrategy.resetChatMessagesDirtyFlag(event.chatId);
 
-        // Cancel old subscription if exists
-        _cancelMessageSubscription(event.chatId);
-
         // Subscribe to real-time updates
         if (event.subscribeToUpdates) {
-          _subscribeToMessages(event.chatId);
+          unawaited(_subscribeToMessages(event.chatId));
+        } else {
+          // Ensure old subscription is cancelled if caller disables updates
+          unawaited(_cancelMessageSubscription(event.chatId));
         }
 
         emit(MessagesLoaded(
@@ -390,39 +390,53 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     }
 
     // Leave chat room to stop receiving updates
-    _realtimeService.leaveChatRoom(chatId).then((result) {
-      result.fold(
-        (failure) {
-          logger.w('Failed to leave chat room $chatId: ${failure.toString()}');
-        },
-        (success) {
-          logger.d('Successfully left chat room: $chatId');
-        },
-      );
-    });
+    final result = await _realtimeService.leaveChatRoom(chatId);
+    result.fold(
+      (failure) {
+        logger.w('Failed to leave chat room $chatId: ${failure.toString()}');
+      },
+      (_) {
+        logger.d('Successfully left chat room: $chatId');
+      },
+    );
   }
   
   /// **Subscribe to real-time messages - ENTERPRISE REAL-TIME**
   ///
   /// **Performance**: <100ms message delivery
   /// **Strategy**: WebSocket subscription with automatic room management
-  void _subscribeToMessages(String chatId) {
+  Future<void> _subscribeToMessages(String chatId) async {
     logger.i('Subscribing to real-time messages for chat: $chatId');
 
     // Cancel existing subscription if any
-    _cancelMessageSubscription(chatId);
+    await _cancelMessageSubscription(chatId);
+
+    // Ensure real-time connection is established
+    if (!_realtimeService.isConnected) {
+      final connectResult = await _realtimeService.connect();
+      final connectOk = connectResult.fold((_) => false, (_) => true);
+      if (!connectOk) {
+        logger.e('Failed to connect to real-time server before joining chat room $chatId');
+        return;
+      }
+    }
 
     // Join chat room for real-time updates
-    _realtimeService.joinChatRoom(chatId).then((result) {
-      result.fold(
-        (failure) {
-          logger.e('Failed to join chat room $chatId', error: failure);
-        },
-        (success) {
-          logger.i('Successfully joined chat room: $chatId');
-        },
-      );
-    });
+    final joinResult = await _realtimeService.joinChatRoom(chatId);
+    final joined = joinResult.fold(
+      (failure) {
+        logger.e('Failed to join chat room $chatId', error: failure);
+        return false;
+      },
+      (_) {
+        logger.i('Successfully joined chat room: $chatId');
+        return true;
+      },
+    );
+
+    if (!joined) {
+      return;
+    }
 
     // Subscribe to real-time message stream
     _messageSubscriptions[chatId] = _realtimeService.messageStream
@@ -444,7 +458,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   Future<void> close() async {
     // Cancel all subscriptions when closing bloc
     for (final chatId in _messageSubscriptions.keys) {
-      _cancelMessageSubscription(chatId);
+      await _cancelMessageSubscription(chatId);
     }
     _messageSubscriptions.clear();
     return super.close();

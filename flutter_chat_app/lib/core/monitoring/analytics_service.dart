@@ -420,7 +420,7 @@ class AnalyticsService {
           'error_type': errorType,
           if (errorMessage != null) 'error_message': errorMessage,
           if (errorDetails != null) 'error_details': errorDetails,
-          'fatal': fatal,
+          'fatal': fatal ? 1 : 0,
           'timestamp': DateTime.now().toIso8601String(),
         }),
       );

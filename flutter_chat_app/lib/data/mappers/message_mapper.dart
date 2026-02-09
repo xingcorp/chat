@@ -41,7 +41,9 @@ class MessageMapper {
     final sender = MessageSender(
       id: dto.senderId,
       name: dto.sender?.fullName ?? 'Unknown',
-      avatar: dto.sender?.avatarUrl,
+      avatar: (dto.sender?.imageUrls.isNotEmpty ?? false)
+          ? dto.sender!.imageUrls.first
+          : null,
     );
     
     // Parse attachments from URLs

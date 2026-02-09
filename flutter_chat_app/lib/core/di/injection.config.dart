@@ -207,11 +207,6 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.factory<_i656.PermissionsDataSource>(
         () => _i656.MobilePermissionsDataSource());
-    gh.lazySingleton<_i1025.AuthRemoteDataSourceImpl>(
-        () => _i1025.AuthRemoteDataSourceImpl(
-              gh<_i788.GraphQLClientWrapper>(),
-              gh<_i328.TokenRepository>(),
-            ));
     gh.lazySingleton<_i329.LocalStorage>(
         () => _i329.LocalStorageImpl(gh<_i460.SharedPreferences>()));
     gh.singleton<_i393.MediaCache>(
@@ -220,6 +215,13 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i745.AuthService(gh<_i328.TokenRepository>()));
     gh.singleton<_i706.RealtimeMessagingService>(
         () => _i706.RealtimeMessagingService(gh<_i932.NetworkInfo>()));
+    gh.lazySingleton<_i788.GraphQLClientWrapperImpl>(
+        () => _i788.GraphQLClientWrapperImpl(
+              gh<_i128.GraphQLClient>(),
+              gh<_i932.NetworkInfo>(),
+              gh<_i328.TokenRepository>(),
+              gh<_i221.AppLogger>(),
+            ));
     gh.lazySingleton<_i794.PerformanceMonitor>(
         () => _i794.PerformanceMonitor(gh<_i346.FirebasePerformance>()));
     gh.singleton<_i808.IntegrationService>(
@@ -317,12 +319,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i98.DeviceCapabilityService>(),
           gh<_i794.PerformanceMonitor>(),
         ));
-    gh.lazySingleton<_i788.GraphQLClientWrapperImpl>(
-        () => _i788.GraphQLClientWrapperImpl(
-              gh<_i128.GraphQLClient>(),
-              gh<_i932.NetworkInfo>(),
-              gh<_i328.TokenRepository>(),
-            ));
     gh.singleton<_i686.IsolateManager>(() => _i686.IsolateManager(
           gh<_i794.PerformanceMonitor>(),
           gh<_i260.SystemResourceMonitor>(),
@@ -381,6 +377,11 @@ extension GetItInjectableX on _i174.GetIt {
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
+    gh.lazySingleton<_i1025.AuthRemoteDataSourceImpl>(
+        () => _i1025.AuthRemoteDataSourceImpl(
+              gh<_i788.GraphQLClientWrapper>(),
+              gh<_i328.TokenRepository>(),
+            ));
     gh.singleton<_i199.NetworkOptimizer>(() => _i199.NetworkOptimizer(
           connectivityService: gh<_i47.ConnectivityService>(),
           performanceMonitor: gh<_i794.PerformanceMonitor>(),

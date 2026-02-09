@@ -47,7 +47,7 @@ class CreatorDto with _$CreatorDto {
   const factory CreatorDto({
     required String id,
     @JsonKey(name: 'fullname') required String fullName,
-    String? avatarUrl,
+    @Default([]) List<String> imageUrls,
   }) = _CreatorDto;
 
   factory CreatorDto.fromJson(Map<String, dynamic> json) =>
@@ -82,7 +82,7 @@ class UserDto with _$UserDto {
   const factory UserDto({
     required String id,
     @JsonKey(name: 'fullname') required String fullName,
-    String? avatarUrl,
+    @Default([]) List<String> imageUrls,
     String? email,
   }) = _UserDto;
 

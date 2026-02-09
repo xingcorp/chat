@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
 import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
+import 'package:flutter_chat_app/core/network/auth/token_repository.dart' as token_module;
 import 'package:rxdart/rxdart.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
@@ -72,7 +74,6 @@ class SocketManager {
   /// Connect to the WebSocket server
   Future<void> connect() async {
     if (_socket != null && (isConnected || isConnecting)) {
-      _logger.d('Socket already connected or connecting');
       return;
     }
     
@@ -84,9 +85,22 @@ class SocketManager {
     _updateConnectionState(SocketConnectionState.connecting);
     
     try {
+      String authToken = '';
+      try {
+        if (GetIt.I.isRegistered<token_module.TokenRepository>()) {
+          authToken = ((await GetIt.I<token_module.TokenRepository>().getAccessToken()) ?? '').trim();
+        }
+      } catch (_) {
+        authToken = '';
+      }
+
+      // Match the working web frontend behavior: prefer websocket transport.
+      // Some deployments disable polling, which can lead to Engine.IO errors like
+      // "Transport unknown" when the client attempts polling first.
+      final transports = <String>['websocket'];
+
       final defaultOptions = {
-        'transports': ['websocket'],
-        'autoConnect': false,
+        'transports': transports,
         'reconnection': true,
         'reconnectionAttempts': 5,
         'reconnectionDelay': 1000,
@@ -100,7 +114,24 @@ class SocketManager {
       final providedOptions = Map<String, dynamic>.from(_options)
         ..removeWhere((key, value) => value == null);
         
-      final mergedOptions = {...defaultOptions, ...providedOptions};
+      final tokenOptions = authToken.isNotEmpty
+          ? <String, dynamic>{
+              'query': <String, dynamic>{
+                ...((defaultOptions['query'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{}),
+                'token': authToken,
+              },
+              'auth': <String, dynamic>{
+                ...((defaultOptions['auth'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{}),
+                'token': 'Bearer $authToken',
+              },
+              'extraHeaders': <String, String>{
+                ...((defaultOptions['extraHeaders'] as Map?)?.cast<String, String>() ?? const <String, String>{}),
+                'Authorization': 'Bearer $authToken',
+              },
+            }
+          : const <String, dynamic>{};
+
+      final mergedOptions = {...defaultOptions, ...tokenOptions, ...providedOptions};
       
       _logger.d('Socket.IO connecting to $_serverUrl with options: $mergedOptions');
 

@@ -228,6 +228,12 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     final result = await _client.query(options);
 
     if (result.hasException) {
+      _logOperationException(
+        exception: result.exception!,
+        operationName: options.operationName ?? 'UnnamedQuery',
+        endpoint: dotenv.env['GRAPHQL_API_URL'] ?? '${AppConstants.apiBaseUrl}/graphql',
+        variables: options.variables,
+      );
       try {
         _handleGraphQLException(result.exception!);
       } on app_exceptions.AuthException {
@@ -325,6 +331,12 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     final result = await _client.mutate(options);
 
     if (result.hasException) {
+      _logOperationException(
+        exception: result.exception!,
+        operationName: options.operationName ?? 'UnnamedMutation',
+        endpoint: dotenv.env['GRAPHQL_API_URL'] ?? '${AppConstants.apiBaseUrl}/graphql',
+        variables: options.variables,
+      );
       try {
         _handleGraphQLException(result.exception!);
       } on app_exceptions.AuthException {
@@ -415,4 +427,61 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
       details: exception,
     );
   }
-} 
+
+  Map<String, dynamic> _redactVariables(Map<String, dynamic> input) {
+    dynamic redact(dynamic value) {
+      if (value is Map) {
+        final out = <String, dynamic>{};
+        for (final entry in value.entries) {
+          final key = entry.key.toString();
+          final v = entry.value;
+          if (key == 'message' || key == 'content') {
+            out[key] = '<redacted>';
+            continue;
+          }
+          if (key == 'urls' && v is List) {
+            out[key] = {'count': v.length};
+            continue;
+          }
+          out[key] = redact(v);
+        }
+        return out;
+      }
+      if (value is List) {
+        return value.map(redact).toList();
+      }
+      return value;
+    }
+
+    return redact(input) as Map<String, dynamic>;
+  }
+
+  void _logOperationException({
+    required OperationException exception,
+    required String operationName,
+    required String endpoint,
+    required Map<String, dynamic> variables,
+  }) {
+    final errors = exception.graphqlErrors
+        .map(
+          (e) => {
+            'message': e.message,
+            'code': e.extensions?['code'],
+            'path': e.path,
+            'extensions': e.extensions,
+          },
+        )
+        .toList();
+
+    _logger.error(
+      'GraphQL operation exception',
+      {
+        'operation': operationName,
+        'endpoint': endpoint,
+        'linkException': exception.linkException?.toString(),
+        'graphqlErrors': errors,
+        'variables': _redactVariables(variables),
+      },
+    );
+  }
+}

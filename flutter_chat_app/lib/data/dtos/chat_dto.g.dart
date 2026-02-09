@@ -45,14 +45,17 @@ _$CreatorDtoImpl _$$CreatorDtoImplFromJson(Map<String, dynamic> json) =>
     _$CreatorDtoImpl(
       id: json['id'] as String,
       fullName: json['fullname'] as String,
-      avatarUrl: json['avatarUrl'] as String?,
+      imageUrls: (json['imageUrls'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$$CreatorDtoImplToJson(_$CreatorDtoImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'fullname': instance.fullName,
-      'avatarUrl': instance.avatarUrl,
+      'imageUrls': instance.imageUrls,
     };
 
 _$MemberDtoImpl _$$MemberDtoImplFromJson(Map<String, dynamic> json) =>
@@ -85,7 +88,10 @@ _$UserDtoImpl _$$UserDtoImplFromJson(Map<String, dynamic> json) =>
     _$UserDtoImpl(
       id: json['id'] as String,
       fullName: json['fullname'] as String,
-      avatarUrl: json['avatarUrl'] as String?,
+      imageUrls: (json['imageUrls'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
       email: json['email'] as String?,
     );
 
@@ -93,7 +99,7 @@ Map<String, dynamic> _$$UserDtoImplToJson(_$UserDtoImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'fullname': instance.fullName,
-      'avatarUrl': instance.avatarUrl,
+      'imageUrls': instance.imageUrls,
       'email': instance.email,
     };
 

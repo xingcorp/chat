@@ -422,6 +422,19 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
   
   /// Helper method to convert ChatMessage (domain entity) to MessageDto (data DTO)
   MessageDto _chatMessageToDto(ChatMessage message) {
+    final senderImageUrls = <String>[];
+    final senderAvatar = message.sender.avatar;
+    if (senderAvatar != null && senderAvatar.isNotEmpty) {
+      senderImageUrls.add(senderAvatar);
+    }
+
+    final reactorIdsByCode = <String, Set<String>>{};
+    for (final reaction in message.reactions) {
+      reactorIdsByCode
+          .putIfAbsent(reaction.code, () => <String>{})
+          .add(reaction.userId);
+    }
+
     return MessageDto(
       id: message.id,
       content: message.content,
@@ -438,16 +451,18 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
       sender: SenderDto(
         id: message.sender.id,
         fullName: message.sender.name,
-        avatarUrl: message.sender.avatar,
+        imageUrls: senderImageUrls,
       ),
       chatId: message.chatId,
       readerIds: message.readBy,
-      reactions: message.reactions
-          .map((r) => ReactionDto(
-                code: r.code,
-                userId: r.userId,
-                user: null, // User info not available in MessageReaction
-              ))
+      reactions: reactorIdsByCode.entries
+          .map(
+            (e) => ReactionDto(
+              code: e.key,
+              reactorIds: e.value.toList(),
+              reactors: const [],
+            ),
+          )
           .toList(),
       mentionTo: [], // Not available in ChatMessage
     );

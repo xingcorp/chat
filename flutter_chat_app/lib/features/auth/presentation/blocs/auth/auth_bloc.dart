@@ -56,47 +56,53 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
       // Check authentication status
       final result = await _authRepository.isLoggedIn();
 
-      result.fold(
-        (failure) {
-          // Authentication check failed - emit error state
-          emit(AuthError(
-            failure: failure,
+      if (result.isLeft) {
+        if (emit.isDone) return;
+        emit(
+          AuthError(
+            failure: result.left,
             operation: 'isLoggedIn',
             retryAction: () => add(const AuthCheckRequested()),
-          ));
-        },
-        (isAuthenticated) async {
-          if (isAuthenticated) {
-            // Get current user details
-            final userResult = await _authRepository.getCurrentUser();
+          ),
+        );
+        return;
+      }
 
-            userResult.fold(
-              (failure) {
-                // Failed to get user details - emit error state
-                emit(AuthError(
-                  failure: failure,
-                  operation: 'getCurrentUser',
-                  retryAction: () => add(const AuthCheckRequested()),
-                ));
-              },
-              (user) {
-                final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
+      final isAuthenticated = result.right;
+      if (!isAuthenticated) {
+        if (emit.isDone) return;
+        emit(const AuthUnauthenticated());
+        return;
+      }
 
-                if (user != null) {
-                  emit(AuthAuthenticated(
-                    user: user,
-                    isOnboarded: isOnboarded,
-                  ));
-                } else {
-                  emit(const AuthUnauthenticated());
-                }
-              },
-            );
-          } else {
-            emit(const AuthUnauthenticated());
-          }
-        },
-      );
+      // Get current user details
+      final userResult = await _authRepository.getCurrentUser();
+      if (emit.isDone) return;
+
+      if (userResult.isLeft) {
+        emit(
+          AuthError(
+            failure: userResult.left,
+            operation: 'getCurrentUser',
+            retryAction: () => add(const AuthCheckRequested()),
+          ),
+        );
+        return;
+      }
+
+      final user = userResult.right;
+      final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
+
+      if (user != null) {
+        emit(
+          AuthAuthenticated(
+            user: user,
+            isOnboarded: isOnboarded,
+          ),
+        );
+      } else {
+        emit(const AuthUnauthenticated());
+      }
     } catch (exception, stackTrace) {
       logger.e('Auth check exception', error: exception, stackTrace: stackTrace);
 

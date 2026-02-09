@@ -273,7 +273,17 @@ Future<void> _registerExternalDependencies(Logger logger) async {
 
   final graphQlApiUrl = graphQlApiUrlRaw;
   final graphQlWsUrl = graphQlWsUrlRaw;
-  final socketUrl = socketUrlRaw;
+  String socketUrl = socketUrlRaw;
+
+  // Socket.IO expects an HTTP(S) base URL. Using ws/wss here often causes
+  // TransportError on web when the client constructs the polling/websocket URLs.
+  if (socketUrl.startsWith('wss://')) {
+    socketUrl = socketUrl.replaceFirst('wss://', 'https://');
+  } else if (socketUrl.startsWith('ws://')) {
+    socketUrl = socketUrl.replaceFirst('ws://', 'http://');
+  }
+
+  socketUrl = socketUrl.replaceFirst(RegExp(r'/+$'), '');
 
   logger.i('Resolved endpoints (dotenv):');
   logger.i('  API_BASE_URL=$apiBaseUrl');
@@ -294,10 +304,6 @@ Future<void> _registerExternalDependencies(Logger logger) async {
 
   if (!getIt.isRegistered<String>(instanceName: 'graphQlWsUrl')) {
     getIt.registerSingleton<String>(graphQlWsUrl, instanceName: 'graphQlWsUrl');
-  }
-
-  if (!getIt.isRegistered<Map<String, dynamic>>()) {
-    getIt.registerSingleton<Map<String, dynamic>>(<String, dynamic>{});
   }
 
   if (!getIt.isRegistered<app_retry.RetryConfig>()) {
@@ -357,6 +363,28 @@ Future<void> _registerExternalDependencies(Logger logger) async {
 
   if (!getIt.isRegistered<String>(instanceName: 'authToken')) {
     getIt.registerSingleton<String>(authToken, instanceName: 'authToken');
+  }
+
+  // Socket.IO connection options
+  // Backend middleware verifies token primarily from `handshake.headers.authorization`.
+  // Browsers may not allow custom headers for websocket, so also provide `query.token`
+  // (matches @frontend) and `auth.token` as additional fallbacks.
+  if (!getIt.isRegistered<Map<String, dynamic>>()) {
+    final socketOptions = authToken.isNotEmpty
+        ? <String, dynamic>{
+            'query': <String, dynamic>{
+              'token': authToken,
+            },
+            'auth': <String, dynamic>{
+              'token': 'Bearer $authToken',
+            },
+            'extraHeaders': <String, String>{
+              'Authorization': 'Bearer $authToken',
+            },
+          }
+        : <String, dynamic>{};
+
+    getIt.registerSingleton<Map<String, dynamic>>(socketOptions);
   }
 
   if (!getIt.isRegistered<GraphQLClient>()) {

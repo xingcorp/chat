@@ -47,6 +47,7 @@ class ChatQueries {
           creator {
             id
             fullname
+            imageUrls
           }
           members {
             id
@@ -60,6 +61,7 @@ class ChatQueries {
               id
               fullname
               email
+              imageUrls
             }
           }
         }
@@ -78,14 +80,8 @@ class ChatQueries {
   ///
   /// **Returns:** Conversation details with full member list
   static const String getConversationDetail = r'''
-    query GetConversationDetail(
-      $conversationId: String
-      $receiverId: String
-    ) {
-      chatConversationDetail(
-        conversationId: $conversationId
-        receiverId: $receiverId
-      ) {
+    query GetConversationDetail($conversationId: String, $receiverId: String) {
+      chatConversationDetail(conversationId: $conversationId, receiverId: $receiverId) {
         id
         name
         type
@@ -98,6 +94,7 @@ class ChatQueries {
         creator {
           id
           fullname
+          imageUrls
         }
         members {
           id
@@ -111,6 +108,7 @@ class ChatQueries {
             id
             fullname
             email
+            imageUrls
           }
         }
       }
@@ -155,7 +153,7 @@ class ChatQueries {
             sender {
               id
               fullname
-              avatar { location }
+              imageUrls
             }
           }
           forwardedFromMessageId
@@ -164,16 +162,16 @@ class ChatQueries {
           sender {
             id
             fullname
-            avatar { location }
+            imageUrls
           }
           conversationId
           readerIds
           reactions {
             code
-            userId
-            user {
-              id
+            reactorIds
+            reactors {
               fullname
+              imageUrls
             }
           }
           mentionTo {
@@ -213,7 +211,7 @@ class ChatQueries {
         sender {
           id
           fullname
-          avatar { location }
+          imageUrls
         }
         conversationId
       }
@@ -251,7 +249,7 @@ class ChatMutations {
         creator {
           id
           fullname
-          avatar { location }
+          imageUrls
         }
         members {
           id
@@ -260,7 +258,7 @@ class ChatMutations {
           user {
             id
             fullname
-            avatar { location }
+            imageUrls
           }
         }
       }
@@ -299,7 +297,7 @@ class ChatMutations {
           user {
             id
             fullname
-            avatar { location }
+            imageUrls
           }
         }
       }
@@ -368,15 +366,42 @@ class ChatMutations {
         type
         createdAt
         senderId
+        mentionTo {
+          id
+          fullname
+          imageUrls
+        }
+        replyMessage {
+          id
+          type
+          message
+          urls
+          mentionTo {
+            id
+            fullname
+            imageUrls
+          }
+          sender {
+            id
+            fullname
+          }
+        }
         sender {
           id
           fullname
-          avatar { location }
+          imageUrls
         }
         conversationId
         replyMessageId
         forwardedFromMessageId
         fileName
+        reactions {
+          code
+          reactorIds
+          reactors {
+            fullname
+          }
+        }
       }
     }
   ''';
@@ -438,10 +463,10 @@ class ChatMutations {
         id
         reactions {
           code
-          userId
-          user {
-            id
+          reactorIds
+          reactors {
             fullname
+            imageUrls
           }
         }
       }
@@ -498,7 +523,7 @@ class ChatSubscriptions {
         sender {
           id
           fullname
-          avatar { location }
+          imageUrls
         }
         conversationId
       }
