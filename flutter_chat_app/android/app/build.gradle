@@ -37,8 +37,8 @@ android {
 
         // Default build config fields
         buildConfigField "String", "FLAVOR", '"production"'
-        buildConfigField "String", "API_BASE_URL", '"https://api.oxii.chat"'
-        buildConfigField "String", "WEBSOCKET_URL", '"wss://ws.oxii.chat"'
+        buildConfigField "String", "API_BASE_URL", '"https://oxii-office-api.oxiitek.com"'
+        buildConfigField "String", "WEBSOCKET_URL", '"wss://oxii-office-api.oxiitek.com"'
         buildConfigField "boolean", "ENABLE_LOGGING", "false"
     }
 
@@ -74,8 +74,8 @@ android {
 
             // Production configuration
             buildConfigField "String", "FLAVOR", '"production"'
-            buildConfigField "String", "API_BASE_URL", '"https://api.oxii.chat"'
-            buildConfigField "String", "WEBSOCKET_URL", '"wss://ws.oxii.chat"'
+            buildConfigField "String", "API_BASE_URL", '"https://oxii-office-api.oxiitek.com"'
+            buildConfigField "String", "WEBSOCKET_URL", '"wss://oxii-office-api.oxiitek.com"'
             buildConfigField "boolean", "ENABLE_LOGGING", "false"
             buildConfigField "boolean", "ENABLE_MOCK_DATA", "false"
             buildConfigField "boolean", "ENABLE_DEBUG_TOOLS", "false"

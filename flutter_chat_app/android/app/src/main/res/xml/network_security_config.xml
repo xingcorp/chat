@@ -4,8 +4,8 @@
 <network-security-config>
     <domain-config cleartextTrafficPermitted="false">
         <!-- Production API endpoints -->
-        <domain includeSubdomains="true">api.oxii.chat</domain>
-        <domain includeSubdomains="true">ws.oxii.chat</domain>
+        <domain includeSubdomains="true">oxii-office-api.oxiitek.com</domain>
+        <domain includeSubdomains="true">oxii-office-api.oxiitek.com</domain>
         <domain includeSubdomains="true">cdn.oxii.chat</domain>
         
         <!-- Firebase services -->

@@ -79,7 +79,7 @@ android/
 |---------|---------|------------|
 | **App Name** | OXII Chat STG | OXII Chat |
 | **Package ID** | com.oxii.chat.staging | com.oxii.chat |
-| **API URL** | api-staging.oxii.chat | api.oxii.chat |
+| **API URL** | api-staging.oxii.chat | oxii-office-api.oxiitek.com |
 | **Firebase** | oxii-chat-staging | oxii-chat-prod |
 | **Debug Tools** | ✅ Enabled | ❌ Disabled |
 | **Mock Data** | ✅ Enabled | ❌ Disabled |
@@ -102,8 +102,8 @@ LOG_LEVEL=DEBUG
 #### Production (.env.production)
 ```env
 FLAVOR=production
-API_BASE_URL=https://api.oxii.chat
-WEBSOCKET_URL=wss://ws.oxii.chat
+API_BASE_URL=https://oxii-office-api.oxiitek.com
+WEBSOCKET_URL=wss://oxii-office-api.oxiitek.com
 FIREBASE_PROJECT_ID=oxii-chat-prod
 ENABLE_DEBUG_TOOLS=false
 ENABLE_MOCK_DATA=false

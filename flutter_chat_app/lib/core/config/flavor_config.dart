@@ -101,8 +101,8 @@ class EnvironmentConfig {
   
   /// Create production configuration
   factory EnvironmentConfig.production() => const EnvironmentConfig(
-    apiBaseUrl: 'https://api.oxii.chat',
-    websocketUrl: 'wss://ws.oxii.chat',
+    apiBaseUrl: 'https://oxii-office-api.oxiitek.com',
+    websocketUrl: 'wss://oxii-office-api.oxiitek.com',
     firebaseProjectId: 'oxii-chat-prod',
     enableAnalytics: true,
     enableCrashlytics: true,

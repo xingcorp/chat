@@ -21,7 +21,7 @@
             
         <meta-data
             android:name="com.oxii.chat.API_BASE_URL"
-            android:value="https://api.oxii.chat" />
+            android:value="https://oxii-office-api.oxiitek.com" />
             
         <meta-data
             android:name="com.oxii.chat.ENABLE_DEBUG_TOOLS"
