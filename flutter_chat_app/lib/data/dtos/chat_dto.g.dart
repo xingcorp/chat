@@ -17,6 +17,9 @@ _$ChatDtoImpl _$$ChatDtoImplFromJson(Map<String, dynamic> json) =>
       createdAt: (json['createdAt'] as num).toInt(),
       lastMessageAt: (json['lastMessageAt'] as num?)?.toInt(),
       lastMessageId: json['lastMessageId'] as String?,
+      lastMessage: _lastMessageFromJson(json['lastMessage']),
+      personalConversation:
+          _personalConversationFromJson(json['personalConversation']),
       creator: json['creator'] == null
           ? null
           : CreatorDto.fromJson(json['creator'] as Map<String, dynamic>),
@@ -37,8 +40,69 @@ Map<String, dynamic> _$$ChatDtoImplToJson(_$ChatDtoImpl instance) =>
       'createdAt': instance.createdAt,
       'lastMessageAt': instance.lastMessageAt,
       'lastMessageId': instance.lastMessageId,
+      'lastMessage': instance.lastMessage,
+      'personalConversation': instance.personalConversation,
       'creator': instance.creator,
       'members': instance.members,
+    };
+
+_$LastMessageDtoImpl _$$LastMessageDtoImplFromJson(Map<String, dynamic> json) =>
+    _$LastMessageDtoImpl(
+      id: json['id'] as String,
+      message: json['message'] as String?,
+      fileName: json['fileName'] as String?,
+      type: json['type'] as String?,
+      sender: _userBriefFromJson(json['sender']),
+      mentionTo: _mentionToFromJson(json['mentionTo']),
+    );
+
+Map<String, dynamic> _$$LastMessageDtoImplToJson(
+        _$LastMessageDtoImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'message': instance.message,
+      'fileName': instance.fileName,
+      'type': instance.type,
+      'sender': instance.sender,
+      'mentionTo': instance.mentionTo,
+    };
+
+_$UserBriefDtoImpl _$$UserBriefDtoImplFromJson(Map<String, dynamic> json) =>
+    _$UserBriefDtoImpl(
+      id: json['id'] as String,
+      fullName: json['fullname'] as String,
+    );
+
+Map<String, dynamic> _$$UserBriefDtoImplToJson(_$UserBriefDtoImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'fullname': instance.fullName,
+    };
+
+_$MentionToDtoImpl _$$MentionToDtoImplFromJson(Map<String, dynamic> json) =>
+    _$MentionToDtoImpl(
+      id: json['id'] as String,
+      fullName: json['fullname'] as String,
+    );
+
+Map<String, dynamic> _$$MentionToDtoImplToJson(_$MentionToDtoImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'fullname': instance.fullName,
+    };
+
+_$PersonalConversationDtoImpl _$$PersonalConversationDtoImplFromJson(
+        Map<String, dynamic> json) =>
+    _$PersonalConversationDtoImpl(
+      lastMessageReadId: json['lastMessageReadId'] as String?,
+      unreadCount: (json['unreadCount'] as num?)?.toInt() ?? 0,
+    );
+
+Map<String, dynamic> _$$PersonalConversationDtoImplToJson(
+        _$PersonalConversationDtoImpl instance) =>
+    <String, dynamic>{
+      'lastMessageReadId': instance.lastMessageReadId,
+      'unreadCount': instance.unreadCount,
     };
 
 _$CreatorDtoImpl _$$CreatorDtoImplFromJson(Map<String, dynamic> json) =>

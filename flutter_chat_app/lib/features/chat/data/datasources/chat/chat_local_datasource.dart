@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/core/utils/isar_id.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
@@ -105,8 +106,11 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   @override
   Future<void> saveChat(Chat chat) async {
     try {
+      final existing = await _databaseService.getChatByServerId(chat.id);
+
       // Convert Chat domain entity to ChatModel
       final chatModel = ChatModel(
+        id: existing?.id ?? chat.id.toIsarId(),
         serverId: chat.id,
         name: chat.name,
         type: _mapToDataChatType(chat.type),
@@ -142,7 +146,9 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
     try {
       // Save each chat using database service
       for (final chat in chats) {
+        final existing = await _databaseService.getChatByServerId(chat.id);
         final chatModel = ChatModel(
+          id: existing?.id ?? chat.id.toIsarId(),
           serverId: chat.id,
           name: chat.name,
           type: _mapToDataChatType(chat.type),

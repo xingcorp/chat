@@ -4,6 +4,50 @@ import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 part 'chat_dto.freezed.dart';
 part 'chat_dto.g.dart';
 
+LastMessageDto? _lastMessageFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is Map<String, dynamic>) return LastMessageDto.fromJson(value);
+  if (value is List && value.isNotEmpty) {
+    final first = value.first;
+    if (first is Map<String, dynamic>) return LastMessageDto.fromJson(first);
+  }
+  return null;
+}
+
+UserBriefDto? _userBriefFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is Map<String, dynamic>) return UserBriefDto.fromJson(value);
+  if (value is List && value.isNotEmpty) {
+    final first = value.first;
+    if (first is Map<String, dynamic>) return UserBriefDto.fromJson(first);
+  }
+  return null;
+}
+
+MentionToDto? _mentionToFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is Map<String, dynamic>) return MentionToDto.fromJson(value);
+  if (value is List && value.isNotEmpty) {
+    final first = value.first;
+    if (first is Map<String, dynamic>) return MentionToDto.fromJson(first);
+  }
+  return null;
+}
+
+PersonalConversationDto? _personalConversationFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is Map<String, dynamic>) {
+    return PersonalConversationDto.fromJson(value);
+  }
+  if (value is List && value.isNotEmpty) {
+    final first = value.first;
+    if (first is Map<String, dynamic>) {
+      return PersonalConversationDto.fromJson(first);
+    }
+  }
+  return null;
+}
+
 /// **Chat DTO (Data Transfer Object)**
 ///
 /// Freezed model for backend API responses/requests.
@@ -31,12 +75,63 @@ class ChatDto with _$ChatDto {
     required int createdAt,
     int? lastMessageAt,
     String? lastMessageId,
+    @JsonKey(fromJson: _lastMessageFromJson) LastMessageDto? lastMessage,
+    @JsonKey(fromJson: _personalConversationFromJson)
+    PersonalConversationDto? personalConversation,
     CreatorDto? creator,
     @Default([]) List<MemberDto> members,
   }) = _ChatDto;
 
   factory ChatDto.fromJson(Map<String, dynamic> json) =>
       _$ChatDtoFromJson(json);
+}
+
+@freezed
+class LastMessageDto with _$LastMessageDto {
+  const factory LastMessageDto({
+    required String id,
+    String? message,
+    String? fileName,
+    String? type,
+    @JsonKey(fromJson: _userBriefFromJson) UserBriefDto? sender,
+    @JsonKey(fromJson: _mentionToFromJson) MentionToDto? mentionTo,
+  }) = _LastMessageDto;
+
+  factory LastMessageDto.fromJson(Map<String, dynamic> json) =>
+      _$LastMessageDtoFromJson(json);
+}
+
+@freezed
+class UserBriefDto with _$UserBriefDto {
+  const factory UserBriefDto({
+    required String id,
+    @JsonKey(name: 'fullname') required String fullName,
+  }) = _UserBriefDto;
+
+  factory UserBriefDto.fromJson(Map<String, dynamic> json) =>
+      _$UserBriefDtoFromJson(json);
+}
+
+@freezed
+class MentionToDto with _$MentionToDto {
+  const factory MentionToDto({
+    required String id,
+    @JsonKey(name: 'fullname') required String fullName,
+  }) = _MentionToDto;
+
+  factory MentionToDto.fromJson(Map<String, dynamic> json) =>
+      _$MentionToDtoFromJson(json);
+}
+
+@freezed
+class PersonalConversationDto with _$PersonalConversationDto {
+  const factory PersonalConversationDto({
+    String? lastMessageReadId,
+    @Default(0) int unreadCount,
+  }) = _PersonalConversationDto;
+
+  factory PersonalConversationDto.fromJson(Map<String, dynamic> json) =>
+      _$PersonalConversationDtoFromJson(json);
 }
 
 /// **Creator DTO**
@@ -118,8 +213,8 @@ extension ChatDtoMapper on ChatDto {
       lastMessageTime: lastMessageAt != null 
           ? DateTime.fromMillisecondsSinceEpoch(lastMessageAt!)
           : null,
-      lastMessagePreview: null, // Not available in DTO
-      unreadCount: members.firstOrNull?.unreadCount ?? 0,
+      lastMessagePreview: lastMessage?.message,
+      unreadCount: personalConversation?.unreadCount ?? members.firstOrNull?.unreadCount ?? 0,
       type: _mapChatType(type),
       participantIds: members.map((m) => m.userId).toList(),
     );

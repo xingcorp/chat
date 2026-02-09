@@ -30,6 +30,11 @@ mixin _$ChatDto {
   int get createdAt => throw _privateConstructorUsedError;
   int? get lastMessageAt => throw _privateConstructorUsedError;
   String? get lastMessageId => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: _lastMessageFromJson)
+  LastMessageDto? get lastMessage => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: _personalConversationFromJson)
+  PersonalConversationDto? get personalConversation =>
+      throw _privateConstructorUsedError;
   CreatorDto? get creator => throw _privateConstructorUsedError;
   List<MemberDto> get members => throw _privateConstructorUsedError;
 
@@ -57,9 +62,14 @@ abstract class $ChatDtoCopyWith<$Res> {
       int createdAt,
       int? lastMessageAt,
       String? lastMessageId,
+      @JsonKey(fromJson: _lastMessageFromJson) LastMessageDto? lastMessage,
+      @JsonKey(fromJson: _personalConversationFromJson)
+      PersonalConversationDto? personalConversation,
       CreatorDto? creator,
       List<MemberDto> members});
 
+  $LastMessageDtoCopyWith<$Res>? get lastMessage;
+  $PersonalConversationDtoCopyWith<$Res>? get personalConversation;
   $CreatorDtoCopyWith<$Res>? get creator;
 }
 
@@ -87,6 +97,8 @@ class _$ChatDtoCopyWithImpl<$Res, $Val extends ChatDto>
     Object? createdAt = null,
     Object? lastMessageAt = freezed,
     Object? lastMessageId = freezed,
+    Object? lastMessage = freezed,
+    Object? personalConversation = freezed,
     Object? creator = freezed,
     Object? members = null,
   }) {
@@ -127,6 +139,14 @@ class _$ChatDtoCopyWithImpl<$Res, $Val extends ChatDto>
           ? _value.lastMessageId
           : lastMessageId // ignore: cast_nullable_to_non_nullable
               as String?,
+      lastMessage: freezed == lastMessage
+          ? _value.lastMessage
+          : lastMessage // ignore: cast_nullable_to_non_nullable
+              as LastMessageDto?,
+      personalConversation: freezed == personalConversation
+          ? _value.personalConversation
+          : personalConversation // ignore: cast_nullable_to_non_nullable
+              as PersonalConversationDto?,
       creator: freezed == creator
           ? _value.creator
           : creator // ignore: cast_nullable_to_non_nullable
@@ -136,6 +156,35 @@ class _$ChatDtoCopyWithImpl<$Res, $Val extends ChatDto>
           : members // ignore: cast_nullable_to_non_nullable
               as List<MemberDto>,
     ) as $Val);
+  }
+
+  /// Create a copy of ChatDto
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $LastMessageDtoCopyWith<$Res>? get lastMessage {
+    if (_value.lastMessage == null) {
+      return null;
+    }
+
+    return $LastMessageDtoCopyWith<$Res>(_value.lastMessage!, (value) {
+      return _then(_value.copyWith(lastMessage: value) as $Val);
+    });
+  }
+
+  /// Create a copy of ChatDto
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $PersonalConversationDtoCopyWith<$Res>? get personalConversation {
+    if (_value.personalConversation == null) {
+      return null;
+    }
+
+    return $PersonalConversationDtoCopyWith<$Res>(_value.personalConversation!,
+        (value) {
+      return _then(_value.copyWith(personalConversation: value) as $Val);
+    });
   }
 
   /// Create a copy of ChatDto
@@ -170,9 +219,16 @@ abstract class _$$ChatDtoImplCopyWith<$Res> implements $ChatDtoCopyWith<$Res> {
       int createdAt,
       int? lastMessageAt,
       String? lastMessageId,
+      @JsonKey(fromJson: _lastMessageFromJson) LastMessageDto? lastMessage,
+      @JsonKey(fromJson: _personalConversationFromJson)
+      PersonalConversationDto? personalConversation,
       CreatorDto? creator,
       List<MemberDto> members});
 
+  @override
+  $LastMessageDtoCopyWith<$Res>? get lastMessage;
+  @override
+  $PersonalConversationDtoCopyWith<$Res>? get personalConversation;
   @override
   $CreatorDtoCopyWith<$Res>? get creator;
 }
@@ -199,6 +255,8 @@ class __$$ChatDtoImplCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? lastMessageAt = freezed,
     Object? lastMessageId = freezed,
+    Object? lastMessage = freezed,
+    Object? personalConversation = freezed,
     Object? creator = freezed,
     Object? members = null,
   }) {
@@ -239,6 +297,14 @@ class __$$ChatDtoImplCopyWithImpl<$Res>
           ? _value.lastMessageId
           : lastMessageId // ignore: cast_nullable_to_non_nullable
               as String?,
+      lastMessage: freezed == lastMessage
+          ? _value.lastMessage
+          : lastMessage // ignore: cast_nullable_to_non_nullable
+              as LastMessageDto?,
+      personalConversation: freezed == personalConversation
+          ? _value.personalConversation
+          : personalConversation // ignore: cast_nullable_to_non_nullable
+              as PersonalConversationDto?,
       creator: freezed == creator
           ? _value.creator
           : creator // ignore: cast_nullable_to_non_nullable
@@ -264,6 +330,9 @@ class _$ChatDtoImpl implements _ChatDto {
       required this.createdAt,
       this.lastMessageAt,
       this.lastMessageId,
+      @JsonKey(fromJson: _lastMessageFromJson) this.lastMessage,
+      @JsonKey(fromJson: _personalConversationFromJson)
+      this.personalConversation,
       this.creator,
       final List<MemberDto> members = const []})
       : _members = members;
@@ -291,6 +360,12 @@ class _$ChatDtoImpl implements _ChatDto {
   @override
   final String? lastMessageId;
   @override
+  @JsonKey(fromJson: _lastMessageFromJson)
+  final LastMessageDto? lastMessage;
+  @override
+  @JsonKey(fromJson: _personalConversationFromJson)
+  final PersonalConversationDto? personalConversation;
+  @override
   final CreatorDto? creator;
   final List<MemberDto> _members;
   @override
@@ -303,7 +378,7 @@ class _$ChatDtoImpl implements _ChatDto {
 
   @override
   String toString() {
-    return 'ChatDto(id: $id, name: $name, type: $type, description: $description, imageUrl: $imageUrl, groupType: $groupType, createdAt: $createdAt, lastMessageAt: $lastMessageAt, lastMessageId: $lastMessageId, creator: $creator, members: $members)';
+    return 'ChatDto(id: $id, name: $name, type: $type, description: $description, imageUrl: $imageUrl, groupType: $groupType, createdAt: $createdAt, lastMessageAt: $lastMessageAt, lastMessageId: $lastMessageId, lastMessage: $lastMessage, personalConversation: $personalConversation, creator: $creator, members: $members)';
   }
 
   @override
@@ -326,6 +401,10 @@ class _$ChatDtoImpl implements _ChatDto {
                 other.lastMessageAt == lastMessageAt) &&
             (identical(other.lastMessageId, lastMessageId) ||
                 other.lastMessageId == lastMessageId) &&
+            (identical(other.lastMessage, lastMessage) ||
+                other.lastMessage == lastMessage) &&
+            (identical(other.personalConversation, personalConversation) ||
+                other.personalConversation == personalConversation) &&
             (identical(other.creator, creator) || other.creator == creator) &&
             const DeepCollectionEquality().equals(other._members, _members));
   }
@@ -343,6 +422,8 @@ class _$ChatDtoImpl implements _ChatDto {
       createdAt,
       lastMessageAt,
       lastMessageId,
+      lastMessage,
+      personalConversation,
       creator,
       const DeepCollectionEquality().hash(_members));
 
@@ -373,6 +454,10 @@ abstract class _ChatDto implements ChatDto {
       required final int createdAt,
       final int? lastMessageAt,
       final String? lastMessageId,
+      @JsonKey(fromJson: _lastMessageFromJson)
+      final LastMessageDto? lastMessage,
+      @JsonKey(fromJson: _personalConversationFromJson)
+      final PersonalConversationDto? personalConversation,
       final CreatorDto? creator,
       final List<MemberDto> members}) = _$ChatDtoImpl;
 
@@ -398,6 +483,12 @@ abstract class _ChatDto implements ChatDto {
   @override
   String? get lastMessageId;
   @override
+  @JsonKey(fromJson: _lastMessageFromJson)
+  LastMessageDto? get lastMessage;
+  @override
+  @JsonKey(fromJson: _personalConversationFromJson)
+  PersonalConversationDto? get personalConversation;
+  @override
   CreatorDto? get creator;
   @override
   List<MemberDto> get members;
@@ -408,6 +499,829 @@ abstract class _ChatDto implements ChatDto {
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ChatDtoImplCopyWith<_$ChatDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
+}
+
+LastMessageDto _$LastMessageDtoFromJson(Map<String, dynamic> json) {
+  return _LastMessageDto.fromJson(json);
+}
+
+/// @nodoc
+mixin _$LastMessageDto {
+  String get id => throw _privateConstructorUsedError;
+  String? get message => throw _privateConstructorUsedError;
+  String? get fileName => throw _privateConstructorUsedError;
+  String? get type => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: _userBriefFromJson)
+  UserBriefDto? get sender => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: _mentionToFromJson)
+  MentionToDto? get mentionTo => throw _privateConstructorUsedError;
+
+  /// Serializes this LastMessageDto to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of LastMessageDto
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $LastMessageDtoCopyWith<LastMessageDto> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $LastMessageDtoCopyWith<$Res> {
+  factory $LastMessageDtoCopyWith(
+          LastMessageDto value, $Res Function(LastMessageDto) then) =
+      _$LastMessageDtoCopyWithImpl<$Res, LastMessageDto>;
+  @useResult
+  $Res call(
+      {String id,
+      String? message,
+      String? fileName,
+      String? type,
+      @JsonKey(fromJson: _userBriefFromJson) UserBriefDto? sender,
+      @JsonKey(fromJson: _mentionToFromJson) MentionToDto? mentionTo});
+
+  $UserBriefDtoCopyWith<$Res>? get sender;
+  $MentionToDtoCopyWith<$Res>? get mentionTo;
+}
+
+/// @nodoc
+class _$LastMessageDtoCopyWithImpl<$Res, $Val extends LastMessageDto>
+    implements $LastMessageDtoCopyWith<$Res> {
+  _$LastMessageDtoCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of LastMessageDto
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? message = freezed,
+    Object? fileName = freezed,
+    Object? type = freezed,
+    Object? sender = freezed,
+    Object? mentionTo = freezed,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      message: freezed == message
+          ? _value.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fileName: freezed == fileName
+          ? _value.fileName
+          : fileName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      type: freezed == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String?,
+      sender: freezed == sender
+          ? _value.sender
+          : sender // ignore: cast_nullable_to_non_nullable
+              as UserBriefDto?,
+      mentionTo: freezed == mentionTo
+          ? _value.mentionTo
+          : mentionTo // ignore: cast_nullable_to_non_nullable
+              as MentionToDto?,
+    ) as $Val);
+  }
+
+  /// Create a copy of LastMessageDto
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $UserBriefDtoCopyWith<$Res>? get sender {
+    if (_value.sender == null) {
+      return null;
+    }
+
+    return $UserBriefDtoCopyWith<$Res>(_value.sender!, (value) {
+      return _then(_value.copyWith(sender: value) as $Val);
+    });
+  }
+
+  /// Create a copy of LastMessageDto
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $MentionToDtoCopyWith<$Res>? get mentionTo {
+    if (_value.mentionTo == null) {
+      return null;
+    }
+
+    return $MentionToDtoCopyWith<$Res>(_value.mentionTo!, (value) {
+      return _then(_value.copyWith(mentionTo: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$LastMessageDtoImplCopyWith<$Res>
+    implements $LastMessageDtoCopyWith<$Res> {
+  factory _$$LastMessageDtoImplCopyWith(_$LastMessageDtoImpl value,
+          $Res Function(_$LastMessageDtoImpl) then) =
+      __$$LastMessageDtoImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String id,
+      String? message,
+      String? fileName,
+      String? type,
+      @JsonKey(fromJson: _userBriefFromJson) UserBriefDto? sender,
+      @JsonKey(fromJson: _mentionToFromJson) MentionToDto? mentionTo});
+
+  @override
+  $UserBriefDtoCopyWith<$Res>? get sender;
+  @override
+  $MentionToDtoCopyWith<$Res>? get mentionTo;
+}
+
+/// @nodoc
+class __$$LastMessageDtoImplCopyWithImpl<$Res>
+    extends _$LastMessageDtoCopyWithImpl<$Res, _$LastMessageDtoImpl>
+    implements _$$LastMessageDtoImplCopyWith<$Res> {
+  __$$LastMessageDtoImplCopyWithImpl(
+      _$LastMessageDtoImpl _value, $Res Function(_$LastMessageDtoImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of LastMessageDto
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? message = freezed,
+    Object? fileName = freezed,
+    Object? type = freezed,
+    Object? sender = freezed,
+    Object? mentionTo = freezed,
+  }) {
+    return _then(_$LastMessageDtoImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      message: freezed == message
+          ? _value.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fileName: freezed == fileName
+          ? _value.fileName
+          : fileName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      type: freezed == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String?,
+      sender: freezed == sender
+          ? _value.sender
+          : sender // ignore: cast_nullable_to_non_nullable
+              as UserBriefDto?,
+      mentionTo: freezed == mentionTo
+          ? _value.mentionTo
+          : mentionTo // ignore: cast_nullable_to_non_nullable
+              as MentionToDto?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$LastMessageDtoImpl implements _LastMessageDto {
+  const _$LastMessageDtoImpl(
+      {required this.id,
+      this.message,
+      this.fileName,
+      this.type,
+      @JsonKey(fromJson: _userBriefFromJson) this.sender,
+      @JsonKey(fromJson: _mentionToFromJson) this.mentionTo});
+
+  factory _$LastMessageDtoImpl.fromJson(Map<String, dynamic> json) =>
+      _$$LastMessageDtoImplFromJson(json);
+
+  @override
+  final String id;
+  @override
+  final String? message;
+  @override
+  final String? fileName;
+  @override
+  final String? type;
+  @override
+  @JsonKey(fromJson: _userBriefFromJson)
+  final UserBriefDto? sender;
+  @override
+  @JsonKey(fromJson: _mentionToFromJson)
+  final MentionToDto? mentionTo;
+
+  @override
+  String toString() {
+    return 'LastMessageDto(id: $id, message: $message, fileName: $fileName, type: $type, sender: $sender, mentionTo: $mentionTo)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$LastMessageDtoImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.message, message) || other.message == message) &&
+            (identical(other.fileName, fileName) ||
+                other.fileName == fileName) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.sender, sender) || other.sender == sender) &&
+            (identical(other.mentionTo, mentionTo) ||
+                other.mentionTo == mentionTo));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, id, message, fileName, type, sender, mentionTo);
+
+  /// Create a copy of LastMessageDto
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$LastMessageDtoImplCopyWith<_$LastMessageDtoImpl> get copyWith =>
+      __$$LastMessageDtoImplCopyWithImpl<_$LastMessageDtoImpl>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$LastMessageDtoImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _LastMessageDto implements LastMessageDto {
+  const factory _LastMessageDto(
+      {required final String id,
+      final String? message,
+      final String? fileName,
+      final String? type,
+      @JsonKey(fromJson: _userBriefFromJson) final UserBriefDto? sender,
+      @JsonKey(fromJson: _mentionToFromJson)
+      final MentionToDto? mentionTo}) = _$LastMessageDtoImpl;
+
+  factory _LastMessageDto.fromJson(Map<String, dynamic> json) =
+      _$LastMessageDtoImpl.fromJson;
+
+  @override
+  String get id;
+  @override
+  String? get message;
+  @override
+  String? get fileName;
+  @override
+  String? get type;
+  @override
+  @JsonKey(fromJson: _userBriefFromJson)
+  UserBriefDto? get sender;
+  @override
+  @JsonKey(fromJson: _mentionToFromJson)
+  MentionToDto? get mentionTo;
+
+  /// Create a copy of LastMessageDto
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$LastMessageDtoImplCopyWith<_$LastMessageDtoImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+UserBriefDto _$UserBriefDtoFromJson(Map<String, dynamic> json) {
+  return _UserBriefDto.fromJson(json);
+}
+
+/// @nodoc
+mixin _$UserBriefDto {
+  String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'fullname')
+  String get fullName => throw _privateConstructorUsedError;
+
+  /// Serializes this UserBriefDto to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of UserBriefDto
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $UserBriefDtoCopyWith<UserBriefDto> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $UserBriefDtoCopyWith<$Res> {
+  factory $UserBriefDtoCopyWith(
+          UserBriefDto value, $Res Function(UserBriefDto) then) =
+      _$UserBriefDtoCopyWithImpl<$Res, UserBriefDto>;
+  @useResult
+  $Res call({String id, @JsonKey(name: 'fullname') String fullName});
+}
+
+/// @nodoc
+class _$UserBriefDtoCopyWithImpl<$Res, $Val extends UserBriefDto>
+    implements $UserBriefDtoCopyWith<$Res> {
+  _$UserBriefDtoCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of UserBriefDto
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? fullName = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      fullName: null == fullName
+          ? _value.fullName
+          : fullName // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$UserBriefDtoImplCopyWith<$Res>
+    implements $UserBriefDtoCopyWith<$Res> {
+  factory _$$UserBriefDtoImplCopyWith(
+          _$UserBriefDtoImpl value, $Res Function(_$UserBriefDtoImpl) then) =
+      __$$UserBriefDtoImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String id, @JsonKey(name: 'fullname') String fullName});
+}
+
+/// @nodoc
+class __$$UserBriefDtoImplCopyWithImpl<$Res>
+    extends _$UserBriefDtoCopyWithImpl<$Res, _$UserBriefDtoImpl>
+    implements _$$UserBriefDtoImplCopyWith<$Res> {
+  __$$UserBriefDtoImplCopyWithImpl(
+      _$UserBriefDtoImpl _value, $Res Function(_$UserBriefDtoImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of UserBriefDto
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? fullName = null,
+  }) {
+    return _then(_$UserBriefDtoImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      fullName: null == fullName
+          ? _value.fullName
+          : fullName // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$UserBriefDtoImpl implements _UserBriefDto {
+  const _$UserBriefDtoImpl(
+      {required this.id, @JsonKey(name: 'fullname') required this.fullName});
+
+  factory _$UserBriefDtoImpl.fromJson(Map<String, dynamic> json) =>
+      _$$UserBriefDtoImplFromJson(json);
+
+  @override
+  final String id;
+  @override
+  @JsonKey(name: 'fullname')
+  final String fullName;
+
+  @override
+  String toString() {
+    return 'UserBriefDto(id: $id, fullName: $fullName)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$UserBriefDtoImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.fullName, fullName) ||
+                other.fullName == fullName));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, fullName);
+
+  /// Create a copy of UserBriefDto
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$UserBriefDtoImplCopyWith<_$UserBriefDtoImpl> get copyWith =>
+      __$$UserBriefDtoImplCopyWithImpl<_$UserBriefDtoImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$UserBriefDtoImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _UserBriefDto implements UserBriefDto {
+  const factory _UserBriefDto(
+          {required final String id,
+          @JsonKey(name: 'fullname') required final String fullName}) =
+      _$UserBriefDtoImpl;
+
+  factory _UserBriefDto.fromJson(Map<String, dynamic> json) =
+      _$UserBriefDtoImpl.fromJson;
+
+  @override
+  String get id;
+  @override
+  @JsonKey(name: 'fullname')
+  String get fullName;
+
+  /// Create a copy of UserBriefDto
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$UserBriefDtoImplCopyWith<_$UserBriefDtoImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+MentionToDto _$MentionToDtoFromJson(Map<String, dynamic> json) {
+  return _MentionToDto.fromJson(json);
+}
+
+/// @nodoc
+mixin _$MentionToDto {
+  String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'fullname')
+  String get fullName => throw _privateConstructorUsedError;
+
+  /// Serializes this MentionToDto to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of MentionToDto
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $MentionToDtoCopyWith<MentionToDto> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $MentionToDtoCopyWith<$Res> {
+  factory $MentionToDtoCopyWith(
+          MentionToDto value, $Res Function(MentionToDto) then) =
+      _$MentionToDtoCopyWithImpl<$Res, MentionToDto>;
+  @useResult
+  $Res call({String id, @JsonKey(name: 'fullname') String fullName});
+}
+
+/// @nodoc
+class _$MentionToDtoCopyWithImpl<$Res, $Val extends MentionToDto>
+    implements $MentionToDtoCopyWith<$Res> {
+  _$MentionToDtoCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of MentionToDto
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? fullName = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      fullName: null == fullName
+          ? _value.fullName
+          : fullName // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$MentionToDtoImplCopyWith<$Res>
+    implements $MentionToDtoCopyWith<$Res> {
+  factory _$$MentionToDtoImplCopyWith(
+          _$MentionToDtoImpl value, $Res Function(_$MentionToDtoImpl) then) =
+      __$$MentionToDtoImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String id, @JsonKey(name: 'fullname') String fullName});
+}
+
+/// @nodoc
+class __$$MentionToDtoImplCopyWithImpl<$Res>
+    extends _$MentionToDtoCopyWithImpl<$Res, _$MentionToDtoImpl>
+    implements _$$MentionToDtoImplCopyWith<$Res> {
+  __$$MentionToDtoImplCopyWithImpl(
+      _$MentionToDtoImpl _value, $Res Function(_$MentionToDtoImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of MentionToDto
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? fullName = null,
+  }) {
+    return _then(_$MentionToDtoImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      fullName: null == fullName
+          ? _value.fullName
+          : fullName // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$MentionToDtoImpl implements _MentionToDto {
+  const _$MentionToDtoImpl(
+      {required this.id, @JsonKey(name: 'fullname') required this.fullName});
+
+  factory _$MentionToDtoImpl.fromJson(Map<String, dynamic> json) =>
+      _$$MentionToDtoImplFromJson(json);
+
+  @override
+  final String id;
+  @override
+  @JsonKey(name: 'fullname')
+  final String fullName;
+
+  @override
+  String toString() {
+    return 'MentionToDto(id: $id, fullName: $fullName)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$MentionToDtoImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.fullName, fullName) ||
+                other.fullName == fullName));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, fullName);
+
+  /// Create a copy of MentionToDto
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$MentionToDtoImplCopyWith<_$MentionToDtoImpl> get copyWith =>
+      __$$MentionToDtoImplCopyWithImpl<_$MentionToDtoImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$MentionToDtoImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _MentionToDto implements MentionToDto {
+  const factory _MentionToDto(
+          {required final String id,
+          @JsonKey(name: 'fullname') required final String fullName}) =
+      _$MentionToDtoImpl;
+
+  factory _MentionToDto.fromJson(Map<String, dynamic> json) =
+      _$MentionToDtoImpl.fromJson;
+
+  @override
+  String get id;
+  @override
+  @JsonKey(name: 'fullname')
+  String get fullName;
+
+  /// Create a copy of MentionToDto
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$MentionToDtoImplCopyWith<_$MentionToDtoImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+PersonalConversationDto _$PersonalConversationDtoFromJson(
+    Map<String, dynamic> json) {
+  return _PersonalConversationDto.fromJson(json);
+}
+
+/// @nodoc
+mixin _$PersonalConversationDto {
+  String? get lastMessageReadId => throw _privateConstructorUsedError;
+  int get unreadCount => throw _privateConstructorUsedError;
+
+  /// Serializes this PersonalConversationDto to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of PersonalConversationDto
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $PersonalConversationDtoCopyWith<PersonalConversationDto> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $PersonalConversationDtoCopyWith<$Res> {
+  factory $PersonalConversationDtoCopyWith(PersonalConversationDto value,
+          $Res Function(PersonalConversationDto) then) =
+      _$PersonalConversationDtoCopyWithImpl<$Res, PersonalConversationDto>;
+  @useResult
+  $Res call({String? lastMessageReadId, int unreadCount});
+}
+
+/// @nodoc
+class _$PersonalConversationDtoCopyWithImpl<$Res,
+        $Val extends PersonalConversationDto>
+    implements $PersonalConversationDtoCopyWith<$Res> {
+  _$PersonalConversationDtoCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of PersonalConversationDto
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? lastMessageReadId = freezed,
+    Object? unreadCount = null,
+  }) {
+    return _then(_value.copyWith(
+      lastMessageReadId: freezed == lastMessageReadId
+          ? _value.lastMessageReadId
+          : lastMessageReadId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      unreadCount: null == unreadCount
+          ? _value.unreadCount
+          : unreadCount // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$PersonalConversationDtoImplCopyWith<$Res>
+    implements $PersonalConversationDtoCopyWith<$Res> {
+  factory _$$PersonalConversationDtoImplCopyWith(
+          _$PersonalConversationDtoImpl value,
+          $Res Function(_$PersonalConversationDtoImpl) then) =
+      __$$PersonalConversationDtoImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String? lastMessageReadId, int unreadCount});
+}
+
+/// @nodoc
+class __$$PersonalConversationDtoImplCopyWithImpl<$Res>
+    extends _$PersonalConversationDtoCopyWithImpl<$Res,
+        _$PersonalConversationDtoImpl>
+    implements _$$PersonalConversationDtoImplCopyWith<$Res> {
+  __$$PersonalConversationDtoImplCopyWithImpl(
+      _$PersonalConversationDtoImpl _value,
+      $Res Function(_$PersonalConversationDtoImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of PersonalConversationDto
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? lastMessageReadId = freezed,
+    Object? unreadCount = null,
+  }) {
+    return _then(_$PersonalConversationDtoImpl(
+      lastMessageReadId: freezed == lastMessageReadId
+          ? _value.lastMessageReadId
+          : lastMessageReadId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      unreadCount: null == unreadCount
+          ? _value.unreadCount
+          : unreadCount // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$PersonalConversationDtoImpl implements _PersonalConversationDto {
+  const _$PersonalConversationDtoImpl(
+      {this.lastMessageReadId, this.unreadCount = 0});
+
+  factory _$PersonalConversationDtoImpl.fromJson(Map<String, dynamic> json) =>
+      _$$PersonalConversationDtoImplFromJson(json);
+
+  @override
+  final String? lastMessageReadId;
+  @override
+  @JsonKey()
+  final int unreadCount;
+
+  @override
+  String toString() {
+    return 'PersonalConversationDto(lastMessageReadId: $lastMessageReadId, unreadCount: $unreadCount)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$PersonalConversationDtoImpl &&
+            (identical(other.lastMessageReadId, lastMessageReadId) ||
+                other.lastMessageReadId == lastMessageReadId) &&
+            (identical(other.unreadCount, unreadCount) ||
+                other.unreadCount == unreadCount));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, lastMessageReadId, unreadCount);
+
+  /// Create a copy of PersonalConversationDto
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$PersonalConversationDtoImplCopyWith<_$PersonalConversationDtoImpl>
+      get copyWith => __$$PersonalConversationDtoImplCopyWithImpl<
+          _$PersonalConversationDtoImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$PersonalConversationDtoImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _PersonalConversationDto implements PersonalConversationDto {
+  const factory _PersonalConversationDto(
+      {final String? lastMessageReadId,
+      final int unreadCount}) = _$PersonalConversationDtoImpl;
+
+  factory _PersonalConversationDto.fromJson(Map<String, dynamic> json) =
+      _$PersonalConversationDtoImpl.fromJson;
+
+  @override
+  String? get lastMessageReadId;
+  @override
+  int get unreadCount;
+
+  /// Create a copy of PersonalConversationDto
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$PersonalConversationDtoImplCopyWith<_$PersonalConversationDtoImpl>
+      get copyWith => throw _privateConstructorUsedError;
 }
 
 CreatorDto _$CreatorDtoFromJson(Map<String, dynamic> json) {

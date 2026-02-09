@@ -36,14 +36,32 @@ class ChatQueries {
         total
         conversations {
           id
+          groupType
+          lastMessageAt
+          lastMessageId
           name
           type
           description
           imgUrl
-          groupType
           createdAt
-          lastMessageAt
-          lastMessageId
+          lastMessage {
+            id
+            message
+            fileName
+            type
+            sender {
+              id
+              fullname
+            }
+            mentionTo {
+              id
+              fullname
+            }
+          }
+          personalConversation {
+            lastMessageReadId
+            unreadCount
+          }
           creator {
             id
             fullname
@@ -83,14 +101,26 @@ class ChatQueries {
     query GetConversationDetail($conversationId: String, $receiverId: String) {
       chatConversationDetail(conversationId: $conversationId, receiverId: $receiverId) {
         id
+        groupType
+        lastMessageAt
+        lastMessageId
         name
         type
         description
         imgUrl
-        groupType
         createdAt
-        lastMessageAt
-        lastMessageId
+        lastMessage {
+          id
+          message
+          mentionTo {
+            id
+            fullname
+          }
+        }
+        personalConversation {
+          lastMessageReadId
+          unreadCount
+        }
         creator {
           id
           fullname
