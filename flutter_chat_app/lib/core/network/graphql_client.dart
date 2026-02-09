@@ -67,9 +67,12 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
         ? await accessTokenProvider()
         : token;
 
-    final httpLink = HttpLink(
-      dotenv.env['GRAPHQL_API_URL'] ?? '${AppConstants.apiBaseUrl}/graphql',
-    );
+    final graphQlApiUrl = (dotenv.env['GRAPHQL_API_URL'] ?? '').trim();
+    if (graphQlApiUrl.isEmpty) {
+      throw StateError('Missing required environment key: GRAPHQL_API_URL');
+    }
+
+    final httpLink = HttpLink(graphQlApiUrl);
 
     final authLink = AuthLink(
       getToken: () async {
@@ -84,8 +87,13 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     );
 
     // Create a WebSocket link for subscriptions
+    final graphQlWsUrl = (dotenv.env['GRAPHQL_WS_URL'] ?? '').trim();
+    if (graphQlWsUrl.isEmpty) {
+      throw StateError('Missing required environment key: GRAPHQL_WS_URL');
+    }
+
     final websocketLink = WebSocketLink(
-      dotenv.env['GRAPHQL_WS_URL'] ?? 'ws://localhost:3000/graphql',
+      graphQlWsUrl,
       config: SocketClientConfig(
         initialPayload: () async {
           final currentToken = accessTokenProvider != null

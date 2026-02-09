@@ -208,7 +208,9 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   }
 
   if (!getIt.isRegistered<SecureStorage>()) {
-    getIt.registerSingleton<SecureStorage>(SecureStorageImpl());
+    getIt.registerSingleton<SecureStorage>(
+      kIsWeb ? InMemorySecureStorage() : SecureStorageImpl(),
+    );
   }
 
   if (!getIt.isRegistered<token_module.TokenStorage>()) {
@@ -244,13 +246,12 @@ Future<void> _registerExternalDependencies(Logger logger) async {
 
   // Base URL - required for API endpoints
   if (!getIt.isRegistered<String>(instanceName: 'baseUrl')) {
-    final apiBaseUrl = (dotenv.env['API_BASE_URL'] ?? '').trim();
-    final baseUrl = apiBaseUrl.isNotEmpty
-        ? apiBaseUrl
-        : const String.fromEnvironment(
-            'BASE_URL',
-            defaultValue: 'http://localhost:5000',
-          );
+    final apiBaseUrlRaw = (dotenv.env['API_BASE_URL'] ?? '').trim();
+    if (apiBaseUrlRaw.isEmpty) {
+      throw StateError('Missing required environment key: API_BASE_URL');
+    }
+
+    final baseUrl = apiBaseUrlRaw.replaceFirst(RegExp(r'/+$'), '');
     getIt.registerSingleton<String>(baseUrl, instanceName: 'baseUrl');
   }
 
@@ -260,15 +261,19 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   final socketUrlRaw =
       (dotenv.env['SOCKET_URL'] ?? dotenv.env['WEBSOCKET_URL'] ?? '').trim();
 
-  final graphQlApiUrl = graphQlApiUrlRaw.isNotEmpty
-      ? graphQlApiUrlRaw
-      : (apiBaseUrl.isNotEmpty ? '$apiBaseUrl/graphql' : 'http://localhost:3000/graphql');
-  final graphQlWsUrl = graphQlWsUrlRaw.isNotEmpty
-      ? graphQlWsUrlRaw
-      : (socketUrlRaw.isNotEmpty ? '$socketUrlRaw/graphql' : 'ws://localhost:3000/graphql');
-  final socketUrl = socketUrlRaw.isNotEmpty
-      ? socketUrlRaw
-      : 'ws://localhost:3000';
+  if (graphQlApiUrlRaw.isEmpty) {
+    throw StateError('Missing required environment key: GRAPHQL_API_URL');
+  }
+  if (graphQlWsUrlRaw.isEmpty) {
+    throw StateError('Missing required environment key: GRAPHQL_WS_URL');
+  }
+  if (socketUrlRaw.isEmpty) {
+    throw StateError('Missing required environment key: SOCKET_URL (or WEBSOCKET_URL)');
+  }
+
+  final graphQlApiUrl = graphQlApiUrlRaw;
+  final graphQlWsUrl = graphQlWsUrlRaw;
+  final socketUrl = socketUrlRaw;
 
   logger.i('Resolved endpoints (dotenv):');
   logger.i('  API_BASE_URL=$apiBaseUrl');
@@ -366,10 +371,8 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   if (!getIt.isRegistered<realtime_models.RealtimeConnectionConfig>()) {
     getIt.registerSingleton<realtime_models.RealtimeConnectionConfig>(
       realtime_models.RealtimeConnectionConfig(
-        webSocketUrl:
-            graphQlWsUrl.isNotEmpty ? graphQlWsUrl : 'ws://localhost:3000/graphql',
-        httpUrl:
-            graphQlApiUrl.isNotEmpty ? graphQlApiUrl : 'http://localhost:3000/graphql',
+        webSocketUrl: graphQlWsUrl,
+        httpUrl: graphQlApiUrl,
         authToken: authToken,
         additionalHeaders: authToken.isNotEmpty
             ? <String, String>{
@@ -383,7 +386,7 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   if (!getIt.isRegistered<realtime.RealtimeConfig>()) {
     getIt.registerSingleton<realtime.RealtimeConfig>(
       realtime.RealtimeConfig(
-        serverUrl: socketUrl.isNotEmpty ? socketUrl : 'ws://localhost:3000',
+        serverUrl: socketUrl,
       ),
     );
   }

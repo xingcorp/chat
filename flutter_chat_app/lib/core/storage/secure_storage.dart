@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Abstract interface for secure storage operations
@@ -32,17 +33,76 @@ abstract class SecureStorage {
   Future<Map<String, String>> getAll();
 }
 
+class InMemorySecureStorage implements SecureStorage {
+  final Map<String, String> _data = <String, String>{};
+
+  @override
+  Future<void> setString(String key, String value) async {
+    _data[key] = value;
+  }
+
+  @override
+  Future<String?> getString(String key) async {
+    return _data[key];
+  }
+
+  @override
+  Future<void> setObject(String key, Map<String, dynamic> value) async {
+    _data[key] = json.encode(value);
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getObject(String key) async {
+    final jsonString = _data[key];
+    if (jsonString == null) return null;
+
+    try {
+      return json.decode(jsonString) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<bool> containsKey(String key) async {
+    return _data.containsKey(key);
+  }
+
+  @override
+  Future<void> remove(String key) async {
+    _data.remove(key);
+  }
+
+  @override
+  Future<void> clear() async {
+    _data.clear();
+  }
+
+  @override
+  Future<List<String>> getKeys() async {
+    return _data.keys.toList();
+  }
+
+  @override
+  Future<Map<String, String>> getAll() async {
+    return Map<String, String>.from(_data);
+  }
+}
+
 /// Implementation of the SecureStorage interface
 class SecureStorageImpl implements SecureStorage {
   final FlutterSecureStorage _storage;
   
   /// Constructor
   SecureStorageImpl({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage(
-          aOptions: AndroidOptions(
-            encryptedSharedPreferences: true,
-          ),
-        );
+      : _storage = storage ??
+            (kIsWeb
+                ? const FlutterSecureStorage()
+                : const FlutterSecureStorage(
+                    aOptions: AndroidOptions(
+                      encryptedSharedPreferences: true,
+                    ),
+                  ));
   
   @override
   Future<void> setString(String key, String value) async {

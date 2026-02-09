@@ -47,7 +47,6 @@ class ChatQueries {
           creator {
             id
             fullname
-            avatar { location }
           }
           members {
             id
@@ -60,7 +59,6 @@ class ChatQueries {
             user {
               id
               fullname
-              avatar { location }
               email
             }
           }
@@ -100,7 +98,6 @@ class ChatQueries {
         creator {
           id
           fullname
-          avatar { location }
         }
         members {
           id
@@ -113,7 +110,6 @@ class ChatQueries {
           user {
             id
             fullname
-            avatar { location }
             email
           }
         }

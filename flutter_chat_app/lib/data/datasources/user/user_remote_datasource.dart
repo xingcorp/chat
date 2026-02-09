@@ -53,13 +53,15 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
         }
       }
       ''',
+      operationName: 'GetCurrentUserProfile',
     );
-    
-    if (result['data'] == null || result['data']['me'] == null) {
+
+    final me = result['me'] as Map<String, dynamic>?;
+    if (me == null) {
       throw Exception('Failed to get current user profile');
     }
-    
-    return UserModel.fromMap(result['data']['me']);
+
+    return UserModel.fromMap(me);
   }
   
   @override
@@ -80,13 +82,15 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       }
       ''',
       variables: {'userId': userId},
+      operationName: 'GetUserProfile',
     );
-    
-    if (result['data'] == null || result['data']['getUserProfile'] == null) {
+
+    final profile = result['getUserProfile'] as Map<String, dynamic>?;
+    if (profile == null) {
       throw Exception('Failed to get user profile');
     }
-    
-    return UserModel.fromMap(result['data']['getUserProfile']);
+
+    return UserModel.fromMap(profile);
   }
   
   @override
@@ -105,13 +109,12 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       }
       ''',
       variables: {'query': query, 'limit': limit},
+      operationName: 'SearchUsers',
     );
-    
-    if (result['data'] == null || result['data']['searchUsers'] == null) {
-      return [];
-    }
-    
-    final List<dynamic> usersData = result['data']['searchUsers'];
+
+    final usersData = result['searchUsers'] as List<dynamic>?;
+    if (usersData == null) return [];
+
     return usersData.map((userData) => UserModel.fromMap(userData)).toList();
   }
   
@@ -130,13 +133,12 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
         }
       }
       ''',
+      operationName: 'GetUserContacts',
     );
-    
-    if (result['data'] == null || result['data']['getUserContacts'] == null) {
-      return [];
-    }
-    
-    final List<dynamic> contactsData = result['data']['getUserContacts'];
+
+    final contactsData = result['getUserContacts'] as List<dynamic>?;
+    if (contactsData == null) return [];
+
     return contactsData.map((contactData) => UserModel.fromMap(contactData)).toList();
   }
   
@@ -180,13 +182,15 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       }
       ''',
       variables: variables,
+      operationName: 'UpdateUserProfile',
     );
-    
-    if (result['data'] == null || result['data']['updateUserProfile'] == null) {
+
+    final updated = result['updateUserProfile'] as Map<String, dynamic>?;
+    if (updated == null) {
       throw Exception('Failed to update user profile');
     }
-    
-    return UserModel.fromMap(result['data']['updateUserProfile']);
+
+    return UserModel.fromMap(updated);
   }
   
   @override
@@ -198,12 +202,9 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       }
       ''',
       variables: {'isOnline': isOnline},
+      operationName: 'SetUserStatus',
     );
-    
-    if (result['data'] == null) {
-      return false;
-    }
-    
-    return result['data']['setUserStatus'] ?? false;
+
+    return result['setUserStatus'] == true;
   }
 } 

@@ -127,9 +127,10 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
     final result = await _client.query(
       ChatQueries.getMessageList,
       variables: variables,
+      operationName: 'GetMessageList',
     );
     
-    final data = result['data']?['chatMessageList'] as Map<String, dynamic>?;
+    final data = result['chatMessageList'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to fetch message list');
     }
@@ -170,9 +171,10 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
     final result = await _client.mutate(
       ChatMutations.sendMessage,
       variables: variables,
+      operationName: 'SendMessage',
     );
     
-    final data = result['data']?['chatMessageAdd'] as Map<String, dynamic>?;
+    final data = result['chatMessageAdd'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to send message');
     }
@@ -197,9 +199,10 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
     final result = await _client.mutate(
       ChatMutations.editMessage,
       variables: variables,
+      operationName: 'EditMessage',
     );
     
-    final data = result['data']?['chatMessageEdit'] as Map<String, dynamic>?;
+    final data = result['chatMessageEdit'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to edit message');
     }
@@ -222,9 +225,10 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
     final result = await _client.mutate(
       ChatMutations.markAsRead,
       variables: variables,
+      operationName: 'MarkAsRead',
     );
     
-    final data = result['data']?['chatMessageUpdateRead'] as Map<String, dynamic>?;
+    final data = result['chatMessageUpdateRead'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to mark as read');
     }
@@ -249,9 +253,10 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
     final result = await _client.mutate(
       ChatMutations.updateReaction,
       variables: variables,
+      operationName: 'UpdateReaction',
     );
     
-    final data = result['data']?['chatMessageUpdateReaction'] as Map<String, dynamic>?;
+    final data = result['chatMessageUpdateReaction'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to update reaction');
     }
@@ -270,9 +275,10 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
     final result = await _client.mutate(
       ChatMutations.deleteHistory,
       variables: variables,
+      operationName: 'DeleteHistory',
     );
     
-    final data = result['data']?['chatMessageDeleteHistory'] as Map<String, dynamic>?;
+    final data = result['chatMessageDeleteHistory'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to delete history');
     }
@@ -307,9 +313,10 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
     final result = await _client.query(
       ChatQueries.searchMessages,
       variables: variables,
+      operationName: 'SearchMessages',
     );
     
-    final data = result['data']?['chatSearch'] as List<dynamic>?;
+    final data = result['chatSearch'] as List<dynamic>?;
     if (data == null) {
       throw Exception('Failed to search messages');
     }

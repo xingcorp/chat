@@ -62,8 +62,6 @@ void _printStagingInfo() {
   print('🧪 ===== STAGING ENVIRONMENT =====');
   print('📱 App: OXII Chat STG');
   print('🏷️ Flavor: staging');
-  print('🌐 API: https://api-staging.oxii.chat');
-  print('🔌 WebSocket: wss://ws-staging.oxii.chat');
   print('🔥 Firebase: oxii-chat-staging');
   print('🛠️ Debug Tools: ENABLED');
   print('🧪 Mock Data: ENABLED');
