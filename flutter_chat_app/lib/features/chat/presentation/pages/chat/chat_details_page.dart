@@ -1,11 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
 import 'package:get_it/get_it.dart';
+
+import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_alert_dialog.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/inputs/app_text_field.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/lists/app_list_view.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 
 // Service locator instance
 final getIt = GetIt.instance;
@@ -27,9 +42,9 @@ class ChatDetailsPage extends BaseStatefulWidget {
 
 class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   final TextEditingController _messageController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  final FocusNode _messageFocusNode = FocusNode();
   late final MessageBloc _messageBloc;
+  late final GetConversationDetailUseCase _getConversationDetail;
+  Chat? _chat;
   
   static const int _pageSize = 50;
   bool _isLoadingMore = false;
@@ -38,7 +53,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   void initState() {
     super.initState();
     _messageBloc = getIt<MessageBloc>();
-    _scrollController.addListener(_onScroll);
+    _getConversationDetail = getIt<GetConversationDetailUseCase>();
     // Load initial messages
     _messageBloc.add(
       LoadMessages(
@@ -47,40 +62,37 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         forceRefresh: false,
       ),
     );
+
+    _loadChatHeader();
+  }
+
+  Future<void> _loadChatHeader() async {
+    final result = await _getConversationDetail(widget.chatId);
+    result.fold(
+      (_) {},
+      (chat) {
+        if (chat == null) return;
+        safeSetState(() {
+          _chat = chat;
+        });
+      },
+    );
   }
   
   @override
   void dispose() {
     _messageController.dispose();
-    _scrollController.dispose();
-    _messageFocusNode.dispose();
     _messageBloc.close();
     super.dispose();
-  }
-  
-  void _onScroll() {
-    if (_isLoadingMore) return;
-    
-    // Load more when scrolled to top (reverse list)
-    if (_scrollController.position.pixels <= _scrollController.position.minScrollExtent + 100) {
-      final state = _messageBloc.state;
-      // Check if state has more messages to load
-      if (state is MessagesLoaded) {
-        safeSetState(() {
-          _isLoadingMore = true;
-        });
-        _messageBloc.add(
-          const LoadMoreMessages(limit: _pageSize),
-        );
-      }
-    }
   }
   
   void _sendMessage() {
     final text = _messageController.text.trim();
     if (text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.messageEmpty)),
+      AppSnackBar.show(
+        context: context,
+        message: context.l10n.messageEmpty,
+        type: FeedbackType.warning,
       );
       return;
     }
@@ -98,18 +110,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     );
     
     _messageController.clear();
-    _messageFocusNode.requestFocus();
-    
-    // Scroll to bottom after sending
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
   }
   
   Future<void> _onRefresh() async {
@@ -121,6 +121,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final chatTitle = (_chat?.name?.trim().isNotEmpty ?? false)
+        ? _chat!.name!.trim()
+        : context.l10n.chats;
+
     return BlocProvider<MessageBloc>.value(
       value: _messageBloc,
       child: Scaffold(
@@ -128,31 +132,39 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           titleSpacing: 0,
           title: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: Colors.blue,
+              Container(
+                width: AppDimens.iconSizeLarge,
+                height: AppDimens.iconSizeLarge,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(AppDimens.radiusCircular),
+                ),
                 child: const Icon(
                   Icons.person,
-                  color: Colors.white,
+                  color: AppColors.textButton,
+                  size: AppDimens.iconSizeMedium,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppDimens.spaceSmall),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      context.l10n.chatTitle(widget.chatId),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    AppText(
+                      chatTitle,
+                      style: AppTextStyles.titleMedium.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
+                    AppText(
                       context.l10n.online,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.normal,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.textSecondary,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -207,21 +219,21 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                     safeSetState(() {
                       _isLoadingMore = false;
                     });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.error),
-                        action: SnackBarAction(
-                          label: context.l10n.retryOperation,
-                          onPressed: () {
-                            _messageBloc.add(
-                              LoadMessages(
-                                chatId: widget.chatId,
-                                limit: _pageSize,
-                                forceRefresh: true,
-                              ),
-                            );
-                          },
-                        ),
+                    AppSnackBar.show(
+                      context: context,
+                      message: state.error,
+                      type: FeedbackType.error,
+                      action: SnackBarAction(
+                        label: context.l10n.retryOperation,
+                        onPressed: () {
+                          _messageBloc.add(
+                            LoadMessages(
+                              chatId: widget.chatId,
+                              limit: _pageSize,
+                              forceRefresh: true,
+                            ),
+                          );
+                        },
                       ),
                     );
                   }
@@ -232,9 +244,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const CircularProgressIndicator(),
-                          const SizedBox(height: 16),
-                          Text(context.l10n.loadingMessages),
+                          AppProgressIndicator.circular(
+                            label: context.l10n.loading,
+                          ),
+                          const SizedBox(height: AppDimens.spaceMedium),
+                          AppText(context.l10n.loadingMessages),
                         ],
                       ),
                     );
@@ -245,49 +259,39 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                     if (messages.isEmpty) {
                       return _buildEmptyState(context);
                     }
-                    
-                    return RefreshIndicator(
+
+                    return AppListView<ChatMessage>(
+                      items: messages,
+                      reverse: true,
+                      isLoading: _isLoadingMore,
+                      hasMore: hasMore,
                       onRefresh: _onRefresh,
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(8),
-                        reverse: true, // Show newest messages at bottom
-                        itemCount: messages.length + (_isLoadingMore ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (_isLoadingMore && index == messages.length) {
-                            // Loading more indicator at top
-                            return Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Center(
-                                child: Column(
-                                  children: [
-                                    const CircularProgressIndicator(),
-                                    const SizedBox(height: 8),
-                                    Text(context.l10n.loadingMore),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }
-                          
-                          final message = messages[index];
-                          final isCurrentUser = message.isFromCurrentUser;
-                          
-                          return MessageItem(
-                            message: message,
-                            onLongPress: () {
-                              _showMessageOptions(context, message, isCurrentUser);
-                            },
-                          );
-                        },
-                      ),
+                      onLoadMore: () async {
+                        if (_isLoadingMore) return;
+                        safeSetState(() {
+                          _isLoadingMore = true;
+                        });
+                        _messageBloc.add(
+                          const LoadMoreMessages(limit: _pageSize),
+                        );
+                      },
+                      padding: const EdgeInsets.all(AppDimens.paddingSmall),
+                      itemBuilder: (context, message, index) {
+                        final isCurrentUser = message.isFromCurrentUser;
+                        return MessageItem(
+                          message: message,
+                          onLongPress: () {
+                            _showMessageOptions(context, message, isCurrentUser);
+                          },
+                        );
+                      },
                     );
                   } else if (state is MessagesError) {
                     return _buildErrorState(
                       context,
                       state.error,
                       () {
-                        context.read<MessageBloc>().add(
+                        _messageBloc.add(
                           LoadMessages(
                             chatId: widget.chatId,
                             limit: _pageSize,
@@ -300,29 +304,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                   
                   // Fallback for unknown state
                   return Center(
-                    child: Text('Unknown state: ${state.runtimeType}'),
+                    child: AppText(context.l10n.errorOccurred),
                   );
                 },
               ),
             ),
             
             // Message input
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 8,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    spreadRadius: 1,
-                    blurRadius: 3,
-                    offset: const Offset(0, -1),
-                  ),
-                ],
-              ),
+            AppCard.outlined(
+              margin: EdgeInsets.zero,
+              padding: const EdgeInsets.all(AppDimens.paddingSmall),
               child: Row(
                 children: [
                   IconButton(
@@ -332,16 +323,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                     },
                   ),
                   Expanded(
-                    child: TextField(
+                    child: AppTextField(
                       controller: _messageController,
-                      focusNode: _messageFocusNode,
-                      decoration: InputDecoration(
-                        hintText: context.l10n.typeMessage,
-                        border: InputBorder.none,
-                      ),
-                      textCapitalization: TextCapitalization.sentences,
                       minLines: 1,
                       maxLines: 5,
+                      hint: context.l10n.typeMessage,
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
@@ -351,9 +337,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                       // TODO: Show emoji picker
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.send),
-                    color: Colors.blue,
+                  AppButton.primary(
+                    text: context.l10n.send,
+                    icon: Icons.send,
                     onPressed: _sendMessage,
                   ),
                 ],
@@ -372,15 +358,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         children: [
           Icon(
             Icons.chat_bubble_outline,
-            size: 64,
-            color: Colors.grey[400],
+            size: AppDimens.iconSizeXXLarge,
+            color: AppColors.textSecondary,
           ),
-          const SizedBox(height: 16),
-          Text(
+          const SizedBox(height: AppDimens.spaceMedium),
+          AppText(
             context.l10n.noMessagesInChat,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -392,30 +377,29 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   Widget _buildErrorState(BuildContext context, String message, VoidCallback? retryAction) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(AppDimens.paddingLarge),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.error_outline,
-              size: 64,
-              color: Colors.red[400],
+              size: AppDimens.iconSizeXXLarge,
+              color: AppColors.error,
             ),
-            const SizedBox(height: 16),
-            Text(
+            const SizedBox(height: AppDimens.spaceMedium),
+            AppText(
               message,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[700],
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
             if (retryAction != null) ...[
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
+              const SizedBox(height: AppDimens.spaceLarge),
+              AppButton.primary(
+                text: context.l10n.retryOperation,
+                icon: Icons.refresh,
                 onPressed: retryAction,
-                icon: const Icon(Icons.refresh),
-                label: Text(context.l10n.retryOperation),
               ),
             ],
           ],
@@ -433,18 +417,20 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           children: [
             ListTile(
               leading: const Icon(Icons.copy),
-              title: Text(context.l10n.copyMessage),
+              title: AppText(context.l10n.copyMessage),
               onTap: () {
                 // TODO: Copy message to clipboard
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(context.l10n.messageCopied)),
+                AppSnackBar.show(
+                  context: context,
+                  message: context.l10n.messageCopied,
+                  type: FeedbackType.success,
                 );
               },
             ),
             ListTile(
               leading: const Icon(Icons.reply),
-              title: Text(context.l10n.replyMessage),
+              title: AppText(context.l10n.replyMessage),
               onTap: () {
                 // TODO: Reply to message
                 Navigator.pop(context);
@@ -453,7 +439,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
             if (isCurrentUser) ...[
               ListTile(
                 leading: const Icon(Icons.edit),
-                title: Text(context.l10n.editMessage),
+                title: AppText(context.l10n.editMessage),
                 onTap: () {
                   Navigator.pop(context);
                   _editMessage(message);
@@ -461,7 +447,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               ),
               ListTile(
                 leading: const Icon(Icons.delete),
-                title: Text(context.l10n.deleteMessage),
+                title: AppText(context.l10n.deleteMessage),
                 onTap: () {
                   Navigator.pop(context);
                   _confirmDeleteMessage(message);
@@ -470,7 +456,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
             ],
             ListTile(
               leading: const Icon(Icons.forward),
-              title: Text(context.l10n.forwardMessage),
+              title: AppText(context.l10n.forwardMessage),
               onTap: () {
                 // TODO: Forward message
                 Navigator.pop(context);
@@ -484,32 +470,29 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   
   void _editMessage(ChatMessage message) {
     _messageController.text = message.content;
-    _messageFocusNode.requestFocus();
     // TODO: Set edit mode and update send button to save button
   }
   
   void _confirmDeleteMessage(ChatMessage message) {
-    showDialog(
+    AppAlertDialog.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.deleteMessage),
-        content: Text(context.l10n.confirmDelete),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<MessageBloc>().add(
-                DeleteMessage(message.id),
-              );
-            },
-            child: Text(context.l10n.delete),
-          ),
-        ],
-      ),
+      title: context.l10n.deleteMessage,
+      content: context.l10n.confirmDelete,
+      actions: [
+        AppButton.text(
+          text: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppButton.primary(
+          text: context.l10n.delete,
+          onPressed: () {
+            Navigator.pop(context);
+            _messageBloc.add(
+              DeleteMessage(message.id),
+            );
+          },
+        ),
+      ],
     );
   }
 } 

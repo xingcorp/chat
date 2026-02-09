@@ -83,6 +83,18 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   Future<List<Chat>> getChats() async {
     try {
       final chatModels = await _databaseService.getChats();
+
+      chatModels.sort((a, b) {
+        final aTime = a.lastMessageTime ?? a.createdAt;
+        final bTime = b.lastMessageTime ?? b.createdAt;
+        final timeCmp = bTime.compareTo(aTime);
+        if (timeCmp != 0) return timeCmp;
+
+        final aName = (a.name ?? '').toLowerCase();
+        final bName = (b.name ?? '').toLowerCase();
+        return aName.compareTo(bName);
+      });
+
       // Convert ChatModel to Chat domain entity using toDomain method
       return chatModels.map((model) => model.toDomain()).toList();
     } catch (e) {
