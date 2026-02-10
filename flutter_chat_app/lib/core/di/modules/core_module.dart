@@ -24,6 +24,7 @@ import 'package:flutter_chat_app/data/datasources/message/message_remote_datasou
 import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/media/media_remote_datasource.dart';
 import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_local_datasource.dart';
+import 'package:flutter_chat_app/features/chat/presentation/adapters/flyer_message_mapper.dart';
 import 'package:flutter_chat_app/core/services/production_logger.dart';
 import 'package:flutter_chat_app/core/config/environment_manager.dart';
 import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
@@ -113,6 +114,13 @@ Future<void> registerCoreModule(GetIt getIt) async {
   if (!getIt.isRegistered<SocketRateLimiter>()) {
     getIt.registerSingleton<SocketRateLimiter>(
       SocketRateLimiter(logger: getIt<Logger>()),
+    );
+  }
+
+  // Flyer Chat adapter - stateless mapper (const constructor)
+  if (!getIt.isRegistered<FlyerMessageMapper>()) {
+    getIt.registerLazySingleton<FlyerMessageMapper>(
+      () => const FlyerMessageMapper(),
     );
   }
   

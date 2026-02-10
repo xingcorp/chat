@@ -1,36 +1,39 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_ui/flutter_chat_ui.dart' as flyer_ui;
+import 'package:flutter_chat_core/flutter_chat_core.dart' as flyer;
+
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
+import 'package:flutter_chat_app/features/chat/presentation/adapters/adapters.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
 import 'package:get_it/get_it.dart';
 
-import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_alert_dialog.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/inputs/app_text_field.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/lists/app_list_view.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 
 // Service locator instance
 final getIt = GetIt.instance;
 
-/// Chat details page with MessageBloc integration
+/// Chat details page using Flyer Chat UI with adapter pattern.
+///
+/// Bridges [MessageBloc] (domain/BLoC layer) → [ChatControllerAdapter] → Flyer Chat widget.
 class ChatDetailsPage extends BaseStatefulWidget {
-  /// Chat ID
   final String chatId;
-  
-  /// Constructor
+
   const ChatDetailsPage({
     super.key,
     required this.chatId,
@@ -41,19 +44,39 @@ class ChatDetailsPage extends BaseStatefulWidget {
 }
 
 class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
-  final TextEditingController _messageController = TextEditingController();
   late final MessageBloc _messageBloc;
   late final GetConversationDetailUseCase _getConversationDetail;
+  late final ChatControllerAdapter _chatController;
+  late final FlyerUserResolver _userResolver;
+  late final String _currentUserId;
+
   Chat? _chat;
-  
+  StreamSubscription<MessageState>? _blocSubscription;
+
   static const int _pageSize = 50;
-  bool _isLoadingMore = false;
-  
+
   @override
   void initState() {
     super.initState();
+
+    // Resolve current user ID from AuthBloc
+    final authState = context.read<AuthBloc>().state;
+    _currentUserId = authState is AuthAuthenticated ? authState.user.id : '';
+
     _messageBloc = getIt<MessageBloc>();
     _getConversationDetail = getIt<GetConversationDetailUseCase>();
+
+    // Create per-page adapter instances
+    _userResolver = FlyerUserResolver();
+    _chatController = ChatControllerAdapter(
+      mapper: getIt<FlyerMessageMapper>(),
+      resolver: _userResolver,
+      currentUserId: _currentUserId,
+    );
+
+    // Listen to BLoC state changes and sync to Flyer adapter
+    _blocSubscription = _messageBloc.stream.listen(_onBlocStateChanged);
+
     // Load initial messages
     _messageBloc.add(
       LoadMessages(
@@ -72,52 +95,81 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       (_) {},
       (chat) {
         if (chat == null) return;
+        _userResolver.seedFromChat(chat);
         safeSetState(() {
           _chat = chat;
         });
       },
     );
   }
-  
+
+  /// Sync BLoC state → ChatControllerAdapter whenever messages change.
+  void _onBlocStateChanged(MessageState state) {
+    if (state is MessagesLoaded && state.chatId == widget.chatId) {
+      _chatController.syncMessages(state.messages);
+    }
+  }
+
   @override
   void dispose() {
-    _messageController.dispose();
+    _blocSubscription?.cancel();
+    _chatController.dispose();
     _messageBloc.close();
     super.dispose();
   }
-  
-  void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) {
-      AppSnackBar.show(
-        context: context,
-        message: context.l10n.messageEmpty,
-        type: FeedbackType.warning,
-      );
-      return;
-    }
-    
-    // TODO: Get current user ID from auth state
-    final currentUserId = 'current_user_id'; // Placeholder
-    
+
+  // ---------------------------------------------------------------------------
+  // Flyer Chat callbacks
+  // ---------------------------------------------------------------------------
+
+  void _onMessageSend(String text) {
+    if (text.trim().isEmpty) return;
+
     _messageBloc.add(
       SendMessage(
-        content: text,
-        senderId: currentUserId,
+        content: text.trim(),
+        senderId: _currentUserId,
         contentType: 'text',
         attachmentIds: const [],
       ),
     );
-    
-    _messageController.clear();
   }
-  
-  Future<void> _onRefresh() async {
-    _messageBloc.add(
-      const RefreshMessages(),
-    );
-    await Future.delayed(const Duration(milliseconds: 500));
+
+  void _onMessageTap(
+    BuildContext context,
+    flyer.Message message, {
+    required int index,
+    required TapUpDetails details,
+  }) {
+    // Reserved for future: open media viewer, link preview, etc.
   }
+
+  void _onMessageLongPress(
+    BuildContext context,
+    flyer.Message message, {
+    required int index,
+    required LongPressStartDetails details,
+  }) {
+    // Find the corresponding domain message
+    final state = _messageBloc.state;
+    if (state is! MessagesLoaded) return;
+
+    final domainMessage = state.messages
+        .cast<ChatMessage?>()
+        .firstWhere((m) => m?.id == message.id, orElse: () => null);
+    if (domainMessage == null) return;
+
+    final isCurrentUser = domainMessage.sender.id == _currentUserId;
+    _showMessageOptions(context, domainMessage, isCurrentUser);
+  }
+
+  void _onAttachmentTap() {
+    // Reserved for Phase 4: Media & Attachments
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -205,176 +257,75 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
             ),
           ],
         ),
-        body: Column(
-          children: [
-            // Chat messages
-            Expanded(
-              child: BlocConsumer<MessageBloc, MessageState>(
-                listener: (context, state) {
-                  if (state is MessagesLoaded) {
-                    safeSetState(() {
-                      _isLoadingMore = false;
-                    });
-                  } else if (state is MessagesError) {
-                    safeSetState(() {
-                      _isLoadingMore = false;
-                    });
-                    AppSnackBar.show(
-                      context: context,
-                      message: state.error,
-                      type: FeedbackType.error,
-                      action: SnackBarAction(
-                        label: context.l10n.retryOperation,
-                        onPressed: () {
-                          _messageBloc.add(
-                            LoadMessages(
-                              chatId: widget.chatId,
-                              limit: _pageSize,
-                              forceRefresh: true,
-                            ),
-                          );
-                        },
+        body: BlocConsumer<MessageBloc, MessageState>(
+          listener: (context, state) {
+            if (state is MessagesError) {
+              AppSnackBar.show(
+                context: context,
+                message: state.error,
+                type: FeedbackType.error,
+                action: SnackBarAction(
+                  label: context.l10n.retryOperation,
+                  onPressed: () {
+                    _messageBloc.add(
+                      LoadMessages(
+                        chatId: widget.chatId,
+                        limit: _pageSize,
+                        forceRefresh: true,
                       ),
                     );
-                  }
-                },
-                builder: (context, state) {
-                  if (state is MessageInitial || state is MessagesLoading) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          AppProgressIndicator.circular(
-                            label: context.l10n.loading,
-                          ),
-                          const SizedBox(height: AppDimens.spaceMedium),
-                          AppText(context.l10n.loadingMessages),
-                        ],
-                      ),
-                    );
-                  } else if (state is MessagesLoaded) {
-                    final messages = state.messages;
-                    final hasMore = !state.hasReachedMax;
-                    
-                    if (messages.isEmpty) {
-                      return _buildEmptyState(context);
-                    }
+                  },
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            if (state is MessageInitial || state is MessagesLoading) {
+              return Center(
+                child: AppProgressIndicator.circular(
+                  label: context.l10n.loading,
+                ),
+              );
+            }
 
-                    return AppListView<ChatMessage>(
-                      items: messages,
-                      reverse: true,
-                      isLoading: _isLoadingMore,
-                      hasMore: hasMore,
-                      onRefresh: _onRefresh,
-                      onLoadMore: () async {
-                        if (_isLoadingMore) return;
-                        safeSetState(() {
-                          _isLoadingMore = true;
-                        });
-                        _messageBloc.add(
-                          const LoadMoreMessages(limit: _pageSize),
-                        );
-                      },
-                      padding: const EdgeInsets.all(AppDimens.paddingSmall),
-                      itemBuilder: (context, message, index) {
-                        final isCurrentUser = message.isFromCurrentUser;
-                        return MessageItem(
-                          message: message,
-                          onLongPress: () {
-                            _showMessageOptions(context, message, isCurrentUser);
-                          },
-                        );
-                      },
-                    );
-                  } else if (state is MessagesError) {
-                    return _buildErrorState(
-                      context,
-                      state.error,
-                      () {
-                        _messageBloc.add(
-                          LoadMessages(
-                            chatId: widget.chatId,
-                            limit: _pageSize,
-                            forceRefresh: true,
-                          ),
-                        );
-                      },
-                    );
-                  }
-                  
-                  // Fallback for unknown state
-                  return Center(
-                    child: AppText(context.l10n.errorOccurred),
+            if (state is MessagesError && state.previousMessages == null) {
+              return _buildErrorState(
+                context,
+                state.error,
+                () {
+                  _messageBloc.add(
+                    LoadMessages(
+                      chatId: widget.chatId,
+                      limit: _pageSize,
+                      forceRefresh: true,
+                    ),
                   );
                 },
-              ),
-            ),
-            
-            // Message input
-            AppCard.outlined(
-              margin: EdgeInsets.zero,
-              padding: const EdgeInsets.all(AppDimens.paddingSmall),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      // TODO: Show attachment options
-                    },
-                  ),
-                  Expanded(
-                    child: AppTextField(
-                      controller: _messageController,
-                      minLines: 1,
-                      maxLines: 5,
-                      hint: context.l10n.typeMessage,
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.emoji_emotions_outlined),
-                    onPressed: () {
-                      // TODO: Show emoji picker
-                    },
-                  ),
-                  AppButton.primary(
-                    text: context.l10n.send,
-                    icon: Icons.send,
-                    onPressed: _sendMessage,
-                  ),
-                ],
-              ),
-            ),
-          ],
+              );
+            }
+
+            // MessagesLoaded or MessagesError with previousMessages
+            return flyer_ui.Chat(
+              currentUserId: _currentUserId,
+              resolveUser: _userResolver.resolve,
+              chatController: _chatController,
+              theme: flyer.ChatTheme.fromThemeData(Theme.of(context)),
+              onMessageSend: _onMessageSend,
+              onMessageTap: _onMessageTap,
+              onMessageLongPress: _onMessageLongPress,
+              onAttachmentTap: _onAttachmentTap,
+            );
+          },
         ),
       ),
     );
   }
-  
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: AppDimens.iconSizeXXLarge,
-            color: AppColors.textSecondary,
-          ),
-          const SizedBox(height: AppDimens.spaceMedium),
-          AppText(
-            context.l10n.noMessagesInChat,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildErrorState(BuildContext context, String message, VoidCallback? retryAction) {
+  Widget _buildErrorState(
+    BuildContext context,
+    String message,
+    VoidCallback? retryAction,
+  ) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.paddingLarge),
@@ -407,8 +358,12 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       ),
     );
   }
-  
-  void _showMessageOptions(BuildContext context, ChatMessage message, bool isCurrentUser) {
+
+  void _showMessageOptions(
+    BuildContext context,
+    ChatMessage message,
+    bool isCurrentUser,
+  ) {
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -419,7 +374,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               leading: const Icon(Icons.copy),
               title: AppText(context.l10n.copyMessage),
               onTap: () {
-                // TODO: Copy message to clipboard
                 Navigator.pop(context);
                 AppSnackBar.show(
                   context: context,
@@ -432,7 +386,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               leading: const Icon(Icons.reply),
               title: AppText(context.l10n.replyMessage),
               onTap: () {
-                // TODO: Reply to message
                 Navigator.pop(context);
               },
             ),
@@ -442,7 +395,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                 title: AppText(context.l10n.editMessage),
                 onTap: () {
                   Navigator.pop(context);
-                  _editMessage(message);
+                  // TODO: Implement edit via Flyer composer
                 },
               ),
               ListTile(
@@ -458,7 +411,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               leading: const Icon(Icons.forward),
               title: AppText(context.l10n.forwardMessage),
               onTap: () {
-                // TODO: Forward message
                 Navigator.pop(context);
               },
             ),
@@ -467,12 +419,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       ),
     );
   }
-  
-  void _editMessage(ChatMessage message) {
-    _messageController.text = message.content;
-    // TODO: Set edit mode and update send button to save button
-  }
-  
+
   void _confirmDeleteMessage(ChatMessage message) {
     AppAlertDialog.show(
       context: context,
@@ -495,4 +442,4 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       ],
     );
   }
-} 
+}

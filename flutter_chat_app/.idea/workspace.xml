@@ -12,10 +12,12 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="fix: refactor data sources, improve DI configuration, and add web support for secure storage&#10;&#10;- **Data Sources Refactor**: Updated `UserRemoteDataSource`, `ChatRemoteDataSource`, and `MessageRemoteDataSource` to use `operationName` in GraphQL calls and streamlined response parsing by removing redundant `['data']` nesting.&#10;- **Dependency Injection**: &#10;    - Enforced strict environment variable requirements for `API_BASE_URL`, `GRAPHQL_API_URL`, `GRAPHQL_WS_URL`, and `SOCKET_URL`.&#10;    - Added trailing slash removal for `baseUrl`.&#10;    - Integrated `InMemorySecureStorage` for Web platform support.&#10;- **Secure Storage**: Introduced `InMemorySecureStorage` for `kIsWeb` environments and updated `SecureStorageImpl` to handle web platform defaults.&#10;- **GraphQL Client**: Enforced required environment variables and improved error handling for missing configuration.&#10;- **Cleanup**: Removed obsolete avatar location fields from group chat GraphQL fragments and removed hardcoded staging URLs from `main_staging.dart` logs.&#10;&#10;Files updated:&#10;- lib/data/datasources/user/user_remote_datasource.dart&#10;- lib/features/chat/data/datasources/chat/chat_remote_datasource.dart&#10;- lib/data/datasources/message/message_remote_datasource.dart&#10;- lib/core/di/injection.dart&#10;- lib/core/storage/secure_storage.dart&#10;- lib/core/network/graphql_client.dart&#10;- lib/data/graphql/chat_operations.dart&#10;- lib/main_staging.dart">
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="Refactor: Improve code formatting and state management&#10;&#10;This commit introduces two main changes:&#10;&#10;-   **Code Formatting:** The auto-generated localization files (`app_localizations*.dart`) have been reformatted to improve readability and adhere to linting rules. This includes removing trailing commas and fixing line breaks.&#10;&#10;-   **State Management in `MediaPreview`:**&#10;    -   Introduced a `_setLoadState` helper method to safely and efficiently manage the `_isLoading` and `_hasError` states.&#10;    -   This method checks if the widget is still mounted and uses `addPostFrameCallback` to prevent `setState` calls during the build phase, ensuring state updates are handled correctly within the widget lifecycle.">
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/graphql/chat_operations.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/graphql/chat_operations.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/pages/permissions/permissions_onboarding_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/pages/permissions/permissions_onboarding_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/di/modules/core_module.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/modules/core_module.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/pages/chat/chat_details_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/pages/chat/chat_details_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,6 +109,7 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;Flutter.main_web.executor&quot;: &quot;Debug&quot;,
+    &quot;Flutter.main_web_prod.executor&quot;: &quot;Debug&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
@@ -127,7 +130,7 @@
       <recent name="$PROJECT_DIR$/docs/tempt" />
     </key>
   </component>
-  <component name="RunManager" selected="Flutter.main_web">
+  <component name="RunManager" selected="Flutter.main_web_prod">
     <configuration name="&lt;template&gt;" type="Applet" default="true" selected="false">
       <option name="MAIN_CLASS_NAME" />
       <option name="HTML_FILE_NAME" />
@@ -156,7 +159,12 @@
       <option name="filePath" value="$PROJECT_DIR$/lib/main.dart" />
       <method v="2" />
     </configuration>
-    <configuration name="main_web" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <configuration name="main_web_prod" type="FlutterRunConfigurationType" factoryName="Flutter">
+      <option name="additionalArgs" value="--web-hostname=localhost --dart-define=FLAVOR=production --web-port=8080 --web-browser-flag &quot;--disable-web-security&quot;" />
+      <option name="filePath" value="$PROJECT_DIR$/lib/main_web.dart" />
+      <method v="2" />
+    </configuration>
+    <configuration name="main_web_stag" type="FlutterRunConfigurationType" factoryName="Flutter">
       <option name="additionalArgs" value="--web-hostname=localhost --dart-define=FLAVOR=staging --web-port=8080 --web-browser-flag &quot;--disable-web-security&quot;" />
       <option name="buildFlavor" value="staging" />
       <option name="filePath" value="$PROJECT_DIR$/lib/main_web.dart" />
@@ -191,7 +199,8 @@
     </configuration>
     <list>
       <item itemvalue="Flutter.main.dart" />
-      <item itemvalue="Flutter.main_web" />
+      <item itemvalue="Flutter.main_web_stag" />
+      <item itemvalue="Flutter.main_web_prod" />
     </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -205,62 +214,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00024" summary="feat: update design patterns, SOLID principles, and state management guidelines with improved descriptions and ensure alwaysApply is set to true">
-      <option name="closed" value="true" />
-      <created>1746674555331</created>
-      <option name="number" value="00024" />
-      <option name="presentableId" value="LOCAL-00024" />
-      <option name="project" value="LOCAL" />
-      <updated>1746674555331</updated>
-    </task>
-    <task id="LOCAL-00025" summary="feat: refine architecture guidelines with enhanced descriptions, multi-platform structure, and state management best practices">
-      <option name="closed" value="true" />
-      <created>1747388611223</created>
-      <option name="number" value="00025" />
-      <option name="presentableId" value="LOCAL-00025" />
-      <option name="project" value="LOCAL" />
-      <updated>1747388611223</updated>
-    </task>
-    <task id="LOCAL-00026" summary="feat: update workspace configuration to refine architecture guidelines with enhanced descriptions and multi-platform structure">
-      <option name="closed" value="true" />
-      <created>1747390987281</created>
-      <option name="number" value="00026" />
-      <option name="presentableId" value="LOCAL-00026" />
-      <option name="project" value="LOCAL" />
-      <updated>1747390987281</updated>
-    </task>
-    <task id="LOCAL-00027" summary="feat: enhance design pattern guidelines with detailed descriptions for behavioral and structural patterns in Flutter apps">
-      <option name="closed" value="true" />
-      <created>1747392058922</created>
-      <option name="number" value="00027" />
-      <option name="presentableId" value="LOCAL-00027" />
-      <option name="project" value="LOCAL" />
-      <updated>1747392058922</updated>
-    </task>
-    <task id="LOCAL-00028" summary="feat: add localization support with localization service and locale management in Flutter app">
-      <option name="closed" value="true" />
-      <created>1747397977288</created>
-      <option name="number" value="00028" />
-      <option name="presentableId" value="LOCAL-00028" />
-      <option name="project" value="LOCAL" />
-      <updated>1747397977288</updated>
-    </task>
-    <task id="LOCAL-00029" summary="feat: enhance localization support with new service patterns, utilities, and error handling guidelines">
-      <option name="closed" value="true" />
-      <created>1747407295802</created>
-      <option name="number" value="00029" />
-      <option name="presentableId" value="LOCAL-00029" />
-      <option name="project" value="LOCAL" />
-      <updated>1747407295802</updated>
-    </task>
-    <task id="LOCAL-00030" summary="add rules">
-      <option name="closed" value="true" />
-      <created>1752469465559</created>
-      <option name="number" value="00030" />
-      <option name="presentableId" value="LOCAL-00030" />
-      <option name="project" value="LOCAL" />
-      <updated>1752469465559</updated>
     </task>
     <task id="LOCAL-00031" summary="add rules">
       <option name="closed" value="true" />
@@ -598,7 +551,63 @@
       <option name="project" value="LOCAL" />
       <updated>1770622412720</updated>
     </task>
-    <option name="localTasksCounter" value="73" />
+    <task id="LOCAL-00073" summary="fix: refactor data sources, improve DI configuration, and add web support for secure storage&#10;&#10;- **Data Sources Refactor**: Updated `UserRemoteDataSource`, `ChatRemoteDataSource`, and `MessageRemoteDataSource` to use `operationName` in GraphQL calls and streamlined response parsing by removing redundant `['data']` nesting.&#10;- **Dependency Injection**: &#10;    - Enforced strict environment variable requirements for `API_BASE_URL`, `GRAPHQL_API_URL`, `GRAPHQL_WS_URL`, and `SOCKET_URL`.&#10;    - Added trailing slash removal for `baseUrl`.&#10;    - Integrated `InMemorySecureStorage` for Web platform support.&#10;- **Secure Storage**: Introduced `InMemorySecureStorage` for `kIsWeb` environments and updated `SecureStorageImpl` to handle web platform defaults.&#10;- **GraphQL Client**: Enforced required environment variables and improved error handling for missing configuration.&#10;- **Cleanup**: Removed obsolete avatar location fields from group chat GraphQL fragments and removed hardcoded staging URLs from `main_staging.dart` logs.&#10;&#10;Files updated:&#10;- lib/data/datasources/user/user_remote_datasource.dart&#10;- lib/features/chat/data/datasources/chat/chat_remote_datasource.dart&#10;- lib/data/datasources/message/message_remote_datasource.dart&#10;- lib/core/di/injection.dart&#10;- lib/core/storage/secure_storage.dart&#10;- lib/core/network/graphql_client.dart&#10;- lib/data/graphql/chat_operations.dart&#10;- lib/main_staging.dart">
+      <option name="closed" value="true" />
+      <created>1770633660225</created>
+      <option name="number" value="00073" />
+      <option name="presentableId" value="LOCAL-00073" />
+      <option name="project" value="LOCAL" />
+      <updated>1770633660225</updated>
+    </task>
+    <task id="LOCAL-00074" summary="chore: update production API and WebSocket endpoints&#10;&#10;- Update production `API_BASE_URL` and `WEBSOCKET_URL` to `oxii-office-api.oxiitek.com` across environment configurations&#10;- Update GraphQL and Socket endpoint URLs in `.env.production`&#10;- Synchronize production endpoint constants in `FlavorConfig` and Android `build.gradle`&#10;- Update `network_security_config.xml` and `AndroidManifest.xml` with the new production domain&#10;- Update documentation in `MULTI_FLAVOR_SETUP.md` to reflect the new production URL&#10;&#10;Files updated:&#10;- flutter_chat_app/docs/MULTI_FLAVOR_SETUP.md&#10;- flutter_chat_app/.env.production&#10;- flutter_chat_app/lib/core/config/flavor_config.dart&#10;- flutter_chat_app/android/app/build.gradle&#10;- flutter_chat_app/android/app/src/main/res/xml/network_security_config.xml&#10;- flutter_chat_app/android/app/src/production/AndroidManifest.xml">
+      <option name="closed" value="true" />
+      <created>1770635506607</created>
+      <option name="number" value="00074" />
+      <option name="presentableId" value="LOCAL-00074" />
+      <option name="project" value="LOCAL" />
+      <updated>1770635506608</updated>
+    </task>
+    <task id="LOCAL-00075" summary="feat(chat): expand Chat DTO and enhance local persistence with stable IDs&#10;&#10;- Implement `IsarIdX` extension to generate deterministic integer IDs from server string IDs using FNV-1a hashing&#10;- Expand `ChatDto` to include `LastMessageDto`, `UserBriefDto`, `MentionToDto`, and `PersonalConversationDto`&#10;- Update GraphQL queries (`GetConversations`, `GetConversationDetail`) to fetch rich message data and unread counts&#10;- Refactor `ChatLocalDataSource` to maintain ID stability by checking for existing records before saving&#10;- Update `ChatDto` mapper to populate `lastMessagePreview` and `unreadCount` from new nested DTOs&#10;- Add custom JSON converters for DTOs to handle varied backend response formats (objects vs single-item lists)&#10;&#10;Files fixed/updated:&#10;- lib/core/utils/isar_id.dart: New utility for Isar ID generation&#10;- lib/data/dtos/chat_dto.dart: Added nested DTOs and updated mapping logic&#10;- lib/data/graphql/chat_operations.dart: Updated queries for rich chat metadata&#10;- lib/features/chat/data/datasources/chat/chat_local_datasource.dart: Improved local save logic with ID persistence">
+      <option name="closed" value="true" />
+      <created>1770639249002</created>
+      <option name="number" value="00075" />
+      <option name="presentableId" value="LOCAL-00075" />
+      <option name="project" value="LOCAL" />
+      <updated>1770639249002</updated>
+    </task>
+    <task id="LOCAL-00076" summary="feat(chat): modernize UI with design system and improve list sorting&#10;&#10;- Implement `AppText` design system widget for consistent typography&#10;- Refactor `ChatListPage` and `ChatDetailsPage` to use design system components (buttons, cards, progress indicators, snackbars, and list views)&#10;- Implement auto-sorting for chats in `ChatLocalDataSource` by `lastMessageTime` (descending) and name (alphabetical)&#10;- Replace standard `ListView` and `RefreshIndicator` with `AppListView` for standardized pagination and empty states&#10;- Integrate `AppAlertDialog` for message deletion confirmation&#10;- Add dynamic chat header title loading in `ChatDetailsPage` via `GetConversationDetailUseCase`&#10;- Standardize spacing and dimensions using `AppDimens` and colors via `AppColors`&#10;- Simplify state management and event handling in UI layers&#10;&#10;Files updated:&#10;- lib/presentation/widgets/design_system/typography/app_text.dart: New typography widget&#10;- lib/features/chat/data/datasources/chat/chat_local_datasource.dart: Added sorting logic&#10;- lib/features/chat/presentation/pages/chat/chat_list_page.dart: UI refactor&#10;- lib/features/chat/presentation/pages/chat/chat_details_page.dart: UI refactor and header logic">
+      <option name="closed" value="true" />
+      <created>1770644918561</created>
+      <option name="number" value="00076" />
+      <option name="presentableId" value="LOCAL-00076" />
+      <option name="project" value="LOCAL" />
+      <updated>1770644918561</updated>
+    </task>
+    <task id="LOCAL-00077" summary="feat(chat): modernize UI with design system and improve list sorting&#10;&#10;- Implement `AppText` design system widget for consistent typography&#10;- Refactor `ChatListPage` and `ChatDetailsPage` to use design system components (buttons, cards, progress indicators, snackbars, and list views)&#10;- Implement auto-sorting for chats in `ChatLocalDataSource` by `lastMessageTime` (descending) and name (alphabetical)&#10;- Replace standard `ListView` and `RefreshIndicator` with `AppListView` for standardized pagination and empty states&#10;- Integrate `AppAlertDialog` for message deletion confirmation&#10;- Add dynamic chat header title loading in `ChatDetailsPage` via `GetConversationDetailUseCase`&#10;- Standardize spacing and dimensions using `AppDimens` and colors via `AppColors`&#10;- Simplify state management and event handling in UI layers&#10;&#10;Files updated:&#10;- lib/presentation/widgets/design_system/typography/app_text.dart: New typography widget&#10;- lib/features/chat/data/datasources/chat/chat_local_datasource.dart: Added sorting logic&#10;- lib/features/chat/presentation/pages/chat/chat_list_page.dart: UI refactor&#10;- lib/features/chat/presentation/pages/chat/chat_details_page.dart: UI refactor and header logic">
+      <option name="closed" value="true" />
+      <created>1770710389624</created>
+      <option name="number" value="00077" />
+      <option name="presentableId" value="LOCAL-00077" />
+      <option name="project" value="LOCAL" />
+      <updated>1770710389624</updated>
+    </task>
+    <task id="LOCAL-00078" summary="Refactor: Improve code formatting and state management&#10;&#10;This commit introduces two main changes:&#10;&#10;-   **Code Formatting:** The auto-generated localization files (`app_localizations*.dart`) have been reformatted to improve readability and adhere to linting rules. This includes removing trailing commas and fixing line breaks.&#10;&#10;-   **State Management in `MediaPreview`:**&#10;    -   Introduced a `_setLoadState` helper method to safely and efficiently manage the `_isLoading` and `_hasError` states.&#10;    -   This method checks if the widget is still mounted and uses `addPostFrameCallback` to prevent `setState` calls during the build phase, ensuring state updates are handled correctly within the widget lifecycle.">
+      <option name="closed" value="true" />
+      <created>1770716032040</created>
+      <option name="number" value="00078" />
+      <option name="presentableId" value="LOCAL-00078" />
+      <option name="project" value="LOCAL" />
+      <updated>1770716032040</updated>
+    </task>
+    <task id="LOCAL-00079" summary="Refactor: Improve code formatting and state management&#10;&#10;This commit introduces two main changes:&#10;&#10;-   **Code Formatting:** The auto-generated localization files (`app_localizations*.dart`) have been reformatted to improve readability and adhere to linting rules. This includes removing trailing commas and fixing line breaks.&#10;&#10;-   **State Management in `MediaPreview`:**&#10;    -   Introduced a `_setLoadState` helper method to safely and efficiently manage the `_isLoading` and `_hasError` states.&#10;    -   This method checks if the widget is still mounted and uses `addPostFrameCallback` to prevent `setState` calls during the build phase, ensuring state updates are handled correctly within the widget lifecycle.">
+      <option name="closed" value="true" />
+      <created>1770717297233</created>
+      <option name="number" value="00079" />
+      <option name="presentableId" value="LOCAL-00079" />
+      <option name="project" value="LOCAL" />
+      <updated>1770717297233</updated>
+    </task>
+    <option name="localTasksCounter" value="80" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -695,10 +704,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix bug 7" />
-    <MESSAGE value="fix bug 8" />
-    <MESSAGE value="fix bug 9" />
-    <MESSAGE value="fix bug 10" />
     <MESSAGE value="done bug" />
     <MESSAGE value="fix sua nhieu" />
     <MESSAGE value="fix sua nhieu 1" />
@@ -720,7 +725,11 @@
     <MESSAGE value="feat(auth): transition authentication from email to phone-based login&#10;&#10;- Replace `email` with `phone` across authentication layers including `AuthRepository`, `AuthRemoteDataSource`, and `AuthUseCase`&#10;- Update GraphQL mutation to use `identityOfficeLogin` with `UserLoginArgs` (phone/password)&#10;- Refactor `AuthLoginRequested` event and `LoginParams` to utilize `phone` instead of `email`&#10;- Update `LoginPage` UI to include phone-specific input field and keyboard type&#10;- Remove email format validation logic in favor of phone-based validation&#10;- Enhance `UserModel` mapping to handle complex `avatar` objects from the backend response&#10;&#10;Files updated:&#10;- lib/features/auth/data/datasources/auth/auth_remote_datasource.dart&#10;- lib/features/auth/data/repositories/auth_repository_impl.dart&#10;- lib/features/auth/domain/repositories/auth_repository.dart&#10;- lib/features/auth/domain/usecases/auth/login_usecase.dart&#10;- lib/features/auth/presentation/blocs/auth/auth_bloc.dart&#10;- lib/features/auth/presentation/blocs/auth/auth_event.dart&#10;- lib/features/auth/presentation/pages/auth/login_page.dart" />
     <MESSAGE value="refactor: migrate GraphQL client, enhance web support, and align API models&#10;&#10;- Remove legacy `GraphQLClientWrapper` in favor of `GraphQLClientWrapperImpl` with integrated logging and retry logic&#10;- Update `AuthRemoteDataSource` to use the new `GraphQLClientWrapper` and unified response handling&#10;- Implement `WebPermissionsDataSource` and update `PermissionsDataSource` to safely handle web-specific limitations (using `kIsWeb`)&#10;- Switch `TokenStorage` to use `SharedPreferences` on web instead of `SecureStorage`&#10;- Update GraphQL queries and mutations across `User`, `Chat`, and `Auth` data sources to use nested `avatar { location }` structure&#10;- Improve `UserModel` to robustly parse avatar URLs from multiple possible JSON formats&#10;- Update `PermissionsBloc` with debounced stream updates and manual signature tracking to prevent redundant state emissions&#10;- Add explicit `operationName` to various GraphQL requests for better debugging and tracing&#10;- Update staging environment configuration with new API and WebSocket endpoints&#10;- Inject and log environment variables during web initialization for easier troubleshooting&#10;- Refine DI configuration to handle platform-specific implementations and initialize authentication tokens properly during startup&#10;&#10;Files fixed/updated:&#10;- lib/core/network/graphql_client.dart: Added logging and instrumentation&#10;- lib/core/di/injection.dart: Refined platform-specific dependency registration&#10;- lib/data/datasources/permissions/web_permissions_datasource.dart: New web implementation&#10;- lib/data/models/user_model.dart: Updated avatar mapping logic&#10;- lib/features/auth/data/datasources/auth/auth_remote_datasource.dart: Migrated to new client&#10;- lib/presentation/blocs/permissions/permissions_bloc.dart: Improved state management&#10;- Various GraphQL operation files: Updated schema selections for avatars" />
     <MESSAGE value="fix: refactor data sources, improve DI configuration, and add web support for secure storage&#10;&#10;- **Data Sources Refactor**: Updated `UserRemoteDataSource`, `ChatRemoteDataSource`, and `MessageRemoteDataSource` to use `operationName` in GraphQL calls and streamlined response parsing by removing redundant `['data']` nesting.&#10;- **Dependency Injection**: &#10;    - Enforced strict environment variable requirements for `API_BASE_URL`, `GRAPHQL_API_URL`, `GRAPHQL_WS_URL`, and `SOCKET_URL`.&#10;    - Added trailing slash removal for `baseUrl`.&#10;    - Integrated `InMemorySecureStorage` for Web platform support.&#10;- **Secure Storage**: Introduced `InMemorySecureStorage` for `kIsWeb` environments and updated `SecureStorageImpl` to handle web platform defaults.&#10;- **GraphQL Client**: Enforced required environment variables and improved error handling for missing configuration.&#10;- **Cleanup**: Removed obsolete avatar location fields from group chat GraphQL fragments and removed hardcoded staging URLs from `main_staging.dart` logs.&#10;&#10;Files updated:&#10;- lib/data/datasources/user/user_remote_datasource.dart&#10;- lib/features/chat/data/datasources/chat/chat_remote_datasource.dart&#10;- lib/data/datasources/message/message_remote_datasource.dart&#10;- lib/core/di/injection.dart&#10;- lib/core/storage/secure_storage.dart&#10;- lib/core/network/graphql_client.dart&#10;- lib/data/graphql/chat_operations.dart&#10;- lib/main_staging.dart" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: refactor data sources, improve DI configuration, and add web support for secure storage&#10;&#10;- **Data Sources Refactor**: Updated `UserRemoteDataSource`, `ChatRemoteDataSource`, and `MessageRemoteDataSource` to use `operationName` in GraphQL calls and streamlined response parsing by removing redundant `['data']` nesting.&#10;- **Dependency Injection**: &#10;    - Enforced strict environment variable requirements for `API_BASE_URL`, `GRAPHQL_API_URL`, `GRAPHQL_WS_URL`, and `SOCKET_URL`.&#10;    - Added trailing slash removal for `baseUrl`.&#10;    - Integrated `InMemorySecureStorage` for Web platform support.&#10;- **Secure Storage**: Introduced `InMemorySecureStorage` for `kIsWeb` environments and updated `SecureStorageImpl` to handle web platform defaults.&#10;- **GraphQL Client**: Enforced required environment variables and improved error handling for missing configuration.&#10;- **Cleanup**: Removed obsolete avatar location fields from group chat GraphQL fragments and removed hardcoded staging URLs from `main_staging.dart` logs.&#10;&#10;Files updated:&#10;- lib/data/datasources/user/user_remote_datasource.dart&#10;- lib/features/chat/data/datasources/chat/chat_remote_datasource.dart&#10;- lib/data/datasources/message/message_remote_datasource.dart&#10;- lib/core/di/injection.dart&#10;- lib/core/storage/secure_storage.dart&#10;- lib/core/network/graphql_client.dart&#10;- lib/data/graphql/chat_operations.dart&#10;- lib/main_staging.dart" />
+    <MESSAGE value="chore: update production API and WebSocket endpoints&#10;&#10;- Update production `API_BASE_URL` and `WEBSOCKET_URL` to `oxii-office-api.oxiitek.com` across environment configurations&#10;- Update GraphQL and Socket endpoint URLs in `.env.production`&#10;- Synchronize production endpoint constants in `FlavorConfig` and Android `build.gradle`&#10;- Update `network_security_config.xml` and `AndroidManifest.xml` with the new production domain&#10;- Update documentation in `MULTI_FLAVOR_SETUP.md` to reflect the new production URL&#10;&#10;Files updated:&#10;- flutter_chat_app/docs/MULTI_FLAVOR_SETUP.md&#10;- flutter_chat_app/.env.production&#10;- flutter_chat_app/lib/core/config/flavor_config.dart&#10;- flutter_chat_app/android/app/build.gradle&#10;- flutter_chat_app/android/app/src/main/res/xml/network_security_config.xml&#10;- flutter_chat_app/android/app/src/production/AndroidManifest.xml" />
+    <MESSAGE value="feat(chat): expand Chat DTO and enhance local persistence with stable IDs&#10;&#10;- Implement `IsarIdX` extension to generate deterministic integer IDs from server string IDs using FNV-1a hashing&#10;- Expand `ChatDto` to include `LastMessageDto`, `UserBriefDto`, `MentionToDto`, and `PersonalConversationDto`&#10;- Update GraphQL queries (`GetConversations`, `GetConversationDetail`) to fetch rich message data and unread counts&#10;- Refactor `ChatLocalDataSource` to maintain ID stability by checking for existing records before saving&#10;- Update `ChatDto` mapper to populate `lastMessagePreview` and `unreadCount` from new nested DTOs&#10;- Add custom JSON converters for DTOs to handle varied backend response formats (objects vs single-item lists)&#10;&#10;Files fixed/updated:&#10;- lib/core/utils/isar_id.dart: New utility for Isar ID generation&#10;- lib/data/dtos/chat_dto.dart: Added nested DTOs and updated mapping logic&#10;- lib/data/graphql/chat_operations.dart: Updated queries for rich chat metadata&#10;- lib/features/chat/data/datasources/chat/chat_local_datasource.dart: Improved local save logic with ID persistence" />
+    <MESSAGE value="feat(chat): modernize UI with design system and improve list sorting&#10;&#10;- Implement `AppText` design system widget for consistent typography&#10;- Refactor `ChatListPage` and `ChatDetailsPage` to use design system components (buttons, cards, progress indicators, snackbars, and list views)&#10;- Implement auto-sorting for chats in `ChatLocalDataSource` by `lastMessageTime` (descending) and name (alphabetical)&#10;- Replace standard `ListView` and `RefreshIndicator` with `AppListView` for standardized pagination and empty states&#10;- Integrate `AppAlertDialog` for message deletion confirmation&#10;- Add dynamic chat header title loading in `ChatDetailsPage` via `GetConversationDetailUseCase`&#10;- Standardize spacing and dimensions using `AppDimens` and colors via `AppColors`&#10;- Simplify state management and event handling in UI layers&#10;&#10;Files updated:&#10;- lib/presentation/widgets/design_system/typography/app_text.dart: New typography widget&#10;- lib/features/chat/data/datasources/chat/chat_local_datasource.dart: Added sorting logic&#10;- lib/features/chat/presentation/pages/chat/chat_list_page.dart: UI refactor&#10;- lib/features/chat/presentation/pages/chat/chat_details_page.dart: UI refactor and header logic" />
+    <MESSAGE value="Refactor: Improve code formatting and state management&#10;&#10;This commit introduces two main changes:&#10;&#10;-   **Code Formatting:** The auto-generated localization files (`app_localizations*.dart`) have been reformatted to improve readability and adhere to linting rules. This includes removing trailing commas and fixing line breaks.&#10;&#10;-   **State Management in `MediaPreview`:**&#10;    -   Introduced a `_setLoadState` helper method to safely and efficiently manage the `_isLoading` and `_hasError` states.&#10;    -   This method checks if the widget is still mounted and uses `addPostFrameCallback` to prevent `setState` calls during the build phase, ensuring state updates are handled correctly within the widget lifecycle." />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor: Improve code formatting and state management&#10;&#10;This commit introduces two main changes:&#10;&#10;-   **Code Formatting:** The auto-generated localization files (`app_localizations*.dart`) have been reformatted to improve readability and adhere to linting rules. This includes removing trailing commas and fixing line breaks.&#10;&#10;-   **State Management in `MediaPreview`:**&#10;    -   Introduced a `_setLoadState` helper method to safely and efficiently manage the `_isLoading` and `_hasError` states.&#10;    -   This method checks if the widget is still mounted and uses `addPostFrameCallback` to prevent `setState` calls during the build phase, ensuring state updates are handled correctly within the widget lifecycle." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
