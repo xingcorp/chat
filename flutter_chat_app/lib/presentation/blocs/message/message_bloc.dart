@@ -8,6 +8,8 @@ import 'package:logger/logger.dart';
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_list_transformer.dart';
 import 'package:flutter_chat_app/domain/usecases/message/delete_message_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/edit_message_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/get_messages_usecase.dart';
@@ -46,6 +48,36 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
   // Map chat ID -> StreamSubscription
   final Map<String, StreamSubscription?> _messageSubscriptions = {};
+
+  // UI transform context
+  String _currentUserId = '';
+  bool _isGroupChat = false;
+  String? _lastReadMessageId;
+  String? _highlightedMessageId;
+
+  /// Cập nhật context cho UI transform (gọi từ Page khi mở chat)
+  void setTransformContext({
+    required String currentUserId,
+    bool isGroupChat = false,
+    String? lastReadMessageId,
+    String? highlightedMessageId,
+  }) {
+    _currentUserId = currentUserId;
+    _isGroupChat = isGroupChat;
+    _lastReadMessageId = lastReadMessageId;
+    _highlightedMessageId = highlightedMessageId;
+  }
+
+  /// Transform messages thành UI state
+  List<MessageUIState> _transformMessages(List<ChatMessage> messages) {
+    return MessageListTransformer.transform(
+      messages: messages,
+      currentUserId: _currentUserId,
+      lastReadMessageId: _lastReadMessageId,
+      highlightedMessageId: _highlightedMessageId,
+      isGroupChat: _isGroupChat,
+    );
+  }
 
   /// Constructor with UseCases injection
   MessageBloc({
@@ -120,6 +152,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         emit(MessagesLoaded(
           chatId: event.chatId,
           messages: messages,
+          uiMessages: _transformMessages(messages),
           hasReachedMax: messages.length < event.limit,
         ));
       },
@@ -164,8 +197,10 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
           emit(currentState.copyWith(hasReachedMax: true));
         } else {
           // Add new messages to current list
+          final allMessages = [...currentState.messages, ...nextMessages];
           emit(currentState.copyWith(
-            messages: [...currentState.messages, ...nextMessages],
+            messages: allMessages,
+            uiMessages: _transformMessages(allMessages),
             hasReachedMax: nextMessages.length < event.limit,
           ));
         }
@@ -203,8 +238,10 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         logger.i('Message sent successfully: ${newMessage.id}');
         
         // Add new message to the beginning of the list (optimistic update)
+        final allMessages = [newMessage, ...currentState.messages];
         emit(currentState.copyWith(
-          messages: [newMessage, ...currentState.messages],
+          messages: allMessages,
+          uiMessages: _transformMessages(allMessages),
         ));
 
         // Mark message list as dirty
@@ -262,14 +299,17 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
           return msg;
         }).toList();
 
-        emit(currentState.copyWith(messages: updatedMessages));
+        emit(currentState.copyWith(
+          messages: updatedMessages,
+          uiMessages: _transformMessages(updatedMessages),
+        ));
 
         // Mark message list as dirty
         _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
       },
     );
   }
-  
+
   /// **Delete message using DeleteMessageUseCase - CLEAN ARCHITECTURE**
   Future<void> _onDeleteMessage(DeleteMessage event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
@@ -301,7 +341,10 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
             .where((msg) => msg.id != event.messageId)
             .toList();
 
-        emit(currentState.copyWith(messages: updatedMessages));
+        emit(currentState.copyWith(
+          messages: updatedMessages,
+          uiMessages: _transformMessages(updatedMessages),
+        ));
 
         // Mark message list as dirty
         _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
@@ -350,8 +393,10 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     
     if (!messageExists) {
       // Add new message to beginning of list
+      final allMessages = [event.message, ...currentState.messages];
       emit(currentState.copyWith(
-        messages: [event.message, ...currentState.messages],
+        messages: allMessages,
+        uiMessages: _transformMessages(allMessages),
       ));
       
       // Mark message list as dirty

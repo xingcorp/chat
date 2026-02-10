@@ -2269,6 +2269,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add tag'**
   String get addTag;
+
+  /// Reply preview text for image messages
+  ///
+  /// In en, this message translates to:
+  /// **'[Photo]'**
+  String get replyPreviewImage;
+
+  /// Reply preview text for video messages
+  ///
+  /// In en, this message translates to:
+  /// **'[Video]'**
+  String get replyPreviewVideo;
+
+  /// Reply preview text for audio messages
+  ///
+  /// In en, this message translates to:
+  /// **'[Audio]'**
+  String get replyPreviewAudio;
+
+  /// Reply preview text for file messages
+  ///
+  /// In en, this message translates to:
+  /// **'[File] {fileName}'**
+  String replyPreviewFile(String fileName);
+
+  /// Reply preview text for location messages
+  ///
+  /// In en, this message translates to:
+  /// **'[Location]'**
+  String get replyPreviewLocation;
+
+  /// Reply preview text for link messages
+  ///
+  /// In en, this message translates to:
+  /// **'[Link]'**
+  String get replyPreviewLink;
+
+  /// Reply preview text for system event messages
+  ///
+  /// In en, this message translates to:
+  /// **'[System event]'**
+  String get replyPreviewSystemEvent;
+
+  /// Fallback actor name for system events
+  ///
+  /// In en, this message translates to:
+  /// **'Someone'**
+  String get eventSomeone;
+
+  /// System event when members are added
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} added {targets} to the group'**
+  String eventAddMember(String actor, String targets);
+
+  /// System event when members are removed
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} removed {targets} from the group'**
+  String eventRemoveMember(String actor, String targets);
+
+  /// System event when someone leaves the group
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} left the group'**
+  String eventLeaveConversation(String actor);
+
+  /// System event when group name is changed with old and new values
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} changed the group name from \"{oldName}\" to \"{newName}\"'**
+  String eventChangeNameFromTo(String actor, String oldName, String newName);
+
+  /// System event when group name is changed
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} changed the group name to \"{newName}\"'**
+  String eventChangeName(String actor, String newName);
+
+  /// System event when group avatar is changed
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} changed the group photo'**
+  String eventChangeAvatar(String actor);
+
+  /// System event when group is created
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} created the group'**
+  String eventCreateConversation(String actor);
+
+  /// System event when a message is pinned
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} pinned a message'**
+  String eventPinMessage(String actor);
+
+  /// System event when a message is unpinned
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} unpinned a message'**
+  String eventUnpinMessage(String actor);
+
+  /// System event when someone joins the group
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} joined the group'**
+  String eventJoinConversation(String actor);
+
+  /// Fallback system event text
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} performed an action'**
+  String eventPerformedAction(String actor);
+
+  /// Label for unread messages separator
+  ///
+  /// In en, this message translates to:
+  /// **'Unread messages'**
+  String get unreadSeparatorLabel;
 }
 
 class _AppLocalizationsDelegate

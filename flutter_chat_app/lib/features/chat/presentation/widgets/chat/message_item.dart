@@ -2,34 +2,28 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:go_router/go_router.dart';
 import 'package:get_it/get_it.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
-// TODO: Refactor to use MediaBloc instead of direct repository calls
-// import 'package:flutter_chat_app/core/services/media_service.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' as domain;
 import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/presentation/widgets/message_status_indicator.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_preview.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 
 class MessageItem extends StatefulWidget {
-  final domain.ChatMessage message;
+  final MessageUIState uiState;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
-  final bool isLastInGroup;
-  final bool showSenderInfo;
-  final bool highlightMessage;
 
   const MessageItem({
     Key? key,
-    required this.message,
+    required this.uiState,
     this.onTap,
     this.onLongPress,
-    this.isLastInGroup = false,
-    this.showSenderInfo = false,
-    this.highlightMessage = false,
   }) : super(key: key);
 
   @override
@@ -37,22 +31,17 @@ class MessageItem extends StatefulWidget {
 }
 
 class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClientMixin {
-  // TODO: Refactor to use MediaBloc for media loading
-  // final _mediaService = GetIt.I<MediaService>();
-  
   bool _isMediaLoaded = false;
   bool _isMediaError = false;
-  late double _mediaAspectRatio = 16 / 9; // Default aspect ratio
+  late double _mediaAspectRatio = 16 / 9;
   File? _localMediaFile;
 
   @override
-  bool get wantKeepAlive => widget.message.hasMedia;
+  bool get wantKeepAlive => widget.uiState.hasMedia;
 
   @override
   void initState() {
     super.initState();
-    // TODO: Implement media loading with MediaBloc
-    // _processMedia();
   }
 
   Widget _buildMentionableMessageText({
@@ -60,15 +49,13 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     required Color textColor,
   }) {
     final mentionNameById = <String, String>{
-      for (final m in widget.message.mentionTo)
+      for (final m in widget.uiState.mentionTo)
         if (m.id.isNotEmpty && m.name.trim().isNotEmpty) m.id: m.name.trim(),
     };
 
-    final raw = widget.message.content;
+    final raw = widget.uiState.content;
     final normalized = raw.formatChatMessage(mentionNameById: mentionNameById);
 
-    // We still need to keep userId mapping for navigation, so we parse on the
-    // original raw content.
     final spans = _parseMentionSpans(
       rawContent: raw,
       normalizedContent: normalized,
@@ -105,7 +92,6 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     required Map<String, String> mentionNameById,
     required void Function(String userId) onTapMention,
   }) {
-    // If backend already formatted to plain text without tokens, fallback.
     if (!rawContent.contains('@') && !rawContent.contains('[')) {
       return [TextSpan(text: normalizedContent, style: textStyle)];
     }
@@ -181,46 +167,29 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
 
     return spans;
   }
-  
+
   @override
   void didUpdateWidget(MessageItem oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.message.id != widget.message.id ||
-        oldWidget.message.mediaUrl != widget.message.mediaUrl) {
-      // TODO: Implement media loading with MediaBloc
-      // _processMedia();
+    if (oldWidget.uiState.id != widget.uiState.id) {
+      // Reset media state when message changes
     }
   }
-
-  // TODO: Refactor to use MediaBloc instead of direct MediaService calls
-  /*
-  Future<void> _processMedia() async {
-    if (!widget.message.hasMedia) return;
-
-    try {
-      // Use MediaRepository through MediaBloc
-      // ...
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isMediaError = true;
-        });
-      }
-    }
-  }
-  */
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    
+
     final theme = Theme.of(context);
-    final isCurrentUser = widget.message.isFromCurrentUser;
-    
+    final isCurrentUser = widget.uiState.isFromCurrentUser;
+    final position = widget.uiState.position;
+    final isLast = position == BubblePosition.last ||
+        position == BubblePosition.standalone;
+
     final messageBubble = RepaintBoundary(
       child: _buildMessageBubble(context, isCurrentUser),
     );
-    
+
     return GestureDetector(
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
@@ -228,22 +197,22 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
         margin: EdgeInsets.only(
           left: 8.0,
           right: 8.0,
-          bottom: widget.isLastInGroup ? 12.0 : 4.0,
-          top: widget.showSenderInfo ? 8.0 : 0.0,
+          bottom: isLast ? 12.0 : 4.0,
+          top: widget.uiState.showSenderName ? 8.0 : 0.0,
         ),
         child: Column(
-          crossAxisAlignment: isCurrentUser 
-              ? CrossAxisAlignment.end 
+          crossAxisAlignment: isCurrentUser
+              ? CrossAxisAlignment.end
               : CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             // Sender info for group chats
-            if (widget.showSenderInfo && !isCurrentUser)
+            if (widget.uiState.showSenderName && !isCurrentUser)
               Padding(
-                padding: EdgeInsets.only(left: 12.0, bottom: 4.0),
+                padding: const EdgeInsets.only(left: 12.0, bottom: 4.0),
                 child: RepaintBoundary(
                   child: Text(
-                    widget.message.senderName,
+                    widget.uiState.senderName,
                     style: TextStyle(
                       fontSize: 12.0,
                       fontWeight: FontWeight.bold,
@@ -252,40 +221,40 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                   ),
                 ),
               ),
-            
+
             // Message row with avatar for non-current user
             Row(
-              mainAxisAlignment: isCurrentUser 
-                  ? MainAxisAlignment.end 
+              mainAxisAlignment: isCurrentUser
+                  ? MainAxisAlignment.end
                   : MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 // Avatar for messages from others
-                if (!isCurrentUser && widget.isLastInGroup)
+                if (!isCurrentUser && widget.uiState.showAvatar)
                   RepaintBoundary(
                     child: _buildAvatar(context),
                   )
                 else if (!isCurrentUser)
                   const SizedBox(width: 36.0),
-                
+
                 // Message bubble
                 Flexible(
                   child: messageBubble,
                 ),
-                
+
                 // Space for status indicator on own messages
                 if (isCurrentUser)
                   const SizedBox(width: 4.0),
-                
+
                 // Message status indicator for own messages
                 if (isCurrentUser &&
                     GetIt.instance.isRegistered<MessageQueueService>() &&
                     GetIt.instance.isReadySync<MessageQueueService>())
                   RepaintBoundary(
                     child: MessageStatusIndicator(
-                      messageId: widget.message.id,
+                      messageId: widget.uiState.id,
                       messageQueueService: GetIt.instance<MessageQueueService>(),
-                      status: _mapMessageStatusToQueueStatus(widget.message.status),
+                      status: _mapMessageStatusToQueueStatus(widget.uiState.status),
                     ),
                   ),
               ],
@@ -295,15 +264,15 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       ),
     );
   }
-  
+
   List<domain.MessageAttachment> _getRenderableAttachments() {
-    final existing = widget.message.attachments;
+    final existing = widget.uiState.attachments;
     if (existing.isNotEmpty) return existing;
 
-    final urls = widget.message.urls;
+    final urls = widget.uiState.urls;
     if (urls.isEmpty) return const [];
 
-    final typeName = widget.message.contentType.toString().split('.').last.toLowerCase();
+    final typeName = widget.uiState.contentType.toString().split('.').last.toLowerCase();
     final attachmentType = switch (typeName) {
       'image' => 'image',
       'video' => 'video',
@@ -316,11 +285,11 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
         .where((u) => u.trim().isNotEmpty)
         .map<domain.MessageAttachment>(
           (u) => domain.MessageAttachment(
-            id: '${widget.message.id}-$u',
+            id: '${widget.uiState.id}-$u',
             type: attachmentType,
             url: u,
             size: 0,
-            name: widget.message.fileName ?? '',
+            name: widget.uiState.fileName ?? '',
           ),
         )
         .toList(growable: false);
@@ -328,28 +297,27 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
 
   Widget _buildMessageBubble(BuildContext context, bool isFromCurrentUser) {
     final ThemeData theme = Theme.of(context);
-    final messageAlignment = isFromCurrentUser 
-        ? CrossAxisAlignment.end 
+    final messageAlignment = isFromCurrentUser
+        ? CrossAxisAlignment.end
         : CrossAxisAlignment.start;
 
     final renderableAttachments = _getRenderableAttachments();
-    
-    // Different color for current user vs others
-    final bubbleColor = isFromCurrentUser 
-        ? theme.colorScheme.primary.withOpacity(0.8) 
+
+    final bubbleColor = isFromCurrentUser
+        ? theme.colorScheme.primary.withOpacity(0.8)
         : theme.cardColor;
-    
-    final textColor = isFromCurrentUser 
-        ? theme.colorScheme.onPrimary 
+
+    final textColor = isFromCurrentUser
+        ? theme.colorScheme.onPrimary
         : theme.textTheme.bodyMedium?.color ?? Colors.black;
-    
+
     return Container(
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * 0.75,
       ),
       decoration: BoxDecoration(
-        color: widget.highlightMessage 
-            ? bubbleColor.withOpacity(0.7) 
+        color: widget.uiState.isHighlighted
+            ? bubbleColor.withOpacity(0.7)
             : bubbleColor,
         borderRadius: _getBubbleBorderRadius(isFromCurrentUser),
         boxShadow: [
@@ -366,19 +334,18 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
           crossAxisAlignment: messageAlignment,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Reply indicator if this is a reply
-            // TODO: Add replyTo field to ChatMessage entity
-            // if (widget.message.replyTo != null)
-            //   _buildReplyPreview(context, isFromCurrentUser),
-            
+            // Reply preview
+            if (widget.uiState.replyMessage != null)
+              _buildReplyPreview(context, isFromCurrentUser),
+
             // Attachment previews if any
             if (renderableAttachments.isNotEmpty)
               _buildAttachmentPreviews(context, attachments: renderableAttachments),
-            
+
             // Message content
-            if (widget.message.content.isNotEmpty || renderableAttachments.isEmpty)
+            if (widget.uiState.content.isNotEmpty || renderableAttachments.isEmpty)
               Padding(
-                padding: EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: 12.0,
                   vertical: 8.0,
                 ),
@@ -393,20 +360,60 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                         textColor: textColor,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 4.0),
-                    
-                    // Timestamp
+
+                    // Timestamp + edited indicator
                     RepaintBoundary(
-                      child: Text(
-                        timeago.format(widget.message.createdAt, locale: 'en_short'),
-                        style: TextStyle(
-                          color: textColor.withOpacity(0.7),
-                          fontSize: 10.0,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.uiState.isEdited)
+                            Text(
+                              '${context.l10n.edited}  ',
+                              style: TextStyle(
+                                color: textColor.withOpacity(0.5),
+                                fontSize: 10.0,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          if (widget.uiState.showTimestamp)
+                            Text(
+                              widget.uiState.formattedTime,
+                              style: TextStyle(
+                                color: textColor.withOpacity(0.7),
+                                fontSize: 10.0,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ],
+                ),
+              ),
+
+            // Reactions bar (phía dưới content)
+            if (widget.uiState.groupedReactions.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 8.0),
+                child: ReactionBar(
+                  groupedReactions: widget.uiState.groupedReactions,
+                  showAddButton: true,
+                  onReactionTap: (emojiCode, isCurrentlyReacted) {
+                    // TODO: Call BLoC to toggle reaction
+                    debugPrint('Reaction tapped: $emojiCode, isReacted: $isCurrentlyReacted');
+                  },
+                  onReactionLongPress: (emojiCode, reactorIds, reactorNames) {
+                    ReactionDetailModal.show(
+                      context,
+                      emojiCode: emojiCode,
+                      reactorNames: reactorNames,
+                    );
+                  },
+                  onAddReaction: () {
+                    // TODO: Show emoji picker
+                    debugPrint('Add reaction tapped');
+                  },
                 ),
               ),
           ],
@@ -414,11 +421,11 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       ),
     );
   }
-  
+
   Widget _buildAvatar(BuildContext context) {
     final theme = Theme.of(context);
-    final avatarUrl = widget.message.sender.avatar;
-    final senderName = widget.message.sender.name.trim();
+    final avatarUrl = widget.uiState.senderAvatar;
+    final senderName = widget.uiState.senderName.trim();
 
     final initials = senderName.isNotEmpty
         ? senderName.characters.first.toUpperCase()
@@ -454,13 +461,54 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
             ),
     );
   }
-  
+
   Widget _buildReplyPreview(BuildContext context, bool isFromCurrentUser) {
-    // Implementation of _buildReplyPreview method
-    // This method should return a widget representing the reply preview
-    throw UnimplementedError();
+    final reply = widget.uiState.replyMessage!;
+    final theme = Theme.of(context);
+
+    final bgColor = isFromCurrentUser
+        ? Colors.white.withOpacity(0.15)
+        : theme.colorScheme.primary.withOpacity(0.08);
+    final accentColor = theme.colorScheme.primary;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: bgColor,
+        border: Border(
+          left: BorderSide(color: accentColor, width: 3.0),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            reply.senderName,
+            style: TextStyle(
+              fontSize: 12.0,
+              fontWeight: FontWeight.w600,
+              color: accentColor,
+            ),
+          ),
+          const SizedBox(height: 2.0),
+          Text(
+            reply.previewText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12.0,
+              color: isFromCurrentUser
+                  ? Colors.white.withOpacity(0.8)
+                  : theme.textTheme.bodySmall?.color,
+            ),
+          ),
+        ],
+      ),
+    );
   }
-  
+
   Widget _buildAttachmentPreviews(
     BuildContext context, {
     required List<domain.MessageAttachment> attachments,
@@ -470,10 +518,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     Widget buildFileTile(domain.MessageAttachment attachment) {
       final name = attachment.name.trim().isNotEmpty ? attachment.name.trim() : 'File';
       return InkWell(
-        onTap: () {
-          // For web/desktop, opening the URL is handled by browser.
-          // For mobile, higher-level handler can be added later.
-        },
+        onTap: () {},
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
@@ -570,30 +615,87 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       case domain.MessageStatus.delivered:
         return MessageQueueStatus.delivered;
       case domain.MessageStatus.read:
-        return MessageQueueStatus.delivered; // Map read to delivered for now
+        return MessageQueueStatus.delivered;
       case domain.MessageStatus.failed:
         return MessageQueueStatus.failed;
     }
   }
 
+  /// Border radius dựa trên BubblePosition
+  ///
+  /// Khớp stream_chat_flutter: message grouping với bo góc
+  /// - standalone: bo tròn đầy đủ
+  /// - first: bo tròn trên, góc nhỏ dưới
+  /// - middle: góc nhỏ cả trên lẫn dưới
+  /// - last: góc nhỏ trên, bo tròn dưới
   BorderRadius _getBubbleBorderRadius(bool isFromCurrentUser) {
     const radius = Radius.circular(16.0);
     const smallRadius = Radius.circular(4.0);
 
+    final position = widget.uiState.position;
+
     if (isFromCurrentUser) {
-      return const BorderRadius.only(
-        topLeft: radius,
-        topRight: radius,
-        bottomLeft: radius,
-        bottomRight: smallRadius,
-      );
+      switch (position) {
+        case BubblePosition.standalone:
+          return const BorderRadius.only(
+            topLeft: radius,
+            topRight: radius,
+            bottomLeft: radius,
+            bottomRight: smallRadius,
+          );
+        case BubblePosition.first:
+          return const BorderRadius.only(
+            topLeft: radius,
+            topRight: radius,
+            bottomLeft: radius,
+            bottomRight: smallRadius,
+          );
+        case BubblePosition.middle:
+          return const BorderRadius.only(
+            topLeft: radius,
+            topRight: smallRadius,
+            bottomLeft: radius,
+            bottomRight: smallRadius,
+          );
+        case BubblePosition.last:
+          return const BorderRadius.only(
+            topLeft: radius,
+            topRight: smallRadius,
+            bottomLeft: radius,
+            bottomRight: radius,
+          );
+      }
     }
 
-    return const BorderRadius.only(
-      topLeft: radius,
-      topRight: radius,
-      bottomLeft: smallRadius,
-      bottomRight: radius,
-    );
+    switch (position) {
+      case BubblePosition.standalone:
+        return const BorderRadius.only(
+          topLeft: radius,
+          topRight: radius,
+          bottomLeft: smallRadius,
+          bottomRight: radius,
+        );
+      case BubblePosition.first:
+        return const BorderRadius.only(
+          topLeft: radius,
+          topRight: radius,
+          bottomLeft: smallRadius,
+          bottomRight: radius,
+        );
+      case BubblePosition.middle:
+        return const BorderRadius.only(
+          topLeft: smallRadius,
+          topRight: radius,
+          bottomLeft: smallRadius,
+          bottomRight: radius,
+        );
+      case BubblePosition.last:
+        return const BorderRadius.only(
+          topLeft: smallRadius,
+          topRight: radius,
+          bottomLeft: radius,
+          bottomRight: radius,
+        );
+    }
   }
 }

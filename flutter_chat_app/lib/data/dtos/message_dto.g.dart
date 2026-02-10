@@ -41,6 +41,21 @@ _$MessageDtoImpl _$$MessageDtoImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => MentionDto.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
+      actionType: json['actionType'] as String?,
+      actorId: json['actorId'] as String?,
+      actor: json['actor'] == null
+          ? null
+          : SenderDto.fromJson(json['actor'] as Map<String, dynamic>),
+      targetUserIds: (json['targetUserIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      targetUsers: (json['targetUsers'] as List<dynamic>?)
+              ?.map((e) => SenderDto.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      newValue: json['newValue'] as String?,
+      oldValue: json['oldValue'] as String?,
     );
 
 Map<String, dynamic> _$$MessageDtoImplToJson(_$MessageDtoImpl instance) =>
@@ -62,6 +77,13 @@ Map<String, dynamic> _$$MessageDtoImplToJson(_$MessageDtoImpl instance) =>
       'readerIds': instance.readerIds,
       'reactions': instance.reactions,
       'mentionTo': instance.mentionTo,
+      'actionType': instance.actionType,
+      'actorId': instance.actorId,
+      'actor': instance.actor,
+      'targetUserIds': instance.targetUserIds,
+      'targetUsers': instance.targetUsers,
+      'newValue': instance.newValue,
+      'oldValue': instance.oldValue,
     };
 
 _$SenderDtoImpl _$$SenderDtoImplFromJson(Map<String, dynamic> json) =>

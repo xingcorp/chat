@@ -248,55 +248,76 @@ class MessageAttachment {
 class ChatMessage {
   /// ID tin nhắn
   final String id;
-  
+
   /// ID của đoạn chat
   final String chatId;
-  
+
   /// Nội dung tin nhắn
   final String content;
-  
+
   /// Loại nội dung
   final ContentType contentType;
-  
+
   /// Thông tin người gửi
   final MessageSender sender;
-  
+
   /// Thời gian tạo
   final DateTime createdAt;
-  
+
   /// Thời gian cập nhật
   final DateTime updatedAt;
-  
+
   /// Thời gian chỉnh sửa (nếu có)
   final DateTime? editedAt;
-  
+
   /// Thời gian xóa (nếu có)
   final DateTime? deletedAt;
-  
+
   /// Danh sách URLs (cho image, video, file)
   final List<String> urls;
-  
+
   /// Tên file (cho file attachments)
   final String? fileName;
-  
+
   /// ID tin nhắn được forward từ đâu
   final String? forwardedFromMessageId;
-  
+
+  /// ID tin nhắn được reply (khớp Angular: replyMessageId)
+  final String? replyMessageId;
+
+  /// Tin nhắn được reply (khớp Angular: replyMessage — nested object)
+  final ChatMessage? replyMessage;
+
+  /// Loại action cho system event (khớp Angular: ConversationActionType)
+  final String? actionType;
+
+  /// Người thực hiện action (khớp Angular: actor)
+  final MessageSender? actor;
+
+  /// Danh sách user bị tác động (khớp Angular: targetUsers)
+  final List<MessageSender> targetUsers;
+
+  /// Giá trị mới cho system event (khớp Angular: newValue)
+  final String? newValue;
+
+  /// Giá trị cũ cho system event (khớp Angular: oldValue)
+  final String? oldValue;
+
   /// Danh sách user được mention
   final List<MessageSender> mentionTo;
-  
+
   /// Danh sách người đã đọc tin nhắn
   final List<String> readBy;
-  
+
   /// Danh sách người đã nhận tin nhắn
   final List<String> deliveredTo;
-  
+
   /// Danh sách tệp đính kèm
   final List<MessageAttachment> attachments;
-  
+
   /// Danh sách reactions
   final List<MessageReaction> reactions;
-  
+
   /// Constructor
   ChatMessage({
     required this.id,
@@ -311,6 +332,13 @@ class ChatMessage {
     this.urls = const [],
     this.fileName,
     this.forwardedFromMessageId,
+    this.replyMessageId,
+    this.replyMessage,
+    this.actionType,
+    this.actor,
+    this.targetUsers = const [],
+    this.newValue,
+    this.oldValue,
     this.mentionTo = const [],
     this.readBy = const [],
     this.deliveredTo = const [],
@@ -347,6 +375,19 @@ class ChatMessage {
       urls: (json['urls'] as List?)?.map((e) => e as String).toList() ?? [],
       fileName: json['fileName'] as String?,
       forwardedFromMessageId: json['forwardedFromMessageId'] as String?,
+      replyMessageId: json['replyMessageId'] as String?,
+      replyMessage: json['replyMessage'] != null
+          ? ChatMessage.fromJson(json['replyMessage'] as Map<String, dynamic>)
+          : null,
+      actionType: json['actionType'] as String?,
+      actor: json['actor'] != null
+          ? MessageSender.fromJson(json['actor'] as Map<String, dynamic>)
+          : null,
+      targetUsers: (json['targetUsers'] as List?)
+          ?.map((e) => MessageSender.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
+      newValue: json['newValue'] as String?,
+      oldValue: json['oldValue'] as String?,
       mentionTo: (json['mentionTo'] as List?)
           ?.map((e) => MessageSender.fromJson(e as Map<String, dynamic>))
           .toList() ?? [],
@@ -376,6 +417,13 @@ class ChatMessage {
       'urls': urls,
       'fileName': fileName,
       'forwardedFromMessageId': forwardedFromMessageId,
+      'replyMessageId': replyMessageId,
+      if (replyMessage != null) 'replyMessage': replyMessage!.toJson(),
+      if (actionType != null) 'actionType': actionType,
+      if (actor != null) 'actor': actor!.toJson(),
+      if (targetUsers.isNotEmpty) 'targetUsers': targetUsers.map((u) => u.toJson()).toList(),
+      if (newValue != null) 'newValue': newValue,
+      if (oldValue != null) 'oldValue': oldValue,
       'mentionTo': mentionTo.map((m) => m.toJson()).toList(),
       'readBy': readBy,
       'deliveredTo': deliveredTo,
@@ -410,7 +458,7 @@ class ChatMessage {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    
+
     return other is ChatMessage &&
       other.id == id &&
       other.chatId == chatId &&
@@ -424,13 +472,18 @@ class ChatMessage {
       _listEquals(other.urls, urls) &&
       other.fileName == fileName &&
       other.forwardedFromMessageId == forwardedFromMessageId &&
+      other.replyMessageId == replyMessageId &&
+      other.actionType == actionType &&
+      other.actor == actor &&
+      other.newValue == newValue &&
+      other.oldValue == oldValue &&
       _listEquals(other.mentionTo, mentionTo) &&
       _listEquals(other.readBy, readBy) &&
       _listEquals(other.deliveredTo, deliveredTo) &&
       _listEquals(other.attachments, attachments) &&
       _listEquals(other.reactions, reactions);
   }
-  
+
   @override
   int get hashCode {
     return id.hashCode ^
@@ -445,6 +498,11 @@ class ChatMessage {
       urls.hashCode ^
       (fileName?.hashCode ?? 0) ^
       (forwardedFromMessageId?.hashCode ?? 0) ^
+      (replyMessageId?.hashCode ?? 0) ^
+      (actionType?.hashCode ?? 0) ^
+      (actor?.hashCode ?? 0) ^
+      (newValue?.hashCode ?? 0) ^
+      (oldValue?.hashCode ?? 0) ^
       mentionTo.hashCode ^
       readBy.hashCode ^
       deliveredTo.hashCode ^

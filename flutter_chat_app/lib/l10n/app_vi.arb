@@ -383,5 +383,26 @@
   "addTag": "Thêm thẻ",
   "@addTag": {
     "description": "Placeholder text for tag input"
-  }
+  },
+
+  "replyPreviewImage": "[Hình ảnh]",
+  "replyPreviewVideo": "[Video]",
+  "replyPreviewAudio": "[Ghi âm]",
+  "replyPreviewFile": "[Tệp] {fileName}",
+  "replyPreviewLocation": "[Vị trí]",
+  "replyPreviewLink": "[Liên kết]",
+  "replyPreviewSystemEvent": "[Sự kiện hệ thống]",
+  "eventSomeone": "Ai đó",
+  "eventAddMember": "{actor} đã thêm {targets} vào nhóm",
+  "eventRemoveMember": "{actor} đã xóa {targets} khỏi nhóm",
+  "eventLeaveConversation": "{actor} đã rời khỏi nhóm",
+  "eventChangeNameFromTo": "{actor} đã đổi tên nhóm từ \"{oldName}\" thành \"{newName}\"",
+  "eventChangeName": "{actor} đã đổi tên nhóm thành \"{newName}\"",
+  "eventChangeAvatar": "{actor} đã thay đổi ảnh nhóm",
+  "eventCreateConversation": "{actor} đã tạo nhóm",
+  "eventPinMessage": "{actor} đã ghim một tin nhắn",
+  "eventUnpinMessage": "{actor} đã bỏ ghim một tin nhắn",
+  "eventJoinConversation": "{actor} đã tham gia nhóm",
+  "eventPerformedAction": "{actor} đã thực hiện hành động",
+  "unreadSeparatorLabel": "Tin nhắn chưa đọc"
 }

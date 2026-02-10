@@ -2039,5 +2039,181 @@
   "addTag": "Add tag",
   "@addTag": {
     "description": "Placeholder text for tag input"
+  },
+
+  "replyPreviewImage": "[Photo]",
+  "@replyPreviewImage": {
+    "description": "Reply preview text for image messages"
+  },
+
+  "replyPreviewVideo": "[Video]",
+  "@replyPreviewVideo": {
+    "description": "Reply preview text for video messages"
+  },
+
+  "replyPreviewAudio": "[Audio]",
+  "@replyPreviewAudio": {
+    "description": "Reply preview text for audio messages"
+  },
+
+  "replyPreviewFile": "[File] {fileName}",
+  "@replyPreviewFile": {
+    "description": "Reply preview text for file messages",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "document.pdf"
+      }
+    }
+  },
+
+  "replyPreviewLocation": "[Location]",
+  "@replyPreviewLocation": {
+    "description": "Reply preview text for location messages"
+  },
+
+  "replyPreviewLink": "[Link]",
+  "@replyPreviewLink": {
+    "description": "Reply preview text for link messages"
+  },
+
+  "replyPreviewSystemEvent": "[System event]",
+  "@replyPreviewSystemEvent": {
+    "description": "Reply preview text for system event messages"
+  },
+
+  "eventSomeone": "Someone",
+  "@eventSomeone": {
+    "description": "Fallback actor name for system events"
+  },
+
+  "eventAddMember": "{actor} added {targets} to the group",
+  "@eventAddMember": {
+    "description": "System event when members are added",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "targets": {
+        "type": "String"
+      }
+    }
+  },
+
+  "eventRemoveMember": "{actor} removed {targets} from the group",
+  "@eventRemoveMember": {
+    "description": "System event when members are removed",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "targets": {
+        "type": "String"
+      }
+    }
+  },
+
+  "eventLeaveConversation": "{actor} left the group",
+  "@eventLeaveConversation": {
+    "description": "System event when someone leaves the group",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+
+  "eventChangeNameFromTo": "{actor} changed the group name from \"{oldName}\" to \"{newName}\"",
+  "@eventChangeNameFromTo": {
+    "description": "System event when group name is changed with old and new values",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "oldName": {
+        "type": "String"
+      },
+      "newName": {
+        "type": "String"
+      }
+    }
+  },
+
+  "eventChangeName": "{actor} changed the group name to \"{newName}\"",
+  "@eventChangeName": {
+    "description": "System event when group name is changed",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "newName": {
+        "type": "String"
+      }
+    }
+  },
+
+  "eventChangeAvatar": "{actor} changed the group photo",
+  "@eventChangeAvatar": {
+    "description": "System event when group avatar is changed",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+
+  "eventCreateConversation": "{actor} created the group",
+  "@eventCreateConversation": {
+    "description": "System event when group is created",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+
+  "eventPinMessage": "{actor} pinned a message",
+  "@eventPinMessage": {
+    "description": "System event when a message is pinned",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+
+  "eventUnpinMessage": "{actor} unpinned a message",
+  "@eventUnpinMessage": {
+    "description": "System event when a message is unpinned",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+
+  "eventJoinConversation": "{actor} joined the group",
+  "@eventJoinConversation": {
+    "description": "System event when someone joins the group",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+
+  "eventPerformedAction": "{actor} performed an action",
+  "@eventPerformedAction": {
+    "description": "Fallback system event text",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+
+  "unreadSeparatorLabel": "Unread messages",
+  "@unreadSeparatorLabel": {
+    "description": "Label for unread messages separator"
   }
 }

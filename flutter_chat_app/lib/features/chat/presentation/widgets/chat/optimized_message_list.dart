@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:visibility_detector/visibility_detector.dart';
@@ -283,8 +284,7 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
                   }
                 },
                 child: MessageItem(
-                  message: message,
-                  showSenderInfo: widget.isGroupChat,
+                  uiState: MessageUIState.fromMessage(message),
                   onTap: widget.onMessageTap != null ? () => widget.onMessageTap!(message) : null,
                   onLongPress: widget.onMessageLongPress != null ? () => widget.onMessageLongPress!(message) : null,
                 ),

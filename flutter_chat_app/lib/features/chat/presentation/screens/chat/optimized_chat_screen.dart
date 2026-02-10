@@ -8,6 +8,7 @@ import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:get_it/get_it.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 
@@ -357,8 +358,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
       // Build and cache new message widget
       final messageWidget = MessageItem(
         key: ValueKey('message_${message.id}'),
-        message: message,
-        showSenderInfo: isGroupChat,
+        uiState: MessageUIState.fromMessage(message),
         onTap: () => _handleMessageTap(message),
         onLongPress: () => _handleMessageLongPress(message),
       );
@@ -596,11 +596,9 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                       controller: _scrollController,
                       index: messageIndex,
                       child: MessageItem(
-                        message: message,
+                        uiState: MessageUIState.fromMessage(message),
                         onTap: () => _handleMessageTap(message),
                         onLongPress: () => _handleMessageLongPress(message),
-                        isLastInGroup: isLastInGroup,
-                        showSenderInfo: showSenderInfo,
                       ),
                     );
                   },

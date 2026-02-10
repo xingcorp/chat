@@ -4,7 +4,9 @@ import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
@@ -45,15 +47,18 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   late final MessageBloc _messageBloc;
   late final GetConversationDetailUseCase _getConversationDetail;
   Chat? _chat;
-  
+  String _currentUserId = '';
+  bool _hasInitializedContext = false;
+
   static const int _pageSize = 50;
   bool _isLoadingMore = false;
-  
+
   @override
   void initState() {
     super.initState();
     _messageBloc = getIt<MessageBloc>();
     _getConversationDetail = getIt<GetConversationDetailUseCase>();
+
     // Load initial messages
     _messageBloc.add(
       LoadMessages(
@@ -66,6 +71,24 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _loadChatHeader();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasInitializedContext) {
+      _hasInitializedContext = true;
+      // Lấy currentUserId từ AuthBloc thông qua BlocProvider
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        _currentUserId = authState.user.id;
+        // Cập nhật transform context
+        _messageBloc.setTransformContext(
+          currentUserId: _currentUserId,
+          isGroupChat: _chat?.type == ChatType.group,
+        );
+      }
+    }
+  }
+
   Future<void> _loadChatHeader() async {
     final result = await _getConversationDetail(widget.chatId);
     result.fold(
@@ -75,6 +98,12 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         safeSetState(() {
           _chat = chat;
         });
+
+        // Cập nhật transform context khi có thông tin chat đầy đủ
+        _messageBloc.setTransformContext(
+          currentUserId: _currentUserId,
+          isGroupChat: chat.type == ChatType.group,
+        );
       },
     );
   }
@@ -96,19 +125,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       );
       return;
     }
-    
-    // TODO: Get current user ID from auth state
-    final currentUserId = 'current_user_id'; // Placeholder
-    
+
     _messageBloc.add(
       SendMessage(
         content: text,
-        senderId: currentUserId,
+        senderId: _currentUserId,
         contentType: 'text',
         attachmentIds: const [],
       ),
     );
-    
+
     _messageController.clear();
   }
   
@@ -253,15 +279,15 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                       ),
                     );
                   } else if (state is MessagesLoaded) {
-                    final messages = state.messages;
+                    final uiMessages = state.uiMessages;
                     final hasMore = !state.hasReachedMax;
-                    
-                    if (messages.isEmpty) {
+
+                    if (uiMessages.isEmpty) {
                       return _buildEmptyState(context);
                     }
 
-                    return AppListView<ChatMessage>(
-                      items: messages,
+                    return AppListView<MessageUIState>(
+                      items: uiMessages,
                       reverse: true,
                       isLoading: _isLoadingMore,
                       hasMore: hasMore,
@@ -276,14 +302,41 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                         );
                       },
                       padding: const EdgeInsets.all(AppDimens.paddingSmall),
-                      itemBuilder: (context, message, index) {
-                        final isCurrentUser = message.isFromCurrentUser;
-                        return MessageItem(
-                          message: message,
-                          onLongPress: () {
-                            _showMessageOptions(context, message, isCurrentUser);
-                          },
-                        );
+                      itemBuilder: (context, uiState, index) {
+                        // Handle các loại item khác nhau
+                        switch (uiState.itemType) {
+                          case MessageListItemType.dateSeparator:
+                            return _buildDateSeparator(
+                              uiState.dateSeparatorText ?? '',
+                            );
+                          case MessageListItemType.unreadSeparator:
+                            return _buildUnreadSeparator();
+                          case MessageListItemType.systemEvent:
+                            return _buildSystemEvent(uiState);
+                          case MessageListItemType.message:
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Date separator phía trên tin nhắn
+                                if (uiState.showDateSeparator)
+                                  _buildDateSeparator(
+                                    uiState.dateSeparatorText ?? '',
+                                  ),
+                                MessageItem(
+                                  uiState: uiState,
+                                  onLongPress: () {
+                                    if (uiState.message != null) {
+                                      _showMessageOptions(
+                                        context,
+                                        uiState.message!,
+                                        uiState.isFromCurrentUser,
+                                      );
+                                    }
+                                  },
+                                ),
+                              ],
+                            );
+                        }
                       },
                     );
                   } else if (state is MessagesError) {
@@ -351,6 +404,77 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     );
   }
   
+  Widget _buildDateSeparator(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppDimens.spaceSmall),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.paddingMedium,
+            vertical: AppDimens.paddingXSmall,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.textSecondary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
+          ),
+          child: AppText(
+            text,
+            style: AppTextStyles.labelSmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnreadSeparator() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppDimens.spaceSmall),
+      child: Row(
+        children: [
+          Expanded(
+            child: Divider(color: AppColors.error.withOpacity(0.5)),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.paddingSmall,
+            ),
+            child: AppText(
+              context.l10n.unreadSeparatorLabel,
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.error,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Divider(color: AppColors.error.withOpacity(0.5)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSystemEvent(MessageUIState uiState) {
+    final text = uiState.systemEvent?.formattedText ?? uiState.content;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: AppDimens.spaceSmall,
+        horizontal: AppDimens.paddingMedium,
+      ),
+      child: Center(
+        child: AppText(
+          text,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+            fontStyle: FontStyle.italic,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(

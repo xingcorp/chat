@@ -10,10 +10,9 @@
 /// **Architecture:** Clean Architecture + Localization
 
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/l10n/app_localizations.dart';
-
-import '../../l10n/app_localizations_en.dart';
-import '../../l10n/app_localizations_vi.dart';
+import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
+import 'package:flutter_chat_app/generated/l10n/app_localizations_en.dart';
+import 'package:flutter_chat_app/generated/l10n/app_localizations_vi.dart';
 
 /// Global localization helper
 class L10nHelper {

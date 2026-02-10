@@ -97,9 +97,6 @@ class _$MessageQueueEventCopyWithImpl<$Res, $Val extends MessageQueueEvent>
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
-
-  /// Create a copy of MessageQueueEvent
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -123,8 +120,6 @@ class __$$EnqueueMessageImplCopyWithImpl<$Res>
       _$EnqueueMessageImpl _value, $Res Function(_$EnqueueMessageImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MessageQueueEvent
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -201,9 +196,7 @@ class _$EnqueueMessageImpl implements _EnqueueMessage {
   int get hashCode => Object.hash(runtimeType, chatId, content, contentType,
       const DeepCollectionEquality().hash(_attachments));
 
-  /// Create a copy of MessageQueueEvent
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$EnqueueMessageImplCopyWith<_$EnqueueMessageImpl> get copyWith =>
@@ -309,10 +302,7 @@ abstract class _EnqueueMessage implements MessageQueueEvent {
   String get content;
   ContentType get contentType;
   List<Attachment> get attachments;
-
-  /// Create a copy of MessageQueueEvent
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$EnqueueMessageImplCopyWith<_$EnqueueMessageImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -334,8 +324,6 @@ class __$$CancelMessageImplCopyWithImpl<$Res>
       _$CancelMessageImpl _value, $Res Function(_$CancelMessageImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MessageQueueEvent
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -375,9 +363,7 @@ class _$CancelMessageImpl implements _CancelMessage {
   @override
   int get hashCode => Object.hash(runtimeType, messageId);
 
-  /// Create a copy of MessageQueueEvent
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CancelMessageImplCopyWith<_$CancelMessageImpl> get copyWith =>
@@ -476,10 +462,7 @@ abstract class _CancelMessage implements MessageQueueEvent {
       _$CancelMessageImpl;
 
   String get messageId;
-
-  /// Create a copy of MessageQueueEvent
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CancelMessageImplCopyWith<_$CancelMessageImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -501,8 +484,6 @@ class __$$MessageStatusUpdatedImplCopyWithImpl<$Res>
       $Res Function(_$MessageStatusUpdatedImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MessageQueueEvent
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -542,9 +523,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   @override
   int get hashCode => Object.hash(runtimeType, messageId);
 
-  /// Create a copy of MessageQueueEvent
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$MessageStatusUpdatedImplCopyWith<_$MessageStatusUpdatedImpl>
@@ -645,10 +624,7 @@ abstract class _MessageStatusUpdated implements MessageQueueEvent {
       _$MessageStatusUpdatedImpl;
 
   String get messageId;
-
-  /// Create a copy of MessageQueueEvent
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$MessageStatusUpdatedImplCopyWith<_$MessageStatusUpdatedImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
@@ -667,9 +643,6 @@ class __$$LoadPendingMessagesImplCopyWithImpl<$Res>
   __$$LoadPendingMessagesImplCopyWithImpl(_$LoadPendingMessagesImpl _value,
       $Res Function(_$LoadPendingMessagesImpl) _then)
       : super(_value, _then);
-
-  /// Create a copy of MessageQueueEvent
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -800,9 +773,6 @@ class __$$ClearCompletedMessagesImplCopyWithImpl<$Res>
       _$ClearCompletedMessagesImpl _value,
       $Res Function(_$ClearCompletedMessagesImpl) _then)
       : super(_value, _then);
-
-  /// Create a copy of MessageQueueEvent
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -1021,9 +991,6 @@ class _$MessageQueueStateCopyWithImpl<$Res, $Val extends MessageQueueState>
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
-
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -1040,9 +1007,6 @@ class __$$InitialImplCopyWithImpl<$Res>
   __$$InitialImplCopyWithImpl(
       _$InitialImpl _value, $Res Function(_$InitialImpl) _then)
       : super(_value, _then);
-
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -1191,9 +1155,6 @@ class __$$LoadingImplCopyWithImpl<$Res>
   __$$LoadingImplCopyWithImpl(
       _$LoadingImpl _value, $Res Function(_$LoadingImpl) _then)
       : super(_value, _then);
-
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -1345,8 +1306,6 @@ class __$$MessageEnqueuedImplCopyWithImpl<$Res>
       _$MessageEnqueuedImpl _value, $Res Function(_$MessageEnqueuedImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1386,9 +1345,7 @@ class _$MessageEnqueuedImpl implements _MessageEnqueued {
   @override
   int get hashCode => Object.hash(runtimeType, messageId);
 
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$MessageEnqueuedImplCopyWith<_$MessageEnqueuedImpl> get copyWith =>
@@ -1509,10 +1466,7 @@ abstract class _MessageEnqueued implements MessageQueueState {
       _$MessageEnqueuedImpl;
 
   String get messageId;
-
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$MessageEnqueuedImplCopyWith<_$MessageEnqueuedImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1534,8 +1488,6 @@ class __$$MessageCancelledImplCopyWithImpl<$Res>
       $Res Function(_$MessageCancelledImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1575,9 +1527,7 @@ class _$MessageCancelledImpl implements _MessageCancelled {
   @override
   int get hashCode => Object.hash(runtimeType, messageId);
 
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$MessageCancelledImplCopyWith<_$MessageCancelledImpl> get copyWith =>
@@ -1698,10 +1648,7 @@ abstract class _MessageCancelled implements MessageQueueState {
       _$MessageCancelledImpl;
 
   String get messageId;
-
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$MessageCancelledImplCopyWith<_$MessageCancelledImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1726,8 +1673,6 @@ class __$$MessageStatusUpdatedStateImplCopyWithImpl<$Res>
       $Res Function(_$MessageStatusUpdatedStateImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1767,9 +1712,7 @@ class _$MessageStatusUpdatedStateImpl implements _MessageStatusUpdatedState {
   @override
   int get hashCode => Object.hash(runtimeType, messageId);
 
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$MessageStatusUpdatedStateImplCopyWith<_$MessageStatusUpdatedStateImpl>
@@ -1890,10 +1833,7 @@ abstract class _MessageStatusUpdatedState implements MessageQueueState {
       _$MessageStatusUpdatedStateImpl;
 
   String get messageId;
-
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$MessageStatusUpdatedStateImplCopyWith<_$MessageStatusUpdatedStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
@@ -1916,8 +1856,6 @@ class __$$PendingMessagesLoadedImplCopyWithImpl<$Res>
       $Res Function(_$PendingMessagesLoadedImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1964,9 +1902,7 @@ class _$PendingMessagesLoadedImpl implements _PendingMessagesLoaded {
   int get hashCode => Object.hash(
       runtimeType, const DeepCollectionEquality().hash(_messageIds));
 
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$PendingMessagesLoadedImplCopyWith<_$PendingMessagesLoadedImpl>
@@ -2087,10 +2023,7 @@ abstract class _PendingMessagesLoaded implements MessageQueueState {
       _$PendingMessagesLoadedImpl;
 
   List<String> get messageIds;
-
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$PendingMessagesLoadedImplCopyWith<_$PendingMessagesLoadedImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
@@ -2112,9 +2045,6 @@ class __$$CompletedMessagesClearedImplCopyWithImpl<$Res>
       _$CompletedMessagesClearedImpl _value,
       $Res Function(_$CompletedMessagesClearedImpl) _then)
       : super(_value, _then);
-
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -2264,9 +2194,6 @@ class __$$NoChangeImplCopyWithImpl<$Res>
   __$$NoChangeImplCopyWithImpl(
       _$NoChangeImpl _value, $Res Function(_$NoChangeImpl) _then)
       : super(_value, _then);
-
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -2418,8 +2345,6 @@ class __$$ErrorImplCopyWithImpl<$Res>
       _$ErrorImpl _value, $Res Function(_$ErrorImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2458,9 +2383,7 @@ class _$ErrorImpl implements _Error {
   @override
   int get hashCode => Object.hash(runtimeType, message);
 
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ErrorImplCopyWith<_$ErrorImpl> get copyWith =>
@@ -2579,10 +2502,7 @@ abstract class _Error implements MessageQueueState {
   const factory _Error(final String message) = _$ErrorImpl;
 
   String get message;
-
-  /// Create a copy of MessageQueueState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ErrorImplCopyWith<_$ErrorImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

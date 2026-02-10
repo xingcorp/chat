@@ -38,14 +38,18 @@ mixin _$MessageDto {
   String get chatId => throw _privateConstructorUsedError;
   List<String> get readerIds => throw _privateConstructorUsedError;
   List<ReactionDto> get reactions => throw _privateConstructorUsedError;
-  List<MentionDto> get mentionTo => throw _privateConstructorUsedError;
+  List<MentionDto> get mentionTo =>
+      throw _privateConstructorUsedError; // System event fields (khớp Angular: ConversationActionType)
+  String? get actionType => throw _privateConstructorUsedError;
+  String? get actorId => throw _privateConstructorUsedError;
+  SenderDto? get actor => throw _privateConstructorUsedError;
+  List<String> get targetUserIds => throw _privateConstructorUsedError;
+  List<SenderDto> get targetUsers => throw _privateConstructorUsedError;
+  String? get newValue => throw _privateConstructorUsedError;
+  String? get oldValue => throw _privateConstructorUsedError;
 
-  /// Serializes this MessageDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of MessageDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $MessageDtoCopyWith<MessageDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -73,10 +77,18 @@ abstract class $MessageDtoCopyWith<$Res> {
       @JsonKey(name: 'conversationId') String chatId,
       List<String> readerIds,
       List<ReactionDto> reactions,
-      List<MentionDto> mentionTo});
+      List<MentionDto> mentionTo,
+      String? actionType,
+      String? actorId,
+      SenderDto? actor,
+      List<String> targetUserIds,
+      List<SenderDto> targetUsers,
+      String? newValue,
+      String? oldValue});
 
   $ReplyMessageDtoCopyWith<$Res>? get replyMessage;
   $SenderDtoCopyWith<$Res>? get sender;
+  $SenderDtoCopyWith<$Res>? get actor;
 }
 
 /// @nodoc
@@ -89,8 +101,6 @@ class _$MessageDtoCopyWithImpl<$Res, $Val extends MessageDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of MessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -111,6 +121,13 @@ class _$MessageDtoCopyWithImpl<$Res, $Val extends MessageDto>
     Object? readerIds = null,
     Object? reactions = null,
     Object? mentionTo = null,
+    Object? actionType = freezed,
+    Object? actorId = freezed,
+    Object? actor = freezed,
+    Object? targetUserIds = null,
+    Object? targetUsers = null,
+    Object? newValue = freezed,
+    Object? oldValue = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -181,11 +198,37 @@ class _$MessageDtoCopyWithImpl<$Res, $Val extends MessageDto>
           ? _value.mentionTo
           : mentionTo // ignore: cast_nullable_to_non_nullable
               as List<MentionDto>,
+      actionType: freezed == actionType
+          ? _value.actionType
+          : actionType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      actorId: freezed == actorId
+          ? _value.actorId
+          : actorId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      actor: freezed == actor
+          ? _value.actor
+          : actor // ignore: cast_nullable_to_non_nullable
+              as SenderDto?,
+      targetUserIds: null == targetUserIds
+          ? _value.targetUserIds
+          : targetUserIds // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      targetUsers: null == targetUsers
+          ? _value.targetUsers
+          : targetUsers // ignore: cast_nullable_to_non_nullable
+              as List<SenderDto>,
+      newValue: freezed == newValue
+          ? _value.newValue
+          : newValue // ignore: cast_nullable_to_non_nullable
+              as String?,
+      oldValue: freezed == oldValue
+          ? _value.oldValue
+          : oldValue // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 
-  /// Create a copy of MessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ReplyMessageDtoCopyWith<$Res>? get replyMessage {
@@ -198,8 +241,6 @@ class _$MessageDtoCopyWithImpl<$Res, $Val extends MessageDto>
     });
   }
 
-  /// Create a copy of MessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $SenderDtoCopyWith<$Res>? get sender {
@@ -209,6 +250,18 @@ class _$MessageDtoCopyWithImpl<$Res, $Val extends MessageDto>
 
     return $SenderDtoCopyWith<$Res>(_value.sender!, (value) {
       return _then(_value.copyWith(sender: value) as $Val);
+    });
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $SenderDtoCopyWith<$Res>? get actor {
+    if (_value.actor == null) {
+      return null;
+    }
+
+    return $SenderDtoCopyWith<$Res>(_value.actor!, (value) {
+      return _then(_value.copyWith(actor: value) as $Val);
     });
   }
 }
@@ -238,12 +291,21 @@ abstract class _$$MessageDtoImplCopyWith<$Res>
       @JsonKey(name: 'conversationId') String chatId,
       List<String> readerIds,
       List<ReactionDto> reactions,
-      List<MentionDto> mentionTo});
+      List<MentionDto> mentionTo,
+      String? actionType,
+      String? actorId,
+      SenderDto? actor,
+      List<String> targetUserIds,
+      List<SenderDto> targetUsers,
+      String? newValue,
+      String? oldValue});
 
   @override
   $ReplyMessageDtoCopyWith<$Res>? get replyMessage;
   @override
   $SenderDtoCopyWith<$Res>? get sender;
+  @override
+  $SenderDtoCopyWith<$Res>? get actor;
 }
 
 /// @nodoc
@@ -254,8 +316,6 @@ class __$$MessageDtoImplCopyWithImpl<$Res>
       _$MessageDtoImpl _value, $Res Function(_$MessageDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -276,6 +336,13 @@ class __$$MessageDtoImplCopyWithImpl<$Res>
     Object? readerIds = null,
     Object? reactions = null,
     Object? mentionTo = null,
+    Object? actionType = freezed,
+    Object? actorId = freezed,
+    Object? actor = freezed,
+    Object? targetUserIds = null,
+    Object? targetUsers = null,
+    Object? newValue = freezed,
+    Object? oldValue = freezed,
   }) {
     return _then(_$MessageDtoImpl(
       id: null == id
@@ -346,6 +413,34 @@ class __$$MessageDtoImplCopyWithImpl<$Res>
           ? _value._mentionTo
           : mentionTo // ignore: cast_nullable_to_non_nullable
               as List<MentionDto>,
+      actionType: freezed == actionType
+          ? _value.actionType
+          : actionType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      actorId: freezed == actorId
+          ? _value.actorId
+          : actorId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      actor: freezed == actor
+          ? _value.actor
+          : actor // ignore: cast_nullable_to_non_nullable
+              as SenderDto?,
+      targetUserIds: null == targetUserIds
+          ? _value._targetUserIds
+          : targetUserIds // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      targetUsers: null == targetUsers
+          ? _value._targetUsers
+          : targetUsers // ignore: cast_nullable_to_non_nullable
+              as List<SenderDto>,
+      newValue: freezed == newValue
+          ? _value.newValue
+          : newValue // ignore: cast_nullable_to_non_nullable
+              as String?,
+      oldValue: freezed == oldValue
+          ? _value.oldValue
+          : oldValue // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -370,11 +465,20 @@ class _$MessageDtoImpl implements _MessageDto {
       @JsonKey(name: 'conversationId') required this.chatId,
       final List<String> readerIds = const [],
       final List<ReactionDto> reactions = const [],
-      final List<MentionDto> mentionTo = const []})
+      final List<MentionDto> mentionTo = const [],
+      this.actionType,
+      this.actorId,
+      this.actor,
+      final List<String> targetUserIds = const [],
+      final List<SenderDto> targetUsers = const [],
+      this.newValue,
+      this.oldValue})
       : _urls = urls,
         _readerIds = readerIds,
         _reactions = reactions,
-        _mentionTo = mentionTo;
+        _mentionTo = mentionTo,
+        _targetUserIds = targetUserIds,
+        _targetUsers = targetUsers;
 
   factory _$MessageDtoImpl.fromJson(Map<String, dynamic> json) =>
       _$$MessageDtoImplFromJson(json);
@@ -443,9 +547,39 @@ class _$MessageDtoImpl implements _MessageDto {
     return EqualUnmodifiableListView(_mentionTo);
   }
 
+// System event fields (khớp Angular: ConversationActionType)
+  @override
+  final String? actionType;
+  @override
+  final String? actorId;
+  @override
+  final SenderDto? actor;
+  final List<String> _targetUserIds;
+  @override
+  @JsonKey()
+  List<String> get targetUserIds {
+    if (_targetUserIds is EqualUnmodifiableListView) return _targetUserIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_targetUserIds);
+  }
+
+  final List<SenderDto> _targetUsers;
+  @override
+  @JsonKey()
+  List<SenderDto> get targetUsers {
+    if (_targetUsers is EqualUnmodifiableListView) return _targetUsers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_targetUsers);
+  }
+
+  @override
+  final String? newValue;
+  @override
+  final String? oldValue;
+
   @override
   String toString() {
-    return 'MessageDto(id: $id, content: $content, urls: $urls, type: $type, createdAt: $createdAt, editAt: $editAt, deletedAt: $deletedAt, replyMessageId: $replyMessageId, replyMessage: $replyMessage, forwardedFromMessageId: $forwardedFromMessageId, fileName: $fileName, senderId: $senderId, sender: $sender, chatId: $chatId, readerIds: $readerIds, reactions: $reactions, mentionTo: $mentionTo)';
+    return 'MessageDto(id: $id, content: $content, urls: $urls, type: $type, createdAt: $createdAt, editAt: $editAt, deletedAt: $deletedAt, replyMessageId: $replyMessageId, replyMessage: $replyMessage, forwardedFromMessageId: $forwardedFromMessageId, fileName: $fileName, senderId: $senderId, sender: $sender, chatId: $chatId, readerIds: $readerIds, reactions: $reactions, mentionTo: $mentionTo, actionType: $actionType, actorId: $actorId, actor: $actor, targetUserIds: $targetUserIds, targetUsers: $targetUsers, newValue: $newValue, oldValue: $oldValue)';
   }
 
   @override
@@ -479,34 +613,52 @@ class _$MessageDtoImpl implements _MessageDto {
             const DeepCollectionEquality()
                 .equals(other._reactions, _reactions) &&
             const DeepCollectionEquality()
-                .equals(other._mentionTo, _mentionTo));
+                .equals(other._mentionTo, _mentionTo) &&
+            (identical(other.actionType, actionType) ||
+                other.actionType == actionType) &&
+            (identical(other.actorId, actorId) || other.actorId == actorId) &&
+            (identical(other.actor, actor) || other.actor == actor) &&
+            const DeepCollectionEquality()
+                .equals(other._targetUserIds, _targetUserIds) &&
+            const DeepCollectionEquality()
+                .equals(other._targetUsers, _targetUsers) &&
+            (identical(other.newValue, newValue) ||
+                other.newValue == newValue) &&
+            (identical(other.oldValue, oldValue) ||
+                other.oldValue == oldValue));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      content,
-      const DeepCollectionEquality().hash(_urls),
-      type,
-      createdAt,
-      editAt,
-      deletedAt,
-      replyMessageId,
-      replyMessage,
-      forwardedFromMessageId,
-      fileName,
-      senderId,
-      sender,
-      chatId,
-      const DeepCollectionEquality().hash(_readerIds),
-      const DeepCollectionEquality().hash(_reactions),
-      const DeepCollectionEquality().hash(_mentionTo));
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        content,
+        const DeepCollectionEquality().hash(_urls),
+        type,
+        createdAt,
+        editAt,
+        deletedAt,
+        replyMessageId,
+        replyMessage,
+        forwardedFromMessageId,
+        fileName,
+        senderId,
+        sender,
+        chatId,
+        const DeepCollectionEquality().hash(_readerIds),
+        const DeepCollectionEquality().hash(_reactions),
+        const DeepCollectionEquality().hash(_mentionTo),
+        actionType,
+        actorId,
+        actor,
+        const DeepCollectionEquality().hash(_targetUserIds),
+        const DeepCollectionEquality().hash(_targetUsers),
+        newValue,
+        oldValue
+      ]);
 
-  /// Create a copy of MessageDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$MessageDtoImplCopyWith<_$MessageDtoImpl> get copyWith =>
@@ -538,7 +690,14 @@ abstract class _MessageDto implements MessageDto {
       @JsonKey(name: 'conversationId') required final String chatId,
       final List<String> readerIds,
       final List<ReactionDto> reactions,
-      final List<MentionDto> mentionTo}) = _$MessageDtoImpl;
+      final List<MentionDto> mentionTo,
+      final String? actionType,
+      final String? actorId,
+      final SenderDto? actor,
+      final List<String> targetUserIds,
+      final List<SenderDto> targetUsers,
+      final String? newValue,
+      final String? oldValue}) = _$MessageDtoImpl;
 
   factory _MessageDto.fromJson(Map<String, dynamic> json) =
       _$MessageDtoImpl.fromJson;
@@ -579,11 +738,22 @@ abstract class _MessageDto implements MessageDto {
   List<ReactionDto> get reactions;
   @override
   List<MentionDto> get mentionTo;
-
-  /// Create a copy of MessageDto
-  /// with the given fields replaced by the non-null parameter values.
+  @override // System event fields (khớp Angular: ConversationActionType)
+  String? get actionType;
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  String? get actorId;
+  @override
+  SenderDto? get actor;
+  @override
+  List<String> get targetUserIds;
+  @override
+  List<SenderDto> get targetUsers;
+  @override
+  String? get newValue;
+  @override
+  String? get oldValue;
+  @override
+  @JsonKey(ignore: true)
   _$$MessageDtoImplCopyWith<_$MessageDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -599,12 +769,8 @@ mixin _$SenderDto {
   String get fullName => throw _privateConstructorUsedError;
   List<String> get imageUrls => throw _privateConstructorUsedError;
 
-  /// Serializes this SenderDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of SenderDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SenderDtoCopyWith<SenderDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -630,8 +796,6 @@ class _$SenderDtoCopyWithImpl<$Res, $Val extends SenderDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SenderDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -678,8 +842,6 @@ class __$$SenderDtoImplCopyWithImpl<$Res>
       _$SenderDtoImpl _value, $Res Function(_$SenderDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SenderDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -747,14 +909,12 @@ class _$SenderDtoImpl implements _SenderDto {
                 .equals(other._imageUrls, _imageUrls));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, fullName,
       const DeepCollectionEquality().hash(_imageUrls));
 
-  /// Create a copy of SenderDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SenderDtoImplCopyWith<_$SenderDtoImpl> get copyWith =>
@@ -784,11 +944,8 @@ abstract class _SenderDto implements SenderDto {
   String get fullName;
   @override
   List<String> get imageUrls;
-
-  /// Create a copy of SenderDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SenderDtoImplCopyWith<_$SenderDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -804,12 +961,8 @@ mixin _$ReplyMessageDto {
   String get content => throw _privateConstructorUsedError;
   SenderDto? get sender => throw _privateConstructorUsedError;
 
-  /// Serializes this ReplyMessageDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of ReplyMessageDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ReplyMessageDtoCopyWith<ReplyMessageDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -836,8 +989,6 @@ class _$ReplyMessageDtoCopyWithImpl<$Res, $Val extends ReplyMessageDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ReplyMessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -861,8 +1012,6 @@ class _$ReplyMessageDtoCopyWithImpl<$Res, $Val extends ReplyMessageDto>
     ) as $Val);
   }
 
-  /// Create a copy of ReplyMessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $SenderDtoCopyWith<$Res>? get sender {
@@ -899,8 +1048,6 @@ class __$$ReplyMessageDtoImplCopyWithImpl<$Res>
       _$ReplyMessageDtoImpl _value, $Res Function(_$ReplyMessageDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ReplyMessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -959,13 +1106,11 @@ class _$ReplyMessageDtoImpl implements _ReplyMessageDto {
             (identical(other.sender, sender) || other.sender == sender));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, content, sender);
 
-  /// Create a copy of ReplyMessageDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ReplyMessageDtoImplCopyWith<_$ReplyMessageDtoImpl> get copyWith =>
@@ -996,11 +1141,8 @@ abstract class _ReplyMessageDto implements ReplyMessageDto {
   String get content;
   @override
   SenderDto? get sender;
-
-  /// Create a copy of ReplyMessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ReplyMessageDtoImplCopyWith<_$ReplyMessageDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1015,12 +1157,8 @@ mixin _$ReactionDto {
   List<String> get reactorIds => throw _privateConstructorUsedError;
   List<UserReactionDto> get reactors => throw _privateConstructorUsedError;
 
-  /// Serializes this ReactionDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of ReactionDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ReactionDtoCopyWith<ReactionDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1045,8 +1183,6 @@ class _$ReactionDtoCopyWithImpl<$Res, $Val extends ReactionDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ReactionDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1091,8 +1227,6 @@ class __$$ReactionDtoImplCopyWithImpl<$Res>
       _$ReactionDtoImpl _value, $Res Function(_$ReactionDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ReactionDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1166,7 +1300,7 @@ class _$ReactionDtoImpl implements _ReactionDto {
             const DeepCollectionEquality().equals(other._reactors, _reactors));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -1174,9 +1308,7 @@ class _$ReactionDtoImpl implements _ReactionDto {
       const DeepCollectionEquality().hash(_reactorIds),
       const DeepCollectionEquality().hash(_reactors));
 
-  /// Create a copy of ReactionDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ReactionDtoImplCopyWith<_$ReactionDtoImpl> get copyWith =>
@@ -1205,11 +1337,8 @@ abstract class _ReactionDto implements ReactionDto {
   List<String> get reactorIds;
   @override
   List<UserReactionDto> get reactors;
-
-  /// Create a copy of ReactionDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ReactionDtoImplCopyWith<_$ReactionDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1224,12 +1353,8 @@ mixin _$UserReactionDto {
   String get fullName => throw _privateConstructorUsedError;
   List<String> get imageUrls => throw _privateConstructorUsedError;
 
-  /// Serializes this UserReactionDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of UserReactionDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $UserReactionDtoCopyWith<UserReactionDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1254,8 +1379,6 @@ class _$UserReactionDtoCopyWithImpl<$Res, $Val extends UserReactionDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of UserReactionDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1295,8 +1418,6 @@ class __$$UserReactionDtoImplCopyWithImpl<$Res>
       _$UserReactionDtoImpl _value, $Res Function(_$UserReactionDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of UserReactionDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1355,14 +1476,12 @@ class _$UserReactionDtoImpl implements _UserReactionDto {
                 .equals(other._imageUrls, _imageUrls));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType, fullName, const DeepCollectionEquality().hash(_imageUrls));
 
-  /// Create a copy of UserReactionDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$UserReactionDtoImplCopyWith<_$UserReactionDtoImpl> get copyWith =>
@@ -1390,11 +1509,8 @@ abstract class _UserReactionDto implements UserReactionDto {
   String get fullName;
   @override
   List<String> get imageUrls;
-
-  /// Create a copy of UserReactionDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$UserReactionDtoImplCopyWith<_$UserReactionDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1409,12 +1525,8 @@ mixin _$MentionDto {
   @JsonKey(name: 'fullname')
   String get fullName => throw _privateConstructorUsedError;
 
-  /// Serializes this MentionDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of MentionDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $MentionDtoCopyWith<MentionDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1438,8 +1550,6 @@ class _$MentionDtoCopyWithImpl<$Res, $Val extends MentionDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of MentionDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1478,8 +1588,6 @@ class __$$MentionDtoImplCopyWithImpl<$Res>
       _$MentionDtoImpl _value, $Res Function(_$MentionDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MentionDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1529,13 +1637,11 @@ class _$MentionDtoImpl implements _MentionDto {
                 other.fullName == fullName));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, fullName);
 
-  /// Create a copy of MentionDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$MentionDtoImplCopyWith<_$MentionDtoImpl> get copyWith =>
@@ -1563,11 +1669,8 @@ abstract class _MentionDto implements MentionDto {
   @override
   @JsonKey(name: 'fullname')
   String get fullName;
-
-  /// Create a copy of MentionDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$MentionDtoImplCopyWith<_$MentionDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1582,12 +1685,8 @@ mixin _$MessageListResponseDto {
   LastKeyDto? get lastKey => throw _privateConstructorUsedError;
   List<MessageDto> get messages => throw _privateConstructorUsedError;
 
-  /// Serializes this MessageListResponseDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of MessageListResponseDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $MessageListResponseDtoCopyWith<MessageListResponseDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1614,8 +1713,6 @@ class _$MessageListResponseDtoCopyWithImpl<$Res,
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of MessageListResponseDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1634,8 +1731,6 @@ class _$MessageListResponseDtoCopyWithImpl<$Res,
     ) as $Val);
   }
 
-  /// Create a copy of MessageListResponseDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $LastKeyDtoCopyWith<$Res>? get lastKey {
@@ -1674,8 +1769,6 @@ class __$$MessageListResponseDtoImplCopyWithImpl<$Res>
       $Res Function(_$MessageListResponseDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MessageListResponseDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1730,14 +1823,12 @@ class _$MessageListResponseDtoImpl implements _MessageListResponseDto {
             const DeepCollectionEquality().equals(other._messages, _messages));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType, lastKey, const DeepCollectionEquality().hash(_messages));
 
-  /// Create a copy of MessageListResponseDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$MessageListResponseDtoImplCopyWith<_$MessageListResponseDtoImpl>
@@ -1764,11 +1855,8 @@ abstract class _MessageListResponseDto implements MessageListResponseDto {
   LastKeyDto? get lastKey;
   @override
   List<MessageDto> get messages;
-
-  /// Create a copy of MessageListResponseDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$MessageListResponseDtoImplCopyWith<_$MessageListResponseDtoImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
@@ -1783,12 +1871,8 @@ mixin _$LastKeyDto {
   String get chatId => throw _privateConstructorUsedError;
   int get createdAt => throw _privateConstructorUsedError;
 
-  /// Serializes this LastKeyDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of LastKeyDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $LastKeyDtoCopyWith<LastKeyDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1812,8 +1896,6 @@ class _$LastKeyDtoCopyWithImpl<$Res, $Val extends LastKeyDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of LastKeyDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1852,8 +1934,6 @@ class __$$LastKeyDtoImplCopyWithImpl<$Res>
       _$LastKeyDtoImpl _value, $Res Function(_$LastKeyDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of LastKeyDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1904,13 +1984,11 @@ class _$LastKeyDtoImpl implements _LastKeyDto {
                 other.createdAt == createdAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, chatId, createdAt);
 
-  /// Create a copy of LastKeyDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$LastKeyDtoImplCopyWith<_$LastKeyDtoImpl> get copyWith =>
@@ -1937,11 +2015,8 @@ abstract class _LastKeyDto implements LastKeyDto {
   String get chatId;
   @override
   int get createdAt;
-
-  /// Create a copy of LastKeyDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$LastKeyDtoImplCopyWith<_$LastKeyDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

@@ -27,28 +27,32 @@ class MessagesLoading extends MessageState {
 class MessagesLoaded extends MessageState {
   final String chatId;
   final List<ChatMessage> messages;
+  final List<MessageUIState> uiMessages;
   final bool hasReachedMax;
 
   const MessagesLoaded({
     required this.chatId,
     required this.messages,
+    this.uiMessages = const [],
     this.hasReachedMax = false,
   });
 
   MessagesLoaded copyWith({
     String? chatId,
     List<ChatMessage>? messages,
+    List<MessageUIState>? uiMessages,
     bool? hasReachedMax,
   }) {
     return MessagesLoaded(
       chatId: chatId ?? this.chatId,
       messages: messages ?? this.messages,
+      uiMessages: uiMessages ?? this.uiMessages,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
     );
   }
 
   @override
-  List<Object?> get props => [chatId, messages, hasReachedMax];
+  List<Object?> get props => [chatId, messages, uiMessages, hasReachedMax];
 }
 
 /// **Trạng thái khi có lỗi với enterprise error handling**

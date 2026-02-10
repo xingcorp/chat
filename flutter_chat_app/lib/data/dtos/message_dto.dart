@@ -34,6 +34,14 @@ class MessageDto with _$MessageDto {
     @Default([]) List<String> readerIds,
     @Default([]) List<ReactionDto> reactions,
     @Default([]) List<MentionDto> mentionTo,
+    // System event fields (khớp Angular: ConversationActionType)
+    String? actionType,
+    String? actorId,
+    SenderDto? actor,
+    @Default([]) List<String> targetUserIds,
+    @Default([]) List<SenderDto> targetUsers,
+    String? newValue,
+    String? oldValue,
   }) = _MessageDto;
 
   factory MessageDto.fromJson(Map<String, dynamic> json) =>
@@ -177,6 +185,7 @@ extension MessageDtoMapper on MessageDto {
       case 'link':
         contentType = ContentType.link;
         break;
+      case 'log':
       case 'event':
         contentType = ContentType.event;
         break;
@@ -233,6 +242,50 @@ extension MessageDtoMapper on MessageDto {
         )
         .toList();
 
+    // Convert reply message
+    ChatMessage? replyMsg;
+    if (replyMessage != null) {
+      final replySender = replyMessage!.sender;
+      replyMsg = ChatMessage(
+        id: replyMessage!.id,
+        chatId: chatId,
+        content: replyMessage!.content,
+        contentType: ContentType.text,
+        sender: replySender != null
+            ? MessageSender(
+                id: replySender.id,
+                name: replySender.fullName,
+                avatar: replySender.imageUrls.isNotEmpty
+                    ? replySender.imageUrls.first
+                    : null,
+              )
+            : MessageSender(id: '', name: 'Unknown'),
+        createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
+      );
+    }
+
+    // Convert actor (system events)
+    MessageSender? actorSender;
+    if (actor != null) {
+      actorSender = MessageSender(
+        id: actor!.id,
+        name: actor!.fullName,
+        avatar: actor!.imageUrls.isNotEmpty ? actor!.imageUrls.first : null,
+      );
+    } else if (actorId != null) {
+      actorSender = MessageSender(id: actorId!, name: 'Unknown');
+    }
+
+    // Convert target users (system events)
+    final targetUserSenders = targetUsers
+        .map((u) => MessageSender(
+              id: u.id,
+              name: u.fullName,
+              avatar: u.imageUrls.isNotEmpty ? u.imageUrls.first : null,
+            ))
+        .toList();
+
     return ChatMessage(
       id: id,
       chatId: chatId,
@@ -242,11 +295,22 @@ extension MessageDtoMapper on MessageDto {
       createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(editAt ?? createdAt),
       editedAt: editAt != null ? DateTime.fromMillisecondsSinceEpoch(editAt!) : null,
+      deletedAt: deletedAt != null ? DateTime.fromMillisecondsSinceEpoch(deletedAt!) : null,
       readBy: readerIds,
       deliveredTo: const [], // Backend doesn't track delivery separately
       attachments: messageAttachments,
       reactions: messageReactions,
       mentionTo: mentions,
+      urls: urls,
+      fileName: fileName,
+      forwardedFromMessageId: forwardedFromMessageId,
+      replyMessageId: replyMessageId,
+      replyMessage: replyMsg,
+      actionType: actionType,
+      actor: actorSender,
+      targetUsers: targetUserSenders,
+      newValue: newValue,
+      oldValue: oldValue,
     );
   }
 }

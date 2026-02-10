@@ -349,6 +349,10 @@ extension GetItInjectableX on _i174.GetIt {
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
+    gh.factory<_i409.AddReactionUseCase>(() => _i409.AddReactionUseCase(
+          repository: gh<_i572.IMessageRepository>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
     gh.factory<_i467.GetMessagesUseCase>(() => _i467.GetMessagesUseCase(
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
@@ -357,23 +361,19 @@ extension GetItInjectableX on _i174.GetIt {
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
-    gh.factory<_i67.SendMessageUseCase>(() => _i67.SendMessageUseCase(
-          repository: gh<_i572.IMessageRepository>(),
-          logger: gh<_i221.AppLogger>(),
-        ));
-    gh.factory<_i848.MarkAsReadUseCase>(() => _i848.MarkAsReadUseCase(
-          repository: gh<_i572.IMessageRepository>(),
-          logger: gh<_i221.AppLogger>(),
-        ));
-    gh.factory<_i409.AddReactionUseCase>(() => _i409.AddReactionUseCase(
-          repository: gh<_i572.IMessageRepository>(),
-          logger: gh<_i221.AppLogger>(),
-        ));
     gh.factory<_i148.SearchMessagesUseCase>(() => _i148.SearchMessagesUseCase(
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
     gh.factory<_i539.RemoveReactionUseCase>(() => _i539.RemoveReactionUseCase(
+          repository: gh<_i572.IMessageRepository>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
+    gh.factory<_i67.SendMessageUseCase>(() => _i67.SendMessageUseCase(
+          repository: gh<_i572.IMessageRepository>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
+    gh.factory<_i848.MarkAsReadUseCase>(() => _i848.MarkAsReadUseCase(
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));

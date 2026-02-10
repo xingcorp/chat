@@ -1187,4 +1187,88 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addTag => 'Add tag';
+
+  @override
+  String get replyPreviewImage => '[Photo]';
+
+  @override
+  String get replyPreviewVideo => '[Video]';
+
+  @override
+  String get replyPreviewAudio => '[Audio]';
+
+  @override
+  String replyPreviewFile(String fileName) {
+    return '[File] $fileName';
+  }
+
+  @override
+  String get replyPreviewLocation => '[Location]';
+
+  @override
+  String get replyPreviewLink => '[Link]';
+
+  @override
+  String get replyPreviewSystemEvent => '[System event]';
+
+  @override
+  String get eventSomeone => 'Someone';
+
+  @override
+  String eventAddMember(String actor, String targets) {
+    return '$actor added $targets to the group';
+  }
+
+  @override
+  String eventRemoveMember(String actor, String targets) {
+    return '$actor removed $targets from the group';
+  }
+
+  @override
+  String eventLeaveConversation(String actor) {
+    return '$actor left the group';
+  }
+
+  @override
+  String eventChangeNameFromTo(String actor, String oldName, String newName) {
+    return '$actor changed the group name from \"$oldName\" to \"$newName\"';
+  }
+
+  @override
+  String eventChangeName(String actor, String newName) {
+    return '$actor changed the group name to \"$newName\"';
+  }
+
+  @override
+  String eventChangeAvatar(String actor) {
+    return '$actor changed the group photo';
+  }
+
+  @override
+  String eventCreateConversation(String actor) {
+    return '$actor created the group';
+  }
+
+  @override
+  String eventPinMessage(String actor) {
+    return '$actor pinned a message';
+  }
+
+  @override
+  String eventUnpinMessage(String actor) {
+    return '$actor unpinned a message';
+  }
+
+  @override
+  String eventJoinConversation(String actor) {
+    return '$actor joined the group';
+  }
+
+  @override
+  String eventPerformedAction(String actor) {
+    return '$actor performed an action';
+  }
+
+  @override
+  String get unreadSeparatorLabel => 'Unread messages';
 }

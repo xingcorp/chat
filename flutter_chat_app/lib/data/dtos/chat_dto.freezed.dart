@@ -38,12 +38,8 @@ mixin _$ChatDto {
   CreatorDto? get creator => throw _privateConstructorUsedError;
   List<MemberDto> get members => throw _privateConstructorUsedError;
 
-  /// Serializes this ChatDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of ChatDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ChatDtoCopyWith<ChatDto> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -83,8 +79,6 @@ class _$ChatDtoCopyWithImpl<$Res, $Val extends ChatDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ChatDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -158,8 +152,6 @@ class _$ChatDtoCopyWithImpl<$Res, $Val extends ChatDto>
     ) as $Val);
   }
 
-  /// Create a copy of ChatDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $LastMessageDtoCopyWith<$Res>? get lastMessage {
@@ -172,8 +164,6 @@ class _$ChatDtoCopyWithImpl<$Res, $Val extends ChatDto>
     });
   }
 
-  /// Create a copy of ChatDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $PersonalConversationDtoCopyWith<$Res>? get personalConversation {
@@ -187,8 +177,6 @@ class _$ChatDtoCopyWithImpl<$Res, $Val extends ChatDto>
     });
   }
 
-  /// Create a copy of ChatDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $CreatorDtoCopyWith<$Res>? get creator {
@@ -241,8 +229,6 @@ class __$$ChatDtoImplCopyWithImpl<$Res>
       _$ChatDtoImpl _value, $Res Function(_$ChatDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ChatDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -409,7 +395,7 @@ class _$ChatDtoImpl implements _ChatDto {
             const DeepCollectionEquality().equals(other._members, _members));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -427,9 +413,7 @@ class _$ChatDtoImpl implements _ChatDto {
       creator,
       const DeepCollectionEquality().hash(_members));
 
-  /// Create a copy of ChatDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ChatDtoImplCopyWith<_$ChatDtoImpl> get copyWith =>
@@ -492,11 +476,8 @@ abstract class _ChatDto implements ChatDto {
   CreatorDto? get creator;
   @override
   List<MemberDto> get members;
-
-  /// Create a copy of ChatDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ChatDtoImplCopyWith<_$ChatDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -516,12 +497,8 @@ mixin _$LastMessageDto {
   @JsonKey(fromJson: _mentionToFromJson)
   MentionToDto? get mentionTo => throw _privateConstructorUsedError;
 
-  /// Serializes this LastMessageDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of LastMessageDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $LastMessageDtoCopyWith<LastMessageDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -554,8 +531,6 @@ class _$LastMessageDtoCopyWithImpl<$Res, $Val extends LastMessageDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of LastMessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -594,8 +569,6 @@ class _$LastMessageDtoCopyWithImpl<$Res, $Val extends LastMessageDto>
     ) as $Val);
   }
 
-  /// Create a copy of LastMessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $UserBriefDtoCopyWith<$Res>? get sender {
@@ -608,8 +581,6 @@ class _$LastMessageDtoCopyWithImpl<$Res, $Val extends LastMessageDto>
     });
   }
 
-  /// Create a copy of LastMessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $MentionToDtoCopyWith<$Res>? get mentionTo {
@@ -653,8 +624,6 @@ class __$$LastMessageDtoImplCopyWithImpl<$Res>
       _$LastMessageDtoImpl _value, $Res Function(_$LastMessageDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of LastMessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -743,14 +712,12 @@ class _$LastMessageDtoImpl implements _LastMessageDto {
                 other.mentionTo == mentionTo));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode =>
       Object.hash(runtimeType, id, message, fileName, type, sender, mentionTo);
 
-  /// Create a copy of LastMessageDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$LastMessageDtoImplCopyWith<_$LastMessageDtoImpl> get copyWith =>
@@ -792,11 +759,8 @@ abstract class _LastMessageDto implements LastMessageDto {
   @override
   @JsonKey(fromJson: _mentionToFromJson)
   MentionToDto? get mentionTo;
-
-  /// Create a copy of LastMessageDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$LastMessageDtoImplCopyWith<_$LastMessageDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -811,12 +775,8 @@ mixin _$UserBriefDto {
   @JsonKey(name: 'fullname')
   String get fullName => throw _privateConstructorUsedError;
 
-  /// Serializes this UserBriefDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of UserBriefDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $UserBriefDtoCopyWith<UserBriefDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -840,8 +800,6 @@ class _$UserBriefDtoCopyWithImpl<$Res, $Val extends UserBriefDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of UserBriefDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -880,8 +838,6 @@ class __$$UserBriefDtoImplCopyWithImpl<$Res>
       _$UserBriefDtoImpl _value, $Res Function(_$UserBriefDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of UserBriefDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -931,13 +887,11 @@ class _$UserBriefDtoImpl implements _UserBriefDto {
                 other.fullName == fullName));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, fullName);
 
-  /// Create a copy of UserBriefDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$UserBriefDtoImplCopyWith<_$UserBriefDtoImpl> get copyWith =>
@@ -965,11 +919,8 @@ abstract class _UserBriefDto implements UserBriefDto {
   @override
   @JsonKey(name: 'fullname')
   String get fullName;
-
-  /// Create a copy of UserBriefDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$UserBriefDtoImplCopyWith<_$UserBriefDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -984,12 +935,8 @@ mixin _$MentionToDto {
   @JsonKey(name: 'fullname')
   String get fullName => throw _privateConstructorUsedError;
 
-  /// Serializes this MentionToDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of MentionToDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $MentionToDtoCopyWith<MentionToDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1013,8 +960,6 @@ class _$MentionToDtoCopyWithImpl<$Res, $Val extends MentionToDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of MentionToDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1053,8 +998,6 @@ class __$$MentionToDtoImplCopyWithImpl<$Res>
       _$MentionToDtoImpl _value, $Res Function(_$MentionToDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MentionToDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1104,13 +1047,11 @@ class _$MentionToDtoImpl implements _MentionToDto {
                 other.fullName == fullName));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, fullName);
 
-  /// Create a copy of MentionToDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$MentionToDtoImplCopyWith<_$MentionToDtoImpl> get copyWith =>
@@ -1138,11 +1079,8 @@ abstract class _MentionToDto implements MentionToDto {
   @override
   @JsonKey(name: 'fullname')
   String get fullName;
-
-  /// Create a copy of MentionToDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$MentionToDtoImplCopyWith<_$MentionToDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1157,12 +1095,8 @@ mixin _$PersonalConversationDto {
   String? get lastMessageReadId => throw _privateConstructorUsedError;
   int get unreadCount => throw _privateConstructorUsedError;
 
-  /// Serializes this PersonalConversationDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of PersonalConversationDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $PersonalConversationDtoCopyWith<PersonalConversationDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1187,8 +1121,6 @@ class _$PersonalConversationDtoCopyWithImpl<$Res,
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of PersonalConversationDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1230,8 +1162,6 @@ class __$$PersonalConversationDtoImplCopyWithImpl<$Res>
       $Res Function(_$PersonalConversationDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of PersonalConversationDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1282,13 +1212,11 @@ class _$PersonalConversationDtoImpl implements _PersonalConversationDto {
                 other.unreadCount == unreadCount));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, lastMessageReadId, unreadCount);
 
-  /// Create a copy of PersonalConversationDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$PersonalConversationDtoImplCopyWith<_$PersonalConversationDtoImpl>
@@ -1315,11 +1243,8 @@ abstract class _PersonalConversationDto implements PersonalConversationDto {
   String? get lastMessageReadId;
   @override
   int get unreadCount;
-
-  /// Create a copy of PersonalConversationDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$PersonalConversationDtoImplCopyWith<_$PersonalConversationDtoImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
@@ -1335,12 +1260,8 @@ mixin _$CreatorDto {
   String get fullName => throw _privateConstructorUsedError;
   List<String> get imageUrls => throw _privateConstructorUsedError;
 
-  /// Serializes this CreatorDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of CreatorDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $CreatorDtoCopyWith<CreatorDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1367,8 +1288,6 @@ class _$CreatorDtoCopyWithImpl<$Res, $Val extends CreatorDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CreatorDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1415,8 +1334,6 @@ class __$$CreatorDtoImplCopyWithImpl<$Res>
       _$CreatorDtoImpl _value, $Res Function(_$CreatorDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of CreatorDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1484,14 +1401,12 @@ class _$CreatorDtoImpl implements _CreatorDto {
                 .equals(other._imageUrls, _imageUrls));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, fullName,
       const DeepCollectionEquality().hash(_imageUrls));
 
-  /// Create a copy of CreatorDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CreatorDtoImplCopyWith<_$CreatorDtoImpl> get copyWith =>
@@ -1521,11 +1436,8 @@ abstract class _CreatorDto implements CreatorDto {
   String get fullName;
   @override
   List<String> get imageUrls;
-
-  /// Create a copy of CreatorDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CreatorDtoImplCopyWith<_$CreatorDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1545,12 +1457,8 @@ mixin _$MemberDto {
   String? get lastMessageReadId => throw _privateConstructorUsedError;
   UserDto? get user => throw _privateConstructorUsedError;
 
-  /// Serializes this MemberDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of MemberDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $MemberDtoCopyWith<MemberDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1583,8 +1491,6 @@ class _$MemberDtoCopyWithImpl<$Res, $Val extends MemberDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of MemberDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1633,8 +1539,6 @@ class _$MemberDtoCopyWithImpl<$Res, $Val extends MemberDto>
     ) as $Val);
   }
 
-  /// Create a copy of MemberDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $UserDtoCopyWith<$Res>? get user {
@@ -1678,8 +1582,6 @@ class __$$MemberDtoImplCopyWithImpl<$Res>
       _$MemberDtoImpl _value, $Res Function(_$MemberDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of MemberDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1789,14 +1691,12 @@ class _$MemberDtoImpl implements _MemberDto {
             (identical(other.user, user) || other.user == user));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, userId, admin, connected,
       hide, unreadCount, lastMessageReadId, user);
 
-  /// Create a copy of MemberDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$MemberDtoImplCopyWith<_$MemberDtoImpl> get copyWith =>
@@ -1840,11 +1740,8 @@ abstract class _MemberDto implements MemberDto {
   String? get lastMessageReadId;
   @override
   UserDto? get user;
-
-  /// Create a copy of MemberDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$MemberDtoImplCopyWith<_$MemberDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1861,12 +1758,8 @@ mixin _$UserDto {
   List<String> get imageUrls => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
 
-  /// Serializes this UserDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of UserDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $UserDtoCopyWith<UserDto> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -1892,8 +1785,6 @@ class _$UserDtoCopyWithImpl<$Res, $Val extends UserDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of UserDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1945,8 +1836,6 @@ class __$$UserDtoImplCopyWithImpl<$Res>
       _$UserDtoImpl _value, $Res Function(_$UserDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of UserDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2024,14 +1913,12 @@ class _$UserDtoImpl implements _UserDto {
             (identical(other.email, email) || other.email == email));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, fullName,
       const DeepCollectionEquality().hash(_imageUrls), email);
 
-  /// Create a copy of UserDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$UserDtoImplCopyWith<_$UserDtoImpl> get copyWith =>
@@ -2063,11 +1950,8 @@ abstract class _UserDto implements UserDto {
   List<String> get imageUrls;
   @override
   String? get email;
-
-  /// Create a copy of UserDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$UserDtoImplCopyWith<_$UserDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2081,12 +1965,8 @@ mixin _$ChatListResponseDto {
   int get total => throw _privateConstructorUsedError;
   List<ChatDto> get conversations => throw _privateConstructorUsedError;
 
-  /// Serializes this ChatListResponseDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of ChatListResponseDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ChatListResponseDtoCopyWith<ChatListResponseDto> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2110,8 +1990,6 @@ class _$ChatListResponseDtoCopyWithImpl<$Res, $Val extends ChatListResponseDto>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ChatListResponseDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2150,8 +2028,6 @@ class __$$ChatListResponseDtoImplCopyWithImpl<$Res>
       $Res Function(_$ChatListResponseDtoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ChatListResponseDto
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2207,14 +2083,12 @@ class _$ChatListResponseDtoImpl implements _ChatListResponseDto {
                 .equals(other._conversations, _conversations));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType, total, const DeepCollectionEquality().hash(_conversations));
 
-  /// Create a copy of ChatListResponseDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ChatListResponseDtoImplCopyWith<_$ChatListResponseDtoImpl> get copyWith =>
@@ -2241,11 +2115,8 @@ abstract class _ChatListResponseDto implements ChatListResponseDto {
   int get total;
   @override
   List<ChatDto> get conversations;
-
-  /// Create a copy of ChatListResponseDto
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ChatListResponseDtoImplCopyWith<_$ChatListResponseDtoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

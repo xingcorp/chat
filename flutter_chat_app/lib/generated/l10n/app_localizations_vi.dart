@@ -1188,4 +1188,88 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get addTag => 'Thêm thẻ';
+
+  @override
+  String get replyPreviewImage => '[Hình ảnh]';
+
+  @override
+  String get replyPreviewVideo => '[Video]';
+
+  @override
+  String get replyPreviewAudio => '[Ghi âm]';
+
+  @override
+  String replyPreviewFile(String fileName) {
+    return '[Tệp] $fileName';
+  }
+
+  @override
+  String get replyPreviewLocation => '[Vị trí]';
+
+  @override
+  String get replyPreviewLink => '[Liên kết]';
+
+  @override
+  String get replyPreviewSystemEvent => '[Sự kiện hệ thống]';
+
+  @override
+  String get eventSomeone => 'Ai đó';
+
+  @override
+  String eventAddMember(String actor, String targets) {
+    return '$actor đã thêm $targets vào nhóm';
+  }
+
+  @override
+  String eventRemoveMember(String actor, String targets) {
+    return '$actor đã xóa $targets khỏi nhóm';
+  }
+
+  @override
+  String eventLeaveConversation(String actor) {
+    return '$actor đã rời khỏi nhóm';
+  }
+
+  @override
+  String eventChangeNameFromTo(String actor, String oldName, String newName) {
+    return '$actor đã đổi tên nhóm từ \"$oldName\" thành \"$newName\"';
+  }
+
+  @override
+  String eventChangeName(String actor, String newName) {
+    return '$actor đã đổi tên nhóm thành \"$newName\"';
+  }
+
+  @override
+  String eventChangeAvatar(String actor) {
+    return '$actor đã thay đổi ảnh nhóm';
+  }
+
+  @override
+  String eventCreateConversation(String actor) {
+    return '$actor đã tạo nhóm';
+  }
+
+  @override
+  String eventPinMessage(String actor) {
+    return '$actor đã ghim một tin nhắn';
+  }
+
+  @override
+  String eventUnpinMessage(String actor) {
+    return '$actor đã bỏ ghim một tin nhắn';
+  }
+
+  @override
+  String eventJoinConversation(String actor) {
+    return '$actor đã tham gia nhóm';
+  }
+
+  @override
+  String eventPerformedAction(String actor) {
+    return '$actor đã thực hiện hành động';
+  }
+
+  @override
+  String get unreadSeparatorLabel => 'Tin nhắn chưa đọc';
 }
