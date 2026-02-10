@@ -48,6 +48,20 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
   bool _isLoading = true;
   bool _hasError = false;
 
+  void _setLoadState({required bool isLoading, required bool hasError}) {
+    if (!mounted) return;
+    if (_isLoading == isLoading && _hasError == hasError) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_isLoading == isLoading && _hasError == hasError) return;
+      safeSetState(() {
+        _isLoading = isLoading;
+        _hasError = hasError;
+      });
+    });
+  }
+
   String _normalizeUrl(String url) {
     final trimmed = url.trim();
     if (trimmed.isEmpty) return trimmed;
@@ -71,10 +85,7 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
   void didUpdateWidget(covariant MediaPreview oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.mediaUrl != widget.mediaUrl || oldWidget.thumbnailUrl != widget.thumbnailUrl) {
-      safeSetState(() {
-        _isLoading = true;
-        _hasError = false;
-      });
+      _setLoadState(isLoading: true, hasError: false);
     }
   }
   
@@ -131,19 +142,13 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
           height: double.infinity,
           placeholder: (context, url) => _buildPlaceholder(),
           errorWidget: (context, url, error) {
-            safeSetState(() {
-              _isLoading = false;
-              _hasError = true;
-            });
+            _setLoadState(isLoading: false, hasError: true);
             return _buildErrorWidget();
           },
           fadeInDuration: const Duration(milliseconds: 300),
           fadeOutDuration: const Duration(milliseconds: 300),
           imageBuilder: (context, imageProvider) {
-            safeSetState(() {
-              _isLoading = false;
-              _hasError = false;
-            });
+            _setLoadState(isLoading: false, hasError: false);
             return Image(
               image: imageProvider,
               fit: BoxFit.cover,
@@ -176,19 +181,13 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
           height: double.infinity,
           placeholder: (context, url) => _buildPlaceholder(),
           errorWidget: (context, url, error) {
-            safeSetState(() {
-              _isLoading = false;
-              _hasError = true;
-            });
+            _setLoadState(isLoading: false, hasError: true);
             return _buildErrorWidget();
           },
           fadeInDuration: const Duration(milliseconds: 300),
           fadeOutDuration: const Duration(milliseconds: 300),
           imageBuilder: (context, imageProvider) {
-            safeSetState(() {
-              _isLoading = false;
-              _hasError = false;
-            });
+            _setLoadState(isLoading: false, hasError: false);
             return Image(
               image: imageProvider,
               fit: BoxFit.cover,

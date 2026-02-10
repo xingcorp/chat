@@ -104,7 +104,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String messageCount(int count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
-      
     );
     final String countString = countNumberFormat.format(count);
 
@@ -357,7 +356,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeToChat => 'Welcome to Flutter Chat App';
 
   @override
-  String get errorNoInternet => 'No internet connection. Please check your network.';
+  String get errorNoInternet =>
+      'No internet connection. Please check your network.';
 
   @override
   String get errorServer => 'Server error. Please try again later.';
@@ -366,7 +366,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorCache => 'Failed to load cached data.';
 
   @override
-  String get errorUnexpected => 'An unexpected error occurred. Please try again.';
+  String get errorUnexpected =>
+      'An unexpected error occurred. Please try again.';
 
   @override
   String get errorValidation => 'Invalid input. Please check your data.';
@@ -495,7 +496,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmLeaveGroup => 'Are you sure you want to leave this group?';
 
   @override
-  String get confirmDeleteConversation => 'Are you sure you want to delete this conversation?';
+  String get confirmDeleteConversation =>
+      'Are you sure you want to delete this conversation?';
 
   @override
   String get searchConversations => 'Search conversations...';
@@ -582,7 +584,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messageCopied => 'Message copied to clipboard';
 
   @override
-  String get offlineMode => 'You are offline. Messages will be sent when you reconnect.';
+  String get offlineMode =>
+      'You are offline. Messages will be sent when you reconnect.';
 
   @override
   String get syncingMessages => 'Syncing messages...';
@@ -591,7 +594,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messageQueued => 'Message queued for sending';
 
   @override
-  String get operationQueued => 'Operation queued. Will be processed when online.';
+  String get operationQueued =>
+      'Operation queued. Will be processed when online.';
 
   @override
   String get backOnline => 'Back online. Syncing...';
@@ -672,7 +676,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noInternetConnection => 'No Internet Connection';
 
   @override
-  String get checkInternetConnection => 'Please check your internet connection and try again';
+  String get checkInternetConnection =>
+      'Please check your internet connection and try again';
 
   @override
   String get selectOption => 'Select an option';
@@ -723,7 +728,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String stars(int count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
-      
     );
     final String countString = countNumberFormat.format(count);
 
@@ -1058,7 +1062,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String selectedItems(int count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
-      
     );
     final String countString = countNumberFormat.format(count);
 
@@ -1112,7 +1115,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dropFilesHere => 'Drop files here';
 
   @override
-  String get dragDropOrClickToUpload => 'Drag & drop files here or click to browse';
+  String get dragDropOrClickToUpload =>
+      'Drag & drop files here or click to browse';
 
   @override
   String get maxFilesReached => 'Maximum number of files reached';
