@@ -82,7 +82,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         );
         
         // Cache for next time
-        await _cacheManager.cacheApiResponse(cacheKey, message);
+        await _cacheManager.cacheApiResponse(cacheKey, message.toMap());
         
         return message.toDomain();
       },
@@ -128,7 +128,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         // Cache API response
         await _cacheManager.cacheApiResponse(
           cacheKey,
-          models,
+          models.map((m) => m.toMap()).toList(),
           ttl: AppCacheManager.messageTtl,
         );
         
@@ -145,7 +145,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         if (!forceRefresh) {
           final cachedMessages = await _cacheManager.getApiResponse<List<MessageModel>>(
             cacheKey,
-            fromJson: (json) => (json as List)
+            fromJsonList: (json) => json
                 .map((item) => MessageModel.fromMap(item as Map<String, dynamic>))
                 .toList(),
           );
@@ -161,11 +161,35 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         
         // Apply pagination if needed
         final paginatedMessages = _applyPagination(localMessages, limit, cursor);
+
+        // If local is empty but we're online, fetch synchronously from remote.
+        // This avoids the "first open shows empty" issue caused by background
+        // remote sync in executeOfflineFirst.
+        if (paginatedMessages.isEmpty && await networkInfo.isConnected) {
+          logger.t('Local messages empty for chat $chatId; fetching from server');
+
+          final response = await _remoteDataSource.getMessageList(
+            conversationId: chatId,
+            size: limit,
+          );
+          final models = MessageMapper.toModelList(response.messages);
+
+          await _localDataSource.saveMessages(models);
+          await _cacheManager.cacheApiResponse(
+            cacheKey,
+            models.map((m) => m.toMap()).toList(),
+            ttl: AppCacheManager.messageTtl,
+          );
+          _cacheSyncStrategy.resetChatMessagesDirtyFlag(chatId);
+          _prefetchAttachmentThumbnails(models);
+
+          return models.map((m) => m.toDomain()).toList();
+        }
         
         // Cache the result
         await _cacheManager.cacheApiResponse(
           cacheKey,
-          paginatedMessages,
+          paginatedMessages.map((m) => m.toMap()).toList(),
           ttl: AppCacheManager.messageTtl,
         );
         
@@ -233,7 +257,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         // Cache individual message
         await _cacheManager.cacheApiResponse(
           'message_${sentMessage.serverId}',
-          updatedMessage,
+          updatedMessage.toMap(),
         );
         
         logger.i('Message sent successfully: $localId -> ${sentMessage.serverId}');

@@ -47,6 +47,36 @@ class MediaPreview extends BaseStatefulWidget {
 class _MediaPreviewState extends BaseState<MediaPreview> {
   bool _isLoading = true;
   bool _hasError = false;
+
+  String _normalizeUrl(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return trimmed;
+
+    // Allow protocol-relative URLs
+    if (trimmed.startsWith('//')) {
+      return 'https:$trimmed';
+    }
+
+    // If it already has a scheme, keep as-is
+    final uri = Uri.tryParse(trimmed);
+    if (uri != null && uri.hasScheme) {
+      return trimmed;
+    }
+
+    // Otherwise keep raw; the caller may already provide a valid relative URL
+    return trimmed;
+  }
+
+  @override
+  void didUpdateWidget(covariant MediaPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.mediaUrl != widget.mediaUrl || oldWidget.thumbnailUrl != widget.thumbnailUrl) {
+      safeSetState(() {
+        _isLoading = true;
+        _hasError = false;
+      });
+    }
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -90,16 +120,23 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
   
   /// Build widget hiển thị hình ảnh
   Widget _buildImagePreview() {
+    final imageUrl = _normalizeUrl(widget.mediaUrl);
     return Stack(
       children: [
         // Ảnh chính
         CachedNetworkImage(
-          imageUrl: widget.mediaUrl,
+          imageUrl: imageUrl,
           fit: BoxFit.cover,
           width: double.infinity,
           height: double.infinity,
           placeholder: (context, url) => _buildPlaceholder(),
-          errorWidget: (context, url, error) => _buildErrorWidget(),
+          errorWidget: (context, url, error) {
+            safeSetState(() {
+              _isLoading = false;
+              _hasError = true;
+            });
+            return _buildErrorWidget();
+          },
           fadeInDuration: const Duration(milliseconds: 300),
           fadeOutDuration: const Duration(milliseconds: 300),
           imageBuilder: (context, imageProvider) {
@@ -127,17 +164,24 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
   
   /// Build widget hiển thị video
   Widget _buildVideoPreview() {
+    final thumbUrl = _normalizeUrl(widget.thumbnailUrl ?? widget.mediaUrl);
     return Stack(
       alignment: Alignment.center,
       children: [
         // Thumbnail
         CachedNetworkImage(
-          imageUrl: widget.thumbnailUrl ?? widget.mediaUrl,
+          imageUrl: thumbUrl,
           fit: BoxFit.cover,
           width: double.infinity,
           height: double.infinity,
           placeholder: (context, url) => _buildPlaceholder(),
-          errorWidget: (context, url, error) => _buildErrorWidget(),
+          errorWidget: (context, url, error) {
+            safeSetState(() {
+              _isLoading = false;
+              _hasError = true;
+            });
+            return _buildErrorWidget();
+          },
           fadeInDuration: const Duration(milliseconds: 300),
           fadeOutDuration: const Duration(milliseconds: 300),
           imageBuilder: (context, imageProvider) {

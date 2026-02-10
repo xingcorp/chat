@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/services/date_formatter_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
@@ -347,7 +348,13 @@ class _ChatListPageState extends BaseState<ChatListPage> {
                 ),
                 const SizedBox(height: AppDimens.spaceXSmall),
                 AppText(
-                  chat.lastMessage ?? context.l10n.noMessages,
+                  (chat.lastMessage ?? context.l10n.noMessages).formatChatMessage(
+                    mentionNameById: {
+                      for (final m in chat.members)
+                        if ((m.userId).isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
+                          m.userId: m.fullName!.trim(),
+                    },
+                  ),
                   style: AppTextStyles.bodySmall,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

@@ -123,13 +123,49 @@ class AppCacheManager {
     
     // Cache to disk
     try {
-      final jsonData = jsonEncode(data);
+      final jsonData = jsonEncode(_toEncodable(data));
       await _apiCacheBox.put(key, jsonData);
       await _prefs.setInt('${key}_expiry', expiry.millisecondsSinceEpoch);
       _logger.t('Đã cache API response: $key');
     } catch (e) {
       _logger.e('Lỗi khi cache API response: $e');
     }
+  }
+
+  dynamic _toEncodable(dynamic value) {
+    if (value == null) return null;
+
+    if (value is num || value is String || value is bool) {
+      return value;
+    }
+
+    if (value is DateTime) {
+      return value.toIso8601String();
+    }
+
+    if (value is Map) {
+      return value.map((k, v) => MapEntry(k.toString(), _toEncodable(v)));
+    }
+
+    if (value is List) {
+      return value.map(_toEncodable).toList();
+    }
+
+    // Common patterns in this codebase
+    try {
+      final dynamic asDynamic = value;
+      final dynamic mapped = asDynamic.toMap?.call();
+      if (mapped != null) return _toEncodable(mapped);
+    } catch (_) {}
+
+    try {
+      final dynamic asDynamic = value;
+      final dynamic json = asDynamic.toJson?.call();
+      if (json != null) return _toEncodable(json);
+    } catch (_) {}
+
+    // Fallback to string to avoid crashing caching
+    return value.toString();
   }
   
   /// Lấy API response đã cache

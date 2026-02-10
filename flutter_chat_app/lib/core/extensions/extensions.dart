@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:intl/intl.dart';
 
 /// Extensions cho String
@@ -98,6 +99,58 @@ extension StringExtension on String {
   String truncate(int maxLength) {
     if (length <= maxLength) return this;
     return '${substring(0, maxLength)}...';
+  }
+
+  String formatChatMessage({
+    List<MessageSender> mentions = const [],
+    Map<String, String> mentionNameById = const {},
+  }) {
+    var result = this;
+
+    result = result
+        .replaceAll('<br/>', '\n')
+        .replaceAll('<br />', '\n')
+        .replaceAll('<br>', '\n');
+
+    final mentionPattern = RegExp(r'\[@([^\]]+)\]');
+    result = result.replaceAllMapped(mentionPattern, (match) {
+      final id = match.group(1) ?? '';
+      if (id.isEmpty) return '@';
+      final mappedName = mentionNameById[id];
+      if (mappedName != null && mappedName.trim().isNotEmpty) {
+        return '@${mappedName.trim()}';
+      }
+
+      final found = mentions.where((m) => m.id == id).toList();
+      final name = found.isNotEmpty ? found.first.name : null;
+      return '@${(name?.trim().isNotEmpty ?? false) ? name!.trim() : id}';
+    });
+
+    // Support backend/token variants like: "@<uuid>" (commonly shown in chat list)
+    // Only replace when we can resolve id -> name.
+    final uuidMentionPattern = RegExp(
+      r'@([0-9a-fA-F]{8}-'
+      r'[0-9a-fA-F]{4}-'
+      r'[0-9a-fA-F]{4}-'
+      r'[0-9a-fA-F]{4}-'
+      r'[0-9a-fA-F]{12})',
+    );
+    result = result.replaceAllMapped(uuidMentionPattern, (match) {
+      final id = match.group(1) ?? '';
+      final mappedName = mentionNameById[id];
+      if (mappedName != null && mappedName.trim().isNotEmpty) {
+        return '@${mappedName.trim()}';
+      }
+
+      final found = mentions.where((m) => m.id == id).toList();
+      final name = found.isNotEmpty ? found.first.name : null;
+      if (name != null && name.trim().isNotEmpty) {
+        return '@${name.trim()}';
+      }
+      return match.group(0) ?? '@$id';
+    });
+
+    return result;
   }
 }
 

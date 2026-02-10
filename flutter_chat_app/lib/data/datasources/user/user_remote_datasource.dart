@@ -68,24 +68,22 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   Future<UserModel> getUserProfile(String userId) async {
     final result = await _client.query(
       '''
-      query GetUserProfile(\$userId: ID!) {
-        getUserProfile(userId: \$userId) {
+      query IdentityFindUserById(\$userId: String!) {
+        identityFindUserById(id: \$userId) {
           id
           username
-          displayName
-          bio
+          fullname
           avatar { location }
-          isOnline
-          lastSeen
-          createdAt
+          phone
+          email
         }
       }
       ''',
       variables: {'userId': userId},
-      operationName: 'GetUserProfile',
+      operationName: 'IdentityFindUserById',
     );
 
-    final profile = result['getUserProfile'] as Map<String, dynamic>?;
+    final profile = result['identityFindUserById'] as Map<String, dynamic>?;
     if (profile == null) {
       throw Exception('Failed to get user profile');
     }

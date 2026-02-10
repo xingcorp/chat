@@ -148,15 +148,41 @@ class LastKeyDto with _$LastKeyDto {
 extension MessageDtoMapper on MessageDto {
   /// Convert MessageDto to ChatMessage domain entity
   ChatMessage toDomain() {
-    // Parse content type from string
-    ContentType contentType = ContentType.text;
-    try {
-      contentType = ContentType.values.firstWhere(
-        (e) => e.toString().split('.').last.toLowerCase() == type.toLowerCase(),
-        orElse: () => ContentType.text,
-      );
-    } catch (_) {
-      contentType = ContentType.text;
+    // Parse content type from string (backend uses ChatMessageType enum: TEXT/IMAGE/VIDEO/DOC/...)
+    final typeStr = type.toLowerCase();
+    ContentType contentType;
+    switch (typeStr) {
+      case 'text':
+        contentType = ContentType.text;
+        break;
+      case 'image':
+        contentType = ContentType.image;
+        break;
+      case 'video':
+        contentType = ContentType.video;
+        break;
+      case 'audio':
+        contentType = ContentType.audio;
+        break;
+      case 'voice_note':
+        contentType = ContentType.audio;
+        break;
+      case 'doc':
+      case 'file':
+        contentType = ContentType.file;
+        break;
+      case 'location':
+        contentType = ContentType.location;
+        break;
+      case 'link':
+        contentType = ContentType.link;
+        break;
+      case 'event':
+        contentType = ContentType.event;
+        break;
+      default:
+        contentType = ContentType.text;
+        break;
     }
 
     // Convert sender
@@ -197,6 +223,16 @@ extension MessageDtoMapper on MessageDto {
       );
     }).toList();
 
+    final mentions = mentionTo
+        .map(
+          (m) => MessageSender(
+            id: m.id,
+            name: m.fullName,
+            avatar: null,
+          ),
+        )
+        .toList();
+
     return ChatMessage(
       id: id,
       chatId: chatId,
@@ -210,6 +246,7 @@ extension MessageDtoMapper on MessageDto {
       deliveredTo: const [], // Backend doesn't track delivery separately
       attachments: messageAttachments,
       reactions: messageReactions,
+      mentionTo: mentions,
     );
   }
 }

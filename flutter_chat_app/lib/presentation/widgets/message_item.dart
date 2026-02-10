@@ -131,7 +131,7 @@ class MessageItem extends StatelessWidget {
   
   /// Xây dựng nội dung tin nhắn
   Widget _buildMessageContent(BuildContext context) {
-    final contentType = message.contentType.toString().toLowerCase();
+    final contentType = message.contentType.toString().split('.').last.toLowerCase();
     
     // Bong bóng chat
     return Container(

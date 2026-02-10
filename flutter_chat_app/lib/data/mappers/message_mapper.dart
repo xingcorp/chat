@@ -56,6 +56,16 @@ class MessageMapper {
         size: 0, // Not provided by backend
       );
     }).toList();
+
+    final mentions = dto.mentionTo
+        .map(
+          (m) => MessageSender(
+            id: m.id,
+            name: m.fullName,
+            avatar: null,
+          ),
+        )
+        .toList();
     
     return ChatMessage(
       id: dto.id,
@@ -68,6 +78,7 @@ class MessageMapper {
       readBy: dto.readerIds,
       deliveredTo: const [], // Not provided by backend
       attachments: attachments,
+      mentionTo: mentions,
     );
   }
 
@@ -82,6 +93,7 @@ class MessageMapper {
         return ContentType.video;
       case 'audio':
         return ContentType.audio;
+      case 'doc':
       case 'file':
         return ContentType.file;
       case 'location':
@@ -90,6 +102,8 @@ class MessageMapper {
         return ContentType.link;
       case 'event':
         return ContentType.event;
+      case 'voice_note':
+        return ContentType.audio;
       default:
         return ContentType.text;
     }
@@ -132,10 +146,34 @@ class MessageMapper {
     
     // Parse type
     final typeStr = dto.type.toLowerCase();
-    final type = MessageType.values.firstWhere(
-      (e) => e.name == typeStr,
-      orElse: () => MessageType.text,
-    );
+    final MessageType type;
+    switch (typeStr) {
+      case 'text':
+        type = MessageType.text;
+        break;
+      case 'image':
+        type = MessageType.image;
+        break;
+      case 'video':
+        type = MessageType.video;
+        break;
+      case 'audio':
+        type = MessageType.audio;
+        break;
+      case 'voice_note':
+        type = MessageType.audio;
+        break;
+      case 'doc':
+      case 'file':
+        type = MessageType.file;
+        break;
+      case 'location':
+        type = MessageType.location;
+        break;
+      default:
+        type = MessageType.text;
+        break;
+    }
     
     // Convert timestamps
     final createdAt = DateTime.fromMillisecondsSinceEpoch(dto.createdAt);
@@ -156,6 +194,15 @@ class MessageMapper {
       'forwardedFromMessageId': dto.forwardedFromMessageId,
       'sender': dto.sender?.toJson(),
     });
+
+    final mentionToJson = dto.mentionTo
+        .map(
+          (m) => {
+            'id': m.id,
+            'name': m.fullName,
+          },
+        )
+        .toList();
     
     return MessageModel(
       serverId: dto.id,
@@ -169,7 +216,11 @@ class MessageMapper {
       createdAt: createdAt,
       updatedAt: updatedAt,
       replyToMessageId: dto.replyMessageId,
+      urls: dto.urls,
+      fileName: dto.fileName,
+      forwardedFromMessageId: dto.forwardedFromMessageId,
       metadata: metadata,
+      mentionToJson: jsonEncode(mentionToJson),
       isDeleted: isDeleted,
       isPinned: false, // Backend doesn't provide this
       retryCount: 0,

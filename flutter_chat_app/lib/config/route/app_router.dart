@@ -12,6 +12,7 @@ import 'package:flutter_chat_app/features/chat/presentation/pages/chat/create_gr
 import 'package:flutter_chat_app/presentation/pages/error_page.dart';
 import 'package:flutter_chat_app/presentation/pages/permissions/permissions_onboarding_page.dart';
 import 'package:flutter_chat_app/presentation/pages/splash_page.dart';
+import 'package:flutter_chat_app/presentation/pages/users/user_details_page.dart';
 import 'package:go_router/go_router.dart';
 
 /// Application router configuration
@@ -139,6 +140,19 @@ class AppRouter {
               ],
             ),
           ],
+        ),
+
+        GoRoute(
+          path: '/users/:userId',
+          builder: (context, state) {
+            final userId = state.pathParameters['userId']!;
+            final extra = state.extra;
+            final displayName = extra is Map ? extra['displayName'] as String? : null;
+            return UserDetailsPage(
+              userId: userId,
+              displayName: displayName,
+            );
+          },
         ),
       ],
       errorBuilder: (context, state) => ErrorPage(error: state.error),

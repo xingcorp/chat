@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 
 part 'chat_dto.freezed.dart';
@@ -206,6 +207,34 @@ class ChatListResponseDto with _$ChatListResponseDto {
 extension ChatDtoMapper on ChatDto {
   /// Convert ChatDto to Chat entity
   Chat toDomain() {
+    final domainMembers = members
+        .map(
+          (m) => ConversationMember(
+            id: m.id,
+            userId: m.userId,
+            fullName: m.user?.fullName,
+            avatarUrl: (m.user?.imageUrls.isNotEmpty ?? false)
+                ? m.user!.imageUrls.first
+                : null,
+            isAdmin: m.admin,
+            isConnected: m.connected,
+            isHidden: m.hide,
+            unreadCount: m.unreadCount,
+            lastMessageReadId: m.lastMessageReadId,
+          ),
+        )
+        .toList();
+
+    final mentionNameById = <String, String>{
+      for (final m in domainMembers)
+        if ((m.userId).isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
+          m.userId: m.fullName!.trim(),
+    };
+
+    final formattedPreview = lastMessage?.message?.formatChatMessage(
+      mentionNameById: mentionNameById,
+    );
+
     return Chat(
       id: id,
       name: name,
@@ -213,10 +242,11 @@ extension ChatDtoMapper on ChatDto {
       lastMessageTime: lastMessageAt != null 
           ? DateTime.fromMillisecondsSinceEpoch(lastMessageAt!)
           : null,
-      lastMessagePreview: lastMessage?.message,
+      lastMessagePreview: formattedPreview,
       unreadCount: personalConversation?.unreadCount ?? members.firstOrNull?.unreadCount ?? 0,
       type: _mapChatType(type),
       participantIds: members.map((m) => m.userId).toList(),
+      members: domainMembers,
     );
   }
   

@@ -67,16 +67,31 @@ class UserModel {
       }
     }
 
+    final serverId = (map['id'] ?? '').toString();
+    final email = map['email'] as String?;
+    final username = (map['username'] as String?) ??
+        (email != null && email.contains('@') ? email.split('@').first : null) ??
+        serverId;
+    final displayName = (map['displayName'] as String?) ??
+        (map['fullname'] as String?) ??
+        (map['name'] as String?) ??
+        username;
+
+    final lastSeenRaw = map['lastSeen'];
+    final lastSeen = lastSeenRaw is String
+        ? (DateTime.tryParse(lastSeenRaw) ?? DateTime.now())
+        : DateTime.now();
+
     return UserModel(
-      serverId: map['id'] as String,
-      username: map['username'] as String,
-      displayName: map['displayName'] as String,
+      serverId: serverId,
+      username: username,
+      displayName: displayName,
       avatarUrl: avatarUrl,
-      email: map['email'] as String?,
+      email: email,
       isOnline: map['isOnline'] as bool? ?? false,
-      lastSeen: DateTime.parse(map['lastSeen'] as String),
-      statusMessage: map['statusMessage'] as String?,
-      roles: List<String>.from(map['roles'] ?? []),
+      lastSeen: lastSeen,
+      statusMessage: map['statusMessage'] as String? ?? map['status'] as String?,
+      roles: (map['roles'] is List) ? List<String>.from(map['roles']) : const [],
     );
   }
 
