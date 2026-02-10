@@ -254,7 +254,7 @@ abstract class AppLocalizations {
   /// **'Today'**
   String get today;
 
-  /// Online status
+  /// User online status
   ///
   /// In en, this message translates to:
   /// **'Online'**
@@ -1748,7 +1748,7 @@ abstract class AppLocalizations {
   /// **'Search emojis'**
   String get searchEmojis;
 
-  /// Message when there are no recent emojis
+  /// Text shown when there are no recent emojis
   ///
   /// In en, this message translates to:
   /// **'No recent emojis'**
@@ -1790,7 +1790,7 @@ abstract class AppLocalizations {
   /// **'Activities'**
   String get activities;
 
-  /// Typing indicator for single user
+  /// Typing indicator text
   ///
   /// In en, this message translates to:
   /// **'{name} is typing...'**
@@ -1802,11 +1802,11 @@ abstract class AppLocalizations {
   /// **'{name1} and {name2} are typing...'**
   String areTyping(String name1, String name2);
 
-  /// Typing indicator for multiple users
+  /// Multiple users typing
   ///
   /// In en, this message translates to:
-  /// **'{name} and {count} others are typing...'**
-  String multipleTyping(String name, int count);
+  /// **'{count} people are typing...'**
+  String multipleTyping(int count);
 
   /// Play button label
   ///
@@ -1940,13 +1940,13 @@ abstract class AppLocalizations {
   /// **'Download failed'**
   String get downloadFailed;
 
-  /// Upload failed status
+  /// Error message when upload fails
   ///
   /// In en, this message translates to:
   /// **'Upload failed'**
   String get uploadFailed;
 
-  /// Uploading status
+  /// Status text when uploading file
   ///
   /// In en, this message translates to:
   /// **'Uploading...'**
@@ -2389,6 +2389,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unread messages'**
   String get unreadSeparatorLabel;
+
+  /// Title for attachment picker bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Pick attachment'**
+  String get pickAttachment;
+
+  /// Option to take photo with camera
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get takePhoto;
+
+  /// Option to choose from photo gallery
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get chooseFromGallery;
+
+  /// Option to choose file from device
+  ///
+  /// In en, this message translates to:
+  /// **'Choose file'**
+  String get chooseFile;
+
+  /// Option to share current location
+  ///
+  /// In en, this message translates to:
+  /// **'Share location'**
+  String get shareLocation;
+
+  /// Status text when compressing image/video
+  ///
+  /// In en, this message translates to:
+  /// **'Compressing...'**
+  String get compressing;
+
+  /// Upload progress percentage
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading {progress}%'**
+  String uploadProgress(int progress);
+
+  /// Error when file exceeds size limit
+  ///
+  /// In en, this message translates to:
+  /// **'File too large. Maximum size: {maxSize}MB'**
+  String fileTooLargeMax(int maxSize);
+
+  /// Error when image compression fails
+  ///
+  /// In en, this message translates to:
+  /// **'Image compression failed'**
+  String get imageCompressionFailed;
+
+  /// Typing indicator when name is unknown
+  ///
+  /// In en, this message translates to:
+  /// **'Someone is typing...'**
+  String get someoneIsTyping;
+
+  /// User last seen status
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen recently'**
+  String get lastSeenRecently;
+
+  /// User last seen with time
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen at {time}'**
+  String lastSeenAt(String time);
+
+  /// User last seen minutes ago
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen {minutes} minutes ago'**
+  String lastSeenMinutesAgo(int minutes);
+
+  /// User last seen hours ago
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen {hours} hours ago'**
+  String lastSeenHoursAgo(int hours);
+
+  /// User last seen days ago
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen {days} days ago'**
+  String lastSeenDaysAgo(int days);
 }
 
 class _AppLocalizationsDelegate

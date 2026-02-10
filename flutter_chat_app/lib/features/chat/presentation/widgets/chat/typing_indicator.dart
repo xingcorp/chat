@@ -66,7 +66,16 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
         children: [
           if (widget.showName && widget.displayName != null) ...[
             Text(
-              '${widget.displayName} đang nhập',
+              context.l10n.isTyping(widget.displayName!),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ] else if (widget.showName) ...[
+            Text(
+              context.l10n.someoneIsTyping,
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),

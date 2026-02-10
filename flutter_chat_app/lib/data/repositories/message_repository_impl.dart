@@ -7,6 +7,7 @@ import 'package:flutter_chat_app/core/exceptions/exceptions.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_remote_datasource.dart';
+import 'package:flutter_chat_app/data/dtos/message_dto.dart'; // Added for extension methods
 import 'package:flutter_chat_app/data/mappers/message_mapper.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
@@ -354,7 +355,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
           size: size,
         );
 
-        return dtos.map((dto) => MessageMapper.toEntity(dto)).toList();
+        return dtos.map((dto) => dto.toDomain()).toList();
       },
       localDataSource: () async {
         final chatId = (conversationIds != null && conversationIds.isNotEmpty)

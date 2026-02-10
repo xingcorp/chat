@@ -11,7 +11,10 @@ import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' as do
 import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/presentation/widgets/message_status_indicator.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_preview.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_gallery.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reply_preview.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 
 class MessageItem extends StatefulWidget {
@@ -411,8 +414,13 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                     );
                   },
                   onAddReaction: () {
-                    // TODO: Show emoji picker
-                    debugPrint('Add reaction tapped');
+                    EmojiPickerBottomSheet.show(
+                      context,
+                      onEmojiSelected: (emoji) {
+                        // TODO: Call BLoC to add reaction
+                        debugPrint('Add reaction: $emoji to message ${widget.uiState.id}');
+                      },
+                    );
                   },
                 ),
               ),
@@ -463,49 +471,18 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
   }
 
   Widget _buildReplyPreview(BuildContext context, bool isFromCurrentUser) {
-    final reply = widget.uiState.replyMessage!;
-    final theme = Theme.of(context);
+    final reply = widget.uiState.replyMessage;
+    if (reply == null) return const SizedBox.shrink();
 
-    final bgColor = isFromCurrentUser
-        ? Colors.white.withOpacity(0.15)
-        : theme.colorScheme.primary.withOpacity(0.08);
-    final accentColor = theme.colorScheme.primary;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        color: bgColor,
-        border: Border(
-          left: BorderSide(color: accentColor, width: 3.0),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            reply.senderName,
-            style: TextStyle(
-              fontSize: 12.0,
-              fontWeight: FontWeight.w600,
-              color: accentColor,
-            ),
-          ),
-          const SizedBox(height: 2.0),
-          Text(
-            reply.previewText,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12.0,
-              color: isFromCurrentUser
-                  ? Colors.white.withOpacity(0.8)
-                  : theme.textTheme.bodySmall?.color,
-            ),
-          ),
-        ],
-      ),
+    return ReplyPreview(
+      replyMessage: reply,
+      isFromCurrentUser: isFromCurrentUser,
+      showThumbnail: true,
+      onTap: () {
+        // TODO: Scroll đến tin nhắn gốc
+        // Cần implement scroll-to-message functionality trong ChatDetailsPage
+        debugPrint('Reply preview tapped: ${reply.id}');
+      },
     );
   }
 
@@ -513,92 +490,13 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     BuildContext context, {
     required List<domain.MessageAttachment> attachments,
   }) {
-    final theme = Theme.of(context);
-
-    Widget buildFileTile(domain.MessageAttachment attachment) {
-      final name = attachment.name.trim().isNotEmpty ? attachment.name.trim() : 'File';
-      return InkWell(
-        onTap: () {},
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-          child: Row(
-            children: [
-              Icon(
-                Icons.insert_drive_file,
-                size: 20,
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ),
-              Icon(
-                Icons.download,
-                size: 18,
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final previewWidgets = <Widget>[];
-    for (final a in attachments) {
-      final type = a.type.toLowerCase();
-      final url = a.url;
-      if (url.trim().isEmpty) {
-        previewWidgets.add(buildFileTile(a));
-        continue;
-      }
-
-      if (type == 'image') {
-        previewWidgets.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6.0),
-            child: MediaPreview(
-              mediaUrl: url,
-              isImage: true,
-              width: 220,
-              height: 160,
-              borderRadius: 12,
-            ),
-          ),
-        );
-        continue;
-      }
-
-      if (type == 'video') {
-        previewWidgets.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6.0),
-            child: MediaPreview(
-              mediaUrl: url,
-              isImage: false,
-              width: 240,
-              height: 160,
-              borderRadius: 12,
-            ),
-          ),
-        );
-        continue;
-      }
-
-      previewWidgets.add(buildFileTile(a));
-    }
+    if (attachments.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: previewWidgets,
+      child: MediaGallery(
+        attachments: attachments,
+        layout: MediaGalleryLayout.grid,
       ),
     );
   }

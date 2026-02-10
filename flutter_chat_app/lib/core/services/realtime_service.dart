@@ -331,10 +331,10 @@ class RealtimeService {
       
       // Parse using MessageDto
       final messageDto = MessageDto.fromJson(messageData);
-      
-      // Convert to domain entity using MessageMapper
-      final chatMessage = MessageMapper.toEntity(messageDto);
-      
+
+      // Convert to domain entity using extension method
+      final chatMessage = messageDto.toDomain();
+
       // Emit to stream
       _messageController.add(chatMessage);
       
@@ -360,10 +360,10 @@ class RealtimeService {
       
       // Parse using MessageDto
       final messageDto = MessageDto.fromJson(messageData);
-      
-      // Convert to domain entity
-      final chatMessage = MessageMapper.toEntity(messageDto);
-      
+
+      // Convert to domain entity using extension method
+      final chatMessage = messageDto.toDomain();
+
       // Emit to edited stream
       _messageEditedController.add(chatMessage);
       

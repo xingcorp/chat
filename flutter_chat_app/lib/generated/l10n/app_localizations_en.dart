@@ -924,8 +924,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String multipleTyping(String name, int count) {
-    return '$name and $count others are typing...';
+  String multipleTyping(int count) {
+    return '$count people are typing...';
   }
 
   @override
@@ -1271,4 +1271,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unreadSeparatorLabel => 'Unread messages';
+
+  @override
+  String get pickAttachment => 'Pick attachment';
+
+  @override
+  String get takePhoto => 'Take photo';
+
+  @override
+  String get chooseFromGallery => 'Choose from gallery';
+
+  @override
+  String get chooseFile => 'Choose file';
+
+  @override
+  String get shareLocation => 'Share location';
+
+  @override
+  String get compressing => 'Compressing...';
+
+  @override
+  String uploadProgress(int progress) {
+    return 'Uploading $progress%';
+  }
+
+  @override
+  String fileTooLargeMax(int maxSize) {
+    return 'File too large. Maximum size: ${maxSize}MB';
+  }
+
+  @override
+  String get imageCompressionFailed => 'Image compression failed';
+
+  @override
+  String get someoneIsTyping => 'Someone is typing...';
+
+  @override
+  String get lastSeenRecently => 'Last seen recently';
+
+  @override
+  String lastSeenAt(String time) {
+    return 'Last seen at $time';
+  }
+
+  @override
+  String lastSeenMinutesAgo(int minutes) {
+    return 'Last seen $minutes minutes ago';
+  }
+
+  @override
+  String lastSeenHoursAgo(int hours) {
+    return 'Last seen $hours hours ago';
+  }
+
+  @override
+  String lastSeenDaysAgo(int days) {
+    return 'Last seen $days days ago';
+  }
 }

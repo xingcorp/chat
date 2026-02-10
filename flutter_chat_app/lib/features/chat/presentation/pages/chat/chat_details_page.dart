@@ -4,6 +4,7 @@ import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
@@ -12,7 +13,10 @@ import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/attachment_picker_widget.dart';
 import 'package:get_it/get_it.dart';
+import 'dart:io';
 
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
@@ -137,7 +141,107 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
     _messageController.clear();
   }
-  
+
+  /// Show attachment picker bottom sheet
+  void _showAttachmentPicker() {
+    AttachmentPickerBottomSheet.show(
+      context,
+      onImageFromCamera: _handleImageFromCamera,
+      onImageFromGallery: _handleImageFromGallery,
+      onFileSelected: _handleFileSelected,
+      onLocationShare: _handleLocationShare,
+    );
+  }
+
+  /// Handle image from camera
+  Future<void> _handleImageFromCamera(File imageFile) async {
+    await _processAndSendImage(imageFile);
+  }
+
+  /// Handle image from gallery
+  Future<void> _handleImageFromGallery(File imageFile) async {
+    await _processAndSendImage(imageFile);
+  }
+
+  /// Handle file selection
+  Future<void> _handleFileSelected(File file) async {
+    // TODO: Implement file upload
+    AppSnackBar.show(
+      context: context,
+      message: 'File upload: ${file.path}',
+      type: FeedbackType.info,
+    );
+  }
+
+  /// Handle location share
+  void _handleLocationShare() {
+    // TODO: Implement location sharing
+    AppSnackBar.show(
+      context: context,
+      message: context.l10n.shareLocation,
+      type: FeedbackType.info,
+    );
+  }
+
+  /// Process and send image with compression
+  Future<void> _processAndSendImage(File imageFile) async {
+    try {
+      // Show compressing feedback
+      if (mounted) {
+        AppSnackBar.show(
+          context: context,
+          message: context.l10n.compressing,
+          type: FeedbackType.info,
+        );
+      }
+
+      // Compress image
+      final compressedImage = await ImageCompressionHelper.compressImage(imageFile);
+
+      if (compressedImage == null) {
+        if (mounted) {
+          AppSnackBar.show(
+            context: context,
+            message: context.l10n.imageCompressionFailed,
+            type: FeedbackType.error,
+          );
+        }
+        return;
+      }
+
+      // TODO: Upload to server and get URL
+      // For now, just show success message
+      if (mounted) {
+        final fileSize = await compressedImage.length();
+        final formattedSize = ImageCompressionHelper.formatFileSize(fileSize);
+
+        AppSnackBar.show(
+          context: context,
+          message: 'Image ready to upload: $formattedSize',
+          type: FeedbackType.success,
+        );
+
+        // TODO: Implement actual upload and send message with attachment
+        // _messageBloc.add(
+        //   SendMessage(
+        //     content: '',
+        //     senderId: _currentUserId,
+        //     contentType: 'image',
+        //     attachmentIds: [uploadedUrl],
+        //   ),
+        // );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.show(
+          context: context,
+          message: context.l10n.errorOccurred,
+          type: FeedbackType.error,
+        );
+      }
+    }
+  }
+
   Future<void> _onRefresh() async {
     _messageBloc.add(
       const RefreshMessages(),
@@ -372,7 +476,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                   IconButton(
                     icon: const Icon(Icons.add),
                     onPressed: () {
-                      // TODO: Show attachment options
+                      _showAttachmentPicker();
                     },
                   ),
                   Expanded(
@@ -387,7 +491,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                   IconButton(
                     icon: const Icon(Icons.emoji_emotions_outlined),
                     onPressed: () {
-                      // TODO: Show emoji picker
+                      EmojiPickerBottomSheet.show(
+                        context,
+                        onEmojiSelected: (emoji) {
+                          EmojiTextEditingHelper.insertEmoji(
+                            _messageController,
+                            emoji,
+                          );
+                        },
+                        textController: _messageController,
+                      );
                     },
                   ),
                   AppButton.primary(

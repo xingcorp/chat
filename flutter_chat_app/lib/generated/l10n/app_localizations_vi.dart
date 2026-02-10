@@ -772,129 +772,129 @@ class AppLocalizationsVi extends AppLocalizations {
   String get volume => 'Âm lượng';
 
   @override
-  String get messageBubble => 'Message bubble';
+  String get messageBubble => 'Bong bóng tin nhắn';
 
   @override
-  String get textMessage => 'Text message';
+  String get textMessage => 'Tin nhắn văn bản';
 
   @override
-  String get imageMessage => 'Image message';
+  String get imageMessage => 'Tin nhắn hình ảnh';
 
   @override
-  String get videoMessage => 'Video message';
+  String get videoMessage => 'Tin nhắn video';
 
   @override
-  String get audioMessage => 'Audio message';
+  String get audioMessage => 'Tin nhắn âm thanh';
 
   @override
-  String get fileMessage => 'File message';
+  String get fileMessage => 'Tin nhắn tệp';
 
   @override
-  String get locationMessage => 'Location message';
+  String get locationMessage => 'Tin nhắn vị trí';
 
   @override
-  String get contactMessage => 'Contact message';
+  String get contactMessage => 'Tin nhắn liên hệ';
 
   @override
-  String get systemMessage => 'System message';
+  String get systemMessage => 'Tin nhắn hệ thống';
 
   @override
-  String get delivered => 'Delivered';
+  String get delivered => 'Đã gửi';
 
   @override
-  String get read => 'Read';
+  String get read => 'Đã đọc';
 
   @override
-  String get failed => 'Failed';
+  String get failed => 'Thất bại';
 
   @override
-  String get pending => 'Pending';
+  String get pending => 'Đang chờ';
 
   @override
   String replyingTo(String author) {
-    return 'Replying to $author';
+    return 'Đang trả lời $author';
   }
 
   @override
-  String get cancelReply => 'Cancel reply';
+  String get cancelReply => 'Hủy trả lời';
 
   @override
-  String get voiceMessage => 'Voice message';
+  String get voiceMessage => 'Tin nhắn thoại';
 
   @override
-  String get photo => 'Photo';
+  String get photo => 'Ảnh';
 
   @override
   String get video => 'Video';
 
   @override
-  String get audio => 'Audio';
+  String get audio => 'Âm thanh';
 
   @override
-  String get document => 'Document';
+  String get document => 'Tài liệu';
 
   @override
-  String get location => 'Location';
+  String get location => 'Vị trí';
 
   @override
-  String get contact => 'Contact';
+  String get contact => 'Liên hệ';
 
   @override
-  String get addReaction => 'Add reaction';
+  String get addReaction => 'Thêm phản ứng';
 
   @override
-  String get removeReaction => 'Remove reaction';
+  String get removeReaction => 'Xóa phản ứng';
 
   @override
-  String get reactions => 'Reactions';
+  String get reactions => 'Phản ứng';
 
   @override
-  String get recentlyUsed => 'Recently used';
+  String get recentlyUsed => 'Gần đây';
 
   @override
-  String get searchEmoji => 'Search emoji';
+  String get searchEmoji => 'Tìm kiếm emoji';
 
   @override
-  String get smileysAndPeople => 'Smileys & People';
+  String get smileysAndPeople => 'Mặt cười & Con người';
 
   @override
-  String get gesturesAndBodyParts => 'Gestures & Body Parts';
+  String get gesturesAndBodyParts => 'Cử chỉ & Bộ phận cơ thể';
 
   @override
-  String get peopleAndProfessions => 'People & Professions';
+  String get peopleAndProfessions => 'Con người & Nghề nghiệp';
 
   @override
-  String get animalsAndNature => 'Animals & Nature';
+  String get animalsAndNature => 'Động vật & Thiên nhiên';
 
   @override
-  String get foodAndDrink => 'Food & Drink';
+  String get foodAndDrink => 'Đồ ăn & Đồ uống';
 
   @override
-  String get activitiesAndSports => 'Activities & Sports';
+  String get activitiesAndSports => 'Hoạt động & Thể thao';
 
   @override
-  String get activity => 'Activity';
+  String get activity => 'Hoạt động';
 
   @override
-  String get travelAndPlaces => 'Travel & Places';
+  String get travelAndPlaces => 'Du lịch & Địa điểm';
 
   @override
-  String get objects => 'Objects';
+  String get objects => 'Đồ vật';
 
   @override
-  String get symbols => 'Symbols';
+  String get symbols => 'Ký hiệu';
 
   @override
-  String get flags => 'Flags';
+  String get flags => 'Cờ';
 
   @override
-  String get noEmojisFound => 'No emojis found';
+  String get noEmojisFound => 'Không tìm thấy emoji';
 
   @override
   String get searchEmojis => 'Tìm kiếm emoji';
 
   @override
-  String get noRecentEmojis => 'Không có emoji gần đây';
+  String get noRecentEmojis => 'Chưa có emoji gần đây';
 
   @override
   String get recent => 'Gần đây';
@@ -916,117 +916,117 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String isTyping(String name) {
-    return '$name is typing...';
+    return '$name đang nhập...';
   }
 
   @override
   String areTyping(String name1, String name2) {
-    return '$name1 and $name2 are typing...';
+    return '$name1 và $name2 đang nhập...';
   }
 
   @override
-  String multipleTyping(String name, int count) {
-    return '$name and $count others are typing...';
+  String multipleTyping(int count) {
+    return '$count người đang nhập...';
   }
 
   @override
-  String get play => 'Play';
+  String get play => 'Phát';
 
   @override
-  String get pause => 'Pause';
+  String get pause => 'Tạm dừng';
 
   @override
-  String get stop => 'Stop';
+  String get stop => 'Dừng';
 
   @override
   String get playbackSpeed => 'Tốc độ phát';
 
   @override
-  String get duration => 'Duration';
+  String get duration => 'Thời lượng';
 
   @override
-  String get currentTime => 'Current time';
+  String get currentTime => 'Thời gian hiện tại';
 
   @override
-  String get loadingAudio => 'Loading audio...';
+  String get loadingAudio => 'Đang tải âm thanh...';
 
   @override
-  String get remainingTime => 'Remaining time';
+  String get remainingTime => 'Thời gian còn lại';
 
   @override
-  String get recording => 'Recording...';
+  String get recording => 'Đang ghi âm...';
 
   @override
-  String get recordVoiceMessage => 'Record voice message';
+  String get recordVoiceMessage => 'Ghi âm tin nhắn';
 
   @override
-  String get sendVoiceMessage => 'Send voice message';
+  String get sendVoiceMessage => 'Gửi tin nhắn thoại';
 
   @override
-  String get cancelRecording => 'Cancel recording';
+  String get cancelRecording => 'Hủy ghi âm';
 
   @override
-  String get longPressToRecord => 'Long press to record';
+  String get longPressToRecord => 'Giữ để ghi âm';
 
   @override
-  String get slideToCancel => 'Slide to cancel';
+  String get slideToCancel => 'Trượt để hủy';
 
   @override
-  String get releaseToSend => 'Release to send';
+  String get releaseToSend => 'Thả để gửi';
 
   @override
-  String get messageOptions => 'Message options';
+  String get messageOptions => 'Tùy chọn tin nhắn';
 
   @override
-  String get longPressForOptions => 'Long press for options';
+  String get longPressForOptions => 'Giữ lâu để xem tùy chọn';
 
   @override
-  String get tapToView => 'Tap to view';
+  String get tapToView => 'Nhấn để xem';
 
   @override
-  String get tapToDownload => 'Tap to download';
+  String get tapToDownload => 'Nhấn để tải xuống';
 
   @override
-  String get downloading => 'Downloading...';
+  String get downloading => 'Đang tải xuống...';
 
   @override
-  String get downloaded => 'Downloaded';
+  String get downloaded => 'Đã tải xuống';
 
   @override
-  String get downloadFailed => 'Download failed';
+  String get downloadFailed => 'Tải xuống thất bại';
 
   @override
-  String get uploadFailed => 'Upload failed';
+  String get uploadFailed => 'Tải lên thất bại';
 
   @override
-  String get uploading => 'Uploading...';
+  String get uploading => 'Đang tải lên...';
 
   @override
-  String get uploaded => 'Uploaded';
+  String get uploaded => 'Đã tải lên';
 
   @override
-  String get retryUpload => 'Retry upload';
+  String get retryUpload => 'Thử lại tải lên';
 
   @override
-  String get retryDownload => 'Retry download';
+  String get retryDownload => 'Thử lại tải xuống';
 
   @override
-  String get cancelUpload => 'Cancel upload';
+  String get cancelUpload => 'Hủy tải lên';
 
   @override
-  String get cancelDownload => 'Cancel download';
+  String get cancelDownload => 'Hủy tải xuống';
 
   @override
-  String get fileSize => 'File size';
+  String get fileSize => 'Kích thước tệp';
 
   @override
-  String get fileName => 'File name';
+  String get fileName => 'Tên tệp';
 
   @override
-  String get fileType => 'File type';
+  String get fileType => 'Loại tệp';
 
   @override
-  String get unsupportedFileType => 'Unsupported file type';
+  String get unsupportedFileType => 'Loại tệp không được hỗ trợ';
 
   @override
   String fileTooLarge(String fileName, String maxSize) {
@@ -1272,4 +1272,61 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get unreadSeparatorLabel => 'Tin nhắn chưa đọc';
+
+  @override
+  String get pickAttachment => 'Chọn tệp đính kèm';
+
+  @override
+  String get takePhoto => 'Chụp ảnh';
+
+  @override
+  String get chooseFromGallery => 'Chọn từ thư viện';
+
+  @override
+  String get chooseFile => 'Chọn tệp';
+
+  @override
+  String get shareLocation => 'Chia sẻ vị trí';
+
+  @override
+  String get compressing => 'Đang nén...';
+
+  @override
+  String uploadProgress(int progress) {
+    return 'Đang tải lên $progress%';
+  }
+
+  @override
+  String fileTooLargeMax(int maxSize) {
+    return 'Tệp quá lớn. Kích thước tối đa: ${maxSize}MB';
+  }
+
+  @override
+  String get imageCompressionFailed => 'Nén ảnh thất bại';
+
+  @override
+  String get someoneIsTyping => 'Ai đó đang nhập...';
+
+  @override
+  String get lastSeenRecently => 'Hoạt động gần đây';
+
+  @override
+  String lastSeenAt(String time) {
+    return 'Hoạt động lúc $time';
+  }
+
+  @override
+  String lastSeenMinutesAgo(int minutes) {
+    return 'Hoạt động $minutes phút trước';
+  }
+
+  @override
+  String lastSeenHoursAgo(int hours) {
+    return 'Hoạt động $hours giờ trước';
+  }
+
+  @override
+  String lastSeenDaysAgo(int days) {
+    return 'Hoạt động $days ngày trước';
+  }
 }

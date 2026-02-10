@@ -43,9 +43,9 @@ class MessageStatusIndicator extends StatelessWidget {
     this.size = 16.0,
     this.errorColor = Colors.red,
     this.pendingColor = Colors.grey,
-    this.sentColor = Colors.blue,
-    this.deliveredColor = Colors.green,
-    this.readColor = Colors.green,
+    this.sentColor = Colors.grey,
+    this.deliveredColor = Colors.grey,
+    this.readColor = Colors.blue, // Blue color for read receipts
     this.onPressed,
   }) : super(key: key);
 

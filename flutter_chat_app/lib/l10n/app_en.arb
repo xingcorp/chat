@@ -2215,5 +2215,150 @@
   "unreadSeparatorLabel": "Unread messages",
   "@unreadSeparatorLabel": {
     "description": "Label for unread messages separator"
+  },
+
+  "noRecentEmojis": "No recent emojis",
+  "@noRecentEmojis": {
+    "description": "Text shown when there are no recent emojis"
+  },
+
+  "pickAttachment": "Pick attachment",
+  "@pickAttachment": {
+    "description": "Title for attachment picker bottom sheet"
+  },
+
+  "takePhoto": "Take photo",
+  "@takePhoto": {
+    "description": "Option to take photo with camera"
+  },
+
+  "chooseFromGallery": "Choose from gallery",
+  "@chooseFromGallery": {
+    "description": "Option to choose from photo gallery"
+  },
+
+  "chooseFile": "Choose file",
+  "@chooseFile": {
+    "description": "Option to choose file from device"
+  },
+
+  "shareLocation": "Share location",
+  "@shareLocation": {
+    "description": "Option to share current location"
+  },
+
+  "compressing": "Compressing...",
+  "@compressing": {
+    "description": "Status text when compressing image/video"
+  },
+
+  "uploading": "Uploading...",
+  "@uploading": {
+    "description": "Status text when uploading file"
+  },
+
+  "uploadProgress": "Uploading {progress}%",
+  "@uploadProgress": {
+    "description": "Upload progress percentage",
+    "placeholders": {
+      "progress": {
+        "type": "int"
+      }
+    }
+  },
+
+  "uploadFailed": "Upload failed",
+  "@uploadFailed": {
+    "description": "Error message when upload fails"
+  },
+
+  "fileTooLargeMax": "File too large. Maximum size: {maxSize}MB",
+  "@fileTooLargeMax": {
+    "description": "Error when file exceeds size limit",
+    "placeholders": {
+      "maxSize": {
+        "type": "int"
+      }
+    }
+  },
+
+  "imageCompressionFailed": "Image compression failed",
+  "@imageCompressionFailed": {
+    "description": "Error when image compression fails"
+  },
+
+  "isTyping": "{name} is typing...",
+  "@isTyping": {
+    "description": "Typing indicator text",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+
+  "someoneIsTyping": "Someone is typing...",
+  "@someoneIsTyping": {
+    "description": "Typing indicator when name is unknown"
+  },
+
+  "multipleTyping": "{count} people are typing...",
+  "@multipleTyping": {
+    "description": "Multiple users typing",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "online": "Online",
+  "@online": {
+    "description": "User online status"
+  },
+
+  "lastSeenRecently": "Last seen recently",
+  "@lastSeenRecently": {
+    "description": "User last seen status"
+  },
+
+  "lastSeenAt": "Last seen at {time}",
+  "@lastSeenAt": {
+    "description": "User last seen with time",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+
+  "lastSeenMinutesAgo": "Last seen {minutes} minutes ago",
+  "@lastSeenMinutesAgo": {
+    "description": "User last seen minutes ago",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+
+  "lastSeenHoursAgo": "Last seen {hours} hours ago",
+  "@lastSeenHoursAgo": {
+    "description": "User last seen hours ago",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+
+  "lastSeenDaysAgo": "Last seen {days} days ago",
+  "@lastSeenDaysAgo": {
+    "description": "User last seen days ago",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   }
 }

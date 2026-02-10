@@ -82,9 +82,11 @@ dependencies:
   video_compress: ^3.1.2
   photo_view: ^0.15.0
   image_picker: ^1.0.7
+  file_picker: ^8.1.6
   just_audio: ^0.10.4
   video_player: ^2.8.1
   chewie: ^1.7.4
+  emoji_picker_flutter: ^3.1.0
 
   # Encryption and Security
   crypto: ^3.0.3
