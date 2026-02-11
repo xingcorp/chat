@@ -71,6 +71,10 @@ class ReplyMessageDto with _$ReplyMessageDto {
   const factory ReplyMessageDto({
     required String id,
     @JsonKey(name: 'message') required String content,
+    String? type,
+    @Default([]) List<String> urls,
+    String? fileName,
+    @Default([]) List<MentionDto> mentionTo,
     SenderDto? sender,
   }) = _ReplyMessageDto;
 
@@ -246,11 +250,52 @@ extension MessageDtoMapper on MessageDto {
     ChatMessage? replyMsg;
     if (replyMessage != null) {
       final replySender = replyMessage!.sender;
+
+      // Convert reply content type (fallback to text if missing)
+      final replyTypeStr = replyMessage!.type?.toLowerCase();
+      ContentType replyContentType = ContentType.text;
+      switch (replyTypeStr) {
+        case 'image':
+          replyContentType = ContentType.image;
+          break;
+        case 'video':
+          replyContentType = ContentType.video;
+          break;
+        case 'audio':
+        case 'voice_note':
+          replyContentType = ContentType.audio;
+          break;
+        case 'doc':
+        case 'file':
+          replyContentType = ContentType.file;
+          break;
+        case 'location':
+          replyContentType = ContentType.location;
+          break;
+        case 'link':
+          replyContentType = ContentType.link;
+          break;
+        case 'log':
+        case 'event':
+          replyContentType = ContentType.event;
+          break;
+      }
+
+      final replyMentions = replyMessage!.mentionTo
+          .map(
+            (m) => MessageSender(
+              id: m.id,
+              name: m.fullName,
+              avatar: null,
+            ),
+          )
+          .toList();
+
       replyMsg = ChatMessage(
         id: replyMessage!.id,
         chatId: chatId,
         content: replyMessage!.content,
-        contentType: ContentType.text,
+        contentType: replyContentType,
         sender: replySender != null
             ? MessageSender(
                 id: replySender.id,
@@ -262,6 +307,9 @@ extension MessageDtoMapper on MessageDto {
             : MessageSender(id: '', name: 'Unknown'),
         createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
         updatedAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
+        urls: replyMessage!.urls,
+        fileName: replyMessage!.fileName,
+        mentionTo: replyMentions,
       );
     }
 

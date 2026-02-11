@@ -5,38 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
-/// Performance trace types
-enum TraceType {
-  /// App startup
-  appStartup,
-  
-  /// Loading chat list
-  loadChats,
-  
-  /// Loading messages
-  loadMessages,
-  
-  /// Sending messages
-  sendMessage,
-  
-  /// Media uploads
-  uploadMedia,
-  
-  /// Loading user profile
-  loadUserProfile,
-  
-  /// Background data sync
-  backgroundSync,
-  
-  /// Page loading
-  pageLoad,
-  
-  /// Screen navigation
-  navigation,
-  
-  /// Custom trace
-  custom,
-}
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
+
+// Re-export so existing imports of TraceType from this file still work
+export 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart'
+    show TraceType;
 
 /// Names of traces
 const Map<TraceType, String> _traceNames = {
@@ -52,9 +25,12 @@ const Map<TraceType, String> _traceNames = {
   TraceType.custom: 'custom',
 };
 
-/// Performance monitoring management class
-@lazySingleton
-class PerformanceMonitor {
+/// Firebase-backed performance monitoring implementation.
+///
+/// Implements [IPerformanceMonitor] using Firebase Performance SDK.
+/// For environments without Firebase, use [NoOpPerformanceMonitor] instead.
+@LazySingleton(as: IPerformanceMonitor)
+class PerformanceMonitor implements IPerformanceMonitor {
   /// Logger
   final _logger = Logger();
   
@@ -74,6 +50,7 @@ class PerformanceMonitor {
   PerformanceMonitor(this._performance);
   
   /// Initialize performance monitor
+  @override
   Future<void> initialize() async {
     try {
       _logger.i('Initializing Performance Monitor');
@@ -93,6 +70,7 @@ class PerformanceMonitor {
   }
   
   /// Start tracing an activity
+  @override
   Future<void> startTrace(
     TraceType type, {
     String? customTraceName,
@@ -135,6 +113,7 @@ class PerformanceMonitor {
   }
   
   /// Stop a trace
+  @override
   Future<void> stopTrace(
     TraceType type, {
     String? customTraceName,
@@ -168,6 +147,7 @@ class PerformanceMonitor {
   }
   
   /// Add metric to active trace
+  @override
   Future<void> addTraceMetric(
     TraceType type, {
     String? customTraceName,
@@ -197,6 +177,7 @@ class PerformanceMonitor {
   }
   
   /// Add attribute to active trace
+  @override
   Future<void> addTraceAttribute(
     TraceType type, {
     String? customTraceName,
@@ -313,6 +294,7 @@ class PerformanceMonitor {
   }
   
   /// Record custom metric (outside of a trace)
+  @override
   void recordCustomMetric(String name, double value) {
     if (!_isPerformanceCollectionEnabled) return;
     
@@ -325,6 +307,7 @@ class PerformanceMonitor {
   }
   
   /// Record custom event
+  @override
   void recordEvent(String name, {Map<String, dynamic>? parameters}) {
     if (!_isPerformanceCollectionEnabled) return;
     

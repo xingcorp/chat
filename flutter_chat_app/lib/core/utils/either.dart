@@ -127,4 +127,36 @@ class Right<L, R> extends Either<L, R> {
 
   @override
   String toString() => 'Right($_value)';
+}
+
+// Utility extensions for Either
+extension EitherExtensions<L, R> on Either<L, R> {
+  /// Returns the right value or a default value
+  R getOrElse(R Function() defaultValue) {
+    return fold((_) => defaultValue(), (r) => r);
+  }
+
+  /// Transforms the left value
+  Either<TL, R> mapLeft<TL>(TL Function(L) f) {
+    return fold(
+      (l) => Left<TL, R>(f(l)),
+      (r) => Right<TL, R>(r),
+    );
+  }
+
+  /// Transforms the right value
+  Either<L, TR> mapRight<TR>(TR Function(R) f) {
+    return fold(
+      (l) => Left<L, TR>(l),
+      (r) => Right<L, TR>(f(r)),
+    );
+  }
+
+  /// Chains another Either-returning computation
+  Either<L, TR> flatMap<TR>(Either<L, TR> Function(R) f) {
+    return fold(
+      (l) => Left<L, TR>(l),
+      (r) => f(r),
+    );
+  }
 } 

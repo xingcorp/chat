@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:flutter_chat_app/core/localization/l10n_helper.dart';
+import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 
@@ -70,6 +71,12 @@ class MessageListTransformer {
 
     final result = <MessageUIState>[];
 
+    // Index messages by id for reply/forward lookup
+    final Map<String, ChatMessage> messageById = {
+      for (final m in messages)
+        if (m.id.isNotEmpty) m.id: m,
+    };
+
     for (int i = 0; i < messages.length; i++) {
       final current = messages[i];
 
@@ -111,7 +118,7 @@ class MessageListTransformer {
       );
 
       // ── Reply preview ──
-      final replyPreview = _buildReplyPreview(current);
+      final replyPreview = _buildReplyPreview(current, messageById);
 
       // ── Forward info ──
       final forwardInfo = current.forwardedFromMessageId != null
@@ -331,8 +338,15 @@ class MessageListTransformer {
   /// Build reply preview từ domain entity
   ///
   /// Khớp Angular: replyMessage { sender.fullname, type, message, urls, fileName }
-  static ReplyMessagePreview? _buildReplyPreview(ChatMessage message) {
-    final reply = message.replyMessage;
+  static ReplyMessagePreview? _buildReplyPreview(
+    ChatMessage message,
+    Map<String, ChatMessage> messageById,
+  ) {
+    // Prefer lookup by replyMessageId (frontend uses replyMessageId, nested replyMessage may be partial)
+    final reply = (message.replyMessageId != null
+            ? messageById[message.replyMessageId!]
+            : null) ??
+        message.replyMessage;
     if (reply == null) return null;
 
     // Preview text theo content type
@@ -377,7 +391,11 @@ class MessageListTransformer {
       case ContentType.event:
         return l10n.replyPreviewSystemEvent;
       case ContentType.text:
-        return reply.content;
+        final mentionNameById = <String, String>{
+          for (final m in reply.mentionTo)
+            if (m.id.isNotEmpty && m.name.trim().isNotEmpty) m.id: m.name.trim(),
+        };
+        return reply.content.formatChatMessage(mentionNameById: mentionNameById);
     }
   }
 

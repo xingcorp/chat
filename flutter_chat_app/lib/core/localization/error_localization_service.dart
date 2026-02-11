@@ -9,7 +9,7 @@
 /// **Architecture:** Clean Architecture + Localization + User Experience
 
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/localization/error_messages_vi.dart';
+import 'package:flutter_chat_app/core/localization/error_message_provider.dart';
 
 /// **ERROR LOCALIZATION SERVICE**
 class ErrorLocalizationService {
@@ -90,11 +90,11 @@ class ErrorLocalizationService {
     
     switch (_currentLocale) {
       case 'vi':
-        return ErrorMessagesVi.getRecoveryGuidance(category);
+        return ErrorMessages.provider.getRecoveryGuidance(category);
       case 'en':
         return _getEnglishRecoveryGuidance(category);
       default:
-        return ErrorMessagesVi.getRecoveryGuidance(category);
+        return ErrorMessages.provider.getRecoveryGuidance(category);
     }
   }
 

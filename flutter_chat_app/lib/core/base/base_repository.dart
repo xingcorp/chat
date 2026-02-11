@@ -4,7 +4,7 @@ import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:logger/logger.dart';
 
 /// **ENTERPRISE-GRADE BASE REPOSITORY**
@@ -21,7 +21,7 @@ import 'package:logger/logger.dart';
 abstract class BaseRepository {
   final NetworkInfo networkInfo;
   final Logger logger;
-  final PerformanceMonitor performanceMonitor;
+  final IPerformanceMonitor performanceMonitor;
 
   BaseRepository({
     required this.networkInfo,

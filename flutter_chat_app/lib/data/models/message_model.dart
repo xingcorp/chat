@@ -663,6 +663,112 @@ class MessageModel {
       ));
     }
 
+    // Parse reply message from metadata (khớp Angular: replyMessage/replyMessageId)
+    final String? replyMessageId = replyToMessageId;
+    ChatMessage? replyMessage;
+    final replyMeta = metadataMap['replyMessage'];
+    if (replyMeta is Map<String, dynamic>) {
+      // Extract reply sender
+      MessageSender replySender = MessageSender(id: '', name: 'Unknown');
+      final replySenderMeta = replyMeta['sender'];
+      if (replySenderMeta is Map<String, dynamic>) {
+        final replyFullName = replySenderMeta['fullname'] ??
+            replySenderMeta['fullName'] ??
+            replySenderMeta['name'];
+        final replyName = (replyFullName is String && replyFullName.trim().isNotEmpty)
+            ? replyFullName.trim()
+            : 'Unknown';
+
+        String? replyAvatar;
+        final replyImageUrls = replySenderMeta['imageUrls'];
+        if (replyImageUrls is List && replyImageUrls.isNotEmpty) {
+          final first = replyImageUrls.first;
+          if (first is String && first.trim().isNotEmpty) {
+            replyAvatar = first.trim();
+          }
+        }
+
+        final replySenderId = (replySenderMeta['id'] as String?) ?? '';
+        replySender = MessageSender(
+          id: replySenderId,
+          name: replyName,
+          avatar: replyAvatar,
+        );
+      }
+
+      // Extract reply content
+      final replyContent = (replyMeta['message'] ?? replyMeta['content']) as String?;
+
+      // Extract reply type/urls/fileName if backend provides (optional)
+      final replyTypeStr = (replyMeta['type'] as String?)?.toLowerCase();
+      ContentType replyContentType = ContentType.text;
+      switch (replyTypeStr) {
+        case 'image':
+          replyContentType = ContentType.image;
+          break;
+        case 'video':
+          replyContentType = ContentType.video;
+          break;
+        case 'audio':
+        case 'voice_note':
+          replyContentType = ContentType.audio;
+          break;
+        case 'doc':
+        case 'file':
+          replyContentType = ContentType.file;
+          break;
+        case 'location':
+          replyContentType = ContentType.location;
+          break;
+        case 'link':
+          replyContentType = ContentType.link;
+          break;
+        case 'log':
+        case 'event':
+          replyContentType = ContentType.event;
+          break;
+      }
+
+      final replyUrls = (replyMeta['urls'] as List?)?.cast<String>() ?? const <String>[];
+      final replyFileName = replyMeta['fileName'] as String?;
+
+      final replyMentions = <MessageSender>[];
+      final mentionToMeta = replyMeta['mentionTo'];
+      if (mentionToMeta is List) {
+        for (final m in mentionToMeta) {
+          if (m is Map<String, dynamic>) {
+            final id = (m['id'] as String?) ?? '';
+            final fullName = (m['fullname'] ?? m['fullName'] ?? m['name']) as String?;
+            final name = (fullName != null && fullName.trim().isNotEmpty)
+                ? fullName.trim()
+                : id;
+            if (id.isNotEmpty) {
+              replyMentions.add(MessageSender(id: id, name: name));
+            }
+          }
+        }
+      }
+
+      final replyId = (replyMeta['id'] as String?) ?? '';
+      final hasRenderableReply =
+          (replyContent?.trim().isNotEmpty ?? false) || replyUrls.isNotEmpty || (replyFileName?.trim().isNotEmpty ?? false);
+
+      if (replyId.isNotEmpty && hasRenderableReply) {
+        replyMessage = ChatMessage(
+          id: replyId,
+          chatId: chatId,
+          content: (replyContent?.trim().isNotEmpty ?? false) ? replyContent!.trim() : '',
+          contentType: replyContentType,
+          sender: replySender,
+          createdAt: createdAt,
+          updatedAt: createdAt,
+          urls: replyUrls,
+          fileName: replyFileName,
+          mentionTo: replyMentions,
+        );
+      }
+    }
+
     return ChatMessage(
       id: serverId ?? localId,
       chatId: chatId,
@@ -676,6 +782,8 @@ class MessageModel {
       urls: urls,
       fileName: fileName,
       forwardedFromMessageId: forwardedFromMessageId,
+      replyMessageId: replyMessageId,
+      replyMessage: replyMessage,
       mentionTo: mentionedUsers,
       readBy: readBy,
       deliveredTo: status == MessageStatus.delivered || status == MessageStatus.read

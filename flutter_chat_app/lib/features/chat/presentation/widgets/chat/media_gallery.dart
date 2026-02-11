@@ -4,6 +4,8 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
+final Map<String, double> _imageAspectRatioCache = {};
+
 /// Widget hiển thị media gallery cho message attachments
 ///
 /// Khớp với:
@@ -68,16 +70,14 @@ class MediaGallery extends StatelessWidget {
     const borderRadius = BorderRadius.all(Radius.circular(8.0));
 
     if (images.length == 1) {
-      // Single image: fit full bubble width and preserve aspect ratio
-      return _buildImageTile(
-        context,
-        images[0],
-        index: 0,
-        width: double.infinity,
-        height: null, // Let image determine height
-        maxHeight: null,
+      return _SmartSingleImageTile(
+        image: images[0],
         borderRadius: borderRadius,
-        fit: BoxFit.fitWidth,
+        onTap: () => _openFullscreenGallery(
+          context,
+          attachments: attachments.where((a) => a.type == 'image').toList(),
+          initialIndex: 0,
+        ),
       );
     } else if (images.length == 2) {
       // Two images: 2 columns
@@ -430,6 +430,128 @@ class MediaGallery extends StatelessWidget {
           initialIndex: initialIndex,
         ),
       ),
+    );
+  }
+}
+
+class _SmartSingleImageTile extends StatefulWidget {
+  final MessageAttachment image;
+  final BorderRadius borderRadius;
+  final VoidCallback onTap;
+
+  const _SmartSingleImageTile({
+    required this.image,
+    required this.borderRadius,
+    required this.onTap,
+  });
+
+  @override
+  State<_SmartSingleImageTile> createState() => _SmartSingleImageTileState();
+}
+
+class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
+  double? _aspectRatio;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveAspectRatio();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SmartSingleImageTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.image.url != widget.image.url) {
+      _aspectRatio = null;
+      _resolveAspectRatio();
+    }
+  }
+
+  void _resolveAspectRatio() {
+    final url = widget.image.url.trim();
+    if (url.isEmpty) return;
+
+    final cached = _imageAspectRatioCache[url];
+    if (cached != null) {
+      setState(() {
+        _aspectRatio = cached;
+      });
+      return;
+    }
+
+    final provider = CachedNetworkImageProvider(url);
+    final stream = provider.resolve(const ImageConfiguration());
+    late final ImageStreamListener listener;
+    listener = ImageStreamListener(
+      (info, _) {
+        final w = info.image.width.toDouble();
+        final h = info.image.height.toDouble();
+        if (w > 0 && h > 0) {
+          final ar = w / h;
+          _imageAspectRatioCache[url] = ar;
+          if (mounted) {
+            setState(() {
+              _aspectRatio = ar;
+            });
+          }
+        }
+        stream.removeListener(listener);
+      },
+      onError: (_, __) {
+        stream.removeListener(listener);
+      },
+    );
+    stream.addListener(listener);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.of(context).size.width;
+
+        final ar = _aspectRatio ?? 1.0;
+
+        final double maxWidth = ar < 0.85
+            ? availableWidth * 0.62
+            : (ar < 1.2 ? availableWidth * 0.85 : availableWidth);
+
+        final double maxHeight = ar < 0.85 ? 420 : 360;
+
+        return GestureDetector(
+          onTap: widget.onTap,
+          child: ClipRRect(
+            borderRadius: widget.borderRadius,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                maxHeight: maxHeight,
+              ),
+              child: AspectRatio(
+                aspectRatio: ar,
+                child: CachedNetworkImage(
+                  imageUrl: widget.image.url,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.contain,
+                  placeholder: (_, __) => Container(
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2.0),
+                    ),
+                  ),
+                  errorWidget: (_, __, ___) => Container(
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

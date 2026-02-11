@@ -9,7 +9,7 @@
 /// **Architecture:** Clean Architecture + SOLID principles + Either<Failure, T>
 
 import 'package:equatable/equatable.dart';
-import 'package:flutter_chat_app/core/localization/error_messages_vi.dart';
+import 'package:flutter_chat_app/core/localization/error_message_provider.dart';
 
 /// **Base Failure Class**
 ///
@@ -62,15 +62,15 @@ class ServerFailure extends Failure {
   String get userMessage {
     switch (code) {
       case '500':
-        return ErrorMessagesVi.getErrorMessage('server_error');
+        return ErrorMessages.getMessage('server_error');
       case '502':
-        return ErrorMessagesVi.getErrorMessage('server_unavailable');
+        return ErrorMessages.getMessage('server_unavailable');
       case '503':
-        return ErrorMessagesVi.getErrorMessage('server_maintenance');
+        return ErrorMessages.getMessage('server_maintenance');
       case 'overload':
-        return ErrorMessagesVi.getErrorMessage('server_overload');
+        return ErrorMessages.getMessage('server_overload');
       default:
-        return ErrorMessagesVi.getErrorMessage('server_error');
+        return ErrorMessages.getMessage('server_error');
     }
   }
 
@@ -94,17 +94,17 @@ class ConnectionFailure extends Failure {
   String get userMessage {
     switch (code) {
       case 'timeout':
-        return ErrorMessagesVi.getErrorMessage('connection_timeout');
+        return ErrorMessages.getMessage('connection_timeout');
       case 'no_internet':
-        return ErrorMessagesVi.getErrorMessage('no_internet');
+        return ErrorMessages.getMessage('no_internet');
       case 'dns_error':
-        return ErrorMessagesVi.getErrorMessage('connection_failed');
+        return ErrorMessages.getMessage('connection_failed');
       case 'lost':
-        return ErrorMessagesVi.getErrorMessage('connection_lost');
+        return ErrorMessages.getMessage('connection_lost');
       case 'weak':
-        return ErrorMessagesVi.getErrorMessage('weak_connection');
+        return ErrorMessages.getMessage('weak_connection');
       default:
-        return ErrorMessagesVi.getErrorMessage('connection_failed');
+        return ErrorMessages.getMessage('connection_failed');
     }
   }
 
@@ -125,7 +125,7 @@ class NetworkFailure extends Failure {
   });
 
   @override
-  String get userMessage => ErrorMessagesVi.getErrorMessage('connection_failed');
+  String get userMessage => ErrorMessages.getMessage('connection_failed');
 
   @override
   String get category => 'network';
@@ -149,19 +149,19 @@ class AuthenticationFailure extends Failure {
   String get userMessage {
     switch (code) {
       case 'invalid_credentials':
-        return ErrorMessagesVi.getErrorMessage('invalid_credentials');
+        return ErrorMessages.getMessage('invalid_credentials');
       case 'account_locked':
-        return ErrorMessagesVi.getErrorMessage('account_locked');
+        return ErrorMessages.getMessage('account_locked');
       case 'token_expired':
-        return ErrorMessagesVi.getErrorMessage('token_expired');
+        return ErrorMessages.getMessage('token_expired');
       case 'account_not_verified':
-        return ErrorMessagesVi.getErrorMessage('account_not_verified');
+        return ErrorMessages.getMessage('account_not_verified');
       case 'login_failed':
-        return ErrorMessagesVi.getErrorMessage('login_failed');
+        return ErrorMessages.getMessage('login_failed');
       case 'account_disabled':
-        return ErrorMessagesVi.getErrorMessage('account_disabled');
+        return ErrorMessages.getMessage('account_disabled');
       default:
-        return ErrorMessagesVi.getErrorMessage('login_failed');
+        return ErrorMessages.getMessage('login_failed');
     }
   }
 
