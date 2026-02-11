@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 
 /// Widget hiển thị reactions gom nhóm dưới message bubble
 ///
@@ -226,16 +227,16 @@ class ReactionDetailModal extends StatelessWidget {
                   return ListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(
+                    leading: AppAvatar.initials(
+                      name: name.isNotEmpty ? name : '?',
+                      size: AvatarSize.small,
                       backgroundColor: theme.colorScheme.primary,
-                      child: Text(
-                        name.isNotEmpty
-                            ? name.characters.first.toUpperCase()
-                            : '?',
-                        style: const TextStyle(color: Colors.white),
-                      ),
+                      foregroundColor: Colors.white,
                     ),
-                    title: Text(name),
+                    title: Text(
+                      name,
+                      style: theme.textTheme.bodyMedium,
+                    ),
                   );
                 },
               ),

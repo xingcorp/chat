@@ -9,6 +9,7 @@ import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 import 'package:get_it/get_it.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 
@@ -693,15 +694,22 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                         GestureDetector(
                           onLongPress: _startRecording,
                           onLongPressUp: _stopRecordingAndSend,
-                          child: CircleAvatar(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            radius: 24,
-                            child: Icon(
-                              _messageController.text.trim().isEmpty
-                                ? (_isRecording ? Icons.stop : Icons.mic)
-                                : Icons.send,
-                              color: Colors.white,
-                            ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              AppAvatar.initials(
+                                name: ' ',
+                                size: AvatarSize.large,
+                                backgroundColor: Theme.of(context).primaryColor,
+                                foregroundColor: Colors.transparent,
+                              ),
+                              Icon(
+                                _messageController.text.trim().isEmpty
+                                    ? (_isRecording ? Icons.stop : Icons.mic)
+                                    : Icons.send,
+                                color: Colors.white,
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -763,10 +771,17 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircleAvatar(
-            backgroundColor: color,
-            radius: 25,
-            child: Icon(icon, color: Colors.white),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              AppAvatar.initials(
+                name: ' ',
+                size: AvatarSize.large,
+                backgroundColor: color,
+                foregroundColor: Colors.transparent,
+              ),
+              Icon(icon, color: Colors.white),
+            ],
           ),
           const SizedBox(height: 4),
           Text(label, style: const TextStyle(fontSize: 12)),

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/core/localization/l10n_helper.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_image.dart';
 
 /// Widget hiển thị reply preview phía trên message bubble
 ///
@@ -173,23 +173,11 @@ class ReplyPreview extends StatelessWidget {
             replyMessage.previewUrl!.isNotEmpty) {
           return ClipRRect(
             borderRadius: BorderRadius.circular(4.0),
-            child: CachedNetworkImage(
+            child: AppImage.network(
               imageUrl: replyMessage.previewUrl!,
               width: size,
               height: size,
               fit: BoxFit.cover,
-              placeholder: (_, __) => Container(
-                width: size,
-                height: size,
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: Icon(Icons.image_outlined, size: 20, color: iconColor),
-              ),
-              errorWidget: (_, __, ___) => Container(
-                width: size,
-                height: size,
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: Icon(Icons.broken_image_outlined, size: 20, color: iconColor),
-              ),
             ),
           );
         }
@@ -208,22 +196,11 @@ class ReplyPreview extends StatelessWidget {
             borderRadius: BorderRadius.circular(4.0),
             child: Stack(
               children: [
-                CachedNetworkImage(
+                AppImage.network(
                   imageUrl: replyMessage.previewUrl!,
                   width: size,
                   height: size,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
-                    width: size,
-                    height: size,
-                    color: theme.colorScheme.surfaceContainerHighest,
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    width: size,
-                    height: size,
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: Icon(Icons.videocam_outlined, size: 20, color: iconColor),
-                  ),
                 ),
                 // Play icon overlay
                 Positioned.fill(

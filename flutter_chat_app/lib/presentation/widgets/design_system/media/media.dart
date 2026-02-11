@@ -7,9 +7,8 @@
 /// import 'package:flutter_chat_app/presentation/widgets/design_system/media/media.dart';
 /// ```
 
-library;
-
 export 'app_audio_player.dart';
+export 'app_avatar.dart';
 export 'app_emoji_picker.dart';
 export 'app_file_uploader.dart';
 export 'app_image_gallery.dart';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_image.dart';
 
 /// Lazy-init inline video player for chat messages.
 ///
@@ -118,12 +119,11 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             if (widget.thumbnailUrl != null && widget.thumbnailUrl!.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  widget.thumbnailUrl!,
+                child: AppImage.network(
+                  imageUrl: widget.thumbnailUrl!,
                   width: double.infinity,
                   height: 200,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),
               ),
             Center(

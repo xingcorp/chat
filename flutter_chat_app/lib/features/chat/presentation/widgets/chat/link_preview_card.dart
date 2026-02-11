@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:any_link_preview/any_link_preview.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_image.dart';
 
 /// In-memory cache for link metadata to avoid refetching on rebuild.
 final Map<String, Metadata?> _linkMetadataCache = {};
@@ -134,12 +135,11 @@ class _LinkPreviewCardState extends State<LinkPreviewCard> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (hasImage)
-              Image.network(
-                meta.image!,
+              AppImage.network(
+                imageUrl: meta.image!,
                 width: double.infinity,
                 height: 120,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
               ),
             Padding(
               padding: const EdgeInsets.all(10),
