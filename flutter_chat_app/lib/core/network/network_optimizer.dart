@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:injectable/injectable.dart';
@@ -33,7 +33,7 @@ import 'package:logger/logger.dart';
 @singleton
 class NetworkOptimizer {
   final ConnectivityService _connectivityService;
-  final PerformanceMonitor _performanceMonitor;
+  final IPerformanceMonitor _performanceMonitor;
   final Logger _logger = Logger();
 
   // HTTP client with connection pooling
@@ -65,7 +65,7 @@ class NetworkOptimizer {
   /// Constructor
   NetworkOptimizer({
     required ConnectivityService connectivityService,
-    required PerformanceMonitor performanceMonitor,
+    required IPerformanceMonitor performanceMonitor,
   }) : _connectivityService = connectivityService,
        _performanceMonitor = performanceMonitor;
 

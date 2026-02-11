@@ -6,7 +6,7 @@ import 'package:logger/logger.dart';
 
 import 'package:flutter_chat_app/core/monitoring/analytics_manager.dart';
 import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/services/chat_message_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
@@ -35,7 +35,7 @@ class ServiceInitializer {
 
     try {
       await GetIt.I.getAsync<CrashReporter>();
-      final performanceMonitor = await GetIt.I.getAsync<PerformanceMonitor>();
+      final performanceMonitor = await GetIt.I.getAsync<IPerformanceMonitor>();
       final analyticsManager = await GetIt.I.getAsync<AnalyticsManager>();
 
       await performanceMonitor.startTrace(TraceType.appStartup);

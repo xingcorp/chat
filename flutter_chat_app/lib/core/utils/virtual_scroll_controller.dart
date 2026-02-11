@@ -4,7 +4,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:get_it/get_it.dart';
 
@@ -24,7 +24,7 @@ class VirtualScrollController {
   final ScrollController scrollController;
   
   /// Performance monitoring
-  final PerformanceMonitor _performance = GetIt.I<PerformanceMonitor>();
+  final IPerformanceMonitor _performance = GetIt.I<IPerformanceMonitor>();
   
   /// All message IDs in the list, sorted from oldest to newest
   final List<String> _allMessageIds = [];

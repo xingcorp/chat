@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:get_it/get_it.dart';
 
 /// A wrapper around [RepaintBoundary] that conditionally applies the boundary
@@ -32,7 +32,7 @@ class OptimizedRepaintBoundary extends StatefulWidget {
 }
 
 class _OptimizedRepaintBoundaryState extends State<OptimizedRepaintBoundary> {
-  late final PerformanceMonitor? _performanceMonitor;
+  late final IPerformanceMonitor? _performanceMonitor;
   final GlobalKey _paintKey = GlobalKey();
   
   @override
@@ -41,7 +41,7 @@ class _OptimizedRepaintBoundaryState extends State<OptimizedRepaintBoundary> {
     // Get the performance monitor from the service locator if tracking is enabled
     if (widget.trackPerformance) {
       try {
-        _performanceMonitor = GetIt.I<PerformanceMonitor>();
+        _performanceMonitor = GetIt.I<IPerformanceMonitor>();
       } catch (e) {
         debugPrint('Failed to get PerformanceMonitor: $e');
         // Continue without performance monitoring

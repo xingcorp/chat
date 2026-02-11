@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/utils/device_performance_tier.dart';
 import 'package:get_it/get_it.dart';
 
@@ -51,7 +51,7 @@ class AdaptiveAnimationManager {
   AnimationQuality _quality = AnimationQuality.standard;
   
   /// Performance monitor instance
-  final PerformanceMonitor _performanceMonitor;
+  final IPerformanceMonitor _performanceMonitor;
   
   /// Current frame rate (for adaptive timing)
   double _currentFrameRate = 60.0;

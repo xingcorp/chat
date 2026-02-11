@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:injectable/injectable.dart';
@@ -80,7 +80,7 @@ class AnalyticsService {
   final CrashReporter _crashReporter;
   
   /// Performance monitor để tạo traces
-  final PerformanceMonitor _performanceMonitor;
+  final IPerformanceMonitor _performanceMonitor;
   
   /// User ID hiện tại
   String? _currentUserId;

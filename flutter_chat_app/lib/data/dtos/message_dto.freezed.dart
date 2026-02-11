@@ -959,6 +959,10 @@ mixin _$ReplyMessageDto {
   String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'message')
   String get content => throw _privateConstructorUsedError;
+  String? get type => throw _privateConstructorUsedError;
+  List<String> get urls => throw _privateConstructorUsedError;
+  String? get fileName => throw _privateConstructorUsedError;
+  List<MentionDto> get mentionTo => throw _privateConstructorUsedError;
   SenderDto? get sender => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -974,7 +978,13 @@ abstract class $ReplyMessageDtoCopyWith<$Res> {
       _$ReplyMessageDtoCopyWithImpl<$Res, ReplyMessageDto>;
   @useResult
   $Res call(
-      {String id, @JsonKey(name: 'message') String content, SenderDto? sender});
+      {String id,
+      @JsonKey(name: 'message') String content,
+      String? type,
+      List<String> urls,
+      String? fileName,
+      List<MentionDto> mentionTo,
+      SenderDto? sender});
 
   $SenderDtoCopyWith<$Res>? get sender;
 }
@@ -994,6 +1004,10 @@ class _$ReplyMessageDtoCopyWithImpl<$Res, $Val extends ReplyMessageDto>
   $Res call({
     Object? id = null,
     Object? content = null,
+    Object? type = freezed,
+    Object? urls = null,
+    Object? fileName = freezed,
+    Object? mentionTo = null,
     Object? sender = freezed,
   }) {
     return _then(_value.copyWith(
@@ -1005,6 +1019,22 @@ class _$ReplyMessageDtoCopyWithImpl<$Res, $Val extends ReplyMessageDto>
           ? _value.content
           : content // ignore: cast_nullable_to_non_nullable
               as String,
+      type: freezed == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String?,
+      urls: null == urls
+          ? _value.urls
+          : urls // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      fileName: freezed == fileName
+          ? _value.fileName
+          : fileName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      mentionTo: null == mentionTo
+          ? _value.mentionTo
+          : mentionTo // ignore: cast_nullable_to_non_nullable
+              as List<MentionDto>,
       sender: freezed == sender
           ? _value.sender
           : sender // ignore: cast_nullable_to_non_nullable
@@ -1034,7 +1064,13 @@ abstract class _$$ReplyMessageDtoImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id, @JsonKey(name: 'message') String content, SenderDto? sender});
+      {String id,
+      @JsonKey(name: 'message') String content,
+      String? type,
+      List<String> urls,
+      String? fileName,
+      List<MentionDto> mentionTo,
+      SenderDto? sender});
 
   @override
   $SenderDtoCopyWith<$Res>? get sender;
@@ -1053,6 +1089,10 @@ class __$$ReplyMessageDtoImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? content = null,
+    Object? type = freezed,
+    Object? urls = null,
+    Object? fileName = freezed,
+    Object? mentionTo = null,
     Object? sender = freezed,
   }) {
     return _then(_$ReplyMessageDtoImpl(
@@ -1064,6 +1104,22 @@ class __$$ReplyMessageDtoImplCopyWithImpl<$Res>
           ? _value.content
           : content // ignore: cast_nullable_to_non_nullable
               as String,
+      type: freezed == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String?,
+      urls: null == urls
+          ? _value._urls
+          : urls // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      fileName: freezed == fileName
+          ? _value.fileName
+          : fileName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      mentionTo: null == mentionTo
+          ? _value._mentionTo
+          : mentionTo // ignore: cast_nullable_to_non_nullable
+              as List<MentionDto>,
       sender: freezed == sender
           ? _value.sender
           : sender // ignore: cast_nullable_to_non_nullable
@@ -1078,7 +1134,13 @@ class _$ReplyMessageDtoImpl implements _ReplyMessageDto {
   const _$ReplyMessageDtoImpl(
       {required this.id,
       @JsonKey(name: 'message') required this.content,
-      this.sender});
+      this.type,
+      final List<String> urls = const [],
+      this.fileName,
+      final List<MentionDto> mentionTo = const [],
+      this.sender})
+      : _urls = urls,
+        _mentionTo = mentionTo;
 
   factory _$ReplyMessageDtoImpl.fromJson(Map<String, dynamic> json) =>
       _$$ReplyMessageDtoImplFromJson(json);
@@ -1089,11 +1151,33 @@ class _$ReplyMessageDtoImpl implements _ReplyMessageDto {
   @JsonKey(name: 'message')
   final String content;
   @override
+  final String? type;
+  final List<String> _urls;
+  @override
+  @JsonKey()
+  List<String> get urls {
+    if (_urls is EqualUnmodifiableListView) return _urls;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_urls);
+  }
+
+  @override
+  final String? fileName;
+  final List<MentionDto> _mentionTo;
+  @override
+  @JsonKey()
+  List<MentionDto> get mentionTo {
+    if (_mentionTo is EqualUnmodifiableListView) return _mentionTo;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_mentionTo);
+  }
+
+  @override
   final SenderDto? sender;
 
   @override
   String toString() {
-    return 'ReplyMessageDto(id: $id, content: $content, sender: $sender)';
+    return 'ReplyMessageDto(id: $id, content: $content, type: $type, urls: $urls, fileName: $fileName, mentionTo: $mentionTo, sender: $sender)';
   }
 
   @override
@@ -1103,12 +1187,26 @@ class _$ReplyMessageDtoImpl implements _ReplyMessageDto {
             other is _$ReplyMessageDtoImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.content, content) || other.content == content) &&
+            (identical(other.type, type) || other.type == type) &&
+            const DeepCollectionEquality().equals(other._urls, _urls) &&
+            (identical(other.fileName, fileName) ||
+                other.fileName == fileName) &&
+            const DeepCollectionEquality()
+                .equals(other._mentionTo, _mentionTo) &&
             (identical(other.sender, sender) || other.sender == sender));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, content, sender);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      content,
+      type,
+      const DeepCollectionEquality().hash(_urls),
+      fileName,
+      const DeepCollectionEquality().hash(_mentionTo),
+      sender);
 
   @JsonKey(ignore: true)
   @override
@@ -1129,6 +1227,10 @@ abstract class _ReplyMessageDto implements ReplyMessageDto {
   const factory _ReplyMessageDto(
       {required final String id,
       @JsonKey(name: 'message') required final String content,
+      final String? type,
+      final List<String> urls,
+      final String? fileName,
+      final List<MentionDto> mentionTo,
       final SenderDto? sender}) = _$ReplyMessageDtoImpl;
 
   factory _ReplyMessageDto.fromJson(Map<String, dynamic> json) =
@@ -1139,6 +1241,14 @@ abstract class _ReplyMessageDto implements ReplyMessageDto {
   @override
   @JsonKey(name: 'message')
   String get content;
+  @override
+  String? get type;
+  @override
+  List<String> get urls;
+  @override
+  String? get fileName;
+  @override
+  List<MentionDto> get mentionTo;
   @override
   SenderDto? get sender;
   @override

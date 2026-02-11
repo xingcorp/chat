@@ -8,7 +8,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/utils/system_resources.dart';
 
 /// Types of background tasks that can be executed
@@ -197,7 +197,7 @@ class IsolateManager {
   /// Cooldown period for scaling
   static const Duration _scalingCooldown = Duration(seconds: 30);
   
-  final PerformanceMonitor _performance;
+  final IPerformanceMonitor _performance;
   final SystemResourceMonitor _resourceMonitor;
   
   bool _isInitialized = false;

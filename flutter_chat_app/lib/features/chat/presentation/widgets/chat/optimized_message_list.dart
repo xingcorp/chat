@@ -8,7 +8,7 @@ import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_st
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 
 /// Widget for displaying a large list of messages with performance optimization
 class OptimizedMessageList extends StatefulWidget {
@@ -81,7 +81,7 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
   String? _scrollToMessageId;
   bool _isScrollControllerAttached = false;
   
-  final _performanceMonitor = GetIt.I<PerformanceMonitor>();
+  final _performanceMonitor = GetIt.I<IPerformanceMonitor>();
   final _analytics = GetIt.I<AnalyticsService>();
   
   @override

@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/services/device_capability_service.dart';
 import 'package:flutter_chat_app/core/utils/animation_config.dart';
 import 'package:flutter_chat_app/core/utils/device_performance_tier.dart';
@@ -64,7 +64,7 @@ class AnimationService {
   final DeviceCapabilityService? _deviceCapabilityService;
   
   /// Monitor de desempenho
-  final PerformanceMonitor? _performanceMonitor;
+  final IPerformanceMonitor? _performanceMonitor;
 
   /// Logger instance
   final Logger _logger = Logger();

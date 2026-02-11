@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
 import 'package:injectable/injectable.dart';
@@ -38,7 +38,7 @@ class MessageDeliveryTracker {
   final _logger = Logger();
   
   /// Performance monitor để tạo traces
-  final PerformanceMonitor _performanceMonitor;
+  final IPerformanceMonitor _performanceMonitor;
   
   /// Map lưu thông tin gửi nhận message
   final Map<String, MessageDeliveryInfo> _messageTraces = {};

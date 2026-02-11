@@ -6,7 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
 import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/base_state.dart';
 
 /// Lớp cơ sở trừu tượng cho tất cả các BLoC.
@@ -24,7 +24,7 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
   // Services
   late final CrashReporter _crashReporter;
   late final AnalyticsService _analyticsService;
-  late final PerformanceMonitor _performanceMonitor;
+  late final IPerformanceMonitor _performanceMonitor;
 
   // Khởi tạo BLoC với trạng thái ban đầu.
   BaseBloc(StateType initialState) : super(initialState) {
@@ -55,7 +55,7 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
     try {
       _crashReporter = _serviceLocator.get<CrashReporter>();
       _analyticsService = _serviceLocator.get<AnalyticsService>();
-      _performanceMonitor = _serviceLocator.get<PerformanceMonitor>();
+      _performanceMonitor = _serviceLocator.get<IPerformanceMonitor>();
     } catch (e) {
       _logger.w('Một số services không khả dụng: $e');
     }

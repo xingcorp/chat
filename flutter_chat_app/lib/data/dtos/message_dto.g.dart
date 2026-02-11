@@ -108,6 +108,15 @@ _$ReplyMessageDtoImpl _$$ReplyMessageDtoImplFromJson(
     _$ReplyMessageDtoImpl(
       id: json['id'] as String,
       content: json['message'] as String,
+      type: json['type'] as String?,
+      urls:
+          (json['urls'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+              const [],
+      fileName: json['fileName'] as String?,
+      mentionTo: (json['mentionTo'] as List<dynamic>?)
+              ?.map((e) => MentionDto.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       sender: json['sender'] == null
           ? null
           : SenderDto.fromJson(json['sender'] as Map<String, dynamic>),
@@ -118,6 +127,10 @@ Map<String, dynamic> _$$ReplyMessageDtoImplToJson(
     <String, dynamic>{
       'id': instance.id,
       'message': instance.content,
+      'type': instance.type,
+      'urls': instance.urls,
+      'fileName': instance.fileName,
+      'mentionTo': instance.mentionTo,
       'sender': instance.sender,
     };
 

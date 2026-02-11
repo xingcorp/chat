@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
@@ -24,7 +24,7 @@ import 'package:logger/logger.dart';
 /// **Architecture**: Clean Architecture + SOLID principles + Either error handling
 @singleton
 class MemoryOptimizer {
-  final PerformanceMonitor _performanceMonitor;
+  final IPerformanceMonitor _performanceMonitor;
   final Logger _logger = Logger();
 
   // Memory monitoring
@@ -65,7 +65,7 @@ class MemoryOptimizer {
 
   /// Constructor
   MemoryOptimizer({
-    required PerformanceMonitor performanceMonitor,
+    required IPerformanceMonitor performanceMonitor,
   }) : _performanceMonitor = performanceMonitor;
 
   /// **Initialize memory optimization - ENTERPRISE MONITORING**

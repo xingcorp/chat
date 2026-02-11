@@ -2,7 +2,7 @@
 ///
 /// Enterprise-grade failure types following clean architecture principles:
 /// - Specific failure types for different error categories
-/// - Vietnamese user-friendly messages
+/// - Localized user-friendly messages via ErrorMessages provider (i18n ready)
 /// - Technical English messages for developers
 /// - Proper error codes for debugging
 ///
@@ -31,7 +31,7 @@ abstract class Failure extends Equatable {
     this.details,
   });
 
-  /// User-friendly message in Vietnamese
+  /// User-friendly localized message
   String get userMessage;
 
   /// Error category for analytics
@@ -185,13 +185,13 @@ class PermissionFailure extends Failure {
   String get userMessage {
     switch (code) {
       case 'access_denied':
-        return 'Bạn không có quyền truy cập tính năng này.';
+        return ErrorMessages.getMessage('access_denied');
       case 'insufficient_permissions':
-        return 'Quyền hạn không đủ để thực hiện thao tác này.';
+        return ErrorMessages.getMessage('insufficient_permissions');
       case 'admin_required':
-        return 'Chỉ quản trị viên mới có thể thực hiện thao tác này.';
+        return ErrorMessages.getMessage('admin_required');
       default:
-        return 'Bạn không có quyền thực hiện thao tác này.';
+        return ErrorMessages.getMessage('permission_denied');
     }
   }
 
@@ -217,13 +217,13 @@ class CacheFailure extends Failure {
   String get userMessage {
     switch (code) {
       case 'storage_full':
-        return 'Bộ nhớ thiết bị đã đầy. Vui lòng giải phóng dung lượng.';
+        return ErrorMessages.getMessage('storage_full');
       case 'corruption':
-        return 'Dữ liệu bị lỗi. Ứng dụng sẽ tải lại dữ liệu.';
+        return ErrorMessages.getMessage('cache_corruption');
       case 'permission_denied':
-        return 'Không có quyền truy cập bộ nhớ thiết bị.';
+        return ErrorMessages.getMessage('storage_permission_denied');
       default:
-        return 'Có lỗi với dữ liệu cục bộ. Dữ liệu có thể không được cập nhật.';
+        return ErrorMessages.getMessage('cache_error');
     }
   }
 
@@ -254,15 +254,15 @@ class ValidationFailure extends Failure {
 
     switch (code) {
       case 'invalid_email':
-        return 'Email không hợp lệ. Vui lòng nhập đúng định dạng.';
+        return ErrorMessages.getMessage('invalid_email');
       case 'password_too_short':
-        return 'Mật khẩu phải có ít nhất 8 ký tự.';
+        return ErrorMessages.getMessage('password_too_short');
       case 'required_field':
-        return 'Vui lòng điền đầy đủ thông tin bắt buộc.';
+        return ErrorMessages.getMessage('required_field');
       case 'invalid_phone':
-        return 'Số điện thoại không hợp lệ.';
+        return ErrorMessages.getMessage('invalid_phone');
       default:
-        return 'Thông tin không hợp lệ. Vui lòng kiểm tra lại.';
+        return ErrorMessages.getMessage('validation_failed');
     }
   }
 
@@ -291,13 +291,13 @@ class TimeoutFailure extends Failure {
   String get userMessage {
     switch (code) {
       case 'request_timeout':
-        return 'Yêu cầu bị timeout. Vui lòng thử lại.';
+        return ErrorMessages.getMessage('request_timeout');
       case 'connection_timeout':
-        return 'Kết nối bị timeout. Vui lòng kiểm tra mạng.';
+        return ErrorMessages.getMessage('connection_timeout');
       case 'operation_timeout':
-        return 'Thao tác mất quá nhiều thời gian. Vui lòng thử lại.';
+        return ErrorMessages.getMessage('operation_timeout');
       default:
-        return 'Thao tác bị timeout. Vui lòng thử lại sau.';
+        return ErrorMessages.getMessage('timeout_default');
     }
   }
 
@@ -321,13 +321,13 @@ class RealtimeFailure extends Failure {
   String get userMessage {
     switch (code) {
       case 'connection_lost':
-        return 'Mất kết nối real-time. Đang thử kết nối lại...';
+        return ErrorMessages.getMessage('realtime_connection_lost');
       case 'reconnect_failed':
-        return 'Không thể kết nối lại. Vui lòng kiểm tra mạng.';
+        return ErrorMessages.getMessage('realtime_reconnect_failed');
       case 'message_failed':
-        return 'Không thể gửi tin nhắn. Vui lòng thử lại.';
+        return ErrorMessages.getMessage('realtime_message_failed');
       default:
-        return 'Có lỗi với kết nối real-time. Vui lòng thử lại.';
+        return ErrorMessages.getMessage('realtime_error');
     }
   }
 
@@ -351,15 +351,15 @@ class UploadFailure extends Failure {
   String get userMessage {
     switch (code) {
       case 'file_too_large':
-        return 'File quá lớn. Vui lòng chọn file nhỏ hơn.';
+        return ErrorMessages.getMessage('upload_file_too_large');
       case 'invalid_format':
-        return 'Định dạng file không được hỗ trợ.';
+        return ErrorMessages.getMessage('upload_invalid_format');
       case 'upload_failed':
-        return 'Upload thất bại. Vui lòng thử lại.';
+        return ErrorMessages.getMessage('upload_failed');
       case 'storage_full':
-        return 'Bộ nhớ server đã đầy. Vui lòng thử lại sau.';
+        return ErrorMessages.getMessage('upload_storage_full');
       default:
-        return 'Không thể upload file. Vui lòng thử lại.';
+        return ErrorMessages.getMessage('upload_error');
     }
   }
 
@@ -383,13 +383,13 @@ class DownloadFailure extends Failure {
   String get userMessage {
     switch (code) {
       case 'file_not_found':
-        return 'File không tồn tại hoặc đã bị xóa.';
+        return ErrorMessages.getMessage('download_file_not_found');
       case 'download_failed':
-        return 'Download thất bại. Vui lòng thử lại.';
+        return ErrorMessages.getMessage('download_failed');
       case 'storage_full':
-        return 'Bộ nhớ thiết bị đã đầy. Vui lòng giải phóng dung lượng.';
+        return ErrorMessages.getMessage('download_storage_full');
       default:
-        return 'Không thể download file. Vui lòng thử lại.';
+        return ErrorMessages.getMessage('download_error');
     }
   }
 
@@ -415,13 +415,13 @@ class ConflictFailure extends Failure {
   String get userMessage {
     switch (code) {
       case 'version_conflict':
-        return 'Dữ liệu đã được cập nhật bởi người khác. Vui lòng tải lại.';
+        return ErrorMessages.getMessage('version_conflict');
       case 'concurrent_modification':
-        return 'Có người khác đang chỉnh sửa. Vui lòng thử lại sau.';
+        return ErrorMessages.getMessage('concurrent_modification');
       case 'duplicate_entry':
-        return 'Dữ liệu đã tồn tại. Vui lòng kiểm tra lại.';
+        return ErrorMessages.getMessage('duplicate_entry');
       default:
-        return 'Có xung đột dữ liệu. Vui lòng tải lại và thử lại.';
+        return ErrorMessages.getMessage('conflict_error');
     }
   }
 
@@ -445,7 +445,7 @@ class UnknownFailure extends Failure {
 
   @override
   String get userMessage {
-    return 'Có lỗi không xác định xảy ra. Vui lòng thử lại sau.';
+    return ErrorMessages.getMessage('unknown_error');
   }
 
   @override
@@ -466,7 +466,7 @@ class UnexpectedFailure extends Failure {
 
   @override
   String get userMessage {
-    return 'Có lỗi không mong đợi xảy ra. Vui lòng khởi động lại ứng dụng.';
+    return ErrorMessages.getMessage('unexpected_error');
   }
 
   @override
