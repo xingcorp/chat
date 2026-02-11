@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
 import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
-import 'package:flutter_chat_app/core/network/auth/token_repository.dart' as token_module;
 import 'package:rxdart/rxdart.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
@@ -30,7 +29,10 @@ class SocketManager {
   
   /// Analytics service for tracking performance
   final AnalyticsService? _analytics;
-  
+
+  /// Token provider for authentication
+  final TokenProvider? _tokenProvider;
+
   /// Current connection state
   final BehaviorSubject<SocketConnectionState> _connectionStateController = 
       BehaviorSubject<SocketConnectionState>.seeded(SocketConnectionState.disconnected);
@@ -66,10 +68,12 @@ class SocketManager {
     Map<String, dynamic> options = const {},
     Logger? logger,
     AnalyticsService? analytics,
+    TokenProvider? tokenProvider,
   }) : _serverUrl = serverUrl,
        _options = options,
        _logger = logger ?? Logger(),
-       _analytics = analytics;
+       _analytics = analytics,
+       _tokenProvider = tokenProvider;
   
   /// Connect to the WebSocket server
   Future<void> connect() async {
@@ -87,9 +91,7 @@ class SocketManager {
     try {
       String authToken = '';
       try {
-        if (GetIt.I.isRegistered<token_module.TokenRepository>()) {
-          authToken = ((await GetIt.I<token_module.TokenRepository>().getAccessToken()) ?? '').trim();
-        }
+        authToken = ((await _tokenProvider?.getAccessToken()) ?? '').trim();
       } catch (_) {
         authToken = '';
       }

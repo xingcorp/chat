@@ -3,6 +3,7 @@ import 'package:flutter_chat_app/data/dtos/message_dto.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/foundation.dart';
 
 /// **Message Mapper**
 ///
@@ -67,6 +68,67 @@ class MessageMapper {
         )
         .toList();
     
+    // Convert nested reply message (if backend provides it)
+    ChatMessage? replyMessage;
+    if (dto.replyMessage != null) {
+      final r = dto.replyMessage!;
+
+      if (kDebugMode) {
+        debugPrint(
+          '[dto.replyMessage] parentId=${dto.id} replyId=${r.id} '
+          'type=${r.type} urls=${r.urls.length} fileName=${r.fileName}',
+        );
+      }
+
+      final replyTypeStr = (r.type ?? 'text').toLowerCase();
+      final replyContentType = _parseContentType(replyTypeStr);
+
+      final replySender = r.sender;
+      final replySenderEntity = replySender != null
+          ? MessageSender(
+              id: replySender.id,
+              name: replySender.fullName,
+              avatar: replySender.imageUrls.isNotEmpty
+                  ? replySender.imageUrls.first
+                  : null,
+            )
+          : MessageSender(id: '', name: 'Unknown');
+
+      final replyAttachments = r.urls.map((url) {
+        return MessageAttachment(
+          id: _uuid.v4(),
+          url: url,
+          type: _getAttachmentType(url),
+          name: r.fileName ?? _getFileNameFromUrl(url),
+          size: 0,
+        );
+      }).toList();
+
+      final replyMentions = r.mentionTo
+          .map(
+            (m) => MessageSender(
+              id: m.id,
+              name: m.fullName,
+              avatar: null,
+            ),
+          )
+          .toList();
+
+      replyMessage = ChatMessage(
+        id: r.id,
+        chatId: dto.chatId,
+        content: r.content,
+        contentType: replyContentType,
+        sender: replySenderEntity,
+        createdAt: createdAt,
+        updatedAt: createdAt,
+        urls: r.urls,
+        fileName: r.fileName,
+        attachments: replyAttachments,
+        mentionTo: replyMentions,
+      );
+    }
+
     return ChatMessage(
       id: dto.id,
       chatId: dto.chatId,
@@ -79,6 +141,8 @@ class MessageMapper {
       deliveredTo: const [], // Not provided by backend
       attachments: attachments,
       mentionTo: mentions,
+      replyMessageId: dto.replyMessageId,
+      replyMessage: replyMessage,
     );
   }
 

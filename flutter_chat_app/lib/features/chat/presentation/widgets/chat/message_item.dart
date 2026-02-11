@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/design_system.dart';
@@ -210,6 +211,17 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    if (kDebugMode) {
+      final replyId = widget.uiState.message?.replyMessageId;
+      if (replyId != null && replyId.isNotEmpty && widget.uiState.replyMessage == null) {
+        debugPrint(
+          '[MessageItem] reply missing uiStateId=${widget.uiState.id} '
+          'replyMessageId=$replyId contentType=${widget.uiState.contentType} '
+          'content="${widget.uiState.content.replaceAll("\n", "\\n")}"',
+        );
+      }
+    }
 
     final theme = Theme.of(context);
     final isCurrentUser = widget.uiState.isFromCurrentUser;
@@ -602,12 +614,13 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
 
     return Padding(
       padding: const EdgeInsets.only(right: 4.0),
-      child: AppHeroAvatar(
+      child: HeroAvatar(
         id: widget.uiState.senderId,
         imageUrl: avatarUrl,
         displayName: senderName,
-        size: AvatarSize.small,
+        size: 32,
         hasBorder: false,
+        enableHero: false,
       ),
     );
   }

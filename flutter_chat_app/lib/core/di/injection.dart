@@ -29,6 +29,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_chat_app/core/network/connectivity/connectivity_service.dart'
     as net_connectivity;
 import 'package:flutter_chat_app/core/error/retry_config.dart' as app_retry;
+import 'package:flutter_chat_app/core/network/auth/auth_delegate.dart';
+import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart'
     as token_module;
 import 'package:flutter_chat_app/core/config/firebase_config.dart';
@@ -36,6 +38,7 @@ import 'package:flutter_chat_app/core/network/graphql_client.dart' as core_graph
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/network/http/dio_http_client.dart';
 import 'package:flutter_chat_app/core/network/http/http_client_interface.dart';
+import 'package:flutter_chat_app/core/network/socket_manager.dart' as socket_mgr;
 import 'package:flutter_chat_app/core/network/realtime/connection_pool_manager.dart';
 import 'package:flutter_chat_app/core/network/realtime/enhanced_realtime_connection_service.dart';
 import 'package:flutter_chat_app/core/network/realtime/models/realtime_connection_config.dart'
@@ -147,12 +150,23 @@ Future<void> configureDependencies() async {
       () => core_graphql.GraphQLClientWrapperImpl(
         getIt<GraphQLClient>(),
         getIt<NetworkInfo>(),
-        getIt<token_module.TokenRepository>(),
+        getIt<TokenProvider>(),
+        getIt<AuthDelegate>(),
       ),
     );
 
     getIt.registerLazySingleton<core_graphql.GraphQLClientWrapper>(
       () => getIt<core_graphql.GraphQLClientWrapperImpl>(),
+    );
+
+    // Override generated SocketManager to inject TokenProvider
+    getIt.registerFactory<socket_mgr.SocketManager>(
+      () => socket_mgr.SocketManager(
+        serverUrl: getIt<String>(instanceName: 'socketUrl'),
+        options: getIt<Map<String, dynamic>>(),
+        logger: getIt<Logger>(),
+        tokenProvider: getIt<TokenProvider>(),
+      ),
     );
 
     if (!getIt.isRegistered<IHttpClient>()) {
@@ -233,6 +247,18 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   }
 
   await getIt<token_module.TokenRepository>().initialize();
+
+  // Register TokenProvider pointing to TokenRepository (same instance)
+  if (!getIt.isRegistered<TokenProvider>()) {
+    getIt.registerSingleton<TokenProvider>(
+      getIt<token_module.TokenRepository>(),
+    );
+  }
+
+  // Register AuthDelegate with no-op default
+  if (!getIt.isRegistered<AuthDelegate>()) {
+    getIt.registerSingleton<AuthDelegate>(const NoOpAuthDelegate());
+  }
 
   // Connectivity - required for network monitoring
   if (!getIt.isRegistered<Connectivity>()) {

@@ -180,10 +180,17 @@ class ChatQueries {
           replyMessage {
             id
             message
+            urls
+            type
+            fileName
             sender {
               id
               fullname
               imageUrls
+            }
+            mentionTo {
+              id
+              fullname
             }
           }
           forwardedFromMessageId

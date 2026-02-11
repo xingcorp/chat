@@ -14,25 +14,19 @@
   <component name="ChangeListManager">
     <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="refactor(core): abstract error handling and monitoring for package extraction&#10;&#10;- **Package Extraction Foundation**:&#10;    - Introduce `PACKAGE_EXTRACTION_PLAN.md` outlining the roadmap to decouple the chat module from the host app.&#10;    - Implement `ErrorMessageProvider` and `ErrorMessages` registry to abstract localized error strings, moving away from hardcoded Vietnamese messages.&#10;    - Introduce `IPerformanceMonitor` interface and `NoOpPerformanceMonitor` implementation to make Firebase Performance optional.&#10;- **Type Safety &amp; Utilities**:&#10;    - Migrate multiple use cases and repositories from `dartz` Either to a unified internal `Either` implementation.&#10;    - Enhance internal `Either` with utility methods: `getOrElse`, `mapLeft`, `mapRight`, and `flatMap`.&#10;- **Messaging Logic Enhancements**:&#10;    - **Reply Handling**: Update `MessageDto`, `MessageModel`, and `MessageListTransformer` to robustly support nested reply metadata (sender, content type, mentions, and media).&#10;    - **Mention Support**: Add logic to format chat messages with mentions in reply previews.&#10;    - **Media Gallery**: Implement `_SmartSingleImageTile` in `MediaGallery` to dynamically resolve and cache aspect ratios for single-image displays, improving layout stability.&#10;- **Refactoring**:&#10;    - Update `BaseRepository` to depend on `IPerformanceMonitor` interface.&#10;    - Refactor `Failures` and `ErrorLocalizationService` to utilize the new `ErrorMessageProvider` system.&#10;&#10;Files updated:&#10;- lib/core/localization/error_message_provider.dart: New abstraction for error localizations&#10;- lib/core/monitoring/i_performance_monitor.dart: New performance monitoring interface&#10;- lib/core/utils/either.dart: Added utility extensions and unified type usage&#10;- lib/data/models/message_model.dart &amp; lib/data/dtos/message_dto.dart: Enhanced reply metadata parsing&#10;- lib/features/chat/presentation/widgets/chat/media_gallery.dart: Added smart aspect ratio handling&#10;- lib/core/base/base_repository.dart: Refactored to use performance interface&#10;- lib/core/error/failures.dart: Integrated with dynamic error provider&#10;- claudedocs/PACKAGE_EXTRACTION_PLAN.md: Added architectural migration plan">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/cache/enhanced_cache_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/cache/enhanced_cache_manager.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/core/di/injection.config.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/injection.config.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/error/failures.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/error/failures.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/initialization/service_initializer.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/initialization/service_initializer.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/localization/error_message_provider.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/localization/error_message_provider.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/monitoring/analytics_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/monitoring/analytics_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/monitoring/message_delivery_tracker.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/monitoring/message_delivery_tracker.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/network/network_optimizer.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/network_optimizer.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/animation_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/animation_service.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/memory_optimizer.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/memory_optimizer.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/upgrade_services.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/upgrade_services.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/utils/adaptive_animations.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/utils/adaptive_animations.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/utils/isolate_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/utils/isolate_manager.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/utils/optimized_repaint_boundary.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/utils/optimized_repaint_boundary.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/utils/virtual_scroll_controller.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/utils/virtual_scroll_controller.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/dtos/message_dto.freezed.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/dtos/message_dto.freezed.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/data/dtos/message_dto.g.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/dtos/message_dto.g.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/di/injection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/injection.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/auth/token_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/auth/token_repository.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/graphql_client.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/graphql_client.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/network/socket_manager.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/network/socket_manager.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/graphql/chat_operations.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/graphql/chat_operations.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/mappers/message_mapper.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/mappers/message_mapper.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/repositories/message_repository_impl.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/repositories/message_repository_impl.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/models/message_list_transformer.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/models/message_list_transformer.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/screens/chat/optimized_chat_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/screens/chat/optimized_chat_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/message_item.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/message_item.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/optimized_message_list.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/optimized_message_list.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/base/base_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/base/base_bloc.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/common/hero_avatar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/common/hero_avatar.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -236,14 +230,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00031" summary="add rules">
-      <option name="closed" value="true" />
-      <created>1752477238609</created>
-      <option name="number" value="00031" />
-      <option name="presentableId" value="LOCAL-00031" />
-      <option name="project" value="LOCAL" />
-      <updated>1752477238609</updated>
     </task>
     <task id="LOCAL-00032" summary="fix multi">
       <option name="closed" value="true" />
@@ -629,7 +615,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770794052370</updated>
     </task>
-    <option name="localTasksCounter" value="80" />
+    <task id="LOCAL-00080" summary="refactor(core): abstract error handling and monitoring for package extraction&#10;&#10;- **Package Extraction Foundation**:&#10;    - Introduce `PACKAGE_EXTRACTION_PLAN.md` outlining the roadmap to decouple the chat module from the host app.&#10;    - Implement `ErrorMessageProvider` and `ErrorMessages` registry to abstract localized error strings, moving away from hardcoded Vietnamese messages.&#10;    - Introduce `IPerformanceMonitor` interface and `NoOpPerformanceMonitor` implementation to make Firebase Performance optional.&#10;- **Type Safety &amp; Utilities**:&#10;    - Migrate multiple use cases and repositories from `dartz` Either to a unified internal `Either` implementation.&#10;    - Enhance internal `Either` with utility methods: `getOrElse`, `mapLeft`, `mapRight`, and `flatMap`.&#10;- **Messaging Logic Enhancements**:&#10;    - **Reply Handling**: Update `MessageDto`, `MessageModel`, and `MessageListTransformer` to robustly support nested reply metadata (sender, content type, mentions, and media).&#10;    - **Mention Support**: Add logic to format chat messages with mentions in reply previews.&#10;    - **Media Gallery**: Implement `_SmartSingleImageTile` in `MediaGallery` to dynamically resolve and cache aspect ratios for single-image displays, improving layout stability.&#10;- **Refactoring**:&#10;    - Update `BaseRepository` to depend on `IPerformanceMonitor` interface.&#10;    - Refactor `Failures` and `ErrorLocalizationService` to utilize the new `ErrorMessageProvider` system.&#10;&#10;Files updated:&#10;- lib/core/localization/error_message_provider.dart: New abstraction for error localizations&#10;- lib/core/monitoring/i_performance_monitor.dart: New performance monitoring interface&#10;- lib/core/utils/either.dart: Added utility extensions and unified type usage&#10;- lib/data/models/message_model.dart &amp; lib/data/dtos/message_dto.dart: Enhanced reply metadata parsing&#10;- lib/features/chat/presentation/widgets/chat/media_gallery.dart: Added smart aspect ratio handling&#10;- lib/core/base/base_repository.dart: Refactored to use performance interface&#10;- lib/core/error/failures.dart: Integrated with dynamic error provider&#10;- claudedocs/PACKAGE_EXTRACTION_PLAN.md: Added architectural migration plan">
+      <option name="closed" value="true" />
+      <created>1770795560569</created>
+      <option name="number" value="00080" />
+      <option name="presentableId" value="LOCAL-00080" />
+      <option name="project" value="LOCAL" />
+      <updated>1770795560569</updated>
+    </task>
+    <option name="localTasksCounter" value="81" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

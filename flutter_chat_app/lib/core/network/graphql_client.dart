@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
-import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
+import 'package:flutter_chat_app/core/network/auth/auth_delegate.dart';
+import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:injectable/injectable.dart';
 
 /// Abstract interface for GraphQL client operations
 abstract class GraphQLClientWrapper {
@@ -38,18 +38,19 @@ abstract class GraphQLClientWrapper {
 }
 
 /// Implementation of GraphQL client
-@lazySingleton
 class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
   final GraphQLClient _client;
   final NetworkInfo _networkInfo;
-  final TokenRepository? _tokenRepository;
+  final TokenProvider? _tokenProvider;
+  final AuthDelegate? _authDelegate;
   final AppLogger _logger;
 
   /// Constructor
   GraphQLClientWrapperImpl(
     this._client,
     this._networkInfo, [
-    this._tokenRepository,
+    this._tokenProvider,
+    this._authDelegate,
     AppLogger? logger,
   ]) : _logger = logger ?? AppLogger();
 
@@ -61,13 +62,15 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
   static Future<GraphQLClient> createClient({
     String? token,
     Future<String?> Function()? accessTokenProvider,
+    String? graphqlUrl,
+    String? graphqlWsUrl,
     ValueNotifier<GraphQLClient>? clientNotifier,
   }) async {
     final resolvedToken = accessTokenProvider != null
         ? await accessTokenProvider()
         : token;
 
-    final graphQlApiUrl = (dotenv.env['GRAPHQL_API_URL'] ?? '').trim();
+    final graphQlApiUrl = graphqlUrl ?? (dotenv.env['GRAPHQL_API_URL'] ?? '').trim();
     if (graphQlApiUrl.isEmpty) {
       throw StateError('Missing required environment key: GRAPHQL_API_URL');
     }
@@ -87,13 +90,13 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     );
 
     // Create a WebSocket link for subscriptions
-    final graphQlWsUrl = (dotenv.env['GRAPHQL_WS_URL'] ?? '').trim();
-    if (graphQlWsUrl.isEmpty) {
+    final graphQlWsUrlResolved = graphqlWsUrl ?? (dotenv.env['GRAPHQL_WS_URL'] ?? '').trim();
+    if (graphQlWsUrlResolved.isEmpty) {
       throw StateError('Missing required environment key: GRAPHQL_WS_URL');
     }
 
     final websocketLink = WebSocketLink(
-      graphQlWsUrl,
+      graphQlWsUrlResolved,
       config: SocketClientConfig(
         initialPayload: () async {
           final currentToken = accessTokenProvider != null
@@ -238,14 +241,17 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
         _handleGraphQLException(result.exception!);
       } on app_exceptions.AuthException {
         if (didRetry) {
+          _authDelegate?.onAuthExpired();
           rethrow;
         }
 
-        final refreshedToken = await _tokenRepository?.refreshAccessToken();
+        final refreshedToken = await _tokenProvider?.refreshAccessToken();
         if (refreshedToken != null && refreshedToken.isNotEmpty) {
+          _authDelegate?.onTokenRefreshed(refreshedToken);
           return _queryWithRetry(options, didRetry: true);
         }
 
+        _authDelegate?.onAuthExpired();
         rethrow;
       }
     }
@@ -341,14 +347,17 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
         _handleGraphQLException(result.exception!);
       } on app_exceptions.AuthException {
         if (didRetry) {
+          _authDelegate?.onAuthExpired();
           rethrow;
         }
 
-        final refreshedToken = await _tokenRepository?.refreshAccessToken();
+        final refreshedToken = await _tokenProvider?.refreshAccessToken();
         if (refreshedToken != null && refreshedToken.isNotEmpty) {
+          _authDelegate?.onTokenRefreshed(refreshedToken);
           return _mutateWithRetry(options, didRetry: true);
         }
 
+        _authDelegate?.onAuthExpired();
         rethrow;
       }
     }

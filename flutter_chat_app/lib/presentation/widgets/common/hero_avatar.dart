@@ -26,6 +26,9 @@ class HeroAvatar extends StatelessWidget {
   /// Độ dày viền
   final double borderWidth;
 
+  /// Cờ cho phép sử dụng Hero animation
+  final bool enableHero;
+
   /// Constructor
   const HeroAvatar({
     Key? key,
@@ -36,6 +39,7 @@ class HeroAvatar extends StatelessWidget {
     this.hasBorder = true,
     this.borderColor,
     this.borderWidth = 2.0,
+    this.enableHero = true,
   }) : super(key: key);
 
   @override
@@ -53,18 +57,10 @@ class HeroAvatar extends StatelessWidget {
       hasBorder: hasBorder,
       borderColor: borderColor,
       borderWidth: borderWidth,
+      enableHero: enableHero,
     );
 
-    // Kiểm tra nếu thiết bị có hỗ trợ Hero animation không
-    if (animationService.config.useHeroAnimations) {
-      return Hero(
-        tag: heroTag,
-        child: avatarWidget,
-      );
-    } else {
-      // Trả về widget thông thường nếu không dùng Hero
-      return avatarWidget;
-    }
+    return avatarWidget;
   }
 
   AvatarSize _mapSizeToAvatarSize(double size) {
@@ -81,6 +77,7 @@ class AppHeroAvatar extends StatelessWidget {
   final String? displayName;
   final AvatarSize size;
   final bool hasBorder;
+  final bool enableHero;
   final Color? borderColor;
   final double borderWidth;
 
@@ -93,6 +90,7 @@ class AppHeroAvatar extends StatelessWidget {
     this.hasBorder = false,
     this.borderColor,
     this.borderWidth = 2.0,
+    this.enableHero = true,
   });
 
   @override
@@ -115,7 +113,7 @@ class AppHeroAvatar extends StatelessWidget {
             borderWidth: hasBorder ? borderWidth : null,
           );
 
-    if (animationService.config.useHeroAnimations) {
+    if (enableHero && animationService.config.useHeroAnimations) {
       return Hero(
         tag: heroTag,
         child: avatar,

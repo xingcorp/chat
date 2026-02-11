@@ -3,6 +3,7 @@ import 'package:flutter_chat_app/core/localization/l10n_helper.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
+import 'package:flutter/foundation.dart';
 
 /// Transform danh sách domain entity → danh sách UI state
 ///
@@ -343,11 +344,41 @@ class MessageListTransformer {
     Map<String, ChatMessage> messageById,
   ) {
     // Prefer lookup by replyMessageId (frontend uses replyMessageId, nested replyMessage may be partial)
-    final reply = (message.replyMessageId != null
-            ? messageById[message.replyMessageId!]
-            : null) ??
-        message.replyMessage;
-    if (reply == null) return null;
+    final lookupId = message.replyMessageId;
+    final lookedUp = (lookupId != null) ? messageById[lookupId] : null;
+    final reply = lookedUp ?? message.replyMessage;
+    if (reply == null) {
+      if (kDebugMode && lookupId != null && lookupId.isNotEmpty) {
+        debugPrint(
+          '[replyPreview][MISS] msgId=${message.id} replyMessageId=$lookupId '
+          'lookupHit=false nestedReply=false -> returning placeholder',
+        );
+      }
+
+      if (lookupId == null || lookupId.isEmpty) return null;
+
+      // Placeholder to make the missing-data case visible in UI
+      final l10n = L10nHelper.current;
+      return ReplyMessagePreview(
+        id: lookupId,
+        senderName: 'Unknown',
+        senderAvatar: null,
+        contentType: ContentType.text,
+        previewText: l10n.noMessages,
+        previewUrl: null,
+      );
+    }
+
+    if (kDebugMode) {
+      final urlsCount = reply.urls.length;
+      final attachCount = reply.attachments.length;
+      debugPrint(
+        '[replyPreview] msgId=${message.id} replyMessageId=$lookupId '
+        'lookupHit=${lookedUp != null} replyId=${reply.id} '
+        'replyType=${reply.contentType} content="${reply.content.replaceAll("\n", "\\n")}" '
+        'urls=$urlsCount attachments=$attachCount fileName=${reply.fileName}',
+      );
+    }
 
     // Preview text theo content type
     final previewText = _getReplyPreviewText(reply);
@@ -358,6 +389,13 @@ class MessageListTransformer {
         (reply.contentType == ContentType.image ||
             reply.contentType == ContentType.video)) {
       previewUrl = reply.urls.first;
+    }
+
+    if (kDebugMode) {
+      debugPrint(
+        '[replyPreview] msgId=${message.id} replyId=${reply.id} '
+        'computedPreviewUrl=${previewUrl ?? ''} previewText="$previewText"',
+      );
     }
 
     return ReplyMessagePreview(

@@ -2,12 +2,15 @@ import 'package:flutter_chat_app/core/base/base_repository.dart';
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
 import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
+import 'package:flutter_chat_app/core/constants/app_constants.dart';
+import 'package:flutter_chat_app/core/error/exceptions.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/exceptions/exceptions.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_remote_datasource.dart';
-import 'package:flutter_chat_app/data/dtos/message_dto.dart'; // Added for extension methods
+import 'package:flutter_chat_app/data/dtos/message_dto.dart';
 import 'package:flutter_chat_app/data/mappers/message_mapper.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
@@ -70,7 +73,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         );
         
         if (cachedMessage != null) {
-          logger.t('Retrieved message from cache: $messageId');
+          logger.d('Retrieved message from cache: $messageId');
           return cachedMessage.toDomain();
         }
 
@@ -106,12 +109,15 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   /// **Strategy**: Cache → Local → Remote with background sync
   @override
   Future<Either<Failure, List<ChatMessage>>> getMessages(String chatId, {int limit = 20, String? cursor}) async {
-    final cacheKey = 'chat_messages_${chatId}_${limit}_${cursor ?? "initial"}';
+    // Cache key version bump: replyMessage selection set was expanded (type/urls/fileName/mentionTo).
+    // Prevent serving stale cached payloads which don't include these fields.
+    const cacheVersion = 'v2';
+    final cacheKey = 'chat_messages_${chatId}_${limit}_${cursor ?? "initial"}_$cacheVersion';
     final forceRefresh = _cacheSyncStrategy.shouldRefreshChatMessages(chatId);
 
     return executeOfflineFirst<List<ChatMessage>>(
       remoteDataSource: () async {
-        logger.t('Fetching messages from server for chat $chatId');
+        logger.d('Fetching messages from server for chat $chatId');
         
         // Get DTOs from remote datasource
         final response = await _remoteDataSource.getMessageList(
@@ -152,7 +158,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
           );
           
           if (cachedMessages != null && cachedMessages.isNotEmpty) {
-            logger.t('Retrieved messages from cache for chat $chatId');
+            logger.d('Retrieved messages from cache for chat $chatId');
             return cachedMessages.map((model) => model.toDomain()).toList();
           }
         }
@@ -167,7 +173,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         // This avoids the "first open shows empty" issue caused by background
         // remote sync in executeOfflineFirst.
         if (paginatedMessages.isEmpty && await networkInfo.isConnected) {
-          logger.t('Local messages empty for chat $chatId; fetching from server');
+          logger.d('Local messages empty for chat $chatId; fetching from server');
 
           final response = await _remoteDataSource.getMessageList(
             conversationId: chatId,
@@ -225,7 +231,14 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
       type: messageType,
       createdAt: DateTime.now(),
       status: MessageStatus.sending,
+      replyToMessageId: replyMessageId,
     );
+
+    if (kDebugMode) {
+      logger.i('[sendMessage][local] localId=$localId chatId=$chatId senderId=$senderId '
+          'type=${messageType.name} replyMessageId=$replyMessageId '
+          'attachments=${attachmentIds.length} content="${content.replaceAll("\n", "\\n")}"');
+    }
     
     // Save to local storage immediately for instant UI feedback
     await _localDataSource.saveMessage(localMessage);
@@ -237,10 +250,16 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     return executeOnlineFirst<ChatMessage>(
       remoteDataSource: () async {
         // Send to server using DTO
+        if (kDebugMode) {
+          logger.i('[sendMessage][remote] chatId=$chatId type=${messageType.name.toUpperCase()} '
+              'replyMessageId=$replyMessageId urls=${attachmentIds.length}');
+        }
         final dto = await _remoteDataSource.sendMessage(
           conversationId: chatId,
           type: messageType.name.toUpperCase(),
           message: content,
+          urls: attachmentIds,
+          replyMessageId: replyMessageId,
           createdAt: DateTime.now().millisecondsSinceEpoch,
         );
         
@@ -617,7 +636,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         _mediaCacheManager.prefetchThumbnails(videoUrls);
       }
 
-      logger.t('Prefetched ${imageUrls.length} image and ${videoUrls.length} video thumbnails');
+      logger.d('Prefetched ${imageUrls.length} image and ${videoUrls.length} video thumbnails');
     } catch (e) {
       logger.w('Error prefetching thumbnails: $e');
     }

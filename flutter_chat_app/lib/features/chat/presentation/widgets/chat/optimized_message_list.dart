@@ -5,6 +5,7 @@ import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_list_transformer.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:visibility_detector/visibility_detector.dart';
@@ -230,6 +231,12 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
     if (widget.messages.isEmpty) {
       return const Center(child: Text('Không có tin nhắn'));
     }
+
+    final uiStates = MessageListTransformer.transform(
+      messages: widget.messages,
+      currentUserId: widget.currentUserId,
+      isGroupChat: widget.isGroupChat,
+    );
     
     // Performance trace
     _performanceMonitor.startTrace(TraceType.custom,
@@ -238,7 +245,6 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
     
     Widget messageList = ListView.builder(
       // Key performance optimizations here:
-      itemExtent: widget.estimatedItemHeight, // Fixed item height for better performance
       cacheExtent: MediaQuery.of(context).size.height * 2, // Increase cache for smoother scrolling
       physics: const AlwaysScrollableScrollPhysics(),
       reverse: true,
@@ -263,6 +269,7 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
         }
         
         final message = widget.messages[messageIndex];
+        final uiState = uiStates[messageIndex];
         
         // Wrap each message in RepaintBoundary for render optimization
         return RepaintBoundary(
@@ -284,9 +291,23 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
                   }
                 },
                 child: MessageItem(
-                  uiState: MessageUIState.fromMessage(message),
+                  uiState: uiState,
                   onTap: widget.onMessageTap != null ? () => widget.onMessageTap!(message) : null,
                   onLongPress: widget.onMessageLongPress != null ? () => widget.onMessageLongPress!(message) : null,
+                  onReplyPreviewTap: uiState.replyMessage != null
+                      ? () {
+                          final targetIndex = widget.messages.indexWhere(
+                            (m) =>
+                                m.id == uiState.replyMessage!.originalMessageId,
+                          );
+                          if (targetIndex < 0) return;
+                          _scrollController.scrollToIndex(
+                            targetIndex,
+                            preferPosition: AutoScrollPosition.middle,
+                            duration: const Duration(milliseconds: 250),
+                          );
+                        }
+                      : null,
                 ),
               ),
             ),

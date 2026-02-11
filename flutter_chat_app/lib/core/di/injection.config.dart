@@ -102,7 +102,9 @@ import '../monitoring/i_performance_monitor.dart' as _i610;
 import '../monitoring/message_delivery_tracker.dart' as _i475;
 import '../monitoring/performance_monitor.dart' as _i794;
 import '../network/api_client.dart' as _i557;
+import '../network/auth/auth_delegate.dart' as _i589;
 import '../network/auth/token_manager.dart' as _i694;
+import '../network/auth/token_provider.dart' as _i211;
 import '../network/auth/token_repository.dart' as _i328;
 import '../network/cache/api_cache_manager.dart' as _i931;
 import '../network/cache/network_response_cache.dart' as _i903;
@@ -191,12 +193,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i695.MediaProcessingService());
     gh.lazySingleton<_i982.MediaLocalDataSourceImpl>(
         () => _i982.MediaLocalDataSourceImpl());
-    gh.factory<_i498.SocketManager>(() => _i498.SocketManager(
-          serverUrl: gh<String>(instanceName: 'socketUrl'),
-          options: gh<Map<String, dynamic>>(),
-          logger: gh<_i974.Logger>(),
-          analytics: gh<_i343.AnalyticsService>(),
-        ));
     gh.lazySingleton<_i610.IPerformanceMonitor>(
         () => _i794.PerformanceMonitor(gh<_i346.FirebasePerformance>()));
     gh.singleton<_i903.NetworkResponseCache>(
@@ -233,13 +229,6 @@ extension GetItInjectableX on _i174.GetIt {
         performanceMonitor: gh<_i610.IPerformanceMonitor>()));
     gh.singleton<_i706.RealtimeMessagingService>(
         () => _i706.RealtimeMessagingService(gh<_i932.NetworkInfo>()));
-    gh.lazySingleton<_i788.GraphQLClientWrapperImpl>(
-        () => _i788.GraphQLClientWrapperImpl(
-              gh<_i128.GraphQLClient>(),
-              gh<_i932.NetworkInfo>(),
-              gh<_i328.TokenRepository>(),
-              gh<_i221.AppLogger>(),
-            ));
     gh.lazySingleton<_i572.IMessageRepository>(
         () => _i564.MessageRepositoryImpl(
               localDataSource: gh<_i75.MessageLocalDataSource>(),
@@ -267,6 +256,13 @@ extension GetItInjectableX on _i174.GetIt {
               gh<int>(instanceName: 'connectionPoolCleanupInterval'),
           healthCheckInterval:
               gh<int>(instanceName: 'connectionPoolHealthCheckInterval'),
+        ));
+    gh.factory<_i498.SocketManager>(() => _i498.SocketManager(
+          serverUrl: gh<String>(instanceName: 'socketUrl'),
+          options: gh<Map<String, dynamic>>(),
+          logger: gh<_i974.Logger>(),
+          analytics: gh<_i343.AnalyticsService>(),
+          tokenProvider: gh<_i211.TokenProvider>(),
         ));
     gh.lazySingleton<_i404.UserRemoteDataSourceImpl>(
         () => _i404.UserRemoteDataSourceImpl(gh<_i788.GraphQLClientWrapper>()));
@@ -321,6 +317,14 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i788.GraphQLClientWrapper>(),
               gh<_i706.RealtimeMessagingService>(),
               gh<_i976.SocketIOEventMapper>(),
+            ));
+    gh.lazySingleton<_i788.GraphQLClientWrapperImpl>(
+        () => _i788.GraphQLClientWrapperImpl(
+              gh<_i128.GraphQLClient>(),
+              gh<_i932.NetworkInfo>(),
+              gh<_i211.TokenProvider>(),
+              gh<_i589.AuthDelegate>(),
+              gh<_i221.AppLogger>(),
             ));
     gh.singleton<_i777.WebSocketClient>(() => _i777.WebSocketClient(
           serverUrl: gh<String>(instanceName: 'socketUrl'),

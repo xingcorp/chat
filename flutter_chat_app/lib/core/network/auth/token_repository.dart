@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_chat_app/core/constants/storage_keys.dart';
+import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -114,12 +115,15 @@ class SharedPreferencesTokenStorage implements TokenStorage {
   }
 }
 
-abstract class TokenRepository {
+abstract class TokenRepository implements TokenProvider {
+  @override
   Stream<AuthTokens?> get tokensStream;
 
   Future<void> initialize();
 
+  @override
   Future<String?> getAccessToken();
+  @override
   Future<String?> getRefreshToken();
   Future<AuthTokens?> getTokens();
 
@@ -127,6 +131,7 @@ abstract class TokenRepository {
   Future<void> saveRefreshToken(String refreshToken);
   Future<void> saveTokens(AuthTokens tokens);
 
+  @override
   Future<String?> refreshAccessToken();
 
   Future<void> clear();

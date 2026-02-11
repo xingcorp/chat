@@ -7,8 +7,10 @@ import 'package:flutter_chat_app/core/utils/isolate_manager.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_list_transformer.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
+import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 import 'package:get_it/get_it.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
@@ -345,12 +347,27 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
     
     final chatState = context.read<ChatBloc>().state;
     final isGroupChat = chatState.whenOrNull(
-      messagesLoaded: (chats, chatId, messages) {
-        return chats?.firstWhere((c) => c.id == widget.chatId, orElse: () => Chat(id: widget.chatId)).type == ChatType.group;
-      },
-    ) ?? false;
+          messagesLoaded: (chats, chatId, messages) {
+            return chats
+                    ?.firstWhere(
+                      (c) => c.id == widget.chatId,
+                      orElse: () => Chat(id: widget.chatId),
+                    )
+                    .type ==
+                ChatType.group;
+          },
+        ) ??
+        false;
+
+    final uiStates = MessageListTransformer.transform(
+      messages: messages,
+      currentUserId: currentUserId,
+      isGroupChat: isGroupChat,
+    );
     
-    final widgets = messages.map((message) {
+    final widgets = List<Widget>.generate(messages.length, (index) {
+      final message = messages[index];
+      final uiState = uiStates[index];
       // Use cached widget if available
       if (_cachedMessageItems.containsKey(message.id) && message.status != MessageStatus.sending) {
         return _cachedMessageItems[message.id]!;
@@ -359,9 +376,22 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
       // Build and cache new message widget
       final messageWidget = MessageItem(
         key: ValueKey('message_${message.id}'),
-        uiState: MessageUIState.fromMessage(message),
+        uiState: uiState,
         onTap: () => _handleMessageTap(message),
         onLongPress: () => _handleMessageLongPress(message),
+        onReplyPreviewTap: uiState.replyMessage != null
+            ? () {
+                final targetIndex = messages.indexWhere(
+                  (m) => m.id == uiState.replyMessage!.originalMessageId,
+                );
+                if (targetIndex < 0) return;
+                _scrollController.scrollToIndex(
+                  targetIndex,
+                  preferPosition: AutoScrollPosition.middle,
+                  duration: const Duration(milliseconds: 250),
+                );
+              }
+            : null,
       );
       
       // Only cache non-sending messages (since they might update)
@@ -370,7 +400,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
       }
       
       return messageWidget;
-    }).toList();
+    });
     
     // Cache for future use
     _previousMessages = List.from(messages);
@@ -408,6 +438,9 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
   
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthBloc>().state;
+    final currentUserId = authState is AuthAuthenticated ? authState.user.id : '';
+
     return Scaffold(
       appBar: AppBar(
         title: BlocBuilder<ChatBloc, ChatState>(
@@ -569,6 +602,26 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                   );
                 }
                 
+                final chatState = context.read<ChatBloc>().state;
+                final isGroupChat = chatState.whenOrNull(
+                      messagesLoaded: (chats, chatId, messages) {
+                        return chats
+                                ?.firstWhere(
+                                  (c) => c.id == widget.chatId,
+                                  orElse: () => Chat(id: widget.chatId),
+                                )
+                                .type ==
+                            ChatType.group;
+                      },
+                    ) ??
+                    false;
+
+                final uiStates = MessageListTransformer.transform(
+                  messages: messages,
+                  currentUserId: currentUserId,
+                  isGroupChat: isGroupChat,
+                );
+
                 // Use ListView.builder with key-based items and AutoScrollController
                 return ListView.builder(
                   controller: _scrollController,
@@ -589,17 +642,32 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                     }
                     
                     final message = messages[messageIndex];
-                    final showSenderInfo = _shouldShowSenderInfo(messages, messageIndex);
-                    final isLastInGroup = _isLastInMessageGroup(messages, messageIndex);
+                    final uiState = uiStates[messageIndex];
                     
                     return AutoScrollTag(
                       key: ValueKey('message-${message.id}'),
                       controller: _scrollController,
                       index: messageIndex,
                       child: MessageItem(
-                        uiState: MessageUIState.fromMessage(message),
+                        uiState: uiState,
                         onTap: () => _handleMessageTap(message),
                         onLongPress: () => _handleMessageLongPress(message),
+                        onReplyPreviewTap: uiState.replyMessage != null
+                            ? () {
+                                final targetIndex = messages.indexWhere(
+                                  (m) =>
+                                      m.id ==
+                                      uiState.replyMessage!.originalMessageId,
+                                );
+                                if (targetIndex < 0) return;
+                                _scrollController.scrollToIndex(
+                                  targetIndex,
+                                  preferPosition: AutoScrollPosition.middle,
+                                  duration:
+                                      const Duration(milliseconds: 250),
+                                );
+                              }
+                            : null,
                       ),
                     );
                   },
