@@ -224,6 +224,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       senderId: event.senderId,
       type: event.contentType,
       urls: event.attachmentIds,
+      replyMessageId: event.replyMessageId,
     );
 
     result.fold(

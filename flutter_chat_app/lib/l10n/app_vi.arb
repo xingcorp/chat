@@ -496,5 +496,17 @@
   "fileSize": "Kích thước tệp",
   "fileName": "Tên tệp",
   "fileType": "Loại tệp",
-  "unsupportedFileType": "Loại tệp không được hỗ trợ"
+  "unsupportedFileType": "Loại tệp không được hỗ trợ",
+  "messageNotFound": "Không tìm thấy tin nhắn",
+  "editingMessage": "Đang chỉnh sửa tin nhắn",
+  "forwardTo": "Chuyển tiếp đến...",
+  "selectChat": "Chọn cuộc hội thoại",
+  "scrollToBottom": "Cuộn xuống cuối",
+  "newMessagesCount": "{count} tin nhắn mới",
+  "selectedCount": "Đã chọn {count}",
+  "confirmDeleteMultiple": "Xóa {count} tin nhắn?",
+  "linkPreview": "Xem trước liên kết",
+  "openLink": "Mở liên kết",
+  "copyLink": "Sao chép liên kết",
+  "readBy": "Đã xem bởi {names}"
 }

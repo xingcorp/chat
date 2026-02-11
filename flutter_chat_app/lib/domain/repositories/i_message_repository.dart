@@ -72,6 +72,7 @@ abstract class IMessageRepository {
     required String senderId,
     required String contentType,
     List<String> attachmentIds = const [],
+    String? replyMessageId,
   });
 
   /// **Kiểm tra xung đột tin nhắn**

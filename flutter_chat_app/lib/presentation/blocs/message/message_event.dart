@@ -42,16 +42,18 @@ class SendMessage extends MessageEvent {
   final String senderId;
   final String contentType;
   final List<String> attachmentIds;
+  final String? replyMessageId;
 
   const SendMessage({
     required this.content,
     required this.senderId,
     required this.contentType,
     this.attachmentIds = const [],
+    this.replyMessageId,
   });
 
   @override
-  List<Object?> get props => [content, senderId, contentType, attachmentIds];
+  List<Object?> get props => [content, senderId, contentType, attachmentIds, replyMessageId];
 }
 
 /// Sự kiện chỉnh sửa tin nhắn

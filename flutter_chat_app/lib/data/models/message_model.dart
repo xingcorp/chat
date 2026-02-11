@@ -573,6 +573,34 @@ class MessageModel {
 
   /// Convert MessageModel to domain ChatMessage entity
   ChatMessage toDomain() {
+    Map<String, dynamic> metadataMap = {};
+    if (metadata != null && metadata!.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(metadata!);
+        if (decoded is Map<String, dynamic>) {
+          metadataMap = decoded;
+        }
+      } catch (_) {}
+    }
+
+    String? senderName;
+    String? senderAvatar;
+    final senderMeta = metadataMap['sender'];
+    if (senderMeta is Map<String, dynamic>) {
+      final fullName = senderMeta['fullname'] ?? senderMeta['fullName'] ?? senderMeta['name'];
+      if (fullName is String && fullName.trim().isNotEmpty) {
+        senderName = fullName.trim();
+      }
+
+      final imageUrls = senderMeta['imageUrls'];
+      if (imageUrls is List && imageUrls.isNotEmpty) {
+        final first = imageUrls.first;
+        if (first is String && first.trim().isNotEmpty) {
+          senderAvatar = first.trim();
+        }
+      }
+    }
+
     // Convert MessageType to ContentType (mapping data layer to domain layer)
     ContentType contentType;
     switch (type) {
@@ -604,11 +632,13 @@ class MessageModel {
         contentType = ContentType.text;
     }
 
-    // Create MessageSender from senderId
+    // Create MessageSender from senderId (prefer metadata sender for name/avatar)
     final sender = MessageSender(
       id: senderId,
-      name: 'User $senderId', // This should be populated from user data
-      avatar: null, // This should be populated from user data
+      name: (senderName != null && senderName!.isNotEmpty)
+          ? senderName!
+          : senderId,
+      avatar: senderAvatar,
     );
 
     // Parse mentionTo from JSON

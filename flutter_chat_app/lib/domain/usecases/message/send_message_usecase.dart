@@ -40,6 +40,7 @@ class SendMessageUseCase {
     required String type,
     List<String> urls = const [],
     String? fileName,
+    String? replyMessageId,
   }) async {
     _logger.info('SendMessageUseCase: Starting operation', {
       'conversationId': conversationId,
@@ -70,6 +71,7 @@ class SendMessageUseCase {
         senderId: senderId,
         contentType: type,
         attachmentIds: urls,
+        replyMessageId: replyMessageId,
       );
 
       return result.fold(

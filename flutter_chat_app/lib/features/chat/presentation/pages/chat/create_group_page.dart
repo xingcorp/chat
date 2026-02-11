@@ -4,6 +4,7 @@ import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 
 /// **Create Group Page**
 ///
@@ -211,14 +212,11 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                       Stack(
                         alignment: Alignment.bottomRight,
                         children: [
-                          CircleAvatar(
-                            radius: 40,
+                          AppAvatar.initials(
+                            name: context.l10n.groupName,
+                            size: AvatarSize.large,
                             backgroundColor: Theme.of(context).primaryColor,
-                            child: const Icon(
-                              Icons.group,
-                              size: 40,
-                              color: Colors.white,
-                            ),
+                            foregroundColor: Colors.white,
                           ),
                           Container(
                             padding: const EdgeInsets.all(4),
@@ -306,20 +304,12 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                               Stack(
                                 alignment: Alignment.topRight,
                                 children: [
-                                  CircleAvatar(
-                                    radius: 30,
+                                  AppAvatar.initials(
+                                    name: contact['name'].toString(),
+                                    size: AvatarSize.medium,
                                     backgroundColor:
                                         Theme.of(context).primaryColor,
-                                    child: Text(
-                                      contact['name']
-                                          .toString()
-                                          .substring(0, 1)
-                                          .toUpperCase(),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                    foregroundColor: Colors.white,
                                   ),
                                   GestureDetector(
                                     onTap: () => _toggleUser(userId),
@@ -373,18 +363,11 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
 
                             return ListTile(
                               enabled: !isLoading,
-                              leading: CircleAvatar(
+                              leading: AppAvatar.initials(
+                                name: contact['name'].toString(),
+                                size: AvatarSize.medium,
                                 backgroundColor: Theme.of(context).primaryColor,
-                                child: Text(
-                                  contact['name']
-                                      .toString()
-                                      .substring(0, 1)
-                                      .toUpperCase(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                foregroundColor: Colors.white,
                               ),
                               title: Text(contact['name'].toString()),
                               subtitle: Text(

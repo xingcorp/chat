@@ -211,6 +211,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     required String senderId,
     required String contentType,
     List<String> attachmentIds = const [],
+    String? replyMessageId,
   }) async {
     // Create local message with sending status
     final localId = _uuid.v4();

@@ -87,6 +87,8 @@ dependencies:
   video_player: ^2.8.1
   chewie: ^1.7.4
   emoji_picker_flutter: ^3.1.0
+  url_launcher: ^6.2.5
+  any_link_preview: ^3.0.2
 
   # Encryption and Security
   crypto: ^3.0.3

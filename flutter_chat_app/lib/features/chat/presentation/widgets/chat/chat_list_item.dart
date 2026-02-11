@@ -45,11 +45,11 @@ class ChatListItem extends StatelessWidget {
           child: Row(
             children: [
               // Avatar với Hero animation
-              HeroAvatar(
+              AppHeroAvatar(
                 id: chat.id,
                 imageUrl: chat.avatarUrl,
                 displayName: chat.name,
-                size: 50,
+                size: AvatarSize.large,
                 hasBorder: true,
                 borderColor: theme.colorScheme.primary,
               ),

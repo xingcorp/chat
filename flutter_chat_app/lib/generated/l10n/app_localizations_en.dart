@@ -1328,4 +1328,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String lastSeenDaysAgo(int days) {
     return 'Last seen $days days ago';
   }
+
+  @override
+  String get messageNotFound => 'Message not found';
+
+  @override
+  String get editingMessage => 'Editing message';
+
+  @override
+  String get forwardTo => 'Forward to...';
+
+  @override
+  String get selectChat => 'Select a conversation';
+
+  @override
+  String get scrollToBottom => 'Scroll to bottom';
+
+  @override
+  String newMessagesCount(int count) {
+    return '$count new messages';
+  }
+
+  @override
+  String selectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String confirmDeleteMultiple(int count) {
+    return 'Delete $count messages?';
+  }
+
+  @override
+  String get linkPreview => 'Link preview';
+
+  @override
+  String get openLink => 'Open link';
+
+  @override
+  String get copyLink => 'Copy link';
+
+  @override
+  String readBy(String names) {
+    return 'Seen by $names';
+  }
 }

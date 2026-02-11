@@ -41,11 +41,11 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
           // Avatar với Hero animation từ danh sách chat
           GestureDetector(
             onTap: onAvatarTap,
-            child: HeroAvatar(
+            child: AppHeroAvatar(
               id: chat.id,
               imageUrl: chat.avatarUrl,
               displayName: chat.name,
-              size: 40,
+              size: AvatarSize.medium,
               hasBorder: true,
             ),
           ),

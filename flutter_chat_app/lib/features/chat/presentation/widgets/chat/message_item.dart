@@ -17,18 +17,43 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_g
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reply_preview.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/audio_player_widget.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/video_player_widget.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/link_preview_card.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/read_receipt_avatars.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
+import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 
 class MessageItem extends StatefulWidget {
   final MessageUIState uiState;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
+  // Selection mode
+  final bool isSelectionMode;
+  final bool isSelected;
+  final ValueChanged<bool>? onSelectionChanged;
+
+  // Swipe-to-reply
+  final VoidCallback? onSwipeReply;
+
+  // Reply preview tap (scroll to original)
+  final VoidCallback? onReplyPreviewTap;
+
+  // Read receipts
+  final List<ReaderInfo>? readReceipts;
+
   const MessageItem({
     Key? key,
     required this.uiState,
     this.onTap,
     this.onLongPress,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    this.onSelectionChanged,
+    this.onSwipeReply,
+    this.onReplyPreviewTap,
+    this.readReceipts,
   }) : super(key: key);
 
   @override
@@ -195,10 +220,16 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       child: _buildMessageBubble(context, isCurrentUser),
     );
 
-    return GestureDetector(
-      onTap: widget.onTap,
+    // Wrap in Dismissible for swipe-to-reply
+    Widget messageContent = GestureDetector(
+      onTap: widget.isSelectionMode
+          ? () => widget.onSelectionChanged?.call(!widget.isSelected)
+          : widget.onTap,
       onLongPress: widget.onLongPress,
       child: Container(
+        color: widget.isSelected
+            ? theme.colorScheme.primary.withOpacity(0.1)
+            : null,
         margin: EdgeInsets.only(
           left: 8.0,
           right: 8.0,
@@ -234,12 +265,25 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                   : MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                // Selection checkbox
+                if (widget.isSelectionMode)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Checkbox(
+                      value: widget.isSelected,
+                      onChanged: (val) =>
+                          widget.onSelectionChanged?.call(val ?? false),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+
                 // Avatar for messages from others
                 if (!isCurrentUser && widget.uiState.showAvatar)
                   RepaintBoundary(
                     child: _buildAvatar(context),
                   )
-                else if (!isCurrentUser)
+                else if (!isCurrentUser && !widget.isSelectionMode)
                   const SizedBox(width: 36.0),
 
                 // Message bubble
@@ -264,10 +308,43 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                   ),
               ],
             ),
+
+            // Read receipt avatars below own messages at last/standalone position
+            if (isCurrentUser &&
+                isLast &&
+                widget.readReceipts != null &&
+                widget.readReceipts!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0, top: 4.0),
+                child: ReadReceiptAvatars(readers: widget.readReceipts!),
+              ),
           ],
         ),
       ),
     );
+
+    // Wrap with Dismissible for swipe-to-reply (only when not in selection mode)
+    if (widget.onSwipeReply != null && !widget.isSelectionMode) {
+      messageContent = Dismissible(
+        key: ValueKey('swipe_${widget.uiState.id}'),
+        direction: DismissDirection.startToEnd,
+        confirmDismiss: (_) async {
+          widget.onSwipeReply!();
+          return false; // Don't actually dismiss
+        },
+        background: Container(
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.only(left: 24.0),
+          child: Icon(
+            Icons.reply,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        child: messageContent,
+      );
+    }
+
+    return messageContent;
   }
 
   List<domain.MessageAttachment> _getRenderableAttachments() {
@@ -344,6 +421,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     }
 
     final renderableAttachments = _getRenderableAttachments();
+    final contentType = widget.uiState.contentType;
 
     final bubbleColor = isFromCurrentUser
         ? theme.colorScheme.primary.withOpacity(0.8)
@@ -352,6 +430,12 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     final textColor = isFromCurrentUser
         ? theme.colorScheme.onPrimary
         : theme.textTheme.bodyMedium?.color ?? Colors.black;
+
+    // Determine if we should use audio/video player instead of media gallery
+    final isAudioMessage = contentType == domain.ContentType.audio;
+    final isVideoMessage = contentType == domain.ContentType.video;
+    final useSpecialPlayer = (isAudioMessage || isVideoMessage) &&
+        renderableAttachments.length == 1;
 
     return Container(
       constraints: BoxConstraints(
@@ -380,8 +464,28 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
             if (widget.uiState.replyMessage != null)
               _buildReplyPreview(context, isFromCurrentUser),
 
-            // Attachment previews if any
-            if (renderableAttachments.isNotEmpty)
+            // Audio player for audio messages
+            if (useSpecialPlayer && isAudioMessage)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
+                child: AudioPlayerWidget(
+                  url: renderableAttachments.first.url,
+                  isFromCurrentUser: isFromCurrentUser,
+                ),
+              ),
+
+            // Video player for video messages
+            if (useSpecialPlayer && isVideoMessage)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
+                child: VideoPlayerWidget(
+                  url: renderableAttachments.first.url,
+                  isFromCurrentUser: isFromCurrentUser,
+                ),
+              ),
+
+            // Attachment previews (skip for single audio/video with special player)
+            if (renderableAttachments.isNotEmpty && !useSpecialPlayer)
               _buildAttachmentPreviews(context, attachments: renderableAttachments),
 
             // Message content
@@ -402,6 +506,14 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                         textColor: textColor,
                       ),
                     ),
+
+                    // Link preview card
+                    if (widget.uiState.hasLink &&
+                        widget.uiState.previewLink != null)
+                      LinkPreviewCard(
+                        url: widget.uiState.previewLink!,
+                        isFromCurrentUser: isFromCurrentUser,
+                      ),
 
                     const SizedBox(height: 4.0),
 
@@ -434,7 +546,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                 ),
               ),
 
-            // Reactions bar (phía dưới content)
+            // Reactions bar (phia duoi content)
             if (widget.uiState.groupedReactions.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 8.0),
@@ -478,42 +590,18 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
   }
 
   Widget _buildAvatar(BuildContext context) {
-    final theme = Theme.of(context);
     final avatarUrl = widget.uiState.senderAvatar;
     final senderName = widget.uiState.senderName.trim();
 
-    final initials = senderName.isNotEmpty
-        ? senderName.characters.first.toUpperCase()
-        : '?';
-
-    return Container(
-      width: 32,
-      height: 32,
-      margin: const EdgeInsets.only(right: 4.0),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary,
-        shape: BoxShape.circle,
+    return Padding(
+      padding: const EdgeInsets.only(right: 4.0),
+      child: AppHeroAvatar(
+        id: widget.uiState.senderId,
+        imageUrl: avatarUrl,
+        displayName: senderName,
+        size: AvatarSize.small,
+        hasBorder: false,
       ),
-      clipBehavior: Clip.antiAlias,
-      child: (avatarUrl != null && avatarUrl.trim().isNotEmpty)
-          ? Image.network(
-              avatarUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) {
-                return Center(
-                  child: Text(
-                    initials,
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                );
-              },
-            )
-          : Center(
-              child: Text(
-                initials,
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
     );
   }
 
@@ -525,11 +613,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       replyMessage: reply,
       isFromCurrentUser: isFromCurrentUser,
       showThumbnail: true,
-      onTap: () {
-        // TODO: Scroll đến tin nhắn gốc
-        // Cần implement scroll-to-message functionality trong ChatDetailsPage
-        debugPrint('Reply preview tapped: ${reply.id}');
-      },
+      onTap: widget.onReplyPreviewTap ?? () {},
     );
   }
 
@@ -566,13 +650,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     }
   }
 
-  /// Border radius dựa trên BubblePosition
-  ///
-  /// Khớp stream_chat_flutter: message grouping với bo góc
-  /// - standalone: bo tròn đầy đủ
-  /// - first: bo tròn trên, góc nhỏ dưới
-  /// - middle: góc nhỏ cả trên lẫn dưới
-  /// - last: góc nhỏ trên, bo tròn dưới
+  /// Border radius dua tren BubblePosition
   BorderRadius _getBubbleBorderRadius(bool isFromCurrentUser) {
     const radius = Radius.circular(16.0);
     const smallRadius = Radius.circular(4.0);

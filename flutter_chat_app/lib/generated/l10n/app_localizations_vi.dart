@@ -1329,4 +1329,48 @@ class AppLocalizationsVi extends AppLocalizations {
   String lastSeenDaysAgo(int days) {
     return 'Hoạt động $days ngày trước';
   }
+
+  @override
+  String get messageNotFound => 'Không tìm thấy tin nhắn';
+
+  @override
+  String get editingMessage => 'Đang chỉnh sửa tin nhắn';
+
+  @override
+  String get forwardTo => 'Chuyển tiếp đến...';
+
+  @override
+  String get selectChat => 'Chọn cuộc hội thoại';
+
+  @override
+  String get scrollToBottom => 'Cuộn xuống cuối';
+
+  @override
+  String newMessagesCount(int count) {
+    return '$count tin nhắn mới';
+  }
+
+  @override
+  String selectedCount(int count) {
+    return 'Đã chọn $count';
+  }
+
+  @override
+  String confirmDeleteMultiple(int count) {
+    return 'Xóa $count tin nhắn?';
+  }
+
+  @override
+  String get linkPreview => 'Xem trước liên kết';
+
+  @override
+  String get openLink => 'Mở liên kết';
+
+  @override
+  String get copyLink => 'Sao chép liên kết';
+
+  @override
+  String readBy(String names) {
+    return 'Đã xem bởi $names';
+  }
 }

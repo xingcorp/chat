@@ -2360,5 +2360,85 @@
         "type": "int"
       }
     }
+  },
+
+  "messageNotFound": "Message not found",
+  "@messageNotFound": {
+    "description": "Error when trying to scroll to a message that is not loaded"
+  },
+
+  "editingMessage": "Editing message",
+  "@editingMessage": {
+    "description": "Label shown when editing a message"
+  },
+
+  "forwardTo": "Forward to...",
+  "@forwardTo": {
+    "description": "Title for forward message sheet"
+  },
+
+  "selectChat": "Select a conversation",
+  "@selectChat": {
+    "description": "Hint text in forward message sheet"
+  },
+
+  "scrollToBottom": "Scroll to bottom",
+  "@scrollToBottom": {
+    "description": "Tooltip for scroll to bottom FAB"
+  },
+
+  "newMessagesCount": "{count} new messages",
+  "@newMessagesCount": {
+    "description": "Badge text for new messages on scroll-to-bottom FAB",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "selectedCount": "{count} selected",
+  "@selectedCount": {
+    "description": "Title in selection mode app bar",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "confirmDeleteMultiple": "Delete {count} messages?",
+  "@confirmDeleteMultiple": {
+    "description": "Confirmation dialog for deleting multiple messages",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "linkPreview": "Link preview",
+  "@linkPreview": {
+    "description": "Label for link preview card"
+  },
+
+  "openLink": "Open link",
+  "@openLink": {
+    "description": "Button to open link in browser"
+  },
+
+  "copyLink": "Copy link",
+  "@copyLink": {
+    "description": "Button to copy link to clipboard"
+  },
+
+  "readBy": "Seen by {names}",
+  "@readBy": {
+    "description": "Read receipt tooltip showing who has seen the message",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
   }
 }

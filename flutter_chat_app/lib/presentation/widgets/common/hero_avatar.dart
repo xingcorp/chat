@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 
 /// Widget hiển thị hình đại diện với Hero animation
 class HeroAvatar extends StatelessWidget {
@@ -37,98 +37,91 @@ class HeroAvatar extends StatelessWidget {
     this.borderColor,
     this.borderWidth = 2.0,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     // Lấy cấu hình animation từ service
     final AnimationService animationService = GetIt.I<AnimationService>();
-    final filterQuality = animationService.config.imageFilterQuality;
-    
-    // Widget hiển thị khi không có ảnh
-    Widget placeholderWidget() {
-      final firstLetter = (displayName?.isNotEmpty == true) 
-          ? displayName!.substring(0, 1).toUpperCase() 
-          : '?';
-          
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-          shape: BoxShape.circle,
-          border: hasBorder ? Border.all(
-            color: borderColor ?? Theme.of(context).colorScheme.primary,
-            width: borderWidth,
-          ) : null,
-        ),
-        child: Center(
-          child: Text(
-            firstLetter,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: size * 0.4,
-            ),
-          ),
-        ),
-      );
-    }
-    
-    // Widget hiển thị ảnh
-    Widget avatarWidget() {
-      if (imageUrl == null || imageUrl!.isEmpty) {
-        return placeholderWidget();
-      }
-      
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: hasBorder ? Border.all(
-            color: borderColor ?? Theme.of(context).colorScheme.primary,
-            width: borderWidth,
-          ) : null,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(size / 2),
-          child: CachedNetworkImage(
-            imageUrl: imageUrl!,
-            fit: BoxFit.cover,
-            filterQuality: filterQuality,
-            placeholder: (context, url) => Container(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              child: Center(
-                child: SizedBox(
-                  width: size * 0.5,
-                  height: size * 0.5,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.0,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            errorWidget: (context, url, error) => placeholderWidget(),
-          ),
-        ),
-      );
-    }
-    
-    // Tạo Hero tag duy nhất
+
     final heroTag = 'avatar-$id';
-    
+
+    final Widget avatarWidget = AppHeroAvatar(
+      id: id,
+      imageUrl: imageUrl,
+      displayName: displayName,
+      size: _mapSizeToAvatarSize(size),
+      hasBorder: hasBorder,
+      borderColor: borderColor,
+      borderWidth: borderWidth,
+    );
+
     // Kiểm tra nếu thiết bị có hỗ trợ Hero animation không
     if (animationService.config.useHeroAnimations) {
       return Hero(
         tag: heroTag,
-        child: avatarWidget(),
+        child: avatarWidget,
       );
     } else {
       // Trả về widget thông thường nếu không dùng Hero
-      return avatarWidget();
+      return avatarWidget;
     }
   }
+
+  AvatarSize _mapSizeToAvatarSize(double size) {
+    if (size <= 28) return AvatarSize.small;
+    if (size <= 44) return AvatarSize.medium;
+    if (size <= 72) return AvatarSize.large;
+    return AvatarSize.xlarge;
+  }
 } 
+
+class AppHeroAvatar extends StatelessWidget {
+  final String id;
+  final String? imageUrl;
+  final String? displayName;
+  final AvatarSize size;
+  final bool hasBorder;
+  final Color? borderColor;
+  final double borderWidth;
+
+  const AppHeroAvatar({
+    super.key,
+    required this.id,
+    this.imageUrl,
+    this.displayName,
+    this.size = AvatarSize.medium,
+    this.hasBorder = false,
+    this.borderColor,
+    this.borderWidth = 2.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final AnimationService animationService = GetIt.I<AnimationService>();
+    final heroTag = 'avatar-$id';
+    final resolvedBorderColor = borderColor ?? Theme.of(context).colorScheme.primary;
+
+    final Widget avatar = (imageUrl != null && imageUrl!.trim().isNotEmpty)
+        ? AppAvatar.network(
+            imageUrl: imageUrl!.trim(),
+            size: size,
+            borderColor: hasBorder ? resolvedBorderColor : null,
+            borderWidth: hasBorder ? borderWidth : null,
+          )
+        : AppAvatar.initials(
+            name: (displayName?.trim().isNotEmpty ?? false) ? displayName!.trim() : '?',
+            size: size,
+            borderColor: hasBorder ? resolvedBorderColor : null,
+            borderWidth: hasBorder ? borderWidth : null,
+          );
+
+    if (animationService.config.useHeroAnimations) {
+      return Hero(
+        tag: heroTag,
+        child: avatar,
+      );
+    }
+
+    return avatar;
+  }
+}

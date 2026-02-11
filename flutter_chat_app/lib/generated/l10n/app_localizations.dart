@@ -2479,6 +2479,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last seen {days} days ago'**
   String lastSeenDaysAgo(int days);
+
+  /// Error when trying to scroll to a message that is not loaded
+  ///
+  /// In en, this message translates to:
+  /// **'Message not found'**
+  String get messageNotFound;
+
+  /// Label shown when editing a message
+  ///
+  /// In en, this message translates to:
+  /// **'Editing message'**
+  String get editingMessage;
+
+  /// Title for forward message sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Forward to...'**
+  String get forwardTo;
+
+  /// Hint text in forward message sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Select a conversation'**
+  String get selectChat;
+
+  /// Tooltip for scroll to bottom FAB
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll to bottom'**
+  String get scrollToBottom;
+
+  /// Badge text for new messages on scroll-to-bottom FAB
+  ///
+  /// In en, this message translates to:
+  /// **'{count} new messages'**
+  String newMessagesCount(int count);
+
+  /// Title in selection mode app bar
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectedCount(int count);
+
+  /// Confirmation dialog for deleting multiple messages
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {count} messages?'**
+  String confirmDeleteMultiple(int count);
+
+  /// Label for link preview card
+  ///
+  /// In en, this message translates to:
+  /// **'Link preview'**
+  String get linkPreview;
+
+  /// Button to open link in browser
+  ///
+  /// In en, this message translates to:
+  /// **'Open link'**
+  String get openLink;
+
+  /// Button to copy link to clipboard
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get copyLink;
+
+  /// Read receipt tooltip showing who has seen the message
+  ///
+  /// In en, this message translates to:
+  /// **'Seen by {names}'**
+  String readBy(String names);
 }
 
 class _AppLocalizationsDelegate

@@ -70,10 +70,20 @@ class AnimationService {
   final Logger _logger = Logger();
 
   /// Cấp hiệu năng thiết bị hiện tại
-  late DevicePerformanceTier _currentPerformanceTier;
-  
-  /// Cấu hình animation hiện tại
-  late AnimationConfig _config;
+  DevicePerformanceTier _currentPerformanceTier = DevicePerformanceTier.medium;
+
+  /// Cấu hình animation hiện tại — default medium until initialize() runs
+  AnimationConfig _config = const AnimationConfig(
+    defaultDuration: Duration(milliseconds: 250),
+    longDuration: Duration(milliseconds: 400),
+    fastDuration: Duration(milliseconds: 150),
+    useHeroAnimations: true,
+    useExtendedTransitions: true,
+    useMicroAnimations: true,
+    useAdvancedEffects: false,
+    imageFilterQuality: FilterQuality.medium,
+    defaultCurve: Curves.easeInOut,
+  );
   
   /// Có đang trong chế độ tiết kiệm điện không
   bool _isLowPowerMode = false;

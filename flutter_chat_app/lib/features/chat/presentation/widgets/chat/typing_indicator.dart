@@ -3,21 +3,31 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
 
+/// Safely get AnimationService config, returning null if not available
+AnimationConfig? _getAnimationConfig() {
+  try {
+    if (!GetIt.I.isRegistered<AnimationService>()) return null;
+    return GetIt.I<AnimationService>().config;
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Widget hiển thị chỉ báo đang nhập tin nhắn
 class TypingIndicator extends StatefulWidget {
   /// Tên hiển thị của người đang nhập
   final String? displayName;
-  
+
   /// Có hiển thị tên không
   final bool showName;
-  
+
   /// Constructor
   const TypingIndicator({
     Key? key,
     this.displayName,
     this.showName = true,
   }) : super(key: key);
-  
+
   @override
   State<TypingIndicator> createState() => _TypingIndicatorState();
 }
@@ -25,18 +35,18 @@ class TypingIndicator extends StatefulWidget {
 class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderStateMixin {
   /// Danh sách các controller animation
   late List<AnimationController> _controllers;
-  
+
   /// Thời lượng animation
   late Duration _duration;
-  
+
   @override
   void initState() {
     super.initState();
-    
-    // Lấy cấu hình animation từ service
-    final animationService = GetIt.I<AnimationService>();
-    _duration = animationService.config.defaultDuration;
-    
+
+    // Lấy cấu hình animation từ service, fallback to default duration
+    final config = _getAnimationConfig();
+    _duration = config?.defaultDuration ?? const Duration(milliseconds: 300);
+
     // Tạo controllers animation
     _controllers = List.generate(3, (index) {
       return AnimationController(
@@ -47,7 +57,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
       ));
     });
   }
-  
+
   @override
   void dispose() {
     // Giải phóng controllers
@@ -56,7 +66,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
     }
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -110,13 +120,13 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
 class TypingIndicatorWithFade extends StatelessWidget {
   /// Có ai đang gõ không
   final bool isTyping;
-  
+
   /// Tên người đang gõ
   final String? displayName;
-  
+
   /// Có hiển thị tên không
   final bool showName;
-  
+
   /// Constructor
   const TypingIndicatorWithFade({
     Key? key,
@@ -124,21 +134,21 @@ class TypingIndicatorWithFade extends StatelessWidget {
     this.displayName,
     this.showName = true,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
-    final animationService = GetIt.I<AnimationService>();
-    
-    // Nếu không dùng micro-animations hoặc thiết bị yếu
-    if (!animationService.config.useMicroAnimations) {
+    final config = _getAnimationConfig();
+
+    // If AnimationService not available or no micro-animations
+    if (config == null || !config.useMicroAnimations) {
       return isTyping
           ? TypingIndicator(displayName: displayName, showName: showName)
           : const SizedBox.shrink();
     }
-    
+
     // Sử dụng AnimatedSwitcher để có hiệu ứng fade in/out
     return AnimatedSwitcher(
-      duration: animationService.config.fastDuration,
+      duration: config.fastDuration,
       switchInCurve: Curves.easeIn,
       switchOutCurve: Curves.easeOut,
       child: isTyping
@@ -150,4 +160,4 @@ class TypingIndicatorWithFade extends StatelessWidget {
           : const SizedBox.shrink(key: ValueKey('not_typing')),
     );
   }
-} 
+}

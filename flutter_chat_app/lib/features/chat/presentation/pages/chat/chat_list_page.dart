@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
@@ -12,6 +11,8 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
 import 'package:get_it/get_it.dart';
+
+import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
@@ -271,31 +272,12 @@ class _ChatListPageState extends BaseState<ChatListPage> {
   Widget _buildChatListItem(BuildContext context, Chat chat) {
     final isGroup = chat.type == ChatType.group || chat.type == ChatType.channel;
 
-    final avatar = Container(
-      width: AppDimens.iconSizeXXLarge,
-      height: AppDimens.iconSizeXXLarge,
-      decoration: BoxDecoration(
-        color: isGroup ? AppColors.success : AppColors.primary,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCircular),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: (chat.imgUrl != null && chat.imgUrl!.isNotEmpty)
-          ? CachedNetworkImage(
-              imageUrl: chat.imgUrl!,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Icon(
-                isGroup ? Icons.group : Icons.person,
-                color: AppColors.textButton,
-              ),
-              errorWidget: (context, url, error) => Icon(
-                isGroup ? Icons.group : Icons.person,
-                color: AppColors.textButton,
-              ),
-            )
-          : Icon(
-              isGroup ? Icons.group : Icons.person,
-              color: AppColors.textButton,
-            ),
+    final avatar = AppHeroAvatar(
+      id: chat.id,
+      imageUrl: chat.avatarUrl,
+      displayName: chat.name,
+      size: AvatarSize.large,
+      hasBorder: false,
     );
 
     final timeText = chat.lastMessageAt != null
