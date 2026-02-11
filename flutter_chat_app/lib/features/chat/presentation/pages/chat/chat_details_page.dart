@@ -64,6 +64,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   String _currentUserId = '';
   bool _hasInitializedContext = false;
 
+  bool _isProgrammaticScroll = false;
+
   static const int _pageSize = 50;
   bool _isLoadingMore = false;
 
@@ -218,6 +220,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   void _onScroll() {
+    if (_isProgrammaticScroll) return;
     // Pagination: load more when near top (reverse list)
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
@@ -412,6 +415,12 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       preferPosition: AutoScrollPosition.middle,
       duration: const Duration(milliseconds: 400),
     );
+
+    _isProgrammaticScroll = true;
+    Future.delayed(const Duration(milliseconds: 550), () {
+      if (!mounted) return;
+      _isProgrammaticScroll = false;
+    });
 
     // Highlight for 2 seconds
     safeSetState(() => _highlightedMessageId = targetMessageId);
