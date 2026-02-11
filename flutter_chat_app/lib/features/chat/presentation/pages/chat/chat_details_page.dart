@@ -70,6 +70,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   bool _isLoadingMore = false;
   DateTime? _lastLoadMoreAt;
   String? _lastLoadMoreCursor;
+  String? _pendingScrollToMessageId;
+  int _pendingScrollAttempts = 0;
+  static const int _maxPendingScrollAttempts = 8;
 
   // ══════════════════════════════════════════
   // Reply / Edit state
@@ -225,8 +228,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     if (_isProgrammaticScroll) return;
     // Pagination: load more when near top (reverse list)
     final position = _scrollController.position;
-    if (position.hasPixels && position.maxScrollExtent > 0) {
-      if (position.pixels >= position.maxScrollExtent * 0.9) {
+    if (position.hasPixels) {
+      // For reverse lists, "top" means nearing maxScrollExtent.
+      // Using extentAfter is more robust than maxScrollExtent ratios and also
+      // works when maxScrollExtent == 0 (short lists).
+      if (position.extentAfter < 200) {
         _loadMore();
       }
     }
@@ -426,11 +432,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
     final index = uiMessages.indexWhere((m) => m.id == targetMessageId);
     if (index == -1) {
-      AppSnackBar.show(
-        context: context,
-        message: context.l10n.messageNotFound,
-        type: FeedbackType.warning,
-      );
+      _pendingScrollToMessageId = targetMessageId;
+      _pendingScrollAttempts = 0;
+      _loadMore();
       return;
     }
 
@@ -580,6 +584,39 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                     listener: (context, state) {
                       if (state is MessagesLoaded) {
                         safeSetState(() => _isLoadingMore = false);
+
+                        final pendingId = _pendingScrollToMessageId;
+                        if (pendingId != null && pendingId.isNotEmpty) {
+                          final index = state.uiMessages.indexWhere((m) => m.id == pendingId);
+                          if (index != -1) {
+                            _pendingScrollToMessageId = null;
+                            _pendingScrollAttempts = 0;
+                            _scrollController.scrollToIndex(
+                              index,
+                              preferPosition: AutoScrollPosition.middle,
+                              duration: const Duration(milliseconds: 400),
+                            );
+                            _isProgrammaticScroll = true;
+                            Future.delayed(const Duration(milliseconds: 550), () {
+                              if (!mounted) return;
+                              _isProgrammaticScroll = false;
+                            });
+                          } else {
+                            if (!state.hasReachedMax && _pendingScrollAttempts < _maxPendingScrollAttempts) {
+                              _pendingScrollAttempts++;
+                              _loadMore();
+                            } else {
+                              _pendingScrollToMessageId = null;
+                              _pendingScrollAttempts = 0;
+                              AppSnackBar.show(
+                                context: context,
+                                message: context.l10n.messageNotFound,
+                                type: FeedbackType.warning,
+                              );
+                            }
+                          }
+                        }
+
                         // Track new messages when scrolled up
                         if (_showScrollToBottom) {
                           safeSetState(() => _newMessageCount++);
