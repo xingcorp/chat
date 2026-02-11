@@ -243,22 +243,6 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
               : CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Sender info for group chats
-            if (widget.uiState.showSenderName && !isCurrentUser)
-              Padding(
-                padding: const EdgeInsets.only(left: 12.0, bottom: 4.0),
-                child: RepaintBoundary(
-                  child: Text(
-                    widget.uiState.senderName,
-                    style: TextStyle(
-                      fontSize: 12.0,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-                  ),
-                ),
-              ),
-
             // Message row with avatar for non-current user
             Row(
               mainAxisAlignment: isCurrentUser
@@ -287,9 +271,31 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                 else if (!isCurrentUser && !widget.isSelectionMode)
                   const SizedBox(width: 36.0),
 
-                // Message bubble
+                // Sender name + message bubble aligned to the same start as bubble
                 Flexible(
-                  child: messageBubble,
+                  child: Column(
+                    crossAxisAlignment: isCurrentUser
+                        ? CrossAxisAlignment.end
+                        : CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.uiState.showSenderName && !isCurrentUser)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4.0, bottom: 4.0),
+                          child: RepaintBoundary(
+                            child: Text(
+                              widget.uiState.senderName,
+                              style: TextStyle(
+                                fontSize: 12.0,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      messageBubble,
+                    ],
+                  ),
                 ),
 
                 // Space for status indicator on own messages

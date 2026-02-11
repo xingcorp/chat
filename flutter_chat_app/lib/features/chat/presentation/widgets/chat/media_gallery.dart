@@ -68,16 +68,16 @@ class MediaGallery extends StatelessWidget {
     const borderRadius = BorderRadius.all(Radius.circular(8.0));
 
     if (images.length == 1) {
-      // Single image: constrained height, preserve aspect ratio
+      // Single image: fit full bubble width and preserve aspect ratio
       return _buildImageTile(
         context,
         images[0],
         index: 0,
         width: double.infinity,
         height: null, // Let image determine height
-        maxHeight: 300,
+        maxHeight: null,
         borderRadius: borderRadius,
-        fit: BoxFit.contain,
+        fit: BoxFit.fitWidth,
       );
     } else if (images.length == 2) {
       // Two images: 2 columns
@@ -215,7 +215,7 @@ class MediaGallery extends StatelessWidget {
       fit: fit,
       placeholder: (_, __) => Container(
         width: width,
-        height: height ?? 150,
+        height: height ?? maxHeight ?? 150,
         color: Colors.grey[300],
         child: const Center(
           child: CircularProgressIndicator(strokeWidth: 2.0),
@@ -223,7 +223,7 @@ class MediaGallery extends StatelessWidget {
       ),
       errorWidget: (_, __, ___) => Container(
         width: width,
-        height: height ?? 150,
+        height: height ?? maxHeight ?? 150,
         color: Colors.grey[300],
         child: const Icon(Icons.broken_image, color: Colors.grey),
       ),

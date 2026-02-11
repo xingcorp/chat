@@ -13,14 +13,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat(chat): enhance messaging experience with reply, edit, selection mode, and typing indicators&#10;&#10;- **Messaging Features**:&#10;    - Implement message replying and editing functionality with a dedicated UI bar for each state.&#10;    - Add multi-message selection mode with support for bulk deletion, copying, and forwarding.&#10;    - Integrate `AutoScrollController` to support smooth scrolling to specific messages (e.g., when tapping a reply preview).&#10;    - Add a &quot;scroll-to-bottom&quot; floating action button with a new message count badge.&#10;- **Real-time Enhancements**:&#10;    - Implement real-time typing indicators with debounce logic via `RealtimeService`.&#10;    - Integrate live read receipts showing user avatars below messages.&#10;    - Add `TypingIndicatorWithFade` for smoother UI transitions when users are typing.&#10;- **UI/UX Refactor**:&#10;    - Replace generic `CircleAvatar` and `CachedNetworkImage` with `AppAvatar` and `AppHeroAvatar` design system components across `ChatListPage`, `CreateGroupPage`, and `MessageItem`.&#10;    - Enhance `MessageItem` with swipe-to-reply gesture, link previews, and dedicated audio/video player widgets.&#10;    - Improve message sender metadata parsing to display correct names and avatars from message JSON.&#10;- **Internationalization**:&#10;    - Add localized strings for message editing, forwarding, selection counts, and link previews in both English and Vietnamese.&#10;- **Infrastructure**:&#10;    - Update `SendMessageUseCase`, `IMessageRepository`, and `MessageBloc` to support `replyMessageId`.&#10;    - Ensure `AnimationService` provides a default configuration if accessed before initialization.&#10;&#10;Files updated:&#10;- lib/features/chat/presentation/pages/chat/chat_details_page.dart: Major logic and UI overhaul&#10;- lib/features/chat/presentation/widgets/chat/message_item.dart: Enhanced with selection, swipe, and media players&#10;- lib/presentation/widgets/common/hero_avatar.dart: Refactored to use design system `AppAvatar`&#10;- lib/l10n/app_en.arb &amp; app_vi.arb: Added new chat-related strings&#10;- lib/domain/usecases/message/send_message_usecase.dart: Added reply support&#10;- lib/data/models/message_model.dart: Improved sender metadata extraction&#10;- lib/features/chat/presentation/widgets/chat/typing_indicator.dart: Added fade effects and service safety">
-      <change afterPath="$PROJECT_DIR$/lib/presentation/widgets/design_system/inputs/input.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/flutter_chat_app.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/flutter_chat_app.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/pages/chat/chat_list_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/pages/chat/chat_list_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/screens/chat/optimized_chat_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/screens/chat/optimized_chat_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/link_preview_card.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/link_preview_card.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/reaction_bar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/reaction_bar.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/reply_preview.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/reply_preview.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/video_player_widget.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/video_player_widget.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/media_gallery.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/media_gallery.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/message_item.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/message_item.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main_web.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main_web.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -116,24 +113,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Flutter.main_web.executor": "Debug",
-    "Flutter.main_web_prod.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "doanbh/update__ui",
-    "io.flutter.reload.alreadyRun": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Volumes/DoanBHSST9/FlutterGithubOXII/chat/flutter_chat_app",
-    "settings.editor.selected.configurable": "flutter.settings",
-    "show.migrate.to.gradle.popup": "false"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Flutter.main_web.executor&quot;: &quot;Debug&quot;,
+    &quot;Flutter.main_web_prod.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;doanbh/update__ui&quot;,
+    &quot;io.flutter.reload.alreadyRun&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Volumes/DoanBHSST9/FlutterGithubOXII/chat/flutter_chat_app&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;flutter.settings&quot;,
+    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/docs/tempt" />
@@ -223,14 +221,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00028" summary="feat: add localization support with localization service and locale management in Flutter app">
-      <option name="closed" value="true" />
-      <created>1747397977288</created>
-      <option name="number" value="00028" />
-      <option name="presentableId" value="LOCAL-00028" />
-      <option name="project" value="LOCAL" />
-      <updated>1747397977288</updated>
     </task>
     <task id="LOCAL-00029" summary="feat: enhance localization support with new service patterns, utilities, and error handling guidelines">
       <option name="closed" value="true" />
@@ -616,7 +606,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770782783618</updated>
     </task>
-    <option name="localTasksCounter" value="77" />
+    <task id="LOCAL-00077" summary="feat(chat): enhance messaging experience with reply, edit, selection mode, and typing indicators&#10;&#10;- **Messaging Features**:&#10;    - Implement message replying and editing functionality with a dedicated UI bar for each state.&#10;    - Add multi-message selection mode with support for bulk deletion, copying, and forwarding.&#10;    - Integrate `AutoScrollController` to support smooth scrolling to specific messages (e.g., when tapping a reply preview).&#10;    - Add a &quot;scroll-to-bottom&quot; floating action button with a new message count badge.&#10;- **Real-time Enhancements**:&#10;    - Implement real-time typing indicators with debounce logic via `RealtimeService`.&#10;    - Integrate live read receipts showing user avatars below messages.&#10;    - Add `TypingIndicatorWithFade` for smoother UI transitions when users are typing.&#10;- **UI/UX Refactor**:&#10;    - Replace generic `CircleAvatar` and `CachedNetworkImage` with `AppAvatar` and `AppHeroAvatar` design system components across `ChatListPage`, `CreateGroupPage`, and `MessageItem`.&#10;    - Enhance `MessageItem` with swipe-to-reply gesture, link previews, and dedicated audio/video player widgets.&#10;    - Improve message sender metadata parsing to display correct names and avatars from message JSON.&#10;- **Internationalization**:&#10;    - Add localized strings for message editing, forwarding, selection counts, and link previews in both English and Vietnamese.&#10;- **Infrastructure**:&#10;    - Update `SendMessageUseCase`, `IMessageRepository`, and `MessageBloc` to support `replyMessageId`.&#10;    - Ensure `AnimationService` provides a default configuration if accessed before initialization.&#10;&#10;Files updated:&#10;- lib/features/chat/presentation/pages/chat/chat_details_page.dart: Major logic and UI overhaul&#10;- lib/features/chat/presentation/widgets/chat/message_item.dart: Enhanced with selection, swipe, and media players&#10;- lib/presentation/widgets/common/hero_avatar.dart: Refactored to use design system `AppAvatar`&#10;- lib/l10n/app_en.arb &amp; app_vi.arb: Added new chat-related strings&#10;- lib/domain/usecases/message/send_message_usecase.dart: Added reply support&#10;- lib/data/models/message_model.dart: Improved sender metadata extraction&#10;- lib/features/chat/presentation/widgets/chat/typing_indicator.dart: Added fade effects and service safety">
+      <option name="closed" value="true" />
+      <created>1770783386520</created>
+      <option name="number" value="00077" />
+      <option name="presentableId" value="LOCAL-00077" />
+      <option name="project" value="LOCAL" />
+      <updated>1770783386520</updated>
+    </task>
+    <option name="localTasksCounter" value="78" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
