@@ -2,7 +2,23 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Cấu hình cho ứng dụng
+///
+/// In standalone mode, reads from dotenv environment variables.
+/// In package mode, override values via [setOverrides] before use.
 class AppConfig {
+  static Map<String, String>? _overrides;
+
+  /// Override config values for package mode.
+  /// Called by ChatModuleInjection with values from ChatConfig.
+  static void setOverrides(Map<String, String> overrides) {
+    _overrides = overrides;
+  }
+
+  /// Clear overrides (e.g., on dispose).
+  static void clearOverrides() {
+    _overrides = null;
+  }
+
   /// API URL
   static String get apiUrl => _getConfigValue('API_URL', 'https://stg-office-api.smarthiz.vn/graphql');
   
@@ -72,8 +88,13 @@ class AppConfig {
     timeout: 30000, // ms
   );
   
-  /// Lấy giá trị từ .env hoặc trả về giá trị mặc định
+  /// Lấy giá trị từ overrides, .env, hoặc giá trị mặc định
   static String _getConfigValue(String key, String defaultValue) {
+    // Package mode: use overrides if set
+    if (_overrides != null && _overrides!.containsKey(key)) {
+      return _overrides![key]!;
+    }
+    // Standalone mode: try dotenv
     try {
       return dotenv.env[key] ?? defaultValue;
     } catch (e) {

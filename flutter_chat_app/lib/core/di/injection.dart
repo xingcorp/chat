@@ -152,6 +152,7 @@ Future<void> configureDependencies() async {
         getIt<NetworkInfo>(),
         getIt<TokenProvider>(),
         getIt<AuthDelegate>(),
+        getIt<String>(instanceName: 'graphQlApiUrl'),
       ),
     );
 
@@ -414,10 +415,15 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   }
 
   if (!getIt.isRegistered<GraphQLClient>()) {
-    // Create a GraphQL client with the current token
+    // Pre-populate env cache for GraphQLClientWrapperImpl.createClient fallback
+    core_graphql.GraphQLClientWrapperImpl.setEnvCache(Map<String, String>.from(dotenv.env));
+
+    // Create a GraphQL client with the current token and explicit URLs
     final client = await core_graphql.GraphQLClientWrapperImpl.createClient(
       accessTokenProvider:
           () => getIt<token_module.TokenRepository>().getAccessToken(),
+      graphqlUrl: graphQlApiUrl,
+      graphqlWsUrl: graphQlWsUrl,
     );
     getIt.registerSingleton<GraphQLClient>(client);
   }

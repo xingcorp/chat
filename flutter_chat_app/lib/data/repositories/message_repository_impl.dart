@@ -118,11 +118,14 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     return executeOfflineFirst<List<ChatMessage>>(
       remoteDataSource: () async {
         logger.d('Fetching messages from server for chat $chatId');
+
+        final fromTs = cursor != null ? int.tryParse(cursor) : null;
         
         // Get DTOs from remote datasource
         final response = await _remoteDataSource.getMessageList(
           conversationId: chatId,
           size: limit,
+          from: fromTs,
         );
         final dtos = response.messages;
         
@@ -175,9 +178,12 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         if (paginatedMessages.isEmpty && await networkInfo.isConnected) {
           logger.d('Local messages empty for chat $chatId; fetching from server');
 
+          final fromTs = cursor != null ? int.tryParse(cursor) : null;
+
           final response = await _remoteDataSource.getMessageList(
             conversationId: chatId,
             size: limit,
+            from: fromTs,
           );
           final models = MessageMapper.toModelList(response.messages);
 

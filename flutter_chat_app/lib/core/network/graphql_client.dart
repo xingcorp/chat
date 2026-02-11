@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
 import 'package:flutter_chat_app/core/network/auth/auth_delegate.dart';
 import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 /// Abstract interface for GraphQL client operations
@@ -43,6 +41,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
   final NetworkInfo _networkInfo;
   final TokenProvider? _tokenProvider;
   final AuthDelegate? _authDelegate;
+  final String _endpointUrl;
   final AppLogger _logger;
 
   /// Constructor
@@ -51,8 +50,10 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     this._networkInfo, [
     this._tokenProvider,
     this._authDelegate,
+    String? endpointUrl,
     AppLogger? logger,
-  ]) : _logger = logger ?? AppLogger();
+  ])  : _endpointUrl = endpointUrl ?? 'graphql',
+        _logger = logger ?? AppLogger();
 
   /// Get the underlying GraphQLClient instance
   @override
@@ -70,9 +71,9 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
         ? await accessTokenProvider()
         : token;
 
-    final graphQlApiUrl = graphqlUrl ?? (dotenv.env['GRAPHQL_API_URL'] ?? '').trim();
+    final graphQlApiUrl = graphqlUrl ?? _tryGetEnv('GRAPHQL_API_URL');
     if (graphQlApiUrl.isEmpty) {
-      throw StateError('Missing required environment key: GRAPHQL_API_URL');
+      throw StateError('Missing required: graphqlUrl parameter or GRAPHQL_API_URL env key');
     }
 
     final httpLink = HttpLink(graphQlApiUrl);
@@ -90,9 +91,9 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     );
 
     // Create a WebSocket link for subscriptions
-    final graphQlWsUrlResolved = graphqlWsUrl ?? (dotenv.env['GRAPHQL_WS_URL'] ?? '').trim();
+    final graphQlWsUrlResolved = graphqlWsUrl ?? _tryGetEnv('GRAPHQL_WS_URL');
     if (graphQlWsUrlResolved.isEmpty) {
-      throw StateError('Missing required environment key: GRAPHQL_WS_URL');
+      throw StateError('Missing required: graphqlWsUrl parameter or GRAPHQL_WS_URL env key');
     }
 
     final websocketLink = WebSocketLink(
@@ -161,7 +162,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     String? operationName,
   }) async {
     final op = operationName ?? 'UnnamedQuery';
-    final endpoint = dotenv.env['GRAPHQL_API_URL'] ?? '${AppConstants.apiBaseUrl}/graphql';
+    final endpoint = _endpointUrl;
     final stopwatch = Stopwatch()..start();
 
     if (!await _networkInfo.isConnected) {
@@ -234,7 +235,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
       _logOperationException(
         exception: result.exception!,
         operationName: options.operationName ?? 'UnnamedQuery',
-        endpoint: dotenv.env['GRAPHQL_API_URL'] ?? '${AppConstants.apiBaseUrl}/graphql',
+        endpoint: _endpointUrl,
         variables: options.variables,
       );
       try {
@@ -267,7 +268,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     String? operationName,
   }) async {
     final op = operationName ?? 'UnnamedMutation';
-    final endpoint = dotenv.env['GRAPHQL_API_URL'] ?? '${AppConstants.apiBaseUrl}/graphql';
+    final endpoint = _endpointUrl;
     final stopwatch = Stopwatch()..start();
 
     if (!await _networkInfo.isConnected) {
@@ -340,7 +341,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
       _logOperationException(
         exception: result.exception!,
         operationName: options.operationName ?? 'UnnamedMutation',
-        endpoint: dotenv.env['GRAPHQL_API_URL'] ?? '${AppConstants.apiBaseUrl}/graphql',
+        endpoint: _endpointUrl,
         variables: options.variables,
       );
       try {
@@ -492,5 +493,19 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
         'variables': _redactVariables(variables),
       },
     );
+  }
+
+  /// Safely read env value — returns empty string if not available.
+  /// Used only in [createClient] as fallback when explicit URLs aren't provided.
+  static String _tryGetEnv(String key) {
+    return _dotenvCache?[key]?.trim() ?? '';
+  }
+
+  static Map<String, String>? _dotenvCache;
+
+  /// Pre-populate env cache for standalone mode.
+  /// Called by injection.dart during standalone app initialization.
+  static void setEnvCache(Map<String, String> env) {
+    _dotenvCache = env;
   }
 }

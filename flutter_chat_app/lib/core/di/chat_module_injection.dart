@@ -22,6 +22,7 @@ import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_chat_app/chat_config.dart';
+import 'package:flutter_chat_app/core/config/app_config.dart';
 import 'package:flutter_chat_app/core/config/firebase_config.dart';
 import 'package:flutter_chat_app/core/error/retry_config.dart' as app_retry;
 import 'package:flutter_chat_app/core/localization/error_message_provider.dart';
@@ -111,7 +112,14 @@ class ChatModuleInjection {
       // Step 6: Override GraphQL and Socket with config-aware implementations
       _registerConfigOverrides(config);
 
-      // Step 7: Set error message provider if provided
+      // Step 7: Set AppConfig overrides for package mode
+      AppConfig.setOverrides({
+        'API_URL': config.graphqlUrl,
+        'WS_URL': config.graphqlWsUrl,
+        'SOCKET_URL': config.socketUrl,
+      });
+
+      // Step 8: Set error message provider if provided
       if (config.errorMessageProvider != null) {
         ErrorMessages.setProvider(config.errorMessageProvider!);
       }
@@ -133,6 +141,7 @@ class ChatModuleInjection {
 
   /// Clean up all registered dependencies.
   static Future<void> dispose() async {
+    AppConfig.clearOverrides();
     await _getIt.reset();
   }
 
@@ -434,6 +443,7 @@ class ChatModuleInjection {
         _getIt<NetworkInfo>(),
         _getIt<TokenProvider>(),
         _getIt<AuthDelegate>(),
+        config.graphqlUrl,
       ),
     );
 

@@ -102,7 +102,6 @@ import '../monitoring/i_performance_monitor.dart' as _i610;
 import '../monitoring/message_delivery_tracker.dart' as _i475;
 import '../monitoring/performance_monitor.dart' as _i794;
 import '../network/api_client.dart' as _i557;
-import '../network/auth/auth_delegate.dart' as _i589;
 import '../network/auth/token_manager.dart' as _i694;
 import '../network/auth/token_provider.dart' as _i211;
 import '../network/auth/token_repository.dart' as _i328;
@@ -227,8 +226,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i745.AuthService(gh<_i328.TokenRepository>()));
     gh.singleton<_i803.MemoryOptimizer>(() => _i803.MemoryOptimizer(
         performanceMonitor: gh<_i610.IPerformanceMonitor>()));
-    gh.singleton<_i706.RealtimeMessagingService>(
-        () => _i706.RealtimeMessagingService(gh<_i932.NetworkInfo>()));
     gh.lazySingleton<_i572.IMessageRepository>(
         () => _i564.MessageRepositoryImpl(
               localDataSource: gh<_i75.MessageLocalDataSource>(),
@@ -264,6 +261,11 @@ extension GetItInjectableX on _i174.GetIt {
           analytics: gh<_i343.AnalyticsService>(),
           tokenProvider: gh<_i211.TokenProvider>(),
         ));
+    gh.singleton<_i706.RealtimeMessagingService>(
+        () => _i706.RealtimeMessagingService(
+              gh<_i932.NetworkInfo>(),
+              serverUrl: gh<String>(),
+            ));
     gh.lazySingleton<_i404.UserRemoteDataSourceImpl>(
         () => _i404.UserRemoteDataSourceImpl(gh<_i788.GraphQLClientWrapper>()));
     gh.singleton<_i604.EnhancedCacheManager>(() => _i604.EnhancedCacheManager(
@@ -317,14 +319,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i788.GraphQLClientWrapper>(),
               gh<_i706.RealtimeMessagingService>(),
               gh<_i976.SocketIOEventMapper>(),
-            ));
-    gh.lazySingleton<_i788.GraphQLClientWrapperImpl>(
-        () => _i788.GraphQLClientWrapperImpl(
-              gh<_i128.GraphQLClient>(),
-              gh<_i932.NetworkInfo>(),
-              gh<_i211.TokenProvider>(),
-              gh<_i589.AuthDelegate>(),
-              gh<_i221.AppLogger>(),
             ));
     gh.singleton<_i777.WebSocketClient>(() => _i777.WebSocketClient(
           serverUrl: gh<String>(instanceName: 'socketUrl'),

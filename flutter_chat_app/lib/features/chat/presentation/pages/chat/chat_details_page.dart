@@ -68,6 +68,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   static const int _pageSize = 50;
   bool _isLoadingMore = false;
+  DateTime? _lastLoadMoreAt;
+  String? _lastLoadMoreCursor;
 
   // ══════════════════════════════════════════
   // Reply / Edit state
@@ -222,9 +224,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   void _onScroll() {
     if (_isProgrammaticScroll) return;
     // Pagination: load more when near top (reverse list)
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent * 0.9) {
-      _loadMore();
+    final position = _scrollController.position;
+    if (position.hasPixels && position.maxScrollExtent > 0) {
+      if (position.pixels >= position.maxScrollExtent * 0.9) {
+        _loadMore();
+      }
     }
 
     // Scroll-to-bottom FAB visibility
@@ -239,6 +243,26 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   void _loadMore() {
     if (_isLoadingMore) return;
+
+    final now = DateTime.now();
+    if (_lastLoadMoreAt != null && now.difference(_lastLoadMoreAt!) < const Duration(milliseconds: 700)) {
+      return;
+    }
+
+    final state = _messageBloc.state;
+    if (state is! MessagesLoaded) return;
+    if (state.hasReachedMax) return;
+
+    final cursor = state.messages.isNotEmpty
+        ? state.messages.last.createdAt.millisecondsSinceEpoch.toString()
+        : null;
+    if (cursor != null && cursor == _lastLoadMoreCursor) {
+      return;
+    }
+
+    _lastLoadMoreAt = now;
+    _lastLoadMoreCursor = cursor;
+
     safeSetState(() => _isLoadingMore = true);
     _messageBloc.add(const LoadMoreMessages(limit: _pageSize));
   }

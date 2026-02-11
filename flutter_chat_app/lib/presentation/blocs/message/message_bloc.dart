@@ -171,16 +171,17 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     logger.i('Loading more messages for chat: ${currentState.chatId}');
 
-    // Calculate cursor based on last message
-    final lastMessageId = currentState.messages.isNotEmpty
-        ? currentState.messages.last.id
+    // Calculate cursor based on oldest message timestamp.
+    // Backend supports timestamp-based pagination via filters.from.
+    final lastMessageCursor = currentState.messages.isNotEmpty
+        ? currentState.messages.last.createdAt.millisecondsSinceEpoch.toString()
         : null;
 
     // Execute UseCase
     final result = await _getMessages(
       conversationId: currentState.chatId,
       limit: event.limit,
-      cursor: lastMessageId,
+      cursor: lastMessageCursor,
     );
 
     result.fold(
@@ -198,7 +199,15 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
           emit(currentState.copyWith(hasReachedMax: true));
         } else {
           // Add new messages to current list
-          final allMessages = [...currentState.messages, ...nextMessages];
+          final byId = <String, ChatMessage>{
+            for (final m in currentState.messages) m.id: m,
+          };
+          for (final m in nextMessages) {
+            byId[m.id] = m;
+          }
+
+          final allMessages = byId.values.toList()
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
           emit(currentState.copyWith(
             messages: allMessages,
             uiMessages: _transformMessages(allMessages),

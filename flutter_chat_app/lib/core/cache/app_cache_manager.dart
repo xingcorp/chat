@@ -185,7 +185,21 @@ class AppCacheManager {
           _logger.t('Lấy API response từ memory cache: $key');
           isHit = true;
           await _updateAccessStats(key, true);
-          return cacheEntry.data as T;
+          final dynamic raw = cacheEntry.data;
+
+          if (fromJson != null && raw is Map) {
+            final result = fromJson(raw.map((k, v) => MapEntry(k.toString(), v)));
+            _memoryCache[key] = _CacheEntry<T>(result, cacheEntry.expiry);
+            return result;
+          }
+
+          if (fromJsonList != null && raw is List) {
+            final result = fromJsonList(raw);
+            _memoryCache[key] = _CacheEntry<T>(result, cacheEntry.expiry);
+            return result;
+          }
+
+          return raw as T;
         } else {
           // Xóa cache đã hết hạn
           _memoryCache.remove(key);

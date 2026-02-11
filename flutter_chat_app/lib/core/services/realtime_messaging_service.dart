@@ -24,7 +24,6 @@ import 'package:logger/logger.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../constants/app_constants.dart';
 import '../network/network_info.dart';
@@ -189,14 +188,16 @@ class RealtimeMessagingService {
   static const Duration _heartbeatInterval = Duration(seconds: 30);
 
   /// Constructor
-  RealtimeMessagingService(this._networkInfo) {
+  RealtimeMessagingService(this._networkInfo, {String? serverUrl})
+      : _injectedServerUrl = serverUrl {
     _initializeService();
   }
 
+  final String? _injectedServerUrl;
+
   /// Initialize service
   void _initializeService() {
-    final socketUrlRaw = (dotenv.env['SOCKET_URL'] ?? dotenv.env['WEBSOCKET_URL'] ?? '').trim();
-    String socketUrl = socketUrlRaw.isNotEmpty ? socketUrlRaw : AppConstants.websocketUrl;
+    String socketUrl = _injectedServerUrl ?? AppConstants.websocketUrl;
 
     if (socketUrl.startsWith('wss://')) {
       socketUrl = socketUrl.replaceFirst('wss://', 'https://');
