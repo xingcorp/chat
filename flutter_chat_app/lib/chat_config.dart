@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/localization/error_message_provider.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 
 /// Configuration for initializing the chat module as a package.
@@ -68,6 +70,12 @@ class ChatConfig {
   /// Custom performance monitor. If null, uses [NoOpPerformanceMonitor].
   final IPerformanceMonitor? performanceMonitor;
 
+  /// Custom crash reporter. If null, uses [NoOpCrashReporter].
+  final ICrashReporter? crashReporter;
+
+  /// Custom analytics service. If null, uses [NoOpAnalyticsService].
+  final IAnalyticsService? analyticsService;
+
   /// Custom error message provider. If null, uses default Vietnamese messages.
   final ErrorMessageProvider? errorMessageProvider;
 
@@ -86,6 +94,8 @@ class ChatConfig {
     this.locale,
     this.theme,
     this.performanceMonitor,
+    this.crashReporter,
+    this.analyticsService,
     this.errorMessageProvider,
   });
 
@@ -105,6 +115,8 @@ class ChatConfig {
     Locale? locale,
     ThemeData? theme,
     IPerformanceMonitor? performanceMonitor,
+    ICrashReporter? crashReporter,
+    IAnalyticsService? analyticsService,
     ErrorMessageProvider? errorMessageProvider,
   }) {
     return ChatConfig(
@@ -122,6 +134,8 @@ class ChatConfig {
       locale: locale ?? this.locale,
       theme: theme ?? this.theme,
       performanceMonitor: performanceMonitor ?? this.performanceMonitor,
+      crashReporter: crashReporter ?? this.crashReporter,
+      analyticsService: analyticsService ?? this.analyticsService,
       errorMessageProvider: errorMessageProvider ?? this.errorMessageProvider,
     );
   }

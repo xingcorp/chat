@@ -6,7 +6,7 @@ import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_list_transformer.dart';
-import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
@@ -83,7 +83,7 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
   bool _isScrollControllerAttached = false;
   
   final _performanceMonitor = GetIt.I<IPerformanceMonitor>();
-  final _analytics = GetIt.I<AnalyticsService>();
+  final _analytics = GetIt.I<IAnalyticsService>();
   
   @override
   void initState() {

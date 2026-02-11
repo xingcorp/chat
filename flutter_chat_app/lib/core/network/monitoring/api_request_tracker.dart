@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
@@ -154,7 +154,7 @@ class ApiRequestStats {
 class ApiRequestTracker {
   // Dependencies (injected via constructor)
   final AppLogger _logger;
-  final AnalyticsService _analytics;
+  final IAnalyticsService _analytics;
   
   // Storage for requests
   final LinkedHashMap<String, ApiRequestInfo> _recentRequests = LinkedHashMap();

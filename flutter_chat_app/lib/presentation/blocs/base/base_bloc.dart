@@ -4,8 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:get_it/get_it.dart';
-import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
-import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/base_state.dart';
 
@@ -22,8 +22,8 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
   final GetIt _serviceLocator = GetIt.instance;
   
   // Services
-  late final CrashReporter _crashReporter;
-  late final AnalyticsService _analyticsService;
+  late final ICrashReporter _crashReporter;
+  late final IAnalyticsService _analyticsService;
   late final IPerformanceMonitor _performanceMonitor;
 
   // Khởi tạo BLoC với trạng thái ban đầu.
@@ -53,8 +53,8 @@ abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<Eve
   /// Khởi tạo các services cần thiết
   void _initServices() {
     try {
-      _crashReporter = _serviceLocator.get<CrashReporter>();
-      _analyticsService = _serviceLocator.get<AnalyticsService>();
+      _crashReporter = _serviceLocator.get<ICrashReporter>();
+      _analyticsService = _serviceLocator.get<IAnalyticsService>();
       _performanceMonitor = _serviceLocator.get<IPerformanceMonitor>();
     } catch (e) {
       _logger.w('Một số services không khả dụng: $e');

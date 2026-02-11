@@ -5,7 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 
 import 'package:flutter_chat_app/core/monitoring/analytics_manager.dart';
-import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
+import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/services/chat_message_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
@@ -34,7 +34,7 @@ class ServiceInitializer {
     }
 
     try {
-      await GetIt.I.getAsync<CrashReporter>();
+      await GetIt.I.getAsync<ICrashReporter>();
       final performanceMonitor = await GetIt.I.getAsync<IPerformanceMonitor>();
       final analyticsManager = await GetIt.I.getAsync<AnalyticsManager>();
 

@@ -11,9 +11,6 @@
 library chat_module_injection;
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
@@ -23,9 +20,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_chat_app/chat_config.dart';
 import 'package:flutter_chat_app/core/config/app_config.dart';
-import 'package:flutter_chat_app/core/config/firebase_config.dart';
 import 'package:flutter_chat_app/core/error/retry_config.dart' as app_retry;
 import 'package:flutter_chat_app/core/localization/error_message_provider.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/network/auth/auth_delegate.dart';
 import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
@@ -62,8 +60,9 @@ import 'modules/core_module.dart';
 /// Initializes DI for the chat module running in package mode.
 ///
 /// Mirrors [configureDependencies] but reads URLs and tokens from
-/// [ChatConfig] instead of dotenv. Firebase deps are still expected
-/// to be initialized by the host app (Phase 4 will make them optional).
+/// [ChatConfig] instead of dotenv. Firebase is not required — monitoring
+/// services use NoOp defaults unless the host app provides implementations
+/// via [ChatConfig].
 class ChatModuleInjection {
   ChatModuleInjection._();
 
@@ -216,13 +215,6 @@ class ChatModuleInjection {
       );
     }
 
-    // IPerformanceMonitor from config or NoOp
-    if (!_getIt.isRegistered<IPerformanceMonitor>()) {
-      _getIt.registerSingleton<IPerformanceMonitor>(
-        config.performanceMonitor ?? const NoOpPerformanceMonitor(),
-      );
-    }
-
     // Connectivity
     if (!_getIt.isRegistered<Connectivity>()) {
       _getIt.registerSingleton<Connectivity>(Connectivity());
@@ -269,30 +261,6 @@ class ChatModuleInjection {
     if (!_getIt.isRegistered<app_retry.RetryConfig>()) {
       _getIt.registerSingleton<app_retry.RetryConfig>(
         app_retry.RetryConfig.realtime,
-      );
-    }
-
-    // Firebase — host app must initialize Firebase before calling ChatModule.initialize.
-    // Phase 4 will make Firebase fully optional.
-    if (kIsWeb && !FirebaseConfigManager.isInitialized) {
-      await FirebaseConfigManager.initialize();
-    }
-
-    if (!_getIt.isRegistered<FirebasePerformance>()) {
-      _getIt.registerLazySingleton<FirebasePerformance>(
-        () => FirebasePerformance.instance,
-      );
-    }
-
-    if (!_getIt.isRegistered<FirebaseAnalytics>()) {
-      _getIt.registerLazySingleton<FirebaseAnalytics>(
-        () => FirebaseAnalytics.instance,
-      );
-    }
-
-    if (!_getIt.isRegistered<FirebaseCrashlytics>()) {
-      _getIt.registerLazySingleton<FirebaseCrashlytics>(
-        () => FirebaseCrashlytics.instance,
       );
     }
 
@@ -429,6 +397,21 @@ class ChatModuleInjection {
 
   /// Override auto-generated registrations with config-aware versions.
   static void _registerConfigOverrides(ChatConfig config) {
+    // Override monitoring services — auto-generated code registers Firebase-backed
+    // implementations which require Firebase deps. In package mode, we use
+    // config-provided or NoOp implementations instead.
+    _getIt.registerSingleton<IPerformanceMonitor>(
+      config.performanceMonitor ?? const NoOpPerformanceMonitor(),
+    );
+
+    _getIt.registerSingleton<ICrashReporter>(
+      config.crashReporter ?? const NoOpCrashReporter(),
+    );
+
+    _getIt.registerSingleton<IAnalyticsService>(
+      config.analyticsService ?? const NoOpAnalyticsService(),
+    );
+
     // GraphQLClientWrapperImpl — use TokenProvider + AuthDelegate
     if (_getIt.isRegistered<core_graphql.GraphQLClientWrapperImpl>()) {
       _getIt.unregister<core_graphql.GraphQLClientWrapperImpl>();
@@ -460,10 +443,5 @@ class ChatModuleInjection {
         tokenProvider: _getIt<TokenProvider>(),
       ),
     );
-
-    // Override IPerformanceMonitor if auto-generated registered Firebase version
-    if (config.performanceMonitor != null) {
-      _getIt.registerSingleton<IPerformanceMonitor>(config.performanceMonitor!);
-    }
   }
 }

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
 import 'package:flutter_chat_app/core/network/monitoring/socket_connection_analytics.dart';
 import 'package:flutter_chat_app/core/network/monitoring/socket_error_analytics.dart';
@@ -15,7 +15,7 @@ import 'package:logger/logger.dart';
 @injectable
 class SocketAnalytics {
   final Logger _logger;
-  final AnalyticsService _analyticsService;
+  final IAnalyticsService _analyticsService;
   
   // Tracking components
   late final SocketConnectionAnalytics _connectionAnalytics;
@@ -74,7 +74,7 @@ class SocketAnalytics {
 
   /// Constructor
   SocketAnalytics({
-    required AnalyticsService analyticsService,
+    required IAnalyticsService analyticsService,
     Logger? logger,
   }) :
     _analyticsService = analyticsService,

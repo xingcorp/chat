@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
 import 'package:flutter_chat_app/core/network/realtime/backoff_strategy.dart';
 
 /// Chiến lược kết nối lại thông minh với các tối ưu hiệu suất
 class SmartReconnectStrategy {
   /// Analytics service để ghi nhận các sự kiện
-  final AnalyticsService _analyticsService;
+  final IAnalyticsService _analyticsService;
   
   /// Chiến lược backoff
   final SmartBackoffStrategy _backoffStrategy;
@@ -40,7 +40,7 @@ class SmartReconnectStrategy {
   
   /// Constructor
   SmartReconnectStrategy({
-    required AnalyticsService analyticsService,
+    required IAnalyticsService analyticsService,
     SmartBackoffStrategy? backoffStrategy,
     this.maxReconnectAttempts = 15,
     this.autoReconnect = true,

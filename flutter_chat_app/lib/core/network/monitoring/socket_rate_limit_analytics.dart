@@ -1,10 +1,10 @@
 
-import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:logger/logger.dart';
 
 /// Lớp theo dõi phân tích rate limit Socket
 class SocketRateLimitAnalytics {
-  final AnalyticsService _analyticsService;
+  final IAnalyticsService _analyticsService;
   final Logger _logger;
   
   // Rate limiting analytics
@@ -13,7 +13,7 @@ class SocketRateLimitAnalytics {
   
   /// Constructor
   SocketRateLimitAnalytics({
-    required AnalyticsService analyticsService,
+    required IAnalyticsService analyticsService,
     Logger? logger,
   }) : 
     _analyticsService = analyticsService,

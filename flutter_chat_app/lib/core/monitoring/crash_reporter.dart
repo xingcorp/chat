@@ -7,9 +7,14 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-/// Service quản lý báo cáo lỗi trong ứng dụng
-@lazySingleton
-class CrashReporter {
+import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
+
+/// Firebase-backed crash reporting implementation.
+///
+/// Implements [ICrashReporter] using Firebase Crashlytics SDK.
+/// For environments without Firebase, use [NoOpCrashReporter] instead.
+@LazySingleton(as: ICrashReporter)
+class CrashReporter implements ICrashReporter {
   /// Logger
   final _logger = Logger();
   
@@ -26,6 +31,7 @@ class CrashReporter {
   CrashReporter(this._crashlytics);
   
   /// Khởi tạo crash reporter
+  @override
   Future<void> initialize() async {
     try {
       _logger.i('Khởi tạo Crash Reporter');
@@ -110,6 +116,7 @@ class CrashReporter {
   }
   
   /// Ghi lại error tường minh (từ try-catch)
+  @override
   Future<void> recordError(
     dynamic exception,
     StackTrace stackTrace, {
@@ -140,6 +147,7 @@ class CrashReporter {
   }
   
   /// Đặt thông tin user cho phiên hiện tại
+  @override
   Future<void> setUserIdentifier(String userId) async {
     if (_isCrashlyticsEnabled && _crashlytics != null) {
       await _crashlytics!.setUserIdentifier(userId);
@@ -147,6 +155,7 @@ class CrashReporter {
   }
   
   /// Đặt custom key
+  @override
   Future<void> setCustomKey(String key, dynamic value) async {
     if (_isCrashlyticsEnabled && _crashlytics != null) {
       await _crashlytics!.setCustomKey(key, value);
@@ -154,6 +163,7 @@ class CrashReporter {
   }
   
   /// Ghi log vào Crashlytics
+  @override
   Future<void> log(String message) async {
     if (_isCrashlyticsEnabled && _crashlytics != null) {
       await _crashlytics!.log(message);

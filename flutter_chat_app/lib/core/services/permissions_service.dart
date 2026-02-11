@@ -11,7 +11,7 @@ import 'package:rxdart/rxdart.dart';
 
 // App imports
 import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/shared/domain/entities/permission_entity.dart';
 import 'package:flutter_chat_app/domain/repositories/permissions_repository.dart';
@@ -31,7 +31,7 @@ class PermissionsService {
 
   final PermissionsRepository _repository;
   final RequestPermissionUseCase _requestPermissionUseCase;
-  final AnalyticsService _analyticsService;
+  final IAnalyticsService _analyticsService;
   final AppLogger _logger;
 
   // Cache cho permission states

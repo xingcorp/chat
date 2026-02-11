@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/core/network/cache/api_cache_manager.dart';
 import 'package:flutter_chat_app/core/network/http/http_client_interface.dart';
@@ -24,7 +24,7 @@ class ApiClient {
   final IHttpClient _httpClient;
   final ApiRequestTracker _requestTracker;
   final AppLogger _logger;
-  final AnalyticsService _analytics;
+  final IAnalyticsService _analytics;
   final ApiCacheManager _cacheManager;
   
   // Performance tracking
@@ -41,7 +41,7 @@ class ApiClient {
     required IHttpClient httpClient,
     required ApiRequestTracker requestTracker,
     required AppLogger logger,
-    required AnalyticsService analytics,
+    required IAnalyticsService analytics,
     required ApiCacheManager cacheManager,
   }) : _httpClient = httpClient,
        _requestTracker = requestTracker,
@@ -54,7 +54,7 @@ class ApiClient {
       _httpClient = GetIt.instance<IHttpClient>(),
       _requestTracker = GetIt.instance<ApiRequestTracker>(),
       _logger = GetIt.instance<AppLogger>(),
-      _analytics = GetIt.instance<AnalyticsService>(),
+      _analytics = GetIt.instance<IAnalyticsService>(),
       _cacheManager = ApiCacheManager.instance;
   
   /// Initialize the ApiClient with base configuration

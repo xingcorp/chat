@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
@@ -10,66 +11,12 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-/// Các sự kiện analytics được theo dõi
-enum AnalyticsEvent {
-  /// Đăng nhập
-  login,
-  
-  /// Đăng ký
-  signup,
-  
-  /// Đăng xuất
-  logout,
-  
-  /// Tạo chat mới
-  createChat,
-  
-  /// Tham gia vào chat
-  joinChat,
-  
-  /// Rời chat
-  leaveChat,
-  
-  /// Mời người dùng vào chat
-  inviteUser,
-  
-  /// Gửi tin nhắn
-  sendMessage,
-  
-  /// Tải tin nhắn
-  loadMessages,
-  
-  /// Mở màn hình chat
-  openChat,
-  
-  /// Xem profile người dùng
-  viewUserProfile,
-  
-  /// Tìm kiếm
-  search,
-  
-  /// Tải file
-  downloadFile,
-  
-  /// Upload file
-  uploadFile,
-  
-  /// Thực hiện cuộc gọi
-  initiateCall,
-  
-  /// Trả lời cuộc gọi
-  answerCall,
-  
-  /// Kết thúc cuộc gọi
-  endCall,
-  
-  /// Sự kiện tùy chỉnh
-  custom,
-}
-
-/// Lớp dịch vụ quản lý analytics
-@lazySingleton
-class AnalyticsService {
+/// Firebase-backed analytics implementation.
+///
+/// Implements [IAnalyticsService] using Firebase Analytics SDK.
+/// For environments without Firebase, use [NoOpAnalyticsService] instead.
+@LazySingleton(as: IAnalyticsService)
+class AnalyticsService implements IAnalyticsService {
   /// Logger
   final _logger = Logger();
   
@@ -77,7 +24,7 @@ class AnalyticsService {
   final FirebaseAnalytics _analytics;
   
   /// Crash reporter để liên kết thông tin
-  final CrashReporter _crashReporter;
+  final ICrashReporter _crashReporter;
   
   /// Performance monitor để tạo traces
   final IPerformanceMonitor _performanceMonitor;
@@ -99,6 +46,7 @@ class AnalyticsService {
   );
   
   /// Khởi tạo analytics service
+  @override
   Future<void> initialize() async {
     try {
       _logger.i('Khởi tạo Analytics Service');
@@ -126,6 +74,7 @@ class AnalyticsService {
   }
   
   /// Đặt user ID cho phiên hiện tại
+  @override
   Future<void> setUserId(String userId) async {
     if (!_isAnalyticsEnabled) return;
     
@@ -156,6 +105,7 @@ class AnalyticsService {
   }
   
   /// Đặt user properties
+  @override
   Future<void> setUserProperties({
     String? email,
     String? displayName,
@@ -221,6 +171,7 @@ class AnalyticsService {
   
   /// Track custom event với tên và parameters tùy chỉnh
   /// Method này được sử dụng bởi PermissionsService
+  @override
   Future<void> track(String eventName, Map<String, dynamic> parameters) async {
     if (!_isAnalyticsEnabled) return;
 
@@ -255,6 +206,7 @@ class AnalyticsService {
   }
 
   /// Ghi nhận sự kiện
+  @override
   Future<void> logEvent(
     AnalyticsEvent event, {
     Map<String, dynamic>? parameters,
@@ -367,6 +319,7 @@ class AnalyticsService {
   }
   
   /// Ghi nhận sự kiện bắt đầu một màn hình
+  @override
   Future<void> logScreenView({
     required String screenName,
     String? screenClass,
@@ -404,6 +357,7 @@ class AnalyticsService {
   }
   
   /// Ghi nhận lỗi cho analytics
+  @override
   Future<void> logError({
     required String errorType,
     String? errorMessage,
@@ -432,6 +386,7 @@ class AnalyticsService {
   }
   
   /// Theo dõi giá trị cho hiệu suất ứng dụng
+  @override
   Future<void> trackValueMetric({
     required String metricName,
     required double value,
@@ -468,6 +423,7 @@ class AnalyticsService {
   }
   
   /// Reset analytics data (thường gọi khi logout)
+  @override
   Future<void> resetAnalyticsData() async {
     if (!_isAnalyticsEnabled) return;
     
@@ -486,6 +442,7 @@ class AnalyticsService {
   }
   
   /// Bật/tắt thu thập analytics
+  @override
   Future<void> setAnalyticsEnabled(bool enabled) async {
     try {
       _isAnalyticsEnabled = enabled;

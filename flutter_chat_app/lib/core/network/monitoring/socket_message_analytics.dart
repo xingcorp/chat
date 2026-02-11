@@ -1,10 +1,10 @@
 
-import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:logger/logger.dart';
 
 /// Lớp theo dõi phân tích tin nhắn Socket
 class SocketMessageAnalytics {
-  final AnalyticsService _analyticsService;
+  final IAnalyticsService _analyticsService;
   final Logger _logger;
   
   // Event tracking
@@ -22,7 +22,7 @@ class SocketMessageAnalytics {
   
   /// Constructor
   SocketMessageAnalytics({
-    required AnalyticsService analyticsService,
+    required IAnalyticsService analyticsService,
     Logger? logger,
     int samplingRate = 100,
   }) : 
