@@ -29,12 +29,15 @@ class MessagesLoaded extends MessageState {
   final List<ChatMessage> messages;
   final List<MessageUIState> uiMessages;
   final bool hasReachedMax;
+  /// Lỗi tạm khi pagination fail (không phá state chính, chỉ để reset UI loading)
+  final String? paginationError;
 
   const MessagesLoaded({
     required this.chatId,
     required this.messages,
     this.uiMessages = const [],
     this.hasReachedMax = false,
+    this.paginationError,
   });
 
   MessagesLoaded copyWith({
@@ -42,17 +45,19 @@ class MessagesLoaded extends MessageState {
     List<ChatMessage>? messages,
     List<MessageUIState>? uiMessages,
     bool? hasReachedMax,
+    String? paginationError,
   }) {
     return MessagesLoaded(
       chatId: chatId ?? this.chatId,
       messages: messages ?? this.messages,
       uiMessages: uiMessages ?? this.uiMessages,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+      paginationError: paginationError,
     );
   }
 
   @override
-  List<Object?> get props => [chatId, messages, uiMessages, hasReachedMax];
+  List<Object?> get props => [chatId, messages, uiMessages, hasReachedMax, paginationError];
 }
 
 /// **Trạng thái khi có lỗi với enterprise error handling**

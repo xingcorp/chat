@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' as domain;
 import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/presentation/widgets/message_status_indicator.dart';
+import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_preview.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_gallery.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
@@ -304,6 +306,43 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
         ? CrossAxisAlignment.end
         : CrossAxisAlignment.start;
 
+    // Deleted message placeholder
+    if (widget.uiState.isDeleted) {
+      return Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: _getBubbleBorderRadius(isFromCurrentUser),
+          border: Border.all(
+            color: theme.dividerColor,
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.block,
+              size: 14.0,
+              color: theme.textTheme.bodySmall?.color?.withOpacity(0.5),
+            ),
+            const SizedBox(width: 6.0),
+            Text(
+              context.l10n.messageDeleted,
+              style: TextStyle(
+                color: theme.textTheme.bodySmall?.color?.withOpacity(0.5),
+                fontSize: 14.0,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final renderableAttachments = _getRenderableAttachments();
 
     final bubbleColor = isFromCurrentUser
@@ -403,8 +442,12 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                   groupedReactions: widget.uiState.groupedReactions,
                   showAddButton: true,
                   onReactionTap: (emojiCode, isCurrentlyReacted) {
-                    // TODO: Call BLoC to toggle reaction
-                    debugPrint('Reaction tapped: $emojiCode, isReacted: $isCurrentlyReacted');
+                    context.read<MessageBloc>().add(
+                      ToggleReaction(
+                        messageId: widget.uiState.id,
+                        emojiCode: emojiCode,
+                      ),
+                    );
                   },
                   onReactionLongPress: (emojiCode, reactorIds, reactorNames) {
                     ReactionDetailModal.show(
@@ -417,8 +460,12 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                     EmojiPickerBottomSheet.show(
                       context,
                       onEmojiSelected: (emoji) {
-                        // TODO: Call BLoC to add reaction
-                        debugPrint('Add reaction: $emoji to message ${widget.uiState.id}');
+                        context.read<MessageBloc>().add(
+                          ToggleReaction(
+                            messageId: widget.uiState.id,
+                            emojiCode: emoji,
+                          ),
+                        );
                       },
                     );
                   },
@@ -513,7 +560,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       case domain.MessageStatus.delivered:
         return MessageQueueStatus.delivered;
       case domain.MessageStatus.read:
-        return MessageQueueStatus.delivered;
+        return MessageQueueStatus.read;
       case domain.MessageStatus.failed:
         return MessageQueueStatus.failed;
     }

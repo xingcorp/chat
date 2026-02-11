@@ -209,6 +209,13 @@ class MessageUIState {
   final String? previewLink;
 
   // ══════════════════════════════════════════
+  // Ownership
+  // ══════════════════════════════════════════
+
+  /// Tin nhắn từ người dùng hiện tại (computed by transformer)
+  final bool isFromCurrentUser;
+
+  // ══════════════════════════════════════════
   // Message Status & State
   // ══════════════════════════════════════════
 
@@ -251,7 +258,6 @@ class MessageUIState {
   String? get senderAvatar => message?.sender.avatar;
   DateTime get createdAt => message?.createdAt ?? DateTime.now();
   MessageStatus get status => message?.status ?? MessageStatus.sent;
-  bool get isFromCurrentUser => message?.isFromCurrentUser ?? false;
   bool get hasMedia => message?.hasMedia ?? false;
   List<String> get urls => message?.urls ?? const [];
   String? get fileName => message?.fileName;
@@ -281,6 +287,7 @@ class MessageUIState {
     this.isDeleted = false,
     this.isLastRead = false,
     this.isHighlighted = false,
+    this.isFromCurrentUser = false,
     this.systemEvent,
   });
 

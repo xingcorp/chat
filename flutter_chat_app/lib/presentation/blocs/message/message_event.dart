@@ -106,4 +106,18 @@ class RefreshMessages extends MessageEvent {
 /// Sự kiện xóa tin nhắn
 class ClearMessages extends MessageEvent {
   const ClearMessages();
+}
+
+/// Sự kiện toggle reaction trên tin nhắn
+class ToggleReaction extends MessageEvent {
+  final String messageId;
+  final String emojiCode;
+
+  const ToggleReaction({
+    required this.messageId,
+    required this.emojiCode,
+  });
+
+  @override
+  List<Object?> get props => [messageId, emojiCode];
 } 

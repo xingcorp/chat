@@ -3,7 +3,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// Widget hiển thị media gallery cho message attachments
 ///
@@ -69,14 +68,16 @@ class MediaGallery extends StatelessWidget {
     const borderRadius = BorderRadius.all(Radius.circular(8.0));
 
     if (images.length == 1) {
-      // Single image: full width
+      // Single image: constrained height, preserve aspect ratio
       return _buildImageTile(
         context,
         images[0],
         index: 0,
         width: double.infinity,
-        height: 220,
+        height: null, // Let image determine height
+        maxHeight: 300,
         borderRadius: borderRadius,
+        fit: BoxFit.contain,
       );
     } else if (images.length == 2) {
       // Two images: 2 columns
@@ -201,10 +202,40 @@ class MediaGallery extends StatelessWidget {
     MessageAttachment image, {
     required int index,
     double? width,
-    required double height,
+    double? height,
+    double? maxHeight,
     BorderRadius? borderRadius,
     Widget? overlay,
+    BoxFit fit = BoxFit.cover,
   }) {
+    Widget imageWidget = CachedNetworkImage(
+      imageUrl: image.url,
+      width: width,
+      height: height,
+      fit: fit,
+      placeholder: (_, __) => Container(
+        width: width,
+        height: height ?? 150,
+        color: Colors.grey[300],
+        child: const Center(
+          child: CircularProgressIndicator(strokeWidth: 2.0),
+        ),
+      ),
+      errorWidget: (_, __, ___) => Container(
+        width: width,
+        height: height ?? 150,
+        color: Colors.grey[300],
+        child: const Icon(Icons.broken_image, color: Colors.grey),
+      ),
+    );
+
+    if (maxHeight != null) {
+      imageWidget = ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: imageWidget,
+      );
+    }
+
     return GestureDetector(
       onTap: () => _openFullscreenGallery(
         context,
@@ -215,26 +246,7 @@ class MediaGallery extends StatelessWidget {
         borderRadius: borderRadius ?? BorderRadius.zero,
         child: Stack(
           children: [
-            CachedNetworkImage(
-              imageUrl: image.url,
-              width: width,
-              height: height,
-              fit: BoxFit.cover,
-              placeholder: (_, __) => Container(
-                width: width,
-                height: height,
-                color: Colors.grey[300],
-                child: const Center(
-                  child: CircularProgressIndicator(strokeWidth: 2.0),
-                ),
-              ),
-              errorWidget: (_, __, ___) => Container(
-                width: width,
-                height: height,
-                color: Colors.grey[300],
-                child: const Icon(Icons.broken_image, color: Colors.grey),
-              ),
-            ),
+            imageWidget,
             if (overlay != null) overlay,
           ],
         ),

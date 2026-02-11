@@ -6,7 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
-import 'package:flutter_chat_app/core/services/realtime_service.dart';
+import 'package:flutter_chat_app/core/services/realtime_service.dart' hide MessageReaction;
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_list_transformer.dart';
@@ -106,6 +106,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     on<ReceiveRealTimeMessage>(_onReceiveRealTimeMessage);
     on<RefreshMessages>(_onRefreshMessages);
     on<ClearMessages>(_onClearMessages);
+    on<ToggleReaction>(_onToggleReaction);
   }
   
   /// **Load messages using GetMessagesUseCase - CLEAN ARCHITECTURE**
@@ -185,9 +186,9 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     result.fold(
       (failure) {
         logger.e('Failed to load more messages', error: failure);
-
-        // Don't emit error for pagination - just log it
-        // User can retry by scrolling again
+        // Don't emit error for pagination — just log and re-emit with a
+        // pagination error flag so the page can reset its loading indicator.
+        emit(currentState.copyWith(paginationError: failure.message));
       },
       (nextMessages) {
         logger.i('Loaded ${nextMessages.length} more messages');
@@ -497,6 +498,77 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         );
 
     logger.i('Real-time subscription established for chat: $chatId');
+  }
+
+  /// Handle toggle reaction on message (optimistic update)
+  void _onToggleReaction(ToggleReaction event, Emitter<MessageState> emit) {
+    if (state is! MessagesLoaded) return;
+
+    final currentState = state as MessagesLoaded;
+
+    logger.i('Toggling reaction ${event.emojiCode} on message ${event.messageId}');
+
+    // Optimistic update: toggle reaction locally
+    final updatedMessages = currentState.messages.map((msg) {
+      if (msg.id != event.messageId) return msg;
+
+      final existingReaction = msg.reactions.where(
+        (r) => r.code == event.emojiCode && r.userId == _currentUserId,
+      );
+
+      List<MessageReaction> updatedReactions;
+      if (existingReaction.isNotEmpty) {
+        // Remove reaction
+        updatedReactions = msg.reactions
+            .where((r) => !(r.code == event.emojiCode && r.userId == _currentUserId))
+            .toList();
+      } else {
+        // Add reaction
+        updatedReactions = [
+          ...msg.reactions,
+          MessageReaction(
+            code: event.emojiCode,
+            userId: _currentUserId,
+            createdAt: DateTime.now(),
+          ),
+        ];
+      }
+
+      return ChatMessage(
+        id: msg.id,
+        chatId: msg.chatId,
+        sender: msg.sender,
+        content: msg.content,
+        contentType: msg.contentType,
+        createdAt: msg.createdAt,
+        updatedAt: msg.updatedAt,
+        editedAt: msg.editedAt,
+        deletedAt: msg.deletedAt,
+        urls: msg.urls,
+        fileName: msg.fileName,
+        forwardedFromMessageId: msg.forwardedFromMessageId,
+        replyMessageId: msg.replyMessageId,
+        replyMessage: msg.replyMessage,
+        actionType: msg.actionType,
+        actor: msg.actor,
+        targetUsers: msg.targetUsers,
+        newValue: msg.newValue,
+        oldValue: msg.oldValue,
+        mentionTo: msg.mentionTo,
+        readBy: msg.readBy,
+        deliveredTo: msg.deliveredTo,
+        attachments: msg.attachments,
+        reactions: updatedReactions,
+      );
+    }).toList();
+
+    emit(currentState.copyWith(
+      messages: updatedMessages,
+      uiMessages: _transformMessages(updatedMessages),
+    ));
+
+    // TODO: Call API to persist reaction on server
+    // POST /api/messages/{messageId}/reactions { code: emojiCode }
   }
 
   @override

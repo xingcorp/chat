@@ -95,11 +95,13 @@ class MessageListTransformer {
       final showTimestamp = _shouldShowTimestamp(current, newerMsg, position);
 
       // ── Avatar & sender name ──
+      // stream_chat: avatar at bottom of group (last), name at top (first)
       // Angular: show khi firstMessage == true && role == MEMBER
-      // stream_chat: show khi (hasTimeDiff || !isNextUserSame) && !isMyMessage
       final isFirst = position == BubblePosition.first ||
           position == BubblePosition.standalone;
-      final showAvatar = !isCurrentUser && isFirst;
+      final isLast = position == BubblePosition.last ||
+          position == BubblePosition.standalone;
+      final showAvatar = !isCurrentUser && isLast;
       final showSenderName = !isCurrentUser && isFirst && isGroupChat;
 
       // ── Reactions grouping ──
@@ -156,6 +158,7 @@ class MessageListTransformer {
         isDeleted: current.deletedAt != null,
         isLastRead: current.id == lastReadMessageId,
         isHighlighted: current.id == highlightedMessageId,
+        isFromCurrentUser: isCurrentUser,
       ));
     }
 
