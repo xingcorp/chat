@@ -12,7 +12,16 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat(chat): expose public API and lifecycle management for `ChatModule`&#10;&#10;- **Public API Surface**:&#10;    - Created `lib/flutter_chat_module.dart` as the primary entry point, exporting configuration, domain entities (Chat, Message, User, Attachment), and customization interfaces.&#10;    - Added comprehensive documentation and quick-start guides for integrating the module into host applications.&#10;- **Lifecycle &amp; State Management**:&#10;    - Implemented `ChatModule.dispose()` to clean up internal dependencies and reset the module state.&#10;    - Added `ChatModule.updateToken(newAccessToken)` to allow host apps to synchronize auth tokens with the chat module at runtime.&#10;    - Enhanced initialization logic with safety checks and error messaging for uninitialized access.&#10;- **Navigation &amp; Routing**:&#10;    - Added `MaterialPageRoute` helpers (`chatListRoute`, `chatDetailRoute`, `createGroupRoute`) for standardized navigation.&#10;    - Exposed `createGroupPage` as a public widget.&#10;    - Updated `chatListPage` and `chatDetailPage` with improved documentation and internal dependency handling.&#10;&#10;Files updated:&#10;- lib/flutter_chat_module.dart: New barrel file and public API documentation&#10;- lib/chat_module.dart: Enhanced with lifecycle methods, routing helpers, and token management" />
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat(chat): expose public API and lifecycle management for `ChatModule`&#10;&#10;- **Public API Surface**:&#10;    - Created `lib/flutter_chat_module.dart` as the primary entry point, exporting configuration, domain entities (Chat, Message, User, Attachment), and customization interfaces.&#10;    - Added comprehensive documentation and quick-start guides for integrating the module into host applications.&#10;- **Lifecycle &amp; State Management**:&#10;    - Implemented `ChatModule.dispose()` to clean up internal dependencies and reset the module state.&#10;    - Added `ChatModule.updateToken(newAccessToken)` to allow host apps to synchronize auth tokens with the chat module at runtime.&#10;    - Enhanced initialization logic with safety checks and error messaging for uninitialized access.&#10;- **Navigation &amp; Routing**:&#10;    - Added `MaterialPageRoute` helpers (`chatListRoute`, `chatDetailRoute`, `createGroupRoute`) for standardized navigation.&#10;    - Exposed `createGroupPage` as a public widget.&#10;    - Updated `chatListPage` and `chatDetailPage` with improved documentation and internal dependency handling.&#10;&#10;Files updated:&#10;- lib/flutter_chat_module.dart: New barrel file and public API documentation&#10;- lib/chat_module.dart: Enhanced with lifecycle methods, routing helpers, and token management">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/di/injection.config.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/injection.config.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/di/injection.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/injection.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/di/modules/core_module.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/modules/core_module.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/monitoring/analytics_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/monitoring/analytics_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/monitoring/crash_reporter.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/monitoring/crash_reporter.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/monitoring/performance_monitor.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/monitoring/performance_monitor.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/pages/chat/chat_details_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/pages/chat/chat_details_page.dart" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -215,14 +224,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00040" summary="fix bug 7">
-      <option name="closed" value="true" />
-      <created>1752734725978</created>
-      <option name="number" value="00040" />
-      <option name="presentableId" value="LOCAL-00040" />
-      <option name="project" value="LOCAL" />
-      <updated>1752734725978</updated>
     </task>
     <task id="LOCAL-00041" summary="fix bug 8">
       <option name="closed" value="true" />
@@ -608,7 +609,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770810255592</updated>
     </task>
-    <option name="localTasksCounter" value="89" />
+    <task id="LOCAL-00089" summary="feat(chat): expose public API and lifecycle management for `ChatModule`&#10;&#10;- **Public API Surface**:&#10;    - Created `lib/flutter_chat_module.dart` as the primary entry point, exporting configuration, domain entities (Chat, Message, User, Attachment), and customization interfaces.&#10;    - Added comprehensive documentation and quick-start guides for integrating the module into host applications.&#10;- **Lifecycle &amp; State Management**:&#10;    - Implemented `ChatModule.dispose()` to clean up internal dependencies and reset the module state.&#10;    - Added `ChatModule.updateToken(newAccessToken)` to allow host apps to synchronize auth tokens with the chat module at runtime.&#10;    - Enhanced initialization logic with safety checks and error messaging for uninitialized access.&#10;- **Navigation &amp; Routing**:&#10;    - Added `MaterialPageRoute` helpers (`chatListRoute`, `chatDetailRoute`, `createGroupRoute`) for standardized navigation.&#10;    - Exposed `createGroupPage` as a public widget.&#10;    - Updated `chatListPage` and `chatDetailPage` with improved documentation and internal dependency handling.&#10;&#10;Files updated:&#10;- lib/flutter_chat_module.dart: New barrel file and public API documentation&#10;- lib/chat_module.dart: Enhanced with lifecycle methods, routing helpers, and token management">
+      <option name="closed" value="true" />
+      <created>1770810539702</created>
+      <option name="number" value="00089" />
+      <option name="presentableId" value="LOCAL-00089" />
+      <option name="project" value="LOCAL" />
+      <updated>1770810539702</updated>
+    </task>
+    <option name="localTasksCounter" value="90" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

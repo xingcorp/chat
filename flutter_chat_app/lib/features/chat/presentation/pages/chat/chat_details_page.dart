@@ -14,6 +14,7 @@ import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversa
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/screens/chat/chat_header.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_message_timeline.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/read_receipt_avatars.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reply_preview.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/typing_indicator.dart';
@@ -664,39 +665,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                           return _buildEmptyState(context);
                         }
 
-                        return RefreshIndicator(
+                        return ChatMessageTimeline(
+                          scrollController: _scrollController,
+                          uiMessages: uiMessages,
+                          hasMore: hasMore,
+                          isLoadingMore: _isLoadingMore,
                           onRefresh: _onRefresh,
-                          child: ListView.builder(
-                            controller: _scrollController,
-                            reverse: true,
-                            padding: const EdgeInsets.all(AppDimens.paddingSmall),
-                            itemCount: uiMessages.length + (hasMore ? 1 : 0),
-                            itemBuilder: (context, index) {
-                              // Loading indicator at the top (end of reverse list)
-                              if (hasMore && index == uiMessages.length) {
-                                return _isLoadingMore
-                                    ? const Padding(
-                                        padding: EdgeInsets.all(16),
-                                        child: Center(
-                                          child: SizedBox(
-                                            width: 24,
-                                            height: 24,
-                                            child: CircularProgressIndicator(strokeWidth: 2),
-                                          ),
-                                        ),
-                                      )
-                                    : const SizedBox.shrink();
-                              }
-
-                              final uiState = uiMessages[index];
-                              return AutoScrollTag(
-                                key: ValueKey(uiState.id.isNotEmpty ? uiState.id : 'item_$index'),
-                                controller: _scrollController,
-                                index: index,
-                                child: _buildListItem(context, uiState, uiMessages),
-                              );
-                            },
-                          ),
+                          itemBuilder: (context, uiState, allUiMessages) =>
+                              _buildListItem(context, uiState, allUiMessages),
                         );
                       } else if (state is MessagesError) {
                         return _buildErrorState(

@@ -7,7 +7,6 @@ import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
-import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -15,7 +14,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 ///
 /// Implements [IAnalyticsService] using Firebase Analytics SDK.
 /// For environments without Firebase, use [NoOpAnalyticsService] instead.
-@LazySingleton(as: IAnalyticsService)
+/// Registered manually in injection.dart (standalone) or core_module.dart (NoOp default).
+/// Not auto-registered via Injectable because package mode has no Firebase.
 class AnalyticsService implements IAnalyticsService {
   /// Logger
   final _logger = Logger();

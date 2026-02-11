@@ -21,6 +21,9 @@ import 'package:flutter_chat_app/core/network/auth/auth_delegate.dart';
 import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
 import 'package:flutter_chat_app/core/network/graphql_client.dart' as core_graphql;
 import 'package:flutter_chat_app/core/network/network_info.dart';
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_remote_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.dart';
@@ -85,6 +88,28 @@ Future<void> registerCoreModule(GetIt getIt) async {
   if (!getIt.isRegistered<core_graphql.GraphQLClientWrapper>()) {
     getIt.registerLazySingleton<core_graphql.GraphQLClientWrapper>(
       () => getIt<core_graphql.GraphQLClientWrapperImpl>(),
+    );
+  }
+
+  // Monitoring interfaces — NoOp defaults registered before getIt.init()
+  // so eager singletons (MessageDeliveryTracker, MemoryOptimizer, etc.)
+  // can resolve them. Overridden by injection.dart (Firebase-backed, standalone)
+  // or chat_module_injection.dart (config-provided or NoOp) after init().
+  if (!getIt.isRegistered<IPerformanceMonitor>()) {
+    getIt.registerSingleton<IPerformanceMonitor>(
+      const NoOpPerformanceMonitor(),
+    );
+  }
+
+  if (!getIt.isRegistered<ICrashReporter>()) {
+    getIt.registerSingleton<ICrashReporter>(
+      const NoOpCrashReporter(),
+    );
+  }
+
+  if (!getIt.isRegistered<IAnalyticsService>()) {
+    getIt.registerSingleton<IAnalyticsService>(
+      const NoOpAnalyticsService(),
     );
   }
 

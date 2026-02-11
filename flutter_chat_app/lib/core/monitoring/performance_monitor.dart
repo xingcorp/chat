@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
-import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
@@ -29,7 +28,8 @@ const Map<TraceType, String> _traceNames = {
 ///
 /// Implements [IPerformanceMonitor] using Firebase Performance SDK.
 /// For environments without Firebase, use [NoOpPerformanceMonitor] instead.
-@LazySingleton(as: IPerformanceMonitor)
+/// Registered manually in injection.dart (standalone) or core_module.dart (NoOp default).
+/// Not auto-registered via Injectable because package mode has no Firebase.
 class PerformanceMonitor implements IPerformanceMonitor {
   /// Logger
   final _logger = Logger();

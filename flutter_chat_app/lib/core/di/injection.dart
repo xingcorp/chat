@@ -57,6 +57,13 @@ import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.d
 import 'package:flutter_chat_app/data/datasources/permissions_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/permissions/web_permissions_datasource.dart';
 
+import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
+import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
+import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
+import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
+import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+
 import 'injection.config.dart';
 import 'modules/core_module.dart';
 
@@ -104,6 +111,34 @@ Future<void> configureDependencies() async {
 
     // Step 3: Initialize auto-generated dependencies (feature services)
     getIt.init();
+
+    // Step 4: Override monitoring with Firebase-backed implementations
+    // (standalone mode only — package mode uses NoOp defaults from core_module
+    // or host-provided implementations from chat_module_injection)
+    if (getIt.isRegistered<IPerformanceMonitor>()) {
+      await getIt.unregister<IPerformanceMonitor>();
+    }
+    getIt.registerLazySingleton<IPerformanceMonitor>(
+      () => PerformanceMonitor(getIt<FirebasePerformance>()),
+    );
+
+    if (getIt.isRegistered<ICrashReporter>()) {
+      await getIt.unregister<ICrashReporter>();
+    }
+    getIt.registerLazySingleton<ICrashReporter>(
+      () => CrashReporter(getIt<FirebaseCrashlytics>()),
+    );
+
+    if (getIt.isRegistered<IAnalyticsService>()) {
+      await getIt.unregister<IAnalyticsService>();
+    }
+    getIt.registerLazySingleton<IAnalyticsService>(
+      () => AnalyticsService(
+        getIt<FirebaseAnalytics>(),
+        getIt<ICrashReporter>(),
+        getIt<IPerformanceMonitor>(),
+      ),
+    );
 
     if (kIsWeb) {
       if (getIt.isRegistered<PermissionsDataSource>()) {
