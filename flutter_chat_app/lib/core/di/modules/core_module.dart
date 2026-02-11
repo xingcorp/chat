@@ -13,11 +13,13 @@ import 'package:isar/isar.dart';
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/device_capability_service.dart';
-import 'package:flutter_chat_app/core/network/graphql_client.dart' as core_graphql;
 import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
 import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/core/network/cache/api_cache_manager.dart';
+import 'package:flutter_chat_app/core/network/auth/auth_delegate.dart';
+import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
+import 'package:flutter_chat_app/core/network/graphql_client.dart' as core_graphql;
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_local_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/message/message_remote_datasource.dart';
@@ -28,6 +30,7 @@ import 'package:flutter_chat_app/core/services/production_logger.dart';
 import 'package:flutter_chat_app/core/config/environment_manager.dart';
 import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -59,6 +62,24 @@ Future<void> registerCoreModule(GetIt getIt) async {
     final appCacheManager = AppCacheManager();
     await appCacheManager.initialize();
     getIt.registerSingleton<AppCacheManager>(appCacheManager);
+  }
+
+  // GraphQLClientWrapperImpl + GraphQLClientWrapper — must be registered before
+  // getIt.init() because auto-generated eager singletons (e.g. OfflineOperationProcessor)
+  // depend on GraphQLClientWrapper through the message repository chain.
+  // These are overridden in injection.dart / chat_module_injection.dart after init()
+  // via allowReassignment, but the initial registration is needed to satisfy
+  // dependencies during getIt.init().
+  if (!getIt.isRegistered<core_graphql.GraphQLClientWrapperImpl>()) {
+    getIt.registerLazySingleton<core_graphql.GraphQLClientWrapperImpl>(
+      () => core_graphql.GraphQLClientWrapperImpl(
+        getIt<GraphQLClient>(),
+        getIt<NetworkInfo>(),
+        getIt<TokenProvider>(),
+        getIt<AuthDelegate>(),
+        getIt<String>(instanceName: 'graphQlApiUrl'),
+      ),
+    );
   }
 
   if (!getIt.isRegistered<core_graphql.GraphQLClientWrapper>()) {

@@ -188,7 +188,7 @@ class RealtimeMessagingService {
   static const Duration _heartbeatInterval = Duration(seconds: 30);
 
   /// Constructor
-  RealtimeMessagingService(this._networkInfo, {String? serverUrl})
+  RealtimeMessagingService(this._networkInfo, {@Named('socketUrl') String? serverUrl})
       : _injectedServerUrl = serverUrl {
     _initializeService();
   }
