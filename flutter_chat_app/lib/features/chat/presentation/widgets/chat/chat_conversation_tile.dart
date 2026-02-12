@@ -89,22 +89,27 @@ class ChatConversationTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppDimens.spaceSmall),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                AppText(
-                  RelativeTimeFormatter.format(context, chat.lastMessageAt),
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: hasUnread ? AppColors.primary : AppColors.textSecondary,
-                    fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 88),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  AppText(
+                    RelativeTimeFormatter.format(context, chat.lastMessageAt),
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: hasUnread ? AppColors.primary : AppColors.textSecondary,
+                      fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                if (hasUnread) ...[
-                  const SizedBox(height: AppDimens.spaceXSmall),
-                  _UnreadBadge(count: chat.unreadCount),
+                  if (hasUnread) ...[
+                    const SizedBox(height: AppDimens.spaceXSmall),
+                    _UnreadBadge(count: chat.unreadCount),
+                  ],
                 ],
-              ],
+              ),
             ),
           ],
         ),

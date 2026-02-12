@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/chat_config.dart';
 import 'package:flutter_chat_app/core/app/chat_app_shell.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/di/chat_module_injection.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
@@ -212,13 +213,21 @@ class _ChatPackageWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(375, 812), // Standard iPhone X design size
-      minTextAdapt: true,
-      splitScreenMode: true,
-      builder: (context, _) => ChatAppShell.package(
-        child: child,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= AppDimens.breakpointDesktop;
+
+        return ScreenUtilInit(
+          designSize: isDesktop
+              ? Size(constraints.maxWidth, constraints.maxHeight)
+              : const Size(375, 812),
+          minTextAdapt: true,
+          splitScreenMode: true,
+          builder: (context, _) => ChatAppShell.package(
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

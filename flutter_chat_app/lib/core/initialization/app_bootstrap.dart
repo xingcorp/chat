@@ -8,6 +8,7 @@ import 'package:logger/logger.dart';
 
 import 'package:flutter_chat_app/core/config/environment_manager.dart';
 import 'package:flutter_chat_app/core/config/flavor_config.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/initialization/env_validator.dart';
 import 'package:flutter_chat_app/core/initialization/service_initializer.dart';
@@ -52,11 +53,19 @@ Future<void> runMainApp() async {
   // Start app immediately for fast startup
   runZonedGuarded(() {
     runApp(
-      ScreenUtilInit(
-        designSize: const Size(375, 812),
-        minTextAdapt: true,
-        splitScreenMode: true,
-        builder: (context, child) => const MyApp(),
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= AppDimens.breakpointDesktop;
+
+          return ScreenUtilInit(
+            designSize: isDesktop
+                ? Size(constraints.maxWidth, constraints.maxHeight)
+                : const Size(375, 812),
+            minTextAdapt: true,
+            splitScreenMode: true,
+            builder: (context, child) => const MyApp(),
+          );
+        },
       ),
     );
   }, (error, stackTrace) {

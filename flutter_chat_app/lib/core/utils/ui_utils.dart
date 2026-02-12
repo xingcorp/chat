@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 
 /// Lớp tiện ích cho UI
 class UIUtils {
   /// Wrap ứng dụng với ScreenUtilInit để hỗ trợ responsive
   static Widget wrapWithScreenUtil(Widget app) {
-    return ScreenUtilInit(
-      designSize: const Size(375, 812), // iPhone X design size
-      minTextAdapt: true,
-      splitScreenMode: true,
-      builder: (context, child) => app,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= AppDimens.breakpointDesktop;
+
+        return ScreenUtilInit(
+          designSize: isDesktop
+              ? Size(constraints.maxWidth, constraints.maxHeight)
+              : const Size(375, 812),
+          minTextAdapt: true,
+          splitScreenMode: true,
+          builder: (context, child) => app,
+        );
+      },
     );
   }
   
