@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 final Map<String, double> _imageAspectRatioCache = {};
@@ -69,131 +70,149 @@ class MediaGallery extends StatelessWidget {
 
     const borderRadius = BorderRadius.all(Radius.circular(8.0));
 
-    if (images.length == 1) {
-      return _SmartSingleImageTile(
-        image: images[0],
-        borderRadius: borderRadius,
-        onTap: () => _openFullscreenGallery(
-          context,
-          attachments: attachments.where((a) => a.type == 'image').toList(),
-          initialIndex: 0,
-        ),
-      );
-    } else if (images.length == 2) {
-      // Two images: 2 columns
-      return Row(
-        children: [
-          Expanded(
-            child: _buildImageTile(
-              context,
-              images[0],
-              index: 0,
-              height: 160,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(8.0),
-                bottomLeft: Radius.circular(8.0),
-              ),
-            ),
-          ),
-          const SizedBox(width: 4.0),
-          Expanded(
-            child: _buildImageTile(
-              context,
-              images[1],
-              index: 1,
-              height: 160,
-              borderRadius: const BorderRadius.only(
-                topRight: Radius.circular(8.0),
-                bottomRight: Radius.circular(8.0),
-              ),
-            ),
-          ),
-        ],
-      );
-    } else {
-      // 3+ images: 2x2 grid với counter cho thêm
-      final displayImages = images.take(4).toList();
-      final remaining = images.length - 4;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.of(context).size.width;
+        final isDesktop = availableWidth >= AppDimens.breakpointDesktop;
 
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // First row
-          Row(
+        double clamp(double v, double min, double max) {
+          if (v < min) return min;
+          if (v > max) return max;
+          return v;
+        }
+
+        final twoColTileHeight = isDesktop
+            ? clamp((availableWidth - 4) * 0.32, 160, 240)
+            : 160.0;
+        final gridTileHeight = isDesktop
+            ? clamp((availableWidth - 4) * 0.24, 120, 200)
+            : 120.0;
+
+        if (images.length == 1) {
+          return _SmartSingleImageTile(
+            image: images[0],
+            borderRadius: borderRadius,
+            onTap: () => _openFullscreenGallery(
+              context,
+              attachments: attachments.where((a) => a.type == 'image').toList(),
+              initialIndex: 0,
+            ),
+          );
+        } else if (images.length == 2) {
+          return Row(
             children: [
               Expanded(
                 child: _buildImageTile(
                   context,
-                  displayImages[0],
+                  images[0],
                   index: 0,
-                  height: 120,
+                  height: twoColTileHeight,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(8.0),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4.0),
-              Expanded(
-                child: _buildImageTile(
-                  context,
-                  displayImages[1],
-                  index: 1,
-                  height: 120,
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(8.0),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4.0),
-          // Second row
-          Row(
-            children: [
-              Expanded(
-                child: _buildImageTile(
-                  context,
-                  displayImages[2],
-                  index: 2,
-                  height: 120,
-                  borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(8.0),
                   ),
                 ),
               ),
               const SizedBox(width: 4.0),
               Expanded(
-                child: displayImages.length > 3
-                    ? _buildImageTile(
-                        context,
-                        displayImages[3],
-                        index: 3,
-                        height: 120,
-                        borderRadius: const BorderRadius.only(
-                          bottomRight: Radius.circular(8.0),
-                        ),
-                        overlay: remaining > 0
-                            ? Container(
-                                color: Colors.black54,
-                                alignment: Alignment.center,
-                                child: Text(
-                                  '+$remaining',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              )
-                            : null,
-                      )
-                    : const SizedBox(),
+                child: _buildImageTile(
+                  context,
+                  images[1],
+                  index: 1,
+                  height: twoColTileHeight,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(8.0),
+                    bottomRight: Radius.circular(8.0),
+                  ),
+                ),
               ),
             ],
-          ),
-        ],
-      );
-    }
+          );
+        } else {
+          final displayImages = images.take(4).toList();
+          final remaining = images.length - 4;
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildImageTile(
+                      context,
+                      displayImages[0],
+                      index: 0,
+                      height: gridTileHeight,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(8.0),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4.0),
+                  Expanded(
+                    child: _buildImageTile(
+                      context,
+                      displayImages[1],
+                      index: 1,
+                      height: gridTileHeight,
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(8.0),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4.0),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildImageTile(
+                      context,
+                      displayImages[2],
+                      index: 2,
+                      height: gridTileHeight,
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(8.0),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4.0),
+                  Expanded(
+                    child: displayImages.length > 3
+                        ? _buildImageTile(
+                            context,
+                            displayImages[3],
+                            index: 3,
+                            height: gridTileHeight,
+                            borderRadius: const BorderRadius.only(
+                              bottomRight: Radius.circular(8.0),
+                            ),
+                            overlay: remaining > 0
+                                ? Container(
+                                    color: Colors.black54,
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      '+$remaining',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  )
+                                : null,
+                          )
+                        : const SizedBox(),
+                  ),
+                ],
+              ),
+            ],
+          );
+        }
+      },
+    );
   }
 
   /// Build single image tile

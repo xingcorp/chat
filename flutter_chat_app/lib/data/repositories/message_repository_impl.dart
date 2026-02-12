@@ -337,14 +337,11 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   Future<Either<Failure, void>> markChatAsRead(String chatId) async {
     return executeOnlineFirst<void>(
       remoteDataSource: () async {
-        // Get unread count from local messages
-        final localMessages = await _localDataSource.getMessagesForChat(chatId);
-        final unreadCount = localMessages.where((m) => m.status != MessageStatus.read).length;
-        
-        // Mark as read on server
+        // Backend contract (see @src ChatMessageService.updateUnreadCount):
+        // use readCount=1000000 to reset unread count to 0 for the current user.
         await _remoteDataSource.markAsRead(
           conversationId: chatId,
-          readCount: unreadCount,
+          readCount: 1000000,
         );
         
         logger.i('Marked chat as read: $chatId');

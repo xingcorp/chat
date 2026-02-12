@@ -27,33 +27,51 @@ class ChatMessageTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget list = ListView.builder(
-      controller: scrollController,
-      reverse: true,
-      padding: const EdgeInsets.all(AppDimens.paddingSmall),
-      itemCount: uiMessages.length + (hasMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (hasMore && index == uiMessages.length) {
-          if (!isLoadingMore) return const SizedBox.shrink();
-          return const Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+    Widget list = LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= AppDimens.breakpointDesktop;
+
+        Widget child = ListView.builder(
+          controller: scrollController,
+          reverse: true,
+          padding: const EdgeInsets.all(AppDimens.paddingSmall),
+          itemCount: uiMessages.length + (hasMore ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (hasMore && index == uiMessages.length) {
+              if (!isLoadingMore) return const SizedBox.shrink();
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              );
+            }
+
+            final uiState = uiMessages[index];
+            return AutoScrollTag(
+              key: ValueKey(uiState.id.isNotEmpty ? uiState.id : 'item_$index'),
+              controller: scrollController,
+              index: index,
+              child: itemBuilder(context, uiState, uiMessages),
+            );
+          },
+        );
+
+        if (isDesktop) {
+          child = Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 920),
+              child: child,
             ),
           );
         }
 
-        final uiState = uiMessages[index];
-        return AutoScrollTag(
-          key: ValueKey(uiState.id.isNotEmpty ? uiState.id : 'item_$index'),
-          controller: scrollController,
-          index: index,
-          child: itemBuilder(context, uiState, uiMessages),
-        );
+        return child;
       },
     );
 

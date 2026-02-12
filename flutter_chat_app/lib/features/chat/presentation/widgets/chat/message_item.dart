@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/design_system.dart';
@@ -402,11 +403,20 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
         ? CrossAxisAlignment.end
         : CrossAxisAlignment.start;
 
+    double bubbleMaxWidth() {
+      final screenWidth = MediaQuery.of(context).size.width;
+      final relative = screenWidth * 0.75;
+      final isDesktop = screenWidth >= AppDimens.breakpointDesktop;
+      if (!isDesktop) return relative;
+      const cap = 520.0;
+      return relative > cap ? cap : relative;
+    }
+
     // Deleted message placeholder
     if (widget.uiState.isDeleted) {
       return Container(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
+          maxWidth: bubbleMaxWidth(),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         decoration: BoxDecoration(
@@ -458,7 +468,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
 
     return Container(
       constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.75,
+        maxWidth: bubbleMaxWidth(),
       ),
       decoration: BoxDecoration(
         color: widget.uiState.isHighlighted

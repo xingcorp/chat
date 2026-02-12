@@ -253,7 +253,7 @@ class AppTypingIndicatorState extends BaseState<AppTypingIndicator>
     }
 
     // More than 2 users
-    return l10n.multipleTyping(widget.users[0], widget.users.length - 1);
+    return l10n.multipleTyping(widget.users.length);
   }
 
   double _getDotSize() {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_chat_app/chat_module.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
-import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_list_page.dart';
+import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/create_group_page.dart';
 
 /// Helper for internal navigation within the chat module.
@@ -48,7 +48,7 @@ class ChatNavigationHelper {
       return Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => const ChatListPage(),
+          builder: (_) => const ChatHomePage(),
           settings: const RouteSettings(name: '/chat'),
         ),
       );
@@ -102,7 +102,7 @@ class ChatNavigationHelper {
       return ChatModule.chatListRoute();
     } else {
       return MaterialPageRoute(
-        builder: (_) => const ChatListPage(),
+        builder: (_) => const ChatHomePage(),
         settings: const RouteSettings(name: '/chat'),
       );
     }
@@ -144,7 +144,7 @@ class ChatNavigationHelper {
       return Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const ChatListPage(),
+          builder: (_) => const ChatHomePage(),
           settings: const RouteSettings(name: '/chat'),
         ),
       );

@@ -6,8 +6,8 @@ import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc
 import 'package:flutter_chat_app/features/auth/presentation/pages/auth/forgot_password_page.dart';
 import 'package:flutter_chat_app/features/auth/presentation/pages/auth/login_page.dart';
 import 'package:flutter_chat_app/features/auth/presentation/pages/auth/register_page.dart';
+import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
-import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_list_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/create_group_page.dart';
 import 'package:flutter_chat_app/presentation/pages/error_page.dart';
 import 'package:flutter_chat_app/presentation/pages/permissions/permissions_onboarding_page.dart';
@@ -123,7 +123,7 @@ class AppRouter {
             GoRoute(
               path: '/chats',
               pageBuilder: (context, state) => const NoTransitionPage(
-                child: ChatListPage(),
+                child: ChatHomePage(),
               ),
               routes: [
                 GoRoute(

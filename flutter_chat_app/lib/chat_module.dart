@@ -3,8 +3,8 @@ import 'package:flutter_chat_app/chat_config.dart';
 import 'package:flutter_chat_app/core/app/chat_app_shell.dart';
 import 'package:flutter_chat_app/core/di/chat_module_injection.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
+import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
-import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_list_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/create_group_page.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
@@ -123,7 +123,7 @@ class ChatModule {
   /// Wrapped with [ChatAppShell.package] for providers and localization.
   static Widget chatListPage() {
     _ensureInitialized();
-    return const _ChatPackageWrapper(child: ChatListPage());
+    return const _ChatPackageWrapper(child: ChatHomePage());
   }
 
   /// Returns the chat detail page widget for a specific conversation.
@@ -152,7 +152,7 @@ class ChatModule {
   static Route<dynamic> chatListRoute() {
     _ensureInitialized();
     return MaterialPageRoute<void>(
-      builder: (_) => const _ChatPackageWrapper(child: ChatListPage()),
+      builder: (_) => const _ChatPackageWrapper(child: ChatHomePage()),
       settings: const RouteSettings(name: '/chat'),
     );
   }
