@@ -2440,5 +2440,31 @@
         "type": "String"
       }
     }
+  },
+
+  "emptyMessage": "No message",
+  "@emptyMessage": {
+    "description": "Text shown for empty message content"
+  },
+
+  "attachment": "Attachment",
+  "@attachment": {
+    "description": "Generic attachment label"
+  },
+
+  "daysAgo": "{days}d",
+  "@daysAgo": {
+    "description": "Time indicator for days ago (compact format)",
+    "placeholders": {
+      "days": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+
+  "unknownUser": "Unknown User",
+  "@unknownUser": {
+    "description": "Fallback name for unknown users"
   }
 }

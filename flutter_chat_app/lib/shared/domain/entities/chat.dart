@@ -35,7 +35,13 @@ class Chat {
   
   /// Danh sách ID thành viên (backward compatibility)
   final List<String> participantIds;
-  
+
+  /// Danh sách ID người dùng đang typing
+  final List<String> typingUserIds;
+
+  /// Trạng thái muted của chat
+  final bool isMuted;
+
   /// Constructor
   const Chat({
     required this.id,
@@ -50,6 +56,8 @@ class Chat {
     this.unreadCount = 0,
     this.type = ChatType.direct,
     this.participantIds = const [],
+    this.typingUserIds = const [],
+    this.isMuted = false,
   });
   
   /// Tạo bản sao với một số thuộc tính mới
@@ -66,6 +74,8 @@ class Chat {
     int? unreadCount,
     ChatType? type,
     List<String>? participantIds,
+    List<String>? typingUserIds,
+    bool? isMuted,
   }) {
     return Chat(
       id: id ?? this.id,
@@ -80,6 +90,8 @@ class Chat {
       unreadCount: unreadCount ?? this.unreadCount,
       type: type ?? this.type,
       participantIds: participantIds ?? this.participantIds,
+      typingUserIds: typingUserIds ?? this.typingUserIds,
+      isMuted: isMuted ?? this.isMuted,
     );
   }
 
@@ -90,14 +102,14 @@ class Chat {
       name: json['name'] as String?,
       avatarUrl: json['avatarUrl'] as String?,
       description: json['description'] as String?,
-      groupType: json['groupType'] != null 
+      groupType: json['groupType'] != null
         ? _parseGroupType(json['groupType'] as String)
         : null,
       creatorId: json['creatorId'] as String?,
       members: (json['members'] as List<dynamic>?)
         ?.map((m) => ConversationMember.fromJson(m as Map<String, dynamic>))
         .toList() ?? [],
-      lastMessageTime: json['lastMessageTime'] != null 
+      lastMessageTime: json['lastMessageTime'] != null
         ? DateTime.parse(json['lastMessageTime'] as String)
         : null,
       lastMessagePreview: json['lastMessagePreview'] as String?,
@@ -106,6 +118,10 @@ class Chat {
       participantIds: (json['participantIds'] as List<dynamic>?)
         ?.map((id) => id as String)
         .toList() ?? [],
+      typingUserIds: (json['typingUserIds'] as List<dynamic>?)
+        ?.map((id) => id as String)
+        .toList() ?? [],
+      isMuted: json['isMuted'] as bool? ?? false,
     );
   }
 
@@ -124,6 +140,8 @@ class Chat {
       'unreadCount': unreadCount,
       'type': type.toString().split('.').last,
       'participantIds': participantIds,
+      'typingUserIds': typingUserIds,
+      'isMuted': isMuted,
     };
   }
 
@@ -165,6 +183,9 @@ class Chat {
   
   /// Alias for lastMessageTime (backward compatibility with UI)
   DateTime? get lastMessageAt => lastMessageTime;
+
+  /// Kiểm tra có ai đó đang typing không
+  bool get isTyping => typingUserIds.isNotEmpty;
 }
 
 /// Loại chat

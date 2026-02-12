@@ -1372,4 +1372,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String readBy(String names) {
     return 'Seen by $names';
   }
+
+  @override
+  String get emptyMessage => 'No message';
+
+  @override
+  String get attachment => 'Attachment';
+
+  @override
+  String daysAgo(int days) {
+    return '${days}d';
+  }
+
+  @override
+  String get unknownUser => 'Unknown User';
 }

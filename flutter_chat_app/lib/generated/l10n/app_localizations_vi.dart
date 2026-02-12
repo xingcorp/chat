@@ -1373,4 +1373,18 @@ class AppLocalizationsVi extends AppLocalizations {
   String readBy(String names) {
     return 'Đã xem bởi $names';
   }
+
+  @override
+  String get emptyMessage => 'Không có tin nhắn';
+
+  @override
+  String get attachment => 'Tệp đính kèm';
+
+  @override
+  String daysAgo(int days) {
+    return '$days ngày';
+  }
+
+  @override
+  String get unknownUser => 'Người dùng không xác định';
 }

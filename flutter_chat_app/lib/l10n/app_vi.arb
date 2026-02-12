@@ -508,5 +508,9 @@
   "linkPreview": "Xem trước liên kết",
   "openLink": "Mở liên kết",
   "copyLink": "Sao chép liên kết",
-  "readBy": "Đã xem bởi {names}"
+  "readBy": "Đã xem bởi {names}",
+  "emptyMessage": "Không có tin nhắn",
+  "attachment": "Tệp đính kèm",
+  "daysAgo": "{days} ngày",
+  "unknownUser": "Người dùng không xác định"
 }

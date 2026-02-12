@@ -2551,6 +2551,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Seen by {names}'**
   String readBy(String names);
+
+  /// Text shown for empty message content
+  ///
+  /// In en, this message translates to:
+  /// **'No message'**
+  String get emptyMessage;
+
+  /// Generic attachment label
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment'**
+  String get attachment;
+
+  /// Time indicator for days ago (compact format)
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d'**
+  String daysAgo(int days);
+
+  /// Fallback name for unknown users
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown User'**
+  String get unknownUser;
 }
 
 class _AppLocalizationsDelegate
