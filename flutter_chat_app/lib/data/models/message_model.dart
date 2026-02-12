@@ -583,6 +583,46 @@ class MessageModel {
       } catch (_) {}
     }
 
+    final reactions = <MessageReaction>[];
+    final reactionsMeta = metadataMap['reactions'];
+    if (reactionsMeta is List) {
+      for (final item in reactionsMeta) {
+        if (item is! Map<String, dynamic>) continue;
+        final code = item['code'];
+        final reactorIds = item['reactorIds'];
+        final reactors = item['reactors'];
+        if (code is! String || code.trim().isEmpty || reactorIds is! List) {
+          continue;
+        }
+
+        final reactorNameMap = <String, String>{};
+        if (reactors is List) {
+          for (var i = 0; i < reactorIds.length && i < reactors.length; i++) {
+            final id = reactorIds[i];
+            final r = reactors[i];
+            if (id is String && r is Map<String, dynamic>) {
+              final fullName = r['fullname'] ?? r['fullName'] ?? r['name'];
+              if (fullName is String && fullName.trim().isNotEmpty) {
+                reactorNameMap[id] = fullName.trim();
+              }
+            }
+          }
+        }
+
+        for (final rid in reactorIds) {
+          if (rid is! String || rid.trim().isEmpty) continue;
+          reactions.add(
+            MessageReaction(
+              code: code,
+              userId: rid,
+              userName: reactorNameMap[rid],
+              createdAt: createdAt,
+            ),
+          );
+        }
+      }
+    }
+
     String? senderName;
     String? senderAvatar;
     final senderMeta = metadataMap['sender'];
@@ -790,6 +830,7 @@ class MessageModel {
           ? [senderId]
           : [],
       attachments: attachments,
+      reactions: reactions,
     );
   }
 

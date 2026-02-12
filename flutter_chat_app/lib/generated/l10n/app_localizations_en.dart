@@ -180,7 +180,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messages => 'Messages';
 
   @override
-  String get noUsers => 'No users yet';
+  String get noUsers => 'No users';
 
   @override
   String get noChats => 'No chats yet';
@@ -995,7 +995,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadFailed => 'Download failed';
 
   @override
-  String get uploadFailed => 'Upload failed';
+  String get uploadFailed => 'Failed to upload file';
 
   @override
   String get uploading => 'Uploading...';
@@ -1386,4 +1386,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unknownUser => 'Unknown User';
+
+  @override
+  String get attachments => 'Attachments';
+
+  @override
+  String get insertEmoji => 'Insert emoji';
+
+  @override
+  String get uploadingFile => 'Uploading file...';
+
+  @override
+  String get locationPermissionDenied => 'Location permission denied';
+
+  @override
+  String get gettingLocation => 'Getting your location...';
+
+  @override
+  String get locationSent => 'Location sent';
+
+  @override
+  String get selectReaction => 'Select reaction';
+
+  @override
+  String reactedWith(String user, String emoji) {
+    return '$user reacted with $emoji';
+  }
+
+  @override
+  String get mentionUser => 'Mention user';
 }

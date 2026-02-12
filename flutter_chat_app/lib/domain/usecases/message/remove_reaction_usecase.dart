@@ -38,7 +38,7 @@ class RemoveReactionUseCase {
       final result = await _repository.updateReaction(
         messageId: messageId,
         code: code,
-        act: '0', // REVOKE = 0 per backend enum ChatMessageReactionAct
+        act: 'REVOKE',
       );
 
       return result.fold(

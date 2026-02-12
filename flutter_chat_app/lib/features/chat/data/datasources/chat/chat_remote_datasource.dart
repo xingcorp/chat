@@ -3,7 +3,9 @@ import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';
 import 'package:flutter_chat_app/data/dtos/chat_dto.dart';
 import 'package:flutter_chat_app/data/dtos/message_dto.dart';
 import 'package:flutter_chat_app/data/graphql/chat_operations.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:injectable/injectable.dart';
+import 'package:flutter/foundation.dart';
 
 /// **Chat Remote Data Source Interface**
 ///
@@ -235,6 +237,7 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     final result = await _client.query(
       ChatQueries.getConversationList,
       variables: variables,
+      fetchPolicy: FetchPolicy.networkOnly,
       operationName: 'GetConversationList',
     );
     
@@ -242,8 +245,9 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     if (data == null) {
       throw Exception('Failed to fetch conversation list');
     }
-    
-    return ChatListResponseDto.fromJson(data);
+
+    final dto = ChatListResponseDto.fromJson(data);
+    return dto;
   }
   
   @override

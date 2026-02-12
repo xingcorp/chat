@@ -260,8 +260,25 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
     if (data == null) {
       throw Exception('Failed to update reaction');
     }
-    
-    return MessageDto.fromJson(data);
+
+    // Backend returns a partial message payload for reaction updates (id + reactions).
+    // MessageDto requires additional fields, but repository callers only need success.
+    // Build a minimal DTO payload to avoid runtime parsing errors.
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final minimal = <String, dynamic>{
+      'id': data['id'] ?? messageId,
+      'message': '',
+      'urls': const <String>[],
+      'type': 'TEXT',
+      'createdAt': nowMs,
+      'senderId': '',
+      'conversationId': '',
+      'readerIds': const <String>[],
+      'reactions': (data['reactions'] as List?) ?? const <dynamic>[],
+      'mentionTo': const <dynamic>[],
+    };
+
+    return MessageDto.fromJson(minimal);
   }
   
   @override

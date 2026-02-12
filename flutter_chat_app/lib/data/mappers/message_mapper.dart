@@ -67,6 +67,25 @@ class MessageMapper {
           ),
         )
         .toList();
+
+    final reactions = <MessageReaction>[];
+    for (final r in dto.reactions) {
+      final reactorNameMap = <String, String>{};
+      for (var i = 0; i < r.reactorIds.length && i < r.reactors.length; i++) {
+        reactorNameMap[r.reactorIds[i]] = r.reactors[i].fullName;
+      }
+
+      for (final reactorId in r.reactorIds) {
+        reactions.add(
+          MessageReaction(
+            code: r.code,
+            userId: reactorId,
+            userName: reactorNameMap[reactorId],
+            createdAt: createdAt,
+          ),
+        );
+      }
+    }
     
     // Convert nested reply message (if backend provides it)
     ChatMessage? replyMessage;
@@ -143,6 +162,7 @@ class MessageMapper {
       mentionTo: mentions,
       replyMessageId: dto.replyMessageId,
       replyMessage: replyMessage,
+      reactions: reactions,
     );
   }
 

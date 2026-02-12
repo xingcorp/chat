@@ -202,7 +202,8 @@ class AppListViewState<T> extends BaseState<AppListView<T>> {
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
     // Trigger when 90% scrolled
-    return currentScroll >= (maxScroll * 0.9);
+    final near = currentScroll >= (maxScroll * 0.9);
+    return near;
   }
 
   Future<void> _loadMore() async {
