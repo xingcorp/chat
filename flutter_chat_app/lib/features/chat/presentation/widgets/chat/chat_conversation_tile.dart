@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/formatters/message_preview_formatter.dart';
 import 'package:flutter_chat_app/core/formatters/relative_time_formatter.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/typing_indicator_widget.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/design_system.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/indicators/user_presence_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:get_it/get_it.dart';
 
 
 class ChatConversationTile extends StatelessWidget {
@@ -38,13 +41,7 @@ class ChatConversationTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            AppHeroAvatar(
-              id: chat.id,
-              imageUrl: chat.avatarUrl,
-              displayName: chat.name,
-              size: AvatarSize.large,
-              hasBorder: false,
-            ),
+            _buildAvatarWithPresence(),
             const SizedBox(width: AppDimens.spaceMedium),
             Expanded(
               child: Column(
@@ -114,6 +111,42 @@ class ChatConversationTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// Build avatar with presence indicator for direct chats
+  Widget _buildAvatarWithPresence() {
+    // Only show presence for direct chats (1-1)
+    if (chat.type == ChatType.direct && chat.members.isNotEmpty) {
+      final currentUserId = GetIt.instance<CurrentUserProvider>().currentUserId;
+
+      // Get other user (not current user)
+      final otherMember = chat.members.firstWhere(
+        (m) => m.userId != currentUserId,
+        orElse: () => chat.members.first,
+      );
+
+      return UserPresenceBadge(
+        isConnected: otherMember.isConnected,
+        lastSeenAt: otherMember.viewMessagesFrom,
+        indicatorSize: 14.0,
+        child: AppHeroAvatar(
+          id: chat.id,
+          imageUrl: chat.avatarUrl,
+          displayName: chat.name,
+          size: AvatarSize.large,
+          hasBorder: false,
+        ),
+      );
+    }
+
+    // For group chats, show normal avatar without presence
+    return AppHeroAvatar(
+      id: chat.id,
+      imageUrl: chat.avatarUrl,
+      displayName: chat.name,
+      size: AvatarSize.large,
+      hasBorder: false,
     );
   }
 }
