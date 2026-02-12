@@ -1,4 +1,6 @@
 import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/pagination/page_request.dart';
+import 'package:flutter_chat_app/core/pagination/paged_result.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
@@ -24,25 +26,28 @@ class GetConversationsUseCase {
 
   /// Execute use case to get conversations
   ///
-  /// Returns Either<Failure, List<Chat>>
+  /// Returns Either<Failure, PagedResult<Chat>>
   /// - Left: Failure (NetworkFailure, ServerFailure, etc.)
-  /// - Right: List of Chat entities
-  Future<Either<Failure, List<Chat>>> call() async {
+  /// - Right: PagedResult of Chat entities
+  Future<Either<Failure, PagedResult<Chat>>> call(PageRequest request) async {
     _logger.info('GetConversationsUseCase: Starting operation');
 
     try {
-      final result = await _repository.getChats();
+      final result = await _repository.getChatsPage(request);
 
       return result.fold(
         (failure) {
           _logger.error('GetConversationsUseCase: Failed', failure);
           return Left(failure);
         },
-        (conversations) {
+        (paged) {
           _logger.info('GetConversationsUseCase: Success', {
-            'count': conversations.length,
+            'count': paged.items.length,
+            'total': paged.total,
+            'page': request.page,
+            'size': request.size,
           });
-          return Right(conversations);
+          return Right(paged);
         },
       );
     } catch (e, stackTrace) {

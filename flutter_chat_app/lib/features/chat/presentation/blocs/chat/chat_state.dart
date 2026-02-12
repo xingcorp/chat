@@ -12,6 +12,11 @@ class ChatState with _$ChatState {
   /// Loaded state with list of chats
   const factory ChatState.loaded({
     required List<Chat> chats,
+    @Default(false) bool hasMore,
+    @Default(false) bool isLoadingMore,
+    @Default(0) int page,
+    @Default(25) int pageSize,
+    @Default(0) int total,
   }) = _Loaded;
   
   /// Chat details loaded state

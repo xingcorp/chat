@@ -80,7 +80,7 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
               child: BlocConsumer<ChatBloc, ChatState>(
                 listener: (context, state) {
                   state.whenOrNull(
-                    loaded: (_) {
+                    loaded: (chats, hasMore, isLoadingMore, page, pageSize, total) {
                       safeSetState(() {
                         _isLoadingMore = false;
                       });
@@ -107,18 +107,15 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                   return state.when(
                     initial: () => _buildLoading(context),
                     loading: () => _buildLoading(context),
-                    loaded: (chats) {
+                    loaded: (chats, hasMore, isLoadingMore, page, pageSize, total) {
                       return AppListView<Chat>(
                         items: chats,
-                        isLoading: _isLoadingMore,
-                        hasMore: true,
+                        isLoading: isLoadingMore,
+                        hasMore: hasMore,
                         onRefresh: _onRefresh,
                         onLoadMore: () async {
-                          if (_isLoadingMore) return;
-                          safeSetState(() {
-                            _isLoadingMore = true;
-                          });
-                          _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
+                          if (isLoadingMore) return;
+                          _chatBloc.add(const ChatEvent.loadMoreChats());
                         },
                         emptyWidget: _buildEmptyState(context),
                         separatorBuilder: (context, index) => const Divider(
