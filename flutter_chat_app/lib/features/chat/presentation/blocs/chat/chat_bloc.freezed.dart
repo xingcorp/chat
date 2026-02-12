@@ -6235,7 +6235,7 @@ class __$$MessageStatusChangedImplCopyWithImpl<$Res>
   $Res call({
     Object? chatId = null,
     Object? localId = null,
-    Object? status = freezed,
+    Object? status = null,
     Object? serverId = freezed,
   }) {
     return _then(_$MessageStatusChangedImpl(
@@ -6247,7 +6247,7 @@ class __$$MessageStatusChangedImplCopyWithImpl<$Res>
           ? _value.localId
           : localId // ignore: cast_nullable_to_non_nullable
               as String,
-      status: freezed == status
+      status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as MessageQueueStatus,
@@ -6289,14 +6289,14 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
             other is _$MessageStatusChangedImpl &&
             (identical(other.chatId, chatId) || other.chatId == chatId) &&
             (identical(other.localId, localId) || other.localId == localId) &&
-            const DeepCollectionEquality().equals(other.status, status) &&
+            (identical(other.status, status) || other.status == status) &&
             (identical(other.serverId, serverId) ||
                 other.serverId == serverId));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, chatId, localId,
-      const DeepCollectionEquality().hash(status), serverId);
+  int get hashCode =>
+      Object.hash(runtimeType, chatId, localId, status, serverId);
 
   @JsonKey(ignore: true)
   @override

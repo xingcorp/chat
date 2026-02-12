@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/media.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/indicators/user_presence_indicator.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
+import 'package:get_it/get_it.dart';
 
 /// Header cho màn hình chi tiết chat
 class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
@@ -42,12 +45,17 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
           // Avatar với Hero animation từ danh sách chat
           GestureDetector(
             onTap: onAvatarTap,
-            child: AppHeroAvatar(
-              id: chat.id,
-              imageUrl: chat.avatarUrl,
-              displayName: chat.name,
-              size: AvatarSize.medium,
-              hasBorder: true,
+            child: UserPresenceBadge(
+              isConnected: _getIsConnected(),
+              lastSeenAt: _getLastSeenAt(),
+              indicatorSize: 14.0,
+              child: AppHeroAvatar(
+                id: chat.id,
+                imageUrl: chat.avatarUrl,
+                displayName: chat.name,
+                size: AvatarSize.medium,
+                hasBorder: true,
+              ),
             ),
           ),
           
@@ -93,17 +101,64 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
   
   /// Hiển thị trạng thái chat
   Widget _buildStatusText(BuildContext context, ThemeData theme) {
-    // Đây là một placeholder, trong triển khai thực tế cần lấy trạng thái từ user service
-    // hoặc connectivity service
-    const bool isOnline = true;
-    
+    // For direct chat (1-1), show other user's presence
+    // For group chat, show member count
+    if (chat.type == ChatType.direct && chat.members.isNotEmpty) {
+      final currentUserId = GetIt.instance<CurrentUserProvider>().currentUserId;
+
+      // Get other user (not current user)
+      final otherMember = chat.members.firstWhere(
+        (m) => m.userId != currentUserId,
+        orElse: () => chat.members.first,
+      );
+
+      return UserPresenceText(
+        isConnected: otherMember.isConnected,
+        lastSeenAt: otherMember.viewMessagesFrom,
+      );
+    }
+
+    // Group chat: show member count
     return Text(
-      isOnline ? context.l10n.online : context.l10n.offline,
+      '${chat.members.length} ${context.l10n.members}',
       style: TextStyle(
         fontSize: 12,
         color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
       ),
     );
+  }
+
+  /// Get isConnected for direct chat (other user)
+  bool _getIsConnected() {
+    if (chat.type != ChatType.direct || chat.members.isEmpty) {
+      return false;
+    }
+
+    final currentUserId = GetIt.instance<CurrentUserProvider>().currentUserId;
+
+    // Get other user (not self)
+    final otherMember = chat.members.firstWhere(
+      (m) => m.userId != currentUserId,
+      orElse: () => chat.members.first,
+    );
+
+    return otherMember.isConnected;
+  }
+
+  /// Get lastSeenAt for direct chat (other user)
+  DateTime? _getLastSeenAt() {
+    if (chat.type != ChatType.direct || chat.members.isEmpty) {
+      return null;
+    }
+
+    final currentUserId = GetIt.instance<CurrentUserProvider>().currentUserId;
+
+    final otherMember = chat.members.firstWhere(
+      (m) => m.userId != currentUserId,
+      orElse: () => chat.members.first,
+    );
+
+    return otherMember.viewMessagesFrom;
   }
   
   @override

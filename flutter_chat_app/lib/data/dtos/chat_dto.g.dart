@@ -131,6 +131,7 @@ _$MemberDtoImpl _$$MemberDtoImplFromJson(Map<String, dynamic> json) =>
       hide: json['hide'] as bool? ?? false,
       unreadCount: (json['unreadCount'] as num?)?.toInt() ?? 0,
       lastMessageReadId: json['lastMessageReadId'] as String?,
+      viewMessagesFrom: (json['viewMessagesFrom'] as num?)?.toInt(),
       user: json['user'] == null
           ? null
           : UserDto.fromJson(json['user'] as Map<String, dynamic>),
@@ -145,6 +146,7 @@ Map<String, dynamic> _$$MemberDtoImplToJson(_$MemberDtoImpl instance) =>
       'hide': instance.hide,
       'unreadCount': instance.unreadCount,
       'lastMessageReadId': instance.lastMessageReadId,
+      'viewMessagesFrom': instance.viewMessagesFrom,
       'user': instance.user,
     };
 
