@@ -8,8 +8,6 @@ class MentionTextEditingController extends TextEditingController {
     Map<String, String> mentionNameById = const <String, String>{},
   }) : _mentionNameById = Map<String, String>.from(mentionNameById);
 
-  static final RegExp _mentionPattern = RegExp(r'\[@([^\]]+)\]');
-
   Map<String, String> _mentionNameById;
 
   void updateMentions(Map<String, String> mentionNameById) {
@@ -25,51 +23,24 @@ class MentionTextEditingController extends TextEditingController {
     notifyListeners();
   }
 
-  @override
-  TextSpan buildTextSpan({
-    required BuildContext context,
-    TextStyle? style,
-    required bool withComposing,
-  }) {
-    final baseStyle = style ?? DefaultTextStyle.of(context).style;
-    final mentionStyle = baseStyle.copyWith(
-      color: Theme.of(context).colorScheme.primary,
-      fontWeight: FontWeight.w600,
-    );
+  String toBackendMentionFormat(String input) {
+    var result = input;
 
-    final raw = text;
-    if (raw.isEmpty) {
-      return TextSpan(style: baseStyle, text: raw);
+    final entries = _mentionNameById.entries.toList()
+      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+
+    for (final e in entries) {
+      final name = e.value.trim();
+      if (name.isEmpty) continue;
+
+      final escaped = RegExp.escape('@$name');
+      result = result.replaceAllMapped(
+        RegExp('(^|\\s)($escaped)(?=\\s|)'),
+        (m) => '${m.group(1)}[@${e.key}]',
+      );
     }
 
-    final matches = _mentionPattern.allMatches(raw).toList();
-    if (matches.isEmpty) {
-      return TextSpan(style: baseStyle, text: raw);
-    }
-
-    final children = <InlineSpan>[];
-    var last = 0;
-
-    for (final m in matches) {
-      if (m.start > last) {
-        children.add(TextSpan(text: raw.substring(last, m.start), style: baseStyle));
-      }
-
-      final id = (m.group(1) ?? '').trim();
-      final name = _mentionNameById[id];
-      final display = (name != null && name.trim().isNotEmpty)
-          ? '@${name.trim()}'
-          : '@$id';
-
-      children.add(TextSpan(text: display, style: mentionStyle));
-      last = m.end;
-    }
-
-    if (last < raw.length) {
-      children.add(TextSpan(text: raw.substring(last), style: baseStyle));
-    }
-
-    return TextSpan(style: baseStyle, children: children);
+    return result;
   }
 }
 
@@ -208,15 +179,15 @@ class _MentionTextFieldState extends State<MentionTextField> {
     final text = widget.controller.text;
     final cursorPos = widget.controller.selection.baseOffset;
 
-    // Replace from '@' to cursor with mention format [@userId]
+    // Replace from '@' to cursor with mention display format @FullName
     final before = text.substring(0, _mentionStartIndex);
     final after = text.substring(cursorPos);
 
-    // Format: [@userId] or use displayName for better UX
-    final mentionText = '[@${member.userId}] ';
+    final name = (member.fullName ?? member.displayName ?? '').trim();
+    final display = name.isNotEmpty ? '@$name' : '@${member.userId}';
+    final mentionText = '$display ';
     final newText = before + mentionText + after;
 
-    final name = (member.fullName ?? member.displayName ?? '').trim();
     if (widget.controller is MentionTextEditingController && name.isNotEmpty) {
       (widget.controller as MentionTextEditingController)
           .upsertMention(member.userId, name);

@@ -311,7 +311,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   // ══════════════════════════════════════════
 
   void _sendMessage() {
-    final text = _messageController.text.trim();
+    final raw = _messageController.text.trim();
+    final text = _messageController.toBackendMentionFormat(raw).trim();
     if (text.isEmpty) {
       AppSnackBar.show(
         context: context,
