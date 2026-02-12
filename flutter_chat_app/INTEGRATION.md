@@ -65,6 +65,26 @@ Then run:
 flutter pub get
 ```
 
+### Standalone Mode Setup
+
+If you're running flutter_chat_app as a **standalone app** (not as a package), you need to generate the `.env` file:
+
+```bash
+# Default: creates .env from .env.staging
+dart run flutter_chat_app:setup
+
+# For production environment
+dart run flutter_chat_app:setup --env production
+
+# Interactive mode - customize key values
+dart run flutter_chat_app:setup --interactive
+
+# Force overwrite existing .env
+dart run flutter_chat_app:setup --force
+```
+
+> **Note:** When using flutter_chat_app as a **package** (via `ChatModule.initialize()`), you don't need `.env` — configuration is passed via `ChatConfig` instead.
+
 ---
 
 ## Quick Start

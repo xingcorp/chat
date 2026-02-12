@@ -4,6 +4,9 @@ publish_to: 'none'
 
 version: 1.0.0+1
 
+executables:
+  setup: setup
+
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
@@ -161,7 +164,6 @@ flutter:
     - assets/icons/
     - assets/translations/
     - assets/animations/
-    - .env
     - .env.staging
     - .env.production
 
