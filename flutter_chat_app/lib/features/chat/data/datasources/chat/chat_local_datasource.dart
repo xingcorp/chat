@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
@@ -120,6 +122,10 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
     try {
       final existing = await _databaseService.getChatByServerId(chat.id);
 
+      final membersJson = chat.members.isNotEmpty
+          ? jsonEncode(chat.members.map((m) => m.toJson()).toList())
+          : existing?.membersJson;
+
       // Convert Chat domain entity to ChatModel
       final chatModel = ChatModel(
         id: existing?.id ?? chat.id.toIsarId(),
@@ -131,6 +137,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         unreadCount: chat.unreadCount,
         participantIds: chat.participantIds,
         avatarUrl: chat.avatarUrl,
+        membersJson: membersJson,
         createdAt: DateTime.now(),
       );
       
@@ -159,6 +166,11 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
       // Save each chat using database service
       for (final chat in chats) {
         final existing = await _databaseService.getChatByServerId(chat.id);
+
+        final membersJson = chat.members.isNotEmpty
+            ? jsonEncode(chat.members.map((m) => m.toJson()).toList())
+            : existing?.membersJson;
+
         final chatModel = ChatModel(
           id: existing?.id ?? chat.id.toIsarId(),
           serverId: chat.id,
@@ -169,6 +181,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
           unreadCount: chat.unreadCount,
           participantIds: chat.participantIds,
           avatarUrl: chat.avatarUrl,
+          membersJson: membersJson,
           createdAt: DateTime.now(),
         );
         await _databaseService.saveChat(chatModel);

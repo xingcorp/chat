@@ -59,7 +59,8 @@ class ChatDetailsPage extends BaseStatefulWidget {
 }
 
 class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
-  final TextEditingController _messageController = TextEditingController();
+  final MentionTextEditingController _messageController = MentionTextEditingController();
+  final FocusNode _messageFocusNode = FocusNode();
   late final AutoScrollController _scrollController;
   late final MessageBloc _messageBloc;
   late final GetConversationDetailUseCase _getConversationDetail;
@@ -174,6 +175,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         safeSetState(() {
           _chat = chat;
         });
+
+        _messageController.updateMentions({
+          for (final m in chat.members)
+            if (m.userId.isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
+              m.userId: m.fullName!.trim(),
+        });
+
         _messageBloc.setTransformContext(
           currentUserId: _currentUserId,
           isGroupChat: chat.type == ChatType.group,
@@ -289,6 +297,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   @override
   void dispose() {
     _messageController.dispose();
+    _messageFocusNode.dispose();
     _scrollController.dispose();
     _messageBloc.close();
     _typingSubscription?.cancel();
@@ -891,6 +900,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                     child: _chat != null && _chat!.members.isNotEmpty
                         ? MentionTextField(
                             controller: _messageController,
+                            focusNode: _messageFocusNode,
                             members: _chat!.members,
                             currentUserId: _currentUserId,
                             hint: context.l10n.typeMessage,

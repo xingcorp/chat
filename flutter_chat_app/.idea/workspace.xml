@@ -14,10 +14,10 @@
   <component name="ChangeListManager">
     <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat(chat): improve message reactions, pagination logic, and localization&#10;&#10;- **Message Reactions**:&#10;    - Update `AddReactionUseCase` and `RemoveReactionUseCase` to use string-based actions (`ADD`, `REVOKE`) instead of numeric codes.&#10;    - Enhance `MessageRemoteDataSource` to handle partial backend responses for reactions by constructing a minimal `MessageDto` to prevent parsing errors.&#10;    - Improve `RealtimeService` to robustly handle reaction data types (String/num) from backend events.&#10;    - Update `MessageMapper` and `MessageModel` to correctly extract and map reaction metadata, including reactor names and IDs.&#10;- **Pagination &amp; Data Fetching**:&#10;    - Refactor `ChatBloc` pagination logic to use a size-based heuristic for `hasMore` flags, improving reliability when backend totals are inconsistent.&#10;    - Set `FetchPolicy.networkOnly` for conversation list queries in `ChatRemoteDataSource` to ensure fresh data.&#10;    - Minor cleanup in `AppListView` and `ChatBloc` for better readability and state tracking.&#10;- **Internationalization**:&#10;    - Add and update localized strings for reactions, attachments, emojis, location sharing, and file uploads in both English and Vietnamese.&#10;    - Refine existing translation keys for consistency (e.g., &quot;No users&quot;, &quot;Failed to upload file&quot;).&#10;&#10;Files updated:&#10;- lib/data/datasources/message/message_remote_datasource.dart: Added minimal DTO construction for reactions&#10;- lib/features/chat/data/datasources/chat/chat_remote_datasource.dart: Added network-only fetch policy&#10;- lib/features/chat/presentation/blocs/chat/chat_bloc.dart: Refactored pagination logic&#10;- lib/data/mappers/message_mapper.dart &amp; lib/data/models/message_model.dart: Enhanced reaction mapping&#10;- lib/core/services/realtime_service.dart: Improved reaction data parsing&#10;- lib/domain/usecases/message/add_reaction_usecase.dart &amp; remove_reaction_usecase.dart: Updated action constants&#10;- lib/generated/l10n/app_localizations*: Added and updated chat-related strings">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/core/services/realtime_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/services/realtime_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/data/datasources/chat/chat_local_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/data/datasources/chat/chat_local_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/data/repositories/chat_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/data/repositories/chat_repository.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/pages/chat/chat_details_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/pages/chat/chat_details_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/message_item.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/message_item.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/reaction_bar.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/reaction_bar.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/mention_text_field.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/mention_text_field.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -221,14 +221,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00050" summary="fix 6">
-      <option name="closed" value="true" />
-      <created>1752850507442</created>
-      <option name="number" value="00050" />
-      <option name="presentableId" value="LOCAL-00050" />
-      <option name="project" value="LOCAL" />
-      <updated>1752850507442</updated>
     </task>
     <task id="LOCAL-00051" summary="fix sua nhieu">
       <option name="closed" value="true" />
@@ -614,7 +606,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770900881424</updated>
     </task>
-    <option name="localTasksCounter" value="99" />
+    <task id="LOCAL-00099" summary="feat(chat): improve message reactions, pagination logic, and localization&#10;&#10;- **Message Reactions**:&#10;    - Update `AddReactionUseCase` and `RemoveReactionUseCase` to use string-based actions (`ADD`, `REVOKE`) instead of numeric codes.&#10;    - Enhance `MessageRemoteDataSource` to handle partial backend responses for reactions by constructing a minimal `MessageDto` to prevent parsing errors.&#10;    - Improve `RealtimeService` to robustly handle reaction data types (String/num) from backend events.&#10;    - Update `MessageMapper` and `MessageModel` to correctly extract and map reaction metadata, including reactor names and IDs.&#10;- **Pagination &amp; Data Fetching**:&#10;    - Refactor `ChatBloc` pagination logic to use a size-based heuristic for `hasMore` flags, improving reliability when backend totals are inconsistent.&#10;    - Set `FetchPolicy.networkOnly` for conversation list queries in `ChatRemoteDataSource` to ensure fresh data.&#10;    - Minor cleanup in `AppListView` and `ChatBloc` for better readability and state tracking.&#10;- **Internationalization**:&#10;    - Add and update localized strings for reactions, attachments, emojis, location sharing, and file uploads in both English and Vietnamese.&#10;    - Refine existing translation keys for consistency (e.g., &quot;No users&quot;, &quot;Failed to upload file&quot;).&#10;&#10;Files updated:&#10;- lib/data/datasources/message/message_remote_datasource.dart: Added minimal DTO construction for reactions&#10;- lib/features/chat/data/datasources/chat/chat_remote_datasource.dart: Added network-only fetch policy&#10;- lib/features/chat/presentation/blocs/chat/chat_bloc.dart: Refactored pagination logic&#10;- lib/data/mappers/message_mapper.dart &amp; lib/data/models/message_model.dart: Enhanced reaction mapping&#10;- lib/core/services/realtime_service.dart: Improved reaction data parsing&#10;- lib/domain/usecases/message/add_reaction_usecase.dart &amp; remove_reaction_usecase.dart: Updated action constants&#10;- lib/generated/l10n/app_localizations*: Added and updated chat-related strings">
+      <option name="closed" value="true" />
+      <created>1770902893270</created>
+      <option name="number" value="00099" />
+      <option name="presentableId" value="LOCAL-00099" />
+      <option name="project" value="LOCAL" />
+      <updated>1770902893270</updated>
+    </task>
+    <option name="localTasksCounter" value="100" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

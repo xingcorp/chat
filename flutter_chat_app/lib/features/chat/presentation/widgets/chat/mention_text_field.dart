@@ -2,6 +2,77 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 
+class MentionTextEditingController extends TextEditingController {
+  MentionTextEditingController({
+    super.text,
+    Map<String, String> mentionNameById = const <String, String>{},
+  }) : _mentionNameById = Map<String, String>.from(mentionNameById);
+
+  static final RegExp _mentionPattern = RegExp(r'\[@([^\]]+)\]');
+
+  Map<String, String> _mentionNameById;
+
+  void updateMentions(Map<String, String> mentionNameById) {
+    _mentionNameById = Map<String, String>.from(mentionNameById);
+    notifyListeners();
+  }
+
+  void upsertMention(String userId, String fullName) {
+    final id = userId.trim();
+    final name = fullName.trim();
+    if (id.isEmpty || name.isEmpty) return;
+    _mentionNameById[id] = name;
+    notifyListeners();
+  }
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    final baseStyle = style ?? DefaultTextStyle.of(context).style;
+    final mentionStyle = baseStyle.copyWith(
+      color: Theme.of(context).colorScheme.primary,
+      fontWeight: FontWeight.w600,
+    );
+
+    final raw = text;
+    if (raw.isEmpty) {
+      return TextSpan(style: baseStyle, text: raw);
+    }
+
+    final matches = _mentionPattern.allMatches(raw).toList();
+    if (matches.isEmpty) {
+      return TextSpan(style: baseStyle, text: raw);
+    }
+
+    final children = <InlineSpan>[];
+    var last = 0;
+
+    for (final m in matches) {
+      if (m.start > last) {
+        children.add(TextSpan(text: raw.substring(last, m.start), style: baseStyle));
+      }
+
+      final id = (m.group(1) ?? '').trim();
+      final name = _mentionNameById[id];
+      final display = (name != null && name.trim().isNotEmpty)
+          ? '@${name.trim()}'
+          : '@$id';
+
+      children.add(TextSpan(text: display, style: mentionStyle));
+      last = m.end;
+    }
+
+    if (last < raw.length) {
+      children.add(TextSpan(text: raw.substring(last), style: baseStyle));
+    }
+
+    return TextSpan(style: baseStyle, children: children);
+  }
+}
+
 /// **MentionTextField - Autocomplete @mention support**
 ///
 /// TextField with real-time mention detection and autocomplete dropdown.
@@ -145,6 +216,12 @@ class _MentionTextFieldState extends State<MentionTextField> {
     final mentionText = '[@${member.userId}] ';
     final newText = before + mentionText + after;
 
+    final name = (member.fullName ?? member.displayName ?? '').trim();
+    if (widget.controller is MentionTextEditingController && name.isNotEmpty) {
+      (widget.controller as MentionTextEditingController)
+          .upsertMention(member.userId, name);
+    }
+
     widget.controller.value = TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(
@@ -152,11 +229,23 @@ class _MentionTextFieldState extends State<MentionTextField> {
       ),
     );
 
+    final caretOffset = before.length + mentionText.length;
+
     // Hide overlay
     setState(() {
       _showMentionList = false;
     });
     _removeOverlay();
+
+    // Keep cursor/focus in input after selecting from overlay.
+    final focusNode = widget.focusNode;
+    if (focusNode != null) {
+      FocusScope.of(context).requestFocus(focusNode);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!focusNode.hasFocus) FocusScope.of(context).requestFocus(focusNode);
+        widget.controller.selection = TextSelection.collapsed(offset: caretOffset);
+      });
+    }
   }
 
   void _showOverlay() {
