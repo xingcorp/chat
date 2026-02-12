@@ -163,6 +163,7 @@ class MemberDto with _$MemberDto {
     @Default(false) bool hide,
     @Default(0) int unreadCount,
     String? lastMessageReadId,
+    int? viewMessagesFrom, // Timestamp in milliseconds
     UserDto? user,
   }) = _MemberDto;
 
@@ -221,6 +222,9 @@ extension ChatDtoMapper on ChatDto {
             isHidden: m.hide,
             unreadCount: m.unreadCount,
             lastMessageReadId: m.lastMessageReadId,
+            viewMessagesFrom: m.viewMessagesFrom != null
+                ? DateTime.fromMillisecondsSinceEpoch(m.viewMessagesFrom!)
+                : null,
           ),
         )
         .toList();

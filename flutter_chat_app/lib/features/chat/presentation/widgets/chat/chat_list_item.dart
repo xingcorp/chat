@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/design_system.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/indicators/user_presence_indicator.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -45,15 +47,8 @@ class ChatListItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              // Avatar với Hero animation
-              AppHeroAvatar(
-                id: chat.id,
-                imageUrl: chat.avatarUrl,
-                displayName: chat.name,
-                size: AvatarSize.large,
-                hasBorder: true,
-                borderColor: theme.colorScheme.primary,
-              ),
+              // Avatar với Hero animation + presence badge
+              _buildAvatarWithPresence(context, theme),
               const SizedBox(width: 12),
               
               // Nội dung chat
@@ -147,6 +142,44 @@ class ChatListItem extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// Build avatar with presence indicator for direct chats
+  Widget _buildAvatarWithPresence(BuildContext context, ThemeData theme) {
+    // Only show presence for direct chats
+    if (chat.type == ChatType.direct && chat.members.isNotEmpty) {
+      final currentUserId = GetIt.instance<CurrentUserProvider>().currentUserId;
+
+      // Get other user (not current user)
+      final otherMember = chat.members.firstWhere(
+        (m) => m.userId != currentUserId,
+        orElse: () => chat.members.first,
+      );
+
+      return UserPresenceBadge(
+        isConnected: otherMember.isConnected,
+        lastSeenAt: otherMember.viewMessagesFrom,
+        indicatorSize: 16.0,
+        child: AppHeroAvatar(
+          id: chat.id,
+          imageUrl: chat.avatarUrl,
+          displayName: chat.name,
+          size: AvatarSize.large,
+          hasBorder: true,
+          borderColor: theme.colorScheme.primary,
+        ),
+      );
+    }
+
+    // For group chats, show normal avatar without presence
+    return AppHeroAvatar(
+      id: chat.id,
+      imageUrl: chat.avatarUrl,
+      displayName: chat.name,
+      size: AvatarSize.large,
+      hasBorder: true,
+      borderColor: theme.colorScheme.primary,
     );
   }
 } 

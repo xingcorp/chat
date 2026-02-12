@@ -75,6 +75,7 @@ class ChatQueries {
             hide
             unreadCount
             lastMessageReadId
+            viewMessagesFrom
             user {
               id
               fullname

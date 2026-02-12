@@ -1455,6 +1455,8 @@ mixin _$MemberDto {
   bool get hide => throw _privateConstructorUsedError;
   int get unreadCount => throw _privateConstructorUsedError;
   String? get lastMessageReadId => throw _privateConstructorUsedError;
+  int? get viewMessagesFrom =>
+      throw _privateConstructorUsedError; // Timestamp in milliseconds
   UserDto? get user => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1476,6 +1478,7 @@ abstract class $MemberDtoCopyWith<$Res> {
       bool hide,
       int unreadCount,
       String? lastMessageReadId,
+      int? viewMessagesFrom,
       UserDto? user});
 
   $UserDtoCopyWith<$Res>? get user;
@@ -1501,6 +1504,7 @@ class _$MemberDtoCopyWithImpl<$Res, $Val extends MemberDto>
     Object? hide = null,
     Object? unreadCount = null,
     Object? lastMessageReadId = freezed,
+    Object? viewMessagesFrom = freezed,
     Object? user = freezed,
   }) {
     return _then(_value.copyWith(
@@ -1532,6 +1536,10 @@ class _$MemberDtoCopyWithImpl<$Res, $Val extends MemberDto>
           ? _value.lastMessageReadId
           : lastMessageReadId // ignore: cast_nullable_to_non_nullable
               as String?,
+      viewMessagesFrom: freezed == viewMessagesFrom
+          ? _value.viewMessagesFrom
+          : viewMessagesFrom // ignore: cast_nullable_to_non_nullable
+              as int?,
       user: freezed == user
           ? _value.user
           : user // ignore: cast_nullable_to_non_nullable
@@ -1568,6 +1576,7 @@ abstract class _$$MemberDtoImplCopyWith<$Res>
       bool hide,
       int unreadCount,
       String? lastMessageReadId,
+      int? viewMessagesFrom,
       UserDto? user});
 
   @override
@@ -1592,6 +1601,7 @@ class __$$MemberDtoImplCopyWithImpl<$Res>
     Object? hide = null,
     Object? unreadCount = null,
     Object? lastMessageReadId = freezed,
+    Object? viewMessagesFrom = freezed,
     Object? user = freezed,
   }) {
     return _then(_$MemberDtoImpl(
@@ -1623,6 +1633,10 @@ class __$$MemberDtoImplCopyWithImpl<$Res>
           ? _value.lastMessageReadId
           : lastMessageReadId // ignore: cast_nullable_to_non_nullable
               as String?,
+      viewMessagesFrom: freezed == viewMessagesFrom
+          ? _value.viewMessagesFrom
+          : viewMessagesFrom // ignore: cast_nullable_to_non_nullable
+              as int?,
       user: freezed == user
           ? _value.user
           : user // ignore: cast_nullable_to_non_nullable
@@ -1642,6 +1656,7 @@ class _$MemberDtoImpl implements _MemberDto {
       this.hide = false,
       this.unreadCount = 0,
       this.lastMessageReadId,
+      this.viewMessagesFrom,
       this.user});
 
   factory _$MemberDtoImpl.fromJson(Map<String, dynamic> json) =>
@@ -1666,11 +1681,14 @@ class _$MemberDtoImpl implements _MemberDto {
   @override
   final String? lastMessageReadId;
   @override
+  final int? viewMessagesFrom;
+// Timestamp in milliseconds
+  @override
   final UserDto? user;
 
   @override
   String toString() {
-    return 'MemberDto(id: $id, userId: $userId, admin: $admin, connected: $connected, hide: $hide, unreadCount: $unreadCount, lastMessageReadId: $lastMessageReadId, user: $user)';
+    return 'MemberDto(id: $id, userId: $userId, admin: $admin, connected: $connected, hide: $hide, unreadCount: $unreadCount, lastMessageReadId: $lastMessageReadId, viewMessagesFrom: $viewMessagesFrom, user: $user)';
   }
 
   @override
@@ -1688,13 +1706,15 @@ class _$MemberDtoImpl implements _MemberDto {
                 other.unreadCount == unreadCount) &&
             (identical(other.lastMessageReadId, lastMessageReadId) ||
                 other.lastMessageReadId == lastMessageReadId) &&
+            (identical(other.viewMessagesFrom, viewMessagesFrom) ||
+                other.viewMessagesFrom == viewMessagesFrom) &&
             (identical(other.user, user) || other.user == user));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, userId, admin, connected,
-      hide, unreadCount, lastMessageReadId, user);
+      hide, unreadCount, lastMessageReadId, viewMessagesFrom, user);
 
   @JsonKey(ignore: true)
   @override
@@ -1719,6 +1739,7 @@ abstract class _MemberDto implements MemberDto {
       final bool hide,
       final int unreadCount,
       final String? lastMessageReadId,
+      final int? viewMessagesFrom,
       final UserDto? user}) = _$MemberDtoImpl;
 
   factory _MemberDto.fromJson(Map<String, dynamic> json) =
@@ -1739,6 +1760,8 @@ abstract class _MemberDto implements MemberDto {
   @override
   String? get lastMessageReadId;
   @override
+  int? get viewMessagesFrom;
+  @override // Timestamp in milliseconds
   UserDto? get user;
   @override
   @JsonKey(ignore: true)
