@@ -180,7 +180,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get messages => 'Tin nhắn';
 
   @override
-  String get noUsers => 'Chưa có người dùng';
+  String get noUsers => 'Không có người dùng';
 
   @override
   String get noChats => 'Chưa có cuộc trò chuyện';
@@ -840,7 +840,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get contact => 'Liên hệ';
 
   @override
-  String get addReaction => 'Thêm phản ứng';
+  String get addReaction => 'Thêm biểu cảm';
 
   @override
   String get removeReaction => 'Xóa phản ứng';
@@ -996,7 +996,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get downloadFailed => 'Tải xuống thất bại';
 
   @override
-  String get uploadFailed => 'Tải lên thất bại';
+  String get uploadFailed => 'Tải tệp lên thất bại';
 
   @override
   String get uploading => 'Đang tải lên...';
@@ -1387,4 +1387,33 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get unknownUser => 'Người dùng không xác định';
+
+  @override
+  String get attachments => 'Đính kèm';
+
+  @override
+  String get insertEmoji => 'Chèn biểu tượng cảm xúc';
+
+  @override
+  String get uploadingFile => 'Đang tải tệp lên...';
+
+  @override
+  String get locationPermissionDenied => 'Quyền truy cập vị trí bị từ chối';
+
+  @override
+  String get gettingLocation => 'Đang lấy vị trí của bạn...';
+
+  @override
+  String get locationSent => 'Đã gửi vị trí';
+
+  @override
+  String get selectReaction => 'Chọn biểu cảm';
+
+  @override
+  String reactedWith(String user, String emoji) {
+    return '$user đã thả $emoji';
+  }
+
+  @override
+  String get mentionUser => 'Nhắc đến người dùng';
 }

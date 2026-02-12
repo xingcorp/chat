@@ -416,9 +416,13 @@ class RealtimeService {
         return;
       }
       
-      final messageId = reactionData['messageId'] as String?;
-      final code = reactionData['code'] as String?;
-      final act = reactionData['act'] as String?; // 'ADD' or 'REMOVE'
+      final messageIdRaw = reactionData['messageId'];
+      final codeRaw = reactionData['code'];
+      final actRaw = reactionData['act']; // may be String/num depending on backend
+
+      final messageId = messageIdRaw?.toString();
+      final code = codeRaw?.toString();
+      final act = actRaw?.toString();
       
       if (messageId == null || code == null || act == null) {
         _logger.w('Incomplete reaction data');
@@ -426,8 +430,8 @@ class RealtimeService {
       }
       
       final reactor = data['reactor'] as Map<String, dynamic>?;
-      final userId = reactor?['id'] as String? ?? '';
-      final userName = reactor?['fullname'] as String? ?? 'Unknown';
+      final userId = reactor?['id']?.toString() ?? '';
+      final userName = reactor?['fullname']?.toString() ?? 'Unknown';
       
       final reaction = MessageReaction(
         messageId: messageId,

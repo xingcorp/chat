@@ -404,10 +404,10 @@ abstract class AppLocalizations {
   /// **'Messages'**
   String get messages;
 
-  /// No users message
+  /// Message when there are no users to display
   ///
   /// In en, this message translates to:
-  /// **'No users yet'**
+  /// **'No users'**
   String get noUsers;
 
   /// No chats message
@@ -1640,7 +1640,7 @@ abstract class AppLocalizations {
   /// **'Contact'**
   String get contact;
 
-  /// Button text to add reaction
+  /// Button to add reaction to message
   ///
   /// In en, this message translates to:
   /// **'Add reaction'**
@@ -1940,10 +1940,10 @@ abstract class AppLocalizations {
   /// **'Download failed'**
   String get downloadFailed;
 
-  /// Error message when upload fails
+  /// Error message when file upload fails
   ///
   /// In en, this message translates to:
-  /// **'Upload failed'**
+  /// **'Failed to upload file'**
   String get uploadFailed;
 
   /// Status text when uploading file
@@ -2575,6 +2575,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unknown User'**
   String get unknownUser;
+
+  /// Tooltip for attachment picker button
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments'**
+  String get attachments;
+
+  /// Tooltip for emoji picker button
+  ///
+  /// In en, this message translates to:
+  /// **'Insert emoji'**
+  String get insertEmoji;
+
+  /// Message shown while uploading files
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading file...'**
+  String get uploadingFile;
+
+  /// Error when location permission is denied
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission denied'**
+  String get locationPermissionDenied;
+
+  /// Loading message when getting location
+  ///
+  /// In en, this message translates to:
+  /// **'Getting your location...'**
+  String get gettingLocation;
+
+  /// Success message after sending location
+  ///
+  /// In en, this message translates to:
+  /// **'Location sent'**
+  String get locationSent;
+
+  /// Title for reaction picker
+  ///
+  /// In en, this message translates to:
+  /// **'Select reaction'**
+  String get selectReaction;
+
+  /// Notification when someone reacts to a message
+  ///
+  /// In en, this message translates to:
+  /// **'{user} reacted with {emoji}'**
+  String reactedWith(String user, String emoji);
+
+  /// Tooltip for mention user feature
+  ///
+  /// In en, this message translates to:
+  /// **'Mention user'**
+  String get mentionUser;
 }
 
 class _AppLocalizationsDelegate

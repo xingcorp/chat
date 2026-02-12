@@ -108,7 +108,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     final shouldRefresh = event.forceRefresh || _cacheSyncStrategy.shouldRefreshChatList();
 
     // Execute UseCase
-    final result = await _getConversations(PageRequest.first(size: pageSize));
+    final request = PageRequest.first(size: pageSize);
+    final result = await _getConversations(request);
 
     result.fold(
         (failure) {
@@ -117,7 +118,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
         },
         (paged) {
           final chats = paged.items;
-          logger.i('Loaded ${chats.length} conversations successfully');
+          // Backend `total` is not reliable (it can be equal to the current page length).
+          // Use a simple heuristic consistent with the Angular frontend:
+          // - If a page returns exactly `pageSize` items, assume there may be more.
+          // - Stop when a page returns fewer than `pageSize` items (including empty).
+          final effectiveHasMore = chats.length == request.size;
 
           // Reset dirty flag after successful load
           if (shouldRefresh) {
@@ -133,11 +138,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
           emit(
             ChatState.loaded(
               chats: chats,
-              hasMore: paged.hasMore,
+              hasMore: effectiveHasMore,
               isLoadingMore: false,
               page: 0,
               pageSize: pageSize,
-              total: paged.total,
+              total: chats.length,
             ),
           );
         },
@@ -196,24 +201,44 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
         );
       },
       (paged) {
+        if (paged.items.isEmpty) {
+          emit(
+            ChatState.loaded(
+              chats: current.chats,
+              hasMore: false,
+              isLoadingMore: false,
+              page: current.page,
+              pageSize: current.pageSize,
+              total: current.chats.length,
+            ),
+          );
+          return;
+        }
+
         final merged = <Chat>[...current.chats];
+        var addedNew = 0;
         for (final c in paged.items) {
           final idx = merged.indexWhere((x) => x.id == c.id);
           if (idx == -1) {
             merged.add(c);
+            addedNew++;
           } else {
             merged[idx] = c;
           }
         }
 
+        // Continue paging only when the returned page is full.
+        // If backend returns fewer than `pageSize`, we reached the end.
+        final effectiveHasMore = addedNew > 0 && paged.items.length == nextRequest.size;
+
         emit(
           ChatState.loaded(
             chats: merged,
-            hasMore: merged.length < paged.total,
+            hasMore: effectiveHasMore,
             isLoadingMore: false,
             page: nextRequest.page,
             pageSize: current.pageSize,
-            total: paged.total,
+            total: merged.length,
           ),
         );
       },
