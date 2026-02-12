@@ -19,6 +19,7 @@ mixin _$ChatEvent {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -49,6 +50,7 @@ mixin _$ChatEvent {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -76,6 +78,7 @@ mixin _$ChatEvent {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -104,6 +107,7 @@ mixin _$ChatEvent {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -124,6 +128,7 @@ mixin _$ChatEvent {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -144,6 +149,7 @@ mixin _$ChatEvent {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -248,6 +254,7 @@ class _$LoadChatsImpl implements _LoadChats {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -281,6 +288,7 @@ class _$LoadChatsImpl implements _LoadChats {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -311,6 +319,7 @@ class _$LoadChatsImpl implements _LoadChats {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -345,6 +354,7 @@ class _$LoadChatsImpl implements _LoadChats {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -368,6 +378,7 @@ class _$LoadChatsImpl implements _LoadChats {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -391,6 +402,7 @@ class _$LoadChatsImpl implements _LoadChats {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -422,6 +434,222 @@ abstract class _LoadChats implements ChatEvent {
   @JsonKey(ignore: true)
   _$$LoadChatsImplCopyWith<_$LoadChatsImpl> get copyWith =>
       throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$LoadMoreChatsImplCopyWith<$Res> {
+  factory _$$LoadMoreChatsImplCopyWith(
+          _$LoadMoreChatsImpl value, $Res Function(_$LoadMoreChatsImpl) then) =
+      __$$LoadMoreChatsImplCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$LoadMoreChatsImplCopyWithImpl<$Res>
+    extends _$ChatEventCopyWithImpl<$Res, _$LoadMoreChatsImpl>
+    implements _$$LoadMoreChatsImplCopyWith<$Res> {
+  __$$LoadMoreChatsImplCopyWithImpl(
+      _$LoadMoreChatsImpl _value, $Res Function(_$LoadMoreChatsImpl) _then)
+      : super(_value, _then);
+}
+
+/// @nodoc
+
+class _$LoadMoreChatsImpl implements _LoadMoreChats {
+  const _$LoadMoreChatsImpl();
+
+  @override
+  String toString() {
+    return 'ChatEvent.loadMoreChats()';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is _$LoadMoreChatsImpl);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
+    required TResult Function(String chatId) loadChatDetails,
+    required TResult Function(String chatId, int limit, int offset)
+        loadMessages,
+    required TResult Function(String chatId, String content,
+            ContentType contentType, List<String> attachmentIds)
+        sendMessage,
+    required TResult Function(ChatType type, String? name, String? description,
+            List<String> participantIds)
+        createChat,
+    required TResult Function(
+            String chatId, String? name, String? description, String? avatar)
+        updateChat,
+    required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId, List<String> userIds)
+        addUsersToChat,
+    required TResult Function(String chatId, List<String> userIds)
+        removeUsersFromChat,
+    required TResult Function(String chatId, List<String> messageIds)
+        markMessagesAsRead,
+    required TResult Function() syncChats,
+    required TResult Function(String chatId) syncMessages,
+    required TResult Function(ChatMessage message) newMessageReceived,
+    required TResult Function(bool isConnected) connectivityChanged,
+    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
+  }) {
+    return loadMoreChats();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
+    TResult? Function(String chatId)? loadChatDetails,
+    TResult? Function(String chatId, int limit, int offset)? loadMessages,
+    TResult? Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult? Function(ChatType type, String? name, String? description,
+            List<String> participantIds)?
+        createChat,
+    TResult? Function(
+            String chatId, String? name, String? description, String? avatar)?
+        updateChat,
+    TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult? Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult? Function()? syncChats,
+    TResult? Function(String chatId)? syncMessages,
+    TResult? Function(ChatMessage message)? newMessageReceived,
+    TResult? Function(bool isConnected)? connectivityChanged,
+    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
+  }) {
+    return loadMoreChats?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
+    TResult Function(String chatId)? loadChatDetails,
+    TResult Function(String chatId, int limit, int offset)? loadMessages,
+    TResult Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult Function(ChatType type, String? name, String? description,
+            List<String> participantIds)?
+        createChat,
+    TResult Function(
+            String chatId, String? name, String? description, String? avatar)?
+        updateChat,
+    TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult Function()? syncChats,
+    TResult Function(String chatId)? syncMessages,
+    TResult Function(ChatMessage message)? newMessageReceived,
+    TResult Function(bool isConnected)? connectivityChanged,
+    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
+    required TResult orElse(),
+  }) {
+    if (loadMoreChats != null) {
+      return loadMoreChats();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
+    required TResult Function(_LoadChatDetails value) loadChatDetails,
+    required TResult Function(_LoadMessages value) loadMessages,
+    required TResult Function(_SendMessage value) sendMessage,
+    required TResult Function(_CreateChat value) createChat,
+    required TResult Function(_UpdateChat value) updateChat,
+    required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_AddUsersToChat value) addUsersToChat,
+    required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
+    required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
+    required TResult Function(_SyncChats value) syncChats,
+    required TResult Function(_SyncMessages value) syncMessages,
+    required TResult Function(_NewMessageReceived value) newMessageReceived,
+    required TResult Function(_ConnectivityChanged value) connectivityChanged,
+    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
+  }) {
+    return loadMoreChats(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
+    TResult? Function(_LoadChatDetails value)? loadChatDetails,
+    TResult? Function(_LoadMessages value)? loadMessages,
+    TResult? Function(_SendMessage value)? sendMessage,
+    TResult? Function(_CreateChat value)? createChat,
+    TResult? Function(_UpdateChat value)? updateChat,
+    TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_AddUsersToChat value)? addUsersToChat,
+    TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult? Function(_SyncChats value)? syncChats,
+    TResult? Function(_SyncMessages value)? syncMessages,
+    TResult? Function(_NewMessageReceived value)? newMessageReceived,
+    TResult? Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
+  }) {
+    return loadMoreChats?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
+    TResult Function(_LoadChatDetails value)? loadChatDetails,
+    TResult Function(_LoadMessages value)? loadMessages,
+    TResult Function(_SendMessage value)? sendMessage,
+    TResult Function(_CreateChat value)? createChat,
+    TResult Function(_UpdateChat value)? updateChat,
+    TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_AddUsersToChat value)? addUsersToChat,
+    TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult Function(_SyncChats value)? syncChats,
+    TResult Function(_SyncMessages value)? syncMessages,
+    TResult Function(_NewMessageReceived value)? newMessageReceived,
+    TResult Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
+    required TResult orElse(),
+  }) {
+    if (loadMoreChats != null) {
+      return loadMoreChats(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _LoadMoreChats implements ChatEvent {
+  const factory _LoadMoreChats() = _$LoadMoreChatsImpl;
 }
 
 /// @nodoc
@@ -490,6 +718,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -523,6 +752,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -553,6 +783,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -587,6 +818,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -610,6 +842,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -633,6 +866,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -751,6 +985,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -784,6 +1019,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -814,6 +1050,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -848,6 +1085,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -871,6 +1109,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -894,6 +1133,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -1039,6 +1279,7 @@ class _$SendMessageImpl implements _SendMessage {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -1072,6 +1313,7 @@ class _$SendMessageImpl implements _SendMessage {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -1102,6 +1344,7 @@ class _$SendMessageImpl implements _SendMessage {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -1136,6 +1379,7 @@ class _$SendMessageImpl implements _SendMessage {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -1159,6 +1403,7 @@ class _$SendMessageImpl implements _SendMessage {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -1182,6 +1427,7 @@ class _$SendMessageImpl implements _SendMessage {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -1328,6 +1574,7 @@ class _$CreateChatImpl implements _CreateChat {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -1361,6 +1608,7 @@ class _$CreateChatImpl implements _CreateChat {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -1391,6 +1639,7 @@ class _$CreateChatImpl implements _CreateChat {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -1425,6 +1674,7 @@ class _$CreateChatImpl implements _CreateChat {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -1448,6 +1698,7 @@ class _$CreateChatImpl implements _CreateChat {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -1471,6 +1722,7 @@ class _$CreateChatImpl implements _CreateChat {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -1603,6 +1855,7 @@ class _$UpdateChatImpl implements _UpdateChat {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -1636,6 +1889,7 @@ class _$UpdateChatImpl implements _UpdateChat {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -1666,6 +1920,7 @@ class _$UpdateChatImpl implements _UpdateChat {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -1700,6 +1955,7 @@ class _$UpdateChatImpl implements _UpdateChat {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -1723,6 +1979,7 @@ class _$UpdateChatImpl implements _UpdateChat {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -1746,6 +2003,7 @@ class _$UpdateChatImpl implements _UpdateChat {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -1851,6 +2109,7 @@ class _$LeaveChatImpl implements _LeaveChat {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -1884,6 +2143,7 @@ class _$LeaveChatImpl implements _LeaveChat {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -1914,6 +2174,7 @@ class _$LeaveChatImpl implements _LeaveChat {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -1948,6 +2209,7 @@ class _$LeaveChatImpl implements _LeaveChat {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -1971,6 +2233,7 @@ class _$LeaveChatImpl implements _LeaveChat {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -1994,6 +2257,7 @@ class _$LeaveChatImpl implements _LeaveChat {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -2109,6 +2373,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -2142,6 +2407,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -2172,6 +2438,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -2206,6 +2473,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -2229,6 +2497,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -2252,6 +2521,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -2370,6 +2640,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -2403,6 +2674,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -2433,6 +2705,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -2467,6 +2740,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -2490,6 +2764,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -2513,6 +2788,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -2632,6 +2908,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -2665,6 +2942,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -2695,6 +2973,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -2729,6 +3008,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -2752,6 +3032,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -2775,6 +3056,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -2850,6 +3132,7 @@ class _$SyncChatsImpl implements _SyncChats {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -2883,6 +3166,7 @@ class _$SyncChatsImpl implements _SyncChats {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -2913,6 +3197,7 @@ class _$SyncChatsImpl implements _SyncChats {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -2947,6 +3232,7 @@ class _$SyncChatsImpl implements _SyncChats {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -2970,6 +3256,7 @@ class _$SyncChatsImpl implements _SyncChats {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -2993,6 +3280,7 @@ class _$SyncChatsImpl implements _SyncChats {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -3086,6 +3374,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -3119,6 +3408,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -3149,6 +3439,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -3183,6 +3474,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -3206,6 +3498,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -3229,6 +3522,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -3329,6 +3623,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -3362,6 +3657,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -3392,6 +3688,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -3426,6 +3723,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -3449,6 +3747,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -3472,6 +3771,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -3573,6 +3873,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -3606,6 +3907,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -3636,6 +3938,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -3670,6 +3973,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -3693,6 +3997,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -3716,6 +4021,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -3817,6 +4123,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -3850,6 +4157,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -3880,6 +4188,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -3914,6 +4223,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -3937,6 +4247,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -3960,6 +4271,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -4059,6 +4371,7 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
     required TResult Function(String chatId) loadChatDetails,
     required TResult Function(String chatId, int limit, int offset)
         loadMessages,
@@ -4092,6 +4405,7 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
     TResult? Function(String chatId)? loadChatDetails,
     TResult? Function(String chatId, int limit, int offset)? loadMessages,
     TResult? Function(String chatId, String content, ContentType contentType,
@@ -4122,6 +4436,7 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
     TResult Function(String chatId)? loadChatDetails,
     TResult Function(String chatId, int limit, int offset)? loadMessages,
     TResult Function(String chatId, String content, ContentType contentType,
@@ -4156,6 +4471,7 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
     required TResult Function(_LoadChatDetails value) loadChatDetails,
     required TResult Function(_LoadMessages value) loadMessages,
     required TResult Function(_SendMessage value) sendMessage,
@@ -4179,6 +4495,7 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
     TResult? Function(_LoadChatDetails value)? loadChatDetails,
     TResult? Function(_LoadMessages value)? loadMessages,
     TResult? Function(_SendMessage value)? sendMessage,
@@ -4202,6 +4519,7 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
     TResult Function(_LoadChatDetails value)? loadChatDetails,
     TResult Function(_LoadMessages value)? loadMessages,
     TResult Function(_SendMessage value)? sendMessage,
@@ -4241,7 +4559,9 @@ mixin _$ChatState {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats) loaded,
+    required TResult Function(List<Chat> chats, bool hasMore,
+            bool isLoadingMore, int page, int pageSize, int total)
+        loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
@@ -4260,7 +4580,9 @@ mixin _$ChatState {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats)? loaded,
+    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
@@ -4279,7 +4601,9 @@ mixin _$ChatState {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats)? loaded,
+    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
@@ -4400,7 +4724,9 @@ class _$InitialImpl implements _Initial {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats) loaded,
+    required TResult Function(List<Chat> chats, bool hasMore,
+            bool isLoadingMore, int page, int pageSize, int total)
+        loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
@@ -4422,7 +4748,9 @@ class _$InitialImpl implements _Initial {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats)? loaded,
+    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
@@ -4444,7 +4772,9 @@ class _$InitialImpl implements _Initial {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats)? loaded,
+    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
@@ -4568,7 +4898,9 @@ class _$LoadingImpl implements _Loading {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats) loaded,
+    required TResult Function(List<Chat> chats, bool hasMore,
+            bool isLoadingMore, int page, int pageSize, int total)
+        loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
@@ -4590,7 +4922,9 @@ class _$LoadingImpl implements _Loading {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats)? loaded,
+    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
@@ -4612,7 +4946,9 @@ class _$LoadingImpl implements _Loading {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats)? loaded,
+    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
@@ -4702,7 +5038,13 @@ abstract class _$$LoadedImplCopyWith<$Res> {
           _$LoadedImpl value, $Res Function(_$LoadedImpl) then) =
       __$$LoadedImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({List<Chat> chats});
+  $Res call(
+      {List<Chat> chats,
+      bool hasMore,
+      bool isLoadingMore,
+      int page,
+      int pageSize,
+      int total});
 }
 
 /// @nodoc
@@ -4717,12 +5059,37 @@ class __$$LoadedImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? chats = null,
+    Object? hasMore = null,
+    Object? isLoadingMore = null,
+    Object? page = null,
+    Object? pageSize = null,
+    Object? total = null,
   }) {
     return _then(_$LoadedImpl(
       chats: null == chats
           ? _value._chats
           : chats // ignore: cast_nullable_to_non_nullable
               as List<Chat>,
+      hasMore: null == hasMore
+          ? _value.hasMore
+          : hasMore // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isLoadingMore: null == isLoadingMore
+          ? _value.isLoadingMore
+          : isLoadingMore // ignore: cast_nullable_to_non_nullable
+              as bool,
+      page: null == page
+          ? _value.page
+          : page // ignore: cast_nullable_to_non_nullable
+              as int,
+      pageSize: null == pageSize
+          ? _value.pageSize
+          : pageSize // ignore: cast_nullable_to_non_nullable
+              as int,
+      total: null == total
+          ? _value.total
+          : total // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -4730,7 +5097,14 @@ class __$$LoadedImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$LoadedImpl implements _Loaded {
-  const _$LoadedImpl({required final List<Chat> chats}) : _chats = chats;
+  const _$LoadedImpl(
+      {required final List<Chat> chats,
+      this.hasMore = false,
+      this.isLoadingMore = false,
+      this.page = 0,
+      this.pageSize = 25,
+      this.total = 0})
+      : _chats = chats;
 
   final List<Chat> _chats;
   @override
@@ -4741,8 +5115,24 @@ class _$LoadedImpl implements _Loaded {
   }
 
   @override
+  @JsonKey()
+  final bool hasMore;
+  @override
+  @JsonKey()
+  final bool isLoadingMore;
+  @override
+  @JsonKey()
+  final int page;
+  @override
+  @JsonKey()
+  final int pageSize;
+  @override
+  @JsonKey()
+  final int total;
+
+  @override
   String toString() {
-    return 'ChatState.loaded(chats: $chats)';
+    return 'ChatState.loaded(chats: $chats, hasMore: $hasMore, isLoadingMore: $isLoadingMore, page: $page, pageSize: $pageSize, total: $total)';
   }
 
   @override
@@ -4750,12 +5140,25 @@ class _$LoadedImpl implements _Loaded {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LoadedImpl &&
-            const DeepCollectionEquality().equals(other._chats, _chats));
+            const DeepCollectionEquality().equals(other._chats, _chats) &&
+            (identical(other.hasMore, hasMore) || other.hasMore == hasMore) &&
+            (identical(other.isLoadingMore, isLoadingMore) ||
+                other.isLoadingMore == isLoadingMore) &&
+            (identical(other.page, page) || other.page == page) &&
+            (identical(other.pageSize, pageSize) ||
+                other.pageSize == pageSize) &&
+            (identical(other.total, total) || other.total == total));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(_chats));
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(_chats),
+      hasMore,
+      isLoadingMore,
+      page,
+      pageSize,
+      total);
 
   @JsonKey(ignore: true)
   @override
@@ -4768,7 +5171,9 @@ class _$LoadedImpl implements _Loaded {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats) loaded,
+    required TResult Function(List<Chat> chats, bool hasMore,
+            bool isLoadingMore, int page, int pageSize, int total)
+        loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
@@ -4782,7 +5187,7 @@ class _$LoadedImpl implements _Loaded {
     required TResult Function() offline,
     required TResult Function(String message) error,
   }) {
-    return loaded(chats);
+    return loaded(chats, hasMore, isLoadingMore, page, pageSize, total);
   }
 
   @override
@@ -4790,7 +5195,9 @@ class _$LoadedImpl implements _Loaded {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats)? loaded,
+    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
@@ -4804,7 +5211,7 @@ class _$LoadedImpl implements _Loaded {
     TResult? Function()? offline,
     TResult? Function(String message)? error,
   }) {
-    return loaded?.call(chats);
+    return loaded?.call(chats, hasMore, isLoadingMore, page, pageSize, total);
   }
 
   @override
@@ -4812,7 +5219,9 @@ class _$LoadedImpl implements _Loaded {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats)? loaded,
+    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
@@ -4828,7 +5237,7 @@ class _$LoadedImpl implements _Loaded {
     required TResult orElse(),
   }) {
     if (loaded != null) {
-      return loaded(chats);
+      return loaded(chats, hasMore, isLoadingMore, page, pageSize, total);
     }
     return orElse();
   }
@@ -4893,9 +5302,20 @@ class _$LoadedImpl implements _Loaded {
 }
 
 abstract class _Loaded implements ChatState {
-  const factory _Loaded({required final List<Chat> chats}) = _$LoadedImpl;
+  const factory _Loaded(
+      {required final List<Chat> chats,
+      final bool hasMore,
+      final bool isLoadingMore,
+      final int page,
+      final int pageSize,
+      final int total}) = _$LoadedImpl;
 
   List<Chat> get chats;
+  bool get hasMore;
+  bool get isLoadingMore;
+  int get page;
+  int get pageSize;
+  int get total;
   @JsonKey(ignore: true)
   _$$LoadedImplCopyWith<_$LoadedImpl> get copyWith =>
       throw _privateConstructorUsedError;
@@ -4968,7 +5388,9 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats) loaded,
+    required TResult Function(List<Chat> chats, bool hasMore,
+            bool isLoadingMore, int page, int pageSize, int total)
+        loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
@@ -4990,7 +5412,9 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats)? loaded,
+    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
@@ -5012,7 +5436,9 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats)? loaded,
+    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
@@ -5177,7 +5603,9 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats) loaded,
+    required TResult Function(List<Chat> chats, bool hasMore,
+            bool isLoadingMore, int page, int pageSize, int total)
+        loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
@@ -5199,7 +5627,9 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats)? loaded,
+    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
@@ -5221,7 +5651,9 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats)? loaded,
+    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
@@ -5416,7 +5848,9 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats) loaded,
+    required TResult Function(List<Chat> chats, bool hasMore,
+            bool isLoadingMore, int page, int pageSize, int total)
+        loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
@@ -5438,7 +5872,9 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats)? loaded,
+    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
@@ -5460,7 +5896,9 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats)? loaded,
+    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
@@ -5629,7 +6067,9 @@ class _$MessageSendingImpl implements _MessageSending {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats) loaded,
+    required TResult Function(List<Chat> chats, bool hasMore,
+            bool isLoadingMore, int page, int pageSize, int total)
+        loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
@@ -5651,7 +6091,9 @@ class _$MessageSendingImpl implements _MessageSending {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats)? loaded,
+    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
@@ -5673,7 +6115,9 @@ class _$MessageSendingImpl implements _MessageSending {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats)? loaded,
+    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
@@ -5791,7 +6235,7 @@ class __$$MessageStatusChangedImplCopyWithImpl<$Res>
   $Res call({
     Object? chatId = null,
     Object? localId = null,
-    Object? status = null,
+    Object? status = freezed,
     Object? serverId = freezed,
   }) {
     return _then(_$MessageStatusChangedImpl(
@@ -5803,7 +6247,7 @@ class __$$MessageStatusChangedImplCopyWithImpl<$Res>
           ? _value.localId
           : localId // ignore: cast_nullable_to_non_nullable
               as String,
-      status: null == status
+      status: freezed == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as MessageQueueStatus,
@@ -5845,14 +6289,14 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
             other is _$MessageStatusChangedImpl &&
             (identical(other.chatId, chatId) || other.chatId == chatId) &&
             (identical(other.localId, localId) || other.localId == localId) &&
-            (identical(other.status, status) || other.status == status) &&
+            const DeepCollectionEquality().equals(other.status, status) &&
             (identical(other.serverId, serverId) ||
                 other.serverId == serverId));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, chatId, localId, status, serverId);
+  int get hashCode => Object.hash(runtimeType, chatId, localId,
+      const DeepCollectionEquality().hash(status), serverId);
 
   @JsonKey(ignore: true)
   @override
@@ -5867,7 +6311,9 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats) loaded,
+    required TResult Function(List<Chat> chats, bool hasMore,
+            bool isLoadingMore, int page, int pageSize, int total)
+        loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
@@ -5889,7 +6335,9 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats)? loaded,
+    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
@@ -5911,7 +6359,9 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats)? loaded,
+    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
@@ -6047,7 +6497,9 @@ class _$SyncingImpl implements _Syncing {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats) loaded,
+    required TResult Function(List<Chat> chats, bool hasMore,
+            bool isLoadingMore, int page, int pageSize, int total)
+        loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
@@ -6069,7 +6521,9 @@ class _$SyncingImpl implements _Syncing {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats)? loaded,
+    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
@@ -6091,7 +6545,9 @@ class _$SyncingImpl implements _Syncing {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats)? loaded,
+    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
@@ -6215,7 +6671,9 @@ class _$OfflineImpl implements _Offline {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats) loaded,
+    required TResult Function(List<Chat> chats, bool hasMore,
+            bool isLoadingMore, int page, int pageSize, int total)
+        loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
@@ -6237,7 +6695,9 @@ class _$OfflineImpl implements _Offline {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats)? loaded,
+    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
@@ -6259,7 +6719,9 @@ class _$OfflineImpl implements _Offline {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats)? loaded,
+    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
@@ -6409,7 +6871,9 @@ class _$ErrorImpl implements _Error {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats) loaded,
+    required TResult Function(List<Chat> chats, bool hasMore,
+            bool isLoadingMore, int page, int pageSize, int total)
+        loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
@@ -6431,7 +6895,9 @@ class _$ErrorImpl implements _Error {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats)? loaded,
+    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
@@ -6453,7 +6919,9 @@ class _$ErrorImpl implements _Error {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats)? loaded,
+    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
+            int page, int pageSize, int total)?
+        loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(

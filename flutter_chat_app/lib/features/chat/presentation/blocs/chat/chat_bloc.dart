@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_chat_app/domain/models/queued_message.dart';
+import 'package:flutter_chat_app/features/chat/domain/usecases/chat/delete_conversation_usecase.dart';
+import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 
@@ -12,16 +15,14 @@ import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
-import 'package:flutter_chat_app/domain/models/queued_message.dart';
+import 'package:flutter_chat_app/core/pagination/page_request.dart';
 import 'package:flutter_chat_app/domain/usecases/message/mark_as_read_usecase.dart';
-import 'package:flutter_chat_app/features/chat/domain/usecases/chat/create_group_usecase.dart';
-import 'package:flutter_chat_app/features/chat/domain/usecases/chat/delete_conversation_usecase.dart';
-import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversations_usecase.dart';
+import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
+import 'package:flutter_chat_app/features/chat/domain/usecases/chat/create_group_usecase.dart';
+import 'package:flutter_chat_app/features/chat/domain/usecases/chat/update_group_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/leave_conversation_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/search_conversations_usecase.dart';
-import 'package:flutter_chat_app/features/chat/domain/usecases/chat/update_group_usecase.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/bloc_error_mixin.dart';
 
 part 'chat_event.dart';
@@ -78,6 +79,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     this._currentUserProvider,
   ) : super(const ChatState.initial()) {
     on<_LoadChats>(_onLoadChats);
+    on<_LoadMoreChats>(_onLoadMoreChats);
     on<_LoadChatDetails>(_onLoadChatDetails);
     on<_CreateChat>(_onCreateChat);
     on<_UpdateChat>(_onUpdateChat);
@@ -93,10 +95,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     _LoadChats event,
     Emitter<ChatState> emit,
   ) async {
-    // Skip if already loading
-    if (state is _Loading) {
-      return;
-    }
+    final pageSize = state.whenOrNull(
+          loaded: (_, __, ___, ____, pageSize, _____) => pageSize,
+        ) ??
+        25;
 
     emit(const ChatState.loading());
 
@@ -106,14 +108,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     final shouldRefresh = event.forceRefresh || _cacheSyncStrategy.shouldRefreshChatList();
 
     // Execute UseCase
-    final result = await _getConversations();
+    final result = await _getConversations(PageRequest.first(size: pageSize));
 
     result.fold(
         (failure) {
           logger.e('Failed to load conversations: ${failure.message}');
           emit(ChatState.error(message: getUserErrorMessage(failure)));
         },
-        (chats) {
+        (paged) {
+          final chats = paged.items;
           logger.i('Loaded ${chats.length} conversations successfully');
 
           // Reset dirty flag after successful load
@@ -127,9 +130,94 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
           // Subscribe to real-time updates
           _subscribeToRealTimeUpdates();
 
-          emit(ChatState.loaded(chats: chats));
+          emit(
+            ChatState.loaded(
+              chats: chats,
+              hasMore: paged.hasMore,
+              isLoadingMore: false,
+              page: 0,
+              pageSize: pageSize,
+              total: paged.total,
+            ),
+          );
         },
       );
+  }
+
+  Future<void> _onLoadMoreChats(
+    _LoadMoreChats event,
+    Emitter<ChatState> emit,
+  ) async {
+    final current = state.whenOrNull(loaded: (chats, hasMore, isLoadingMore, page, pageSize, total) {
+      return (
+        chats: chats,
+        hasMore: hasMore,
+        isLoadingMore: isLoadingMore,
+        page: page,
+        pageSize: pageSize,
+        total: total,
+      );
+    });
+
+    if (current == null) return;
+    if (!current.hasMore) return;
+    if (current.isLoadingMore) return;
+
+    emit(
+      ChatState.loaded(
+        chats: current.chats,
+        hasMore: current.hasMore,
+        isLoadingMore: true,
+        page: current.page,
+        pageSize: current.pageSize,
+        total: current.total,
+      ),
+    );
+
+    final nextRequest = PageRequest(
+      page: current.page + 1,
+      size: current.pageSize,
+    );
+
+    final result = await _getConversations(nextRequest);
+
+    result.fold(
+      (failure) {
+        logger.e('Failed to load more conversations: ${failure.message}');
+        emit(
+          ChatState.loaded(
+            chats: current.chats,
+            hasMore: current.hasMore,
+            isLoadingMore: false,
+            page: current.page,
+            pageSize: current.pageSize,
+            total: current.total,
+          ),
+        );
+      },
+      (paged) {
+        final merged = <Chat>[...current.chats];
+        for (final c in paged.items) {
+          final idx = merged.indexWhere((x) => x.id == c.id);
+          if (idx == -1) {
+            merged.add(c);
+          } else {
+            merged[idx] = c;
+          }
+        }
+
+        emit(
+          ChatState.loaded(
+            chats: merged,
+            hasMore: merged.length < paged.total,
+            isLoadingMore: false,
+            page: nextRequest.page,
+            pageSize: current.pageSize,
+            total: paged.total,
+          ),
+        );
+      },
+    );
   }
 
   /// **Load chat details using GetConversationDetailUseCase - CLEAN ARCHITECTURE**

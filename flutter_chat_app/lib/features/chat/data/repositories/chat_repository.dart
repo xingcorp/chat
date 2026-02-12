@@ -20,6 +20,8 @@ import 'package:logger/logger.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
+import 'package:flutter_chat_app/core/pagination/page_request.dart';
+import 'package:flutter_chat_app/core/pagination/paged_result.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_local_datasource.dart';
 import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
@@ -80,10 +82,35 @@ class ChatRepositoryImpl implements IChatRepository {
         
         // 3. Try to sync with remote if available
         try {
-          final remoteResult = await _remoteDataSource.getChats();
-          
-          // Remote success, convert models to domain entities
-          final remoteChats = remoteResult.toDomainList();
+          const pageSize = 25;
+          var page = 0;
+          final allDtos = <ChatDto>[];
+
+          while (true) {
+            final remotePage = await _remoteDataSource.getChats(
+              size: pageSize,
+              page: page,
+            );
+
+            allDtos.addAll(remotePage.conversations);
+
+            final total = remotePage.total;
+            if (allDtos.length >= total) {
+              break;
+            }
+
+            if (remotePage.conversations.isEmpty) {
+              break;
+            }
+
+            page++;
+          }
+
+          final remoteChats = ChatListResponseDto(
+            total: allDtos.length,
+            conversations: allDtos,
+          ).toDomainList();
+
           _logger.i('Synced ${remoteChats.length} remote chats');
 
           // Save remote chats to local storage
@@ -107,6 +134,75 @@ class ChatRepositoryImpl implements IChatRepository {
       } catch (e, stackTrace) {
         _logger.e('Unexpected error getting chats', error: e, stackTrace: stackTrace);
         return const Left(UnexpectedFailure(message: 'An unexpected error occurred'));
+      }
+    });
+  }
+
+  @override
+  Future<Either<Failure, PagedResult<Chat>>> getChatsPage(PageRequest request) async {
+    return _executeWithMonitoring('get_chats_page', () async {
+      final localChats = await _localDataSource.getChats();
+      try {
+        if (!await _networkInfo.isConnected) {
+          final start = request.page * request.size;
+          if (start >= localChats.length) {
+            return Right(PagedResult(items: const <Chat>[], total: localChats.length));
+          }
+          final end = (start + request.size) > localChats.length
+              ? localChats.length
+              : (start + request.size);
+          return Right(
+            PagedResult(
+              items: localChats.sublist(start, end),
+              total: localChats.length,
+            ),
+          );
+        }
+
+        final remoteResult = await _remoteDataSource.getConversationList(
+          size: request.size,
+          page: request.page,
+        );
+
+        final remoteChats = remoteResult.toDomainList();
+        await _localDataSource.saveChats(remoteChats);
+
+        return Right(PagedResult(items: remoteChats, total: remoteResult.total));
+      } on app_exceptions.ServerException catch (e) {
+        _logger.w('Server error fetching paged chats, using cached data', error: e);
+        final start = request.page * request.size;
+        if (start >= localChats.length) {
+          return Right(PagedResult(items: const <Chat>[], total: localChats.length));
+        }
+        final end = (start + request.size) > localChats.length
+            ? localChats.length
+            : (start + request.size);
+        return Right(
+          PagedResult(
+            items: localChats.sublist(start, end),
+            total: localChats.length,
+          ),
+        );
+      } on app_exceptions.NetworkException catch (e) {
+        _logger.w('Network error fetching paged chats, using cached data', error: e);
+        final start = request.page * request.size;
+        if (start >= localChats.length) {
+          return Right(PagedResult(items: const <Chat>[], total: localChats.length));
+        }
+        final end = (start + request.size) > localChats.length
+            ? localChats.length
+            : (start + request.size);
+        return Right(
+          PagedResult(
+            items: localChats.sublist(start, end),
+            total: localChats.length,
+          ),
+        );
+      } on app_exceptions.CacheException catch (e) {
+        _logger.e('Cache error', error: e);
+        return const Left(CacheFailure(message: 'Unable to load chats'));
+      } catch (e) {
+        return Left(UnexpectedFailure(message: e.toString()));
       }
     });
   }

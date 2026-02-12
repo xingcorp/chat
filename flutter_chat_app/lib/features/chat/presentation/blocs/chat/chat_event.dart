@@ -7,6 +7,9 @@ class ChatEvent with _$ChatEvent {
   const factory ChatEvent.loadChats({
     @Default(false) bool forceRefresh,
   }) = _LoadChats;
+
+  /// Load next page of chats
+  const factory ChatEvent.loadMoreChats() = _LoadMoreChats;
   
   /// Load details for a specific chat
   const factory ChatEvent.loadChatDetails({

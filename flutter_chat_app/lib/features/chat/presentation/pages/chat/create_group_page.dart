@@ -145,7 +145,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       child: BlocConsumer<ChatBloc, ChatState>(
         listener: (context, state) {
           state.maybeWhen(
-            loaded: (chats) {
+            loaded: (chats, hasMore, isLoadingMore, page, pageSize, total) {
               // Group created successfully
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

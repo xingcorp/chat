@@ -1,5 +1,7 @@
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/pagination/page_request.dart';
+import 'package:flutter_chat_app/core/pagination/paged_result.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
@@ -19,6 +21,9 @@ abstract class IChatRepository {
 
   /// Get user's chat list with offline-first strategy (cached data)
   Future<Either<Failure, List<Chat>>> getChats();
+
+  /// Get user's chat list by page with offline-first strategy.
+  Future<Either<Failure, PagedResult<Chat>>> getChatsPage(PageRequest request);
 
   /// Get chat details by ID with online-first strategy (fresh data)
   Future<Either<Failure, Chat?>> getChatById(String chatId);
