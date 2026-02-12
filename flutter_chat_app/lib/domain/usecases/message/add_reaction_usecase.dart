@@ -38,7 +38,7 @@ class AddReactionUseCase {
       final result = await _repository.updateReaction(
         messageId: messageId,
         code: code,
-        act: 'ADD',
+        act: '1', // ADD = 1 per backend enum ChatMessageReactionAct
       );
 
       return result.fold(

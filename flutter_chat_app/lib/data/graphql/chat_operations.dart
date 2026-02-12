@@ -528,6 +528,51 @@ class ChatMutations {
       }
     }
   ''';
+
+  /// **Generate Upload Link**
+  ///
+  /// Generates a pre-signed upload URL for file attachments.
+  /// This is step 1 of the 2-step upload process.
+  ///
+  /// **Upload Flow:**
+  /// 1. Call chatObjectGenLinkUpload to get uploadUrl and path
+  /// 2. Upload file directly to GCP Cloud Storage using uploadUrl (PUT request)
+  /// 3. Use the returned path when sending message via chatMessageAdd
+  ///
+  /// **Variables:**
+  /// - arguments: ChatObjectGenLinkUploadInput
+  ///   - filename: String (required, original filename with extension)
+  ///   - conversationId: String (optional but required for MESSAGE type)
+  ///   - type: String (required, "MESSAGE" | "GROUP" | "STORY")
+  ///   - mimetype: String (required, e.g., "image/jpeg", "application/pdf")
+  ///
+  /// **Returns:** Upload URL and storage path
+  /// **Path Format:** MESSAGE/{conversationId}/{timestamp}/{filename}
+  static const String generateUploadLink = r'''
+    mutation GenerateUploadLink($arguments: ChatObjectGenLinkUploadInput!) {
+      chatObjectGenLinkUpload(arguments: $arguments) {
+        uploadUrl
+        path
+      }
+    }
+  ''';
+
+  /// **Get Object URL**
+  ///
+  /// Retrieves accessible download URL for previously uploaded files.
+  ///
+  /// **Variables:**
+  /// - path: String (required, storage path from upload step)
+  ///
+  /// **Returns:** Firebase CDN download URL
+  static const String getObjectUrl = r'''
+    query GetObjectUrl($path: String!) {
+      chatObjectGetUrl(path: $path) {
+        path
+        url
+      }
+    }
+  ''';
 }
 
 /// **CHAT SUBSCRIPTIONS**

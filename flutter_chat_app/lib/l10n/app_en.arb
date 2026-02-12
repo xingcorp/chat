@@ -2466,5 +2466,73 @@
   "unknownUser": "Unknown User",
   "@unknownUser": {
     "description": "Fallback name for unknown users"
+  },
+
+  "attachments": "Attachments",
+  "@attachments": {
+    "description": "Tooltip for attachment picker button"
+  },
+
+  "insertEmoji": "Insert emoji",
+  "@insertEmoji": {
+    "description": "Tooltip for emoji picker button"
+  },
+
+  "uploadingFile": "Uploading file...",
+  "@uploadingFile": {
+    "description": "Message shown while uploading files"
+  },
+
+  "uploadFailed": "Failed to upload file",
+  "@uploadFailed": {
+    "description": "Error message when file upload fails"
+  },
+
+  "locationPermissionDenied": "Location permission denied",
+  "@locationPermissionDenied": {
+    "description": "Error when location permission is denied"
+  },
+
+  "gettingLocation": "Getting your location...",
+  "@gettingLocation": {
+    "description": "Loading message when getting location"
+  },
+
+  "locationSent": "Location sent",
+  "@locationSent": {
+    "description": "Success message after sending location"
+  },
+
+  "selectReaction": "Select reaction",
+  "@selectReaction": {
+    "description": "Title for reaction picker"
+  },
+
+  "addReaction": "Add reaction",
+  "@addReaction": {
+    "description": "Button to add reaction to message"
+  },
+
+  "reactedWith": "{user} reacted with {emoji}",
+  "@reactedWith": {
+    "description": "Notification when someone reacts to a message",
+    "placeholders": {
+      "user": {
+        "type": "String"
+      },
+      "emoji": {
+        "type": "String"
+      }
+    }
+  },
+
+  "mentionUser": "Mention user",
+  "@mentionUser": {
+    "description": "Tooltip for mention user feature"
+  },
+
+  "noUsers": "No users",
+  "@noUsers": {
+    "description": "Message when there are no users to display"
   }
 }

@@ -7,6 +7,7 @@ import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
+import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
@@ -25,6 +26,7 @@ import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/attachment_picker_widget.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/mention_text_field.dart';
 import 'package:get_it/get_it.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'dart:io';
@@ -495,19 +497,96 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   Future<void> _handleFileSelected(File file) async {
-    AppSnackBar.show(
-      context: context,
-      message: 'File upload: ${file.path}',
-      type: FeedbackType.info,
+    // Send file as attachment
+    _messageBloc.add(
+      SendMessageWithAttachments(
+        content: '', // No text, only file
+        senderId: _currentUserId,
+        localFilePaths: [file.path],
+      ),
     );
+
+    if (mounted) {
+      AppSnackBar.show(
+        context: context,
+        message: 'Uploading file...',
+        type: FeedbackType.info,
+      );
+    }
   }
 
-  void _handleLocationShare() {
-    AppSnackBar.show(
-      context: context,
-      message: context.l10n.shareLocation,
-      type: FeedbackType.info,
-    );
+  void _handleLocationShare() async {
+    try {
+      // Get location service
+      final locationService = GetIt.I<ILocationService>();
+
+      // Check permission
+      final hasPermission = await locationService.hasLocationPermission();
+      if (!hasPermission) {
+        final granted = await locationService.requestLocationPermission();
+        if (!granted) {
+          if (mounted) {
+            AppSnackBar.show(
+              context: context,
+              message: 'Location permission denied',
+              type: FeedbackType.error,
+            );
+          }
+          return;
+        }
+      }
+
+      // Show loading
+      if (mounted) {
+        AppSnackBar.show(
+          context: context,
+          message: 'Getting your location...',
+          type: FeedbackType.info,
+        );
+      }
+
+      // Get current location
+      final result = await locationService.getCurrentLocation();
+
+      result.fold(
+        (failure) {
+          if (mounted) {
+            AppSnackBar.show(
+              context: context,
+              message: failure.message,
+              type: FeedbackType.error,
+            );
+          }
+        },
+        (locationData) {
+          // Send location message
+          _messageBloc.add(
+            SendLocationMessage(
+              senderId: _currentUserId,
+              latitude: locationData.latitude,
+              longitude: locationData.longitude,
+              locationName: locationData.name,
+            ),
+          );
+
+          if (mounted) {
+            AppSnackBar.show(
+              context: context,
+              message: 'Location sent successfully',
+              type: FeedbackType.success,
+            );
+          }
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.show(
+          context: context,
+          message: 'Failed to share location: $e',
+          type: FeedbackType.error,
+        );
+      }
+    }
   }
 
   /// Process and send image with compression
@@ -534,13 +613,22 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         return;
       }
 
+      // Send compressed image as attachment
+      _messageBloc.add(
+        SendMessageWithAttachments(
+          content: '', // No text, only image
+          senderId: _currentUserId,
+          localFilePaths: [compressedImage.path],
+        ),
+      );
+
       if (mounted) {
         final fileSize = await compressedImage.length();
         final formattedSize = ImageCompressionHelper.formatFileSize(fileSize);
 
         AppSnackBar.show(
           context: context,
-          message: 'Image ready to upload: $formattedSize',
+          message: 'Uploading image: $formattedSize',
           type: FeedbackType.success,
         );
       }
@@ -782,21 +870,40 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               padding: const EdgeInsets.all(AppDimens.paddingSmall),
               child: Row(
                 children: [
+                  // Attachment picker button
                   IconButton(
-                    icon: const Icon(Icons.add),
+                    icon: const Icon(Icons.add_circle_outline),
+                    iconSize: 28.0,
                     onPressed: _showAttachmentPicker,
+                    tooltip: context.l10n.attachments,
                   ),
+                  // Message input field with mention support
                   Expanded(
-                    child: AppTextField(
-                      controller: _messageController,
-                      minLines: 1,
-                      maxLines: 5,
-                      hint: context.l10n.typeMessage,
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
+                    child: _chat != null && _chat!.members.isNotEmpty
+                        ? MentionTextField(
+                            controller: _messageController,
+                            members: _chat!.members,
+                            currentUserId: _currentUserId,
+                            hint: context.l10n.typeMessage,
+                            minLines: 1,
+                            maxLines: 5,
+                            onSubmitted: (_) => _sendMessage(),
+                            onChanged: () {
+                              // Could add typing indicator here
+                            },
+                          )
+                        : AppTextField(
+                            controller: _messageController,
+                            minLines: 1,
+                            maxLines: 5,
+                            hint: context.l10n.typeMessage,
+                            onSubmitted: (_) => _sendMessage(),
+                          ),
                   ),
+                  // Emoji picker button
                   IconButton(
                     icon: const Icon(Icons.emoji_emotions_outlined),
+                    iconSize: 28.0,
                     onPressed: () {
                       EmojiPickerBottomSheet.show(
                         context,
@@ -809,11 +916,19 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                         textController: _messageController,
                       );
                     },
+                    tooltip: context.l10n.insertEmoji,
                   ),
-                  AppButton.primary(
-                    text: _isEditMode ? context.l10n.save : context.l10n.send,
-                    icon: _isEditMode ? Icons.check : Icons.send,
-                    onPressed: _sendMessage,
+                  // Send button - smaller, icon-only for better responsiveness
+                  IconButton(
+                    icon: Icon(
+                      _isEditMode ? Icons.check : Icons.send,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    iconSize: 28.0,
+                    onPressed: _messageController.text.trim().isNotEmpty
+                        ? _sendMessage
+                        : null,
+                    tooltip: _isEditMode ? context.l10n.save : context.l10n.send,
                   ),
                 ],
               ),

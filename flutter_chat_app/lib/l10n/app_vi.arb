@@ -512,5 +512,73 @@
   "emptyMessage": "Không có tin nhắn",
   "attachment": "Tệp đính kèm",
   "daysAgo": "{days} ngày",
-  "unknownUser": "Người dùng không xác định"
+  "unknownUser": "Người dùng không xác định",
+
+  "attachments": "Đính kèm",
+  "@attachments": {
+    "description": "Tooltip for attachment picker button"
+  },
+
+  "insertEmoji": "Chèn biểu tượng cảm xúc",
+  "@insertEmoji": {
+    "description": "Tooltip for emoji picker button"
+  },
+
+  "uploadingFile": "Đang tải tệp lên...",
+  "@uploadingFile": {
+    "description": "Message shown while uploading files"
+  },
+
+  "uploadFailed": "Tải tệp lên thất bại",
+  "@uploadFailed": {
+    "description": "Error message when file upload fails"
+  },
+
+  "locationPermissionDenied": "Quyền truy cập vị trí bị từ chối",
+  "@locationPermissionDenied": {
+    "description": "Error when location permission is denied"
+  },
+
+  "gettingLocation": "Đang lấy vị trí của bạn...",
+  "@gettingLocation": {
+    "description": "Loading message when getting location"
+  },
+
+  "locationSent": "Đã gửi vị trí",
+  "@locationSent": {
+    "description": "Success message after sending location"
+  },
+
+  "selectReaction": "Chọn biểu cảm",
+  "@selectReaction": {
+    "description": "Title for reaction picker"
+  },
+
+  "addReaction": "Thêm biểu cảm",
+  "@addReaction": {
+    "description": "Button to add reaction to message"
+  },
+
+  "reactedWith": "{user} đã thả {emoji}",
+  "@reactedWith": {
+    "description": "Notification when someone reacts to a message",
+    "placeholders": {
+      "user": {
+        "type": "String"
+      },
+      "emoji": {
+        "type": "String"
+      }
+    }
+  },
+
+  "mentionUser": "Nhắc đến người dùng",
+  "@mentionUser": {
+    "description": "Tooltip for mention user feature"
+  },
+
+  "noUsers": "Không có người dùng",
+  "@noUsers": {
+    "description": "Message when there are no users to display"
+  }
 }

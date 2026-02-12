@@ -56,6 +56,42 @@ class SendMessage extends MessageEvent {
   List<Object?> get props => [content, senderId, contentType, attachmentIds, replyMessageId];
 }
 
+/// Sự kiện gửi tin nhắn với file đính kèm (upload + send)
+class SendMessageWithAttachments extends MessageEvent {
+  final String content;
+  final String senderId;
+  final List<String> localFilePaths;
+  final String? replyMessageId;
+
+  const SendMessageWithAttachments({
+    required this.content,
+    required this.senderId,
+    required this.localFilePaths,
+    this.replyMessageId,
+  });
+
+  @override
+  List<Object?> get props => [content, senderId, localFilePaths, replyMessageId];
+}
+
+/// Sự kiện gửi vị trí
+class SendLocationMessage extends MessageEvent {
+  final String senderId;
+  final double latitude;
+  final double longitude;
+  final String? locationName;
+
+  const SendLocationMessage({
+    required this.senderId,
+    required this.latitude,
+    required this.longitude,
+    this.locationName,
+  });
+
+  @override
+  List<Object?> get props => [senderId, latitude, longitude, locationName];
+}
+
 /// Sự kiện chỉnh sửa tin nhắn
 class EditMessage extends MessageEvent {
   final String messageId;

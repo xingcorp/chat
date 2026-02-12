@@ -36,6 +36,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
 
 /// Register core infrastructure services
 /// 
@@ -199,6 +200,23 @@ Future<void> registerCoreModule(GetIt getIt) async {
   if (!getIt.isRegistered<FirebaseServiceManager>()) {
     getIt.registerSingleton<FirebaseServiceManager>(
       FirebaseServiceManager(getIt<Logger>()),
+    );
+  }
+
+  // 9. Dio uploadClient - For file uploads to GCP Cloud Storage
+  if (!getIt.isRegistered<Dio>(instanceName: 'uploadClient')) {
+    getIt.registerLazySingleton<Dio>(
+      () => Dio(
+        BaseOptions(
+          connectTimeout: const Duration(minutes: 5),
+          sendTimeout: const Duration(minutes: 5),
+          receiveTimeout: const Duration(minutes: 5),
+          headers: {
+            'Accept': '*/*',
+          },
+        ),
+      ),
+      instanceName: 'uploadClient',
     );
   }
 }

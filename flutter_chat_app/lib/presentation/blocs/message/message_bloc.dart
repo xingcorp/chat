@@ -15,7 +15,12 @@ import 'package:flutter_chat_app/domain/usecases/message/edit_message_usecase.da
 import 'package:flutter_chat_app/domain/usecases/message/get_messages_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/mark_as_read_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/send_message_usecase.dart';
+import 'package:flutter_chat_app/domain/usecases/message/add_reaction_usecase.dart';
+import 'package:flutter_chat_app/domain/usecases/message/remove_reaction_usecase.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/bloc_error_mixin.dart';
+import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
+import 'package:flutter_chat_app/core/services/location_service.dart';
+import 'dart:io';
 
 part 'message_event.dart';
 part 'message_state.dart';
@@ -37,11 +42,17 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   final EditMessageUseCase _editMessage;
   final DeleteMessageUseCase _deleteMessage;
   final MarkAsReadUseCase _markAsRead;
-  
+  final AddReactionUseCase _addReaction;
+  final RemoveReactionUseCase _removeReaction;
+
+  // Repositories
+  final IAttachmentRepository _attachmentRepository;
+
   // Services
   final CacheSyncStrategy _cacheSyncStrategy;
   final RealtimeService _realtimeService;
-  
+  final ILocationService _locationService;
+
   // Logger (injected via DI) - must be Logger for BlocErrorMixin
   @override
   final Logger logger;
@@ -86,16 +97,24 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     required EditMessageUseCase editMessage,
     required DeleteMessageUseCase deleteMessage,
     required MarkAsReadUseCase markAsRead,
+    required AddReactionUseCase addReaction,
+    required RemoveReactionUseCase removeReaction,
+    required IAttachmentRepository attachmentRepository,
     required CacheSyncStrategy cacheSyncStrategy,
     required RealtimeService realtimeService,
+    required ILocationService locationService,
     required this.logger,
   })  : _getMessages = getMessages,
         _sendMessage = sendMessage,
         _editMessage = editMessage,
         _deleteMessage = deleteMessage,
         _markAsRead = markAsRead,
+        _addReaction = addReaction,
+        _removeReaction = removeReaction,
+        _attachmentRepository = attachmentRepository,
         _cacheSyncStrategy = cacheSyncStrategy,
         _realtimeService = realtimeService,
+        _locationService = locationService,
         super(const MessageInitial()) {
     on<LoadMessages>(_onLoadMessages);
     on<LoadMoreMessages>(_onLoadMoreMessages);
@@ -107,6 +126,8 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     on<RefreshMessages>(_onRefreshMessages);
     on<ClearMessages>(_onClearMessages);
     on<ToggleReaction>(_onToggleReaction);
+    on<SendMessageWithAttachments>(_onSendMessageWithAttachments);
+    on<SendLocationMessage>(_onSendLocationMessage);
   }
   
   /// **Load messages using GetMessagesUseCase - CLEAN ARCHITECTURE**
@@ -510,24 +531,35 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     logger.i('Real-time subscription established for chat: $chatId');
   }
 
-  /// Handle toggle reaction on message (optimistic update)
-  void _onToggleReaction(ToggleReaction event, Emitter<MessageState> emit) {
+  /// Handle toggle reaction on message (optimistic update + API call)
+  Future<void> _onToggleReaction(
+    ToggleReaction event,
+    Emitter<MessageState> emit,
+  ) async {
     if (state is! MessagesLoaded) return;
 
     final currentState = state as MessagesLoaded;
 
     logger.i('Toggling reaction ${event.emojiCode} on message ${event.messageId}');
 
+    // Determine if we're adding or removing
+    final targetMessage = currentState.messages.firstWhere(
+      (msg) => msg.id == event.messageId,
+      orElse: () => currentState.messages.first, // Fallback
+    );
+
+    final existingReaction = targetMessage.reactions.where(
+      (r) => r.code == event.emojiCode && r.userId == _currentUserId,
+    );
+
+    final isRemoving = existingReaction.isNotEmpty;
+
     // Optimistic update: toggle reaction locally
     final updatedMessages = currentState.messages.map((msg) {
       if (msg.id != event.messageId) return msg;
 
-      final existingReaction = msg.reactions.where(
-        (r) => r.code == event.emojiCode && r.userId == _currentUserId,
-      );
-
       List<MessageReaction> updatedReactions;
-      if (existingReaction.isNotEmpty) {
+      if (isRemoving) {
         // Remove reaction
         updatedReactions = msg.reactions
             .where((r) => !(r.code == event.emojiCode && r.userId == _currentUserId))
@@ -572,13 +604,242 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       );
     }).toList();
 
+    // Emit optimistic update immediately
     emit(currentState.copyWith(
       messages: updatedMessages,
       uiMessages: _transformMessages(updatedMessages),
     ));
 
-    // TODO: Call API to persist reaction on server
-    // POST /api/messages/{messageId}/reactions { code: emojiCode }
+    // Call API to persist reaction on server
+    try {
+      final result = isRemoving
+          ? await _removeReaction(
+              messageId: event.messageId,
+              code: event.emojiCode,
+            )
+          : await _addReaction(
+              messageId: event.messageId,
+              code: event.emojiCode,
+            );
+
+      result.fold(
+        (failure) {
+          logger.e('Failed to toggle reaction', error: failure.message);
+
+          // Rollback optimistic update on failure
+          emit(currentState.copyWith(
+            messages: currentState.messages,
+            uiMessages: _transformMessages(currentState.messages),
+          ));
+
+          // Note: Error handling can be improved by adding error field to MessagesLoaded state
+        },
+        (_) {
+          logger.i('Reaction updated successfully');
+          // Success - optimistic update already shown
+          // Real-time socket will sync the full reaction list with reactors
+        },
+      );
+    } catch (e, stackTrace) {
+      logger.e('Unexpected error toggling reaction', error: e, stackTrace: stackTrace);
+
+      // Rollback on unexpected error
+      emit(currentState.copyWith(
+        messages: currentState.messages,
+        uiMessages: _transformMessages(currentState.messages),
+      ));
+    }
+  }
+
+  /// **Send message with file attachments - CLEAN ARCHITECTURE**
+  ///
+  /// Handles complete flow:
+  /// 1. Upload files to GCP Cloud Storage
+  /// 2. Send message with uploaded file paths
+  /// 3. Update UI state
+  Future<void> _onSendMessageWithAttachments(
+    SendMessageWithAttachments event,
+    Emitter<MessageState> emit,
+  ) async {
+    if (state is! MessagesLoaded) {
+      logger.w('Cannot send message with attachments - messages not loaded');
+      return;
+    }
+
+    final currentState = state as MessagesLoaded;
+    logger.i('Sending message with ${event.localFilePaths.length} attachments');
+
+    try {
+      // Step 1: Upload all files in parallel
+      final uploadResults = await Future.wait(
+        event.localFilePaths.map((filePath) async {
+          final result = await _attachmentRepository.uploadAttachment(
+            messageId: 'temp-${DateTime.now().millisecondsSinceEpoch}',
+            chatId: currentState.chatId,
+            file: File(filePath),
+            onProgress: (progress) {
+              // Progress logging can be added if needed
+            },
+          );
+
+          return result.fold(
+            (failure) {
+              logger.e('Failed to upload file', error: failure);
+              throw Exception(failure.message);
+            },
+            (uploadResult) => uploadResult.id, // Return storage path
+          );
+        }),
+      );
+
+      logger.i('All files uploaded successfully: ${uploadResults.length}');
+
+      // Step 2: Determine message type based on first file extension
+      final firstFilePath = event.localFilePaths.first;
+      final extension = firstFilePath.split('.').last.toLowerCase();
+      final messageType = _getMessageTypeFromExtension(extension);
+
+      // Step 3: Send message with uploaded paths
+      final result = await _sendMessage(
+        conversationId: currentState.chatId,
+        content: event.content,
+        senderId: event.senderId,
+        type: messageType,
+        urls: uploadResults,
+        replyMessageId: event.replyMessageId,
+      );
+
+      result.fold(
+        (failure) {
+          logger.e('Failed to send message with attachments', error: failure);
+        },
+        (message) {
+          logger.i('Message with attachments sent successfully: ${message.id}');
+
+          // Add new message to top of list
+          final updatedMessages = [message, ...currentState.messages];
+          emit(currentState.copyWith(
+            messages: updatedMessages,
+            uiMessages: _transformMessages(updatedMessages),
+          ));
+        },
+      );
+    } catch (e, stackTrace) {
+      logger.e('Error sending message with attachments', error: e, stackTrace: stackTrace);
+    }
+  }
+
+  /// **Send location message - CLEAN ARCHITECTURE**
+  ///
+  /// Handles location sharing:
+  /// 1. Get address from coordinates (optional)
+  /// 2. Create location data JSON
+  /// 3. Send message with type LOCATION
+  Future<void> _onSendLocationMessage(
+    SendLocationMessage event,
+    Emitter<MessageState> emit,
+  ) async {
+    if (state is! MessagesLoaded) {
+      logger.w('Cannot send location - messages not loaded');
+      return;
+    }
+
+    final currentState = state as MessagesLoaded;
+    logger.i('Sending location message');
+
+    try {
+      // Get address from coordinates (optional, for better UX)
+      String? locationName = event.locationName;
+
+      if (locationName == null) {
+        final addressResult = await _locationService.getAddressFromCoordinates(
+          latitude: event.latitude,
+          longitude: event.longitude,
+        );
+
+        locationName = addressResult.fold(
+          (failure) {
+            logger.w('Failed to get address');
+            return null;
+          },
+          (address) => address,
+        );
+      }
+
+      // Create location data JSON
+      final locationData = LocationData(
+        latitude: event.latitude,
+        longitude: event.longitude,
+        name: locationName,
+        timestamp: DateTime.now(),
+      );
+
+      // Send message with type LOCATION
+      final result = await _sendMessage(
+        conversationId: currentState.chatId,
+        content: locationData.toJson(),
+        senderId: event.senderId,
+        type: 'LOCATION',
+      );
+
+      result.fold(
+        (failure) {
+          logger.e('Failed to send location message', error: failure);
+        },
+        (message) {
+          logger.i('Location message sent successfully: ${message.id}');
+
+          // Add new message to top of list
+          final updatedMessages = [message, ...currentState.messages];
+          emit(currentState.copyWith(
+            messages: updatedMessages,
+            uiMessages: _transformMessages(updatedMessages),
+          ));
+        },
+      );
+    } catch (e, stackTrace) {
+      logger.e('Error sending location message', error: e, stackTrace: stackTrace);
+    }
+  }
+
+  /// Helper: Determine message type from file extension
+  String _getMessageTypeFromExtension(String extension) {
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+      case 'bmp':
+        return 'IMAGE';
+
+      case 'mp4':
+      case 'mov':
+      case 'avi':
+      case 'mkv':
+      case 'webm':
+        return 'VIDEO';
+
+      case 'mp3':
+      case 'wav':
+      case 'ogg':
+      case 'm4a':
+      case 'aac':
+        return 'AUDIO';
+
+      case 'pdf':
+      case 'doc':
+      case 'docx':
+      case 'xls':
+      case 'xlsx':
+      case 'ppt':
+      case 'pptx':
+      case 'txt':
+        return 'DOC';
+
+      default:
+        return 'DOC';
+    }
   }
 
   @override
