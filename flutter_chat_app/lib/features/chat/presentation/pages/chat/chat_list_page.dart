@@ -12,6 +12,7 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_av
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_conversation_tile.dart';
 import 'package:get_it/get_it.dart';
 
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
@@ -274,95 +275,32 @@ class _ChatListPageState extends BaseState<ChatListPage> {
   }
 
   Widget _buildChatListItem(BuildContext context, Chat chat) {
-    final isGroup = chat.type == ChatType.group || chat.type == ChatType.channel;
-
-    final avatar = AppHeroAvatar(
-      id: chat.id,
-      imageUrl: chat.avatarUrl,
-      displayName: chat.name,
-      size: AvatarSize.large,
-      hasBorder: false,
+    final previewText = (chat.lastMessagePreview ?? context.l10n.noMessages).formatChatMessage(
+      mentionNameById: {
+        for (final m in chat.members)
+          if ((m.userId).isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
+            m.userId: m.fullName!.trim(),
+      },
     );
 
-    final timeText = chat.lastMessageAt != null
-        ? DateFormatterService.formatTimeForMessage(chat.lastMessageAt!)
-        : '';
-
-    final unreadBadge = (chat.unreadCount > 0)
-        ? Container(
-            padding: const EdgeInsets.all(AppDimens.paddingSmall),
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
-              shape: BoxShape.circle,
+    return ChatConversationTile(
+      chat: chat,
+      previewText: previewText,
+      onTap: () async {
+        if (chat.unreadCount > 0) {
+          _chatBloc.add(
+            ChatEvent.markMessagesAsRead(
+              chatId: chat.id,
+              messageIds: const <String>[],
             ),
-            child: AppText(
-              chat.unreadCount.toString(),
-              style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.textButton,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          )
-        : const SizedBox.shrink();
+          );
+        }
 
-    return AppCard.filled(
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(AppDimens.paddingMedium),
-      onTap: () {
-        // Use ChatNavigationHelper for proper navigation in both standalone and package modes
-        ChatNavigationHelper.navigateToChatDetail(context, chatId: chat.id);
+        await ChatNavigationHelper.navigateToChatDetail(
+          context,
+          chatId: chat.id,
+        );
       },
-      child: Row(
-        children: [
-          avatar,
-          const SizedBox(width: AppDimens.spaceMedium),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(
-                  chat.name ?? '',
-                  style: AppTextStyles.titleMedium.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppDimens.spaceXSmall),
-                AppText(
-                  (chat.lastMessage ?? context.l10n.noMessages).formatChatMessage(
-                    mentionNameById: {
-                      for (final m in chat.members)
-                        if ((m.userId).isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
-                          m.userId: m.fullName!.trim(),
-                    },
-                  ),
-                  style: AppTextStyles.bodySmall,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppDimens.spaceSmall),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              AppText(
-                timeText,
-                style: AppTextStyles.labelSmall.copyWith(
-                  color: chat.unreadCount > 0
-                      ? AppColors.primary
-                      : AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: AppDimens.spaceXSmall),
-              unreadBadge,
-            ],
-          ),
-        ],
-      ),
     );
   }
 
