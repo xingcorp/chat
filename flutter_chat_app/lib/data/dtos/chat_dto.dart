@@ -235,6 +235,29 @@ extension ChatDtoMapper on ChatDto {
       mentionNameById: mentionNameById,
     );
 
+    final resolvedPreview = (formattedPreview?.trim().isNotEmpty ?? false)
+        ? formattedPreview
+        : () {
+            final type = (lastMessage?.type ?? '').trim().toLowerCase();
+            final fileName = lastMessage?.fileName?.trim();
+
+            switch (type) {
+              case 'image':
+                return '📷 Photo';
+              case 'video':
+                return '📹 Video';
+              case 'audio':
+                return '🎧 Audio';
+              case 'file':
+              case 'document':
+                return fileName != null && fileName.isNotEmpty
+                    ? '📄 $fileName'
+                    : '📄 File';
+              default:
+                return fileName != null && fileName.isNotEmpty ? fileName : null;
+            }
+          }();
+
     return Chat(
       id: id,
       name: name,
@@ -242,7 +265,7 @@ extension ChatDtoMapper on ChatDto {
       lastMessageTime: lastMessageAt != null 
           ? DateTime.fromMillisecondsSinceEpoch(lastMessageAt!)
           : null,
-      lastMessagePreview: formattedPreview,
+      lastMessagePreview: resolvedPreview,
       unreadCount: personalConversation?.unreadCount ?? members.firstOrNull?.unreadCount ?? 0,
       type: _mapChatType(type),
       participantIds: members.map((m) => m.userId).toList(),
