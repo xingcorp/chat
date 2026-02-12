@@ -211,14 +211,21 @@ extension MessageDtoMapper on MessageDto {
             avatar: null,
           );
 
-    // Convert reactions
+    // Convert reactions - map userName from reactors
     final messageReactions = <MessageReaction>[];
     for (final r in reactions) {
+      // Create map userId -> userName
+      final reactorNameMap = <String, String>{};
+      for (var i = 0; i < r.reactorIds.length && i < r.reactors.length; i++) {
+        reactorNameMap[r.reactorIds[i]] = r.reactors[i].fullName;
+      }
+
       for (final reactorId in r.reactorIds) {
         messageReactions.add(
           MessageReaction(
             code: r.code,
             userId: reactorId,
+            userName: reactorNameMap[reactorId],
             createdAt: DateTime.now(), // Backend doesn't provide timestamp
           ),
         );

@@ -313,14 +313,20 @@ class MessageListTransformer {
     if (reactions.isEmpty) return const [];
 
     final Map<String, List<String>> groupMap = {};
+    final Map<String, List<String>> namesMap = {};
+
     for (final r in reactions) {
       groupMap.putIfAbsent(r.code, () => []).add(r.userId);
+      if (r.userName != null) {
+        namesMap.putIfAbsent(r.code, () => []).add(r.userName!);
+      }
     }
 
     return groupMap.entries.map((entry) {
       return ReactionGroup(
         code: entry.key,
         reactorIds: entry.value,
+        reactorNames: namesMap[entry.key] ?? [],
         isReactedByCurrentUser: entry.value.contains(currentUserId),
       );
     }).toList()

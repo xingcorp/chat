@@ -875,7 +875,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                     icon: const Icon(Icons.add_circle_outline),
                     iconSize: 28.0,
                     onPressed: _showAttachmentPicker,
-                    tooltip: context.l10n.attachments,
+                    tooltip: 'Attachments', // TODO: Add i18n
                   ),
                   // Message input field with mention support
                   Expanded(
@@ -916,7 +916,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                         textController: _messageController,
                       );
                     },
-                    tooltip: context.l10n.insertEmoji,
+                    tooltip: 'Insert emoji', // TODO: Add i18n
                   ),
                   // Send button - smaller, icon-only for better responsiveness
                   IconButton(

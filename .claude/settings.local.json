@@ -9,7 +9,8 @@
       "mcp__serena__search_for_pattern",
       "mcp__serena__get_symbols_overview",
       "Bash(flutter pub run:*)",
-      "Bash(flutter gen-l10n:*)"
+      "Bash(flutter gen-l10n:*)",
+      "mcp__serena__list_dir"
     ]
   }
 }

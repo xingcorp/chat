@@ -134,34 +134,40 @@ class MessageSender {
 class MessageReaction {
   /// Emoji code (e.g., "👍", "❤️", "😂")
   final String code;
-  
+
   /// ID người dùng đã react
   final String userId;
-  
+
+  /// Tên người dùng đã react (optional, for display)
+  final String? userName;
+
   /// Thời gian react
   final DateTime createdAt;
-  
+
   /// Constructor
   MessageReaction({
     required this.code,
     required this.userId,
+    this.userName,
     required this.createdAt,
   });
-  
+
   /// Tạo từ JSON
   factory MessageReaction.fromJson(Map<String, dynamic> json) {
     return MessageReaction(
       code: json['code'] as String,
       userId: json['userId'] as String,
+      userName: json['userName'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
-  
+
   /// Chuyển đổi thành JSON
   Map<String, dynamic> toJson() {
     return {
       'code': code,
       'userId': userId,
+      if (userName != null) 'userName': userName,
       'createdAt': createdAt.toIso8601String(),
     };
   }
