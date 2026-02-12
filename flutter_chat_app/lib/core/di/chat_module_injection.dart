@@ -42,6 +42,7 @@ import 'package:flutter_chat_app/core/network/realtime/models/realtime_connectio
 import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart'
     as realtime;
 import 'package:flutter_chat_app/core/network/socket_manager.dart' as socket_mgr;
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
 import 'package:flutter_chat_app/data/datasources/permissions_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/permissions/web_permissions_datasource.dart';
@@ -53,6 +54,7 @@ import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.d
     as media_local_ds;
 import 'package:flutter_chat_app/features/auth/data/datasources/auth/auth_remote_datasource.dart'
     as auth_ds;
+import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_local_datasource.dart';
@@ -130,6 +132,24 @@ class ChatModuleInjection {
       // Step 8: Set error message provider if provided
       if (config.errorMessageProvider != null) {
         ErrorMessages.setProvider(config.errorMessageProvider!);
+      }
+
+      // Step 9: Initialize CurrentUserProvider and seed with ChatConfig user.
+      // This makes current user available to non-UI layers (BLoCs/services)
+      // without depending on AuthBloc state or SharedPreferences.
+      if (_getIt.isRegistered<CurrentUserProvider>()) {
+        final currentUserProvider = _getIt<CurrentUserProvider>();
+        await currentUserProvider.initialize();
+
+        final currentUser = User(
+          id: config.currentUserId,
+          username: config.currentUserName ?? 'user_${config.currentUserId}',
+          email: config.currentUserEmail ?? '',
+          fullName: config.currentUserFullName,
+          avatar: config.currentUserAvatar,
+          isOnline: true,
+        );
+        await currentUserProvider.setCurrentUser(currentUser);
       }
 
       stopwatch.stop();
@@ -390,6 +410,14 @@ class ChatModuleInjection {
       _getIt.registerSingleton<String>(
         config.graphqlWsUrl,
         instanceName: 'graphQlWsUrl',
+      );
+    }
+
+    // Current user ID (authoritative from ChatConfig)
+    if (!_getIt.isRegistered<String>(instanceName: 'currentUserId')) {
+      _getIt.registerSingleton<String>(
+        config.currentUserId,
+        instanceName: 'currentUserId',
       );
     }
 

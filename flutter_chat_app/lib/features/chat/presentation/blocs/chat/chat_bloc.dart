@@ -8,10 +8,13 @@ import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
 import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
+import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
+import 'package:flutter_chat_app/domain/usecases/message/mark_as_read_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/create_group_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/delete_conversation_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
@@ -47,9 +50,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   final ConnectivityService _connectivityService;
   final CacheSyncStrategy _cacheSyncStrategy;
   final MediaCacheManager _mediaCacheManager;
+  final RealtimeService _realtimeService;
+  final MarkAsReadUseCase _markAsRead;
+  final CurrentUserProvider _currentUserProvider;
 
   // Subscriptions for real-time updates
   StreamSubscription<ChatMessage>? _messageSubscription;
+  StreamSubscription<TypingIndicator>? _typingSubscription;
+  StreamSubscription<MessageReadReceipt>? _readReceiptSubscription;
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
   StreamSubscription<Chat>? _chatUpdatesSubscription;
   
@@ -65,12 +73,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     this._connectivityService,
     this._cacheSyncStrategy,
     this._mediaCacheManager,
+    this._realtimeService,
+    this._markAsRead,
+    this._currentUserProvider,
   ) : super(const ChatState.initial()) {
     on<_LoadChats>(_onLoadChats);
     on<_LoadChatDetails>(_onLoadChatDetails);
     on<_CreateChat>(_onCreateChat);
     on<_UpdateChat>(_onUpdateChat);
     on<_LeaveChat>(_onLeaveChat);
+    on<_MarkMessagesAsRead>(_onMarkMessagesAsRead);
+    on<_NewMessageReceived>(_onNewMessageReceived);
     on<_ConnectivityChanged>(_onConnectivityChanged);
     on<_ChatUpdated>(_onChatUpdated);
   }
@@ -296,18 +309,150 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
 
   /// Subscribe to real-time updates
   void _subscribeToRealTimeUpdates() {
-    // TODO: Implement when socket manager is available
-    // Cancel existing subscription
-    // _chatUpdatesSubscription?.cancel();
-    // _chatUpdatesSubscription = _socketService.onChatUpdated().listen((chat) {
-    //   add(ChatEvent.chatUpdated(chat: chat));
-    // });
-    logger.d('Real-time updates subscription setup (pending socket implementation)');
+    _messageSubscription?.cancel();
+    _typingSubscription?.cancel();
+    _readReceiptSubscription?.cancel();
+
+    if (!_realtimeService.isConnected) {
+      _realtimeService.connect();
+    }
+
+    _messageSubscription = _realtimeService.messageStream.listen(
+      (message) {
+        add(ChatEvent.newMessageReceived(message));
+      },
+      onError: (error) {
+        logger.w('Error in realtime message stream: $error');
+      },
+    );
+
+    _typingSubscription = _realtimeService.typingStream.listen(
+      (indicator) {
+        _applyTypingIndicator(indicator);
+      },
+      onError: (error) {
+        logger.w('Error in realtime typing stream: $error');
+      },
+    );
+
+    _readReceiptSubscription = _realtimeService.readReceiptStream.listen(
+      (receipt) {
+        _applyReadReceipt(receipt);
+      },
+      onError: (error) {
+        logger.w('Error in realtime read receipt stream: $error');
+      },
+    );
+
+    logger.d('Real-time updates subscription setup completed');
+  }
+
+  Future<void> _onNewMessageReceived(
+    _NewMessageReceived event,
+    Emitter<ChatState> emit,
+  ) async {
+    if (state is! _Loaded) return;
+
+    final currentState = state as _Loaded;
+    final message = event.message;
+
+    final idx = currentState.chats.indexWhere((c) => c.id == message.chatId);
+    if (idx < 0) {
+      return;
+    }
+
+    final existingChat = currentState.chats[idx];
+    final isIncoming = message.sender.id != _currentUserProvider.currentUserId;
+
+    final updatedChat = existingChat.copyWith(
+      lastMessageTime: message.createdAt,
+      lastMessagePreview: message.content,
+      unreadCount: isIncoming ? (existingChat.unreadCount + 1) : existingChat.unreadCount,
+    );
+
+    final updatedChats = List<Chat>.from(currentState.chats);
+    updatedChats[idx] = updatedChat;
+
+    updatedChats.sort((a, b) {
+      final at = a.lastMessageTime;
+      final bt = b.lastMessageTime;
+      if (at == null && bt == null) return 0;
+      if (at == null) return 1;
+      if (bt == null) return -1;
+      return bt.compareTo(at);
+    });
+
+    emit(ChatState.loaded(chats: updatedChats));
+  }
+
+  Future<void> _onMarkMessagesAsRead(
+    _MarkMessagesAsRead event,
+    Emitter<ChatState> emit,
+  ) async {
+    if (state is _Loaded) {
+      final currentState = state as _Loaded;
+      final updatedChats = currentState.chats
+          .map((c) => c.id == event.chatId ? c.copyWith(unreadCount: 0) : c)
+          .toList();
+      emit(ChatState.loaded(chats: updatedChats));
+    }
+
+    final result = await _markAsRead(MarkAsReadParams(conversationId: event.chatId));
+    result.fold(
+      (failure) {
+        logger.w('Failed to mark messages as read: ${failure.message}');
+      },
+      (_) {},
+    );
+  }
+
+  void _applyTypingIndicator(TypingIndicator indicator) {
+    if (state is! _Loaded) return;
+
+    final currentState = state as _Loaded;
+    final idx = currentState.chats.indexWhere((c) => c.id == indicator.chatId);
+    if (idx < 0) return;
+
+    final chat = currentState.chats[idx];
+    final typing = List<String>.from(chat.typingUserIds);
+
+    if (indicator.isTyping) {
+      if (!typing.contains(indicator.userId)) {
+        typing.add(indicator.userId);
+      }
+    } else {
+      typing.remove(indicator.userId);
+    }
+
+    final updatedChats = List<Chat>.from(currentState.chats);
+    updatedChats[idx] = chat.copyWith(typingUserIds: typing);
+    emit(ChatState.loaded(chats: updatedChats));
+  }
+
+  void _applyReadReceipt(MessageReadReceipt receipt) {
+    if (state is! _Loaded) return;
+
+    if (receipt.readerId != _currentUserProvider.currentUserId) {
+      return;
+    }
+
+    final currentState = state as _Loaded;
+    final idx = currentState.chats.indexWhere((c) => c.id == receipt.chatId);
+    if (idx < 0) return;
+
+    final chat = currentState.chats[idx];
+    if (chat.unreadCount == 0) return;
+
+    final updatedChats = List<Chat>.from(currentState.chats);
+    updatedChats[idx] = chat.copyWith(unreadCount: 0);
+    emit(ChatState.loaded(chats: updatedChats));
   }
 
   @override
   Future<void> close() {
     _messageSubscription?.cancel();
+    _typingSubscription?.cancel();
+    _readReceiptSubscription?.cancel();
     _connectivitySubscription?.cancel();
     _chatUpdatesSubscription?.cancel();
     return super.close();

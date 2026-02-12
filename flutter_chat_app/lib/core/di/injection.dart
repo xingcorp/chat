@@ -38,6 +38,7 @@ import 'package:flutter_chat_app/core/network/graphql_client.dart' as core_graph
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/network/http/dio_http_client.dart';
 import 'package:flutter_chat_app/core/network/http/http_client_interface.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/network/socket_manager.dart' as socket_mgr;
 import 'package:flutter_chat_app/core/network/realtime/connection_pool_manager.dart';
 import 'package:flutter_chat_app/core/network/realtime/enhanced_realtime_connection_service.dart';
@@ -219,12 +220,29 @@ Future<void> configureDependencies() async {
           () => getIt<EnhancedRealtimeConnectionService>());
     }
 
+    // Initialize current user provider so non-UI layers can access
+    // current user id and user stream consistently.
+    if (getIt.isRegistered<CurrentUserProvider>()) {
+      await getIt<CurrentUserProvider>().initialize();
+
+      // Backward compatibility: provide named currentUserId sourced from CurrentUserProvider
+      // so callers can migrate away from SharedPreferences('userId').
+      final currentUserId = getIt<CurrentUserProvider>().currentUserId;
+      if (getIt.isRegistered<String>(instanceName: 'currentUserId')) {
+        await getIt.unregister<String>(instanceName: 'currentUserId');
+      }
+      getIt.registerSingleton<String>(
+        currentUserId,
+        instanceName: 'currentUserId',
+      );
+    }
+
     if (!getIt.isRegistered<INetworkInfo>()) {
       getIt.registerLazySingleton<INetworkInfo>(() => getIt<NetworkInfo>());
     }
 
     stopwatch.stop();
-    logger.i('✅ DI initialized in ${stopwatch.elapsedMilliseconds}ms');
+    logger.i('✅ Dependency Injection initialized in ${stopwatch.elapsedMilliseconds}ms');
 
     // Validate performance
     if (stopwatch.elapsedMilliseconds > 500) {

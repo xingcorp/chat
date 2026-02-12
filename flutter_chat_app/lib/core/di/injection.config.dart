@@ -128,6 +128,7 @@ import '../services/background_sync_service.dart' as _i200;
 import '../services/chat_message_service.dart' as _i1060;
 import '../services/connectivity_analyzer_service.dart' as _i286;
 import '../services/connectivity_service.dart' as _i47;
+import '../services/current_user_provider.dart' as _i113;
 import '../services/database_service.dart' as _i665;
 import '../services/device_capability_service.dart' as _i98;
 import '../services/graphql_subscription_service.dart' as _i98;
@@ -272,9 +273,13 @@ extension GetItInjectableX on _i174.GetIt {
           localStorage: gh<_i329.LocalStorage>(),
           performanceMonitor: gh<_i610.IPerformanceMonitor>(),
         ));
-    // DISABLED: Requires FirebasePerformance - monitoring handled by ChatModuleInjection
-    // gh.lazySingleton<_i910.PerformanceService>(
-    //     () => _i910.PerformanceService(gh<_i346.FirebasePerformance>()));
+    gh.lazySingleton<_i113.CurrentUserProvider>(
+        () => _i113.CurrentUserProviderImpl(
+              userLocalDataSource: gh<_i439.UserLocalDataSource>(),
+              tokenRepository: gh<_i328.TokenRepository>(),
+            ));
+    gh.lazySingleton<_i910.PerformanceService>(
+        () => _i910.PerformanceService(gh<_i346.FirebasePerformance>()));
     gh.singleton<_i855.AnimationService>(() => _i855.AnimationService(
           gh<_i98.DeviceCapabilityService>(),
           gh<_i610.IPerformanceMonitor>(),
@@ -577,6 +582,9 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i47.ConnectivityService>(),
           gh<_i514.CacheSyncStrategy>(),
           gh<_i163.MediaCacheManager>(),
+          gh<_i301.RealtimeService>(),
+          gh<_i848.MarkAsReadUseCase>(),
+          gh<_i113.CurrentUserProvider>(),
         ));
     return this;
   }

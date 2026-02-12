@@ -138,6 +138,12 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
     if (state == AppLifecycleState.resumed) {
       // TODO: Implement proper mark chat as read with message IDs
       // context.read<ChatBloc>().add(ChatEvent.markMessagesAsRead(chatId: widget.chatId, messageIds: []));
+      context.read<ChatBloc>().add(
+            ChatEvent.markMessagesAsRead(
+              chatId: widget.chatId,
+              messageIds: const <String>[],
+            ),
+          );
     }
   }
   
@@ -154,6 +160,12 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
     // Mark chat as read when opened
     // TODO: Implement proper mark chat as read with message IDs
     // context.read<ChatBloc>().add(ChatEvent.markMessagesAsRead(chatId: widget.chatId, messageIds: []));
+    context.read<ChatBloc>().add(
+          ChatEvent.markMessagesAsRead(
+            chatId: widget.chatId,
+            messageIds: const <String>[],
+          ),
+        );
   }
   
   void _loadMoreMessages() {
