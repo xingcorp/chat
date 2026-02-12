@@ -111,7 +111,7 @@ Future<void> configureDependencies() async {
     await registerCoreModule(getIt);
 
     // Step 3: Initialize auto-generated dependencies (feature services)
-    getIt.init();
+    getIt.init(environment: 'standalone');
 
     // Step 4: Override monitoring with Firebase-backed implementations
     // (standalone mode only — package mode uses NoOp defaults from core_module

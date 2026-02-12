@@ -104,7 +104,7 @@ class ChatModuleInjection {
       _registerMonitoringServices(config);
 
       // Step 3: Initialize auto-generated deps
-      _getIt.init();
+      _getIt.init(environment: 'package');
 
       // Step 4: Platform-specific overrides
       if (kIsWeb) {

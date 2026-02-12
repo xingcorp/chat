@@ -152,6 +152,7 @@ class PerformanceObserver {
 
 /// Service for measuring and managing application performance
 @lazySingleton
+@Environment('standalone')
 class PerformanceService {
   final FirebasePerformance _firebasePerformance;
   final _logger = Logger();

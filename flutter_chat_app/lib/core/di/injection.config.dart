@@ -155,6 +155,7 @@ import '../utils/logger.dart' as _i221;
 import '../utils/proto_converter.dart' as _i995;
 import '../utils/system_resources.dart' as _i260;
 
+const String _standalone = 'standalone';
 const String _staging = 'staging';
 const String _prod = 'prod';
 const String _test = 'test';
@@ -278,8 +279,6 @@ extension GetItInjectableX on _i174.GetIt {
               userLocalDataSource: gh<_i439.UserLocalDataSource>(),
               tokenRepository: gh<_i328.TokenRepository>(),
             ));
-    gh.lazySingleton<_i910.PerformanceService>(
-        () => _i910.PerformanceService(gh<_i346.FirebasePerformance>()));
     gh.singleton<_i855.AnimationService>(() => _i855.AnimationService(
           gh<_i98.DeviceCapabilityService>(),
           gh<_i610.IPerformanceMonitor>(),
@@ -288,6 +287,10 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i610.IPerformanceMonitor>(),
           gh<_i260.SystemResourceMonitor>(),
         ));
+    gh.lazySingleton<_i910.PerformanceService>(
+      () => _i910.PerformanceService(gh<_i346.FirebasePerformance>()),
+      registerFor: {_standalone},
+    );
     gh.lazySingleton<_i888.ConnectivityServiceImpl>(
         () => _i888.ConnectivityServiceImpl(gh<_i895.Connectivity>()));
     gh.lazySingleton<_i286.ConnectivityAnalyzerService>(

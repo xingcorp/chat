@@ -37,8 +37,10 @@ class AppWrapper extends StatelessWidget {
         child: InkWell(
           onTap: () {
             // Toggle performance overlay
-            final performanceService = GetIt.I<PerformanceService>();
-            performanceService.togglePerformanceOverlay();
+            if (GetIt.I.isRegistered<PerformanceService>()) {
+              final performanceService = GetIt.I<PerformanceService>();
+              performanceService.togglePerformanceOverlay();
+            }
           },
           child: Container(
             decoration: BoxDecoration(

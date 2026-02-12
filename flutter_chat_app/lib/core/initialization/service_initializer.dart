@@ -49,11 +49,13 @@ class ServiceInitializer {
     }
 
     try {
-      final performanceService = GetIt.I<PerformanceService>();
-      await performanceService.initialize();
+      if (GetIt.I.isRegistered<PerformanceService>()) {
+        final performanceService = GetIt.I<PerformanceService>();
+        await performanceService.initialize();
 
-      if (kDebugMode) {
-        performanceService.showPerformanceOverlay = true;
+        if (kDebugMode) {
+          performanceService.showPerformanceOverlay = true;
+        }
       }
     } catch (e) {
       logger.e('PerformanceService initialization failed', error: e);
