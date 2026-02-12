@@ -453,11 +453,30 @@ class RealtimeService {
   /// **Handle typing indicator event**
   void _handleTypingIndicator(Map<String, dynamic> data) {
     try {
+      final chatIdRaw = data['conversationId'];
+      final userIdRaw = data['userId'];
+      final isTypingRaw = data['isTyping'];
+
+      final chatId = chatIdRaw?.toString();
+      final userId = userIdRaw?.toString();
+
+      if (chatId == null || chatId.isEmpty || userId == null || userId.isEmpty) {
+        _logger.w('Typing indicator event missing conversationId/userId');
+        return;
+      }
+
+      final bool isTyping = switch (isTypingRaw) {
+        bool v => v,
+        num v => v != 0,
+        String v => v.toLowerCase() == 'true' || v == '1',
+        _ => false,
+      };
+
       final typingIndicator = TypingIndicator(
-        chatId: data['conversationId'] as String,
-        userId: data['userId'] as String,
-        userName: data['fullName'] as String? ?? 'Unknown',
-        isTyping: data['isTyping'] as bool,
+        chatId: chatId,
+        userId: userId,
+        userName: data['fullName']?.toString() ?? 'Unknown',
+        isTyping: isTyping,
       );
       
       _typingController.add(typingIndicator);

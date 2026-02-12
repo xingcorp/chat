@@ -591,10 +591,15 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                     );
                   },
                   onReactionLongPress: (emojiCode, reactorIds, reactorNames) {
-                    ReactionDetailModal.show(
-                      context,
-                      emojiCode: emojiCode,
-                      reactorNames: reactorNames,
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      barrierColor: Colors.transparent,
+                      builder: (_) => ReactionDetailModal(
+                        emojiCode: emojiCode,
+                        reactorNames: reactorNames,
+                      ),
                     );
                   },
                   onAddReaction: () {

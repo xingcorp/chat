@@ -67,6 +67,15 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   String _currentUserId = '';
   bool _hasInitializedContext = false;
 
+  static const List<String> _quickReactions = <String>[
+    '👍',
+    '❤️',
+    '😂',
+    '😮',
+    '😢',
+    '😡',
+  ];
+
   bool _isProgrammaticScroll = false;
 
   static const int _pageSize = 50;
@@ -1236,6 +1245,93 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Padding(
+              padding: const EdgeInsets.only(
+                left: AppDimens.paddingMedium,
+                right: AppDimens.paddingMedium,
+                top: AppDimens.paddingSmall,
+                bottom: AppDimens.paddingSmall,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        for (final emoji in _quickReactions)
+                          InkWell(
+                            borderRadius: BorderRadius.circular(999),
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              _messageBloc.add(
+                                ToggleReaction(
+                                  messageId: message.id,
+                                  emojiCode: emoji,
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Theme.of(ctx).colorScheme.surface,
+                                border: Border.all(
+                                  color: Theme.of(ctx).dividerColor,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                emoji,
+                                style: const TextStyle(fontSize: 20),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(999),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      EmojiPickerBottomSheet.show(
+                        this.context,
+                        onEmojiSelected: (emoji) {
+                          _messageBloc.add(
+                            ToggleReaction(
+                              messageId: message.id,
+                              emojiCode: emoji,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Theme.of(ctx).colorScheme.surface,
+                        border: Border.all(
+                          color: Theme.of(ctx).dividerColor,
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Icon(
+                        Icons.add,
+                        size: 20,
+                        color: Theme.of(ctx).iconTheme.color,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.copy),
               title: AppText(ctx.l10n.copyMessage),
