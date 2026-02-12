@@ -45,6 +45,22 @@ class ChatConfig {
   /// ID of the currently authenticated user.
   final String currentUserId;
 
+  /// Username of the currently authenticated user.
+  /// Used by [PackageModeAuthBloc] to create the User entity.
+  final String? currentUserName;
+
+  /// Email of the currently authenticated user.
+  /// Used by [PackageModeAuthBloc] to create the User entity.
+  final String? currentUserEmail;
+
+  /// Full name of the currently authenticated user.
+  /// Used by [PackageModeAuthBloc] to create the User entity.
+  final String? currentUserFullName;
+
+  /// Avatar URL of the currently authenticated user.
+  /// Used by [PackageModeAuthBloc] to create the User entity.
+  final String? currentUserAvatar;
+
   /// Called when the access token needs to be refreshed (e.g., after 401).
   /// Should return the new access token, or null if refresh failed.
   final Future<String?> Function()? onTokenRefresh;
@@ -79,6 +95,12 @@ class ChatConfig {
   /// Custom error message provider. If null, uses default Vietnamese messages.
   final ErrorMessageProvider? errorMessageProvider;
 
+  /// Whether to hide the bottom navigation bar in chat pages.
+  /// When true, the chat module will not show its own bottom navigation.
+  /// Useful when embedding chat in a host app that has its own navigation.
+  /// Defaults to false.
+  final bool hideBottomNavBar;
+
   const ChatConfig({
     required this.baseUrl,
     required this.graphqlUrl,
@@ -86,6 +108,10 @@ class ChatConfig {
     required this.socketUrl,
     required this.accessToken,
     required this.currentUserId,
+    this.currentUserName,
+    this.currentUserEmail,
+    this.currentUserFullName,
+    this.currentUserAvatar,
     this.refreshToken,
     this.onTokenRefresh,
     this.onAuthExpired,
@@ -97,6 +123,7 @@ class ChatConfig {
     this.crashReporter,
     this.analyticsService,
     this.errorMessageProvider,
+    this.hideBottomNavBar = false,
   });
 
   /// Creates a copy with the given fields replaced.
@@ -108,6 +135,10 @@ class ChatConfig {
     String? accessToken,
     String? refreshToken,
     String? currentUserId,
+    String? currentUserName,
+    String? currentUserEmail,
+    String? currentUserFullName,
+    String? currentUserAvatar,
     Future<String?> Function()? onTokenRefresh,
     void Function()? onAuthExpired,
     void Function(String)? onTokenRefreshed,
@@ -118,6 +149,7 @@ class ChatConfig {
     ICrashReporter? crashReporter,
     IAnalyticsService? analyticsService,
     ErrorMessageProvider? errorMessageProvider,
+    bool? hideBottomNavBar,
   }) {
     return ChatConfig(
       baseUrl: baseUrl ?? this.baseUrl,
@@ -127,6 +159,10 @@ class ChatConfig {
       accessToken: accessToken ?? this.accessToken,
       refreshToken: refreshToken ?? this.refreshToken,
       currentUserId: currentUserId ?? this.currentUserId,
+      currentUserName: currentUserName ?? this.currentUserName,
+      currentUserEmail: currentUserEmail ?? this.currentUserEmail,
+      currentUserFullName: currentUserFullName ?? this.currentUserFullName,
+      currentUserAvatar: currentUserAvatar ?? this.currentUserAvatar,
       onTokenRefresh: onTokenRefresh ?? this.onTokenRefresh,
       onAuthExpired: onAuthExpired ?? this.onAuthExpired,
       onTokenRefreshed: onTokenRefreshed ?? this.onTokenRefreshed,
@@ -137,6 +173,7 @@ class ChatConfig {
       crashReporter: crashReporter ?? this.crashReporter,
       analyticsService: analyticsService ?? this.analyticsService,
       errorMessageProvider: errorMessageProvider ?? this.errorMessageProvider,
+      hideBottomNavBar: hideBottomNavBar ?? this.hideBottomNavBar,
     );
   }
 }

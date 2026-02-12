@@ -54,6 +54,10 @@ import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.d
 import 'package:flutter_chat_app/features/auth/data/datasources/auth/auth_remote_datasource.dart'
     as auth_ds;
 
+import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_local_datasource.dart';
+import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
+
 import 'injection.config.dart';
 import 'modules/core_module.dart';
 
@@ -66,31 +70,36 @@ import 'modules/core_module.dart';
 class ChatModuleInjection {
   ChatModuleInjection._();
 
+  static final Logger _logger = Logger(
+    printer: PrettyPrinter(
+      methodCount: 1,
+      errorMethodCount: 5,
+      lineLength: 100,
+      colors: true,
+      printEmojis: true,
+    ),
+  );
+
   static final GetIt _getIt = GetIt.instance;
 
   /// Initialize all dependencies from [ChatConfig].
   static Future<void> initialize(ChatConfig config) async {
     _getIt.allowReassignment = true;
 
-    final logger = Logger(
-      printer: PrettyPrinter(
-        methodCount: 1,
-        errorMethodCount: 5,
-        lineLength: 100,
-        colors: true,
-        printEmojis: true,
-      ),
-    );
-
-    logger.i('ChatModule: Initializing DI from ChatConfig...');
+    _logger.i('ChatModule: Initializing DI from ChatConfig...');
     final stopwatch = Stopwatch()..start();
 
     try {
       // Step 1: Register external deps from ChatConfig
-      await _registerExternalDeps(config, logger);
+      await _registerExternalDeps(config, _logger);
 
       // Step 2: Register core module (manual registration)
       await registerCoreModule(_getIt);
+
+      // Step 2.5: Pre-register monitoring services BEFORE auto-generated deps
+      // These are needed by many auto-generated registrations but would normally
+      // be provided by Firebase. In package mode, we use NoOp implementations.
+      _registerMonitoringServices(config);
 
       // Step 3: Initialize auto-generated deps
       _getIt.init();
@@ -124,12 +133,12 @@ class ChatModuleInjection {
       }
 
       stopwatch.stop();
-      logger.i(
+      _logger.i(
         'ChatModule: DI initialized in ${stopwatch.elapsedMilliseconds}ms',
       );
     } catch (e, stackTrace) {
       stopwatch.stop();
-      logger.e(
+      _logger.e(
         'ChatModule: DI initialization failed',
         error: e,
         stackTrace: stackTrace,
@@ -138,10 +147,137 @@ class ChatModuleInjection {
     }
   }
 
-  /// Clean up all registered dependencies.
+  /// Logout the current user and clear all user-specific data.
+  ///
+  /// This method:
+  /// 1. Clears the local database (Isar) to remove cached chats/messages
+  /// 2. Unregisters singleton repositories so they get recreated on next login
+  /// 3. Preserves core infrastructure (SharedPreferences, Logger, etc.)
+  ///
+  /// Call this when user logs out to ensure the next user doesn't see
+  /// the previous user's data.
+  static Future<void> logout() async {
+    _logger.d('[ChatModuleInjection] Logging out - clearing user data...');
+
+    // 1. Clear local database (Isar) - most important for data isolation
+    try {
+      if (_getIt.isRegistered<DatabaseService>()) {
+        final dbService = _getIt<DatabaseService>();
+        await dbService.clearAllData();
+        _logger.d('[ChatModuleInjection] Database cleared successfully');
+      }
+    } catch (e) {
+      _logger.d('[ChatModuleInjection] Failed to clear database: $e');
+    }
+
+    // 2. Clear local datasource cache if it has any in-memory state
+    try {
+      if (_getIt.isRegistered<ChatLocalDataSource>()) {
+        final localDs = _getIt<ChatLocalDataSource>();
+        await localDs.clearAll();
+        _logger.d('[ChatModuleInjection] Local datasource cleared');
+      }
+    } catch (e) {
+      _logger.d('[ChatModuleInjection] Failed to clear local datasource: $e');
+    }
+
+    // 3. Clear GraphQL cache (HiveStore) - critical for data isolation
+    // Without this, cached queries return old user's data
+    try {
+      if (_getIt.isRegistered<GraphQLClient>()) {
+        final graphqlClient = _getIt<GraphQLClient>();
+        graphqlClient.cache.store.reset();
+        _logger.d('[ChatModuleInjection] GraphQL cache cleared');
+      }
+    } catch (e) {
+      _logger.d('[ChatModuleInjection] Failed to clear GraphQL cache: $e');
+    }
+
+    // 4. Unregister singleton repositories so they get recreated fresh
+    // This ensures new instances are created with fresh state on next login
+    _tryUnregister<IChatRepository>();
+    _tryUnregister<ChatLocalDataSource>();
+
+    // 4. Clear config overrides
+    AppConfig.clearOverrides();
+
+    // 5. Unregister auth-related singletons (will be recreated on next init)
+    _tryUnregister<TokenProvider>();
+    _tryUnregister<AuthDelegate>();
+    _tryUnregister<token_module.TokenRepository>();
+    _tryUnregister<core_graphql.GraphQLClientWrapperImpl>();
+    _tryUnregister<core_graphql.GraphQLClientWrapper>();
+
+    _logger.d('[ChatModuleInjection] Logout complete');
+  }
+
+  /// Clean up chat module specific resources.
+  ///
+  /// Selectively unregisters only the dependencies that were explicitly
+  /// registered by chat module, preserving host app's registrations.
+  ///
+  /// NOTE: We do NOT call _getIt.reset() because chat module shares
+  /// GetIt instance with host app. Calling reset() would unregister ALL
+  /// dependencies including host app's routes, causing navigation failures.
   static Future<void> dispose() async {
     AppConfig.clearOverrides();
-    await _getIt.reset();
+
+    // List of instance names registered by chat module
+    final instanceNamesToUnregister = <String>[
+      'baseUrl',
+      'socketUrl',
+      'graphQlApiUrl',
+      'graphQlWsUrl',
+      'authToken',
+      'connectionPoolMaxPoolSize',
+      'connectionPoolMaxConnectionLifetime',
+      'connectionPoolMaxIdleTime',
+      'connectionPoolCleanupInterval',
+      'connectionPoolHealthCheckInterval',
+    ];
+
+    // Unregister String instances with specific names
+    for (final name in instanceNamesToUnregister) {
+      try {
+        if (name.startsWith('connectionPool')) {
+          // These are int types
+          if (_getIt.isRegistered<int>(instanceName: name)) {
+            _getIt.unregister<int>(instanceName: name);
+          }
+        } else {
+          // These are String types
+          if (_getIt.isRegistered<String>(instanceName: name)) {
+            _getIt.unregister<String>(instanceName: name);
+          }
+        }
+      } catch (e) {
+        // Ignore errors during cleanup
+      }
+    }
+
+    // Unregister chat-specific singleton types
+    // These are types unique to chat module that host app typically doesn't use
+    _tryUnregister<TokenProvider>();
+    _tryUnregister<AuthDelegate>();
+    _tryUnregister<token_module.TokenRepository>();
+    _tryUnregister<core_graphql.GraphQLClientWrapperImpl>();
+    _tryUnregister<core_graphql.GraphQLClientWrapper>();
+    _tryUnregister<socket_mgr.SocketManager>();
+    _tryUnregister<ConnectionPoolManager>();
+    _tryUnregister<EnhancedRealtimeConnectionService>();
+    _tryUnregister<realtime.IRealtimeConnectionService>();
+    _tryUnregister<Map<String, dynamic>>(); // Socket options
+  }
+
+  /// Helper to safely unregister a type if registered.
+  static void _tryUnregister<T extends Object>() {
+    try {
+      if (_getIt.isRegistered<T>()) {
+        _getIt.unregister<T>();
+      }
+    } catch (e) {
+      // Ignore - type may not be registered or may have dependencies
+    }
   }
 
   /// Register external dependencies from [ChatConfig].
@@ -154,7 +290,7 @@ class ChatModuleInjection {
   ) async {
     // Logger
     if (!_getIt.isRegistered<Logger>()) {
-      _getIt.registerSingleton<Logger>(logger);
+      _getIt.registerSingleton<Logger>(_logger);
     }
 
     // SharedPreferences
@@ -345,7 +481,7 @@ class ChatModuleInjection {
       );
     }
 
-    logger.d('ChatModule: External dependencies registered');
+    _logger.d('ChatModule: External dependencies registered');
   }
 
   /// Register interface → implementation bindings.
@@ -395,22 +531,36 @@ class ChatModuleInjection {
     }
   }
 
+  /// Pre-register monitoring services before auto-generated deps.
+  ///
+  /// These interfaces are required by many auto-generated registrations
+  /// (e.g., EnhancedCacheManager, SocketManager, etc.) but the auto-generated
+  /// code expects Firebase implementations. In package mode, we register
+  /// NoOp implementations (or config-provided ones) BEFORE init() runs.
+  static void _registerMonitoringServices(ChatConfig config) {
+    if (!_getIt.isRegistered<IPerformanceMonitor>()) {
+      _getIt.registerSingleton<IPerformanceMonitor>(
+        config.performanceMonitor ?? const NoOpPerformanceMonitor(),
+      );
+    }
+
+    if (!_getIt.isRegistered<ICrashReporter>()) {
+      _getIt.registerSingleton<ICrashReporter>(
+        config.crashReporter ?? const NoOpCrashReporter(),
+      );
+    }
+
+    if (!_getIt.isRegistered<IAnalyticsService>()) {
+      _getIt.registerSingleton<IAnalyticsService>(
+        config.analyticsService ?? const NoOpAnalyticsService(),
+      );
+    }
+  }
+
   /// Override auto-generated registrations with config-aware versions.
   static void _registerConfigOverrides(ChatConfig config) {
-    // Override monitoring services — auto-generated code registers Firebase-backed
-    // implementations which require Firebase deps. In package mode, we use
-    // config-provided or NoOp implementations instead.
-    _getIt.registerSingleton<IPerformanceMonitor>(
-      config.performanceMonitor ?? const NoOpPerformanceMonitor(),
-    );
-
-    _getIt.registerSingleton<ICrashReporter>(
-      config.crashReporter ?? const NoOpCrashReporter(),
-    );
-
-    _getIt.registerSingleton<IAnalyticsService>(
-      config.analyticsService ?? const NoOpAnalyticsService(),
-    );
+    // NOTE: Monitoring services are now registered in _registerMonitoringServices
+    // which runs BEFORE init() to satisfy dependencies.
 
     // GraphQLClientWrapperImpl — use TokenProvider + AuthDelegate
     if (_getIt.isRegistered<core_graphql.GraphQLClientWrapperImpl>()) {

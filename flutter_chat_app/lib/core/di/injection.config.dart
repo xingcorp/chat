@@ -272,8 +272,9 @@ extension GetItInjectableX on _i174.GetIt {
           localStorage: gh<_i329.LocalStorage>(),
           performanceMonitor: gh<_i610.IPerformanceMonitor>(),
         ));
-    gh.lazySingleton<_i910.PerformanceService>(
-        () => _i910.PerformanceService(gh<_i346.FirebasePerformance>()));
+    // DISABLED: Requires FirebasePerformance - monitoring handled by ChatModuleInjection
+    // gh.lazySingleton<_i910.PerformanceService>(
+    //     () => _i910.PerformanceService(gh<_i346.FirebasePerformance>()));
     gh.singleton<_i855.AnimationService>(() => _i855.AnimationService(
           gh<_i98.DeviceCapabilityService>(),
           gh<_i610.IPerformanceMonitor>(),

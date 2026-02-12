@@ -61,7 +61,11 @@ dependencies:
   flutter_local_notifications: ^19.0.0
   flutter_background_service: ^5.0.5
   flutter_background_service_android: ^6.2.2
-  workmanager: ^0.5.2
+  workmanager:
+    git:
+      url: https://github.com/fluttercommunity/flutter_workmanager.git
+      path: workmanager
+      ref: main
 
   # Storage
   shared_preferences: ^2.3.2

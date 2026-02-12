@@ -8,6 +8,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:image/image.dart' as img;
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/utils/system_resources.dart';
 
@@ -1180,61 +1181,159 @@ Future<void> _processMessage(
 
 // PROCESSING FUNCTIONS
 
-/// Process image data
+/// Process image data - Real implementation using 'image' package
+///
+/// Supports operations:
+/// - 'resize': Resize image to specified width/height or size (square thumbnail)
+/// - 'compress': Compress image with specified quality
+/// - 'thumbnail': Generate square thumbnail (alias for resize with size param)
+///
+/// Input data: String (file path) or Uint8List (image bytes)
+/// Output: Uint8List (processed image bytes as PNG/JPEG)
 Future<dynamic> _processImage(Map<String, dynamic> args) async {
   final data = args['data'];
   final params = args['params'] as Map<String, dynamic>?;
   final reportProgress = args['reportProgress'] as Function?;
   final isCancelled = args['isCancelled'] as Function?;
-  
-  // Report start
+
   reportProgress?.call(0.0, 'Initializing image processing');
-  
-  // Extract information from params
+
+  // Extract parameters
   final operation = params?['operation'] as String? ?? 'resize';
   final quality = params?['quality'] as int? ?? 80;
-  
-  // Simulate multi-step processing that can be cancelled
-  for (int i = 0; i < 10; i++) {
-    // Check for cancellation
+  final targetWidth = params?['width'] as int?;
+  final targetHeight = params?['height'] as int?;
+  final size = params?['size'] as int?; // For square thumbnails
+
+  try {
+    // Step 1: Load image bytes (10%)
     if (isCancelled?.call() == true) {
       return {'cancelled': true};
     }
-    
-    // Simulate processing
-    await Future.delayed(const Duration(milliseconds: 50));
-    
-    // Report progress
-    reportProgress?.call((i + 1) / 10, 'Processing part ${i + 1}/10');
-  }
-  
-  // Report completion
-  reportProgress?.call(1.0, 'Image processing complete');
-  
-  Map<String, dynamic> result = {
-    'processed': true,
-    'operation': operation,
-  };
-  
-  if (data is Map<String, dynamic> && data.containsKey('size')) {
-    final originalSize = data['size'] as num;
-    result['original_size'] = originalSize;
-    
-    // Simulate compression result
-    if (operation == 'compress') {
-      // New size depends on quality
-      result['new_size'] = originalSize * (quality / 100);
-      result['compression_ratio'] = (100 - quality) / 100;
-    } 
-    // Simulate resize result
-    else if (operation == 'resize') {
-      final scale = params?['scale'] as double? ?? 0.8;
-      result['new_size'] = originalSize * scale * scale; // Area reduces by scale²
-      result['scale_factor'] = scale;
+
+    reportProgress?.call(0.1, 'Loading image');
+
+    Uint8List imageBytes;
+    if (data is String) {
+      // Data is file path
+      final file = File(data);
+      if (!await file.exists()) {
+        return {'error': 'File not found: $data'};
+      }
+      imageBytes = await file.readAsBytes();
+    } else if (data is Uint8List) {
+      imageBytes = data;
+    } else {
+      return {'error': 'Invalid data type: expected String (path) or Uint8List'};
     }
+
+    // Step 2: Decode image (30%)
+    if (isCancelled?.call() == true) {
+      return {'cancelled': true};
+    }
+
+    reportProgress?.call(0.3, 'Decoding image');
+
+    final image = img.decodeImage(imageBytes);
+    if (image == null) {
+      return {'error': 'Failed to decode image - unsupported format'};
+    }
+
+    // Step 3: Process image based on operation (70%)
+    if (isCancelled?.call() == true) {
+      return {'cancelled': true};
+    }
+
+    reportProgress?.call(0.5, 'Processing image');
+
+    img.Image processedImage;
+
+    switch (operation) {
+      case 'thumbnail':
+      case 'resize':
+        // Calculate target dimensions
+        int finalWidth;
+        int finalHeight;
+
+        if (size != null) {
+          // Square thumbnail - maintain aspect ratio, fit within size x size
+          if (image.width > image.height) {
+            finalWidth = size;
+            finalHeight = (size * image.height / image.width).round();
+          } else {
+            finalHeight = size;
+            finalWidth = (size * image.width / image.height).round();
+          }
+        } else if (targetWidth != null && targetHeight != null) {
+          finalWidth = targetWidth;
+          finalHeight = targetHeight;
+        } else if (targetWidth != null) {
+          // Scale proportionally based on width
+          finalWidth = targetWidth;
+          finalHeight = (targetWidth * image.height / image.width).round();
+        } else if (targetHeight != null) {
+          // Scale proportionally based on height
+          finalHeight = targetHeight;
+          finalWidth = (targetHeight * image.width / image.height).round();
+        } else {
+          // No resize needed
+          processedImage = image;
+          break;
+        }
+
+        // Ensure minimum dimensions
+        finalWidth = finalWidth.clamp(1, image.width);
+        finalHeight = finalHeight.clamp(1, image.height);
+
+        // Use high-quality resize interpolation
+        processedImage = img.copyResize(
+          image,
+          width: finalWidth,
+          height: finalHeight,
+          interpolation: img.Interpolation.linear,
+        );
+        break;
+
+      case 'compress':
+        // No resize, just compress
+        processedImage = image;
+        break;
+
+      default:
+        processedImage = image;
+    }
+
+    // Step 4: Encode to output format (90%)
+    if (isCancelled?.call() == true) {
+      return {'cancelled': true};
+    }
+
+    reportProgress?.call(0.8, 'Encoding image');
+
+    // Determine output format based on original or default to JPEG for compression
+    Uint8List outputBytes;
+
+    // Check if original was PNG (has alpha channel or small file)
+    final hasAlpha = image.numChannels == 4;
+
+    if (hasAlpha) {
+      // PNG for images with transparency
+      outputBytes = Uint8List.fromList(img.encodePng(processedImage));
+    } else {
+      // JPEG for photos (better compression)
+      outputBytes = Uint8List.fromList(img.encodeJpg(
+        processedImage,
+        quality: quality,
+      ));
+    }
+
+    reportProgress?.call(1.0, 'Image processing complete');
+
+    return outputBytes;
+
+  } catch (e) {
+    return {'error': 'Image processing failed: $e'};
   }
-  
-  return result;
 }
 
 /// Process file operations

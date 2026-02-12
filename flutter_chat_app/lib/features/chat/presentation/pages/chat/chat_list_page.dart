@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/chat_module.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/services/date_formatter_service.dart';
@@ -10,7 +12,6 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_av
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
-import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
 import 'package:get_it/get_it.dart';
 
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
@@ -246,7 +247,9 @@ class _ChatListPageState extends BaseState<ChatListPage> {
           },
           child: const Icon(Icons.chat),
         ),
-        bottomNavigationBar: BottomNavigationBar(
+        bottomNavigationBar: (ChatModule.config?.hideBottomNavBar ?? false)
+            ? null
+            : BottomNavigationBar(
           currentIndex: 0,
           items: [
             BottomNavigationBarItem(
@@ -306,12 +309,8 @@ class _ChatListPageState extends BaseState<ChatListPage> {
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(AppDimens.paddingMedium),
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatDetailsPage(chatId: chat.id),
-          ),
-        );
+        // Use ChatNavigationHelper for proper navigation in both standalone and package modes
+        ChatNavigationHelper.navigateToChatDetail(context, chatId: chat.id);
       },
       child: Row(
         children: [

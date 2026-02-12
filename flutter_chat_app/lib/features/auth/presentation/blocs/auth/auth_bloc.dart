@@ -25,14 +25,37 @@ part 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
   final IAuthRepository _authRepository;
   final SharedPreferences _preferences;
-  
-  /// Constructor
+
+  /// Constructor - starts with AuthInitial state
   AuthBloc({
     required IAuthRepository authRepository,
     required SharedPreferences preferences,
   }) : _authRepository = authRepository,
        _preferences = preferences,
        super(const AuthInitial.initial()) {
+    _registerEventHandlers();
+  }
+
+  /// Factory constructor for package mode - starts already authenticated.
+  ///
+  /// In package mode, the host app handles authentication. The chat module
+  /// receives user info via ChatConfig, so AuthBloc should start in
+  /// AuthAuthenticated state immediately (no async check needed).
+  ///
+  /// This ensures child widgets can read AuthBloc.state synchronously
+  /// in didChangeDependencies without waiting for async auth check.
+  AuthBloc.authenticated({
+    required IAuthRepository authRepository,
+    required SharedPreferences preferences,
+    required User user,
+    bool isOnboarded = true,
+  }) : _authRepository = authRepository,
+       _preferences = preferences,
+       super(AuthAuthenticated(user: user, isOnboarded: isOnboarded)) {
+    _registerEventHandlers();
+  }
+
+  void _registerEventHandlers() {
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthLoggedIn>(_onAuthLoggedIn);
     on<AuthLoggedOut>(_onAuthLoggedOut);

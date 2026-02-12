@@ -175,14 +175,15 @@ class MediaCacheManager {
   }) async {
     // Tạo một task ID duy nhất
     final taskId = 'img_optimize_${DateTime.now().millisecondsSinceEpoch}';
-    
+
     // Chuẩn bị dữ liệu cho isolate
     final params = {
       'width': width,
       'height': height,
       'quality': defaultCompressQuality,
+      'operation': 'resize',
     };
-    
+
     // Thực thi trong isolate
     final result = await _isolateManager.processInBackground(
       taskType: IsolateTaskType.imageProcessing,
@@ -191,12 +192,22 @@ class MediaCacheManager {
       params: params,
       priority: TaskPriority.medium,
     );
-    
+
     if (result.error != null) {
       throw Exception('Lỗi khi xử lý ảnh trong isolate: ${result.error}');
     }
-    
-    return result.result as Uint8List;
+
+    // Handle different result types
+    final resultData = result.result;
+    if (resultData is Uint8List) {
+      return resultData;
+    } else if (resultData is Map && resultData.containsKey('error')) {
+      throw Exception('Lỗi xử lý ảnh: ${resultData['error']}');
+    } else if (resultData is Map && resultData.containsKey('cancelled')) {
+      throw Exception('Xử lý ảnh bị hủy');
+    } else {
+      throw Exception('Kết quả xử lý ảnh không hợp lệ: ${resultData.runtimeType}');
+    }
   }
   
   /// Tạo và lấy thumbnail cho một hình ảnh
@@ -259,13 +270,14 @@ class MediaCacheManager {
   }) async {
     // Tạo task ID duy nhất
     final taskId = 'thumb_gen_${DateTime.now().millisecondsSinceEpoch}';
-    
+
     // Chuẩn bị tham số
     final params = {
       'size': size,
       'quality': 80, // Chất lượng cho thumbnail
+      'operation': 'thumbnail',
     };
-    
+
     // Thực thi trong isolate
     final result = await _isolateManager.processInBackground(
       taskType: IsolateTaskType.imageProcessing,
@@ -274,12 +286,22 @@ class MediaCacheManager {
       params: params,
       priority: TaskPriority.low, // Thumbnail là ưu tiên thấp
     );
-    
+
     if (result.error != null) {
       throw Exception('Lỗi khi tạo thumbnail trong isolate: ${result.error}');
     }
-    
-    return result.result as Uint8List;
+
+    // Handle different result types
+    final resultData = result.result;
+    if (resultData is Uint8List) {
+      return resultData;
+    } else if (resultData is Map && resultData.containsKey('error')) {
+      throw Exception('Lỗi tạo thumbnail: ${resultData['error']}');
+    } else if (resultData is Map && resultData.containsKey('cancelled')) {
+      throw Exception('Tạo thumbnail bị hủy');
+    } else {
+      throw Exception('Kết quả tạo thumbnail không hợp lệ: ${resultData.runtimeType}');
+    }
   }
   
   /// Tiền tải các ảnh và thumbnail dựa trên danh sách URL
