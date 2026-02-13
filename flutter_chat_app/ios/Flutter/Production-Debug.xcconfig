@@ -1,0 +1,11 @@
+// Production Debug Configuration
+#include "Debug.xcconfig"
+
+// Environment identifier
+FLAVOR = production
+
+// Bundle ID for production
+PRODUCT_BUNDLE_IDENTIFIER = com.oxii.chat
+
+// App Display Name
+PRODUCT_NAME = OXII Chat

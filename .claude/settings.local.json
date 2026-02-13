@@ -10,7 +10,10 @@
       "mcp__serena__get_symbols_overview",
       "Bash(flutter pub run:*)",
       "Bash(flutter gen-l10n:*)",
-      "mcp__serena__list_dir"
+      "mcp__serena__list_dir",
+      "Bash(dart pub global:*)",
+      "Bash(flutterfire configure:*)",
+      "Bash(firebase apps:sdkconfig:*)"
     ]
   }
 }

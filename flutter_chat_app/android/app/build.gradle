@@ -5,12 +5,19 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
     // Firebase Google Services plugin for multi-flavor support
     id "com.google.gms.google-services"
+    id 'com.google.firebase.firebase-perf'
+    id 'com.google.firebase.crashlytics'
 }
 
 android {
     namespace = "com.oxii.chat"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
+
+    // Enable BuildConfig generation (required for AGP 8.x+)
+    buildFeatures {
+        buildConfig = true
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

@@ -79,10 +79,11 @@ class EnvironmentConfig {
   final int maxRetryAttempts;
   
   /// Create staging configuration
+  /// Firebase Project: common-stag (616861138934)
   factory EnvironmentConfig.staging() => const EnvironmentConfig(
     apiBaseUrl: 'https://api-staging.oxii.chat',
     websocketUrl: 'wss://ws-staging.oxii.chat',
-    firebaseProjectId: 'oxii-chat-staging',
+    firebaseProjectId: 'common-stag',
     enableAnalytics: true,
     enableCrashlytics: true,
     enablePerformanceMonitoring: true,
@@ -100,10 +101,11 @@ class EnvironmentConfig {
   );
   
   /// Create production configuration
+  /// Firebase Project: common-18e05 (159636416445)
   factory EnvironmentConfig.production() => const EnvironmentConfig(
     apiBaseUrl: 'https://oxii-office-api.oxiitek.com',
     websocketUrl: 'wss://oxii-office-api.oxiitek.com',
-    firebaseProjectId: 'oxii-chat-prod',
+    firebaseProjectId: 'common-18e05',
     enableAnalytics: true,
     enableCrashlytics: true,
     enablePerformanceMonitoring: true,

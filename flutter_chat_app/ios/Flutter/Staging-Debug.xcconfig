@@ -1,0 +1,12 @@
+// Staging Debug Configuration
+#include "Debug.xcconfig"
+
+// Environment identifier
+FLAVOR = staging
+BUNDLE_DISPLAY_NAME_SUFFIX = STG
+
+// Bundle ID for staging
+PRODUCT_BUNDLE_IDENTIFIER = com.oxii.chat.staging
+
+// App Display Name
+PRODUCT_NAME = OXII Chat STG

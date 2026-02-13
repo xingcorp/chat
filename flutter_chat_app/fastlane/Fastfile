@@ -1,0 +1,220 @@
+# =============================================================================
+# OXII Chat - Fastlane Configuration
+# =============================================================================
+# Automated deployment for iOS and Android
+#
+# Usage:
+#   fastlane ios staging       - Build and deploy iOS staging
+#   fastlane ios production    - Build and deploy iOS production
+#   fastlane android staging   - Build and deploy Android staging
+#   fastlane android production - Build and deploy Android production
+#
+# Firebase Projects:
+#   - Staging: common-stag (616861138934)
+#   - Production: common-18e05 (159636416445)
+# =============================================================================
+
+# Default platform
+default_platform(:ios)
+
+# =============================================================================
+# iOS Lanes
+# =============================================================================
+platform :ios do
+
+  desc "Build and deploy iOS Staging to Firebase App Distribution"
+  lane :staging do
+    setup_firebase_config(flavor: "staging")
+
+    build_ios_app(
+      scheme: "Staging",
+      export_method: "ad-hoc",
+      output_directory: "./build/ios",
+      output_name: "oxii-chat-staging.ipa"
+    )
+
+    firebase_app_distribution(
+      app: ENV["FIREBASE_IOS_STAGING_APP_ID"],
+      groups: "internal-testers",
+      release_notes: "Staging build #{ENV['BUILD_NUMBER'] || 'local'}"
+    )
+  end
+
+  desc "Build and deploy iOS Production to Firebase App Distribution"
+  lane :production do
+    setup_firebase_config(flavor: "production")
+
+    build_ios_app(
+      scheme: "Production",
+      export_method: "app-store",
+      output_directory: "./build/ios",
+      output_name: "oxii-chat-production.ipa"
+    )
+
+    firebase_app_distribution(
+      app: ENV["FIREBASE_IOS_PRODUCTION_APP_ID"],
+      groups: "beta-testers",
+      release_notes: "Production build #{ENV['BUILD_NUMBER'] || 'local'}"
+    )
+  end
+
+  desc "Deploy to App Store Connect"
+  lane :appstore do
+    setup_firebase_config(flavor: "production")
+
+    build_ios_app(
+      scheme: "Production",
+      export_method: "app-store",
+      output_directory: "./build/ios",
+      output_name: "oxii-chat-appstore.ipa"
+    )
+
+    upload_to_app_store(
+      skip_metadata: true,
+      skip_screenshots: true,
+      submit_for_review: false
+    )
+  end
+
+  # Helper: Setup Firebase configuration
+  private_lane :setup_firebase_config do |options|
+    flavor = options[:flavor]
+    source = "../ios/config/#{flavor}/GoogleService-Info.plist"
+    dest = "../ios/Runner/GoogleService-Info.plist"
+
+    sh("cp #{source} #{dest}")
+    UI.success("Firebase config copied for #{flavor}")
+  end
+
+end
+
+# =============================================================================
+# Android Lanes
+# =============================================================================
+platform :android do
+
+  desc "Build and deploy Android Staging to Firebase App Distribution"
+  lane :staging do
+    gradle(
+      task: "assemble",
+      flavor: "staging",
+      build_type: "Release",
+      project_dir: "../android"
+    )
+
+    firebase_app_distribution(
+      app: ENV["FIREBASE_ANDROID_STAGING_APP_ID"],
+      groups: "internal-testers",
+      android_artifact_type: "APK",
+      android_artifact_path: "../build/app/outputs/flutter-apk/app-staging-release.apk",
+      release_notes: "Staging build #{ENV['BUILD_NUMBER'] || 'local'}"
+    )
+  end
+
+  desc "Build and deploy Android Production to Firebase App Distribution"
+  lane :production do
+    gradle(
+      task: "assemble",
+      flavor: "production",
+      build_type: "Release",
+      project_dir: "../android"
+    )
+
+    firebase_app_distribution(
+      app: ENV["FIREBASE_ANDROID_PRODUCTION_APP_ID"],
+      groups: "beta-testers",
+      android_artifact_type: "APK",
+      android_artifact_path: "../build/app/outputs/flutter-apk/app-production-release.apk",
+      release_notes: "Production build #{ENV['BUILD_NUMBER'] || 'local'}"
+    )
+  end
+
+  desc "Build and deploy to Play Store (Internal Track)"
+  lane :playstore_internal do
+    gradle(
+      task: "bundle",
+      flavor: "production",
+      build_type: "Release",
+      project_dir: "../android"
+    )
+
+    upload_to_play_store(
+      track: "internal",
+      aab: "../build/app/outputs/bundle/productionRelease/app-production-release.aab",
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Promote Internal to Beta"
+  lane :promote_to_beta do
+    upload_to_play_store(
+      track: "internal",
+      track_promote_to: "beta"
+    )
+  end
+
+  desc "Promote Beta to Production"
+  lane :promote_to_production do
+    upload_to_play_store(
+      track: "beta",
+      track_promote_to: "production",
+      rollout: "0.1"  # 10% rollout
+    )
+  end
+
+end
+
+# =============================================================================
+# Shared Lanes
+# =============================================================================
+
+desc "Run Flutter tests"
+lane :test do
+  Dir.chdir("..") do
+    sh("flutter test --coverage")
+  end
+end
+
+desc "Clean build artifacts"
+lane :clean do
+  Dir.chdir("..") do
+    sh("flutter clean")
+  end
+end
+
+desc "Get Flutter dependencies"
+lane :deps do
+  Dir.chdir("..") do
+    sh("flutter pub get")
+  end
+end
+
+desc "Build all platforms for a flavor"
+lane :build_all do |options|
+  flavor = options[:flavor] || "staging"
+
+  # Build Android
+  android_build(flavor: flavor)
+
+  # Build iOS (only on macOS)
+  if Gem::Platform.local.os == "darwin"
+    ios_build(flavor: flavor)
+  end
+
+  UI.success("All builds completed for #{flavor}")
+end
+
+private_lane :android_build do |options|
+  Dir.chdir("..") do
+    sh("flutter build apk --flavor #{options[:flavor]} --release --dart-define=FLAVOR=#{options[:flavor]}")
+  end
+end
+
+private_lane :ios_build do |options|
+  setup_firebase_config(flavor: options[:flavor])
+  Dir.chdir("..") do
+    sh("flutter build ios --flavor #{options[:flavor]} --release --no-codesign --dart-define=FLAVOR=#{options[:flavor]}")
+  end
+end

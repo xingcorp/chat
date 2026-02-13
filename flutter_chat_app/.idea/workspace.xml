@@ -12,9 +12,9 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="docs: add comprehensive guide for using private Git packages in Flutter&#10;&#10;- Create `GIT_PRIVATE_PACKAGE_GUIDE.md` containing detailed instructions for managing private Flutter packages.&#10;- Document three authentication methods:&#10;    - **SSH Keys**: Recommended method for secure developer access.&#10;    - **Personal Access Tokens (PAT)**: Instructions for Git credential helpers, environment variables, and URL embedding.&#10;    - **.netrc File**: Configuration for machine-level authentication.&#10;- Provide best practices for version management using Git tags, monorepo paths, and CI/CD integration (GitHub Actions and GitLab CI).&#10;- Include a sample package structure and public API export patterns.&#10;- Add a troubleshooting section for common SSH, permission, and networking issues.&#10;&#10;Files updated:&#10;- GIT_PRIVATE_PACKAGE_GUIDE.md: New documentation file added.">
-      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/pages/chat/chat_details_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/pages/chat/chat_details_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/mention_text_field.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/widgets/chat/mention_text_field.dart" afterDir="false" />
+    <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="test(chat): implement reaction data flow and setup script for environment configuration&#10;&#10;- **Reactions &amp; Data Flow**:&#10;    - Added `test/features/chat/reaction_test.dart` to verify the end-to-end flow of message reactions.&#10;    - Validated `MessageDto` parsing of reactions from backend GraphQL responses.&#10;    - Verified domain entity conversion logic and proper grouping of reactions (including current user state) via `MessageListTransformer`.&#10;- **Environment Setup Tooling**:&#10;    - Created `bin/setup.dart`, a CLI utility to manage `.env` files for standalone mode.&#10;    - Added support for staging/production environment selection, interactive configuration prompts, and force-overwrite flags.&#10;    - Implemented package path discovery to locate template files across different project structures.&#10;- **Documentation**:&#10;    - Updated `INTEGRATION.md` with a new &quot;Standalone Mode Setup&quot; section detailing how to use the setup script.&#10;    - Clarified the distinction between `.env` usage in standalone mode versus `ChatConfig` usage in package mode.&#10;&#10;Files updated:&#10;- flutter_chat_app/test/features/chat/reaction_test.dart: New unit tests for reactions&#10;- flutter_chat_app/bin/setup.dart: New environment configuration script&#10;- flutter_chat_app/INTEGRATION.md: Added setup instructions for standalone mode">
+      <change beforePath="$PROJECT_DIR$/.dart_tool/package_config_subset" beforeDir="false" afterPath="$PROJECT_DIR$/.dart_tool/package_config_subset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,6 +38,9 @@
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="GithubDefaultAccount">
+    <option name="defaultAccountId" value="60f1d662-d4ec-45e3-9f7d-648f320a8846" />
   </component>
   <component name="GradleLocalSettings">
     <option name="projectSyncType">
@@ -110,25 +113,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Flutter.main_web.executor": "Debug",
-    "Flutter.main_web_prod.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "doanbh/update__ui",
-    "io.flutter.reload.alreadyRun": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Volumes/DoanBHSST9/FlutterGithubOXII/chat/flutter_chat_app",
-    "settings.editor.selected.configurable": "flutter.settings",
-    "show.migrate.to.gradle.popup": "false"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Flutter.main_web.executor&quot;: &quot;Debug&quot;,
+    &quot;Flutter.main_web_prod.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;doanbh/update__ui&quot;,
+    &quot;io.flutter.reload.alreadyRun&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Volumes/DoanBHSST9/FlutterGithubOXII/chat/flutter_chat_app&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;flutter.settings&quot;,
+    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/docs/tempt" />
@@ -218,30 +221,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00053" summary="fix sua nhieu 2">
-      <option name="closed" value="true" />
-      <created>1753262423473</created>
-      <option name="number" value="00053" />
-      <option name="presentableId" value="LOCAL-00053" />
-      <option name="project" value="LOCAL" />
-      <updated>1753262423473</updated>
-    </task>
-    <task id="LOCAL-00054" summary="fix 1">
-      <option name="closed" value="true" />
-      <created>1753329317970</created>
-      <option name="number" value="00054" />
-      <option name="presentableId" value="LOCAL-00054" />
-      <option name="project" value="LOCAL" />
-      <updated>1753329317970</updated>
-    </task>
-    <task id="LOCAL-00055" summary="fix 2">
-      <option name="closed" value="true" />
-      <created>1753338563834</created>
-      <option name="number" value="00055" />
-      <option name="presentableId" value="LOCAL-00055" />
-      <option name="project" value="LOCAL" />
-      <updated>1753338563834</updated>
     </task>
     <task id="LOCAL-00056" summary="fix 3">
       <option name="closed" value="true" />
@@ -611,7 +590,31 @@
       <option name="project" value="LOCAL" />
       <updated>1770903905784</updated>
     </task>
-    <option name="localTasksCounter" value="102" />
+    <task id="LOCAL-00102" summary="test(chat): implement reaction data flow and setup script for environment configuration&#10;&#10;- **Reactions &amp; Data Flow**:&#10;    - Added `test/features/chat/reaction_test.dart` to verify the end-to-end flow of message reactions.&#10;    - Validated `MessageDto` parsing of reactions from backend GraphQL responses.&#10;    - Verified domain entity conversion logic and proper grouping of reactions (including current user state) via `MessageListTransformer`.&#10;- **Environment Setup Tooling**:&#10;    - Created `bin/setup.dart`, a CLI utility to manage `.env` files for standalone mode.&#10;    - Added support for staging/production environment selection, interactive configuration prompts, and force-overwrite flags.&#10;    - Implemented package path discovery to locate template files across different project structures.&#10;- **Documentation**:&#10;    - Updated `INTEGRATION.md` with a new &quot;Standalone Mode Setup&quot; section detailing how to use the setup script.&#10;    - Clarified the distinction between `.env` usage in standalone mode versus `ChatConfig` usage in package mode.&#10;&#10;Files updated:&#10;- flutter_chat_app/test/features/chat/reaction_test.dart: New unit tests for reactions&#10;- flutter_chat_app/bin/setup.dart: New environment configuration script&#10;- flutter_chat_app/INTEGRATION.md: Added setup instructions for standalone mode">
+      <option name="closed" value="true" />
+      <created>1770905657022</created>
+      <option name="number" value="00102" />
+      <option name="presentableId" value="LOCAL-00102" />
+      <option name="project" value="LOCAL" />
+      <updated>1770905657022</updated>
+    </task>
+    <task id="LOCAL-00103" summary="test(chat): implement reaction data flow and setup script for environment configuration&#10;&#10;- **Reactions &amp; Data Flow**:&#10;    - Added `test/features/chat/reaction_test.dart` to verify the end-to-end flow of message reactions.&#10;    - Validated `MessageDto` parsing of reactions from backend GraphQL responses.&#10;    - Verified domain entity conversion logic and proper grouping of reactions (including current user state) via `MessageListTransformer`.&#10;- **Environment Setup Tooling**:&#10;    - Created `bin/setup.dart`, a CLI utility to manage `.env` files for standalone mode.&#10;    - Added support for staging/production environment selection, interactive configuration prompts, and force-overwrite flags.&#10;    - Implemented package path discovery to locate template files across different project structures.&#10;- **Documentation**:&#10;    - Updated `INTEGRATION.md` with a new &quot;Standalone Mode Setup&quot; section detailing how to use the setup script.&#10;    - Clarified the distinction between `.env` usage in standalone mode versus `ChatConfig` usage in package mode.&#10;&#10;Files updated:&#10;- flutter_chat_app/test/features/chat/reaction_test.dart: New unit tests for reactions&#10;- flutter_chat_app/bin/setup.dart: New environment configuration script&#10;- flutter_chat_app/INTEGRATION.md: Added setup instructions for standalone mode">
+      <option name="closed" value="true" />
+      <created>1770954185567</created>
+      <option name="number" value="00103" />
+      <option name="presentableId" value="LOCAL-00103" />
+      <option name="project" value="LOCAL" />
+      <updated>1770954185568</updated>
+    </task>
+    <task id="LOCAL-00104" summary="test(chat): implement reaction data flow and setup script for environment configuration&#10;&#10;- **Reactions &amp; Data Flow**:&#10;    - Added `test/features/chat/reaction_test.dart` to verify the end-to-end flow of message reactions.&#10;    - Validated `MessageDto` parsing of reactions from backend GraphQL responses.&#10;    - Verified domain entity conversion logic and proper grouping of reactions (including current user state) via `MessageListTransformer`.&#10;- **Environment Setup Tooling**:&#10;    - Created `bin/setup.dart`, a CLI utility to manage `.env` files for standalone mode.&#10;    - Added support for staging/production environment selection, interactive configuration prompts, and force-overwrite flags.&#10;    - Implemented package path discovery to locate template files across different project structures.&#10;- **Documentation**:&#10;    - Updated `INTEGRATION.md` with a new &quot;Standalone Mode Setup&quot; section detailing how to use the setup script.&#10;    - Clarified the distinction between `.env` usage in standalone mode versus `ChatConfig` usage in package mode.&#10;&#10;Files updated:&#10;- flutter_chat_app/test/features/chat/reaction_test.dart: New unit tests for reactions&#10;- flutter_chat_app/bin/setup.dart: New environment configuration script&#10;- flutter_chat_app/INTEGRATION.md: Added setup instructions for standalone mode">
+      <option name="closed" value="true" />
+      <created>1770954207496</created>
+      <option name="number" value="00104" />
+      <option name="presentableId" value="LOCAL-00104" />
+      <option name="project" value="LOCAL" />
+      <updated>1770954207496</updated>
+    </task>
+    <option name="localTasksCounter" value="105" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -760,7 +763,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: implement GoRouter navigation with centralized auth state management&#10;&#10;- Replace manual navigation with `GoRouter` using a `refreshListenable` to reactively handle authentication and onboarding state changes&#10;- Transition `MaterialApp` to `MaterialApp.router` and implement a unified redirection logic in `AppRouter`&#10;- Update `AuthRepositoryImpl` to determine login status via access tokens instead of local user objects&#10;- Enhance `AuthBloc` to trigger `AuthCheckRequested` on app start and emit `AuthError` with metadata for failed login attempts&#10;- Refactor `LoginPage` into a `StatefulWidget` with form controllers, loading states, and Bloc integration&#10;- Update dependency injection to explicitly register `AuthRemoteDataSource`&#10;- Connect `PermissionsOnboardingPage` completion to `AuthBloc` via `AuthOnboardingCompleted` event&#10;- Centralize app entry point in `main.dart` with necessary providers for `AuthBloc`, `PermissionsBloc`, and theme/locale cubits&#10;&#10;Files updated:&#10;- lib/config/route/app_router.dart: New router configuration with auth-based redirection&#10;- lib/features/auth/data/repositories/auth_repository_impl.dart: Token-based auth check&#10;- lib/features/auth/presentation/blocs/auth/auth_bloc.dart: Improved error handling and check logic&#10;- lib/features/auth/presentation/pages/auth/login_page.dart: UI and Bloc integration&#10;- lib/main.dart: Router initialization and provider setup&#10;- lib/presentation/pages/permissions/permissions_onboarding_page.dart: Navigation fix&#10;- lib/core/di/injection.dart: DI registration updates" />
     <MESSAGE value="fix(di): register user and media data sources&#10;&#10;- Explicitly register `UserLocalDataSource`, `UserRemoteDataSource`, and `IMediaLocalDataSource` as lazy singletons in the DI container&#10;- Add necessary imports for user and media data source implementations&#10;- Implement manual registration checks to ensure singleton instances are only registered if not already present&#10;&#10;Files updated:&#10;- lib/core/di/injection.dart: Added manual DI registrations for user and media data sources" />
     <MESSAGE value="feat(auth): transition authentication from email to phone-based login&#10;&#10;- Replace `email` with `phone` across authentication layers including `AuthRepository`, `AuthRemoteDataSource`, and `AuthUseCase`&#10;- Update GraphQL mutation to use `identityOfficeLogin` with `UserLoginArgs` (phone/password)&#10;- Refactor `AuthLoginRequested` event and `LoginParams` to utilize `phone` instead of `email`&#10;- Update `LoginPage` UI to include phone-specific input field and keyboard type&#10;- Remove email format validation logic in favor of phone-based validation&#10;- Enhance `UserModel` mapping to handle complex `avatar` objects from the backend response&#10;&#10;Files updated:&#10;- lib/features/auth/data/datasources/auth/auth_remote_datasource.dart&#10;- lib/features/auth/data/repositories/auth_repository_impl.dart&#10;- lib/features/auth/domain/repositories/auth_repository.dart&#10;- lib/features/auth/domain/usecases/auth/login_usecase.dart&#10;- lib/features/auth/presentation/blocs/auth/auth_bloc.dart&#10;- lib/features/auth/presentation/blocs/auth/auth_event.dart&#10;- lib/features/auth/presentation/pages/auth/login_page.dart" />
     <MESSAGE value="refactor: migrate GraphQL client, enhance web support, and align API models&#10;&#10;- Remove legacy `GraphQLClientWrapper` in favor of `GraphQLClientWrapperImpl` with integrated logging and retry logic&#10;- Update `AuthRemoteDataSource` to use the new `GraphQLClientWrapper` and unified response handling&#10;- Implement `WebPermissionsDataSource` and update `PermissionsDataSource` to safely handle web-specific limitations (using `kIsWeb`)&#10;- Switch `TokenStorage` to use `SharedPreferences` on web instead of `SecureStorage`&#10;- Update GraphQL queries and mutations across `User`, `Chat`, and `Auth` data sources to use nested `avatar { location }` structure&#10;- Improve `UserModel` to robustly parse avatar URLs from multiple possible JSON formats&#10;- Update `PermissionsBloc` with debounced stream updates and manual signature tracking to prevent redundant state emissions&#10;- Add explicit `operationName` to various GraphQL requests for better debugging and tracing&#10;- Update staging environment configuration with new API and WebSocket endpoints&#10;- Inject and log environment variables during web initialization for easier troubleshooting&#10;- Refine DI configuration to handle platform-specific implementations and initialize authentication tokens properly during startup&#10;&#10;Files fixed/updated:&#10;- lib/core/network/graphql_client.dart: Added logging and instrumentation&#10;- lib/core/di/injection.dart: Refined platform-specific dependency registration&#10;- lib/data/datasources/permissions/web_permissions_datasource.dart: New web implementation&#10;- lib/data/models/user_model.dart: Updated avatar mapping logic&#10;- lib/features/auth/data/datasources/auth/auth_remote_datasource.dart: Migrated to new client&#10;- lib/presentation/blocs/permissions/permissions_bloc.dart: Improved state management&#10;- Various GraphQL operation files: Updated schema selections for avatars" />
@@ -785,7 +787,8 @@
     <MESSAGE value="feat(chat): improve message reactions, pagination logic, and localization&#10;&#10;- **Message Reactions**:&#10;    - Update `AddReactionUseCase` and `RemoveReactionUseCase` to use string-based actions (`ADD`, `REVOKE`) instead of numeric codes.&#10;    - Enhance `MessageRemoteDataSource` to handle partial backend responses for reactions by constructing a minimal `MessageDto` to prevent parsing errors.&#10;    - Improve `RealtimeService` to robustly handle reaction data types (String/num) from backend events.&#10;    - Update `MessageMapper` and `MessageModel` to correctly extract and map reaction metadata, including reactor names and IDs.&#10;- **Pagination &amp; Data Fetching**:&#10;    - Refactor `ChatBloc` pagination logic to use a size-based heuristic for `hasMore` flags, improving reliability when backend totals are inconsistent.&#10;    - Set `FetchPolicy.networkOnly` for conversation list queries in `ChatRemoteDataSource` to ensure fresh data.&#10;    - Minor cleanup in `AppListView` and `ChatBloc` for better readability and state tracking.&#10;- **Internationalization**:&#10;    - Add and update localized strings for reactions, attachments, emojis, location sharing, and file uploads in both English and Vietnamese.&#10;    - Refine existing translation keys for consistency (e.g., &quot;No users&quot;, &quot;Failed to upload file&quot;).&#10;&#10;Files updated:&#10;- lib/data/datasources/message/message_remote_datasource.dart: Added minimal DTO construction for reactions&#10;- lib/features/chat/data/datasources/chat/chat_remote_datasource.dart: Added network-only fetch policy&#10;- lib/features/chat/presentation/blocs/chat/chat_bloc.dart: Refactored pagination logic&#10;- lib/data/mappers/message_mapper.dart &amp; lib/data/models/message_model.dart: Enhanced reaction mapping&#10;- lib/core/services/realtime_service.dart: Improved reaction data parsing&#10;- lib/domain/usecases/message/add_reaction_usecase.dart &amp; remove_reaction_usecase.dart: Updated action constants&#10;- lib/generated/l10n/app_localizations*: Added and updated chat-related strings" />
     <MESSAGE value="feat(chat): enhance message reactions with animations and quick-action UI&#10;&#10;- **Reaction Bar Enhancements**:&#10;    - Implement smooth entry animations for reaction chips using `TweenAnimationBuilder` with elastic curves.&#10;    - Add `_AnimatedReactionChip` wrapper to provide scale-down feedback on tap and improved visual styling for active/inactive states.&#10;    - Refactor `ReactionBar` to use `surfaceContainerHighest` and `outline` color schemes for better consistency with the design system.&#10;- **Reaction Details UI**:&#10;    - Overhaul `ReactionDetailModal` with a custom slide-and-fade animation and a more modern, bottom-sheet style layout.&#10;    - Add a drag handle, enhanced header with emoji previews, and animated list items for reactors.&#10;    - Implement dynamic avatar background colors for reactors in the detail view.&#10;- **Quick Reactions &amp; Actions**:&#10;    - Add a &quot;Quick Reactions&quot; row to the message long-press menu containing common emojis (, ❤️, , etc.).&#10;    - Integrate an emoji picker button within the message menu for adding custom reactions.&#10;    - Standardize reaction long-press behavior to trigger the enhanced `ReactionDetailModal`.&#10;- **Real-time Improvements**:&#10;    - Harden `_handleTypingIndicator` in `RealtimeService` with better null safety and flexible type parsing for `isTyping` status (supporting bool, num, and string).&#10;&#10;Files updated:&#10;- lib/features/chat/presentation/widgets/chat/reaction_bar.dart: Major UI and animation overhaul&#10;- lib/features/chat/presentation/pages/chat/chat_details_page.dart: Added quick reactions to message menu&#10;- lib/features/chat/presentation/widgets/chat/message_item.dart: Updated reaction interaction handlers&#10;- lib/core/services/realtime_service.dart: Improved typing indicator data parsing logic" />
     <MESSAGE value="docs: add comprehensive guide for using private Git packages in Flutter&#10;&#10;- Create `GIT_PRIVATE_PACKAGE_GUIDE.md` containing detailed instructions for managing private Flutter packages.&#10;- Document three authentication methods:&#10;    - **SSH Keys**: Recommended method for secure developer access.&#10;    - **Personal Access Tokens (PAT)**: Instructions for Git credential helpers, environment variables, and URL embedding.&#10;    - **.netrc File**: Configuration for machine-level authentication.&#10;- Provide best practices for version management using Git tags, monorepo paths, and CI/CD integration (GitHub Actions and GitLab CI).&#10;- Include a sample package structure and public API export patterns.&#10;- Add a troubleshooting section for common SSH, permission, and networking issues.&#10;&#10;Files updated:&#10;- GIT_PRIVATE_PACKAGE_GUIDE.md: New documentation file added." />
-    <option name="LAST_COMMIT_MESSAGE" value="docs: add comprehensive guide for using private Git packages in Flutter&#10;&#10;- Create `GIT_PRIVATE_PACKAGE_GUIDE.md` containing detailed instructions for managing private Flutter packages.&#10;- Document three authentication methods:&#10;    - **SSH Keys**: Recommended method for secure developer access.&#10;    - **Personal Access Tokens (PAT)**: Instructions for Git credential helpers, environment variables, and URL embedding.&#10;    - **.netrc File**: Configuration for machine-level authentication.&#10;- Provide best practices for version management using Git tags, monorepo paths, and CI/CD integration (GitHub Actions and GitLab CI).&#10;- Include a sample package structure and public API export patterns.&#10;- Add a troubleshooting section for common SSH, permission, and networking issues.&#10;&#10;Files updated:&#10;- GIT_PRIVATE_PACKAGE_GUIDE.md: New documentation file added." />
+    <MESSAGE value="test(chat): implement reaction data flow and setup script for environment configuration&#10;&#10;- **Reactions &amp; Data Flow**:&#10;    - Added `test/features/chat/reaction_test.dart` to verify the end-to-end flow of message reactions.&#10;    - Validated `MessageDto` parsing of reactions from backend GraphQL responses.&#10;    - Verified domain entity conversion logic and proper grouping of reactions (including current user state) via `MessageListTransformer`.&#10;- **Environment Setup Tooling**:&#10;    - Created `bin/setup.dart`, a CLI utility to manage `.env` files for standalone mode.&#10;    - Added support for staging/production environment selection, interactive configuration prompts, and force-overwrite flags.&#10;    - Implemented package path discovery to locate template files across different project structures.&#10;- **Documentation**:&#10;    - Updated `INTEGRATION.md` with a new &quot;Standalone Mode Setup&quot; section detailing how to use the setup script.&#10;    - Clarified the distinction between `.env` usage in standalone mode versus `ChatConfig` usage in package mode.&#10;&#10;Files updated:&#10;- flutter_chat_app/test/features/chat/reaction_test.dart: New unit tests for reactions&#10;- flutter_chat_app/bin/setup.dart: New environment configuration script&#10;- flutter_chat_app/INTEGRATION.md: Added setup instructions for standalone mode" />
+    <option name="LAST_COMMIT_MESSAGE" value="test(chat): implement reaction data flow and setup script for environment configuration&#10;&#10;- **Reactions &amp; Data Flow**:&#10;    - Added `test/features/chat/reaction_test.dart` to verify the end-to-end flow of message reactions.&#10;    - Validated `MessageDto` parsing of reactions from backend GraphQL responses.&#10;    - Verified domain entity conversion logic and proper grouping of reactions (including current user state) via `MessageListTransformer`.&#10;- **Environment Setup Tooling**:&#10;    - Created `bin/setup.dart`, a CLI utility to manage `.env` files for standalone mode.&#10;    - Added support for staging/production environment selection, interactive configuration prompts, and force-overwrite flags.&#10;    - Implemented package path discovery to locate template files across different project structures.&#10;- **Documentation**:&#10;    - Updated `INTEGRATION.md` with a new &quot;Standalone Mode Setup&quot; section detailing how to use the setup script.&#10;    - Clarified the distinction between `.env` usage in standalone mode versus `ChatConfig` usage in package mode.&#10;&#10;Files updated:&#10;- flutter_chat_app/test/features/chat/reaction_test.dart: New unit tests for reactions&#10;- flutter_chat_app/bin/setup.dart: New environment configuration script&#10;- flutter_chat_app/INTEGRATION.md: Added setup instructions for standalone mode" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
