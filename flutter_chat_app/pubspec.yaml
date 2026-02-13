@@ -99,8 +99,8 @@ dependencies:
   any_link_preview: ^3.0.2
 
   # Location Services
-  geolocator: ^11.0.0
-  geocoding: ^3.0.0
+  geolocator: ^14.0.0
+  geocoding: ^4.0.0
 
   # Encryption and Security
   crypto: ^3.0.3
