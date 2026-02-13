@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Staging App Shortcuts -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="new_chat"
+        android:enabled="true"
+        android:icon="@drawable/ic_chat"
+        android:shortcutShortLabel="@string/shortcut_new_chat"
+        android:shortcutLongLabel="@string/shortcut_new_chat_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.oxii.chat.staging"
+            android:targetClass="com.oxii.chat.MainActivity">
+            <extra android:name="action" android:value="new_chat" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="debug_tools"
+        android:enabled="true"
+        android:icon="@drawable/ic_debug"
+        android:shortcutShortLabel="@string/shortcut_debug"
+        android:shortcutLongLabel="@string/shortcut_debug_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.oxii.chat.staging"
+            android:targetClass="com.oxii.chat.MainActivity">
+            <extra android:name="action" android:value="debug_tools" />
+        </intent>
+    </shortcut>
+</shortcuts>

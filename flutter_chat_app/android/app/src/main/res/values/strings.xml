@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Shortcuts -->
+    <string name="shortcut_new_chat">New Chat</string>
+    <string name="shortcut_new_chat_long">Start a new conversation</string>
+    <string name="shortcut_debug">Debug</string>
+    <string name="shortcut_debug_long">Open debug tools</string>
+</resources>
