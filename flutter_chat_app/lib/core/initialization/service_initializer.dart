@@ -34,16 +34,23 @@ class ServiceInitializer {
     }
 
     try {
-      await GetIt.I.getAsync<ICrashReporter>();
-      final performanceMonitor = await GetIt.I.getAsync<IPerformanceMonitor>();
-      final analyticsManager = await GetIt.I.getAsync<AnalyticsManager>();
+      // These services are registered as LazySingleton (synchronous), not async
+      if (GetIt.I.isRegistered<ICrashReporter>()) {
+        GetIt.I<ICrashReporter>();
+      }
 
-      await performanceMonitor.startTrace(TraceType.appStartup);
-      await performanceMonitor.stopTrace(TraceType.appStartup);
+      if (GetIt.I.isRegistered<IPerformanceMonitor>()) {
+        final performanceMonitor = GetIt.I<IPerformanceMonitor>();
+        await performanceMonitor.startTrace(TraceType.appStartup);
+        await performanceMonitor.stopTrace(TraceType.appStartup);
+      }
 
-      await analyticsManager.logEvent('app_started', {
-        'startup_time': DateTime.now().toIso8601String(),
-      });
+      if (GetIt.I.isRegistered<AnalyticsManager>()) {
+        final analyticsManager = GetIt.I<AnalyticsManager>();
+        await analyticsManager.logEvent('app_started', {
+          'startup_time': DateTime.now().toIso8601String(),
+        });
+      }
     } catch (e) {
       logger.e('Monitoring services initialization failed', error: e);
     }

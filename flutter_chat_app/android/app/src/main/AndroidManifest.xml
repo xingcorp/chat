@@ -133,14 +133,7 @@
         <!-- ENTERPRISE MESSAGING SERVICES & RECEIVERS -->
         <!-- ========================================= -->
 
-        <!-- Firebase Cloud Messaging Service -->
-        <service
-            android:name=".firebase.MessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
+        <!-- Firebase Cloud Messaging is handled by flutter_firebase_messaging plugin -->
 
         <!-- Enterprise Background Service for Chat Sync -->
         <service
@@ -177,17 +170,6 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.PACKAGE_REPLACED" />
                 <data android:scheme="package" />
-            </intent-filter>
-        </receiver>
-
-        <!-- Network State Change Receiver -->
-        <receiver
-            android:name=".receivers.NetworkStateReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-                <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
             </intent-filter>
         </receiver>
 

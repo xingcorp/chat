@@ -390,7 +390,8 @@ Future<void> _registerExternalDependencies(Logger logger) async {
     getIt.registerSingleton<app_retry.RetryConfig>(app_retry.RetryConfig.realtime);
   }
 
-  if (kIsWeb && !FirebaseConfigManager.isInitialized) {
+  // Initialize Firebase for all platforms
+  if (!FirebaseConfigManager.isInitialized) {
     await FirebaseConfigManager.initialize();
   }
 

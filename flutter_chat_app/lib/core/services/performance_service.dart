@@ -600,11 +600,11 @@ class _PerformanceOverlayWidgetState extends State<PerformanceOverlayWidget> {
   /// Current performance stats
   PerformanceStats _stats = PerformanceStats.empty();
   
-  /// FPS history
-  final List<double> _fpsHistory = List.filled(30, 60);
-  
-  /// Memory usage history
-  final List<double> _memoryHistory = List.filled(30, 0);
+  /// FPS history (growable list for add/remove operations)
+  final List<double> _fpsHistory = List.filled(30, 60, growable: true);
+
+  /// Memory usage history (growable list for add/remove operations)
+  final List<double> _memoryHistory = List.filled(30, 0, growable: true);
   
   @override
   void initState() {
