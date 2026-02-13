@@ -31,6 +31,12 @@ class ChatConversationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasUnread = chat.unreadCount > 0;
     final isTyping = chat.typingUserIds.isNotEmpty;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Theme-aware text colors
+    final primaryTextColor = isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary;
+    final secondaryTextColor = isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
 
     return InkWell(
       onTap: onTap,
@@ -54,6 +60,7 @@ class ChatConversationTile extends StatelessWidget {
                           chat.name ?? context.l10n.unknownUser,
                           style: AppTextStyles.titleMedium.copyWith(
                             fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
+                            color: primaryTextColor,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -75,7 +82,7 @@ class ChatConversationTile extends StatelessWidget {
                             attachments: null,
                           ),
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: hasUnread ? AppColors.textPrimary : AppColors.textSecondary,
+                      color: hasUnread ? primaryTextColor : secondaryTextColor,
                       fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
                       fontStyle: isTyping ? FontStyle.italic : FontStyle.normal,
                     ),
@@ -95,7 +102,7 @@ class ChatConversationTile extends StatelessWidget {
                   AppText(
                     RelativeTimeFormatter.format(context, chat.lastMessageAt),
                     style: AppTextStyles.labelSmall.copyWith(
-                      color: hasUnread ? AppColors.primary : AppColors.textSecondary,
+                      color: hasUnread ? AppColors.primary : secondaryTextColor,
                       fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
                     ),
                     maxLines: 1,

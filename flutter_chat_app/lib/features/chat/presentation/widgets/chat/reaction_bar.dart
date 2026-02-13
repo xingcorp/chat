@@ -13,25 +13,26 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_av
 /// Features:
 /// - Hiển thị emoji với số lượng reactors
 /// - Highlight emoji mà currentUser đã react
-/// - Tap emoji → toggle add/remove reaction
-/// - Long press emoji → hiện modal danh sách reactors
+/// - Tap emoji → hiện modal danh sách reactors (như Messenger/WhatsApp)
+/// - Long press emoji → toggle thu hồi reaction (nếu mình đã react)
 /// - Tap "+" → hiện emoji picker để thêm reaction
 /// - Smooth animations cho add/remove/scale effects
 class ReactionBar extends StatelessWidget {
   /// Reactions đã gom nhóm theo emoji
   final List<ReactionGroup> groupedReactions;
 
-  /// Callback khi user tap vào emoji để toggle reaction
-  /// Tham số: emoji code, isCurrentlyReacted
-  final void Function(String emojiCode, bool isCurrentlyReacted)? onReactionTap;
-
-  /// Callback khi user long press vào emoji để xem danh sách reactors
+  /// Callback khi user tap vào emoji để xem danh sách reactors (như Messenger/WhatsApp)
   /// Tham số: emoji code, reactor IDs, reactor names
   final void Function(
     String emojiCode,
     List<String> reactorIds,
     List<String> reactorNames,
-  )? onReactionLongPress;
+  )? onReactionTap;
+
+  /// Callback khi user long press vào emoji để thu hồi reaction (nếu mình đã react)
+  /// Tham số: emoji code, isCurrentlyReacted
+  final void Function(String emojiCode, bool isCurrentlyReacted)?
+      onReactionLongPress;
 
   /// Callback khi user tap nút "+" để thêm reaction mới
   final VoidCallback? onAddReaction;
@@ -117,12 +118,14 @@ class ReactionBar extends StatelessWidget {
       isReacted: isReacted,
       backgroundColor: backgroundColor,
       borderColor: borderColor,
-      onTap: () => onReactionTap?.call(reaction.code, isReacted),
-      onLongPress: () => onReactionLongPress?.call(
+      // Tap → xem danh sách reactors (như Messenger/WhatsApp)
+      onTap: () => onReactionTap?.call(
         reaction.code,
         reaction.reactorIds,
         reaction.reactorNames,
       ),
+      // Long press → thu hồi reaction (nếu mình đã react)
+      onLongPress: () => onReactionLongPress?.call(reaction.code, isReacted),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -295,6 +298,23 @@ class ReactionDetailModal extends StatefulWidget {
 
   @override
   State<ReactionDetailModal> createState() => _ReactionDetailModalState();
+
+  /// Helper method để show modal
+  static Future<void> show(
+    BuildContext context, {
+    required String emojiCode,
+    required List<String> reactorNames,
+  }) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ReactionDetailModal(
+        emojiCode: emojiCode,
+        reactorNames: reactorNames,
+      ),
+    );
+  }
 }
 
 class _ReactionDetailModalState extends State<ReactionDetailModal>
@@ -557,23 +577,5 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
       Colors.teal,
     ];
     return colors[index % colors.length];
-  }
-
-  /// Helper method để show modal
-  static Future<void> show(
-    BuildContext context, {
-    required String emojiCode,
-    required List<String> reactorNames,
-  }) {
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.transparent,
-      builder: (_) => ReactionDetailModal(
-        emojiCode: emojiCode,
-        reactorNames: reactorNames,
-      ),
-    );
   }
 }

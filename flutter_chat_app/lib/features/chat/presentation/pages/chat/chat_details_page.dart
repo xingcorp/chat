@@ -147,6 +147,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _setupTypingSubscription();
     _setupReadReceiptSubscription();
     _setupTypingDebounce();
+
+    // Listen to text changes for send button state
+    _messageController.addListener(_onTextChanged);
   }
 
   @override
@@ -220,6 +223,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         }
       });
     });
+  }
+
+  /// Rebuild widget when text changes (for send button state)
+  void _onTextChanged() {
+    safeSetState(() {});
   }
 
   void _setupTypingDebounce() {
@@ -296,6 +304,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   @override
   void dispose() {
+    _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _messageFocusNode.dispose();
     _scrollController.dispose();

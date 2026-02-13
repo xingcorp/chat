@@ -582,25 +582,24 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                 child: ReactionBar(
                   groupedReactions: widget.uiState.groupedReactions,
                   showAddButton: true,
-                  onReactionTap: (emojiCode, isCurrentlyReacted) {
-                    context.read<MessageBloc>().add(
-                      ToggleReaction(
-                        messageId: widget.uiState.id,
-                        emojiCode: emojiCode,
-                      ),
+                  // Tap → xem danh sách ai đã react (như Messenger/WhatsApp)
+                  onReactionTap: (emojiCode, reactorIds, reactorNames) {
+                    ReactionDetailModal.show(
+                      context,
+                      emojiCode: emojiCode,
+                      reactorNames: reactorNames,
                     );
                   },
-                  onReactionLongPress: (emojiCode, reactorIds, reactorNames) {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      barrierColor: Colors.transparent,
-                      builder: (_) => ReactionDetailModal(
-                        emojiCode: emojiCode,
-                        reactorNames: reactorNames,
-                      ),
-                    );
+                  // Long press → thu hồi reaction (nếu mình đã react emoji đó)
+                  onReactionLongPress: (emojiCode, isCurrentlyReacted) {
+                    if (isCurrentlyReacted) {
+                      context.read<MessageBloc>().add(
+                        ToggleReaction(
+                          messageId: widget.uiState.id,
+                          emojiCode: emojiCode,
+                        ),
+                      );
+                    }
                   },
                   onAddReaction: () {
                     EmojiPickerBottomSheet.show(
