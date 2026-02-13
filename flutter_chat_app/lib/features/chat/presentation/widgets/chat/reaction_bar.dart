@@ -320,7 +320,7 @@ class ReactionDetailModal extends StatefulWidget {
 class _ReactionDetailModalState extends State<ReactionDetailModal>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _slideAnimation;
+  late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
 
   @override
@@ -331,9 +331,9 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
       vsync: this,
     );
 
-    _slideAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
     ).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -380,10 +380,7 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(_slideAnimation),
+            position: _slideAnimation,
             child: Align(
               alignment: Alignment.bottomCenter,
               child: GestureDetector(

@@ -10,8 +10,13 @@ import 'package:injectable/injectable.dart';
 
 /// **Attachment Repository Implementation**
 ///
-/// Implements attachment operations using new ChatObject API.
-/// Integrates with AttachmentQueueService for offline support.
+/// Implements attachment operations using storageGeneratePresignedUrls API.
+/// Matches Angular frontend upload-file.service.ts implementation.
+///
+/// **Upload Flow (matching Angular):**
+/// 1. Call storageGeneratePresignedUrls → get presignedUrl, path, url
+/// 2. PUT file binary to presignedUrl with Content-Type header
+/// 3. Use url in chatMessageAdd (urls field)
 @LazySingleton(as: IAttachmentRepository)
 class AttachmentRepository implements IAttachmentRepository {
   final IChatObjectRemoteDataSource _chatObjectDataSource;
@@ -36,26 +41,40 @@ class AttachmentRepository implements IAttachmentRepository {
         'filePath': file.path,
       });
 
-      // Step 1: Generate upload link
+      // Get file info
       final filename = file.path.split(Platform.pathSeparator).last;
       final extension = filename.split('.').last.toLowerCase();
-      final mimetype = _getMimeType(extension);
+      final mimeType = _getMimeType(extension);
 
-      final uploadResponse = await _chatObjectDataSource.generateUploadLink(
-        filename: filename,
-        conversationId: chatId,
-        type: ChatObjectType.message,
-        mimetype: mimetype,
+      // Step 1: Generate presigned upload URL
+      // Matching Angular: uploadFileService.storageGeneratePresignedUrls({files: [...]})
+      final uploadResponse = await _chatObjectDataSource.generateUploadLinks(
+        files: [
+          GeneratePresignedUrlParams(
+            fileName: filename,
+            fileType: mimeType,
+          ),
+        ],
       );
 
+      if (uploadResponse.data.isEmpty) {
+        throw Exception('No upload data returned from server');
+      }
+
+      final uploadData = uploadResponse.data.first;
+
       _logger.debug('Upload link generated', {
-        'path': uploadResponse.path,
+        'id': uploadData.id,
+        'path': uploadData.path,
+        'url': uploadData.url,
       });
 
-      // Step 2: Upload file to GCP
+      // Step 2: Upload file binary to presigned URL
+      // Matching Angular: uploadFileService.uploadMessageFileS3Observable(file, presignedUrl)
       await _chatObjectDataSource.uploadFile(
-        uploadUrl: uploadResponse.uploadUrl,
+        presignedUrl: uploadData.presignedUrl,
         filePath: file.path,
+        contentType: mimeType,
         onProgress: (sent, total) {
           if (onProgress != null && total > 0) {
             onProgress(sent / total);
@@ -65,17 +84,14 @@ class AttachmentRepository implements IAttachmentRepository {
 
       _logger.info('File uploaded successfully');
 
-      // Step 3: Get download URL
-      final urlResponse = await _chatObjectDataSource.getObjectUrl(
-        uploadResponse.path,
-      );
-
       final fileSize = await file.length();
 
+      // Return result with url for use in chatMessageAdd
+      // Matching Angular: urls: [uploadData.url]
       return Right(
         AttachmentUploadResult(
-          id: uploadResponse.path,
-          url: urlResponse.url,
+          id: uploadData.id,
+          url: uploadData.url ?? uploadData.path,
           size: fileSize,
           createdAt: DateTime.now(),
         ),
@@ -183,6 +199,7 @@ class AttachmentRepository implements IAttachmentRepository {
   }
 
   /// Determine MIME type from file extension
+  /// Matching Angular: fileType passed to storageGeneratePresignedUrls
   String _getMimeType(String extension) {
     switch (extension) {
       // Images
@@ -195,12 +212,20 @@ class AttachmentRepository implements IAttachmentRepository {
         return 'image/gif';
       case 'webp':
         return 'image/webp';
+      case 'heic':
+        return 'image/heic';
+      case 'heif':
+        return 'image/heif';
 
       // Videos
       case 'mp4':
         return 'video/mp4';
       case 'mov':
         return 'video/quicktime';
+      case 'avi':
+        return 'video/x-msvideo';
+      case 'webm':
+        return 'video/webm';
 
       // Audio
       case 'mp3':
@@ -209,13 +234,38 @@ class AttachmentRepository implements IAttachmentRepository {
         return 'audio/wav';
       case 'm4a':
         return 'audio/mp4';
+      case 'aac':
+        return 'audio/aac';
+      case 'ogg':
+        return 'audio/ogg';
 
       // Documents
       case 'pdf':
         return 'application/pdf';
       case 'doc':
-      case 'docx':
         return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'xls':
+        return 'application/vnd.ms-excel';
+      case 'xlsx':
+        return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      case 'ppt':
+        return 'application/vnd.ms-powerpoint';
+      case 'pptx':
+        return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+      case 'txt':
+        return 'text/plain';
+      case 'csv':
+        return 'text/csv';
+      case 'json':
+        return 'application/json';
+      case 'xml':
+        return 'application/xml';
+      case 'zip':
+        return 'application/zip';
+      case 'rar':
+        return 'application/vnd.rar';
 
       default:
         return 'application/octet-stream';

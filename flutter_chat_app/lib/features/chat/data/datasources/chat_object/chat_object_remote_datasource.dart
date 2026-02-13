@@ -1,28 +1,45 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_chat_app/core/network/graphql_client.dart';
 import 'package:flutter_chat_app/data/dtos/chat_object_dto.dart';
 import 'package:flutter_chat_app/data/graphql/chat_operations.dart';
 import 'package:injectable/injectable.dart';
 
-/// **Chat Object Remote Data Source Interface**
+/// **Storage Remote Data Source Interface**
 ///
 /// Handles file upload/download operations for chat attachments.
-/// Implements 2-step upload process:
-/// 1. Get pre-signed upload URL from backend
-/// 2. Upload file directly to GCP Cloud Storage
+/// Implements 2-step upload process matching Angular frontend.
+///
+/// **Matching Angular:** upload-file.service.ts
+///
+/// **Upload Flow:**
+/// 1. Call storageGeneratePresignedUrls → get presignedUrl, path, url
+/// 2. PUT file binary to presignedUrl with Content-Type header
+/// 3. Use url in chatMessageAdd (urls field)
 abstract class IChatObjectRemoteDataSource {
-  /// Generate pre-signed upload URL (Step 1 of upload process)
-  Future<ChatObjectUploadResponseDto> generateUploadLink({
-    required String filename,
-    String? conversationId,
-    required ChatObjectType type,
-    required String mimetype,
+  /// Generate pre-signed upload URLs for files
+  ///
+  /// **Matching Angular:** storageGeneratePresignedUrls in upload-file.service.ts
+  ///
+  /// [files] - List of files with fileName and fileType (MIME type)
+  /// Returns upload data with presignedUrl for upload and url for message
+  Future<StorageUploadResponseDto> generateUploadLinks({
+    required List<GeneratePresignedUrlParams> files,
   });
 
-  /// Upload file to GCP Cloud Storage (Step 2 of upload process)
+  /// Upload file binary to presigned URL
+  ///
+  /// **Matching Angular:** uploadMessageFileS3Observable in upload-file.service.ts
+  ///
+  /// [presignedUrl] - Pre-signed URL for direct upload
+  /// [filePath] - Local file path
+  /// [contentType] - MIME type for Content-Type header
+  /// [onProgress] - Upload progress callback
   Future<void> uploadFile({
-    required String uploadUrl,
+    required String presignedUrl,
     required String filePath,
+    required String contentType,
     ProgressCallback? onProgress,
   });
 
@@ -30,9 +47,10 @@ abstract class IChatObjectRemoteDataSource {
   Future<ChatObjectGetUrlResponseDto> getObjectUrl(String path);
 }
 
-/// **Chat Object Remote Data Source Implementation**
+/// **Storage Remote Data Source Implementation**
 ///
 /// Uses GraphQL for API calls and Dio for file uploads.
+/// Matches Angular frontend upload-file.service.ts implementation.
 @LazySingleton(as: IChatObjectRemoteDataSource)
 class ChatObjectRemoteDataSource implements IChatObjectRemoteDataSource {
   final GraphQLClientWrapper _client;
@@ -44,46 +62,47 @@ class ChatObjectRemoteDataSource implements IChatObjectRemoteDataSource {
   );
 
   @override
-  Future<ChatObjectUploadResponseDto> generateUploadLink({
-    required String filename,
-    String? conversationId,
-    required ChatObjectType type,
-    required String mimetype,
+  Future<StorageUploadResponseDto> generateUploadLinks({
+    required List<GeneratePresignedUrlParams> files,
   }) async {
-    final input = ChatObjectUploadInput(
-      filename: filename,
-      conversationId: conversationId,
-      type: type,
-      mimetype: mimetype,
-    );
+    // Build arguments matching Angular: { arguments: { files: [...] } }
+    final args = UploadFileArgs(files: files);
 
     final result = await _client.mutate(
       ChatMutations.generateUploadLink,
-      variables: {'arguments': input.toJson()},
+      variables: {'arguments': args.toJson()},
     );
 
-    final data = result['chatObjectGenLinkUpload'];
+    final data = result['storageGeneratePresignedUrls'];
     if (data == null) {
-      throw Exception('No upload link returned from server');
+      throw Exception('No upload links returned from server');
     }
 
-    return ChatObjectUploadResponseDto.fromJson(data);
+    return StorageUploadResponseDto.fromJson(data);
   }
 
   @override
   Future<void> uploadFile({
-    required String uploadUrl,
+    required String presignedUrl,
     required String filePath,
+    required String contentType,
     ProgressCallback? onProgress,
   }) async {
     try {
-      // Upload file directly to GCP Cloud Storage
-      await _dio.putUri(
-        Uri.parse(uploadUrl),
-        data: FormData.fromMap({
-          'file': await MultipartFile.fromFile(filePath),
-        }),
+      // Read file as bytes - matching Angular httpClient.put(url, file, {headers})
+      final file = File(filePath);
+      final bytes = await file.readAsBytes();
+
+      // Upload file binary directly with Content-Type header
+      // Matching Angular: uploadMessageFileS3Observable
+      await _dio.put(
+        presignedUrl,
+        data: Stream.fromIterable([bytes]),
         options: Options(
+          headers: {
+            'Content-Type': contentType,
+            'Content-Length': bytes.length,
+          },
           sendTimeout: const Duration(minutes: 5),
           receiveTimeout: const Duration(minutes: 5),
         ),

@@ -530,30 +530,34 @@ class ChatMutations {
     }
   ''';
 
-  /// **Generate Upload Link**
+  /// **Generate Presigned Upload URLs**
   ///
-  /// Generates a pre-signed upload URL for file attachments.
+  /// Generates pre-signed upload URLs for file attachments.
   /// This is step 1 of the 2-step upload process.
   ///
   /// **Upload Flow:**
-  /// 1. Call chatObjectGenLinkUpload to get uploadUrl and path
-  /// 2. Upload file directly to GCP Cloud Storage using uploadUrl (PUT request)
-  /// 3. Use the returned path when sending message via chatMessageAdd
+  /// 1. Call storageGeneratePresignedUrls to get presignedUrl, path, and url
+  /// 2. Upload file binary directly to presignedUrl (PUT request with Content-Type header)
+  /// 3. Use the returned url when sending message via chatMessageAdd (urls field)
   ///
   /// **Variables:**
-  /// - arguments: ChatObjectGenLinkUploadInput
-  ///   - filename: String (required, original filename with extension)
-  ///   - conversationId: String (optional but required for MESSAGE type)
-  ///   - type: String (required, "MESSAGE" | "GROUP" | "STORY")
-  ///   - mimetype: String (required, e.g., "image/jpeg", "application/pdf")
+  /// - arguments: UploadFileArgs
+  ///   - files: [GeneratePresignedUrlParams]
+  ///     - fileName: String (required, original filename with extension)
+  ///     - fileType: String (required, MIME type e.g., "image/jpeg")
   ///
-  /// **Returns:** Upload URL and storage path
-  /// **Path Format:** MESSAGE/{conversationId}/{timestamp}/{filename}
+  /// **Returns:** Array of upload data with presignedUrl, path, url
+  ///
+  /// **Matching Angular:** storage-query.ts - STORAGE_GEN_URL_UPLOAD
   static const String generateUploadLink = r'''
-    mutation GenerateUploadLink($arguments: ChatObjectGenLinkUploadInput!) {
-      chatObjectGenLinkUpload(arguments: $arguments) {
-        uploadUrl
-        path
+    mutation StorageGeneratePresignedUrls($arguments: UploadFileArgs!) {
+      storageGeneratePresignedUrls(arguments: $arguments) {
+        data {
+          id
+          path
+          presignedUrl
+          url
+        }
       }
     }
   ''';

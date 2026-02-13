@@ -9,31 +9,40 @@ import 'package:path/path.dart' as path;
 
 /// Upload File Result
 ///
-/// Contains the storage path and optional download URL
+/// Contains the storage path, url for use in messages, and optional download URL
 class UploadFileResult {
-  /// Storage path for referencing the file in messages
-  final String path;
+  /// Unique file ID from storage service
+  final String id;
 
-  /// Optional download URL (if requested)
+  /// Storage path for referencing the file
+  final String storagePath;
+
+  /// URL for use in chatMessageAdd (urls field)
+  /// This is the CDN URL returned by storageGeneratePresignedUrls
+  final String url;
+
+  /// Optional download URL (if requested separately)
   final String? downloadUrl;
 
   const UploadFileResult({
-    required this.path,
+    required this.id,
+    required this.storagePath,
+    required this.url,
     this.downloadUrl,
   });
+
+  // Legacy getter for backward compatibility
+  String get path => storagePath;
 }
 
 /// Upload File Use Case
 ///
-/// Handles the complete file upload flow:
-/// 1. Generate pre-signed upload URL from backend
-/// 2. Upload file directly to GCP Cloud Storage
-/// 3. Optionally get download URL
+/// Handles the complete file upload flow matching Angular frontend:
+/// 1. Generate pre-signed upload URL via storageGeneratePresignedUrls
+/// 2. Upload file binary directly to presigned URL
+/// 3. Return url for use in chatMessageAdd
 ///
-/// **Two-Step Upload Process:**
-/// - Step 1: Backend generates secure upload URL
-/// - Step 2: Client uploads directly to cloud storage
-/// - Step 3: Use returned path in message
+/// **Matching Angular:** upload-file.service.ts
 @injectable
 class UploadFileUseCase {
   final IChatObjectRemoteDataSource _dataSource;
@@ -48,77 +57,79 @@ class UploadFileUseCase {
   /// Execute file upload
   ///
   /// [filePath] - Local file path to upload
-  /// [conversationId] - Required for MESSAGE type
-  /// [type] - Upload type (MESSAGE, GROUP, STORY)
   /// [onProgress] - Optional upload progress callback
   /// [getDownloadUrl] - Whether to fetch download URL after upload
   ///
   /// Returns Either<Failure, UploadFileResult>
   Future<Either<Failure, UploadFileResult>> call({
     required String filePath,
-    String? conversationId,
-    ChatObjectType type = ChatObjectType.message,
     ProgressCallback? onProgress,
     bool getDownloadUrl = false,
   }) async {
     _logger.info('UploadFileUseCase: Starting upload', {
       'filePath': filePath,
-      'conversationId': conversationId,
-      'type': type.name,
     });
 
     try {
-      // Validate inputs
-      if (type == ChatObjectType.message && conversationId == null) {
-        return const Left(
-          ValidationFailure(
-            message: 'conversationId is required for MESSAGE type uploads',
-          ),
-        );
-      }
-
       // Extract filename and determine MIME type
       final filename = path.basename(filePath);
       final extension = path.extension(filePath).toLowerCase();
-      final mimetype = _getMimeType(extension);
+      final mimeType = _getMimeType(extension);
 
       _logger.debug('UploadFileUseCase: File info', {
         'filename': filename,
-        'mimetype': mimetype,
+        'mimeType': mimeType,
       });
 
-      // Step 1: Generate upload link
-      final uploadResponse = await _dataSource.generateUploadLink(
-        filename: filename,
-        conversationId: conversationId,
-        type: type,
-        mimetype: mimetype,
+      // Step 1: Generate presigned upload URL
+      // Matching Angular: storageGeneratePresignedUrls({files: [...]})
+      final uploadResponse = await _dataSource.generateUploadLinks(
+        files: [
+          GeneratePresignedUrlParams(
+            fileName: filename,
+            fileType: mimeType,
+          ),
+        ],
       );
 
+      if (uploadResponse.data.isEmpty) {
+        return const Left(
+          UnexpectedFailure(message: 'No upload data returned from server'),
+        );
+      }
+
+      final uploadData = uploadResponse.data.first;
+
       _logger.info('UploadFileUseCase: Upload link generated', {
-        'path': uploadResponse.path,
+        'id': uploadData.id,
+        'path': uploadData.path,
+        'url': uploadData.url,
       });
 
-      // Step 2: Upload file to GCP
+      // Step 2: Upload file binary to presigned URL
+      // Matching Angular: uploadMessageFileS3Observable
       await _dataSource.uploadFile(
-        uploadUrl: uploadResponse.uploadUrl,
+        presignedUrl: uploadData.presignedUrl,
         filePath: filePath,
+        contentType: mimeType,
         onProgress: onProgress,
       );
 
       _logger.info('UploadFileUseCase: File uploaded successfully');
 
-      // Step 3: Optionally get download URL
+      // Step 3: Optionally get download URL from separate endpoint
       String? downloadUrl;
       if (getDownloadUrl) {
-        final urlResponse = await _dataSource.getObjectUrl(uploadResponse.path);
+        final urlResponse = await _dataSource.getObjectUrl(uploadData.path);
         downloadUrl = urlResponse.url;
         _logger.debug('UploadFileUseCase: Download URL retrieved');
       }
 
       return Right(
         UploadFileResult(
-          path: uploadResponse.path,
+          id: uploadData.id,
+          storagePath: uploadData.path,
+          url: uploadData.url ?? uploadData.path,
           downloadUrl: downloadUrl,
         ),
       );
@@ -138,6 +149,7 @@ class UploadFileUseCase {
   }
 
   /// Determine MIME type from file extension
+  /// Matching Angular: fileType passed to storageGeneratePresignedUrls
   String _getMimeType(String extension) {
     switch (extension) {
       // Images
@@ -154,6 +166,10 @@ class UploadFileUseCase {
         return 'image/bmp';
       case '.svg':
         return 'image/svg+xml';
+      case '.heic':
+        return 'image/heic';
+      case '.heif':
+        return 'image/heif';
 
       // Videos
       case '.mp4':
@@ -198,12 +214,16 @@ class UploadFileUseCase {
         return 'text/plain';
       case '.csv':
         return 'text/csv';
+      case '.json':
+        return 'application/json';
+      case '.xml':
+        return 'application/xml';
 
       // Archives
       case '.zip':
         return 'application/zip';
       case '.rar':
-        return 'application/x-rar-compressed';
+        return 'application/vnd.rar';
       case '.7z':
         return 'application/x-7z-compressed';
 
