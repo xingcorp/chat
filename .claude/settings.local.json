@@ -13,7 +13,11 @@
       "mcp__serena__list_dir",
       "Bash(dart pub global:*)",
       "Bash(flutterfire configure:*)",
-      "Bash(firebase apps:sdkconfig:*)"
+      "Bash(firebase apps:sdkconfig:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(flutter analyze lib/features/home lib/features/contacts lib/features/settings lib/features/chat/presentation/pages/chat/chat_home_page.dart)",
+      "Bash(flutter analyze)",
+      "mcp__my-answer-engine__ask_internet"
     ]
   }
 }

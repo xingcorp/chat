@@ -61,6 +61,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   StreamSubscription<MessageReadReceipt>? _readReceiptSubscription;
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
   StreamSubscription<Chat>? _chatUpdatesSubscription;
+
+  // Typing indicator timeout management
+  // Key: "chatId:userId", Value: Timer that will clear typing status
+  final Map<String, Timer> _typingTimers = {};
+  static const _typingTimeout = Duration(seconds: 5);
   
   /// Constructor with UseCases injection
   ChatBloc(
@@ -528,15 +533,43 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
 
     final chat = currentState.chats[idx];
     final typing = List<String>.from(chat.typingUserIds);
+    final timerKey = '${indicator.chatId}:${indicator.userId}';
+
+    // Cancel existing timer for this user
+    _typingTimers[timerKey]?.cancel();
 
     if (indicator.isTyping) {
       if (!typing.contains(indicator.userId)) {
         typing.add(indicator.userId);
       }
+      // Set timeout to auto-clear typing status
+      _typingTimers[timerKey] = Timer(_typingTimeout, () {
+        _clearTypingStatus(indicator.chatId, indicator.userId);
+        _typingTimers.remove(timerKey);
+      });
     } else {
       typing.remove(indicator.userId);
+      _typingTimers.remove(timerKey);
     }
 
+    final updatedChats = List<Chat>.from(currentState.chats);
+    updatedChats[idx] = chat.copyWith(typingUserIds: typing);
+    emit(ChatState.loaded(chats: updatedChats));
+  }
+
+  void _clearTypingStatus(String chatId, String userId) {
+    if (state is! _Loaded) return;
+
+    final currentState = state as _Loaded;
+    final idx = currentState.chats.indexWhere((c) => c.id == chatId);
+    if (idx < 0) return;
+
+    final chat = currentState.chats[idx];
+    final typing = List<String>.from(chat.typingUserIds);
+
+    if (!typing.contains(userId)) return;
+
+    typing.remove(userId);
     final updatedChats = List<Chat>.from(currentState.chats);
     updatedChats[idx] = chat.copyWith(typingUserIds: typing);
     emit(ChatState.loaded(chats: updatedChats));
@@ -568,6 +601,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     _readReceiptSubscription?.cancel();
     _connectivitySubscription?.cancel();
     _chatUpdatesSubscription?.cancel();
+    // Cancel all typing timers
+    for (final timer in _typingTimers.values) {
+      timer.cancel();
+    }
+    _typingTimers.clear();
     return super.close();
   }
 }

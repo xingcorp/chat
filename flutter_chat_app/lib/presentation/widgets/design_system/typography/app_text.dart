@@ -24,9 +24,12 @@ class AppText extends BaseStatelessWidget {
 
   @override
   Widget buildContent(BuildContext context) {
+    final defaultStyle = AppTextStyles.bodyMedium.copyWith(
+      color: Theme.of(context).textTheme.bodyMedium?.color,
+    );
     return Text(
       text,
-      style: style ?? AppTextStyles.bodyMedium,
+      style: style ?? defaultStyle,
       textAlign: textAlign,
       maxLines: maxLines,
       overflow: overflow,

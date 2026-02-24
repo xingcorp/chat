@@ -76,3 +76,24 @@ class AuthRegisterRequested extends AuthEvent {
   @override
   List<Object> get props => [email, password, username, displayName ?? ''];
 }
+
+/// **Event đăng nhập qua SSO (Google, Keycloak)**
+class AuthSsoLoginRequested extends AuthEvent {
+  /// SSO provider type
+  final SsoProvider provider;
+
+  const AuthSsoLoginRequested({
+    required this.provider,
+  });
+
+  @override
+  List<Object> get props => [provider];
+}
+
+/// SSO Provider types
+enum SsoProvider {
+  /// Google SSO via Keycloak
+  google,
+  /// Keycloak SSO (general login page)
+  keycloak,
+}

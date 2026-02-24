@@ -1021,47 +1021,49 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     showModalBottomSheet(
       context: context,
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(AppDimens.paddingSmall),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Wrap(
-                      spacing: 10, runSpacing: 10,
-                      children: [
-                        for (final emoji in _quickReactions)
-                          _buildReactionItem(ctx, emoji, () {
-                            Navigator.pop(ctx);
-                            _messageBloc.add(ToggleReaction(messageId: message.id, emojiCode: emoji));
-                          }),
-                      ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(AppDimens.paddingSmall),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Wrap(
+                        spacing: 10, runSpacing: 10,
+                        children: [
+                          for (final emoji in _quickReactions)
+                            _buildReactionItem(ctx, emoji, () {
+                              Navigator.pop(ctx);
+                              _messageBloc.add(ToggleReaction(messageId: message.id, emojiCode: emoji));
+                            }),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  _buildAddReactionItem(ctx, () {
-                    Navigator.pop(ctx);
-                    EmojiPickerBottomSheet.show(this.context, onEmojiSelected: (emoji) => _messageBloc.add(ToggleReaction(messageId: message.id, emojiCode: emoji)));
-                  }),
-                ],
+                    const SizedBox(width: 10),
+                    _buildAddReactionItem(ctx, () {
+                      Navigator.pop(ctx);
+                      EmojiPickerBottomSheet.show(this.context, onEmojiSelected: (emoji) => _messageBloc.add(ToggleReaction(messageId: message.id, emojiCode: emoji)));
+                    }),
+                  ],
+                ),
               ),
-            ),
-            const Divider(height: 1),
-            _buildActionTile(Icons.copy, ctx.l10n.copyMessage, () {
-              Navigator.pop(ctx);
-              Clipboard.setData(ClipboardData(text: message.content));
-              AppSnackBar.show(context: this.context, message: this.context.l10n.messageCopied, type: FeedbackType.success);
-            }),
-            _buildActionTile(Icons.reply, ctx.l10n.replyMessage, () { Navigator.pop(ctx); _startReply(message); }),
-            if (isCurrentUser) ...[
-              _buildActionTile(Icons.edit, ctx.l10n.editMessage, () { Navigator.pop(ctx); _startEditMode(message); }),
-              _buildActionTile(Icons.delete, ctx.l10n.deleteMessage, () { Navigator.pop(ctx); _confirmDeleteMessage(message); }),
+              const Divider(height: 1),
+              _buildActionTile(Icons.copy, ctx.l10n.copyMessage, () {
+                Navigator.pop(ctx);
+                Clipboard.setData(ClipboardData(text: message.content));
+                AppSnackBar.show(context: this.context, message: this.context.l10n.messageCopied, type: FeedbackType.success);
+              }),
+              _buildActionTile(Icons.reply, ctx.l10n.replyMessage, () { Navigator.pop(ctx); _startReply(message); }),
+              if (isCurrentUser) ...[
+                _buildActionTile(Icons.edit, ctx.l10n.editMessage, () { Navigator.pop(ctx); _startEditMode(message); }),
+                _buildActionTile(Icons.delete, ctx.l10n.deleteMessage, () { Navigator.pop(ctx); _confirmDeleteMessage(message); }),
+              ],
+              _buildActionTile(Icons.forward, ctx.l10n.forwardMessage, () { Navigator.pop(ctx); showForwardMessageSheet(this.context, messages: [message]); }),
+              _buildActionTile(Icons.checklist, ctx.l10n.selectAll, () { Navigator.pop(ctx); _enterSelectionMode(message.id); }),
             ],
-            _buildActionTile(Icons.forward, ctx.l10n.forwardMessage, () { Navigator.pop(ctx); showForwardMessageSheet(this.context, messages: [message]); }),
-            _buildActionTile(Icons.checklist, ctx.l10n.selectAll, () { Navigator.pop(ctx); _enterSelectionMode(message.id); }),
-          ],
+          ),
         ),
       ),
     );

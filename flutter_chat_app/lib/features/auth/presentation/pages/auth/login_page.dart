@@ -29,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
     return BlocListener<AuthBloc, AuthState>(
       listenWhen: (_, current) {
         if (current is! AuthError) return false;
-        return current.operation == 'login';
+        return current.operation == 'login' || current.operation == 'sso_login';
       },
       listener: (context, state) {
         final errorState = state as AuthError;
@@ -43,18 +43,21 @@ class _LoginPageState extends State<LoginPage> {
       },
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
-          final isLoading = state is AuthLoading && state.operation == 'login';
+          final isLoading = state is AuthLoading &&
+              (state.operation == 'login' || state.operation == 'sso_login');
+          final isSsoLoading = state is AuthLoading && state.operation == 'sso_login';
 
           return Scaffold(
             appBar: AppBar(
               title: Text(context.l10n.login),
             ),
-            body: Padding(
+            body: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const SizedBox(height: 32),
                   const Icon(
                     Icons.chat,
                     size: 80,
@@ -112,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: isLoading
+                    child: isLoading && !isSsoLoading
                         ? const SizedBox(
                             height: 18,
                             width: 18,
@@ -125,6 +128,67 @@ class _LoginPageState extends State<LoginPage> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Divider with "OR" text
+                  Row(
+                    children: [
+                      const Expanded(child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'HOẶC',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider()),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Google SSO Button
+                  OutlinedButton.icon(
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            context.read<AuthBloc>().add(
+                                  const AuthSsoLoginRequested(
+                                    provider: SsoProvider.google,
+                                  ),
+                                );
+                          },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(color: Colors.grey),
+                    ),
+                    icon: isSsoLoading
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Image.network(
+                            'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                            height: 20,
+                            width: 20,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.g_mobiledata,
+                              size: 24,
+                              color: Colors.red,
+                            ),
+                          ),
+                    label: Text(
+                      'Đăng nhập với Google',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
 

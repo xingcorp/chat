@@ -154,6 +154,7 @@ import '../services/realtime_connection_service.dart' as _i357;
 import '../services/realtime_messaging_service.dart' as _i706;
 import '../services/realtime_service.dart' as _i301;
 import '../services/resource_manager_service.dart' as _i558;
+import '../services/sso_auth_service.dart' as _i349;
 import '../services/state_persistence_service.dart' as _i797;
 import '../storage/local_storage.dart' as _i329;
 import '../utils/isolate_manager.dart' as _i686;
@@ -161,11 +162,11 @@ import '../utils/logger.dart' as _i221;
 import '../utils/proto_converter.dart' as _i995;
 import '../utils/system_resources.dart' as _i260;
 
+const String _dev = 'dev';
+const String _prod = 'prod';
 const String _standalone = 'standalone';
 const String _staging = 'staging';
-const String _prod = 'prod';
 const String _test = 'test';
-const String _dev = 'dev';
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -216,10 +217,14 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i329.LocalStorage>(
         () => _i329.LocalStorageImpl(gh<_i460.SharedPreferences>()));
-    gh.factory<_i331.AuthBloc>(() => _i331.AuthBloc(
-          authRepository: gh<_i787.IAuthRepository>(),
-          preferences: gh<_i460.SharedPreferences>(),
-        ));
+    gh.lazySingleton<_i349.SsoAuthService>(
+      () => _i349.SsoAuthService(),
+      registerFor: {
+        _dev,
+        _prod,
+        _standalone,
+      },
+    );
     gh.factory<_i498.SocketManager>(() => _i498.SocketManager(
           serverUrl: gh<String>(instanceName: 'socketUrl'),
           options: gh<Map<String, dynamic>>(),
@@ -346,6 +351,18 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.singleton<_i797.StatePersistenceService>(
         () => _i797.StatePersistenceService(gh<_i460.SharedPreferences>()));
+    gh.factory<_i331.AuthBloc>(
+      () => _i331.AuthBloc(
+        authRepository: gh<_i787.IAuthRepository>(),
+        preferences: gh<_i460.SharedPreferences>(),
+        ssoAuthService: gh<_i349.SsoAuthService>(),
+      ),
+      registerFor: {
+        _dev,
+        _prod,
+        _standalone,
+      },
+    );
     gh.lazySingleton<_i293.IChatObjectRemoteDataSource>(
         () => _i293.ChatObjectRemoteDataSource(
               gh<_i788.GraphQLClientWrapper>(),

@@ -1,0 +1,361 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
+import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
+import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
+import 'package:flutter_chat_app/shared/domain/entities/user.dart';
+import 'package:get_it/get_it.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
+/// Settings page - app settings and user profile
+class SettingsPage extends BaseStatefulWidget {
+  const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends BaseState<SettingsPage> {
+  final UserRepository _userRepository = GetIt.instance<UserRepository>();
+
+  User? _currentUser;
+  bool _isLoading = true;
+  String _appVersion = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadUserProfile() async {
+    safeSetState(() {
+      _isLoading = true;
+    });
+
+    final result = await _userRepository.getCurrentUser();
+
+    result.fold(
+      (failure) {
+        safeSetState(() {
+          _isLoading = false;
+        });
+      },
+      (user) {
+        safeSetState(() {
+          _isLoading = false;
+          _currentUser = user;
+        });
+      },
+    );
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      safeSetState(() {
+        _appVersion = '${packageInfo.version} (${packageInfo.buildNumber})';
+      });
+    } catch (e) {
+      safeSetState(() {
+        _appVersion = '1.0.0';
+      });
+    }
+  }
+
+  void _logout() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.l10n.logout),
+        content: Text(context.l10n.confirmDelete),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(context.l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.read<AuthBloc>().add(const AuthLoggedOut());
+            },
+            child: Text(
+              context.l10n.logout,
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: AppText(context.l10n.settingsTitle),
+      ),
+      body: _isLoading
+          ? Center(
+              child: AppProgressIndicator.circular(
+                label: context.l10n.loading,
+              ),
+            )
+          : ListView(
+              children: [
+                // User Profile Section
+                _buildUserProfileSection(context, isDark),
+
+                const Divider(height: 1),
+
+                // Theme Settings
+                _buildThemeSection(context, isDark),
+
+                const Divider(height: 1),
+
+                // Notifications
+                _buildSettingsItem(
+                  context: context,
+                  icon: Icons.notifications_outlined,
+                  title: context.l10n.notificationSettings,
+                  onTap: () {
+                    // TODO: Navigate to notification settings
+                  },
+                ),
+
+                const Divider(height: 1),
+
+                // Language
+                _buildSettingsItem(
+                  context: context,
+                  icon: Icons.language,
+                  title: context.l10n.languageSettings,
+                  subtitle: 'Tiếng Việt',
+                  onTap: () {
+                    // TODO: Navigate to language settings
+                  },
+                ),
+
+                const Divider(height: 1),
+
+                // About
+                _buildSettingsItem(
+                  context: context,
+                  icon: Icons.info_outline,
+                  title: context.l10n.aboutSettings,
+                  subtitle: '${context.l10n.version}: $_appVersion',
+                  onTap: () {
+                    // TODO: Show about dialog
+                    _showAboutDialog(context);
+                  },
+                ),
+
+                const Divider(height: 1),
+
+                // Logout
+                _buildSettingsItem(
+                  context: context,
+                  icon: Icons.logout,
+                  title: context.l10n.logout,
+                  textColor: AppColors.error,
+                  onTap: _logout,
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildUserProfileSection(BuildContext context, bool isDark) {
+    final primaryTextColor = isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary;
+    final secondaryTextColor = isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
+
+    return InkWell(
+      onTap: () {
+        // TODO: Navigate to profile edit page
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.paddingLarge),
+        child: Row(
+          children: [
+            AppHeroAvatar(
+              id: _currentUser?.id ?? '',
+              imageUrl: _currentUser?.avatar,
+              displayName: _currentUser?.fullName,
+              size: AvatarSize.large,
+              hasBorder: false,
+            ),
+            const SizedBox(width: AppDimens.spaceMedium),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText(
+                    _currentUser?.fullName ?? _currentUser?.username ?? context.l10n.profile,
+                    style: AppTextStyles.titleLarge.copyWith(
+                      color: primaryTextColor,
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.spaceXSmall),
+                  AppText(
+                    _currentUser?.email ?? '',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: secondaryTextColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: secondaryTextColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeSection(BuildContext context, bool isDark) {
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, state) {
+        String themeLabel;
+        switch (state.themeMode) {
+          case ThemeMode.light:
+            themeLabel = context.l10n.lightTheme;
+            break;
+          case ThemeMode.dark:
+            themeLabel = context.l10n.darkTheme;
+            break;
+          case ThemeMode.system:
+            themeLabel = 'System';
+            break;
+        }
+
+        return _buildSettingsItem(
+          context: context,
+          icon: isDark ? Icons.dark_mode : Icons.light_mode,
+          title: context.l10n.themeSettings,
+          subtitle: themeLabel,
+          onTap: () => _showThemeDialog(context),
+        );
+      },
+    );
+  }
+
+  void _showThemeDialog(BuildContext context) {
+    final themeCubit = context.read<ThemeCubit>();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.themeSettings),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<ThemeMode>(
+              title: Text(context.l10n.lightTheme),
+              value: ThemeMode.light,
+              groupValue: themeCubit.state.themeMode,
+              onChanged: (value) {
+                themeCubit.useLightTheme();
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            RadioListTile<ThemeMode>(
+              title: Text(context.l10n.darkTheme),
+              value: ThemeMode.dark,
+              groupValue: themeCubit.state.themeMode,
+              onChanged: (value) {
+                themeCubit.useDarkTheme();
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            RadioListTile<ThemeMode>(
+              title: const Text('System'),
+              value: ThemeMode.system,
+              groupValue: themeCubit.state.themeMode,
+              onChanged: (value) {
+                themeCubit.useSystemTheme();
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(context.l10n.cancel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AboutDialog(
+        applicationName: 'Chat App',
+        applicationVersion: _appVersion,
+        applicationIcon: const FlutterLogo(size: 48),
+        children: [
+          const SizedBox(height: AppDimens.spaceMedium),
+          const Text('Enterprise Chat Application'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsItem({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    Color? textColor,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryTextColor = textColor ?? (isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary);
+    final secondaryTextColor = isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
+
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: textColor ?? (isDark ? AppColors.primaryDarkMode : AppColors.primary),
+      ),
+      title: AppText(
+        title,
+        style: AppTextStyles.titleMedium.copyWith(
+          color: primaryTextColor,
+        ),
+      ),
+      subtitle: subtitle != null
+          ? AppText(
+              subtitle,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: secondaryTextColor,
+              ),
+            )
+          : null,
+      trailing: Icon(
+        Icons.chevron_right,
+        color: secondaryTextColor,
+      ),
+      onTap: onTap,
+    );
+  }
+}

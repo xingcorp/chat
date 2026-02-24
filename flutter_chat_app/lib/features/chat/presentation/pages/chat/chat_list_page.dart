@@ -30,8 +30,14 @@ final getIt = GetIt.instance;
 
 /// Chat list page with BLoC integration
 class ChatListPage extends BaseStatefulWidget {
+  /// Whether to show bottom navigation bar (when used standalone)
+  final bool showBottomNavBar;
+
   /// Constructor
-  const ChatListPage({super.key});
+  const ChatListPage({
+    super.key,
+    this.showBottomNavBar = true,
+  });
 
   @override
   State<ChatListPage> createState() => _ChatListPageState();
@@ -243,7 +249,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
           },
           child: const Icon(Icons.chat),
         ),
-        bottomNavigationBar: (ChatModule.config?.hideBottomNavBar ?? false)
+        bottomNavigationBar: (!widget.showBottomNavBar || (ChatModule.config?.hideBottomNavBar ?? false))
             ? null
             : BottomNavigationBar(
           currentIndex: 0,

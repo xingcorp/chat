@@ -42,6 +42,11 @@ android {
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
 
+        // OAuth/SSO redirect scheme for flutter_appauth
+        manifestPlaceholders += [
+            'appAuthRedirectScheme': 'com.oxii.office.mobile'
+        ]
+
         // Default build config fields
         buildConfigField "String", "FLAVOR", '"production"'
         buildConfigField "String", "API_BASE_URL", '"https://oxii-office-api.oxiitek.com"'

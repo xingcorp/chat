@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
-import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_list_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_list_panel.dart';
+import 'package:flutter_chat_app/features/home/presentation/pages/main_home_page.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/layouts/app_responsive_layout.dart';
 
 class ChatHomePage extends StatefulWidget {
@@ -19,7 +19,7 @@ class _ChatHomePageState extends State<ChatHomePage> {
     return AppResponsiveBuilder(
       builder: (context, layoutType) {
         if (!layoutType.isDesktop) {
-          return const ChatListPage();
+          return const MainHomePage();
         }
 
         return Scaffold(

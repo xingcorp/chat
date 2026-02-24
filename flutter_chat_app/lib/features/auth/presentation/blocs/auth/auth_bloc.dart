@@ -7,6 +7,7 @@ import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/services/sso_auth_service.dart';
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:flutter_chat_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/bloc_error_mixin.dart';
@@ -21,17 +22,23 @@ part 'auth_state.dart';
 ///
 /// **Performance**: <100ms for auth state changes
 /// **Architecture**: Clean Architecture + BLoC pattern + Either error handling
-@injectable
+///
+/// Note: In package mode, AuthBloc is created manually via AuthBloc.authenticated()
+/// so this injectable registration is only for standalone mode.
+@Injectable(env: [Environment.dev, Environment.prod, 'standalone'])
 class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
   final IAuthRepository _authRepository;
   final SharedPreferences _preferences;
+  final SsoAuthService? _ssoAuthService;
 
   /// Constructor - starts with AuthInitial state
   AuthBloc({
     required IAuthRepository authRepository,
     required SharedPreferences preferences,
+    SsoAuthService? ssoAuthService,
   }) : _authRepository = authRepository,
        _preferences = preferences,
+       _ssoAuthService = ssoAuthService,
        super(const AuthInitial.initial()) {
     _registerEventHandlers();
   }
@@ -49,8 +56,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
     required SharedPreferences preferences,
     required User user,
     bool isOnboarded = true,
+    SsoAuthService? ssoAuthService,
   }) : _authRepository = authRepository,
        _preferences = preferences,
+       _ssoAuthService = ssoAuthService,
        super(AuthAuthenticated(user: user, isOnboarded: isOnboarded)) {
     _registerEventHandlers();
   }
@@ -62,6 +71,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
     on<AuthOnboardingCompleted>(_onAuthOnboardingCompleted);
     on<AuthLoginRequested>(_onAuthLoginRequested);
     on<AuthRegisterRequested>(_onAuthRegisterRequested);
+    on<AuthSsoLoginRequested>(_onAuthSsoLoginRequested);
   }
   
   /// **Check authentication status - STANDARDIZED ERROR HANDLING**
@@ -331,5 +341,105 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
         ));
       },
     );
+  }
+
+  /// **Handle SSO login request (Google, Keycloak)**
+  ///
+  /// **Performance**: <5s for SSO flow (includes browser redirect)
+  /// **Strategy**: SsoAuthService → Token exchange → User lookup
+  Future<void> _onAuthSsoLoginRequested(
+    AuthSsoLoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    if (_ssoAuthService == null) {
+      emit(AuthError(
+        failure: UnexpectedFailure(
+          message: 'SSO service not configured',
+          code: 'sso_not_configured',
+        ),
+        operation: 'sso_login',
+      ));
+      return;
+    }
+
+    // Emit loading state
+    emit(const AuthLoading(operation: 'sso_login'));
+
+    try {
+      // Perform SSO authentication based on provider
+      final ssoResult = switch (event.provider) {
+        SsoProvider.google => await _ssoAuthService!.authenticateWithGoogle(),
+        SsoProvider.keycloak => await _ssoAuthService!.authenticateWithKeycloak(),
+      };
+
+      if (ssoResult.isLeft) {
+        if (emit.isDone) return;
+        emit(AuthError(
+          failure: ssoResult.left,
+          operation: 'sso_login',
+          retryAction: () => add(event),
+        ));
+        return;
+      }
+
+      final tokens = ssoResult.right;
+
+      // Save SSO tokens
+      await _preferences.setBool('isAuthenticated', true);
+      await _preferences.setString('accessToken', tokens.accessToken);
+      if (tokens.refreshToken != null) {
+        await _preferences.setString('refreshToken', tokens.refreshToken!);
+      }
+      if (tokens.idToken != null) {
+        await _preferences.setString('idToken', tokens.idToken!);
+      }
+
+      // Get user info from repository (should use the new token)
+      final userResult = await _authRepository.getCurrentUser();
+
+      if (emit.isDone) return;
+
+      userResult.fold(
+        (failure) {
+          emit(AuthError(
+            failure: failure,
+            operation: 'sso_login',
+            retryAction: () => add(event),
+          ));
+        },
+        (user) {
+          if (user != null) {
+            _preferences.setString('userId', user.id);
+            final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
+
+            emit(AuthAuthenticated(
+              user: user,
+              isOnboarded: isOnboarded,
+            ));
+          } else {
+            emit(AuthError(
+              failure: UnexpectedFailure(
+                message: 'User not found after SSO login',
+                code: 'sso_user_not_found',
+              ),
+              operation: 'sso_login',
+              retryAction: () => add(event),
+            ));
+          }
+        },
+      );
+    } catch (exception, stackTrace) {
+      logger.e('SSO login exception', error: exception, stackTrace: stackTrace);
+
+      if (emit.isDone) return;
+      emit(AuthError(
+        failure: UnexpectedFailure(
+          message: 'SSO login failed: $exception',
+          code: 'sso_exception',
+        ),
+        operation: 'sso_login',
+        retryAction: () => add(event),
+      ));
+    }
   }
 }
