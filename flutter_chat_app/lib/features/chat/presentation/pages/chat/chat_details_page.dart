@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
@@ -523,36 +524,44 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   Future<void> _handleLocationShare() async {
+    final locationService = GetIt.I<ILocationService>();
+    final navigator = Navigator.of(context);
+
     try {
-      final locationService = GetIt.I<ILocationService>();
       final hasPermission = await locationService.hasLocationPermission();
+      if (!mounted) return;
+
       if (!hasPermission) {
         final granted = await locationService.requestLocationPermission();
+        if (!mounted) return;
+
         if (!granted) {
-          if (mounted) {
-            AppSnackBar.show(
-              context: context,
-              message: 'Location permission denied',
-              type: FeedbackType.error,
-            );
-          }
+          AppSnackBar.show(
+            context: context,
+            message: 'Location permission denied',
+            type: FeedbackType.error,
+          );
           return;
         }
       }
 
-      if (mounted) {
-        AppSnackBar.show(
-          context: context,
-          message: 'Getting your location...',
-          type: FeedbackType.info,
-        );
-      }
+      AppSnackBar.show(
+        context: context,
+        message: 'Getting your location...',
+        type: FeedbackType.info,
+      );
 
       final result = await locationService.getCurrentLocation();
       if (!mounted) return;
 
       result.fold(
-        (failure) => AppSnackBar.show(context: context, message: failure.message, type: FeedbackType.error),
+        (failure) {
+          AppSnackBar.show(
+            context: context,
+            message: failure.message,
+            type: FeedbackType.error,
+          );
+        },
         (locationData) {
           _messageBloc.add(
             SendLocationMessage(
@@ -562,27 +571,40 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               locationName: locationData.name,
             ),
           );
-          AppSnackBar.show(context: context, message: 'Location sent successfully', type: FeedbackType.success);
+
+          AppSnackBar.show(
+            context: context,
+            message: 'Location sent successfully',
+            type: FeedbackType.success,
+          );
         },
       );
     } catch (e) {
-      if (mounted) {
-        AppSnackBar.show(context: context, message: 'Failed to share location: $e', type: FeedbackType.error);
-      }
+      if (!mounted) return;
+      AppSnackBar.show(
+        context: context,
+        message: 'Failed to share location: $e',
+        type: FeedbackType.error,
+      );
+    } finally {
+      // keep reference used to avoid analyzer complaining about unused capture in some configs
+      // ignore: unused_local_variable
+      final _ = navigator;
     }
   }
 
   Future<void> _processAndSendImage(File imageFile) async {
+    final l10n = context.l10n;
     try {
       if (mounted) {
-        AppSnackBar.show(context: context, message: context.l10n.compressing, type: FeedbackType.info);
+        AppSnackBar.show(context: context, message: l10n.compressing, type: FeedbackType.info);
       }
 
       final compressedImage = await ImageCompressionHelper.compressImage(imageFile);
       if (!mounted) return;
 
       if (compressedImage == null) {
-        AppSnackBar.show(context: context, message: context.l10n.imageCompressionFailed, type: FeedbackType.error);
+        AppSnackBar.show(context: context, message: l10n.imageCompressionFailed, type: FeedbackType.error);
         return;
       }
 
@@ -601,7 +623,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.show(context: context, message: context.l10n.errorOccurred, type: FeedbackType.error);
+        AppSnackBar.show(
+          context: context,
+          message: l10n.errorOccurred,
+          type: FeedbackType.error,
+        );
       }
     }
   }
