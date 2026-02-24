@@ -39,51 +39,48 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   Future<UserModel> getCurrentUserProfile() async {
     final result = await _client.query(
       '''
-      query GetCurrentUserProfile {
-        me {
+      query IdentityProfile {
+        identityProfile {
           id
-          username
-          displayName
+          name
+          phone
           email
-          bio
+          status
           avatar { location }
-          isOnline
-          lastSeen
-          createdAt
         }
       }
       ''',
-      operationName: 'GetCurrentUserProfile',
+      operationName: 'IdentityProfile',
     );
 
-    final me = result['me'] as Map<String, dynamic>?;
-    if (me == null) {
+    final profile = result['identityProfile'] as Map<String, dynamic>?;
+    if (profile == null) {
       throw Exception('Failed to get current user profile');
     }
 
-    return UserModel.fromMap(me);
+    return UserModel.fromMap(profile);
   }
   
   @override
   Future<UserModel> getUserProfile(String userId) async {
     final result = await _client.query(
       '''
-      query IdentityFindUserById(\$userId: String!) {
-        identityFindUserById(id: \$userId) {
+      query ManagementGetEmployee(\$id: String!) {
+        managementGetEmployee(id: \$id) {
           id
-          username
           fullname
-          avatar { location }
           phone
           email
+          status
+          imageUrls
         }
       }
       ''',
-      variables: {'userId': userId},
-      operationName: 'IdentityFindUserById',
+      variables: {'id': userId},
+      operationName: 'ManagementGetEmployee',
     );
 
-    final profile = result['identityFindUserById'] as Map<String, dynamic>?;
+    final profile = result['managementGetEmployee'] as Map<String, dynamic>?;
     if (profile == null) {
       throw Exception('Failed to get user profile');
     }
@@ -95,22 +92,35 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   Future<List<UserModel>> searchUsers(String query, {int limit = 20}) async {
     final result = await _client.query(
       '''
-      query SearchUsers(\$query: String!, \$limit: Int!) {
-        searchUsers(query: \$query, limit: \$limit) {
-          id
-          username
-          displayName
-          avatar { location }
-          isOnline
-          lastSeen
+      query OfficeEmployeeFullOrgChartList(\$filter: UserOrgChartFilter!) {
+        officeEmployeeFullOrgChartList(filter: \$filter) {
+          list {
+            id
+            fullname
+            phone
+            email
+            status
+            imageUrls
+          }
+          count
         }
       }
       ''',
-      variables: {'query': query, 'limit': limit},
-      operationName: 'SearchUsers',
+      variables: {
+        'filter': {
+          'page': 0,
+          'size': limit,
+          'keyword': query,
+          'onlyActive': true,
+        }
+      },
+      operationName: 'OfficeEmployeeFullOrgChartList',
     );
 
-    final usersData = result['searchUsers'] as List<dynamic>?;
+    final response = result['officeEmployeeFullOrgChartList'] as Map<String, dynamic>?;
+    if (response == null) return [];
+
+    final usersData = response['list'] as List<dynamic>?;
     if (usersData == null) return [];
 
     return usersData.map((userData) => UserModel.fromMap(userData)).toList();
@@ -120,21 +130,33 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   Future<List<UserModel>> getUserContacts() async {
     final result = await _client.query(
       '''
-      query GetUserContacts {
-        getUserContacts {
-          id
-          username
-          displayName
-          avatar { location }
-          isOnline
-          lastSeen
+      query OfficeEmployeeFullOrgChartList(\$filter: UserOrgChartFilter!) {
+        officeEmployeeFullOrgChartList(filter: \$filter) {
+          list {
+            id
+            fullname
+            phone
+            email
+            status
+            imageUrls
+          }
+          count
         }
       }
       ''',
-      operationName: 'GetUserContacts',
+      variables: {
+        'filter': {
+          'page': 0,
+          'size': 100,
+        }
+      },
+      operationName: 'OfficeEmployeeFullOrgChartList',
     );
 
-    final contactsData = result['getUserContacts'] as List<dynamic>?;
+    final response = result['officeEmployeeFullOrgChartList'] as Map<String, dynamic>?;
+    if (response == null) return [];
+
+    final contactsData = response['list'] as List<dynamic>?;
     if (contactsData == null) return [];
 
     return contactsData.map((contactData) => UserModel.fromMap(contactData)).toList();
@@ -146,63 +168,17 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
     String? bio,
     String? avatarUrl,
   }) async {
-    // Build variables map with non-null values
-    final variables = <String, dynamic>{};
-    if (displayName != null) variables['displayName'] = displayName;
-    if (bio != null) variables['bio'] = bio;
-    if (avatarUrl != null) variables['avatarUrl'] = avatarUrl;
-    
-    // If no fields to update, return current profile
-    if (variables.isEmpty) {
-      return await getCurrentUserProfile();
-    }
-    
-    final result = await _client.mutate(
-      '''
-      mutation UpdateUserProfile(\$displayName: String, \$bio: String, \$avatarUrl: String) {
-        updateUserProfile(
-          input: {
-            displayName: \$displayName,
-            bio: \$bio,
-            avatarUrl: \$avatarUrl
-          }
-        ) {
-          id
-          username
-          displayName
-          email
-          bio
-          avatar { location }
-          isOnline
-          lastSeen
-          createdAt
-        }
-      }
-      ''',
-      variables: variables,
-      operationName: 'UpdateUserProfile',
-    );
-
-    final updated = result['updateUserProfile'] as Map<String, dynamic>?;
-    if (updated == null) {
-      throw Exception('Failed to update user profile');
-    }
-
-    return UserModel.fromMap(updated);
+    // Note: Server does not have a direct updateUserProfile mutation
+    // Avatar update should use officeEmployeeAvatarUpdate mutation
+    // For now, return current profile as this feature is not fully supported
+    return await getCurrentUserProfile();
   }
-  
+
   @override
   Future<bool> setUserStatus(bool isOnline) async {
-    final result = await _client.mutate(
-      '''
-      mutation SetUserStatus(\$isOnline: Boolean!) {
-        setUserStatus(isOnline: \$isOnline)
-      }
-      ''',
-      variables: {'isOnline': isOnline},
-      operationName: 'SetUserStatus',
-    );
-
-    return result['setUserStatus'] == true;
+    // Note: Server does not have setUserStatus mutation
+    // User status is managed differently in this system
+    // Return true as a no-op for now
+    return true;
   }
 } 

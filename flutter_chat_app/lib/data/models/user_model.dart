@@ -66,11 +66,20 @@ class UserModel {
         avatarUrl = location is String ? location : location?.toString();
       }
     }
+    // Handle imageUrls array from server
+    if (avatarUrl == null || avatarUrl.isEmpty) {
+      final imageUrls = map['imageUrls'];
+      if (imageUrls is List && imageUrls.isNotEmpty) {
+        avatarUrl = imageUrls.first?.toString();
+      }
+    }
 
     final serverId = (map['id'] ?? '').toString();
     final email = map['email'] as String?;
+    final phone = map['phone'] as String?;
     final username = (map['username'] as String?) ??
         (email != null && email.contains('@') ? email.split('@').first : null) ??
+        phone ??
         serverId;
     final displayName = (map['displayName'] as String?) ??
         (map['fullname'] as String?) ??

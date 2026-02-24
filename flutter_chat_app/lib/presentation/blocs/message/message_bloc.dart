@@ -687,7 +687,9 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
               logger.e('Failed to upload file', error: failure);
               throw Exception(failure.message);
             },
-            (uploadResult) => uploadResult.id, // Return storage path
+            // Return CDN URL for use in chatMessageAdd (urls field)
+            // Matching Angular: urls: [uploadData.url]
+            (uploadResult) => uploadResult.url,
           );
         }),
       );

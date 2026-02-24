@@ -170,9 +170,12 @@ class _ChatListPageState extends BaseState<ChatListPage> {
                     _chatBloc.add(const ChatEvent.loadMoreChats());
                   },
                   emptyWidget: _buildEmptyState(context),
-                  separatorBuilder: (context, index) => const Divider(
+                  separatorBuilder: (context, index) => Divider(
                     height: 1,
-                    indent: AppDimens.spaceHuge,
+                    thickness: 0.5,
+                    indent: 68, // Avatar width (48) + left padding (12) + gap (8)
+                    endIndent: 0,
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
                   ),
                   itemBuilder: (context, chat, index) {
                     return _buildChatListItem(context, chat);

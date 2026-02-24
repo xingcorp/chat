@@ -233,11 +233,13 @@ extension MessageDtoMapper on MessageDto {
     }
 
     // Convert attachments from URLs
+    // Note: type.toLowerCase() to ensure consistent matching with MediaGallery filter
+    final attachmentType = type.toLowerCase();
     final messageAttachments = urls.map((url) {
       return MessageAttachment(
         id: url.hashCode.toString(),
         url: url,
-        type: type,
+        type: attachmentType,
         size: 0, // Backend doesn't provide size
         name: fileName ?? url.split('/').last,
       );

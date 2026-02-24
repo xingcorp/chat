@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/formatters/message_preview_formatter.dart';
 import 'package:flutter_chat_app/core/formatters/relative_time_formatter.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
@@ -42,16 +41,17 @@ class ChatConversationTile extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppDimens.paddingMedium,
-          vertical: AppDimens.paddingSmall,
+          horizontal: 12,
+          vertical: 10,
         ),
         child: Row(
           children: [
             _buildAvatarWithPresence(),
-            const SizedBox(width: AppDimens.spaceMedium),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     children: [
@@ -59,59 +59,57 @@ class ChatConversationTile extends StatelessWidget {
                         child: AppText(
                           chat.name ?? context.l10n.unknownUser,
                           style: AppTextStyles.titleMedium.copyWith(
-                            fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
+                            fontWeight: hasUnread ? FontWeight.bold : FontWeight.w500,
                             color: primaryTextColor,
+                            fontSize: 16,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      AppText(
+                        RelativeTimeFormatter.format(context, chat.lastMessageAt),
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: hasUnread ? AppColors.primary : secondaryTextColor,
+                          fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
                       if (isTyping) ...[
-                        const SizedBox(width: AppDimens.spaceSmall),
                         const TypingIndicatorWidget(),
+                        const SizedBox(width: 4),
+                      ],
+                      Expanded(
+                        child: AppText(
+                          isTyping
+                              ? context.l10n.typing
+                              : MessagePreviewFormatter.format(
+                                  context: context,
+                                  text: previewText,
+                                  attachments: null,
+                                ),
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: hasUnread ? primaryTextColor : secondaryTextColor,
+                            fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
+                            fontStyle: isTyping ? FontStyle.italic : FontStyle.normal,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (hasUnread) ...[
+                        const SizedBox(width: 8),
+                        _UnreadBadge(count: chat.unreadCount),
                       ],
                     ],
                   ),
-                  const SizedBox(height: AppDimens.spaceXSmall),
-                  AppText(
-                    isTyping
-                        ? context.l10n.typing
-                        : MessagePreviewFormatter.format(
-                            context: context,
-                            text: previewText,
-                            attachments: null,
-                          ),
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: hasUnread ? primaryTextColor : secondaryTextColor,
-                      fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
-                      fontStyle: isTyping ? FontStyle.italic : FontStyle.normal,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppDimens.spaceSmall),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 88),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  AppText(
-                    RelativeTimeFormatter.format(context, chat.lastMessageAt),
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: hasUnread ? AppColors.primary : secondaryTextColor,
-                      fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (hasUnread) ...[
-                    const SizedBox(height: AppDimens.spaceXSmall),
-                    _UnreadBadge(count: chat.unreadCount),
-                  ],
                 ],
               ),
             ),
