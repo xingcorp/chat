@@ -36,11 +36,13 @@ class _ChatHomePageState extends State<ChatHomePage> {
                   },
                 ),
               ),
-              const VerticalDivider(width: 1),
               Expanded(
                 child: _selectedChatId == null
                     ? const _DesktopEmptyChatPane()
-                    : ChatDetailsPage(chatId: _selectedChatId!),
+                    : ChatDetailsPage(
+                        key: ValueKey(_selectedChatId),
+                        chatId: _selectedChatId!,
+                      ),
               ),
             ],
           ),

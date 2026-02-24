@@ -134,22 +134,65 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _scrollController = AutoScrollController(axis: Axis.vertical);
     _scrollController.addListener(_onScroll);
 
-    // Load initial messages
-    _messageBloc.add(
-      LoadMessages(
-        chatId: widget.chatId,
-        limit: _pageSize,
-        forceRefresh: false,
-      ),
-    );
-
-    _loadChatHeader();
-    _setupTypingSubscription();
-    _setupReadReceiptSubscription();
-    _setupTypingDebounce();
+    _initForChat(widget.chatId, forceRefresh: false);
 
     // Listen to text changes for send button state
     _messageController.addListener(_onTextChanged);
+  }
+
+  void _initForChat(String chatId, {required bool forceRefresh}) {
+    // Load initial messages
+    _messageBloc.add(
+      LoadMessages(
+        chatId: chatId,
+        limit: _pageSize,
+        forceRefresh: forceRefresh,
+      ),
+    );
+
+    _loadChatHeader(chatId);
+    _resetAndResubscribeRealtime(chatId);
+    _setupTypingDebounce();
+  }
+
+  void _resetAndResubscribeRealtime(String chatId) {
+    _typingSubscription?.cancel();
+    _readReceiptSubscription?.cancel();
+
+    // Clear per-chat ephemeral UI state
+    _readReceipts.clear();
+    _isOtherTyping = false;
+    _typingUserName = null;
+    _pendingScrollToMessageId = null;
+    _pendingScrollAttempts = 0;
+    _highlightedMessageId = null;
+    _showScrollToBottom = false;
+    _newMessageCount = 0;
+
+    _setupTypingSubscription(chatId);
+    _setupReadReceiptSubscription(chatId);
+  }
+
+  @override
+  void didUpdateWidget(covariant ChatDetailsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.chatId != widget.chatId) {
+      // When used in desktop split view, ChatDetailsPage is reused with a new chatId.
+      // We must reload header/messages and re-subscribe realtime streams.
+      safeSetState(() {
+        _chat = null;
+        _replyingToMessage = null;
+        _isEditMode = false;
+        _editingMessageId = null;
+        _isSelectionMode = false;
+        _selectedMessageIds.clear();
+        _isLoadingMore = false;
+        _lastLoadMoreAt = null;
+        _lastLoadMoreCursor = null;
+      });
+
+      _initForChat(widget.chatId, forceRefresh: true);
+    }
   }
 
   @override
@@ -169,8 +212,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
   }
 
-  Future<void> _loadChatHeader() async {
-    final result = await _getConversationDetail(widget.chatId);
+  Future<void> _loadChatHeader(String chatId) async {
+    final result = await _getConversationDetail(chatId);
     result.fold(
       (_) {},
       (chat) {
@@ -193,11 +236,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     );
   }
 
-  void _setupTypingSubscription() {
+  void _setupTypingSubscription(String chatId) {
     if (!getIt.isRegistered<RealtimeService>()) return;
     final realtimeService = getIt<RealtimeService>();
     _typingSubscription = realtimeService.typingStream
-        .where((e) => e.chatId == widget.chatId && e.userId != _currentUserId)
+        .where((e) => e.chatId == chatId && e.userId != _currentUserId)
         .listen((event) {
       safeSetState(() {
         _isOtherTyping = event.isTyping;
@@ -206,11 +249,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     });
   }
 
-  void _setupReadReceiptSubscription() {
+  void _setupReadReceiptSubscription(String chatId) {
     if (!getIt.isRegistered<RealtimeService>()) return;
     final realtimeService = getIt<RealtimeService>();
     _readReceiptSubscription = realtimeService.readReceiptStream
-        .where((e) => e.chatId == widget.chatId)
+        .where((e) => e.chatId == chatId)
         .listen((event) {
       safeSetState(() {
         final readers = _readReceipts[event.messageId] ?? [];
