@@ -1,36 +1,34 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import 'package:scroll_to_index/scroll_to_index.dart';
+
 import 'package:flutter_chat_app/core/base/base_widget.dart';
-import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
-import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
+import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
+import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/screens/chat/chat_header.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/attachment_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_message_timeline.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/mention_text_field.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/read_receipt_avatars.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reply_preview.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/typing_indicator.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/attachment_picker_widget.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/mention_text_field.dart';
-import 'package:get_it/get_it.dart';
-import 'package:scroll_to_index/scroll_to_index.dart';
-import 'dart:io';
-
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_alert_dialog.dart';
@@ -39,6 +37,8 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/inputs/app_text_field.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 // Service locator instance
 final getIt = GetIt.instance;
@@ -128,71 +128,87 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   @override
   void initState() {
     super.initState();
+    // MessageBloc is a factory in DI, so this instance is unique to this page instance.
+    // When chatId changes in desktop view, ValueKey forces a new State instance, 
+    // ensuring clean state and correct bloc scope.
     _messageBloc = getIt<MessageBloc>();
     _getConversationDetail = getIt<GetConversationDetailUseCase>();
 
     _scrollController = AutoScrollController(axis: Axis.vertical);
     _scrollController.addListener(_onScroll);
 
-    _initForChat(widget.chatId, forceRefresh: false);
-
-    // Listen to text changes for send button state
-    _messageController.addListener(_onTextChanged);
-  }
-
-  void _initForChat(String chatId, {required bool forceRefresh}) {
-    // Load initial messages
+    // Initial load
     _messageBloc.add(
       LoadMessages(
-        chatId: chatId,
+        chatId: widget.chatId,
         limit: _pageSize,
-        forceRefresh: forceRefresh,
+        forceRefresh: false,
       ),
     );
 
-    _loadChatHeader(chatId);
-    _resetAndResubscribeRealtime(chatId);
-    _setupTypingDebounce();
+    unawaited(_loadChatHeader());
+    _setupRealtimeSubscriptions();
+
+    // Single listener for efficiency
+    _messageController.addListener(_handleControllerChanges);
   }
 
-  void _resetAndResubscribeRealtime(String chatId) {
-    _typingSubscription?.cancel();
-    _readReceiptSubscription?.cancel();
-
-    // Clear per-chat ephemeral UI state
-    _readReceipts.clear();
-    _isOtherTyping = false;
-    _typingUserName = null;
-    _pendingScrollToMessageId = null;
-    _pendingScrollAttempts = 0;
-    _highlightedMessageId = null;
-    _showScrollToBottom = false;
-    _newMessageCount = 0;
-
-    _setupTypingSubscription(chatId);
-    _setupReadReceiptSubscription(chatId);
+  void _handleControllerChanges() {
+    if (!mounted) return;
+    safeSetState(() {});
+    _handleTypingIndicator();
   }
 
-  @override
-  void didUpdateWidget(covariant ChatDetailsPage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.chatId != widget.chatId) {
-      // When used in desktop split view, ChatDetailsPage is reused with a new chatId.
-      // We must reload header/messages and re-subscribe realtime streams.
-      safeSetState(() {
-        _chat = null;
-        _replyingToMessage = null;
-        _isEditMode = false;
-        _editingMessageId = null;
-        _isSelectionMode = false;
-        _selectedMessageIds.clear();
-        _isLoadingMore = false;
-        _lastLoadMoreAt = null;
-        _lastLoadMoreCursor = null;
-      });
+  void _handleTypingIndicator() {
+    if (!getIt.isRegistered<RealtimeService>()) return;
+    final realtimeService = getIt<RealtimeService>();
 
-      _initForChat(widget.chatId, forceRefresh: true);
+    _typingDebounceTimer?.cancel();
+
+    if (_messageController.text.isNotEmpty) {
+      unawaited(realtimeService.sendTypingIndicator(
+        chatId: widget.chatId,
+        isTyping: true,
+      ));
     }
+
+    _typingDebounceTimer = Timer(const Duration(seconds: 2), () {
+      unawaited(realtimeService.sendTypingIndicator(
+        chatId: widget.chatId,
+        isTyping: false,
+      ));
+    });
+  }
+
+  void _setupRealtimeSubscriptions() {
+    if (!getIt.isRegistered<RealtimeService>()) return;
+    final realtimeService = getIt<RealtimeService>();
+
+    // Typing
+    _typingSubscription = realtimeService.typingStream
+        .where((e) => e.chatId == widget.chatId && e.userId != _currentUserId)
+        .listen((event) {
+      safeSetState(() {
+        _isOtherTyping = event.isTyping;
+        _typingUserName = event.isTyping ? event.userName : null;
+      });
+    });
+
+    // Read receipts
+    _readReceiptSubscription = realtimeService.readReceiptStream
+        .where((e) => e.chatId == widget.chatId)
+        .listen((event) {
+      safeSetState(() {
+        final readers = _readReceipts[event.messageId] ?? [];
+        if (!readers.any((r) => r.userId == event.readerId)) {
+          readers.add(ReaderInfo(
+            userId: event.readerId,
+            name: event.readerName,
+          ));
+          _readReceipts[event.messageId] = readers;
+        }
+      });
+    });
   }
 
   @override
@@ -200,7 +216,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     super.didChangeDependencies();
     if (!_hasInitializedContext) {
       _hasInitializedContext = true;
-      // Get currentUserId from AuthBloc (available in both standalone and package modes via ChatAppShell)
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         _currentUserId = authState.user.id;
@@ -212,8 +227,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
   }
 
-  Future<void> _loadChatHeader(String chatId) async {
-    final result = await _getConversationDetail(chatId);
+  Future<void> _loadChatHeader() async {
+    final result = await _getConversationDetail(widget.chatId);
+    if (!mounted) return;
+    
     result.fold(
       (_) {},
       (chat) {
@@ -236,80 +253,15 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     );
   }
 
-  void _setupTypingSubscription(String chatId) {
-    if (!getIt.isRegistered<RealtimeService>()) return;
-    final realtimeService = getIt<RealtimeService>();
-    _typingSubscription = realtimeService.typingStream
-        .where((e) => e.chatId == chatId && e.userId != _currentUserId)
-        .listen((event) {
-      safeSetState(() {
-        _isOtherTyping = event.isTyping;
-        _typingUserName = event.isTyping ? event.userName : null;
-      });
-    });
-  }
-
-  void _setupReadReceiptSubscription(String chatId) {
-    if (!getIt.isRegistered<RealtimeService>()) return;
-    final realtimeService = getIt<RealtimeService>();
-    _readReceiptSubscription = realtimeService.readReceiptStream
-        .where((e) => e.chatId == chatId)
-        .listen((event) {
-      safeSetState(() {
-        final readers = _readReceipts[event.messageId] ?? [];
-        if (!readers.any((r) => r.userId == event.readerId)) {
-          readers.add(ReaderInfo(
-            userId: event.readerId,
-            name: event.readerName,
-          ));
-          _readReceipts[event.messageId] = readers;
-        }
-      });
-    });
-  }
-
-  /// Rebuild widget when text changes (for send button state)
-  void _onTextChanged() {
-    safeSetState(() {});
-  }
-
-  void _setupTypingDebounce() {
-    _messageController.addListener(() {
-      if (!getIt.isRegistered<RealtimeService>()) return;
-      final realtimeService = getIt<RealtimeService>();
-
-      _typingDebounceTimer?.cancel();
-
-      if (_messageController.text.isNotEmpty) {
-        realtimeService.sendTypingIndicator(
-          chatId: widget.chatId,
-          isTyping: true,
-        );
-      }
-
-      _typingDebounceTimer = Timer(const Duration(seconds: 2), () {
-        realtimeService.sendTypingIndicator(
-          chatId: widget.chatId,
-          isTyping: false,
-        );
-      });
-    });
-  }
-
   void _onScroll() {
     if (_isProgrammaticScroll) return;
-    // Pagination: load more when near top (reverse list)
     final position = _scrollController.position;
     if (position.hasPixels) {
-      // For reverse lists, "top" means nearing maxScrollExtent.
-      // Using extentAfter is more robust than maxScrollExtent ratios and also
-      // works when maxScrollExtent == 0 (short lists).
       if (position.extentAfter < 200) {
         _loadMore();
       }
     }
 
-    // Scroll-to-bottom FAB visibility
     final showFab = _scrollController.offset > 200;
     if (showFab != _showScrollToBottom) {
       safeSetState(() {
@@ -347,7 +299,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   @override
   void dispose() {
-    _messageController.removeListener(_onTextChanged);
+    _messageController.removeListener(_handleControllerChanges);
     _messageController.dispose();
     _messageFocusNode.dispose();
     _scrollController.dispose();
@@ -359,7 +311,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   // ══════════════════════════════════════════
-  // Send / Edit / Reply
+  // Actions
   // ══════════════════════════════════════════
 
   void _sendMessage() {
@@ -423,10 +375,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       _editingMessageId = null;
     });
   }
-
-  // ══════════════════════════════════════════
-  // Selection mode
-  // ══════════════════════════════════════════
 
   void _enterSelectionMode(String messageId) {
     safeSetState(() {
@@ -498,10 +446,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _exitSelectionMode();
   }
 
-  // ══════════════════════════════════════════
-  // Scroll-to-message
-  // ══════════════════════════════════════════
-
   void _scrollToMessage(String? targetMessageId, List<MessageUIState> uiMessages) {
     if (targetMessageId == null) return;
 
@@ -525,7 +469,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       _isProgrammaticScroll = false;
     });
 
-    // Highlight for 2 seconds
     safeSetState(() => _highlightedMessageId = targetMessageId);
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) safeSetState(() => _highlightedMessageId = null);
@@ -545,10 +488,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   // ══════════════════════════════════════════
-  // Attachment handlers
+  // Media Handlers
   // ══════════════════════════════════════════
 
-  /// Show attachment picker bottom sheet
   void _showAttachmentPicker() {
     AttachmentPickerBottomSheet.show(
       context,
@@ -559,19 +501,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     );
   }
 
-  Future<void> _handleImageFromCamera(File imageFile) async {
-    await _processAndSendImage(imageFile);
-  }
-
-  Future<void> _handleImageFromGallery(File imageFile) async {
-    await _processAndSendImage(imageFile);
-  }
+  Future<void> _handleImageFromCamera(File imageFile) async => _processAndSendImage(imageFile);
+  Future<void> _handleImageFromGallery(File imageFile) async => _processAndSendImage(imageFile);
 
   Future<void> _handleFileSelected(File file) async {
-    // Send file as attachment
     _messageBloc.add(
       SendMessageWithAttachments(
-        content: '', // No text, only file
+        content: '',
         senderId: _currentUserId,
         localFilePaths: [file.path],
       ),
@@ -586,12 +522,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
   }
 
-  void _handleLocationShare() async {
+  Future<void> _handleLocationShare() async {
     try {
-      // Get location service
       final locationService = GetIt.I<ILocationService>();
-
-      // Check permission
       final hasPermission = await locationService.hasLocationPermission();
       if (!hasPermission) {
         final granted = await locationService.requestLocationPermission();
@@ -607,7 +540,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         }
       }
 
-      // Show loading
       if (mounted) {
         AppSnackBar.show(
           context: context,
@@ -616,21 +548,12 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         );
       }
 
-      // Get current location
       final result = await locationService.getCurrentLocation();
+      if (!mounted) return;
 
       result.fold(
-        (failure) {
-          if (mounted) {
-            AppSnackBar.show(
-              context: context,
-              message: failure.message,
-              type: FeedbackType.error,
-            );
-          }
-        },
+        (failure) => AppSnackBar.show(context: context, message: failure.message, type: FeedbackType.error),
         (locationData) {
-          // Send location message
           _messageBloc.add(
             SendLocationMessage(
               senderId: _currentUserId,
@@ -639,77 +562,46 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               locationName: locationData.name,
             ),
           );
-
-          if (mounted) {
-            AppSnackBar.show(
-              context: context,
-              message: 'Location sent successfully',
-              type: FeedbackType.success,
-            );
-          }
+          AppSnackBar.show(context: context, message: 'Location sent successfully', type: FeedbackType.success);
         },
       );
     } catch (e) {
       if (mounted) {
-        AppSnackBar.show(
-          context: context,
-          message: 'Failed to share location: $e',
-          type: FeedbackType.error,
-        );
+        AppSnackBar.show(context: context, message: 'Failed to share location: $e', type: FeedbackType.error);
       }
     }
   }
 
-  /// Process and send image with compression
   Future<void> _processAndSendImage(File imageFile) async {
     try {
       if (mounted) {
-        AppSnackBar.show(
-          context: context,
-          message: context.l10n.compressing,
-          type: FeedbackType.info,
-        );
+        AppSnackBar.show(context: context, message: context.l10n.compressing, type: FeedbackType.info);
       }
 
       final compressedImage = await ImageCompressionHelper.compressImage(imageFile);
+      if (!mounted) return;
 
       if (compressedImage == null) {
-        if (mounted) {
-          AppSnackBar.show(
-            context: context,
-            message: context.l10n.imageCompressionFailed,
-            type: FeedbackType.error,
-          );
-        }
+        AppSnackBar.show(context: context, message: context.l10n.imageCompressionFailed, type: FeedbackType.error);
         return;
       }
 
-      // Send compressed image as attachment
       _messageBloc.add(
         SendMessageWithAttachments(
-          content: '', // No text, only image
+          content: '',
           senderId: _currentUserId,
           localFilePaths: [compressedImage.path],
         ),
       );
 
+      final fileSize = await compressedImage.length();
       if (mounted) {
-        final fileSize = await compressedImage.length();
         final formattedSize = ImageCompressionHelper.formatFileSize(fileSize);
-
-        AppSnackBar.show(
-          context: context,
-          message: 'Uploading image: $formattedSize',
-          type: FeedbackType.success,
-        );
+        AppSnackBar.show(context: context, message: 'Uploading image: $formattedSize', type: FeedbackType.success);
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.show(
-          context: context,
-          message: context.l10n.errorOccurred,
-          type: FeedbackType.error,
-        );
+        AppSnackBar.show(context: context, message: context.l10n.errorOccurred, type: FeedbackType.error);
       }
     }
   }
@@ -720,7 +612,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   // ══════════════════════════════════════════
-  // Build methods
+  // UI Building
   // ══════════════════════════════════════════
 
   @override
@@ -737,127 +629,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
             : _buildNormalAppBar(chatTitle),
         body: Column(
           children: [
-            // Chat messages
             Expanded(
               child: Stack(
                 children: [
                   BlocConsumer<MessageBloc, MessageState>(
-                    listener: (context, state) {
-                      if (state is MessagesLoaded) {
-                        safeSetState(() => _isLoadingMore = false);
-
-                        final pendingId = _pendingScrollToMessageId;
-                        if (pendingId != null && pendingId.isNotEmpty) {
-                          final index = state.uiMessages.indexWhere((m) => m.id == pendingId);
-                          if (index != -1) {
-                            _pendingScrollToMessageId = null;
-                            _pendingScrollAttempts = 0;
-                            _scrollController.scrollToIndex(
-                              index,
-                              preferPosition: AutoScrollPosition.middle,
-                              duration: const Duration(milliseconds: 400),
-                            );
-                            _isProgrammaticScroll = true;
-                            Future.delayed(const Duration(milliseconds: 550), () {
-                              if (!mounted) return;
-                              _isProgrammaticScroll = false;
-                            });
-                          } else {
-                            if (!state.hasReachedMax && _pendingScrollAttempts < _maxPendingScrollAttempts) {
-                              _pendingScrollAttempts++;
-                              _loadMore();
-                            } else {
-                              _pendingScrollToMessageId = null;
-                              _pendingScrollAttempts = 0;
-                              AppSnackBar.show(
-                                context: context,
-                                message: context.l10n.messageNotFound,
-                                type: FeedbackType.warning,
-                              );
-                            }
-                          }
-                        }
-
-                        // Track new messages when scrolled up
-                        if (_showScrollToBottom) {
-                          safeSetState(() => _newMessageCount++);
-                        }
-                      } else if (state is MessagesError) {
-                        safeSetState(() => _isLoadingMore = false);
-                        AppSnackBar.show(
-                          context: context,
-                          message: state.error,
-                          type: FeedbackType.error,
-                          action: SnackBarAction(
-                            label: context.l10n.retryOperation,
-                            onPressed: () {
-                              _messageBloc.add(
-                                LoadMessages(
-                                  chatId: widget.chatId,
-                                  limit: _pageSize,
-                                  forceRefresh: true,
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      }
-                    },
-                    builder: (context, state) {
-                      if (state is MessageInitial || state is MessagesLoading) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              AppProgressIndicator.circular(
-                                label: context.l10n.loading,
-                              ),
-                              const SizedBox(height: AppDimens.spaceMedium),
-                              AppText(context.l10n.loadingMessages),
-                            ],
-                          ),
-                        );
-                      } else if (state is MessagesLoaded) {
-                        final uiMessages = state.uiMessages;
-                        final hasMore = !state.hasReachedMax;
-
-                        if (uiMessages.isEmpty) {
-                          return _buildEmptyState(context);
-                        }
-
-                        return ChatMessageTimeline(
-                          scrollController: _scrollController,
-                          uiMessages: uiMessages,
-                          hasMore: hasMore,
-                          isLoadingMore: _isLoadingMore,
-                          onRefresh: _onRefresh,
-                          itemBuilder: (context, uiState, allUiMessages) =>
-                              _buildListItem(context, uiState, allUiMessages),
-                        );
-                      } else if (state is MessagesError) {
-                        return _buildErrorState(
-                          context,
-                          state.error,
-                          () {
-                            _messageBloc.add(
-                              LoadMessages(
-                                chatId: widget.chatId,
-                                limit: _pageSize,
-                                forceRefresh: true,
-                              ),
-                            );
-                          },
-                        );
-                      }
-
-                      // Fallback for unknown state
-                      return Center(
-                        child: AppText(context.l10n.errorOccurred),
-                      );
-                    },
+                    listener: _handleBlocStateChanges,
+                    builder: _buildMessagesList,
                   ),
-
-                  // Scroll-to-bottom FAB
                   if (_showScrollToBottom)
                     Positioned(
                       bottom: 16,
@@ -876,14 +654,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                 ],
               ),
             ),
-
-            // Typing indicator
             TypingIndicatorWithFade(
               isTyping: _isOtherTyping,
               displayName: _typingUserName,
             ),
-
-            // Reply input bar
             if (_replyingToMessage != null)
               ReplyInputBar(
                 replyMessage: ReplyMessagePreview(
@@ -894,119 +668,186 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                 ),
                 onCancel: _cancelReply,
               ),
-
-            // Edit mode bar
-            if (_isEditMode)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  border: Border(
-                    top: BorderSide(color: Theme.of(context).dividerColor),
-                    left: BorderSide(
-                      color: Theme.of(context).colorScheme.tertiary,
-                      width: 3,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.edit, size: 16, color: Theme.of(context).colorScheme.tertiary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        context.l10n.editingMessage,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.tertiary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 20),
-                      onPressed: () {
-                        _cancelEditMode();
-                        _messageController.clear();
-                      },
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-              ),
-
-            // Message input
-            AppCard.outlined(
-              margin: EdgeInsets.zero,
-              padding: const EdgeInsets.all(AppDimens.paddingSmall),
-              child: Row(
-                children: [
-                  // Attachment picker button
-                  IconButton(
-                    icon: const Icon(Icons.add_circle_outline),
-                    iconSize: 28.0,
-                    onPressed: _showAttachmentPicker,
-                    tooltip: 'Attachments', // TODO: Add i18n
-                  ),
-                  // Message input field with mention support
-                  Expanded(
-                    child: _chat != null && _chat!.members.isNotEmpty
-                        ? MentionTextField(
-                            controller: _messageController,
-                            focusNode: _messageFocusNode,
-                            members: _chat!.members,
-                            currentUserId: _currentUserId,
-                            hint: context.l10n.typeMessage,
-                            minLines: 1,
-                            maxLines: 5,
-                            onSubmitted: (_) => _sendMessage(),
-                            onChanged: () {
-                              // Could add typing indicator here
-                            },
-                          )
-                        : AppTextField(
-                            controller: _messageController,
-                            minLines: 1,
-                            maxLines: 5,
-                            hint: context.l10n.typeMessage,
-                            onSubmitted: (_) => _sendMessage(),
-                          ),
-                  ),
-                  // Emoji picker button
-                  IconButton(
-                    icon: const Icon(Icons.emoji_emotions_outlined),
-                    iconSize: 28.0,
-                    onPressed: () {
-                      EmojiPickerBottomSheet.show(
-                        context,
-                        onEmojiSelected: (emoji) {
-                          EmojiTextEditingHelper.insertEmoji(
-                            _messageController,
-                            emoji,
-                          );
-                        },
-                        textController: _messageController,
-                      );
-                    },
-                    tooltip: 'Insert emoji', // TODO: Add i18n
-                  ),
-                  // Send button - smaller, icon-only for better responsiveness
-                  IconButton(
-                    icon: Icon(
-                      _isEditMode ? Icons.check : Icons.send,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    iconSize: 28.0,
-                    onPressed: _messageController.text.trim().isNotEmpty
-                        ? _sendMessage
-                        : null,
-                    tooltip: _isEditMode ? context.l10n.save : context.l10n.send,
-                  ),
-                ],
-              ),
-            ),
+            if (_isEditMode) _buildEditModeBar(),
+            _buildMessageInputArea(),
           ],
         ),
+      ),
+    );
+  }
+
+  void _handleBlocStateChanges(BuildContext context, MessageState state) {
+    if (state is MessagesLoaded) {
+      safeSetState(() => _isLoadingMore = false);
+      final pendingId = _pendingScrollToMessageId;
+      if (pendingId != null && pendingId.isNotEmpty) {
+        final index = state.uiMessages.indexWhere((m) => m.id == pendingId);
+        if (index != -1) {
+          _pendingScrollToMessageId = null;
+          _pendingScrollAttempts = 0;
+          _scrollController.scrollToIndex(
+            index,
+            preferPosition: AutoScrollPosition.middle,
+            duration: const Duration(milliseconds: 400),
+          );
+          _isProgrammaticScroll = true;
+          Future.delayed(const Duration(milliseconds: 550), () {
+            if (!mounted) return;
+            _isProgrammaticScroll = false;
+          });
+        } else if (!state.hasReachedMax && _pendingScrollAttempts < _maxPendingScrollAttempts) {
+          _pendingScrollAttempts++;
+          _loadMore();
+        } else {
+          _pendingScrollToMessageId = null;
+          _pendingScrollAttempts = 0;
+          AppSnackBar.show(
+            context: context,
+            message: context.l10n.messageNotFound,
+            type: FeedbackType.warning,
+          );
+        }
+      }
+      if (_showScrollToBottom) safeSetState(() => _newMessageCount++);
+    } else if (state is MessagesError) {
+      safeSetState(() => _isLoadingMore = false);
+      AppSnackBar.show(
+        context: context,
+        message: state.error,
+        type: FeedbackType.error,
+        action: SnackBarAction(
+          label: context.l10n.retryOperation,
+          onPressed: () => _messageBloc.add(LoadMessages(
+            chatId: widget.chatId,
+            limit: _pageSize,
+            forceRefresh: true,
+          )),
+        ),
+      );
+    }
+  }
+
+  Widget _buildMessagesList(BuildContext context, MessageState state) {
+    if (state is MessageInitial || state is MessagesLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AppProgressIndicator.circular(label: context.l10n.loading),
+            const SizedBox(height: AppDimens.spaceMedium),
+            AppText(context.l10n.loadingMessages),
+          ],
+        ),
+      );
+    } else if (state is MessagesLoaded) {
+      if (state.uiMessages.isEmpty) return _buildEmptyState(context);
+      return ChatMessageTimeline(
+        scrollController: _scrollController,
+        uiMessages: state.uiMessages,
+        hasMore: !state.hasReachedMax,
+        isLoadingMore: _isLoadingMore,
+        onRefresh: _onRefresh,
+        itemBuilder: (context, uiState, allUiMessages) => _buildListItem(context, uiState, allUiMessages),
+      );
+    } else if (state is MessagesError) {
+      return _buildErrorState(context, state.error, () => _messageBloc.add(LoadMessages(
+        chatId: widget.chatId,
+        limit: _pageSize,
+        forceRefresh: true,
+      )));
+    }
+    return Center(child: AppText(context.l10n.errorOccurred));
+  }
+
+  Widget _buildEditModeBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        border: Border(
+          top: BorderSide(color: Theme.of(context).dividerColor),
+          left: BorderSide(color: Theme.of(context).colorScheme.tertiary, width: 3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.edit, size: 16, color: Theme.of(context).colorScheme.tertiary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              context.l10n.editingMessage,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.tertiary,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 20),
+            onPressed: () {
+              _cancelEditMode();
+              _messageController.clear();
+            },
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageInputArea() {
+    return AppCard.outlined(
+      margin: EdgeInsets.zero,
+      padding: const EdgeInsets.all(AppDimens.paddingSmall),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            iconSize: 28.0,
+            onPressed: _showAttachmentPicker,
+            tooltip: 'Attachments',
+          ),
+          Expanded(
+            child: _chat != null && _chat!.members.isNotEmpty
+                ? MentionTextField(
+                    controller: _messageController,
+                    focusNode: _messageFocusNode,
+                    members: _chat!.members,
+                    currentUserId: _currentUserId,
+                    hint: context.l10n.typeMessage,
+                    minLines: 1,
+                    maxLines: 5,
+                    onSubmitted: (_) => _sendMessage(),
+                  )
+                : AppTextField(
+                    controller: _messageController,
+                    minLines: 1,
+                    maxLines: 5,
+                    hint: context.l10n.typeMessage,
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.emoji_emotions_outlined),
+            iconSize: 28.0,
+            onPressed: () => EmojiPickerBottomSheet.show(
+              context,
+              onEmojiSelected: (emoji) => EmojiTextEditingHelper.insertEmoji(_messageController, emoji),
+              textController: _messageController,
+            ),
+            tooltip: 'Insert emoji',
+          ),
+          IconButton(
+            icon: Icon(
+              _isEditMode ? Icons.check : Icons.send,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            iconSize: 28.0,
+            onPressed: _messageController.text.trim().isNotEmpty ? _sendMessage : null,
+            tooltip: _isEditMode ? context.l10n.save : context.l10n.send,
+          ),
+        ],
       ),
     );
   }
@@ -1016,10 +857,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         ? context.l10n.isTyping(_typingUserName!)
         : context.l10n.online;
 
-    final chat = _chat;
-    if (chat != null) {
+    if (_chat != null) {
       return ChatHeader(
-        chat: chat,
+        chat: _chat!,
         onBackPressed: () => Navigator.of(context).pop(),
         onInfoPressed: () {},
       );
@@ -1029,94 +869,29 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText(
-            chatTitle,
-            style: AppTextStyles.titleMedium.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          AppText(
-            subtitleText,
-            style: AppTextStyles.labelSmall.copyWith(
-              color: _isOtherTyping ? AppColors.primary : AppColors.textSecondary,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          AppText(chatTitle, style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+          AppText(subtitleText, style: AppTextStyles.labelSmall.copyWith(color: _isOtherTyping ? AppColors.primary : AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
         ],
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.videocam),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: const Icon(Icons.call),
-          onPressed: () {},
-        ),
-        PopupMenuButton<String>(
-          onSelected: (value) {},
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'viewProfile',
-              child: Text(context.l10n.viewInfo),
-            ),
-            PopupMenuItem(
-              value: 'search',
-              child: Text(context.l10n.search),
-            ),
-            PopupMenuItem(
-              value: 'mute',
-              child: Text(context.l10n.muteNotifications),
-            ),
-          ],
-        ),
-      ],
     );
   }
 
   PreferredSizeWidget _buildSelectionAppBar() {
     return AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.close),
-        onPressed: _exitSelectionMode,
-      ),
-      title: AppText(
-        context.l10n.selectedCount(_selectedMessageIds.length),
-        style: AppTextStyles.titleMedium,
-      ),
+      leading: IconButton(icon: const Icon(Icons.close), onPressed: _exitSelectionMode),
+      title: AppText(context.l10n.selectedCount(_selectedMessageIds.length), style: AppTextStyles.titleMedium),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.copy),
-          tooltip: context.l10n.copyMessage,
-          onPressed: () {
-            final state = _messageBloc.state;
-            if (state is MessagesLoaded) {
-              _copySelectedMessages(state.uiMessages);
-            }
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.forward),
-          tooltip: context.l10n.forwardMessage,
-          onPressed: _forwardSelectedMessages,
-        ),
-        IconButton(
-          icon: const Icon(Icons.delete),
-          tooltip: context.l10n.deleteMessage,
-          onPressed: _deleteSelectedMessages,
-        ),
+        IconButton(icon: const Icon(Icons.copy), tooltip: context.l10n.copyMessage, onPressed: () {
+          final state = _messageBloc.state;
+          if (state is MessagesLoaded) _copySelectedMessages(state.uiMessages);
+        }),
+        IconButton(icon: const Icon(Icons.forward), tooltip: context.l10n.forwardMessage, onPressed: _forwardSelectedMessages),
+        IconButton(icon: const Icon(Icons.delete), tooltip: context.l10n.deleteMessage, onPressed: _deleteSelectedMessages),
       ],
     );
   }
 
-  Widget _buildListItem(
-    BuildContext context,
-    MessageUIState uiState,
-    List<MessageUIState> allMessages,
-  ) {
+  Widget _buildListItem(BuildContext context, MessageUIState uiState, List<MessageUIState> allMessages) {
     switch (uiState.itemType) {
       case MessageListItemType.dateSeparator:
         return _buildDateSeparator(uiState.dateSeparatorText ?? '');
@@ -1126,46 +901,23 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         return _buildSystemEvent(uiState);
       case MessageListItemType.message:
         final isHighlighted = _highlightedMessageId == uiState.id;
-
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          color: isHighlighted
-              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
-              : Colors.transparent,
+          color: isHighlighted ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (uiState.showDateSeparator)
-                _buildDateSeparator(uiState.dateSeparatorText ?? ''),
+              if (uiState.showDateSeparator) _buildDateSeparator(uiState.dateSeparatorText ?? ''),
               MessageItem(
                 uiState: uiState,
                 isSelectionMode: _isSelectionMode,
                 isSelected: _selectedMessageIds.contains(uiState.id),
                 onSelectionChanged: (_) => _toggleSelection(uiState.id),
-                onSwipeReply: () {
-                  if (uiState.message != null) {
-                    _startReply(uiState.message!);
-                  }
-                },
-                onReplyPreviewTap: () {
-                  _scrollToMessage(uiState.replyMessage?.id, allMessages);
-                },
+                onSwipeReply: () { if (uiState.message != null) _startReply(uiState.message!); },
+                onReplyPreviewTap: () => _scrollToMessage(uiState.replyMessage?.id, allMessages),
                 readReceipts: _readReceipts[uiState.id],
-                onLongPress: () {
-                  if (_isSelectionMode) return;
-                  if (uiState.message != null) {
-                    _showMessageOptions(
-                      context,
-                      uiState.message!,
-                      uiState.isFromCurrentUser,
-                    );
-                  }
-                },
-                onTap: () {
-                  if (_isSelectionMode) {
-                    _toggleSelection(uiState.id);
-                  }
-                },
+                onLongPress: () { if (!_isSelectionMode && uiState.message != null) _showMessageOptions(context, uiState.message!, uiState.isFromCurrentUser); },
+                onTap: () { if (_isSelectionMode) _toggleSelection(uiState.id); },
               ),
             ],
           ),
@@ -1178,20 +930,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       padding: const EdgeInsets.symmetric(vertical: AppDimens.spaceSmall),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimens.paddingMedium,
-            vertical: AppDimens.paddingXSmall,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.textSecondary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
-          ),
-          child: AppText(
-            text,
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium, vertical: AppDimens.paddingXSmall),
+          decoration: BoxDecoration(color: AppColors.textSecondary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(AppDimens.radiusSmall)),
+          child: AppText(text, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
         ),
       ),
     );
@@ -1202,45 +943,18 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       padding: const EdgeInsets.symmetric(vertical: AppDimens.spaceSmall),
       child: Row(
         children: [
-          Expanded(
-            child: Divider(color: AppColors.error.withOpacity(0.5)),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.paddingSmall,
-            ),
-            child: AppText(
-              context.l10n.unreadSeparatorLabel,
-              style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.error,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Divider(color: AppColors.error.withOpacity(0.5)),
-          ),
+          Expanded(child: Divider(color: AppColors.error.withValues(alpha: 0.5))),
+          Padding(padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingSmall), child: AppText(context.l10n.unreadSeparatorLabel, style: AppTextStyles.labelSmall.copyWith(color: AppColors.error))),
+          Expanded(child: Divider(color: AppColors.error.withValues(alpha: 0.5))),
         ],
       ),
     );
   }
 
   Widget _buildSystemEvent(MessageUIState uiState) {
-    final text = uiState.systemEvent?.formattedText ?? uiState.content;
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: AppDimens.spaceSmall,
-        horizontal: AppDimens.paddingMedium,
-      ),
-      child: Center(
-        child: AppText(
-          text,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-            fontStyle: FontStyle.italic,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: AppDimens.spaceSmall, horizontal: AppDimens.paddingMedium),
+      child: Center(child: AppText(uiState.systemEvent?.formattedText ?? uiState.content, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontStyle: FontStyle.italic), textAlign: TextAlign.center)),
     );
   }
 
@@ -1249,19 +963,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: AppDimens.iconSizeXXLarge,
-            color: AppColors.textSecondary,
-          ),
+          Icon(Icons.chat_bubble_outline, size: AppDimens.iconSizeXXLarge, color: AppColors.textSecondary),
           const SizedBox(height: AppDimens.spaceMedium),
-          AppText(
-            context.l10n.noMessagesInChat,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
+          AppText(context.l10n.noMessagesInChat, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
         ],
       ),
     );
@@ -1274,26 +978,12 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: AppDimens.iconSizeXXLarge,
-              color: AppColors.error,
-            ),
+            Icon(Icons.error_outline, size: AppDimens.iconSizeXXLarge, color: AppColors.error),
             const SizedBox(height: AppDimens.spaceMedium),
-            AppText(
-              message,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            AppText(message, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
             if (retryAction != null) ...[
               const SizedBox(height: AppDimens.spaceLarge),
-              AppButton.primary(
-                text: context.l10n.retryOperation,
-                icon: Icons.refresh,
-                onPressed: retryAction,
-              ),
+              AppButton.primary(text: context.l10n.retryOperation, icon: Icons.refresh, onPressed: retryAction),
             ],
           ],
         ),
@@ -1309,150 +999,89 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.only(
-                left: AppDimens.paddingMedium,
-                right: AppDimens.paddingMedium,
-                top: AppDimens.paddingSmall,
-                bottom: AppDimens.paddingSmall,
-              ),
+              padding: const EdgeInsets.all(AppDimens.paddingSmall),
               child: Row(
                 children: [
                   Expanded(
                     child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
+                      spacing: 10, runSpacing: 10,
                       children: [
                         for (final emoji in _quickReactions)
-                          InkWell(
-                            borderRadius: BorderRadius.circular(999),
-                            onTap: () {
-                              Navigator.pop(ctx);
-                              _messageBloc.add(
-                                ToggleReaction(
-                                  messageId: message.id,
-                                  emojiCode: emoji,
-                                ),
-                              );
-                            },
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: Theme.of(ctx).colorScheme.surface,
-                                border: Border.all(
-                                  color: Theme.of(ctx).dividerColor,
-                                  width: 1,
-                                ),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                emoji,
-                                style: const TextStyle(fontSize: 20),
-                              ),
-                            ),
-                          ),
+                          _buildReactionItem(ctx, emoji, () {
+                            Navigator.pop(ctx);
+                            _messageBloc.add(ToggleReaction(messageId: message.id, emojiCode: emoji));
+                          }),
                       ],
                     ),
                   ),
                   const SizedBox(width: 10),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(999),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      EmojiPickerBottomSheet.show(
-                        this.context,
-                        onEmojiSelected: (emoji) {
-                          _messageBloc.add(
-                            ToggleReaction(
-                              messageId: message.id,
-                              emojiCode: emoji,
-                            ),
-                          );
-                        },
-                      );
-                    },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Theme.of(ctx).colorScheme.surface,
-                        border: Border.all(
-                          color: Theme.of(ctx).dividerColor,
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Icon(
-                        Icons.add,
-                        size: 20,
-                        color: Theme.of(ctx).iconTheme.color,
-                      ),
-                    ),
-                  ),
+                  _buildAddReactionItem(ctx, () {
+                    Navigator.pop(ctx);
+                    EmojiPickerBottomSheet.show(this.context, onEmojiSelected: (emoji) => _messageBloc.add(ToggleReaction(messageId: message.id, emojiCode: emoji)));
+                  }),
                 ],
               ),
             ),
             const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.copy),
-              title: AppText(ctx.l10n.copyMessage),
-              onTap: () {
-                Navigator.pop(ctx);
-                Clipboard.setData(ClipboardData(text: message.content));
-                AppSnackBar.show(
-                  context: this.context,
-                  message: this.context.l10n.messageCopied,
-                  type: FeedbackType.success,
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.reply),
-              title: AppText(ctx.l10n.replyMessage),
-              onTap: () {
-                Navigator.pop(ctx);
-                _startReply(message);
-              },
-            ),
+            _buildActionTile(Icons.copy, ctx.l10n.copyMessage, () {
+              Navigator.pop(ctx);
+              Clipboard.setData(ClipboardData(text: message.content));
+              AppSnackBar.show(context: this.context, message: this.context.l10n.messageCopied, type: FeedbackType.success);
+            }),
+            _buildActionTile(Icons.reply, ctx.l10n.replyMessage, () { Navigator.pop(ctx); _startReply(message); }),
             if (isCurrentUser) ...[
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: AppText(ctx.l10n.editMessage),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _startEditMode(message);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete),
-                title: AppText(ctx.l10n.deleteMessage),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _confirmDeleteMessage(message);
-                },
-              ),
+              _buildActionTile(Icons.edit, ctx.l10n.editMessage, () { Navigator.pop(ctx); _startEditMode(message); }),
+              _buildActionTile(Icons.delete, ctx.l10n.deleteMessage, () { Navigator.pop(ctx); _confirmDeleteMessage(message); }),
             ],
-            ListTile(
-              leading: const Icon(Icons.forward),
-              title: AppText(ctx.l10n.forwardMessage),
-              onTap: () {
-                Navigator.pop(ctx);
-                showForwardMessageSheet(this.context, messages: [message]);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.checklist),
-              title: AppText(ctx.l10n.selectAll),
-              onTap: () {
-                Navigator.pop(ctx);
-                _enterSelectionMode(message.id);
-              },
-            ),
+            _buildActionTile(Icons.forward, ctx.l10n.forwardMessage, () { Navigator.pop(ctx); showForwardMessageSheet(this.context, messages: [message]); }),
+            _buildActionTile(Icons.checklist, ctx.l10n.selectAll, () { Navigator.pop(ctx); _enterSelectionMode(message.id); }),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildReactionItem(BuildContext context, String emoji, VoidCallback onTap) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border.all(color: Theme.of(context).dividerColor),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(emoji, style: const TextStyle(fontSize: 20)),
+      ),
+    );
+  }
+
+  Widget _buildAddReactionItem(BuildContext context, VoidCallback onTap) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border.all(color: Theme.of(context).dividerColor),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Icon(Icons.add, size: 20, color: Theme.of(context).iconTheme.color),
+      ),
+    );
+  }
+
+  Widget _buildActionTile(IconData icon, String title, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon),
+      title: AppText(title),
+      onTap: onTap,
     );
   }
 
@@ -1470,9 +1099,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           text: context.l10n.delete,
           onPressed: () {
             Navigator.pop(context);
-            _messageBloc.add(
-              DeleteMessage(message.id),
-            );
+            _messageBloc.add(DeleteMessage(message.id));
           },
         ),
       ],
