@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// Bottom sheet for selecting attachment type
@@ -226,14 +227,16 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
 
   Future<void> _pickFile(BuildContext context) async {
     try {
-      // TODO: Implement file picker when dependency is resolved
-      // For now, show placeholder message
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('File picker will be implemented when dependency is resolved'),
-          ),
-        );
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        if (file.path != null) {
+          onFileSelected?.call(File(file.path!));
+        }
       }
     } catch (e) {
       debugPrint('Error picking file: $e');

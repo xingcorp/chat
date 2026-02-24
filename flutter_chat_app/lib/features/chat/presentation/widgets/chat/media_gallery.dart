@@ -445,14 +445,19 @@ class MediaGallery extends StatelessWidget {
   }
 
   /// Build single file tile
+  /// Supports upload progress indicator like image tiles
   Widget _buildFileTile(BuildContext context, MessageAttachment file) {
     final theme = Theme.of(context);
+    final isUploading = file.isUploading;
+    final uploadProgress = file.uploadProgress ?? 0.0;
 
     return GestureDetector(
-      onTap: () {
-        // TODO: Download file
-        debugPrint('File tapped: ${file.url}');
-      },
+      onTap: isUploading
+          ? null // Disable tap during upload
+          : () {
+              // TODO: Download file
+              debugPrint('File tapped: ${file.url}');
+            },
       child: Container(
         padding: const EdgeInsets.all(12.0),
         decoration: BoxDecoration(
@@ -461,11 +466,15 @@ class MediaGallery extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              _getFileIcon(file.type),
-              color: theme.colorScheme.primary,
-              size: 32,
-            ),
+            // File icon or upload progress indicator
+            if (isUploading)
+              _buildFileUploadProgressIndicator(uploadProgress)
+            else
+              Icon(
+                _getFileIcon(file.type),
+                color: theme.colorScheme.primary,
+                size: 32,
+              ),
             const SizedBox(width: 12.0),
             Expanded(
               child: Column(
@@ -479,22 +488,60 @@ class MediaGallery extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2.0),
-                  Text(
-                    _formatFileSize(file.size),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                  if (isUploading)
+                    // Show upload progress text
+                    Text(
+                      'Uploading... ${(uploadProgress * 100).toInt()}%',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
+                    )
+                  else
+                    Text(
+                      _formatFileSize(file.size),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
-            Icon(
-              Icons.download,
-              color: theme.iconTheme.color?.withValues(alpha: 0.7),
-              size: 20,
-            ),
+            if (!isUploading)
+              Icon(
+                Icons.download,
+                color: theme.iconTheme.color?.withValues(alpha: 0.7),
+                size: 20,
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Build circular upload progress indicator for file tiles
+  Widget _buildFileUploadProgressIndicator(double progress) {
+    final percentage = (progress * 100).toInt();
+
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircularProgressIndicator(
+            value: progress > 0 ? progress : null, // Indeterminate if 0
+            strokeWidth: 2.5,
+            backgroundColor: Colors.grey.withValues(alpha: 0.3),
+          ),
+          if (progress > 0)
+            Text(
+              '$percentage%',
+              style: const TextStyle(
+                fontSize: 8,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -506,6 +553,10 @@ class MediaGallery extends StatelessWidget {
         return Icons.audiotrack;
       case 'location':
         return Icons.location_on;
+      case 'doc':
+        return Icons.description;
+      case 'pdf':
+        return Icons.picture_as_pdf;
       case 'file':
       default:
         return Icons.insert_drive_file;
