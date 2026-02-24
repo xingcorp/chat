@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
@@ -216,6 +218,7 @@ class MediaGallery extends StatelessWidget {
   }
 
   /// Build single image tile
+  /// Supports both network URLs and local file paths during upload
   Widget _buildImageTile(
     BuildContext context,
     MessageAttachment image, {
@@ -227,26 +230,60 @@ class MediaGallery extends StatelessWidget {
     Widget? overlay,
     BoxFit fit = BoxFit.cover,
   }) {
-    Widget imageWidget = CachedNetworkImage(
-      imageUrl: image.url,
-      width: width,
-      height: height,
-      fit: fit,
-      placeholder: (_, __) => Container(
+    final hasLocalPath = image.localPath != null && image.localPath!.isNotEmpty;
+    final hasUrl = image.url.isNotEmpty;
+    final isUploading = image.isUploading;
+    final uploadProgress = image.uploadProgress ?? 0.0;
+
+    // Choose image source: local file first, then network URL
+    Widget imageWidget;
+    if (hasLocalPath) {
+      // Use local file (during upload or cached)
+      imageWidget = Image.file(
+        File(image.localPath!),
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (_, __, ___) => Container(
+          width: width,
+          height: height ?? maxHeight ?? 150,
+          color: Colors.grey[300],
+          child: const Icon(Icons.broken_image, color: Colors.grey),
+        ),
+      );
+    } else if (hasUrl) {
+      // Use network image
+      imageWidget = CachedNetworkImage(
+        imageUrl: image.url,
+        width: width,
+        height: height,
+        fit: fit,
+        placeholder: (_, __) => Container(
+          width: width,
+          height: height ?? maxHeight ?? 150,
+          color: Colors.grey[300],
+          child: const Center(
+            child: CircularProgressIndicator(strokeWidth: 2.0),
+          ),
+        ),
+        errorWidget: (_, __, ___) => Container(
+          width: width,
+          height: height ?? maxHeight ?? 150,
+          color: Colors.grey[300],
+          child: const Icon(Icons.broken_image, color: Colors.grey),
+        ),
+      );
+    } else {
+      // No image source - show placeholder
+      imageWidget = Container(
         width: width,
         height: height ?? maxHeight ?? 150,
         color: Colors.grey[300],
         child: const Center(
           child: CircularProgressIndicator(strokeWidth: 2.0),
         ),
-      ),
-      errorWidget: (_, __, ___) => Container(
-        width: width,
-        height: height ?? maxHeight ?? 150,
-        color: Colors.grey[300],
-        child: const Icon(Icons.broken_image, color: Colors.grey),
-      ),
-    );
+      );
+    }
 
     if (maxHeight != null) {
       imageWidget = ConstrainedBox(
@@ -256,19 +293,69 @@ class MediaGallery extends StatelessWidget {
     }
 
     return GestureDetector(
-      onTap: () => _openFullscreenGallery(
-        context,
-        attachments: attachments.where((a) => a.type == 'image').toList(),
-        initialIndex: index,
-      ),
+      onTap: isUploading
+          ? null // Disable tap during upload
+          : () => _openFullscreenGallery(
+                context,
+                attachments: attachments.where((a) => a.type == 'image').toList(),
+                initialIndex: index,
+              ),
       child: ClipRRect(
         borderRadius: borderRadius ?? BorderRadius.zero,
         child: Stack(
           children: [
             imageWidget,
+            // Upload progress overlay
+            if (isUploading)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  child: Center(
+                    child: _buildUploadProgressIndicator(uploadProgress),
+                  ),
+                ),
+              ),
             if (overlay != null) overlay,
           ],
         ),
+      ),
+    );
+  }
+
+  /// Build circular upload progress indicator (like WhatsApp/Telegram)
+  Widget _buildUploadProgressIndicator(double progress) {
+    final percentage = (progress * 100).toInt();
+
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.5),
+        shape: BoxShape.circle,
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: CircularProgressIndicator(
+              value: progress > 0 ? progress : null, // Indeterminate if 0
+              strokeWidth: 3.0,
+              backgroundColor: Colors.white.withValues(alpha: 0.3),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+          if (progress > 0)
+            Text(
+              '$percentage%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -480,21 +567,53 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
   @override
   void didUpdateWidget(covariant _SmartSingleImageTile oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.image.url != widget.image.url) {
+    final oldKey = oldWidget.image.localPath ?? oldWidget.image.url;
+    final newKey = widget.image.localPath ?? widget.image.url;
+    if (oldKey != newKey) {
       _aspectRatio = null;
       _resolveAspectRatio();
     }
   }
 
   void _resolveAspectRatio() {
+    final localPath = widget.image.localPath;
     final url = widget.image.url.trim();
+
+    // Try local file first
+    if (localPath != null && localPath.isNotEmpty) {
+      final cached = _imageAspectRatioCache[localPath];
+      if (cached != null) {
+        setState(() => _aspectRatio = cached);
+        return;
+      }
+
+      // Resolve from local file
+      final provider = FileImage(File(localPath));
+      final stream = provider.resolve(const ImageConfiguration());
+      late final ImageStreamListener listener;
+      listener = ImageStreamListener(
+        (info, _) {
+          final w = info.image.width.toDouble();
+          final h = info.image.height.toDouble();
+          if (w > 0 && h > 0) {
+            final ar = w / h;
+            _imageAspectRatioCache[localPath] = ar;
+            if (mounted) setState(() => _aspectRatio = ar);
+          }
+          stream.removeListener(listener);
+        },
+        onError: (_, __) => stream.removeListener(listener),
+      );
+      stream.addListener(listener);
+      return;
+    }
+
+    // Fall back to network URL
     if (url.isEmpty) return;
 
     final cached = _imageAspectRatioCache[url];
     if (cached != null) {
-      setState(() {
-        _aspectRatio = cached;
-      });
+      setState(() => _aspectRatio = cached);
       return;
     }
 
@@ -508,23 +627,23 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
         if (w > 0 && h > 0) {
           final ar = w / h;
           _imageAspectRatioCache[url] = ar;
-          if (mounted) {
-            setState(() {
-              _aspectRatio = ar;
-            });
-          }
+          if (mounted) setState(() => _aspectRatio = ar);
         }
         stream.removeListener(listener);
       },
-      onError: (_, __) {
-        stream.removeListener(listener);
-      },
+      onError: (_, __) => stream.removeListener(listener),
     );
     stream.addListener(listener);
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasLocalPath = widget.image.localPath != null &&
+                         widget.image.localPath!.isNotEmpty;
+    final hasUrl = widget.image.url.isNotEmpty;
+    final isUploading = widget.image.isUploading;
+    final uploadProgress = widget.image.uploadProgress ?? 0.0;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth.isFinite
@@ -539,8 +658,47 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
 
         final double maxHeight = ar < 0.85 ? 420 : 360;
 
+        // Build image widget based on source
+        Widget imageContent;
+        if (hasLocalPath) {
+          imageContent = Image.file(
+            File(widget.image.localPath!),
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Container(
+              color: Colors.grey[300],
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            ),
+          );
+        } else if (hasUrl) {
+          imageContent = CachedNetworkImage(
+            imageUrl: widget.image.url,
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.contain,
+            placeholder: (_, __) => Container(
+              color: Colors.grey[300],
+              child: const Center(
+                child: CircularProgressIndicator(strokeWidth: 2.0),
+              ),
+            ),
+            errorWidget: (_, __, ___) => Container(
+              color: Colors.grey[300],
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            ),
+          );
+        } else {
+          imageContent = Container(
+            color: Colors.grey[300],
+            child: const Center(
+              child: CircularProgressIndicator(strokeWidth: 2.0),
+            ),
+          );
+        }
+
         return GestureDetector(
-          onTap: widget.onTap,
+          onTap: isUploading ? null : widget.onTap,
           child: ClipRRect(
             borderRadius: widget.borderRadius,
             child: ConstrainedBox(
@@ -550,27 +708,63 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
               ),
               child: AspectRatio(
                 aspectRatio: ar,
-                child: CachedNetworkImage(
-                  imageUrl: widget.image.url,
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.contain,
-                  placeholder: (_, __) => Container(
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2.0),
-                    ),
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.broken_image, color: Colors.grey),
-                  ),
+                child: Stack(
+                  children: [
+                    imageContent,
+                    // Upload progress overlay
+                    if (isUploading)
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          child: Center(
+                            child: _buildUploadProgressIndicator(uploadProgress),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildUploadProgressIndicator(double progress) {
+    final percentage = (progress * 100).toInt();
+
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.5),
+        shape: BoxShape.circle,
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: CircularProgressIndicator(
+              value: progress > 0 ? progress : null,
+              strokeWidth: 3.0,
+              backgroundColor: Colors.white.withValues(alpha: 0.3),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+          if (progress > 0)
+            Text(
+              '$percentage%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

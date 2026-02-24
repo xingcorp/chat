@@ -657,6 +657,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
   }) {
     if (attachments.isEmpty) return const SizedBox.shrink();
 
+    // MediaGallery now handles upload progress overlay internally
+    // for each attachment with percentage display
     return Padding(
       padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
       child: MediaGallery(

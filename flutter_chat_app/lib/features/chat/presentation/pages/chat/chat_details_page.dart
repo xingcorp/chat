@@ -596,10 +596,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   Future<void> _processAndSendImage(File imageFile) async {
     final l10n = context.l10n;
     try {
-      if (mounted) {
-        AppSnackBar.show(context: context, message: l10n.compressing, type: FeedbackType.info);
-      }
-
+      // Compress image silently (no toast - progress shows in message bubble)
       final compressedImage = await ImageCompressionHelper.compressImage(imageFile);
       if (!mounted) return;
 
@@ -608,6 +605,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         return;
       }
 
+      // Send message - progress will be shown in the message bubble itself
       _messageBloc.add(
         SendMessageWithAttachments(
           content: '',
@@ -615,12 +613,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           localFilePaths: [compressedImage.path],
         ),
       );
-
-      final fileSize = await compressedImage.length();
-      if (mounted) {
-        final formattedSize = ImageCompressionHelper.formatFileSize(fileSize);
-        AppSnackBar.show(context: context, message: 'Uploading image: $formattedSize', type: FeedbackType.success);
-      }
     } catch (e) {
       if (mounted) {
         AppSnackBar.show(

@@ -4,6 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart' hide MessageReaction;
@@ -408,35 +409,64 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       },
     );
   }
-  
-  /// Handle real-time message received
+
+  /// Handle real-time message received via WebSocket
+  ///
+  /// **Enterprise Pattern (WhatsApp/Telegram/Messenger):**
+  /// - Messages from SELF: IGNORE (API response is the source of truth)
+  /// - Messages from OTHERS: Add to list (with duplicate check)
+  ///
+  /// This prevents duplicate messages when:
+  /// 1. User sends message → API returns → WebSocket echoes back
+  /// 2. User sends rapidly → multiple messages have similar timestamps
   void _onReceiveRealTimeMessage(ReceiveRealTimeMessage event, Emitter<MessageState> emit) {
     if (state is! MessagesLoaded) return;
-    
+
     final currentState = state as MessagesLoaded;
-    
+
     // Only process messages for current chat
     if (event.message.chatId != currentState.chatId) return;
-    
-    logger.i('Received real-time message via socket: ${event.message.id}');
-    
-    // Check if message already exists in list
+
+    logger.d('Received real-time message via socket: ${event.message.id}');
+
+    // Check if message already exists in list (exact server ID match)
     final messageExists = currentState.messages.any((msg) => msg.id == event.message.id);
-    
-    if (!messageExists) {
-      // Add new message to beginning of list
-      final allMessages = [event.message, ...currentState.messages];
-      emit(currentState.copyWith(
-        messages: allMessages,
-        uiMessages: _transformMessages(allMessages),
-      ));
-      
-      // Mark message list as dirty
-      _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
-      _cacheSyncStrategy.markChatListDirty();
+    if (messageExists) {
+      logger.d('Message ${event.message.id} already exists, ignoring WebSocket echo');
+      return;
     }
+
+    // **KEY LOGIC**: If message is from current user, check if we have a pending draft
+    // API response will handle our own messages, WebSocket is just an echo
+    if (event.message.sender.id == _currentUserId) {
+      // Check if we have ANY pending draft (message with clientId that hasn't been replaced yet)
+      final hasPendingDraft = currentState.messages.any((msg) =>
+          msg.clientId != null && msg.localStatus != null);
+
+      if (hasPendingDraft) {
+        // We have pending messages being sent via API
+        // The API response will update them, ignore WebSocket echo
+        logger.d('Ignoring self-message from WebSocket (API will handle): ${event.message.id}');
+        return;
+      }
+
+      // No pending drafts - this might be a message sent from another device
+      // Fall through to add it
+      logger.d('Adding self-message from another device: ${event.message.id}');
+    }
+
+    // Add new message (from other users or self from another device)
+    final allMessages = [event.message, ...currentState.messages];
+    emit(currentState.copyWith(
+      messages: allMessages,
+      uiMessages: _transformMessages(allMessages),
+    ));
+
+    // Mark message list as dirty
+    _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
+    _cacheSyncStrategy.markChatListDirty();
   }
-  
+
   /// Handle refresh messages
   Future<void> _onRefreshMessages(RefreshMessages event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
@@ -653,10 +683,14 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
   /// **Send message with file attachments - CLEAN ARCHITECTURE**
   ///
-  /// Handles complete flow:
-  /// 1. Upload files to GCP Cloud Storage
-  /// 2. Send message with uploaded file paths
-  /// 3. Update UI state
+  /// Handles complete flow using enterprise-grade optimistic UI pattern:
+  /// 1. Generate unique clientId (UUID) for tracking
+  /// 2. Create optimistic message with local file (show immediately)
+  /// 3. Upload files to GCP Cloud Storage (show progress)
+  /// 4. Send message with uploaded file paths
+  /// 5. Replace optimistic message with server response (matched by clientId)
+  ///
+  /// WebSocket handler will IGNORE messages from self (API response is source of truth)
   Future<void> _onSendMessageWithAttachments(
     SendMessageWithAttachments event,
     Emitter<MessageState> emit,
@@ -669,65 +703,224 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     final currentState = state as MessagesLoaded;
     logger.i('Sending message with ${event.localFilePaths.length} attachments');
 
-    try {
-      // Step 1: Upload all files in parallel
-      final uploadResults = await Future.wait(
-        event.localFilePaths.map((filePath) async {
-          final result = await _attachmentRepository.uploadAttachment(
-            messageId: 'temp-${DateTime.now().millisecondsSinceEpoch}',
-            chatId: currentState.chatId,
-            file: File(filePath),
-            onProgress: (progress) {
-              // Progress logging can be added if needed
-            },
-          );
+    // Generate unique client ID (UUID) for tracking this message
+    // This ensures we can match the API response even with rapid sends
+    const uuid = Uuid();
+    final clientId = uuid.v4();
+    final draftId = 'draft_$clientId'; // Temporary ID until server assigns real one
 
-          return result.fold(
-            (failure) {
-              logger.e('Failed to upload file', error: failure);
-              throw Exception(failure.message);
-            },
-            // Return CDN URL for use in chatMessageAdd (urls field)
-            // Matching Angular: urls: [uploadData.url]
-            (uploadResult) => uploadResult.url,
-          );
-        }),
+    // Determine message type from first file
+    final firstFilePath = event.localFilePaths.first;
+    final extension = firstFilePath.split('.').last.toLowerCase();
+    final messageType = _getMessageTypeFromExtension(extension);
+    final contentType = _getContentTypeFromExtension(extension);
+
+    // Create attachments with local paths (for immediate display)
+    final localAttachments = event.localFilePaths.asMap().entries.map((entry) {
+      final index = entry.key;
+      final path = entry.value;
+      final fileName = path.split('/').last.split('\\').last;
+      return MessageAttachment(
+        id: 'local_${clientId}_$index',
+        url: '', // Empty - will be filled after upload
+        type: messageType.toLowerCase(),
+        size: 0,
+        name: fileName,
+        localPath: path,
+        uploadProgress: 0.0, // Starting upload
       );
+    }).toList();
 
-      logger.i('All files uploaded successfully: ${uploadResults.length}');
+    // Step 1: Create optimistic message with sending status and show immediately
+    final optimisticMessage = ChatMessage(
+      id: draftId,
+      clientId: clientId, // Track by clientId for matching
+      chatId: currentState.chatId,
+      content: event.content,
+      contentType: contentType,
+      sender: MessageSender(
+        id: event.senderId,
+        name: '', // Will be filled by transformer
+        avatar: null,
+      ),
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      attachments: localAttachments,
+      urls: event.localFilePaths, // Use local paths for display
+      reactions: const [],
+      readBy: const [],
+      mentionTo: const [],
+      localStatus: MessageStatus.sending, // Optimistic: show as sending
+    );
 
-      // Step 2: Determine message type based on first file extension
-      final firstFilePath = event.localFilePaths.first;
-      final extension = firstFilePath.split('.').last.toLowerCase();
-      final messageType = _getMessageTypeFromExtension(extension);
+    // Add optimistic message to UI immediately
+    var updatedMessages = [optimisticMessage, ...currentState.messages];
+    emit(currentState.copyWith(
+      messages: updatedMessages,
+      uiMessages: _transformMessages(updatedMessages),
+    ));
 
-      // Step 3: Send message with uploaded paths
+    logger.d('Created optimistic message with clientId: $clientId');
+
+    try {
+      // Step 2: Upload all files with progress tracking
+      final uploadedUrls = <String>[];
+
+      for (var i = 0; i < event.localFilePaths.length; i++) {
+        final filePath = event.localFilePaths[i];
+
+        final result = await _attachmentRepository.uploadAttachment(
+          messageId: draftId,
+          chatId: currentState.chatId,
+          file: File(filePath),
+          onProgress: (progress) {
+            // Update progress for this attachment
+            _updateAttachmentProgress(
+              emit: emit,
+              clientId: clientId,
+              attachmentIndex: i,
+              progress: progress,
+            );
+          },
+        );
+
+        final url = result.fold(
+          (failure) {
+            logger.e('Failed to upload file', error: failure);
+            throw Exception(failure.message);
+          },
+          (uploadResult) => uploadResult.url,
+        );
+
+        uploadedUrls.add(url);
+      }
+
+      logger.i('All files uploaded successfully: ${uploadedUrls.length}');
+
+      // Step 3: Send message with uploaded URLs
       final result = await _sendMessage(
         conversationId: currentState.chatId,
         content: event.content,
         senderId: event.senderId,
         type: messageType,
-        urls: uploadResults,
+        urls: uploadedUrls,
         replyMessageId: event.replyMessageId,
       );
 
       result.fold(
         (failure) {
           logger.e('Failed to send message with attachments', error: failure);
+          // Mark message as failed
+          _markMessageAsFailed(emit, clientId);
         },
         (message) {
-          logger.i('Message with attachments sent successfully: ${message.id}');
+          logger.i('Message sent successfully: ${message.id} (clientId: $clientId)');
 
-          // Add new message to top of list
-          final updatedMessages = [message, ...currentState.messages];
-          emit(currentState.copyWith(
-            messages: updatedMessages,
-            uiMessages: _transformMessages(updatedMessages),
-          ));
+          // Step 4: Replace optimistic message with server response
+          // Match by clientId to handle rapid sends correctly
+          _replaceDraftWithServerMessage(emit, clientId, message);
         },
       );
     } catch (e, stackTrace) {
       logger.e('Error sending message with attachments', error: e, stackTrace: stackTrace);
+      _markMessageAsFailed(emit, clientId);
+    }
+  }
+
+  /// Replace draft message with server response, matched by clientId
+  void _replaceDraftWithServerMessage(
+    Emitter<MessageState> emit,
+    String clientId,
+    ChatMessage serverMessage,
+  ) {
+    if (state is! MessagesLoaded) return;
+
+    final currentState = state as MessagesLoaded;
+    final messages = currentState.messages.map((message) {
+      // Match by clientId (not by draftId which could be ambiguous)
+      if (message.clientId == clientId) {
+        logger.d('Replacing draft (clientId: $clientId) with server message: ${serverMessage.id}');
+        return serverMessage;
+      }
+      return message;
+    }).toList();
+
+    emit(currentState.copyWith(
+      messages: messages,
+      uiMessages: _transformMessages(messages),
+    ));
+  }
+
+  /// Update attachment upload progress (matched by clientId)
+  void _updateAttachmentProgress({
+    required Emitter<MessageState> emit,
+    required String clientId,
+    required int attachmentIndex,
+    required double progress,
+  }) {
+    if (state is! MessagesLoaded) return;
+
+    final currentState = state as MessagesLoaded;
+    final messages = currentState.messages.map((message) {
+      // Match by clientId for accurate tracking with rapid sends
+      if (message.clientId != clientId) return message;
+
+      final updatedAttachments = message.attachments.asMap().entries.map((entry) {
+        if (entry.key != attachmentIndex) return entry.value;
+        return entry.value.copyWith(uploadProgress: progress);
+      }).toList();
+
+      return message.copyWith(attachments: updatedAttachments);
+    }).toList();
+
+    emit(currentState.copyWith(
+      messages: messages,
+      uiMessages: _transformMessages(messages),
+    ));
+  }
+
+  /// Mark a draft message as failed (matched by clientId)
+  void _markMessageAsFailed(Emitter<MessageState> emit, String clientId) {
+    if (state is! MessagesLoaded) return;
+
+    final currentState = state as MessagesLoaded;
+    final messages = currentState.messages.map((message) {
+      // Match by clientId for accurate tracking
+      if (message.clientId != clientId) return message;
+      return message.copyWith(localStatus: MessageStatus.failed);
+    }).toList();
+
+    emit(currentState.copyWith(
+      messages: messages,
+      uiMessages: _transformMessages(messages),
+    ));
+  }
+
+  /// Get ContentType from file extension
+  ContentType _getContentTypeFromExtension(String extension) {
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+      case 'heic':
+      case 'heif':
+        return ContentType.image;
+      case 'mp4':
+      case 'mov':
+      case 'avi':
+      case 'mkv':
+      case 'webm':
+        return ContentType.video;
+      case 'mp3':
+      case 'wav':
+      case 'm4a':
+      case 'aac':
+      case 'ogg':
+        return ContentType.audio;
+      default:
+        return ContentType.file;
     }
   }
 

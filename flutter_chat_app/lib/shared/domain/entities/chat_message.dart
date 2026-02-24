@@ -190,19 +190,28 @@ class MessageReaction {
 class MessageAttachment {
   /// ID của tệp đính kèm
   final String id;
-  
-  /// URL của tệp
+
+  /// URL của tệp (empty string if uploading)
   final String url;
-  
+
   /// Loại tệp
   final String type;
-  
+
   /// Kích thước tệp
   final int size;
-  
+
   /// Tên tệp
   final String name;
-  
+
+  /// Đường dẫn cục bộ (for displaying local file during upload)
+  final String? localPath;
+
+  /// Upload progress (0.0 - 1.0, null when not uploading)
+  final double? uploadProgress;
+
+  /// Whether file is currently uploading
+  bool get isUploading => uploadProgress != null && uploadProgress! < 1.0;
+
   /// Constructor
   MessageAttachment({
     required this.id,
@@ -210,8 +219,31 @@ class MessageAttachment {
     required this.type,
     required this.size,
     required this.name,
+    this.localPath,
+    this.uploadProgress,
   });
-  
+
+  /// Create a copy with updated values
+  MessageAttachment copyWith({
+    String? id,
+    String? url,
+    String? type,
+    int? size,
+    String? name,
+    String? localPath,
+    double? uploadProgress,
+  }) {
+    return MessageAttachment(
+      id: id ?? this.id,
+      url: url ?? this.url,
+      type: type ?? this.type,
+      size: size ?? this.size,
+      name: name ?? this.name,
+      localPath: localPath ?? this.localPath,
+      uploadProgress: uploadProgress ?? this.uploadProgress,
+    );
+  }
+
   /// Tạo từ JSON
   factory MessageAttachment.fromJson(Map<String, dynamic> json) {
     return MessageAttachment(
@@ -220,9 +252,11 @@ class MessageAttachment {
       type: json['type'] as String,
       size: json['size'] as int,
       name: json['name'] as String,
+      localPath: json['localPath'] as String?,
+      uploadProgress: json['uploadProgress'] as double?,
     );
   }
-  
+
   /// Chuyển đổi thành JSON
   Map<String, dynamic> toJson() {
     return {
@@ -231,23 +265,27 @@ class MessageAttachment {
       'type': type,
       'size': size,
       'name': name,
+      if (localPath != null) 'localPath': localPath,
+      if (uploadProgress != null) 'uploadProgress': uploadProgress,
     };
   }
-  
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    
+
     return other is MessageAttachment &&
            other.id == id &&
            other.url == url &&
            other.type == type &&
            other.size == size &&
-           other.name == name;
+           other.name == name &&
+           other.localPath == localPath &&
+           other.uploadProgress == uploadProgress;
   }
-  
+
   @override
-  int get hashCode => id.hashCode ^ url.hashCode ^ type.hashCode ^ size.hashCode ^ name.hashCode;
+  int get hashCode => id.hashCode ^ url.hashCode ^ type.hashCode ^ size.hashCode ^ name.hashCode ^ localPath.hashCode ^ uploadProgress.hashCode;
 }
 
 /// Class đại diện cho một tin nhắn chat
@@ -324,6 +362,17 @@ class ChatMessage {
   /// Danh sách reactions
   final List<MessageReaction> reactions;
 
+  /// Local status override for optimistic UI
+  /// Used for: pending, sending, failed states before server confirmation
+  /// null = use computed status from readBy/deliveredTo
+  final MessageStatus? localStatus;
+
+  /// Client-generated ID for tracking optimistic messages
+  /// Used to match API responses with pending drafts
+  /// Format: UUID v4 (e.g., "550e8400-e29b-41d4-a716-446655440000")
+  /// null for messages received from server/WebSocket
+  final String? clientId;
+
   /// Constructor
   ChatMessage({
     required this.id,
@@ -350,7 +399,70 @@ class ChatMessage {
     this.deliveredTo = const [],
     this.attachments = const [],
     this.reactions = const [],
+    this.localStatus,
+    this.clientId,
   });
+
+  /// Create a copy with updated fields
+  ChatMessage copyWith({
+    String? id,
+    String? chatId,
+    String? content,
+    ContentType? contentType,
+    MessageSender? sender,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    DateTime? editedAt,
+    DateTime? deletedAt,
+    List<String>? urls,
+    String? fileName,
+    String? forwardedFromMessageId,
+    String? replyMessageId,
+    ChatMessage? replyMessage,
+    String? actionType,
+    MessageSender? actor,
+    List<MessageSender>? targetUsers,
+    String? newValue,
+    String? oldValue,
+    List<MessageSender>? mentionTo,
+    List<String>? readBy,
+    List<String>? deliveredTo,
+    List<MessageAttachment>? attachments,
+    List<MessageReaction>? reactions,
+    MessageStatus? localStatus,
+    bool clearLocalStatus = false,
+    String? clientId,
+    bool clearClientId = false,
+  }) {
+    return ChatMessage(
+      id: id ?? this.id,
+      chatId: chatId ?? this.chatId,
+      content: content ?? this.content,
+      contentType: contentType ?? this.contentType,
+      sender: sender ?? this.sender,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      editedAt: editedAt ?? this.editedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      urls: urls ?? this.urls,
+      fileName: fileName ?? this.fileName,
+      forwardedFromMessageId: forwardedFromMessageId ?? this.forwardedFromMessageId,
+      replyMessageId: replyMessageId ?? this.replyMessageId,
+      replyMessage: replyMessage ?? this.replyMessage,
+      actionType: actionType ?? this.actionType,
+      actor: actor ?? this.actor,
+      targetUsers: targetUsers ?? this.targetUsers,
+      newValue: newValue ?? this.newValue,
+      oldValue: oldValue ?? this.oldValue,
+      mentionTo: mentionTo ?? this.mentionTo,
+      readBy: readBy ?? this.readBy,
+      deliveredTo: deliveredTo ?? this.deliveredTo,
+      attachments: attachments ?? this.attachments,
+      reactions: reactions ?? this.reactions,
+      localStatus: clearLocalStatus ? null : (localStatus ?? this.localStatus),
+      clientId: clearClientId ? null : (clientId ?? this.clientId),
+    );
+  }
   
   /// Tạo từ JSON
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
@@ -487,7 +599,8 @@ class ChatMessage {
       _listEquals(other.readBy, readBy) &&
       _listEquals(other.deliveredTo, deliveredTo) &&
       _listEquals(other.attachments, attachments) &&
-      _listEquals(other.reactions, reactions);
+      _listEquals(other.reactions, reactions) &&
+      other.localStatus == localStatus;
   }
 
   @override
@@ -513,11 +626,18 @@ class ChatMessage {
       readBy.hashCode ^
       deliveredTo.hashCode ^
       attachments.hashCode ^
-      reactions.hashCode;
+      reactions.hashCode ^
+      (localStatus?.hashCode ?? 0);
   }
   
   /// Trạng thái hiện tại của tin nhắn
+  /// Priority: localStatus (for optimistic UI) > computed from readBy/deliveredTo
   MessageStatus get status {
+    // Use local status if set (for pending, sending, failed states)
+    if (localStatus != null) {
+      return localStatus!;
+    }
+    // Compute from server data
     if (readBy.isNotEmpty) {
       return MessageStatus.read;
     } else if (deliveredTo.isNotEmpty) {

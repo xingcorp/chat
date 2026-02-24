@@ -215,7 +215,9 @@ enum UploadStatus {
 
 /// Compact upload progress indicator for message bubble
 ///
-/// Used to show upload progress directly in the message bubble
+/// Used to show upload progress directly in the message bubble.
+/// Shows only a circular loading indicator (like major chat apps)
+/// without text labels for cleaner UX.
 class CompactUploadProgress extends StatelessWidget {
   /// Upload progress (0.0 to 1.0)
   final double progress;
@@ -223,45 +225,56 @@ class CompactUploadProgress extends StatelessWidget {
   /// Upload status
   final UploadStatus status;
 
+  /// Size of the progress indicator (default: 32)
+  final double size;
+
+  /// Whether to show progress percentage inside the circle
+  final bool showPercentage;
+
   const CompactUploadProgress({
     Key? key,
     required this.progress,
     required this.status,
+    this.size = 32.0,
+    this.showPercentage = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
+    // Show indeterminate spinner for compressing, determinate for uploading
+    final isUploading = status == UploadStatus.uploading;
+    final progressValue = isUploading ? progress : null;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(4.0),
+        shape: BoxShape.circle,
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
           SizedBox(
-            width: 16,
-            height: 16,
+            width: size * 0.75,
+            height: size * 0.75,
             child: CircularProgressIndicator(
-              value: status == UploadStatus.uploading ? progress : null,
-              strokeWidth: 2.0,
+              value: progressValue,
+              strokeWidth: 2.5,
+              backgroundColor: Colors.white.withOpacity(0.3),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           ),
-          const SizedBox(width: 6.0),
-          Text(
-            status == UploadStatus.compressing
-                ? l10n.compressing
-                : l10n.uploadProgress((progress * 100).toInt()),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: Colors.white,
-              fontSize: 11.0,
+          // Optional: show percentage text inside
+          if (showPercentage && isUploading)
+            Text(
+              '${(progress * 100).toInt()}%',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: size * 0.25,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
         ],
       ),
     );
