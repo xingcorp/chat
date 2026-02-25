@@ -1559,4 +1559,13 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get noMediaYet => 'Chưa có media';
+
+  @override
+  String get createdBy => 'Tạo bởi';
+
+  @override
+  String get noMembers => 'Không có thành viên';
+
+  @override
+  String get searchMembers => 'Tìm thành viên';
 }

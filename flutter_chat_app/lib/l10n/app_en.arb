@@ -2769,5 +2769,20 @@
   "noMediaYet": "No media yet",
   "@noMediaYet": {
     "description": "Message when there is no shared media"
+  },
+
+  "createdBy": "Created by",
+  "@createdBy": {
+    "description": "Label for group creator"
+  },
+
+  "noMembers": "No members",
+  "@noMembers": {
+    "description": "Message when there are no members in group"
+  },
+
+  "searchMembers": "Search members",
+  "@searchMembers": {
+    "description": "Hint text for search members field"
   }
 }

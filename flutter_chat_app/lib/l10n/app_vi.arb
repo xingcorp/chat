@@ -799,5 +799,20 @@
   "noMediaYet": "Chưa có media",
   "@noMediaYet": {
     "description": "Message when there is no shared media"
+  },
+
+  "createdBy": "Tạo bởi",
+  "@createdBy": {
+    "description": "Label for group creator"
+  },
+
+  "noMembers": "Không có thành viên",
+  "@noMembers": {
+    "description": "Message when there are no members in group"
+  },
+
+  "searchMembers": "Tìm thành viên",
+  "@searchMembers": {
+    "description": "Hint text for search members field"
   }
 }

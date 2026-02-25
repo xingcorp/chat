@@ -81,6 +81,9 @@ class ChatQueries {
               fullname
               email
               imageUrls
+              departmentName
+              titleName
+              code
             }
           }
         }
@@ -140,6 +143,9 @@ class ChatQueries {
             fullname
             email
             imageUrls
+            departmentName
+            titleName
+            code
           }
         }
       }

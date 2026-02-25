@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -444,6 +445,7 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
   /// Build individual media item
   Widget _buildMediaItem(SharedMedia media, SharedMediaType type, bool isDark) {
     final isVideo = type == SharedMediaType.video;
+    final hasThumbnail = media.thumbnailUrl != null && media.thumbnailUrl!.isNotEmpty;
 
     return GestureDetector(
       onTap: () => _openMediaPreview(media, type),
@@ -452,33 +454,57 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Thumbnail
-            CachedNetworkImage(
-              imageUrl: media.thumbnailUrl ?? media.url,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
-                child: Center(
-                  child: SizedBox(
-                    width: AppDimens.iconSizeMedium,
-                    height: AppDimens.iconSizeMedium,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.0,
-                      color: isDark ? AppColors.primaryDarkMode : AppColors.primary,
+            // Thumbnail or placeholder
+            if (hasThumbnail)
+              CachedNetworkImage(
+                imageUrl: media.thumbnailUrl!,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
+                  child: Center(
+                    child: SizedBox(
+                      width: AppDimens.iconSizeMedium,
+                      height: AppDimens.iconSizeMedium,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        color: isDark ? AppColors.primaryDarkMode : AppColors.primary,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              errorWidget: (context, url, error) => Container(
-                color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
-                child: Icon(
-                  isVideo ? Icons.videocam : Icons.image,
-                  color: isDark 
-                      ? AppColors.textSecondaryDarkMode 
-                      : AppColors.textSecondary,
+                errorWidget: (context, url, error) => _buildVideoPlaceholder(isVideo, isDark),
+              )
+            else if (isVideo)
+              // For videos without thumbnail, show placeholder instead of trying to load video URL
+              _buildVideoPlaceholder(isVideo, isDark)
+            else
+              // For photos without thumbnail, try loading the photo URL
+              CachedNetworkImage(
+                imageUrl: media.url,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
+                  child: Center(
+                    child: SizedBox(
+                      width: AppDimens.iconSizeMedium,
+                      height: AppDimens.iconSizeMedium,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        color: isDark ? AppColors.primaryDarkMode : AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
+                  child: Icon(
+                    Icons.image,
+                    color: isDark 
+                        ? AppColors.textSecondaryDarkMode 
+                        : AppColors.textSecondary,
+                  ),
                 ),
               ),
-            ),
 
             // Video play icon
             if (isVideo)
@@ -497,6 +523,22 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Build video placeholder when no thumbnail available
+  Widget _buildVideoPlaceholder(bool isVideo, bool isDark) {
+    return Container(
+      color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
+      child: Center(
+        child: Icon(
+          Icons.videocam,
+          size: AppDimens.iconSizeLarge,
+          color: isDark 
+              ? AppColors.textSecondaryDarkMode 
+              : AppColors.textSecondary,
         ),
       ),
     );
@@ -795,26 +837,47 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
         ),
       );
     } else if (type == SharedMediaType.video) {
-      // Use MediaViewer for videos (supports Chewie player)
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => Scaffold(
-            backgroundColor: Colors.black,
-            appBar: AppBar(
+      // On web platform, video_player is not supported, use url_launcher instead
+      if (kIsWeb) {
+        _openVideoInBrowser(media);
+      } else {
+        // Use MediaViewer for videos on mobile (supports Chewie player)
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => Scaffold(
               backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              title: AppText(
-                media.fileName ?? 'Video',
-                style: const TextStyle(color: Colors.white),
+              appBar: AppBar(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                title: AppText(
+                  media.fileName ?? 'Video',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+              body: MediaViewer(
+                mediaUrl: media.url,
+                mediaType: MediaType.video,
               ),
             ),
-            body: MediaViewer(
-              mediaUrl: media.url,
-              mediaType: MediaType.video,
-            ),
           ),
-        ),
-      );
+        );
+      }
+    }
+  }
+
+  /// Open video in browser (for web platform)
+  void _openVideoInBrowser(SharedMedia media) async {
+    final uri = Uri.parse(media.url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: AppText(context.l10n.errorOpeningFile),
+          ),
+        );
+      }
     }
   }
 

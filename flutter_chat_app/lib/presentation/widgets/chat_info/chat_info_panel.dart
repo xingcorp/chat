@@ -11,7 +11,9 @@ import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_bloc.dar
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_event.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_state.dart';
 import 'package:flutter_chat_app/presentation/pages/shared_media_gallery_page.dart';
+import 'package:flutter_chat_app/presentation/pages/chat_members_page.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_header.dart';
+import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_members_section.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_shared_media_section.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_settings_section.dart';
 
@@ -180,6 +182,20 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
             SliverToBoxAdapter(
               child: ChatInfoHeader(chat: widget.chat),
             ),
+
+            // Members Section (for group chats)
+            if (widget.chat.type == ChatType.group) ...[
+              SliverToBoxAdapter(
+                child: ChatInfoMembersSection(
+                  chat: widget.chat,
+                  onTap: () => _handleViewMembers(context),
+                ),
+              ),
+
+              SliverToBoxAdapter(
+                child: SizedBox(height: AppDimens.spaceMedium),
+              ),
+            ],
 
             SliverToBoxAdapter(
               child: SizedBox(height: AppDimens.spaceMedium),
@@ -383,6 +399,18 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
             child: Text('Leave'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _handleViewMembers(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatMembersPage(
+          chat: widget.chat,
+          // currentUserId will be fetched from UserBloc in the page
+        ),
       ),
     );
   }

@@ -2893,6 +2893,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No media yet'**
   String get noMediaYet;
+
+  /// Label for group creator
+  ///
+  /// In en, this message translates to:
+  /// **'Created by'**
+  String get createdBy;
+
+  /// Message when there are no members in group
+  ///
+  /// In en, this message translates to:
+  /// **'No members'**
+  String get noMembers;
+
+  /// Hint text for search members field
+  ///
+  /// In en, this message translates to:
+  /// **'Search members'**
+  String get searchMembers;
 }
 
 class _AppLocalizationsDelegate

@@ -8,6 +8,7 @@ import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
+import 'package:intl/intl.dart';
 
 /// Header cho Chat Info Panel - TUÂN THỦ DESIGN SYSTEM
 /// ✅ SỬ DỤNG AppText thay vì Text
@@ -87,7 +88,7 @@ class ChatInfoHeader extends BaseStatelessWidget {
           SizedBox(height: AppDimens.spaceXSmall),
 
           // Status/Member count
-          if (chat.type == ChatType.group)
+          if (chat.type == ChatType.group) ...[
             AppText(
               '${chat.members.length} ${context.l10n.members}',
               style: AppTextStyles.bodyMedium.copyWith(
@@ -96,8 +97,38 @@ class ChatInfoHeader extends BaseStatelessWidget {
                     : AppColors.textSecondary,
               ),
             ),
+
+            // Group creation info
+            if (chat.creatorName != null || chat.createdAt != null) ...[
+              SizedBox(height: AppDimens.spaceXSmall),
+              AppText(
+                _buildGroupCreateInfo(context),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: isDark
+                      ? AppColors.textSecondaryDarkMode
+                      : AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ],
         ],
       ),
     );
+  }
+
+  /// Build group creation info text
+  String _buildGroupCreateInfo(BuildContext context) {
+    final parts = <String>[];
+
+    if (chat.creatorName != null) {
+      parts.add('${context.l10n.createdBy} ${chat.creatorName}');
+    }
+
+    if (chat.createdAt != null) {
+      parts.add(DateFormat('dd/MM/yyyy HH:mm').format(chat.createdAt!));
+    }
+
+    return parts.join(', ');
   }
 }

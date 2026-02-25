@@ -1558,4 +1558,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noMediaYet => 'No media yet';
+
+  @override
+  String get createdBy => 'Created by';
+
+  @override
+  String get noMembers => 'No members';
+
+  @override
+  String get searchMembers => 'Search members';
 }

@@ -17,7 +17,13 @@ class Chat {
   
   /// Thông tin người tạo group
   final String? creatorId;
-  
+
+  /// Tên người tạo group (từ creator.fullname)
+  final String? creatorName;
+
+  /// Thời gian tạo group
+  final DateTime? createdAt;
+
   /// Danh sách thành viên với thông tin chi tiết
   final List<ConversationMember> members;
   
@@ -50,6 +56,8 @@ class Chat {
     this.description,
     this.groupType,
     this.creatorId,
+    this.creatorName,
+    this.createdAt,
     this.members = const [],
     this.lastMessageTime,
     this.lastMessagePreview,
@@ -68,6 +76,8 @@ class Chat {
     String? description,
     GroupType? groupType,
     String? creatorId,
+    String? creatorName,
+    DateTime? createdAt,
     List<ConversationMember>? members,
     DateTime? lastMessageTime,
     String? lastMessagePreview,
@@ -84,6 +94,8 @@ class Chat {
       description: description ?? this.description,
       groupType: groupType ?? this.groupType,
       creatorId: creatorId ?? this.creatorId,
+      creatorName: creatorName ?? this.creatorName,
+      createdAt: createdAt ?? this.createdAt,
       members: members ?? this.members,
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
       lastMessagePreview: lastMessagePreview ?? this.lastMessagePreview,
@@ -100,19 +112,25 @@ class Chat {
     return Chat(
       id: json['id'] as String,
       name: json['name'] as String?,
-      avatarUrl: json['avatarUrl'] as String?,
+      avatarUrl: json['avatarUrl'] as String? ?? json['imgUrl'] as String?,
       description: json['description'] as String?,
       groupType: json['groupType'] != null
         ? _parseGroupType(json['groupType'] as String)
         : null,
-      creatorId: json['creatorId'] as String?,
+      creatorId: json['creatorId'] as String? ?? json['creator']?['id'] as String?,
+      creatorName: json['creatorName'] as String? ?? json['creator']?['fullname'] as String?,
+      createdAt: json['createdAt'] != null
+        ? DateTime.fromMillisecondsSinceEpoch((json['createdAt'] as num).toInt())
+        : null,
       members: (json['members'] as List<dynamic>?)
         ?.map((m) => ConversationMember.fromJson(m as Map<String, dynamic>))
         .toList() ?? [],
       lastMessageTime: json['lastMessageTime'] != null
         ? DateTime.parse(json['lastMessageTime'] as String)
-        : null,
-      lastMessagePreview: json['lastMessagePreview'] as String?,
+        : json['lastMessageAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch((json['lastMessageAt'] as num).toInt())
+          : null,
+      lastMessagePreview: json['lastMessagePreview'] as String? ?? json['lastMessage'] as String?,
       unreadCount: json['unreadCount'] as int? ?? 0,
       type: _parseType(json['type'] as String),
       participantIds: (json['participantIds'] as List<dynamic>?)
@@ -131,12 +149,17 @@ class Chat {
       'id': id,
       'name': name,
       'avatarUrl': avatarUrl,
+      'imgUrl': avatarUrl,
       'description': description,
       'groupType': groupType?.toString().split('.').last,
       'creatorId': creatorId,
+      'creatorName': creatorName,
+      'createdAt': createdAt?.millisecondsSinceEpoch,
       'members': members.map((m) => m.toJson()).toList(),
       'lastMessageTime': lastMessageTime?.toIso8601String(),
+      'lastMessageAt': lastMessageTime?.millisecondsSinceEpoch,
       'lastMessagePreview': lastMessagePreview,
+      'lastMessage': lastMessagePreview,
       'unreadCount': unreadCount,
       'type': type.toString().split('.').last,
       'participantIds': participantIds,
@@ -223,6 +246,15 @@ class ConversationMember {
   /// Avatar URL của user
   final String? avatarUrl;
   
+  /// Tên phòng ban
+  final String? departmentName;
+  
+  /// Chức vụ
+  final String? titleName;
+  
+  /// Mã nhân viên
+  final String? code;
+  
   /// Có phải admin không
   final bool isAdmin;
   
@@ -247,6 +279,9 @@ class ConversationMember {
     required this.userId,
     this.fullName,
     this.avatarUrl,
+    this.departmentName,
+    this.titleName,
+    this.code,
     this.isAdmin = false,
     this.isConnected = false,
     this.isHidden = false,
@@ -258,13 +293,25 @@ class ConversationMember {
   /// Getter for displayName (alias for fullName)
   String? get displayName => fullName;
   
+  /// Getter for imageUrls (alias for avatarUrl as list)
+  List<String>? get imageUrls => avatarUrl != null ? [avatarUrl!] : null;
+  
   /// Create from JSON
   factory ConversationMember.fromJson(Map<String, dynamic> json) {
+    // Extract user info from nested user object or flat structure
+    final user = json['user'] as Map<String, dynamic>?;
+    
     return ConversationMember(
-      id: json['id'] as String,
-      userId: json['userId'] as String,
-      fullName: json['fullName'] as String? ?? json['displayName'] as String?,
-      avatarUrl: json['avatarUrl'] as String?,
+      id: json['id'] as String? ?? '',
+      userId: json['userId'] as String? ?? user?['id'] as String? ?? '',
+      fullName: json['fullName'] as String? 
+          ?? json['displayName'] as String? 
+          ?? user?['fullname'] as String?,
+      avatarUrl: json['avatarUrl'] as String? 
+          ?? (user?['imageUrls'] as List<dynamic>?)?.firstOrNull as String?,
+      departmentName: json['departmentName'] as String? ?? user?['departmentName'] as String?,
+      titleName: json['titleName'] as String? ?? user?['titleName'] as String?,
+      code: json['code'] as String? ?? user?['code'] as String?,
       isAdmin: json['admin'] as bool? ?? json['isAdmin'] as bool? ?? false,
       isConnected: json['connected'] as bool? ?? json['isConnected'] as bool? ?? false,
       isHidden: json['hide'] as bool? ?? json['isHidden'] as bool? ?? false,
@@ -286,6 +333,9 @@ class ConversationMember {
       'fullName': fullName,
       'displayName': fullName,
       'avatarUrl': avatarUrl,
+      'departmentName': departmentName,
+      'titleName': titleName,
+      'code': code,
       'admin': isAdmin,
       'isAdmin': isAdmin,
       'connected': isConnected,
@@ -308,6 +358,9 @@ class ConversationMember {
       other.userId == userId &&
       other.fullName == fullName &&
       other.avatarUrl == avatarUrl &&
+      other.departmentName == departmentName &&
+      other.titleName == titleName &&
+      other.code == code &&
       other.isAdmin == isAdmin &&
       other.isConnected == isConnected &&
       other.isHidden == isHidden &&
@@ -322,6 +375,9 @@ class ConversationMember {
       userId.hashCode ^
       (fullName?.hashCode ?? 0) ^
       (avatarUrl?.hashCode ?? 0) ^
+      (departmentName?.hashCode ?? 0) ^
+      (titleName?.hashCode ?? 0) ^
+      (code?.hashCode ?? 0) ^
       isAdmin.hashCode ^
       isConnected.hashCode ^
       isHidden.hashCode ^
