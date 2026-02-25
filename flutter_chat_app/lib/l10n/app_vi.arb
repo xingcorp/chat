@@ -24,6 +24,8 @@
   "typeMessage": "Nhập tin nhắn...",
   "noMessages": "Chưa có tin nhắn",
   "loadMore": "Tải thêm",
+  "readMore": "Xem thêm",
+  "showLess": "Thu gọn",
   "yesterday": "Hôm qua",
   "sentAt": "Đã gửi lúc {time}",
   "today": "Hôm nay",
@@ -627,6 +629,21 @@
   "links": "Liên kết",
   "@links": {
     "description": "Tab for link media type"
+  },
+
+  "items": "mục",
+  "@items": {
+    "description": "Items count label"
+  },
+
+  "unknownFile": "Tệp không xác định",
+  "@unknownFile": {
+    "description": "Fallback name for unknown files"
+  },
+
+  "fileExtensionDefault": "TỆP",
+  "@fileExtensionDefault": {
+    "description": "Default file extension when unknown"
   },
 
   "viewAll": "Xem tất cả",

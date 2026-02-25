@@ -25,6 +25,7 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/audio_p
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/video_player_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/link_preview_card.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/read_receipt_avatars.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/expandable_rich_text.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 
@@ -122,8 +123,13 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       context: context,
     );
 
-    return RichText(
-      text: TextSpan(children: spans),
+    return ExpandableRichText(
+      spans: spans,
+      plainText: normalized,
+      style: TextStyle(
+        color: textColor,
+        fontSize: 16.0,
+      ),
     );
   }
 

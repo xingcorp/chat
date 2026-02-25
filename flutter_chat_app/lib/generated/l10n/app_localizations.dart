@@ -236,6 +236,18 @@ abstract class AppLocalizations {
   /// **'Load More'**
   String get loadMore;
 
+  /// Read more button text for expandable messages
+  ///
+  /// In en, this message translates to:
+  /// **'Read more'**
+  String get readMore;
+
+  /// Show less button text for expandable messages
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get showLess;
+
   /// Yesterday text
   ///
   /// In en, this message translates to:
@@ -638,7 +650,7 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get search;
 
-  /// Mute notifications option
+  /// Option to mute notifications
   ///
   /// In en, this message translates to:
   /// **'Mute Notifications'**
@@ -938,7 +950,7 @@ abstract class AppLocalizations {
   /// **'Admin'**
   String get admin;
 
-  /// Button text to leave a group
+  /// Option to leave a group chat
   ///
   /// In en, this message translates to:
   /// **'Leave Group'**
@@ -961,6 +973,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Group Info'**
   String get groupInfo;
+
+  /// Title for chat information panel
+  ///
+  /// In en, this message translates to:
+  /// **'Chat Info'**
+  String get chatInfo;
 
   /// Success message when conversation is deleted
   ///
@@ -2576,7 +2594,7 @@ abstract class AppLocalizations {
   /// **'{days}d'**
   String daysAgo(int days);
 
-  /// Fallback name for unknown users
+  /// Placeholder for unknown user name
   ///
   /// In en, this message translates to:
   /// **'Unknown User'**
@@ -2635,6 +2653,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mention user'**
   String get mentionUser;
+
+  /// Number of members in a group chat
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No members} =1{1 member} other{{count} members}}'**
+  String membersCount(int count);
+
+  /// Section title for shared media
+  ///
+  /// In en, this message translates to:
+  /// **'Shared Media'**
+  String get sharedMedia;
+
+  /// Tab for photo media type
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get photos;
+
+  /// Tab for video media type
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get videos;
+
+  /// Tab for file media type
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get files;
+
+  /// Tab for link media type
+  ///
+  /// In en, this message translates to:
+  /// **'Links'**
+  String get links;
+
+  /// Items count label
+  ///
+  /// In en, this message translates to:
+  /// **'items'**
+  String get items;
+
+  /// Fallback name for unknown files
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown file'**
+  String get unknownFile;
+
+  /// Default file extension when unknown
+  ///
+  /// In en, this message translates to:
+  /// **'FILE'**
+  String get fileExtensionDefault;
+
+  /// Button to view all items
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get viewAll;
+
+  /// Notifications settings
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// Prompt to select mute duration
+  ///
+  /// In en, this message translates to:
+  /// **'Mute for'**
+  String get muteFor;
+
+  /// Mute duration option
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour'**
+  String get oneHour;
+
+  /// Mute duration option
+  ///
+  /// In en, this message translates to:
+  /// **'8 hours'**
+  String get eightHours;
+
+  /// Mute duration option
+  ///
+  /// In en, this message translates to:
+  /// **'1 day'**
+  String get oneDay;
+
+  /// Mute duration option
+  ///
+  /// In en, this message translates to:
+  /// **'Forever'**
+  String get forever;
+
+  /// Option to block a user
+  ///
+  /// In en, this message translates to:
+  /// **'Block User'**
+  String get blockUser;
+
+  /// Option to unblock a user
+  ///
+  /// In en, this message translates to:
+  /// **'Unblock User'**
+  String get unblockUser;
+
+  /// Option to report a chat
+  ///
+  /// In en, this message translates to:
+  /// **'Report Chat'**
+  String get reportChat;
+
+  /// Option to delete a chat
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Chat'**
+  String get deleteChat;
+
+  /// Message when there is no shared media
+  ///
+  /// In en, this message translates to:
+  /// **'No media yet'**
+  String get noMediaYet;
 }
 
 class _AppLocalizationsDelegate

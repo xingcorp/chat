@@ -78,6 +78,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loadMore => 'Load More';
 
   @override
+  String get readMore => 'Read more';
+
+  @override
+  String get showLess => 'Show less';
+
+  @override
   String get yesterday => 'Yesterday';
 
   @override
@@ -467,6 +473,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupInfo => 'Group Info';
+
+  @override
+  String get chatInfo => 'Chat Info';
 
   @override
   String get conversationDeleted => 'Conversation deleted successfully';
@@ -1418,4 +1427,76 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mentionUser => 'Mention user';
+
+  @override
+  String membersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count members',
+      one: '1 member',
+      zero: 'No members',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sharedMedia => 'Shared Media';
+
+  @override
+  String get photos => 'Photos';
+
+  @override
+  String get videos => 'Videos';
+
+  @override
+  String get files => 'Files';
+
+  @override
+  String get links => 'Links';
+
+  @override
+  String get items => 'items';
+
+  @override
+  String get unknownFile => 'Unknown file';
+
+  @override
+  String get fileExtensionDefault => 'FILE';
+
+  @override
+  String get viewAll => 'View All';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get muteFor => 'Mute for';
+
+  @override
+  String get oneHour => '1 hour';
+
+  @override
+  String get eightHours => '8 hours';
+
+  @override
+  String get oneDay => '1 day';
+
+  @override
+  String get forever => 'Forever';
+
+  @override
+  String get blockUser => 'Block User';
+
+  @override
+  String get unblockUser => 'Unblock User';
+
+  @override
+  String get reportChat => 'Report Chat';
+
+  @override
+  String get deleteChat => 'Delete Chat';
+
+  @override
+  String get noMediaYet => 'No media yet';
 }

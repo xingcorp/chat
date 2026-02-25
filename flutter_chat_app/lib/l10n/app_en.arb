@@ -116,6 +116,16 @@
     "description": "Load more button text"
   },
 
+  "readMore": "Read more",
+  "@readMore": {
+    "description": "Read more button text for expandable messages"
+  },
+
+  "showLess": "Show less",
+  "@showLess": {
+    "description": "Show less button text for expandable messages"
+  },
+
   "yesterday": "Yesterday",
   "@yesterday": {
     "description": "Yesterday text"
@@ -775,6 +785,11 @@
   "groupInfo": "Group Info",
   "@groupInfo": {
     "description": "Group information page title"
+  },
+
+  "chatInfo": "Chat Info",
+  "@chatInfo": {
+    "description": "Title for chat information panel"
   },
 
   "conversationDeleted": "Conversation deleted successfully",
@@ -2584,6 +2599,21 @@
   "links": "Links",
   "@links": {
     "description": "Tab for link media type"
+  },
+
+  "items": "items",
+  "@items": {
+    "description": "Items count label"
+  },
+
+  "unknownFile": "Unknown file",
+  "@unknownFile": {
+    "description": "Fallback name for unknown files"
+  },
+
+  "fileExtensionDefault": "FILE",
+  "@fileExtensionDefault": {
+    "description": "Default file extension when unknown"
   },
 
   "viewAll": "View All",

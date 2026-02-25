@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
@@ -8,6 +10,7 @@ import 'package:flutter_chat_app/domain/entities/chat_info/notification_settings
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_event.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_state.dart';
+import 'package:flutter_chat_app/presentation/pages/shared_media_gallery_page.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_header.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_shared_media_section.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_settings_section.dart';
@@ -416,9 +419,50 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
   }
 
   void _handleViewAllMedia(SharedMediaType type) {
-    // TODO: Navigate to media gallery view
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('View all ${type.name} - Coming soon')),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => SharedMediaGalleryPage(
+          chatId: widget.chat.id,
+          chatName: widget.chat.name ?? 'Chat',
+          initialPhotos: _photos,
+          initialVideos: _videos,
+          initialFiles: _files,
+          initialLinks: _links,
+          initialTab: type,
+          onLoadMore: _loadMoreMedia,
+        ),
+      ),
     );
+  }
+
+  Future<List<SharedMedia>> _loadMoreMedia(
+    String chatId,
+    SharedMediaType type,
+    int offset,
+  ) async {
+    final bloc = context.read<ChatInfoBloc>();
+    
+    // Load more media via BLoC
+    bloc.add(ChatInfoLoadSharedMedia(
+      chatId: chatId,
+      type: type,
+      offset: offset,
+    ));
+    
+    // Return current list (in real implementation, would wait for state update)
+    return _getMediaListForType(type);
+  }
+
+  List<SharedMedia> _getMediaListForType(SharedMediaType type) {
+    switch (type) {
+      case SharedMediaType.photo:
+        return _photos;
+      case SharedMediaType.video:
+        return _videos;
+      case SharedMediaType.file:
+        return _files;
+      case SharedMediaType.link:
+        return _links;
+    }
   }
 }

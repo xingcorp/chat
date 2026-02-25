@@ -9,18 +9,33 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/typography/a
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
-/// Builder để parse text thành các TextSpan với support cho mentions, URLs, phones, emails
+/// Builder để parse text thành các TextSpan với support cho mentions, URLs, phones, emails, HTML
 ///
 /// Pattern:
 /// - Mention: [@id] hoặc @uuid format
 /// - URL: https/http links
 /// - Phone: Việt Nam phone numbers
 /// - Email: email addresses
+/// - HTML: <br>, <a href>, <b>, <i>, <u>
 ///
 /// Mỗi entity có:
 /// - Style riêng (primary color, underline)
 /// - TapGestureRecognizer để mở action sheet
+///
+/// Long message handling:
+/// - Truncate after maxLines with "Read more" button
+/// - Expandable/collapsible like WhatsApp, Telegram
 class TextSpanBuilder {
+  // ══════════════════════════════════════════
+  // Constants
+  // ══════════════════════════════════════════
+
+  /// Maximum lines before truncation (like WhatsApp/Telegram)
+  static const int defaultMaxLines = 5;
+
+  /// Maximum characters before truncation
+  static const int defaultMaxChars = 500;
+
   // ══════════════════════════════════════════
   // Regex Patterns
   // ══════════════════════════════════════════
@@ -48,6 +63,24 @@ class TextSpanBuilder {
   static final RegExp _mentionRegex = RegExp(
     r'\[@([^\]]+)\]|@([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})',
   );
+
+  /// Regex cho HTML line break
+  static final RegExp _brRegex = RegExp(r'<br\s*/?>', caseSensitive: false);
+
+  /// Regex cho HTML anchor tag
+  static final RegExp _anchorRegex = RegExp(
+    r'<a\s+[^>]*href=["\x27]([^"\x27]+)["\x27][^>]*>([^<]*)</a>',
+    caseSensitive: false,
+  );
+
+  /// Regex cho HTML bold tag
+  static final RegExp _boldRegex = RegExp(r'<b>([^<]*)</b>', caseSensitive: false);
+
+  /// Regex cho HTML italic tag
+  static final RegExp _italicRegex = RegExp(r'<i>([^<]*)</i>', caseSensitive: false);
+
+  /// Regex cho HTML underline tag
+  static final RegExp _underlineRegex = RegExp(r'<u>([^<]*)</u>', caseSensitive: false);
 
   // ══════════════════════════════════════════
   // Main Build Method
@@ -119,7 +152,12 @@ class TextSpanBuilder {
     return _mentionRegex.hasMatch(text) ||
            _urlRegex.hasMatch(text) ||
            _phoneRegex.hasMatch(text) ||
-           _emailRegex.hasMatch(text);
+           _emailRegex.hasMatch(text) ||
+           _brRegex.hasMatch(text) ||
+           _anchorRegex.hasMatch(text) ||
+           _boldRegex.hasMatch(text) ||
+           _italicRegex.hasMatch(text) ||
+           _underlineRegex.hasMatch(text);
   }
 
   /// Parse tất cả entities từ text
@@ -173,6 +211,62 @@ class TextSpanBuilder {
       ));
     }
 
+    // Parse HTML <br> tags
+    for (final match in _brRegex.allMatches(text)) {
+      entities.add(TextEntity(
+        type: EntityType.htmlBr,
+        text: match.group(0)!,
+        start: match.start,
+        end: match.end,
+        value: '\n', // Convert to newline
+      ));
+    }
+
+    // Parse HTML <a> tags
+    for (final match in _anchorRegex.allMatches(text)) {
+      entities.add(TextEntity(
+        type: EntityType.htmlAnchor,
+        text: match.group(0)!,
+        start: match.start,
+        end: match.end,
+        value: match.group(1)!, // URL
+        displayText: match.group(2)!, // Link text
+      ));
+    }
+
+    // Parse HTML <b> tags
+    for (final match in _boldRegex.allMatches(text)) {
+      entities.add(TextEntity(
+        type: EntityType.htmlBold,
+        text: match.group(0)!,
+        start: match.start,
+        end: match.end,
+        value: match.group(1)!, // Bold text
+      ));
+    }
+
+    // Parse HTML <i> tags
+    for (final match in _italicRegex.allMatches(text)) {
+      entities.add(TextEntity(
+        type: EntityType.htmlItalic,
+        text: match.group(0)!,
+        start: match.start,
+        end: match.end,
+        value: match.group(1)!, // Italic text
+      ));
+    }
+
+    // Parse HTML <u> tags
+    for (final match in _underlineRegex.allMatches(text)) {
+      entities.add(TextEntity(
+        type: EntityType.htmlUnderline,
+        text: match.group(0)!,
+        start: match.start,
+        end: match.end,
+        value: match.group(1)!, // Underline text
+      ));
+    }
+
     return entities;
   }
 
@@ -202,6 +296,30 @@ class TextSpanBuilder {
 
       case EntityType.email:
         return _buildEmailSpan(entity, linkStyle, context);
+
+      case EntityType.htmlBr:
+        return TextSpan(text: '\n', style: textStyle);
+
+      case EntityType.htmlAnchor:
+        return _buildHtmlAnchorSpan(entity, linkStyle, context);
+
+      case EntityType.htmlBold:
+        return TextSpan(
+          text: entity.value,
+          style: textStyle.copyWith(fontWeight: FontWeight.bold),
+        );
+
+      case EntityType.htmlItalic:
+        return TextSpan(
+          text: entity.value,
+          style: textStyle.copyWith(fontStyle: FontStyle.italic),
+        );
+
+      case EntityType.htmlUnderline:
+        return TextSpan(
+          text: entity.value,
+          style: textStyle.copyWith(decoration: TextDecoration.underline),
+        );
     }
   }
 
@@ -276,6 +394,21 @@ class TextSpanBuilder {
     );
   }
 
+  /// Build span cho HTML anchor tag
+  static InlineSpan _buildHtmlAnchorSpan(
+    TextEntity entity,
+    TextStyle linkStyle,
+    BuildContext context,
+  ) {
+    final displayText = entity.displayText ?? entity.value;
+    return TextSpan(
+      text: displayText,
+      style: linkStyle,
+      recognizer: TapGestureRecognizer()
+        ..onTap = () => _showUrlActionSheet(context, entity.value),
+    );
+  }
+
   // ══════════════════════════════════════════
   // Action Sheets
   // ══════════════════════════════════════════
@@ -308,13 +441,14 @@ class TextSpanBuilder {
   }
 }
 
-/// Entity trong text (mention, url, phone, email)
+/// Entity trong text (mention, url, phone, email, html)
 class TextEntity {
   final EntityType type;
   final String text;
   final int start;
   final int end;
   final String value;
+  final String? displayText; // For HTML anchor tags
 
   TextEntity({
     required this.type,
@@ -322,6 +456,7 @@ class TextEntity {
     required this.start,
     required this.end,
     required this.value,
+    this.displayText,
   });
 }
 
@@ -331,6 +466,11 @@ enum EntityType {
   url,
   phone,
   email,
+  htmlBr,
+  htmlAnchor,
+  htmlBold,
+  htmlItalic,
+  htmlUnderline,
 }
 
 /// Action Sheet cho URL

@@ -78,6 +78,12 @@ class AppLocalizationsVi extends AppLocalizations {
   String get loadMore => 'Tải thêm';
 
   @override
+  String get readMore => 'Xem thêm';
+
+  @override
+  String get showLess => 'Thu gọn';
+
+  @override
   String get yesterday => 'Hôm qua';
 
   @override
@@ -468,6 +474,9 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get groupInfo => 'Thông tin nhóm';
+
+  @override
+  String get chatInfo => 'Thông tin chat';
 
   @override
   String get conversationDeleted => 'Đã xóa cuộc trò chuyện thành công';
@@ -1419,4 +1428,76 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get mentionUser => 'Nhắc đến người dùng';
+
+  @override
+  String membersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count thành viên',
+      one: '1 thành viên',
+      zero: 'Không có thành viên',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sharedMedia => 'Media đã chia sẻ';
+
+  @override
+  String get photos => 'Ảnh';
+
+  @override
+  String get videos => 'Video';
+
+  @override
+  String get files => 'Tệp';
+
+  @override
+  String get links => 'Liên kết';
+
+  @override
+  String get items => 'mục';
+
+  @override
+  String get unknownFile => 'Tệp không xác định';
+
+  @override
+  String get fileExtensionDefault => 'TỆP';
+
+  @override
+  String get viewAll => 'Xem tất cả';
+
+  @override
+  String get notifications => 'Thông báo';
+
+  @override
+  String get muteFor => 'Tắt trong';
+
+  @override
+  String get oneHour => '1 giờ';
+
+  @override
+  String get eightHours => '8 giờ';
+
+  @override
+  String get oneDay => '1 ngày';
+
+  @override
+  String get forever => 'Vĩnh viễn';
+
+  @override
+  String get blockUser => 'Chặn người dùng';
+
+  @override
+  String get unblockUser => 'Bỏ chặn người dùng';
+
+  @override
+  String get reportChat => 'Báo cáo chat';
+
+  @override
+  String get deleteChat => 'Xóa chat';
+
+  @override
+  String get noMediaYet => 'Chưa có media';
 }

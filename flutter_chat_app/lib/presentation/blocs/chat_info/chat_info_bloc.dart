@@ -60,7 +60,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     ChatInfoLoadSharedMedia event,
     Emitter<ChatInfoState> emit,
   ) async {
-    emitLoading(message: 'Loading media...');
+    emit(const ChatInfoLoading(message: 'Loading media...'));
 
     _logger.d('Loading shared media: chatId=${event.chatId}, type=${event.type.name}');
 
@@ -74,7 +74,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     result.fold(
       (failure) {
         _logger.e('Failed to load shared media', error: failure);
-        emitError(failure.message, error: failure);
+        emit(ChatInfoError(message: failure.message, error: failure));
       },
       (media) {
         _logger.i('Loaded ${media.length} media items');
@@ -91,7 +91,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     ChatInfoLoadNotificationSettings event,
     Emitter<ChatInfoState> emit,
   ) async {
-    emitLoading(message: 'Loading notification settings...');
+    emit(const ChatInfoLoading(message: 'Loading notification settings...'));
 
     _logger.d('Loading notification settings: chatId=${event.chatId}');
 
@@ -100,7 +100,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     result.fold(
       (failure) {
         _logger.e('Failed to load notification settings', error: failure);
-        emitError(failure.message, error: failure);
+        emit(ChatInfoError(message: failure.message, error: failure));
       },
       (settings) {
         _logger.i('Loaded notification settings: isMuted=${settings.isMuted}');
@@ -114,7 +114,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     ChatInfoUpdateNotificationSettings event,
     Emitter<ChatInfoState> emit,
   ) async {
-    emitLoading(message: 'Updating settings...');
+    emit(const ChatInfoLoading(message: 'Updating settings...'));
 
     _logger.d('Updating notification settings: chatId=${event.settings.chatId}');
 
@@ -126,7 +126,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     result.fold(
       (failure) {
         _logger.e('Failed to update notification settings', error: failure);
-        emitError(failure.message, error: failure);
+        emit(ChatInfoError(message: failure.message, error: failure));
       },
       (settings) {
         _logger.i('Updated notification settings successfully');
@@ -140,7 +140,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     ChatInfoMuteNotifications event,
     Emitter<ChatInfoState> emit,
   ) async {
-    emitLoading(message: 'Muting notifications...');
+    emit(const ChatInfoLoading(message: 'Muting notifications...'));
 
     _logger.d('Muting notifications: chatId=${event.chatId}, duration=${event.duration.name}');
 
@@ -152,7 +152,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     await currentResult.fold(
       (failure) async {
         _logger.e('Failed to get current settings', error: failure);
-        emitError(failure.message, error: failure);
+        emit(ChatInfoError(message: failure.message, error: failure));
       },
       (currentSettings) async {
         // Apply mute
@@ -166,7 +166,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
         result.fold(
           (failure) {
             _logger.e('Failed to mute notifications', error: failure);
-            emitError(failure.message, error: failure);
+            emit(ChatInfoError(message: failure.message, error: failure));
           },
           (settings) {
             _logger.i('Muted notifications successfully');
@@ -182,7 +182,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     ChatInfoUnmuteNotifications event,
     Emitter<ChatInfoState> emit,
   ) async {
-    emitLoading(message: 'Unmuting notifications...');
+    emit(const ChatInfoLoading(message: 'Unmuting notifications...'));
 
     _logger.d('Unmuting notifications: chatId=${event.chatId}');
 
@@ -193,7 +193,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     await currentResult.fold(
       (failure) async {
         _logger.e('Failed to get current settings', error: failure);
-        emitError(failure.message, error: failure);
+        emit(ChatInfoError(message: failure.message, error: failure));
       },
       (currentSettings) async {
         final updatedSettings = currentSettings.unmute();
@@ -206,7 +206,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
         result.fold(
           (failure) {
             _logger.e('Failed to unmute notifications', error: failure);
-            emitError(failure.message, error: failure);
+            emit(ChatInfoError(message: failure.message, error: failure));
           },
           (settings) {
             _logger.i('Unmuted notifications successfully');
@@ -222,7 +222,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     ChatInfoBlockUser event,
     Emitter<ChatInfoState> emit,
   ) async {
-    emitLoading(message: 'Blocking user...');
+    emit(const ChatInfoLoading(message: 'Blocking user...'));
 
     _logger.d('Blocking user: userId=${event.userId}');
 
@@ -231,7 +231,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     result.fold(
       (failure) {
         _logger.e('Failed to block user', error: failure);
-        emitError(failure.message, error: failure);
+        emit(ChatInfoError(message: failure.message, error: failure));
       },
       (_) {
         _logger.i('Blocked user successfully: userId=${event.userId}');
@@ -245,7 +245,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     ChatInfoUnblockUser event,
     Emitter<ChatInfoState> emit,
   ) async {
-    emitLoading(message: 'Unblocking user...');
+    emit(const ChatInfoLoading(message: 'Unblocking user...'));
 
     _logger.d('Unblocking user: userId=${event.userId}');
 
@@ -254,7 +254,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     result.fold(
       (failure) {
         _logger.e('Failed to unblock user', error: failure);
-        emitError(failure.message, error: failure);
+        emit(ChatInfoError(message: failure.message, error: failure));
       },
       (_) {
         _logger.i('Unblocked user successfully: userId=${event.userId}');
@@ -275,7 +275,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     result.fold(
       (failure) {
         _logger.e('Failed to check block status', error: failure);
-        emitError(failure.message, error: failure);
+        emit(ChatInfoError(message: failure.message, error: failure));
       },
       (isBlocked) {
         _logger.d('User block status checked: userId=${event.userId}, isBlocked=$isBlocked');
@@ -292,7 +292,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     ChatInfoReportChat event,
     Emitter<ChatInfoState> emit,
   ) async {
-    emitLoading(message: 'Reporting chat...');
+    emit(const ChatInfoLoading(message: 'Reporting chat...'));
 
     _logger.d('Reporting chat: chatId=${event.chatId}, reason=${event.reason}');
 
@@ -304,7 +304,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     result.fold(
       (failure) {
         _logger.e('Failed to report chat', error: failure);
-        emitError(failure.message, error: failure);
+        emit(ChatInfoError(message: failure.message, error: failure));
       },
       (_) {
         _logger.i('Reported chat successfully: chatId=${event.chatId}');

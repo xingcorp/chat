@@ -449,7 +449,7 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i328.TokenRepository>(),
             ));
     gh.lazySingleton<_i933.IChatInfoRemoteDataSource>(
-        () => _i933.ChatInfoRemoteDataSource(gh<_i557.ApiClient>()));
+        () => _i933.ChatInfoRemoteDataSource(gh<_i788.GraphQLClientWrapper>()));
     gh.factory<_i473.PermissionsRepository>(
         () => _i760.PermissionsRepositoryImpl(
               gh<_i656.PermissionsDataSource>(),
