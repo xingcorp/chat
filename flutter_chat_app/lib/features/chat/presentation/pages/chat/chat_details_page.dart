@@ -511,11 +511,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       _processAndSendImage(imageFile, bytes: bytes, name: name, size: size);
 
   void _handleFileSelected(File file, {Uint8List? bytes, String? name, int? size}) {
+    // Cross-platform: on web, use name as path placeholder; on mobile, use actual path
+    final filePath = kIsWeb && name != null ? name : file.path;
     _messageBloc.add(
       SendMessageWithAttachments(
         content: '',
         senderId: _currentUserId,
-        localFilePaths: [file.path],
+        localFilePaths: [filePath],
         fileBytes: bytes != null ? [bytes] : null,
         fileNames: name != null ? [name] : null,
         fileSizes: size != null ? [size] : null,

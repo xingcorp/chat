@@ -261,15 +261,27 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
 
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
-        if (file.path != null) {
-          // Mobile: pass File object
-          // Web: pass bytes, name, and size
-          onFileSelected?.call(
-            File(file.path!),
-            bytes: kIsWeb ? file.bytes : null,
-            name: file.name,
-            size: file.size,
-          );
+
+        if (kIsWeb) {
+          // Web: use bytes directly (path is unavailable on web)
+          if (file.bytes != null) {
+            onFileSelected?.call(
+              File(''), // Dummy file for web (not used)
+              bytes: file.bytes,
+              name: file.name,
+              size: file.size,
+            );
+          }
+        } else {
+          // Mobile: use path
+          if (file.path != null) {
+            onFileSelected?.call(
+              File(file.path!),
+              bytes: null,
+              name: file.name,
+              size: file.size,
+            );
+          }
         }
       }
     } catch (e) {
