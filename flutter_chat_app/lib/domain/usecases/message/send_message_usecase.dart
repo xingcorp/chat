@@ -72,6 +72,7 @@ class SendMessageUseCase {
         contentType: type,
         attachmentIds: urls,
         replyMessageId: replyMessageId,
+        fileName: fileName,
       );
 
       return result.fold(

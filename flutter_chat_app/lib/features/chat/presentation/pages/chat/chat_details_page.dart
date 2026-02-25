@@ -513,14 +513,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         localFilePaths: [file.path],
       ),
     );
-
-    if (mounted) {
-      AppSnackBar.show(
-        context: context,
-        message: 'Uploading file...',
-        type: FeedbackType.info,
-      );
-    }
+    // No toast - progress is shown directly in file tile (like image upload)
   }
 
   Future<void> _handleLocationShare() async {

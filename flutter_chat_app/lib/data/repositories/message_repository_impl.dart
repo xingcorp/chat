@@ -224,6 +224,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     required String contentType,
     List<String> attachmentIds = const [],
     String? replyMessageId,
+    String? fileName,
   }) async {
     // Create local message with sending status
     final localId = _uuid.v4();
@@ -256,15 +257,17 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     return executeOnlineFirst<ChatMessage>(
       remoteDataSource: () async {
         // Send to server using DTO
+        final serverType = _toServerMessageType(messageType);
         if (kDebugMode) {
-          logger.i('[sendMessage][remote] chatId=$chatId type=${messageType.name.toUpperCase()} '
+          logger.i('[sendMessage][remote] chatId=$chatId type=$serverType '
               'replyMessageId=$replyMessageId urls=${attachmentIds.length}');
         }
         final dto = await _remoteDataSource.sendMessage(
           conversationId: chatId,
-          type: messageType.name.toUpperCase(),
+          type: serverType,
           message: content,
           urls: attachmentIds,
+          fileName: fileName,
           replyMessageId: replyMessageId,
           createdAt: DateTime.now().millisecondsSinceEpoch,
         );
@@ -585,11 +588,33 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
       case 'audio':
         return MessageType.audio;
       case 'file':
+      case 'doc': // Handle DOC type from server/bloc
         return MessageType.file;
       case 'location':
         return MessageType.location;
       default:
         return MessageType.text;
+    }
+  }
+
+  /// Convert MessageType enum to server API type string
+  /// Server expects: TEXT, IMAGE, VIDEO, AUDIO, DOC, LOCATION
+  String _toServerMessageType(MessageType type) {
+    switch (type) {
+      case MessageType.text:
+        return 'TEXT';
+      case MessageType.image:
+        return 'IMAGE';
+      case MessageType.video:
+        return 'VIDEO';
+      case MessageType.audio:
+        return 'AUDIO';
+      case MessageType.file:
+        return 'DOC'; // Server uses DOC, not FILE
+      case MessageType.location:
+        return 'LOCATION';
+      default:
+        return 'TEXT';
     }
   }
 

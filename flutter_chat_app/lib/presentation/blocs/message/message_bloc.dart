@@ -716,20 +716,25 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     final contentType = _getContentTypeFromExtension(extension);
 
     // Create attachments with local paths (for immediate display)
-    final localAttachments = event.localFilePaths.asMap().entries.map((entry) {
-      final index = entry.key;
-      final path = entry.value;
-      final fileName = path.split('/').last.split('\\').last;
-      return MessageAttachment(
-        id: 'local_${clientId}_$index',
-        url: '', // Empty - will be filled after upload
-        type: messageType.toLowerCase(),
-        size: 0,
-        name: fileName,
-        localPath: path,
-        uploadProgress: 0.0, // Starting upload
-      );
-    }).toList();
+    final localAttachments = await Future.wait(
+      event.localFilePaths.asMap().entries.map((entry) async {
+        final index = entry.key;
+        final path = entry.value;
+        final fileName = path.split('/').last.split('\\').last;
+        // Get actual file size from local file
+        final file = File(path);
+        final fileSize = await file.exists() ? await file.length() : 0;
+        return MessageAttachment(
+          id: 'local_${clientId}_$index',
+          url: '', // Empty - will be filled after upload
+          type: messageType.toLowerCase(),
+          size: fileSize,
+          name: fileName,
+          localPath: path,
+          uploadProgress: 0.0, // Starting upload
+        );
+      }),
+    );
 
     // Step 1: Create optimistic message with sending status and show immediately
     final optimisticMessage = ChatMessage(
@@ -798,6 +803,11 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       logger.i('All files uploaded successfully: ${uploadedUrls.length}');
 
       // Step 3: Send message with uploaded URLs
+      // Get fileName from first file (matching Angular frontend behavior)
+      final fileName = event.localFilePaths.isNotEmpty
+          ? event.localFilePaths.first.split('/').last.split('\\').last
+          : null;
+
       final result = await _sendMessage(
         conversationId: currentState.chatId,
         content: event.content,
@@ -805,6 +815,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         type: messageType,
         urls: uploadedUrls,
         replyMessageId: event.replyMessageId,
+        fileName: fileName,
       );
 
       result.fold(
@@ -840,7 +851,22 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       // Match by clientId (not by draftId which could be ambiguous)
       if (message.clientId == clientId) {
         logger.d('Replacing draft (clientId: $clientId) with server message: ${serverMessage.id}');
-        return serverMessage;
+
+        // Preserve file size from draft attachments (backend doesn't return size)
+        final mergedAttachments = serverMessage.attachments.asMap().entries.map((entry) {
+          final serverAttachment = entry.value;
+          // Find corresponding draft attachment by index or URL
+          if (entry.key < message.attachments.length) {
+            final draftAttachment = message.attachments[entry.key];
+            // If server returns size 0, use the size from draft (read from local file)
+            if (serverAttachment.size == 0 && draftAttachment.size > 0) {
+              return serverAttachment.copyWith(size: draftAttachment.size);
+            }
+          }
+          return serverAttachment;
+        }).toList();
+
+        return serverMessage.copyWith(attachments: mergedAttachments);
       }
       return message;
     }).toList();
