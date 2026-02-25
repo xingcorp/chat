@@ -57,21 +57,40 @@ class SendMessage extends MessageEvent {
 }
 
 /// Sự kiện gửi tin nhắn với file đính kèm (upload + send)
+///
+/// **Cross-platform support:**
+/// - Mobile: uses [localFilePaths] with dart:io File operations
+/// - Web: uses [fileBytes] and [fileNames] directly (no dart:io)
 class SendMessageWithAttachments extends MessageEvent {
   final String content;
   final String senderId;
   final List<String> localFilePaths;
   final String? replyMessageId;
 
+  /// File bytes for web platform (indexed same as localFilePaths)
+  /// On mobile, this is null and files are read from localFilePaths
+  final List<List<int>>? fileBytes;
+
+  /// File names for web platform (indexed same as localFilePaths)
+  /// On mobile, extracted from localFilePaths
+  final List<String>? fileNames;
+
+  /// File sizes for web platform (indexed same as localFilePaths)
+  /// On mobile, read from File.length()
+  final List<int>? fileSizes;
+
   const SendMessageWithAttachments({
     required this.content,
     required this.senderId,
     required this.localFilePaths,
     this.replyMessageId,
+    this.fileBytes,
+    this.fileNames,
+    this.fileSizes,
   });
 
   @override
-  List<Object?> get props => [content, senderId, localFilePaths, replyMessageId];
+  List<Object?> get props => [content, senderId, localFilePaths, replyMessageId, fileBytes, fileNames, fileSizes];
 }
 
 /// Sự kiện gửi vị trí

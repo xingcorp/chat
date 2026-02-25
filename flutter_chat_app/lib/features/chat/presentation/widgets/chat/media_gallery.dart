@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
@@ -712,16 +713,40 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
         // Build image widget based on source
         Widget imageContent;
         if (hasLocalPath) {
-          imageContent = Image.file(
-            File(widget.image.localPath!),
-            width: double.infinity,
-            height: double.infinity,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => Container(
+          // Cross-platform: use Image.memory on web, Image.file on mobile
+          if (kIsWeb && widget.image.localBytes != null) {
+            // Web: use Image.memory with bytes
+            imageContent = Image.memory(
+              widget.image.localBytes!,
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.broken_image, color: Colors.grey),
+              ),
+            );
+          } else if (!kIsWeb) {
+            // Mobile: use Image.file
+            imageContent = Image.file(
+              File(widget.image.localPath!),
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.broken_image, color: Colors.grey),
+              ),
+            );
+          } else {
+            // Web without bytes: show placeholder
+            imageContent = Container(
               color: Colors.grey[300],
-              child: const Icon(Icons.broken_image, color: Colors.grey),
-            ),
-          );
+              child: const Center(
+                child: Icon(Icons.image, color: Colors.grey, size: 48),
+              ),
+            );
+          }
         } else if (hasUrl) {
           imageContent = CachedNetworkImage(
             imageUrl: widget.image.url,

@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
@@ -31,20 +33,48 @@ class AttachmentRepository implements IAttachmentRepository {
   Future<Either<Failure, AttachmentUploadResult>> uploadAttachment({
     required String messageId,
     required String chatId,
-    required File file,
+    File? file,
+    Uint8List? bytes,
+    String? fileName,
     void Function(double progress)? onProgress,
   }) async {
     try {
       _logger.info('AttachmentRepository: Uploading file', {
         'messageId': messageId,
         'chatId': chatId,
-        'filePath': file.path,
+        'isWeb': kIsWeb,
+        'hasFile': file != null,
+        'hasBytes': bytes != null,
       });
 
-      // Get file info
-      final filename = file.path.split(Platform.pathSeparator).last;
-      final extension = filename.split('.').last.toLowerCase();
-      final mimeType = _getMimeType(extension);
+      // Validate inputs
+      if (kIsWeb) {
+        if (bytes == null || fileName == null) {
+          throw Exception('Web platform requires bytes and fileName');
+        }
+      } else {
+        if (file == null) {
+          throw Exception('Mobile platform requires file');
+        }
+      }
+
+      // Get file info - cross-platform
+      final String filename;
+      final String extension;
+      final String mimeType;
+      final int fileSize;
+
+      if (kIsWeb) {
+        filename = fileName!;
+        extension = filename.split('.').last.toLowerCase();
+        mimeType = _getMimeType(extension);
+        fileSize = bytes!.length;
+      } else {
+        filename = file!.path.split(Platform.pathSeparator).last;
+        extension = filename.split('.').last.toLowerCase();
+        mimeType = _getMimeType(extension);
+        fileSize = await file.length();
+      }
 
       // Step 1: Generate presigned upload URL
       // Matching Angular: uploadFileService.storageGeneratePresignedUrls({files: [...]})
@@ -70,21 +100,28 @@ class AttachmentRepository implements IAttachmentRepository {
       });
 
       // Step 2: Upload file binary to presigned URL
-      // Matching Angular: uploadFileService.uploadMessageFileS3Observable(file, presignedUrl)
-      await _chatObjectDataSource.uploadFile(
-        presignedUrl: uploadData.presignedUrl,
-        filePath: file.path,
-        contentType: mimeType,
-        onProgress: (sent, total) {
-          if (onProgress != null && total > 0) {
-            onProgress(sent / total);
-          }
-        },
-      );
+      // Cross-platform: use bytes directly on web, read from file on mobile
+      if (kIsWeb) {
+        await _chatObjectDataSource.uploadBytes(
+          presignedUrl: uploadData.presignedUrl,
+          bytes: bytes!,
+          contentType: mimeType,
+          onProgress: onProgress,
+        );
+      } else {
+        await _chatObjectDataSource.uploadFile(
+          presignedUrl: uploadData.presignedUrl,
+          filePath: file!.path,
+          contentType: mimeType,
+          onProgress: (sent, total) {
+            if (onProgress != null && total > 0) {
+              onProgress(sent / total);
+            }
+          },
+        );
+      }
 
       _logger.info('File uploaded successfully');
-
-      final fileSize = await file.length();
 
       // Return result with url for use in chatMessageAdd
       // Matching Angular: urls: [uploadData.url]

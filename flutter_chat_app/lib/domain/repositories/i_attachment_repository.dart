@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
@@ -61,10 +62,16 @@ abstract class IAttachmentRepository {
   /// **Strategy**: executeOnlineFirst (server upload required)
   /// **Performance**: <5s for typical attachments
   /// **Use Case**: Message attachments, file sharing
+  ///
+  /// **Cross-platform support:**
+  /// - Mobile: uses [file] with dart:io File operations
+  /// - Web: uses [bytes] and [fileName] directly (no dart:io)
   Future<Either<Failure, AttachmentUploadResult>> uploadAttachment({
     required String messageId,
     required String chatId,
-    required File file,
+    File? file,
+    Uint8List? bytes,
+    String? fileName,
     void Function(double progress)? onProgress,
   });
   

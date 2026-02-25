@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 /// Loại nội dung của tin nhắn
 enum ContentType {
   /// Văn bản
@@ -203,8 +205,11 @@ class MessageAttachment {
   /// Tên tệp
   final String name;
 
-  /// Đường dẫn cục bộ (for displaying local file during upload)
+  /// Đường dẫn cục bộ (for displaying local file during upload - mobile only)
   final String? localPath;
+
+  /// Bytes cục bộ (for displaying local file during upload - web only)
+  final Uint8List? localBytes;
 
   /// Upload progress (0.0 - 1.0, null when not uploading)
   final double? uploadProgress;
@@ -220,6 +225,7 @@ class MessageAttachment {
     required this.size,
     required this.name,
     this.localPath,
+    this.localBytes,
     this.uploadProgress,
   });
 
@@ -231,6 +237,7 @@ class MessageAttachment {
     int? size,
     String? name,
     String? localPath,
+    Uint8List? localBytes,
     double? uploadProgress,
   }) {
     return MessageAttachment(
@@ -240,6 +247,7 @@ class MessageAttachment {
       size: size ?? this.size,
       name: name ?? this.name,
       localPath: localPath ?? this.localPath,
+      localBytes: localBytes ?? this.localBytes,
       uploadProgress: uploadProgress ?? this.uploadProgress,
     );
   }

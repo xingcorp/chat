@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -13,15 +16,18 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 /// - Location (share location) - placeholder for future implementation
 /// - i18n support for all options
 /// - Theme-aware styling
+/// - Cross-platform: passes bytes on web, File on mobile
 class AttachmentPickerBottomSheet extends StatelessWidget {
   /// Callback when image is selected from camera
-  final void Function(File imageFile)? onImageFromCamera;
+  /// On web: bytes and name are provided
+  final void Function(File imageFile, {Uint8List? bytes, String? name, int? size})? onImageFromCamera;
 
   /// Callback when image is selected from gallery
-  final void Function(File imageFile)? onImageFromGallery;
+  /// On web: bytes and name are provided
+  final void Function(File imageFile, {Uint8List? bytes, String? name, int? size})? onImageFromGallery;
 
-  /// Callback when file is selected
-  final void Function(File file)? onFileSelected;
+  /// Callback when file is selected (mobile: File, web: bytes + name + size)
+  final void Function(File file, {Uint8List? bytes, String? name, int? size})? onFileSelected;
 
   /// Callback when location share is requested
   final VoidCallback? onLocationShare;
@@ -194,7 +200,17 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
       );
 
       if (image != null) {
-        onImageFromCamera?.call(File(image.path));
+        // On web, read bytes; on mobile, just use path
+        Uint8List? bytes;
+        if (kIsWeb) {
+          bytes = await image.readAsBytes();
+        }
+        onImageFromCamera?.call(
+          File(image.path),
+          bytes: bytes,
+          name: image.name,
+          size: await image.length(),
+        );
       }
     } catch (e) {
       debugPrint('Error picking from camera: $e');
@@ -215,7 +231,17 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
       );
 
       if (image != null) {
-        onImageFromGallery?.call(File(image.path));
+        // On web, read bytes; on mobile, just use path
+        Uint8List? bytes;
+        if (kIsWeb) {
+          bytes = await image.readAsBytes();
+        }
+        onImageFromGallery?.call(
+          File(image.path),
+          bytes: bytes,
+          name: image.name,
+          size: await image.length(),
+        );
       }
     } catch (e) {
       debugPrint('Error picking from gallery: $e');
@@ -230,12 +256,20 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.any,
         allowMultiple: false,
+        withData: kIsWeb, // Only load bytes on web platform
       );
 
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
         if (file.path != null) {
-          onFileSelected?.call(File(file.path!));
+          // Mobile: pass File object
+          // Web: pass bytes, name, and size
+          onFileSelected?.call(
+            File(file.path!),
+            bytes: kIsWeb ? file.bytes : null,
+            name: file.name,
+            size: file.size,
+          );
         }
       }
     } catch (e) {
@@ -258,9 +292,9 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
   /// Static method to show the bottom sheet
   static Future<void> show(
     BuildContext context, {
-    void Function(File imageFile)? onImageFromCamera,
-    void Function(File imageFile)? onImageFromGallery,
-    void Function(File file)? onFileSelected,
+    void Function(File imageFile, {Uint8List? bytes, String? name, int? size})? onImageFromCamera,
+    void Function(File imageFile, {Uint8List? bytes, String? name, int? size})? onImageFromGallery,
+    void Function(File file, {Uint8List? bytes, String? name, int? size})? onFileSelected,
     VoidCallback? onLocationShare,
   }) {
     return showModalBottomSheet(

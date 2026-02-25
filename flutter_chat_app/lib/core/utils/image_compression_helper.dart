@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
@@ -23,7 +26,13 @@ class ImageCompressionHelper {
   /// Compress an image file to reduce size
   ///
   /// Returns compressed file or original if compression fails/not needed
+  /// On web platform, returns null (compression not supported)
   static Future<File?> compressImage(File imageFile) async {
+    // Web platform: flutter_image_compress not supported
+    if (kIsWeb) {
+      return imageFile;
+    }
+
     try {
       // Check if file exists
       if (!await imageFile.exists()) {
@@ -72,6 +81,16 @@ class ImageCompressionHelper {
       // Return original file if compression fails
       return imageFile;
     }
+  }
+
+  /// Compress image bytes (web platform)
+  ///
+  /// On web, we can't use flutter_image_compress, so we return bytes as-is.
+  /// In the future, we could use browser-based compression via JS interop.
+  static Future<Uint8List?> compressImageBytes(Uint8List bytes, String fileName) async {
+    // Web platform: return bytes as-is (no compression available)
+    // TODO: Implement browser-based image compression using JS interop
+    return bytes;
   }
 
   /// Compress multiple images in parallel

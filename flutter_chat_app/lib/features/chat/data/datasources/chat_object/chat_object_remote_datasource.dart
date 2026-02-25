@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_chat_app/core/network/graphql_client.dart';
@@ -41,6 +42,19 @@ abstract class IChatObjectRemoteDataSource {
     required String filePath,
     required String contentType,
     ProgressCallback? onProgress,
+  });
+
+  /// Upload bytes directly to presigned URL (for web platform)
+  ///
+  /// [presignedUrl] - Pre-signed URL for direct upload
+  /// [bytes] - File bytes to upload
+  /// [contentType] - MIME type for Content-Type header
+  /// [onProgress] - Upload progress callback (0.0 to 1.0)
+  Future<void> uploadBytes({
+    required String presignedUrl,
+    required Uint8List bytes,
+    required String contentType,
+    void Function(double progress)? onProgress,
   });
 
   /// Get download URL for uploaded file
@@ -110,6 +124,37 @@ class ChatObjectRemoteDataSource implements IChatObjectRemoteDataSource {
       );
     } catch (e) {
       throw Exception('Failed to upload file: $e');
+    }
+  }
+
+  @override
+  Future<void> uploadBytes({
+    required String presignedUrl,
+    required Uint8List bytes,
+    required String contentType,
+    void Function(double progress)? onProgress,
+  }) async {
+    try {
+      // Upload bytes directly - for web platform where File is not available
+      await _dio.put(
+        presignedUrl,
+        data: Stream.fromIterable([bytes]),
+        options: Options(
+          headers: {
+            'Content-Type': contentType,
+            'Content-Length': bytes.length,
+          },
+          sendTimeout: const Duration(minutes: 5),
+          receiveTimeout: const Duration(minutes: 5),
+        ),
+        onSendProgress: (sent, total) {
+          if (onProgress != null && total > 0) {
+            onProgress(sent / total);
+          }
+        },
+      );
+    } catch (e) {
+      throw Exception('Failed to upload bytes: $e');
     }
   }
 

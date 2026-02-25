@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -502,15 +504,21 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     );
   }
 
-  Future<void> _handleImageFromCamera(File imageFile) async => _processAndSendImage(imageFile);
-  Future<void> _handleImageFromGallery(File imageFile) async => _processAndSendImage(imageFile);
+  void _handleImageFromCamera(File imageFile, {Uint8List? bytes, String? name, int? size}) =>
+      _processAndSendImage(imageFile, bytes: bytes, name: name, size: size);
 
-  Future<void> _handleFileSelected(File file) async {
+  void _handleImageFromGallery(File imageFile, {Uint8List? bytes, String? name, int? size}) =>
+      _processAndSendImage(imageFile, bytes: bytes, name: name, size: size);
+
+  void _handleFileSelected(File file, {Uint8List? bytes, String? name, int? size}) {
     _messageBloc.add(
       SendMessageWithAttachments(
         content: '',
         senderId: _currentUserId,
         localFilePaths: [file.path],
+        fileBytes: bytes != null ? [bytes] : null,
+        fileNames: name != null ? [name] : null,
+        fileSizes: size != null ? [size] : null,
       ),
     );
     // No toast - progress is shown directly in file tile (like image upload)
@@ -586,10 +594,27 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
   }
 
-  Future<void> _processAndSendImage(File imageFile) async {
+  Future<void> _processAndSendImage(File imageFile, {Uint8List? bytes, String? name, int? size}) async {
     final l10n = context.l10n;
     try {
-      // Compress image silently (no toast - progress shows in message bubble)
+      // On web, we already have bytes from picker - no compression needed
+      // On mobile, compress image silently (no toast - progress shows in message bubble)
+      if (kIsWeb && bytes != null) {
+        // Web: use bytes directly (no compression available)
+        _messageBloc.add(
+          SendMessageWithAttachments(
+            content: '',
+            senderId: _currentUserId,
+            localFilePaths: [imageFile.path],
+            fileBytes: [bytes],
+            fileNames: name != null ? [name] : null,
+            fileSizes: size != null ? [size] : null,
+          ),
+        );
+        return;
+      }
+
+      // Mobile: compress image
       final compressedImage = await ImageCompressionHelper.compressImage(imageFile);
       if (!mounted) return;
 

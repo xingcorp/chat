@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
@@ -710,20 +712,46 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     final draftId = 'draft_$clientId'; // Temporary ID until server assigns real one
 
     // Determine message type from first file
-    final firstFilePath = event.localFilePaths.first;
-    final extension = firstFilePath.split('.').last.toLowerCase();
+    // Cross-platform: use fileNames on web (path might be blob URL), path on mobile
+    String extension;
+    if (kIsWeb && event.fileNames != null && event.fileNames!.isNotEmpty) {
+      // Web: extract extension from fileName (path might be blob URL)
+      extension = event.fileNames!.first.split('.').last.toLowerCase();
+    } else {
+      // Mobile: extract extension from path
+      extension = event.localFilePaths.first.split('.').last.toLowerCase();
+    }
     final messageType = _getMessageTypeFromExtension(extension);
     final contentType = _getContentTypeFromExtension(extension);
 
     // Create attachments with local paths (for immediate display)
+    // Cross-platform: use event data on web, File operations on mobile
     final localAttachments = await Future.wait(
       event.localFilePaths.asMap().entries.map((entry) async {
         final index = entry.key;
         final path = entry.value;
-        final fileName = path.split('/').last.split('\\').last;
-        // Get actual file size from local file
-        final file = File(path);
-        final fileSize = await file.exists() ? await file.length() : 0;
+
+        // Get file name - from event on web, from path on mobile
+        final fileName = kIsWeb && event.fileNames != null && index < event.fileNames!.length
+            ? event.fileNames![index]
+            : path.split('/').last.split('\\').last;
+
+        // Get file size - from event on web, from File on mobile
+        int fileSize = 0;
+        if (kIsWeb && event.fileSizes != null && index < event.fileSizes!.length) {
+          fileSize = event.fileSizes![index];
+        } else if (!kIsWeb) {
+          // Mobile only: use dart:io File operations
+          final file = File(path);
+          fileSize = await file.exists() ? await file.length() : 0;
+        }
+
+        // Get file bytes - from event on web (for display during upload)
+        Uint8List? fileBytes;
+        if (kIsWeb && event.fileBytes != null && index < event.fileBytes!.length) {
+          fileBytes = Uint8List.fromList(event.fileBytes![index]);
+        }
+
         return MessageAttachment(
           id: 'local_${clientId}_$index',
           url: '', // Empty - will be filled after upload
@@ -731,6 +759,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
           size: fileSize,
           name: fileName,
           localPath: path,
+          localBytes: fileBytes, // Web: bytes for display
           uploadProgress: 0.0, // Starting upload
         );
       }),
@@ -774,10 +803,17 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       for (var i = 0; i < event.localFilePaths.length; i++) {
         final filePath = event.localFilePaths[i];
 
+        // Cross-platform: use bytes on web, File on mobile
         final result = await _attachmentRepository.uploadAttachment(
           messageId: draftId,
           chatId: currentState.chatId,
-          file: File(filePath),
+          file: kIsWeb ? null : File(filePath),
+          bytes: kIsWeb && event.fileBytes != null && i < event.fileBytes!.length
+              ? Uint8List.fromList(event.fileBytes![i])
+              : null,
+          fileName: kIsWeb && event.fileNames != null && i < event.fileNames!.length
+              ? event.fileNames![i]
+              : null,
           onProgress: (progress) {
             // Update progress for this attachment
             _updateAttachmentProgress(
@@ -804,9 +840,12 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
       // Step 3: Send message with uploaded URLs
       // Get fileName from first file (matching Angular frontend behavior)
-      final fileName = event.localFilePaths.isNotEmpty
-          ? event.localFilePaths.first.split('/').last.split('\\').last
-          : null;
+      // Cross-platform: use fileNames on web, extract from path on mobile
+      final fileName = kIsWeb && event.fileNames != null && event.fileNames!.isNotEmpty
+          ? event.fileNames!.first
+          : event.localFilePaths.isNotEmpty
+              ? event.localFilePaths.first.split('/').last.split('\\').last
+              : null;
 
       final result = await _sendMessage(
         conversationId: currentState.chatId,
