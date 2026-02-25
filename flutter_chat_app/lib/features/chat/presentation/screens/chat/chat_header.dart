@@ -20,7 +20,13 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
   
   /// Callback khi nhấn vào nút thông tin
   final VoidCallback? onInfoPressed;
-  
+
+  /// Callback khi nhấn vào nút thêm thành viên (group chat only)
+  final VoidCallback? onAddMemberPressed;
+
+  /// Callback khi nhấn vào nút tìm kiếm tin nhắn
+  final VoidCallback? onSearchPressed;
+
   /// Constructor
   const ChatHeader({
     Key? key,
@@ -28,6 +34,8 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
     this.onBackPressed,
     this.onAvatarTap,
     this.onInfoPressed,
+    this.onAddMemberPressed,
+    this.onSearchPressed,
   }) : super(key: key);
   
   @override
@@ -90,6 +98,17 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
+        // Nút tìm kiếm tin nhắn (cả group và direct)
+        IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: onSearchPressed,
+        ),
+        // Nút thêm thành viên (chỉ group chat)
+        if (chat.type == ChatType.group)
+          IconButton(
+            icon: const Icon(Icons.person_add),
+            onPressed: onAddMemberPressed,
+          ),
         // Nút thông tin chat
         IconButton(
           icon: const Icon(Icons.info_outline),

@@ -706,4 +706,37 @@ class ChatSubscriptions {
       }
     }
   ''';
+
+  /// **Search Messages**
+  ///
+  /// Searches for messages matching a keyword in conversations.
+  ///
+  /// **Variables:**
+  /// - filters: ChatSearchArgs
+  ///   - conversationIds: [String] (optional)
+  ///   - keyword: String (required)
+  ///   - messageTypes: [ChatMessageType] (optional)
+  ///   - conversationTypes: [ChatConversationType] (optional)
+  ///   - senderIds: [String] (optional)
+  ///   - from: Float (optional, timestamp)
+  ///   - to: Float (optional, timestamp)
+  ///   - page: Int (optional)
+  ///
+  /// **Returns:** List of matching messages
+  static const String searchMessages = r'''
+    query SearchMessages($filters: ChatSearchArgs!) {
+      chatSearch(filters: $filters) {
+        id
+        message
+        type
+        createdAt
+        conversationId
+        sender {
+          id
+          fullname
+          imageUrls
+        }
+      }
+    }
+  ''';
 }

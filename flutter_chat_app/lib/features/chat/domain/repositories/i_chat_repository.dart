@@ -89,4 +89,35 @@ abstract class IChatRepository {
   /// Fetches detailed member list for a conversation with department, title, code.
   /// Separate API call to avoid performance impact on conversation list.
   Future<Either<Failure, Chat>> getConversationMembers(String conversationId);
+
+  /// **Search Messages**
+  ///
+  /// Searches messages by keyword within conversations.
+  /// Uses remote-only strategy for comprehensive search results.
+  Future<Either<Failure, List<MessageSearchResult>>> searchMessages({
+    required String keyword,
+    String? conversationId,
+    int limit = 50,
+  });
+}
+
+/// Message search result entity
+class MessageSearchResult {
+  final String id;
+  final String message;
+  final String type;
+  final DateTime createdAt;
+  final String conversationId;
+  final String? senderId;
+  final String? senderName;
+
+  const MessageSearchResult({
+    required this.id,
+    required this.message,
+    required this.type,
+    required this.createdAt,
+    required this.conversationId,
+    this.senderId,
+    this.senderName,
+  });
 }

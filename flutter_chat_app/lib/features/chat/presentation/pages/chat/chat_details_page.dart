@@ -19,6 +19,8 @@ import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
+import 'package:flutter_chat_app/features/chat/domain/usecases/chat/search_messages_usecase.dart';
+import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/screens/chat/chat_header.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/attachment_picker_widget.dart';
@@ -27,6 +29,8 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_p
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/mention_text_field.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/add_member_panel.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_search_panel.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/read_receipt_avatars.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reply_preview.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/typing_indicator.dart';
@@ -514,6 +518,182 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     );
   }
 
+  void _showAddMember() {
+    if (_chat == null) return;
+    
+    final currentMemberIds = _chat?.members.map((m) => m.userId).toList() ?? [];
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => AddMemberPanel(
+          conversationId: widget.chatId,
+          currentMemberIds: currentMemberIds,
+          onSearchUsers: (query) => _searchUsers(query),
+          onAddMembers: (userIds) => _addMembersToGroup(userIds),
+        ),
+      ),
+    ).then((result) {
+      // If members were added successfully, refresh chat info
+      if (result == true) {
+        _refreshChatInfo();
+      }
+    });
+  }
+
+  /// Search users for adding to group
+  Future<List<SelectableUser>> _searchUsers(String query) async {
+    // TODO: Implement user search via repository
+    // For now, return empty list
+    return [];
+  }
+
+  /// Add members to group via API
+  Future<bool> _addMembersToGroup(List<String> userIds) async {
+    try {
+      // Use the remote data source directly to add members
+      final remoteDataSource = getIt<IChatRemoteDataSource>();
+      await remoteDataSource.addMembersToGroup(
+        conversationId: widget.chatId,
+        memberIds: userIds,
+      );
+      return true;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.errorOccurred),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return false;
+    }
+  }
+
+  /// Refresh chat info after adding members
+  void _refreshChatInfo() {
+    // Reload chat header info
+    _loadChatHeader();
+  }
+
+  void _showMessageSearch() {
+    if (_chat == null) return;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => MessageSearchPanel(
+          conversationId: widget.chatId,
+          onResultSelected: (result) {
+            // Jump to message and highlight
+            _jumpToMessage(result.id);
+          },
+          onSearch: (keyword) => _searchMessages(keyword),
+        ),
+      ),
+    );
+  }
+
+  /// Search messages by keyword
+  Future<List<MessageSearchResult>> _searchMessages(String keyword) async {
+    final searchUseCase = getIt<SearchMessagesUseCase>();
+    
+    final result = await searchUseCase(
+      keyword: keyword,
+      conversationId: widget.chatId,
+    );
+    
+    return result.fold(
+      (failure) {
+        // Return empty list on failure
+        return [];
+      },
+      (items) {
+        // Map use case result to widget result
+        return items.map((item) => MessageSearchResult(
+          id: item.id,
+          message: item.message,
+          type: item.type,
+          createdAt: item.createdAt,
+          conversationId: item.conversationId,
+          senderId: item.senderId,
+          senderName: item.senderName,
+        )).toList();
+      },
+    );
+  }
+
+  /// Jump to a specific message by ID from search result
+  void _jumpToMessage(String messageId) {
+    _pendingScrollToMessageId = messageId;
+    _pendingScrollAttempts = 0;
+    
+    // Try to scroll immediately if message is already loaded
+    _attemptJumpToMessage();
+  }
+
+  /// Attempt to jump to pending message
+  void _attemptJumpToMessage() {
+    if (_pendingScrollToMessageId == null) return;
+    
+    final state = _messageBloc.state;
+    if (state is! MessagesLoaded) {
+      // Messages not loaded yet, will retry later
+      return;
+    }
+    
+    final messageId = _pendingScrollToMessageId!;
+    final messages = state.uiMessages;
+    
+    // Find the message index
+    int? messageIndex;
+    for (int i = 0; i < messages.length; i++) {
+      if (messages[i].message?.id == messageId) {
+        messageIndex = i;
+        break;
+      }
+    }
+    
+    if (messageIndex != null) {
+      // Message found, scroll to it
+      _isProgrammaticScroll = true;
+      _scrollController.scrollToIndex(
+        messageIndex,
+        preferPosition: AutoScrollPosition.middle,
+      ).then((_) {
+        if (mounted) {
+          setState(() {
+            _isProgrammaticScroll = false;
+            _pendingScrollToMessageId = null;
+          });
+        }
+      });
+    } else {
+      // Message not found, increment attempts
+      _pendingScrollAttempts++;
+      if (_pendingScrollAttempts < _maxPendingScrollAttempts) {
+        // Retry after a short delay
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) _attemptJumpToMessage();
+        });
+      } else {
+        // Max attempts reached, give up
+        _pendingScrollToMessageId = null;
+      }
+    }
+  }
+
   // ══════════════════════════════════════════
   // Media Handlers
   // ══════════════════════════════════════════
@@ -924,6 +1104,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         chat: _chat!,
         onBackPressed: () => Navigator.of(context).pop(),
         onInfoPressed: _showChatInfo,
+        onAddMemberPressed: _chat!.type == ChatType.group ? _showAddMember : null,
+        onSearchPressed: _showMessageSearch,
       );
     }
 
