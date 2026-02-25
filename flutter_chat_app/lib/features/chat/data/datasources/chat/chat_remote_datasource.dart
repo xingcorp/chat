@@ -25,6 +25,10 @@ abstract class IChatRemoteDataSource {
     String? conversationId,
     String? receiverId,
   });
+
+  /// Get conversation members with detailed user info (department, title, code)
+  /// Separate API to avoid performance impact on conversation list
+  Future<ChatDto> getConversationMembers(String conversationId);
   
   /// Create a new group conversation
   Future<ChatDto> createGroup({
@@ -277,7 +281,76 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     
     return ChatDto.fromJson(data);
   }
-  
+
+  @override
+  Future<ChatDto> getConversationMembers(String conversationId) async {
+    final result = await _client.query(
+      ChatQueries.getConversationMembers,
+      variables: {'conversationId': conversationId},
+      operationName: 'GetConversationMembers',
+    );
+
+    final data = result['chatConversationDetail'] as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Failed to fetch conversation members');
+    }
+
+    try {
+      return ChatDto.fromJson(data);
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint(
+          '[ChatRemoteDataSourceImpl] ChatDto.fromJson failed for getConversationMembers(conversationId=$conversationId): $e',
+        );
+        debugPrint(st.toString());
+
+        final rawMembers = data['members'];
+        if (rawMembers is List) {
+          for (var i = 0; i < rawMembers.length; i++) {
+            final m = rawMembers[i];
+            if (m is! Map) {
+              debugPrint('[ChatRemoteDataSourceImpl] members[$i] type=${m.runtimeType} value=$m');
+              continue;
+            }
+            final user = m['user'];
+            final departments = (user is Map) ? user['departments'] : null;
+            final imageUrls = (user is Map) ? user['imageUrls'] : null;
+            debugPrint(
+              '[ChatRemoteDataSourceImpl] members[$i] id=${m['id']} (type=${m['id']?.runtimeType}) '
+              'userId=${m['userId']} (type=${m['userId']?.runtimeType}) '
+              'user.id=${(user is Map) ? user['id'] : null} (type=${(user is Map) ? user['id']?.runtimeType : null}) '
+              'user.fullname=${(user is Map) ? user['fullname'] : null} (type=${(user is Map) ? user['fullname']?.runtimeType : null}) '
+              'user.imageUrls.type=${imageUrls?.runtimeType} '
+              'user.departments.type=${departments?.runtimeType}',
+            );
+            if (departments is List && departments.isNotEmpty) {
+              final dep0 = departments.first;
+              if (dep0 is Map) {
+                final department = dep0['department'];
+                final title = dep0['title'];
+                debugPrint(
+                  '[ChatRemoteDataSourceImpl] members[$i].user.departments[0] '
+                  'department.type=${department.runtimeType} title.type=${title.runtimeType} '
+                  'department.name=${(department is Map) ? department['name'] : null} '
+                  'title.name=${(title is Map) ? title['name'] : null}',
+                );
+              } else {
+                debugPrint(
+                  '[ChatRemoteDataSourceImpl] members[$i].user.departments[0] type=${dep0.runtimeType} value=$dep0',
+                );
+              }
+            }
+          }
+        } else {
+          debugPrint(
+            '[ChatRemoteDataSourceImpl] chatConversationDetail.members type=${rawMembers.runtimeType} value=$rawMembers',
+          );
+        }
+      }
+      rethrow;
+    }
+  }
+
   @override
   Future<ChatDto> createGroup({
     required String name,

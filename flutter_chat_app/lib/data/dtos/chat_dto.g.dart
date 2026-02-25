@@ -70,7 +70,7 @@ Map<String, dynamic> _$$LastMessageDtoImplToJson(
 _$UserBriefDtoImpl _$$UserBriefDtoImplFromJson(Map<String, dynamic> json) =>
     _$UserBriefDtoImpl(
       id: json['id'] as String,
-      fullName: json['fullname'] as String,
+      fullName: json['fullname'] as String?,
     );
 
 Map<String, dynamic> _$$UserBriefDtoImplToJson(_$UserBriefDtoImpl instance) =>
@@ -82,7 +82,7 @@ Map<String, dynamic> _$$UserBriefDtoImplToJson(_$UserBriefDtoImpl instance) =>
 _$MentionToDtoImpl _$$MentionToDtoImplFromJson(Map<String, dynamic> json) =>
     _$MentionToDtoImpl(
       id: json['id'] as String,
-      fullName: json['fullname'] as String,
+      fullName: json['fullname'] as String?,
     );
 
 Map<String, dynamic> _$$MentionToDtoImplToJson(_$MentionToDtoImpl instance) =>
@@ -108,11 +108,10 @@ Map<String, dynamic> _$$PersonalConversationDtoImplToJson(
 _$CreatorDtoImpl _$$CreatorDtoImplFromJson(Map<String, dynamic> json) =>
     _$CreatorDtoImpl(
       id: json['id'] as String,
-      fullName: json['fullname'] as String,
-      imageUrls: (json['imageUrls'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const [],
+      fullName: json['fullname'] as String?,
+      imageUrls: json['imageUrls'] == null
+          ? const []
+          : _stringListFromJson(json['imageUrls']),
     );
 
 Map<String, dynamic> _$$CreatorDtoImplToJson(_$CreatorDtoImpl instance) =>
@@ -125,7 +124,7 @@ Map<String, dynamic> _$$CreatorDtoImplToJson(_$CreatorDtoImpl instance) =>
 _$MemberDtoImpl _$$MemberDtoImplFromJson(Map<String, dynamic> json) =>
     _$MemberDtoImpl(
       id: json['id'] as String,
-      userId: json['userId'] as String,
+      userId: json['userId'] as String?,
       admin: json['admin'] as bool? ?? false,
       connected: json['connected'] as bool? ?? false,
       hide: json['hide'] as bool? ?? false,
@@ -153,12 +152,16 @@ Map<String, dynamic> _$$MemberDtoImplToJson(_$MemberDtoImpl instance) =>
 _$UserDtoImpl _$$UserDtoImplFromJson(Map<String, dynamic> json) =>
     _$UserDtoImpl(
       id: json['id'] as String,
-      fullName: json['fullname'] as String,
-      imageUrls: (json['imageUrls'] as List<dynamic>?)
-              ?.map((e) => e as String)
+      fullName: json['fullname'] as String?,
+      imageUrls: json['imageUrls'] == null
+          ? const []
+          : _stringListFromJson(json['imageUrls']),
+      email: json['email'] as String?,
+      departments: (json['departments'] as List<dynamic>?)
+              ?.map(
+                  (e) => UserDepartmentDto.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
-      email: json['email'] as String?,
     );
 
 Map<String, dynamic> _$$UserDtoImplToJson(_$UserDtoImpl instance) =>
@@ -167,6 +170,49 @@ Map<String, dynamic> _$$UserDtoImplToJson(_$UserDtoImpl instance) =>
       'fullname': instance.fullName,
       'imageUrls': instance.imageUrls,
       'email': instance.email,
+      'departments': instance.departments,
+    };
+
+_$UserDepartmentDtoImpl _$$UserDepartmentDtoImplFromJson(
+        Map<String, dynamic> json) =>
+    _$UserDepartmentDtoImpl(
+      department: json['department'] == null
+          ? null
+          : DepartmentDto.fromJson(json['department'] as Map<String, dynamic>),
+      title: json['title'] == null
+          ? null
+          : TitleDto.fromJson(json['title'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$$UserDepartmentDtoImplToJson(
+        _$UserDepartmentDtoImpl instance) =>
+    <String, dynamic>{
+      'department': instance.department,
+      'title': instance.title,
+    };
+
+_$DepartmentDtoImpl _$$DepartmentDtoImplFromJson(Map<String, dynamic> json) =>
+    _$DepartmentDtoImpl(
+      id: json['id'] as String?,
+      name: json['name'] as String?,
+    );
+
+Map<String, dynamic> _$$DepartmentDtoImplToJson(_$DepartmentDtoImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+    };
+
+_$TitleDtoImpl _$$TitleDtoImplFromJson(Map<String, dynamic> json) =>
+    _$TitleDtoImpl(
+      id: json['id'] as String?,
+      name: json['name'] as String?,
+    );
+
+Map<String, dynamic> _$$TitleDtoImplToJson(_$TitleDtoImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
     };
 
 _$ChatListResponseDtoImpl _$$ChatListResponseDtoImplFromJson(

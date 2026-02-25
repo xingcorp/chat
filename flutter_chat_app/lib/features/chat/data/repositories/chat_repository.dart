@@ -222,8 +222,18 @@ class ChatRepositoryImpl implements IChatRepository {
         // If local chat exists AND has member list, use it.
         // Member list is required for header member count and @mention suggestions.
         if (localChat != null && localChat.members.isNotEmpty) {
-          _logger.d('Found chat locally');
-          return Right(localChat);
+          final hasCreateInfo =
+              (localChat.creatorName?.trim().isNotEmpty ?? false) ||
+                  localChat.createdAt != null;
+
+          if (hasCreateInfo) {
+            _logger.d('Found chat locally');
+            return Right(localChat);
+          }
+
+          // Local cache is missing group creation info needed for UI header.
+          // Fall through to remote fetch when possible.
+          _logger.d('Found chat locally but missing creator info; fetching remote');
         }
         
         // Check network connectivity
@@ -827,9 +837,36 @@ class ChatRepositoryImpl implements IChatRepository {
   Map<String, dynamic> getPerformanceMetrics() {
     return {
       'repository_operations': Map.from(_operationCounts),
-      'repository_times': _operationTimes.map((k, v) => MapEntry(k, v.inMilliseconds)),
-      'local_datasource_metrics': 'Available in datasource implementation',
-      'timestamp': DateTime.now().toIso8601String(),
+      'operation_times': _operationTimes.map((k, v) => MapEntry(k, '${v.inMilliseconds}ms')),
     };
+  }
+
+  /// **Get Conversation Members**
+  ///
+  /// Fetches detailed member list for a conversation with department, title, code.
+  /// Separate API call to avoid performance impact on conversation list.
+  @override
+  Future<Either<Failure, Chat>> getConversationMembers(String conversationId) async {
+    return _executeWithMonitoring('get_conversation_members', () async {
+      try {
+        _logger.i('Getting conversation members for: $conversationId');
+
+        // Check network connectivity
+        if (!await _networkInfo.isConnected) {
+          _logger.w('No internet connection');
+          return Left(NetworkFailure(message: 'No internet connection'));
+        }
+
+        // Fetch from remote
+        final chatDto = await _remoteDataSource.getConversationMembers(conversationId);
+        final chat = chatDto.toDomain();
+
+        _logger.d('Loaded ${chat.members.length} members for conversation ${chat.id}');
+        return Right(chat);
+      } catch (e) {
+        _logger.e('Failed to get conversation members: $e');
+        return Left(UnknownFailure(message: 'Failed to get conversation members: $e'));
+      }
+    });
   }
 }

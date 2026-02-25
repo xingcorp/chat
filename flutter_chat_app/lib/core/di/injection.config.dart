@@ -176,6 +176,7 @@ import '../utils/isolate_manager.dart' as _i686;
 import '../utils/logger.dart' as _i221;
 import '../utils/proto_converter.dart' as _i995;
 import '../utils/system_resources.dart' as _i260;
+import 'modules/external_module.dart' as _i649;
 
 const String _dev = 'dev';
 const String _prod = 'prod';
@@ -194,6 +195,7 @@ extension GetItInjectableX on _i174.GetIt {
       environment,
       environmentFilter,
     );
+    final externalModule = _$ExternalModule();
     gh.singleton<_i514.CacheSyncStrategy>(() => _i514.CacheSyncStrategy());
     gh.singleton<_i995.ProtoConverter>(() => _i995.ProtoConverter());
     gh.singleton<_i260.SystemResourceMonitor>(
@@ -201,6 +203,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i558.ResourceManagerService>(
         () => _i558.ResourceManagerService());
     gh.singleton<_i976.SocketIOEventMapper>(() => _i976.SocketIOEventMapper());
+    gh.singleton<_i974.Logger>(() => externalModule.logger);
     gh.lazySingleton<_i163.MediaCacheManager>(() => _i163.MediaCacheManager());
     gh.lazySingletonAsync<_i527.LocalStorageService>(
         () => _i527.LocalStorageService.init());
@@ -259,8 +262,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i745.AuthService(gh<_i328.TokenRepository>()));
     gh.singleton<_i803.MemoryOptimizer>(() => _i803.MemoryOptimizer(
         performanceMonitor: gh<_i610.IPerformanceMonitor>()));
-    gh.factory<_i1028.ChatMembersBloc>(
-        () => _i1028.ChatMembersBloc(logger: gh<_i974.Logger>()));
     gh.singleton<_i1005.ApiRequestTracker>(() => _i1005.ApiRequestTracker(
           gh<_i221.AppLogger>(),
           gh<_i451.IAnalyticsService>(),
@@ -621,6 +622,10 @@ extension GetItInjectableX on _i174.GetIt {
           networkInfo: gh<_i932.INetworkInfo>(),
           logger: gh<_i974.Logger>(),
         ));
+    gh.factory<_i1028.ChatMembersBloc>(() => _i1028.ChatMembersBloc(
+          logger: gh<_i974.Logger>(),
+          chatRepository: gh<_i81.IChatRepository>(),
+        ));
     gh.factory<_i787.GetConversationsUseCase>(
         () => _i787.GetConversationsUseCase(
               repository: gh<_i81.IChatRepository>(),
@@ -688,3 +693,5 @@ extension GetItInjectableX on _i174.GetIt {
     return this;
   }
 }
+
+class _$ExternalModule extends _i649.ExternalModule {}

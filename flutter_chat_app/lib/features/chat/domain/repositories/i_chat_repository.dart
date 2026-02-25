@@ -83,4 +83,10 @@ abstract class IChatRepository {
   /// Searches chats by name or content with enterprise performance optimization.
   /// Uses local-first strategy for instant results with optional remote search.
   Future<Either<Failure, List<Chat>>> searchChats(String searchTerm, {int limit = 20});
+
+  /// **Get Conversation Members**
+  ///
+  /// Fetches detailed member list for a conversation with department, title, code.
+  /// Separate API call to avoid performance impact on conversation list.
+  Future<Either<Failure, Chat>> getConversationMembers(String conversationId);
 }

@@ -5,18 +5,22 @@ import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_members/chat_members_event.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_members/chat_members_state.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
 
 /// BLoC cho ChatMembers operations
 /// TUÂN THỦ: PHẢI extend BaseBloc, KHÔNG extend Bloc trực tiếp
 @injectable
 class ChatMembersBloc extends BaseBloc<ChatMembersEvent, ChatMembersState> {
   final Logger _logger;
+  final IChatRepository _chatRepository;
   Chat? _currentChat;
   List<ConversationMember> _allMembers = [];
 
   ChatMembersBloc({
     required Logger logger,
+    required IChatRepository chatRepository,
   })  : _logger = logger,
+        _chatRepository = chatRepository,
         super(const ChatMembersInitial()) {
     // Register event handlers
     on<ChatMembersLoad>(_onLoadMembers);
@@ -38,7 +42,7 @@ class ChatMembersBloc extends BaseBloc<ChatMembersEvent, ChatMembersState> {
   /// Get current chat
   Chat? get currentChat => _currentChat;
 
-  /// Handler: Load members (initialize from chat)
+  /// Handler: Load members from API
   Future<void> _onLoadMembers(
     ChatMembersLoad event,
     Emitter<ChatMembersState> emit,
@@ -47,21 +51,27 @@ class ChatMembersBloc extends BaseBloc<ChatMembersEvent, ChatMembersState> {
 
     _logger.d('Loading members: chatId=${event.chatId}');
 
-    // If we have the chat data, use it
-    if (_currentChat != null && _currentChat!.id == event.chatId) {
-      _allMembers = List.from(_currentChat!.members);
-      final sortedMembers = _sortMembers(_allMembers, MembersSortType.adminFirst);
-      emit(ChatMembersLoaded(
-        members: _allMembers,
-        filteredMembers: sortedMembers,
-        sortType: MembersSortType.adminFirst,
-        creatorName: _currentChat!.creatorName,
-        createdAt: _currentChat!.createdAt,
-      ));
-    } else {
-      // TODO: Fetch from repository if not available
-      emit(const ChatMembersError(message: 'Chat data not available'));
-    }
+    // Fetch members from API
+    final result = await _chatRepository.getConversationMembers(event.chatId);
+
+    result.fold(
+      (failure) {
+        _logger.e('Failed to load members: ${failure.message}');
+        emit(ChatMembersError(message: failure.message));
+      },
+      (chat) {
+        _currentChat = chat;
+        _allMembers = List.from(chat.members);
+        final sortedMembers = _sortMembers(_allMembers, MembersSortType.adminFirst);
+        emit(ChatMembersLoaded(
+          members: _allMembers,
+          filteredMembers: sortedMembers,
+          sortType: MembersSortType.adminFirst,
+          creatorName: chat.creatorName,
+          createdAt: chat.createdAt,
+        ));
+      },
+    );
   }
 
   /// Handler: Search members

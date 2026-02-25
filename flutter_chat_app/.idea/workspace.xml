@@ -14,16 +14,16 @@
   <component name="ChangeListManager">
     <list default="true" id="8026571e-b988-47cf-8499-58ed8165a1be" name="Changes" comment="feat(gallery): add search, timeline grouping, and media preview to shared media gallery&#10;&#10;- **Search Functionality**:&#10;    - Integrated a search bar in the `SharedMediaGalleryPage` to filter photos, videos, files, and links by filename or URL.&#10;    - Added `TextEditingController` and search state management to handle real-time filtering across all tabs.&#10;- **Timeline Grouping**:&#10;    - Refactored media, file, and link lists to group items by date (e.g., Today, Yesterday, or specific dates).&#10;    - Implemented `_groupByTimeline` and `_getTimelineLabel` helpers to provide a structured, chronological view similar to standard messaging apps.&#10;- **Media Interaction &amp; Previews**:&#10;    - Integrated `ImageViewerScreen` for full-screen photo viewing with zoom support.&#10;    - Integrated `MediaViewer` for video playback within the gallery.&#10;    - Implemented external file and link opening using `url_launcher` with error handling via SnackBars.&#10;- **Localization**:&#10;    - Added extensive l10n strings for search placeholders, timeline headers (Today/Yesterday/Months), and error messages in both English and Vietnamese.&#10;- **UI/UX Improvements**:&#10;    - Updated `AppBar` to toggle between the title and search input.&#10;    - Added dynamic tab labels that reflect the count of filtered items.&#10;&#10;Files updated:&#10;- flutter_chat_app/lib/presentation/pages/shared_media_gallery_page.dart: Implemented search, timeline grouping, and preview logic.&#10;- flutter_chat_app/lib/l10n/app_en.arb &amp; app_vi.arb: Added new localized strings.&#10;- flutter_chat_app/lib/generated/l10n/*: Updated generated localization files.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/core/di/injection.config.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/core/di/injection.config.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/dtos/chat_dto.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/dtos/chat_dto.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/dtos/chat_dto.freezed.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/dtos/chat_dto.freezed.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/data/dtos/chat_dto.g.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/dtos/chat_dto.g.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/data/graphql/chat_operations.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/data/graphql/chat_operations.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_en.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/generated/l10n/app_localizations_vi.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/l10n/app_en.arb" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/app_en.arb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/l10n/app_vi.arb" beforeDir="false" afterPath="$PROJECT_DIR$/lib/l10n/app_vi.arb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/pages/shared_media_gallery_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/pages/shared_media_gallery_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat_info/chat_info_header.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat_info/chat_info_header.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/presentation/widgets/chat_info/chat_info_panel.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/widgets/chat_info/chat_info_panel.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/shared/domain/entities/chat.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/shared/domain/entities/chat.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/data/datasources/chat/chat_remote_datasource.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/data/datasources/chat/chat_remote_datasource.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/data/repositories/chat_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/data/repositories/chat_repository.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/domain/repositories/i_chat_repository.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/domain/repositories/i_chat_repository.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/features/chat/presentation/screens/chat/chat_header.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/features/chat/presentation/screens/chat/chat_header.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/presentation/blocs/chat_members/chat_members_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/presentation/blocs/chat_members/chat_members_bloc.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -123,6 +123,7 @@
   "keyToString": {
     "Flutter.main_web.executor": "Debug",
     "Flutter.main_web_prod.executor": "Debug",
+    "Flutter.main_web_stag.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
     "RunOnceActivity.git.unshallow": "true",
@@ -172,14 +173,13 @@
       <option name="filePath" value="$PROJECT_DIR$/lib/main.dart" />
       <method v="2" />
     </configuration>
-    <configuration name="main_web" type="FlutterRunConfigurationType" factoryName="Flutter">
-      <option name="additionalArgs" value="--web-hostname=localhost --dart-define=FLAVOR=staging --web-port=8080 --web-browser-flag &quot;--disable-web-security&quot;" />
-      <option name="buildFlavor" value="staging" />
+    <configuration name="main_web_prod" type="FlutterRunConfigurationType" factoryName="Flutter">
+      <option name="additionalArgs" value="--web-hostname=localhost --dart-define=FLAVOR=production --web-port=8080 --web-browser-flag &quot;--disable-web-security&quot;" />
       <option name="filePath" value="$PROJECT_DIR$/lib/main_web.dart" />
       <method v="2" />
     </configuration>
-    <configuration name="main_web_prod" type="FlutterRunConfigurationType" factoryName="Flutter">
-      <option name="additionalArgs" value="--web-hostname=localhost --dart-define=FLAVOR=production --web-port=8080 --web-browser-flag &quot;--disable-web-security&quot;" />
+    <configuration name="main_web_stag" type="FlutterRunConfigurationType" factoryName="Flutter">
+      <option name="additionalArgs" value="--web-hostname=localhost --dart-define=FLAVOR=staging --web-port=8080 --web-browser-flag &quot;--disable-web-security&quot;" />
       <option name="filePath" value="$PROJECT_DIR$/lib/main_web.dart" />
       <method v="2" />
     </configuration>
@@ -212,7 +212,7 @@
     </configuration>
     <list>
       <item itemvalue="Flutter.main.dart" />
-      <item itemvalue="Flutter.main_web" />
+      <item itemvalue="Flutter.main_web_stag" />
       <item itemvalue="Flutter.main_web_prod" />
     </list>
   </component>
@@ -227,14 +227,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743476027211</updated>
-    </task>
-    <task id="LOCAL-00064" summary="fix(core): improve Firebase initialization for web platform&#10;&#10;- Update `FirebaseConfigManager` to initialize Firebase without a named instance on web to prevent compatibility issues&#10;- Modify `FirebaseConfigManager.app` to return the default Firebase instance when running on web&#10;- Add conditional call to `FirebaseConfigManager.initialize()` within the dependency injection setup for web platforms&#10;- Ensure `FirebaseConfigManager` tracks initialization state via `isInitialized` check before re-initializing on web&#10;&#10;Files updated:&#10;- lib/core/di/injection.dart: Added web-specific Firebase initialization&#10;- lib/core/config/firebase_config.dart: Refactored initialization and app retrieval logic for web support">
-      <option name="closed" value="true" />
-      <created>1770286002511</created>
-      <option name="number" value="00064" />
-      <option name="presentableId" value="LOCAL-00064" />
-      <option name="project" value="LOCAL" />
-      <updated>1770286002511</updated>
     </task>
     <task id="LOCAL-00065" summary="fix(core): implement socket listener persistence and expand DI registrations&#10;&#10;- **SocketManager**: Implement deferred event listener registration to ensure listeners are attached even if the socket is not yet initialized or reconnects&#10;- **SocketManager**: Add `_SocketListenerRegistration` tracking to manage active listeners and cleanup on disposal&#10;- **DI/CoreModule**: Register additional core services including `AppCacheManager`, `DeviceCapabilityService`, and `SocketRateLimiter`&#10;- **DI/CoreModule**: Add lazy singleton registrations for `GraphQLClientWrapper`, `MessageLocalDataSource`, and `IMessageRemoteDataSource`&#10;- **DI/CoreModule**: Explicitly register `Isar` instance from `DatabaseService` into the dependency graph&#10;&#10;Files updated:&#10;- lib/core/network/socket_manager.dart: Added listener persistence logic&#10;- lib/core/di/modules/core_module.dart: Expanded service registrations for caching, data sources, and network utilities">
       <option name="closed" value="true" />
@@ -620,7 +612,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772006420156</updated>
     </task>
-    <option name="localTasksCounter" value="113" />
+    <task id="LOCAL-00113" summary="feat(gallery): add search, timeline grouping, and media preview to shared media gallery&#10;&#10;- **Search Functionality**:&#10;    - Integrated a search bar in the `SharedMediaGalleryPage` to filter photos, videos, files, and links by filename or URL.&#10;    - Added `TextEditingController` and search state management to handle real-time filtering across all tabs.&#10;- **Timeline Grouping**:&#10;    - Refactored media, file, and link lists to group items by date (e.g., Today, Yesterday, or specific dates).&#10;    - Implemented `_groupByTimeline` and `_getTimelineLabel` helpers to provide a structured, chronological view similar to standard messaging apps.&#10;- **Media Interaction &amp; Previews**:&#10;    - Integrated `ImageViewerScreen` for full-screen photo viewing with zoom support.&#10;    - Integrated `MediaViewer` for video playback within the gallery.&#10;    - Implemented external file and link opening using `url_launcher` with error handling via SnackBars.&#10;- **Localization**:&#10;    - Added extensive l10n strings for search placeholders, timeline headers (Today/Yesterday/Months), and error messages in both English and Vietnamese.&#10;- **UI/UX Improvements**:&#10;    - Updated `AppBar` to toggle between the title and search input.&#10;    - Added dynamic tab labels that reflect the count of filtered items.&#10;&#10;Files updated:&#10;- flutter_chat_app/lib/presentation/pages/shared_media_gallery_page.dart: Implemented search, timeline grouping, and preview logic.&#10;- flutter_chat_app/lib/l10n/app_en.arb &amp; app_vi.arb: Added new localized strings.&#10;- flutter_chat_app/lib/generated/l10n/*: Updated generated localization files.">
+      <option name="closed" value="true" />
+      <created>1772009641279</created>
+      <option name="number" value="00113" />
+      <option name="presentableId" value="LOCAL-00113" />
+      <option name="project" value="LOCAL" />
+      <updated>1772009641279</updated>
+    </task>
+    <option name="localTasksCounter" value="114" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

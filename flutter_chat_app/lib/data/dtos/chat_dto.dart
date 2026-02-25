@@ -5,6 +5,14 @@ import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 part 'chat_dto.freezed.dart';
 part 'chat_dto.g.dart';
 
+List<String> _stringListFromJson(dynamic value) {
+  if (value == null) return const [];
+  if (value is List) {
+    return value.whereType<String>().where((e) => e.trim().isNotEmpty).toList();
+  }
+  return const [];
+}
+
 LastMessageDto? _lastMessageFromJson(dynamic value) {
   if (value == null) return null;
   if (value is Map<String, dynamic>) return LastMessageDto.fromJson(value);
@@ -106,7 +114,7 @@ class LastMessageDto with _$LastMessageDto {
 class UserBriefDto with _$UserBriefDto {
   const factory UserBriefDto({
     required String id,
-    @JsonKey(name: 'fullname') required String fullName,
+    @JsonKey(name: 'fullname') String? fullName,
   }) = _UserBriefDto;
 
   factory UserBriefDto.fromJson(Map<String, dynamic> json) =>
@@ -117,7 +125,7 @@ class UserBriefDto with _$UserBriefDto {
 class MentionToDto with _$MentionToDto {
   const factory MentionToDto({
     required String id,
-    @JsonKey(name: 'fullname') required String fullName,
+    @JsonKey(name: 'fullname') String? fullName,
   }) = _MentionToDto;
 
   factory MentionToDto.fromJson(Map<String, dynamic> json) =>
@@ -142,8 +150,8 @@ class PersonalConversationDto with _$PersonalConversationDto {
 class CreatorDto with _$CreatorDto {
   const factory CreatorDto({
     required String id,
-    @JsonKey(name: 'fullname') required String fullName,
-    @Default([]) List<String> imageUrls,
+    @JsonKey(name: 'fullname') String? fullName,
+    @JsonKey(fromJson: _stringListFromJson) @Default([]) List<String> imageUrls,
   }) = _CreatorDto;
 
   factory CreatorDto.fromJson(Map<String, dynamic> json) =>
@@ -157,7 +165,7 @@ class CreatorDto with _$CreatorDto {
 class MemberDto with _$MemberDto {
   const factory MemberDto({
     required String id,
-    required String userId,
+    String? userId,
     @Default(false) bool admin,
     @Default(false) bool connected,
     @Default(false) bool hide,
@@ -178,13 +186,56 @@ class MemberDto with _$MemberDto {
 class UserDto with _$UserDto {
   const factory UserDto({
     required String id,
-    @JsonKey(name: 'fullname') required String fullName,
-    @Default([]) List<String> imageUrls,
+    @JsonKey(name: 'fullname') String? fullName,
+    @JsonKey(fromJson: _stringListFromJson) @Default([]) List<String> imageUrls,
     String? email,
+    @Default([]) List<UserDepartmentDto> departments,
   }) = _UserDto;
 
   factory UserDto.fromJson(Map<String, dynamic> json) =>
       _$UserDtoFromJson(json);
+}
+
+/// **User Department DTO**
+///
+/// Nested object in user response - represents user's department assignment
+@freezed
+class UserDepartmentDto with _$UserDepartmentDto {
+  const factory UserDepartmentDto({
+    DepartmentDto? department,
+    TitleDto? title,
+  }) = _UserDepartmentDto;
+
+  factory UserDepartmentDto.fromJson(Map<String, dynamic> json) =>
+      _$UserDepartmentDtoFromJson(json);
+}
+
+/// **Department DTO**
+///
+/// Department info (OfficeOrgChart)
+@freezed
+class DepartmentDto with _$DepartmentDto {
+  const factory DepartmentDto({
+    String? id,
+    String? name,
+  }) = _DepartmentDto;
+
+  factory DepartmentDto.fromJson(Map<String, dynamic> json) =>
+      _$DepartmentDtoFromJson(json);
+}
+
+/// **Title DTO**
+///
+/// Title/Position info (OfficeTitle)
+@freezed
+class TitleDto with _$TitleDto {
+  const factory TitleDto({
+    String? id,
+    String? name,
+  }) = _TitleDto;
+
+  factory TitleDto.fromJson(Map<String, dynamic> json) =>
+      _$TitleDtoFromJson(json);
 }
 
 /// **Chat List Response DTO**
@@ -212,10 +263,16 @@ extension ChatDtoMapper on ChatDto {
         .map(
           (m) => ConversationMember(
             id: m.id,
-            userId: m.userId,
+            userId: m.userId ?? m.user?.id ?? '',
             fullName: m.user?.fullName,
             avatarUrl: (m.user?.imageUrls.isNotEmpty ?? false)
                 ? m.user!.imageUrls.first
+                : null,
+            departmentName: m.user?.departments.isNotEmpty == true
+                ? m.user!.departments.first.department?.name
+                : null,
+            titleName: m.user?.departments.isNotEmpty == true
+                ? m.user!.departments.first.title?.name
                 : null,
             isAdmin: m.admin,
             isConnected: m.connected,
@@ -272,8 +329,14 @@ extension ChatDtoMapper on ChatDto {
       lastMessagePreview: resolvedPreview,
       unreadCount: personalConversation?.unreadCount ?? members.firstOrNull?.unreadCount ?? 0,
       type: _mapChatType(type),
-      participantIds: members.map((m) => m.userId).toList(),
+      participantIds: members
+          .map((m) => m.userId ?? m.user?.id)
+          .whereType<String>()
+          .where((id) => id.trim().isNotEmpty)
+          .toList(),
       members: domainMembers,
+      creatorName: creator?.fullName,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
     );
   }
   

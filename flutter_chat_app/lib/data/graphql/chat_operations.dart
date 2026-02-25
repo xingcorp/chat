@@ -30,6 +30,7 @@ class ChatQueries {
   ///   - type: String (optional, "Direct" | "Group")
   ///
   /// **Returns:** List of conversations with members and last message
+  /// Note: Members have minimal user info for performance. Use getConversationMembers for full details.
   static const String getConversationList = r'''
     query GetConversationList($filters: ChatConversationListFilter!) {
       chatConversationList(filters: $filters) {
@@ -79,11 +80,7 @@ class ChatQueries {
             user {
               id
               fullname
-              email
               imageUrls
-              departmentName
-              titleName
-              code
             }
           }
         }
@@ -146,6 +143,55 @@ class ChatQueries {
             departmentName
             titleName
             code
+          }
+        }
+      }
+    }
+  ''';
+
+  /// **Get Conversation Members**
+  ///
+  /// Fetches detailed member list for a specific conversation.
+  /// Separate API to avoid performance impact on conversation list.
+  ///
+  /// **Variables:**
+  /// - conversationId: String (required)
+  ///
+  /// **Returns:** Members with full user info including departments with title
+  static const String getConversationMembers = r'''
+    query GetConversationMembers($conversationId: String!) {
+      chatConversationDetail(conversationId: $conversationId) {
+        id
+        type
+        createdAt
+        creator {
+          id
+          fullname
+          imageUrls
+        }
+        members {
+          id
+          userId
+          admin
+          connected
+          hide
+          unreadCount
+          lastMessageReadId
+          user {
+            id
+            fullname
+            email
+            imageUrls
+            departments {
+              department {
+                id
+                name
+              }
+              title {
+                id
+                name
+              }
+            }
           }
         }
       }
