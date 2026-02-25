@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:intl/intl.dart';

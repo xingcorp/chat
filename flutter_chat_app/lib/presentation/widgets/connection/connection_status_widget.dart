@@ -9,6 +9,7 @@
 /// **Architecture:** Clean Architecture + Flutter Best Practices + Material Design 3
 
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -300,7 +301,7 @@ class ConnectionStatusWidget extends StatelessWidget {
 
       case ws.ConnectionState.reconnecting:
         return ConnectionStatusInfo(
-          title: 'Đang kết nối lại...',
+          title: context.l10n.reconnecting,
           subtitle: 'Đang thử khôi phục kết nối',
           icon: Icons.sync_rounded,
           color: Colors.orange,
@@ -310,7 +311,7 @@ class ConnectionStatusWidget extends StatelessWidget {
 
       case ws.ConnectionState.disconnected:
         return ConnectionStatusInfo(
-          title: 'Mất kết nối',
+          title: context.l10n.connectionLost,
           subtitle: 'Không thể kết nối đến server',
           icon: Icons.wifi_off_rounded,
           color: Colors.red,
@@ -350,7 +351,7 @@ class ConnectionStatusWidget extends StatelessWidget {
       case ws.ConnectionState.reconnecting:
         return 'Đang kết nối lại';
       case ws.ConnectionState.disconnected:
-        return 'Mất kết nối';
+        return context.l10n.connectionLost;
       case ws.ConnectionState.error:
         return 'Lỗi kết nối';
       case ws.ConnectionState.disposed:

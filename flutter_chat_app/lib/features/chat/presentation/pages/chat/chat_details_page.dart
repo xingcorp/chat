@@ -32,6 +32,7 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reply_p
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/typing_indicator.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_bloc.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_alert_dialog.dart';
@@ -40,6 +41,7 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/inputs/app_text_field.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
+import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_panel.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
@@ -490,6 +492,28 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     });
   }
 
+  void _showChatInfo() {
+    if (_chat == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => BlocProvider(
+        create: (_) => getIt<ChatInfoBloc>(),
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) => ChatInfoPanel(
+            chat: _chat!,
+            onClose: () => Navigator.of(context).pop(),
+          ),
+        ),
+      ),
+    );
+  }
+
   // ══════════════════════════════════════════
   // Media Handlers
   // ══════════════════════════════════════════
@@ -899,7 +923,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       return ChatHeader(
         chat: _chat!,
         onBackPressed: () => Navigator.of(context).pop(),
-        onInfoPressed: () {},
+        onInfoPressed: _showChatInfo,
       );
     }
 

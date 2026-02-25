@@ -104,7 +104,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String messageCount(int count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
-      
     );
     final String countString = countNumberFormat.format(count);
 
@@ -357,7 +356,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeToChat => 'Welcome to Flutter Chat App';
 
   @override
-  String get errorNoInternet => 'No internet connection. Please check your network.';
+  String get errorNoInternet =>
+      'No internet connection. Please check your network.';
 
   @override
   String get errorServer => 'Server error. Please try again later.';
@@ -366,7 +366,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorCache => 'Failed to load cached data.';
 
   @override
-  String get errorUnexpected => 'An unexpected error occurred. Please try again.';
+  String get errorUnexpected =>
+      'An unexpected error occurred. Please try again.';
 
   @override
   String get errorValidation => 'Invalid input. Please check your data.';
@@ -495,7 +496,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmLeaveGroup => 'Are you sure you want to leave this group?';
 
   @override
-  String get confirmDeleteConversation => 'Are you sure you want to delete this conversation?';
+  String get confirmDeleteConversation =>
+      'Are you sure you want to delete this conversation?';
 
   @override
   String get searchConversations => 'Search conversations...';
@@ -523,6 +525,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get removePhoto => 'Remove Photo';
+
+  @override
+  String get call => 'Call';
 
   @override
   String get camera => 'Camera';
@@ -582,7 +587,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messageCopied => 'Message copied to clipboard';
 
   @override
-  String get offlineMode => 'You are offline. Messages will be sent when you reconnect.';
+  String get offlineMode =>
+      'You are offline. Messages will be sent when you reconnect.';
 
   @override
   String get syncingMessages => 'Syncing messages...';
@@ -591,7 +597,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messageQueued => 'Message queued for sending';
 
   @override
-  String get operationQueued => 'Operation queued. Will be processed when online.';
+  String get operationQueued =>
+      'Operation queued. Will be processed when online.';
 
   @override
   String get backOnline => 'Back online. Syncing...';
@@ -672,7 +679,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noInternetConnection => 'No Internet Connection';
 
   @override
-  String get checkInternetConnection => 'Please check your internet connection and try again';
+  String get checkInternetConnection =>
+      'Please check your internet connection and try again';
 
   @override
   String get selectOption => 'Select an option';
@@ -723,7 +731,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String stars(int count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
-      
     );
     final String countString = countNumberFormat.format(count);
 
@@ -1058,7 +1065,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String selectedItems(int count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
-      
     );
     final String countString = countNumberFormat.format(count);
 
@@ -1112,7 +1118,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dropFilesHere => 'Drop files here';
 
   @override
-  String get dragDropOrClickToUpload => 'Drag & drop files here or click to browse';
+  String get dragDropOrClickToUpload =>
+      'Drag & drop files here or click to browse';
 
   @override
   String get maxFilesReached => 'Maximum number of files reached';
@@ -1411,4 +1418,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mentionUser => 'Mention user';
+
+  @override
+  String get chatInfo => 'Chat Info';
+
+  @override
+  String membersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count members',
+      one: '1 member',
+      zero: 'No members',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sharedMedia => 'Shared Media';
+
+  @override
+  String get photos => 'Photos';
+
+  @override
+  String get videos => 'Videos';
+
+  @override
+  String get files => 'Files';
+
+  @override
+  String get links => 'Links';
+
+  @override
+  String get viewAll => 'View All';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get muteFor => 'Mute for';
+
+  @override
+  String get oneHour => '1 hour';
+
+  @override
+  String get eightHours => '8 hours';
+
+  @override
+  String get oneDay => '1 day';
+
+  @override
+  String get forever => 'Forever';
+
+  @override
+  String get blockUser => 'Block User';
+
+  @override
+  String get unblockUser => 'Unblock User';
+
+  @override
+  String get reportChat => 'Report Chat';
+
+  @override
+  String get deleteChat => 'Delete Chat';
+
+  @override
+  String get noMediaYet => 'No media yet';
 }

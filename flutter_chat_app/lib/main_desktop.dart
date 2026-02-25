@@ -3,6 +3,7 @@ import 'dart:async';
 
 // Flutter imports
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 
 // Third-party package imports
 import 'package:flutter_dotenv/flutter_dotenv.dart';

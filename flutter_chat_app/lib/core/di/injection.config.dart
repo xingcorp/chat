@@ -19,6 +19,8 @@ import 'package:isar/isar.dart' as _i338;
 import 'package:logger/logger.dart' as _i974;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
+import '../../data/datasources/chat_info/chat_info_remote_datasource.dart'
+    as _i933;
 import '../../data/datasources/media/media_local_datasource.dart' as _i982;
 import '../../data/datasources/media/media_remote_datasource.dart' as _i966;
 import '../../data/datasources/message/message_local_datasource.dart' as _i75;
@@ -28,16 +30,26 @@ import '../../data/datasources/user/user_local_datasource.dart' as _i439;
 import '../../data/datasources/user/user_remote_datasource.dart' as _i404;
 import '../../data/mappers/socket_io_event_mapper.dart' as _i976;
 import '../../data/repositories/attachment_repository.dart' as _i431;
+import '../../data/repositories/chat_info_repository_impl.dart' as _i855;
 import '../../data/repositories/media_repository_impl.dart' as _i872;
 import '../../data/repositories/message_repository_impl.dart' as _i564;
 import '../../data/repositories/offline_first_repository.dart' as _i264;
 import '../../data/repositories/permissions_repository_impl.dart' as _i760;
 import '../../data/repositories/user_repository_impl.dart' as _i790;
 import '../../domain/repositories/i_attachment_repository.dart' as _i817;
+import '../../domain/repositories/i_chat_info_repository.dart' as _i282;
 import '../../domain/repositories/i_media_repository.dart' as _i394;
 import '../../domain/repositories/i_message_repository.dart' as _i572;
 import '../../domain/repositories/permissions_repository.dart' as _i473;
 import '../../domain/repositories/user_repository.dart' as _i271;
+import '../../domain/usecases/chat_info/block_user_usecase.dart' as _i735;
+import '../../domain/usecases/chat_info/get_notification_settings_usecase.dart'
+    as _i450;
+import '../../domain/usecases/chat_info/get_shared_media_usecase.dart' as _i436;
+import '../../domain/usecases/chat_info/report_chat_usecase.dart' as _i34;
+import '../../domain/usecases/chat_info/unblock_user_usecase.dart' as _i776;
+import '../../domain/usecases/chat_info/update_notification_settings_usecase.dart'
+    as _i939;
 import '../../domain/usecases/message/add_reaction_usecase.dart' as _i409;
 import '../../domain/usecases/message/delete_message_usecase.dart' as _i434;
 import '../../domain/usecases/message/edit_message_usecase.dart' as _i203;
@@ -79,6 +91,7 @@ import '../../features/chat/domain/usecases/chat/search_conversations_usecase.da
 import '../../features/chat/domain/usecases/chat/update_group_usecase.dart'
     as _i277;
 import '../../features/chat/presentation/blocs/chat/chat_bloc.dart' as _i863;
+import '../../presentation/blocs/chat_info/chat_info_bloc.dart' as _i915;
 import '../../presentation/blocs/connection/connection_bloc.dart' as _i81;
 import '../../presentation/blocs/locale/locale_cubit.dart' as _i128;
 import '../../presentation/blocs/media/media_bloc.dart' as _i921;
@@ -133,6 +146,7 @@ import '../services/background_sync_service.dart' as _i200;
 import '../services/chat_message_service.dart' as _i1060;
 import '../services/connectivity_analyzer_service.dart' as _i286;
 import '../services/connectivity_service.dart' as _i47;
+import '../services/cross_platform_file_service.dart' as _i590;
 import '../services/current_user_provider.dart' as _i113;
 import '../services/database_service.dart' as _i665;
 import '../services/device_capability_service.dart' as _i98;
@@ -189,6 +203,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i163.MediaCacheManager>(() => _i163.MediaCacheManager());
     gh.lazySingleton<_i200.BackgroundSyncService>(
         () => _i200.BackgroundSyncService());
+    gh.lazySingleton<_i590.CrossPlatformFileService>(
+        () => _i590.CrossPlatformFileService());
     gh.lazySingletonAsync<_i527.LocalStorageService>(
         () => _i527.LocalStorageService.init());
     gh.lazySingleton<_i695.MediaProcessingServiceFactory>(
@@ -432,6 +448,8 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i788.GraphQLClientWrapper>(),
               gh<_i328.TokenRepository>(),
             ));
+    gh.lazySingleton<_i933.IChatInfoRemoteDataSource>(
+        () => _i933.ChatInfoRemoteDataSource(gh<_i557.ApiClient>()));
     gh.factory<_i473.PermissionsRepository>(
         () => _i760.PermissionsRepositoryImpl(
               gh<_i656.PermissionsDataSource>(),
@@ -512,6 +530,11 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i706.RealtimeMessagingService>(),
               gh<_i976.SocketIOEventMapper>(),
             ));
+    gh.lazySingleton<_i282.IChatInfoRepository>(
+        () => _i855.ChatInfoRepositoryImpl(
+              remoteDataSource: gh<_i933.IChatInfoRemoteDataSource>(),
+              logger: gh<_i974.Logger>(),
+            ));
     gh.lazySingletonAsync<_i556.MessageQueueService>(
         () async => _i556.MessageQueueService(
               gh<_i572.IMessageRepository>(),
@@ -520,6 +543,19 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i287.IRealtimeConnectionService>(),
               await getAsync<_i567.AttachmentQueueService>(),
             ));
+    gh.factory<_i735.BlockUserUseCase>(
+        () => _i735.BlockUserUseCase(gh<_i282.IChatInfoRepository>()));
+    gh.factory<_i450.GetNotificationSettingsUseCase>(() =>
+        _i450.GetNotificationSettingsUseCase(gh<_i282.IChatInfoRepository>()));
+    gh.factory<_i436.GetSharedMediaUseCase>(
+        () => _i436.GetSharedMediaUseCase(gh<_i282.IChatInfoRepository>()));
+    gh.factory<_i34.ReportChatUseCase>(
+        () => _i34.ReportChatUseCase(gh<_i282.IChatInfoRepository>()));
+    gh.factory<_i776.UnblockUserUseCase>(
+        () => _i776.UnblockUserUseCase(gh<_i282.IChatInfoRepository>()));
+    gh.factory<_i939.UpdateNotificationSettingsUseCase>(() =>
+        _i939.UpdateNotificationSettingsUseCase(
+            gh<_i282.IChatInfoRepository>()));
     gh.lazySingleton<_i351.IChatRemoteDataSource>(
         () => _i351.ChatRemoteDataSourceImpl(
               gh<_i788.GraphQLClientWrapper>(),
@@ -568,6 +604,18 @@ extension GetItInjectableX on _i174.GetIt {
           localDataSource: gh<_i1011.ChatLocalDataSource>(),
           remoteDataSource: gh<_i351.IChatRemoteDataSource>(),
           networkInfo: gh<_i932.INetworkInfo>(),
+          logger: gh<_i974.Logger>(),
+        ));
+    gh.factory<_i915.ChatInfoBloc>(() => _i915.ChatInfoBloc(
+          getSharedMediaUseCase: gh<_i436.GetSharedMediaUseCase>(),
+          getNotificationSettingsUseCase:
+              gh<_i450.GetNotificationSettingsUseCase>(),
+          updateNotificationSettingsUseCase:
+              gh<_i939.UpdateNotificationSettingsUseCase>(),
+          blockUserUseCase: gh<_i735.BlockUserUseCase>(),
+          unblockUserUseCase: gh<_i776.UnblockUserUseCase>(),
+          reportChatUseCase: gh<_i34.ReportChatUseCase>(),
+          repository: gh<_i282.IChatInfoRepository>(),
           logger: gh<_i974.Logger>(),
         ));
     gh.factory<_i224.CreateGroupUseCase>(() => _i224.CreateGroupUseCase(

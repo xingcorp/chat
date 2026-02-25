@@ -582,5 +582,125 @@
   "noUsers": "Không có người dùng",
   "@noUsers": {
     "description": "Message when there are no users to display"
+  },
+
+  "chatInfo": "Thông tin chat",
+  "@chatInfo": {
+    "description": "Title for chat information panel"
+  },
+
+  "membersCount": "{count, plural, =0{Không có thành viên} =1{1 thành viên} other{{count} thành viên}}",
+  "@membersCount": {
+    "description": "Number of members in a group chat",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "unknownUser": "Người dùng không xác định",
+  "@unknownUser": {
+    "description": "Placeholder for unknown user name"
+  },
+
+  "sharedMedia": "Media đã chia sẻ",
+  "@sharedMedia": {
+    "description": "Section title for shared media"
+  },
+
+  "photos": "Ảnh",
+  "@photos": {
+    "description": "Tab for photo media type"
+  },
+
+  "videos": "Video",
+  "@videos": {
+    "description": "Tab for video media type"
+  },
+
+  "files": "Tệp",
+  "@files": {
+    "description": "Tab for file media type"
+  },
+
+  "links": "Liên kết",
+  "@links": {
+    "description": "Tab for link media type"
+  },
+
+  "viewAll": "Xem tất cả",
+  "@viewAll": {
+    "description": "Button to view all items"
+  },
+
+  "settings": "Cài đặt",
+  "@settings": {
+    "description": "Settings section title"
+  },
+
+  "notifications": "Thông báo",
+  "@notifications": {
+    "description": "Notifications settings"
+  },
+
+  "muteNotifications": "Tắt thông báo",
+  "@muteNotifications": {
+    "description": "Option to mute notifications"
+  },
+
+  "muteFor": "Tắt trong",
+  "@muteFor": {
+    "description": "Prompt to select mute duration"
+  },
+
+  "oneHour": "1 giờ",
+  "@oneHour": {
+    "description": "Mute duration option"
+  },
+
+  "eightHours": "8 giờ",
+  "@eightHours": {
+    "description": "Mute duration option"
+  },
+
+  "oneDay": "1 ngày",
+  "@oneDay": {
+    "description": "Mute duration option"
+  },
+
+  "forever": "Vĩnh viễn",
+  "@forever": {
+    "description": "Mute duration option"
+  },
+
+  "blockUser": "Chặn người dùng",
+  "@blockUser": {
+    "description": "Option to block a user"
+  },
+
+  "unblockUser": "Bỏ chặn người dùng",
+  "@unblockUser": {
+    "description": "Option to unblock a user"
+  },
+
+  "reportChat": "Báo cáo chat",
+  "@reportChat": {
+    "description": "Option to report a chat"
+  },
+
+  "leaveGroup": "Rời nhóm",
+  "@leaveGroup": {
+    "description": "Option to leave a group chat"
+  },
+
+  "deleteChat": "Xóa chat",
+  "@deleteChat": {
+    "description": "Option to delete a chat"
+  },
+
+  "noMediaYet": "Chưa có media",
+  "@noMediaYet": {
+    "description": "Message when there is no shared media"
   }
 }

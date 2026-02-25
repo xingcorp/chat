@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/core/services/date_formatter_service.dart';
 
 /// Widget hiển thị ngày phân cách giữa các nhóm tin nhắn

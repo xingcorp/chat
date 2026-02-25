@@ -312,20 +312,25 @@ class PerformanceService {
     // Remove old overlay if exists
     _overlayEntry?.remove();
     _overlayEntry = null;
-    
+
     // Create new overlay if needed
     if (_showPerformanceOverlay) {
       // Get BuildContext from current navigator
       final context = WidgetsBinding.instance.focusManager.primaryFocus?.context;
       if (context == null) return;
-      
+
       final overlay = Overlay.of(context);
       if (overlay == null) return;
-      
+
       _overlayEntry = OverlayEntry(
-        builder: (context) => PerformanceOverlayWidget(observer: _performanceObserver),
+        builder: (context) => PerformanceOverlayWidget(
+          observer: _performanceObserver,
+          onClose: () {
+            showPerformanceOverlay = false;
+          },
+        ),
       );
-      
+
       overlay.insert(_overlayEntry!);
     }
   }
@@ -588,10 +593,17 @@ class PerformanceService {
 class PerformanceOverlayWidget extends StatefulWidget {
   /// Performance observer
   final PerformanceObserver observer;
-  
+
+  /// Callback when close button is pressed
+  final VoidCallback? onClose;
+
   /// Constructor
-  const PerformanceOverlayWidget({Key? key, required this.observer}) : super(key: key);
-  
+  const PerformanceOverlayWidget({
+    Key? key,
+    required this.observer,
+    this.onClose,
+  }) : super(key: key);
+
   @override
   State<PerformanceOverlayWidget> createState() => _PerformanceOverlayWidgetState();
 }
@@ -599,13 +611,22 @@ class PerformanceOverlayWidget extends StatefulWidget {
 class _PerformanceOverlayWidgetState extends State<PerformanceOverlayWidget> {
   /// Current performance stats
   PerformanceStats _stats = PerformanceStats.empty();
-  
+
   /// FPS history (growable list for add/remove operations)
   final List<double> _fpsHistory = List.filled(30, 60, growable: true);
 
   /// Memory usage history (growable list for add/remove operations)
   final List<double> _memoryHistory = List.filled(30, 0, growable: true);
-  
+
+  /// Current position offset for dragging
+  Offset _offset = Offset.zero;
+
+  /// Whether the widget has been initialized with position
+  bool _initialized = false;
+
+  /// Whether the overlay is expanded or minimized
+  bool _isExpanded = true;
+
   @override
   void initState() {
     super.initState();
@@ -613,68 +634,167 @@ class _PerformanceOverlayWidgetState extends State<PerformanceOverlayWidget> {
       if (mounted) {
         setState(() {
           _stats = stats;
-          
+
           // Update history
           _fpsHistory.removeAt(0);
           _fpsHistory.add(stats.fps);
-          
+
           _memoryHistory.removeAt(0);
           _memoryHistory.add(stats.memory.memoryUsagePercent);
         });
       }
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final safeAreaTop = MediaQuery.of(context).padding.top;
+
+    // Initialize position to top-right corner on first build
+    if (!_initialized) {
+      _offset = Offset(screenSize.width - 60, safeAreaTop + 10);
+      _initialized = true;
+    }
+
     return Positioned(
-      top: MediaQuery.of(context).padding.top + 10,
-      right: 0,
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.7),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(8),
-              bottomLeft: Radius.circular(8),
-            ),
-          ),
-          padding: const EdgeInsets.all(8),
-          width: 200,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildPerformanceInfo('FPS', '${_stats.fps.toStringAsFixed(1)}', 
-                _stats.isLowFps ? Colors.red : Colors.green),
-              const SizedBox(height: 4),
-              _buildMiniGraph(_fpsHistory, 60, 0, Colors.green),
-              const SizedBox(height: 8),
-              
-              _buildPerformanceInfo('Memory', 
-                '${_stats.memory.memoryUsagePercent.toStringAsFixed(1)}%', 
-                _stats.isHighMemory ? Colors.red : Colors.green),
-              const SizedBox(height: 4),
-              _buildMiniGraph(_memoryHistory, 100, 0, 
-                _stats.isHighMemory ? Colors.red : Colors.green),
-              const SizedBox(height: 8),
-              
-              Text(
-                'Used: ${_stats.memory.formatMemory(_stats.memory.appMemoryBytes)}',
-                style: const TextStyle(color: Colors.white, fontSize: 10),
+      left: _offset.dx,
+      top: _offset.dy,
+      child: GestureDetector(
+        onPanUpdate: (details) {
+          setState(() {
+            final widgetWidth = _isExpanded ? 200.0 : 48.0;
+            _offset = Offset(
+              (_offset.dx + details.delta.dx).clamp(0, screenSize.width - widgetWidth),
+              (_offset.dy + details.delta.dy).clamp(safeAreaTop, screenSize.height - 100),
+            );
+          });
+        },
+        child: Material(
+          color: Colors.transparent,
+          child: _isExpanded ? _buildExpandedOverlay() : _buildMinimizedOverlay(),
+        ),
+      ),
+    );
+  }
+
+  /// Build minimized overlay (just an icon)
+  Widget _buildMinimizedOverlay() {
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _isExpanded = true;
+        });
+      },
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.7),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.speed, color: Colors.white, size: 18),
+            Text(
+              '${_stats.fps.toStringAsFixed(0)}',
+              style: TextStyle(
+                color: _stats.isLowFps ? Colors.red : Colors.green,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
               ),
-              
-              Text(
-                'Build: ${_stats.buildTime.inMilliseconds}ms',
-                style: TextStyle(
-                  color: _stats.isSlowBuild ? Colors.red : Colors.white, 
-                  fontSize: 10
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build expanded overlay with full details
+  Widget _buildExpandedOverlay() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(8),
+      width: 200,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header with drag handle and minimize button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.drag_indicator, color: Colors.white54, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'Performance',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _isExpanded = false;
+                  });
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.remove,
+                    color: Colors.white,
+                    size: 14,
+                  ),
                 ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 6),
+
+          _buildPerformanceInfo('FPS', '${_stats.fps.toStringAsFixed(1)}',
+            _stats.isLowFps ? Colors.red : Colors.green),
+          const SizedBox(height: 4),
+          _buildMiniGraph(_fpsHistory, 60, 0, Colors.green),
+          const SizedBox(height: 8),
+
+          _buildPerformanceInfo('Memory',
+            '${_stats.memory.memoryUsagePercent.toStringAsFixed(1)}%',
+            _stats.isHighMemory ? Colors.red : Colors.green),
+          const SizedBox(height: 4),
+          _buildMiniGraph(_memoryHistory, 100, 0,
+            _stats.isHighMemory ? Colors.red : Colors.green),
+          const SizedBox(height: 8),
+
+          Text(
+            'Used: ${_stats.memory.formatMemory(_stats.memory.appMemoryBytes)}',
+            style: const TextStyle(color: Colors.white, fontSize: 10),
+          ),
+
+          Text(
+            'Build: ${_stats.buildTime.inMilliseconds}ms',
+            style: TextStyle(
+              color: _stats.isSlowBuild ? Colors.red : Colors.white,
+              fontSize: 10
+            ),
+          ),
+        ],
       ),
     );
   }

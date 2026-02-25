@@ -9,6 +9,7 @@
 /// **Architecture:** Clean Architecture + Reusability Patterns
 
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/core/constants/app_dimensions.dart';
 
 /// **REUSABLE WIDGET MIXINS**

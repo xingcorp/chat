@@ -2539,5 +2539,125 @@
   "noUsers": "No users",
   "@noUsers": {
     "description": "Message when there are no users to display"
+  },
+
+  "chatInfo": "Chat Info",
+  "@chatInfo": {
+    "description": "Title for chat information panel"
+  },
+
+  "membersCount": "{count, plural, =0{No members} =1{1 member} other{{count} members}}",
+  "@membersCount": {
+    "description": "Number of members in a group chat",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "unknownUser": "Unknown User",
+  "@unknownUser": {
+    "description": "Placeholder for unknown user name"
+  },
+
+  "sharedMedia": "Shared Media",
+  "@sharedMedia": {
+    "description": "Section title for shared media"
+  },
+
+  "photos": "Photos",
+  "@photos": {
+    "description": "Tab for photo media type"
+  },
+
+  "videos": "Videos",
+  "@videos": {
+    "description": "Tab for video media type"
+  },
+
+  "files": "Files",
+  "@files": {
+    "description": "Tab for file media type"
+  },
+
+  "links": "Links",
+  "@links": {
+    "description": "Tab for link media type"
+  },
+
+  "viewAll": "View All",
+  "@viewAll": {
+    "description": "Button to view all items"
+  },
+
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings section title"
+  },
+
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Notifications settings"
+  },
+
+  "muteNotifications": "Mute Notifications",
+  "@muteNotifications": {
+    "description": "Option to mute notifications"
+  },
+
+  "muteFor": "Mute for",
+  "@muteFor": {
+    "description": "Prompt to select mute duration"
+  },
+
+  "oneHour": "1 hour",
+  "@oneHour": {
+    "description": "Mute duration option"
+  },
+
+  "eightHours": "8 hours",
+  "@eightHours": {
+    "description": "Mute duration option"
+  },
+
+  "oneDay": "1 day",
+  "@oneDay": {
+    "description": "Mute duration option"
+  },
+
+  "forever": "Forever",
+  "@forever": {
+    "description": "Mute duration option"
+  },
+
+  "blockUser": "Block User",
+  "@blockUser": {
+    "description": "Option to block a user"
+  },
+
+  "unblockUser": "Unblock User",
+  "@unblockUser": {
+    "description": "Option to unblock a user"
+  },
+
+  "reportChat": "Report Chat",
+  "@reportChat": {
+    "description": "Option to report a chat"
+  },
+
+  "leaveGroup": "Leave Group",
+  "@leaveGroup": {
+    "description": "Option to leave a group chat"
+  },
+
+  "deleteChat": "Delete Chat",
+  "@deleteChat": {
+    "description": "Option to delete a chat"
+  },
+
+  "noMediaYet": "No media yet",
+  "@noMediaYet": {
+    "description": "Message when there is no shared media"
   }
 }

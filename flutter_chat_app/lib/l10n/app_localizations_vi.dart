@@ -104,7 +104,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String messageCount(int count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
-      
     );
     final String countString = countNumberFormat.format(count);
 
@@ -357,7 +356,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get welcomeToChat => 'Chào mừng đến với Flutter Chat App';
 
   @override
-  String get errorNoInternet => 'Không có kết nối internet. Vui lòng kiểm tra mạng của bạn.';
+  String get errorNoInternet =>
+      'Không có kết nối internet. Vui lòng kiểm tra mạng của bạn.';
 
   @override
   String get errorServer => 'Lỗi máy chủ. Vui lòng thử lại sau.';
@@ -366,7 +366,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get errorCache => 'Không thể tải dữ liệu đã lưu.';
 
   @override
-  String get errorUnexpected => 'Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.';
+  String get errorUnexpected =>
+      'Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.';
 
   @override
   String get errorValidation => 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
@@ -393,7 +394,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get leavingConversation => 'Đang rời khỏi cuộc trò chuyện...';
 
   @override
-  String get noConversations => 'Chưa có cuộc trò chuyện. Bắt đầu trò chuyện mới!';
+  String get noConversations =>
+      'Chưa có cuộc trò chuyện. Bắt đầu trò chuyện mới!';
 
   @override
   String get noMessagesInChat => 'Chưa có tin nhắn. Gửi tin nhắn đầu tiên!';
@@ -495,7 +497,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get confirmLeaveGroup => 'Bạn có chắc chắn muốn rời khỏi nhóm này?';
 
   @override
-  String get confirmDeleteConversation => 'Bạn có chắc chắn muốn xóa cuộc trò chuyện này?';
+  String get confirmDeleteConversation =>
+      'Bạn có chắc chắn muốn xóa cuộc trò chuyện này?';
 
   @override
   String get searchConversations => 'Tìm kiếm cuộc trò chuyện...';
@@ -523,6 +526,9 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get removePhoto => 'Xóa ảnh';
+
+  @override
+  String get call => 'Gọi';
 
   @override
   String get camera => 'Máy ảnh';
@@ -582,7 +588,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get messageCopied => 'Đã sao chép tin nhắn vào clipboard';
 
   @override
-  String get offlineMode => 'Bạn đang ngoại tuyến. Tin nhắn sẽ được gửi khi kết nối lại.';
+  String get offlineMode =>
+      'Bạn đang ngoại tuyến. Tin nhắn sẽ được gửi khi kết nối lại.';
 
   @override
   String get syncingMessages => 'Đang đồng bộ tin nhắn...';
@@ -591,7 +598,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get messageQueued => 'Tin nhắn đã được xếp hàng để gửi';
 
   @override
-  String get operationQueued => 'Thao tác đã được xếp hàng. Sẽ xử lý khi có kết nối.';
+  String get operationQueued =>
+      'Thao tác đã được xếp hàng. Sẽ xử lý khi có kết nối.';
 
   @override
   String get backOnline => 'Đã kết nối lại. Đang đồng bộ...';
@@ -672,7 +680,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get noInternetConnection => 'Không có kết nối Internet';
 
   @override
-  String get checkInternetConnection => 'Vui lòng kiểm tra kết nối internet và thử lại';
+  String get checkInternetConnection =>
+      'Vui lòng kiểm tra kết nối internet và thử lại';
 
   @override
   String get selectOption => 'Chọn một tùy chọn';
@@ -723,7 +732,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String stars(int count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
-      
     );
     final String countString = countNumberFormat.format(count);
 
@@ -1058,7 +1066,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String selectedItems(int count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
-      
     );
     final String countString = countNumberFormat.format(count);
 
@@ -1112,7 +1119,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get dropFilesHere => 'Thả tệp vào đây';
 
   @override
-  String get dragDropOrClickToUpload => 'Kéo & thả tệp vào đây hoặc nhấp để chọn';
+  String get dragDropOrClickToUpload =>
+      'Kéo & thả tệp vào đây hoặc nhấp để chọn';
 
   @override
   String get maxFilesReached => 'Đã đạt số lượng tệp tối đa';
@@ -1411,4 +1419,70 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get mentionUser => 'Nhắc đến người dùng';
+
+  @override
+  String get chatInfo => 'Thông tin chat';
+
+  @override
+  String membersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count thành viên',
+      one: '1 thành viên',
+      zero: 'Không có thành viên',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sharedMedia => 'Media đã chia sẻ';
+
+  @override
+  String get photos => 'Ảnh';
+
+  @override
+  String get videos => 'Video';
+
+  @override
+  String get files => 'Tệp';
+
+  @override
+  String get links => 'Liên kết';
+
+  @override
+  String get viewAll => 'Xem tất cả';
+
+  @override
+  String get notifications => 'Thông báo';
+
+  @override
+  String get muteFor => 'Tắt trong';
+
+  @override
+  String get oneHour => '1 giờ';
+
+  @override
+  String get eightHours => '8 giờ';
+
+  @override
+  String get oneDay => '1 ngày';
+
+  @override
+  String get forever => 'Vĩnh viễn';
+
+  @override
+  String get blockUser => 'Chặn người dùng';
+
+  @override
+  String get unblockUser => 'Bỏ chặn người dùng';
+
+  @override
+  String get reportChat => 'Báo cáo chat';
+
+  @override
+  String get deleteChat => 'Xóa chat';
+
+  @override
+  String get noMediaYet => 'Chưa có media';
 }

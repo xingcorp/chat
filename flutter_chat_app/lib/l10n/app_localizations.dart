@@ -62,7 +62,8 @@ import 'app_localizations_vi.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale)
+      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -70,7 +71,8 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -82,7 +84,8 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
     delegate,
     GlobalMaterialLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
@@ -635,7 +638,7 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get search;
 
-  /// Mute notifications option
+  /// Option to mute notifications
   ///
   /// In en, this message translates to:
   /// **'Mute Notifications'**
@@ -935,7 +938,7 @@ abstract class AppLocalizations {
   /// **'Admin'**
   String get admin;
 
-  /// Button text to leave a group
+  /// Option to leave a group chat
   ///
   /// In en, this message translates to:
   /// **'Leave Group'**
@@ -1072,6 +1075,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove Photo'**
   String get removePhoto;
+
+  /// Call button text for phone action
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get call;
 
   /// Camera option
   ///
@@ -2567,7 +2576,7 @@ abstract class AppLocalizations {
   /// **'{days}d'**
   String daysAgo(int days);
 
-  /// Fallback name for unknown users
+  /// Placeholder for unknown user name
   ///
   /// In en, this message translates to:
   /// **'Unknown User'**
@@ -2626,9 +2635,124 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mention user'**
   String get mentionUser;
+
+  /// Title for chat information panel
+  ///
+  /// In en, this message translates to:
+  /// **'Chat Info'**
+  String get chatInfo;
+
+  /// Number of members in a group chat
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No members} =1{1 member} other{{count} members}}'**
+  String membersCount(int count);
+
+  /// Section title for shared media
+  ///
+  /// In en, this message translates to:
+  /// **'Shared Media'**
+  String get sharedMedia;
+
+  /// Tab for photo media type
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get photos;
+
+  /// Tab for video media type
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get videos;
+
+  /// Tab for file media type
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get files;
+
+  /// Tab for link media type
+  ///
+  /// In en, this message translates to:
+  /// **'Links'**
+  String get links;
+
+  /// Button to view all items
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get viewAll;
+
+  /// Notifications settings
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// Prompt to select mute duration
+  ///
+  /// In en, this message translates to:
+  /// **'Mute for'**
+  String get muteFor;
+
+  /// Mute duration option
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour'**
+  String get oneHour;
+
+  /// Mute duration option
+  ///
+  /// In en, this message translates to:
+  /// **'8 hours'**
+  String get eightHours;
+
+  /// Mute duration option
+  ///
+  /// In en, this message translates to:
+  /// **'1 day'**
+  String get oneDay;
+
+  /// Mute duration option
+  ///
+  /// In en, this message translates to:
+  /// **'Forever'**
+  String get forever;
+
+  /// Option to block a user
+  ///
+  /// In en, this message translates to:
+  /// **'Block User'**
+  String get blockUser;
+
+  /// Option to unblock a user
+  ///
+  /// In en, this message translates to:
+  /// **'Unblock User'**
+  String get unblockUser;
+
+  /// Option to report a chat
+  ///
+  /// In en, this message translates to:
+  /// **'Report Chat'**
+  String get reportChat;
+
+  /// Option to delete a chat
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Chat'**
+  String get deleteChat;
+
+  /// Message when there is no shared media
+  ///
+  /// In en, this message translates to:
+  /// **'No media yet'**
+  String get noMediaYet;
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -2637,25 +2761,25 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'vi'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['en', 'vi'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
-
-
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en': return AppLocalizationsEn();
-    case 'vi': return AppLocalizationsVi();
+    case 'en':
+      return AppLocalizationsEn();
+    case 'vi':
+      return AppLocalizationsVi();
   }
 
   throw FlutterError(
-    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-    'an issue with the localizations generation tool. Please file an issue '
-    'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.'
-  );
+      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+      'an issue with the localizations generation tool. Please file an issue '
+      'on GitHub with a reproducible sample app and the gen-l10n configuration '
+      'that was used.');
 }
