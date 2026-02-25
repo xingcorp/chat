@@ -248,7 +248,7 @@ abstract class AppLocalizations {
   /// **'Show less'**
   String get showLess;
 
-  /// Yesterday text
+  /// Timeline group for yesterday
   ///
   /// In en, this message translates to:
   /// **'Yesterday'**
@@ -260,7 +260,7 @@ abstract class AppLocalizations {
   /// **'Sent at {time}'**
   String sentAt(String time);
 
-  /// Today text
+  /// Timeline group for today
   ///
   /// In en, this message translates to:
   /// **'Today'**
@@ -2707,6 +2707,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'FILE'**
   String get fileExtensionDefault;
+
+  /// Search placeholder for media gallery
+  ///
+  /// In en, this message translates to:
+  /// **'Search media...'**
+  String get searchMedia;
+
+  /// Timeline group for this week
+  ///
+  /// In en, this message translates to:
+  /// **'This Week'**
+  String get thisWeek;
+
+  /// Timeline group for this month
+  ///
+  /// In en, this message translates to:
+  /// **'This Month'**
+  String get thisMonth;
+
+  /// Timeline group for older items
+  ///
+  /// In en, this message translates to:
+  /// **'Older'**
+  String get older;
+
+  /// Date format for day and month (e.g., 15 Feb)
+  ///
+  /// In en, this message translates to:
+  /// **'{day} {monthName}'**
+  String dateFormatDayMonth(int day, String monthName);
+
+  /// Short month name
+  ///
+  /// In en, this message translates to:
+  /// **'Jan'**
+  String get monthJanuary;
+
+  /// Short month name
+  ///
+  /// In en, this message translates to:
+  /// **'Feb'**
+  String get monthFebruary;
+
+  /// Short month name
+  ///
+  /// In en, this message translates to:
+  /// **'Mar'**
+  String get monthMarch;
+
+  /// Short month name
+  ///
+  /// In en, this message translates to:
+  /// **'Apr'**
+  String get monthApril;
+
+  /// Short month name
+  ///
+  /// In en, this message translates to:
+  /// **'May'**
+  String get monthMay;
+
+  /// Short month name
+  ///
+  /// In en, this message translates to:
+  /// **'Jun'**
+  String get monthJune;
+
+  /// Short month name
+  ///
+  /// In en, this message translates to:
+  /// **'Jul'**
+  String get monthJuly;
+
+  /// Short month name
+  ///
+  /// In en, this message translates to:
+  /// **'Aug'**
+  String get monthAugust;
+
+  /// Short month name
+  ///
+  /// In en, this message translates to:
+  /// **'Sep'**
+  String get monthSeptember;
+
+  /// Short month name
+  ///
+  /// In en, this message translates to:
+  /// **'Oct'**
+  String get monthOctober;
+
+  /// Short month name
+  ///
+  /// In en, this message translates to:
+  /// **'Nov'**
+  String get monthNovember;
+
+  /// Short month name
+  ///
+  /// In en, this message translates to:
+  /// **'Dec'**
+  String get monthDecember;
+
+  /// Error message when file cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot open this file'**
+  String get errorOpeningFile;
+
+  /// Error message when link cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot open this link'**
+  String get errorOpeningLink;
 
   /// Button to view all items
   ///

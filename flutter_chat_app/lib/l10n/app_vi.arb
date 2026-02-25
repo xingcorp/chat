@@ -646,6 +646,86 @@
     "description": "Default file extension when unknown"
   },
 
+  "searchMedia": "Tìm kiếm media...",
+  "@searchMedia": {
+    "description": "Search placeholder for media gallery"
+  },
+
+  "today": "Hôm nay",
+  "@today": {
+    "description": "Timeline group for today"
+  },
+
+  "yesterday": "Hôm qua",
+  "@yesterday": {
+    "description": "Timeline group for yesterday"
+  },
+
+  "thisWeek": "Tuần này",
+  "@thisWeek": {
+    "description": "Timeline group for this week"
+  },
+
+  "thisMonth": "Tháng này",
+  "@thisMonth": {
+    "description": "Timeline group for this month"
+  },
+
+  "older": "Cũ hơn",
+  "@older": {
+    "description": "Timeline group for older items"
+  },
+
+  "dateFormatDayMonth": "{day} tháng {monthName}",
+  "@dateFormatDayMonth": {
+    "description": "Date format for day and month (e.g., 15 tháng 2)",
+    "placeholders": {
+      "day": {
+        "type": "int",
+        "description": "Day of the month"
+      },
+      "monthName": {
+        "type": "String",
+        "description": "Month number or name"
+      }
+    }
+  },
+
+  "monthJanuary": "1",
+  "@monthJanuary": { "description": "Month number for Vietnamese" },
+  "monthFebruary": "2",
+  "@monthFebruary": { "description": "Month number for Vietnamese" },
+  "monthMarch": "3",
+  "@monthMarch": { "description": "Month number for Vietnamese" },
+  "monthApril": "4",
+  "@monthApril": { "description": "Month number for Vietnamese" },
+  "monthMay": "5",
+  "@monthMay": { "description": "Month number for Vietnamese" },
+  "monthJune": "6",
+  "@monthJune": { "description": "Month number for Vietnamese" },
+  "monthJuly": "7",
+  "@monthJuly": { "description": "Month number for Vietnamese" },
+  "monthAugust": "8",
+  "@monthAugust": { "description": "Month number for Vietnamese" },
+  "monthSeptember": "9",
+  "@monthSeptember": { "description": "Month number for Vietnamese" },
+  "monthOctober": "10",
+  "@monthOctober": { "description": "Month number for Vietnamese" },
+  "monthNovember": "11",
+  "@monthNovember": { "description": "Month number for Vietnamese" },
+  "monthDecember": "12",
+  "@monthDecember": { "description": "Month number for Vietnamese" },
+
+  "errorOpeningFile": "Không thể mở tệp này",
+  "@errorOpeningFile": {
+    "description": "Error message when file cannot be opened"
+  },
+
+  "errorOpeningLink": "Không thể mở liên kết này",
+  "@errorOpeningLink": {
+    "description": "Error message when link cannot be opened"
+  },
+
   "viewAll": "Xem tất cả",
   "@viewAll": {
     "description": "Button to view all items"

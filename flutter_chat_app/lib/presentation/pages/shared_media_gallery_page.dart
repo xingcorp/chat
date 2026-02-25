@@ -5,7 +5,10 @@ import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/domain/entities/chat_info/shared_media.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/screens/media/image_viewer_screen.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
+import 'package:flutter_chat_app/presentation/widgets/media_viewer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Full gallery page for shared media with tabs
 /// Similar to Zalo/Messenger media gallery
@@ -39,10 +42,21 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   
+  // Search state
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  
   List<SharedMedia> _photos = [];
   List<SharedMedia> _videos = [];
   List<SharedMedia> _files = [];
   List<SharedMedia> _links = [];
+  
+  // Filtered lists for search
+  List<SharedMedia> _filteredPhotos = [];
+  List<SharedMedia> _filteredVideos = [];
+  List<SharedMedia> _filteredFiles = [];
+  List<SharedMedia> _filteredLinks = [];
   
   bool _isLoading = false;
   int _currentOffset = 0;
@@ -56,6 +70,12 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
     _files = List.from(widget.initialFiles);
     _links = List.from(widget.initialLinks);
     
+    // Initialize filtered lists
+    _filteredPhotos = List.from(_photos);
+    _filteredVideos = List.from(_videos);
+    _filteredFiles = List.from(_files);
+    _filteredLinks = List.from(_links);
+    
     final initialIndex = widget.initialTab == SharedMediaType.photo ? 0 :
                          widget.initialTab == SharedMediaType.video ? 1 :
                          widget.initialTab == SharedMediaType.file ? 2 : 3;
@@ -67,18 +87,59 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
     );
     
     _tabController.addListener(_onTabChanged);
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
     super.dispose();
   }
 
   void _onTabChanged() {
     if (_tabController.indexIsChanging) return;
     _loadMediaForCurrentTab();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase().trim();
+    if (query == _searchQuery) return;
+    
+    setState(() {
+      _searchQuery = query;
+      _applySearchFilter();
+    });
+  }
+
+  void _applySearchFilter() {
+    if (_searchQuery.isEmpty) {
+      _filteredPhotos = List.from(_photos);
+      _filteredVideos = List.from(_videos);
+      _filteredFiles = List.from(_files);
+      _filteredLinks = List.from(_links);
+    } else {
+      _filteredPhotos = _photos.where((m) => m.fileName?.toLowerCase().contains(_searchQuery) ?? false).toList();
+      _filteredVideos = _videos.where((m) => m.fileName?.toLowerCase().contains(_searchQuery) ?? false).toList();
+      _filteredFiles = _files.where((m) => 
+          m.fileName?.toLowerCase().contains(_searchQuery) ?? false).toList();
+      _filteredLinks = _links.where((m) => 
+          m.url.toLowerCase().contains(_searchQuery) || 
+          (m.fileName?.toLowerCase().contains(_searchQuery) ?? false)).toList();
+    }
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchController.clear();
+        _searchQuery = '';
+        _applySearchFilter();
+      }
+    });
   }
 
   Future<void> _loadMediaForCurrentTab() async {
@@ -137,18 +198,39 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDarkMode : AppColors.background,
       appBar: AppBar(
-        title: AppText(
-          widget.chatName,
-          style: const TextStyle(
-            fontSize: 18.0,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: l10n.searchMedia,
+                  hintStyle: TextStyle(
+                    color: isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary,
+                  ),
+                  border: InputBorder.none,
+                ),
+                style: TextStyle(
+                  color: isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary,
+                ),
+              )
+            : AppText(
+                widget.chatName,
+                style: const TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 1,
         backgroundColor: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
         foregroundColor: isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary,
+        actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: _toggleSearch,
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: isDark ? AppColors.primaryDarkMode : AppColors.primary,
@@ -166,30 +248,34 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
             fontWeight: FontWeight.w500,
           ),
           tabs: [
-            Tab(text: '${l10n.photos} (${_photos.length})'),
-            Tab(text: '${l10n.videos} (${_videos.length})'),
-            Tab(text: '${l10n.files} (${_files.length})'),
-            Tab(text: '${l10n.links} (${_links.length})'),
+            Tab(text: '${l10n.photos} (${_filteredPhotos.length})'),
+            Tab(text: '${l10n.videos} (${_filteredVideos.length})'),
+            Tab(text: '${l10n.files} (${_filteredFiles.length})'),
+            Tab(text: '${l10n.links} (${_filteredLinks.length})'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildMediaGrid(_photos, SharedMediaType.photo, isDark),
-          _buildMediaGrid(_videos, SharedMediaType.video, isDark),
-          _buildFilesList(_files, isDark),
-          _buildLinksList(_links, isDark),
+          _buildMediaGridWithTimeline(_filteredPhotos, SharedMediaType.photo, isDark),
+          _buildMediaGridWithTimeline(_filteredVideos, SharedMediaType.video, isDark),
+          _buildFilesList(_filteredFiles, isDark),
+          _buildLinksList(_filteredLinks, isDark),
         ],
       ),
     );
   }
 
-  /// Build grid for photos/videos
-  Widget _buildMediaGrid(List<SharedMedia> media, SharedMediaType type, bool isDark) {
+  /// Build grid for photos/videos with timeline grouping
+  Widget _buildMediaGridWithTimeline(List<SharedMedia> media, SharedMediaType type, bool isDark) {
     if (media.isEmpty) {
       return _buildEmptyState(type, isDark);
     }
+
+    // Group media by timeline
+    final groupedMedia = _groupByTimeline(media);
+    final l10n = context.l10n;
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
@@ -199,19 +285,160 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
         }
         return false;
       },
-      child: GridView.builder(
+      child: ListView.builder(
         padding: const EdgeInsets.all(AppDimens.spaceXSmall),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: AppDimens.spaceXSmall,
-          mainAxisSpacing: AppDimens.spaceXSmall,
-        ),
-        itemCount: media.length,
-        itemBuilder: (context, index) {
-          return _buildMediaItem(media[index], type, isDark);
+        itemCount: groupedMedia.length,
+        itemBuilder: (context, groupIndex) {
+          final group = groupedMedia[groupIndex];
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Timeline header
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppDimens.spaceSmall,
+                  horizontal: AppDimens.spaceXSmall,
+                ),
+                child: AppText(
+                  _getTimelineLabel(group.key, l10n),
+                  style: TextStyle(
+                    fontSize: 13.0,
+                    fontWeight: FontWeight.w600,
+                    color: isDark 
+                        ? AppColors.textSecondaryDarkMode 
+                        : AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              
+              // Grid for this timeline group
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: AppDimens.spaceXSmall,
+                  mainAxisSpacing: AppDimens.spaceXSmall,
+                ),
+                itemCount: group.items.length,
+                itemBuilder: (context, index) {
+                  return _buildMediaItem(group.items[index], type, isDark);
+                },
+              ),
+              
+              const SizedBox(height: AppDimens.spaceSmall),
+            ],
+          );
         },
       ),
     );
+  }
+
+  /// Group media by actual date (like Zalo/Messenger)
+  List<_TimelineGroup> _groupByTimeline(List<SharedMedia> media) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    // Sort media by date descending (newest first)
+    final sortedMedia = List<SharedMedia>.from(media)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    final groups = <String, List<SharedMedia>>{};
+    final dateLabels = <String, String>{};
+
+    for (final item in sortedMedia) {
+      final itemDate = DateTime(
+        item.createdAt.year,
+        item.createdAt.month,
+        item.createdAt.day,
+      );
+
+      String key;
+      String label;
+
+      if (itemDate == today) {
+        key = 'today';
+        label = 'today';
+      } else if (itemDate == yesterday) {
+        key = 'yesterday';
+        label = 'yesterday';
+      } else {
+        // Format as actual date: "15 tháng 2" or "15 Feb"
+        key = '${itemDate.year}-${itemDate.month}-${itemDate.day}';
+        label = key; // Will be formatted in _getTimelineLabel
+      }
+
+      groups.putIfAbsent(key, () => []);
+      groups[key]!.add(item);
+      dateLabels[key] = label;
+    }
+
+    // Build result maintaining order (today, yesterday, then by date descending)
+    final result = <_TimelineGroup>[];
+    
+    // Add today and yesterday first if they exist
+    if (groups.containsKey('today')) {
+      result.add(_TimelineGroup(key: 'today', items: groups['today']!));
+    }
+    if (groups.containsKey('yesterday')) {
+      result.add(_TimelineGroup(key: 'yesterday', items: groups['yesterday']!));
+    }
+
+    // Add other dates in descending order
+    final otherDates = groups.keys
+        .where((k) => k != 'today' && k != 'yesterday')
+        .toList()
+      ..sort((a, b) => b.compareTo(a)); // Descending order
+
+    for (final key in otherDates) {
+      result.add(_TimelineGroup(key: key, items: groups[key]!));
+    }
+
+    return result;
+  }
+
+  /// Get localized timeline label with actual date formatting
+  String _getTimelineLabel(String key, dynamic l10n) {
+    if (key == 'today') {
+      return l10n.today;
+    } else if (key == 'yesterday') {
+      return l10n.yesterday;
+    }
+
+    // Parse date key and format: "15 tháng 2" or "15 Feb"
+    final parts = key.split('-');
+    if (parts.length == 3) {
+      final day = int.parse(parts[2]);
+      final month = int.parse(parts[1]);
+      
+      // Get localized month name
+      final monthName = _getMonthName(month, l10n);
+      
+      // Return format like "15 tháng 2" (Vietnamese) or "15 Feb" (English)
+      return l10n.dateFormatDayMonth(day, monthName);
+    }
+
+    return key;
+  }
+
+  /// Get localized month name
+  String _getMonthName(int month, dynamic l10n) {
+    switch (month) {
+      case 1: return l10n.monthJanuary;
+      case 2: return l10n.monthFebruary;
+      case 3: return l10n.monthMarch;
+      case 4: return l10n.monthApril;
+      case 5: return l10n.monthMay;
+      case 6: return l10n.monthJune;
+      case 7: return l10n.monthJuly;
+      case 8: return l10n.monthAugust;
+      case 9: return l10n.monthSeptember;
+      case 10: return l10n.monthOctober;
+      case 11: return l10n.monthNovember;
+      case 12: return l10n.monthDecember;
+      default: return month.toString();
+    }
   }
 
   /// Build individual media item
@@ -275,18 +502,48 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
     );
   }
 
-  /// Build files list
+  /// Build files list with timeline grouping
   Widget _buildFilesList(List<SharedMedia> files, bool isDark) {
     if (files.isEmpty) {
       return _buildEmptyState(SharedMediaType.file, isDark);
     }
 
+    // Group files by timeline
+    final groupedFiles = _groupByTimeline(files);
+    final l10n = context.l10n;
+
     return ListView.builder(
       padding: const EdgeInsets.all(AppDimens.paddingMedium),
-      itemCount: files.length,
-      itemBuilder: (context, index) {
-        final file = files[index];
-        return _buildFileItem(file, isDark);
+      itemCount: groupedFiles.length,
+      itemBuilder: (context, groupIndex) {
+        final group = groupedFiles[groupIndex];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Timeline header
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: AppDimens.spaceSmall,
+                horizontal: AppDimens.spaceXSmall,
+              ),
+              child: AppText(
+                _getTimelineLabel(group.key, l10n),
+                style: TextStyle(
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.w600,
+                  color: isDark 
+                      ? AppColors.textSecondaryDarkMode 
+                      : AppColors.textSecondary,
+                ),
+              ),
+            ),
+            
+            // Files for this timeline group
+            ...group.items.map((file) => _buildFileItem(file, isDark)),
+            
+            const SizedBox(height: AppDimens.spaceSmall),
+          ],
+        );
       },
     );
   }
@@ -353,18 +610,48 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
     );
   }
 
-  /// Build links list
+  /// Build links list with timeline grouping
   Widget _buildLinksList(List<SharedMedia> links, bool isDark) {
     if (links.isEmpty) {
       return _buildEmptyState(SharedMediaType.link, isDark);
     }
 
+    // Group links by timeline
+    final groupedLinks = _groupByTimeline(links);
+    final l10n = context.l10n;
+
     return ListView.builder(
       padding: const EdgeInsets.all(AppDimens.paddingMedium),
-      itemCount: links.length,
-      itemBuilder: (context, index) {
-        final link = links[index];
-        return _buildLinkItem(link, isDark);
+      itemCount: groupedLinks.length,
+      itemBuilder: (context, groupIndex) {
+        final group = groupedLinks[groupIndex];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Timeline header
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: AppDimens.spaceSmall,
+                horizontal: AppDimens.spaceXSmall,
+              ),
+              child: AppText(
+                _getTimelineLabel(group.key, l10n),
+                style: TextStyle(
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.w600,
+                  color: isDark 
+                      ? AppColors.textSecondaryDarkMode 
+                      : AppColors.textSecondary,
+                ),
+              ),
+            ),
+            
+            // Links for this timeline group
+            ...group.items.map((link) => _buildLinkItem(link, isDark)),
+            
+            const SizedBox(height: AppDimens.spaceSmall),
+          ],
+        );
       },
     );
   }
@@ -496,19 +783,73 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
   }
 
   void _openMediaPreview(SharedMedia media, SharedMediaType type) {
-    // TODO: Implement media preview with zoom capability
-    // For now, just open the URL
-    // launchUrl(Uri.parse(media.url));
+    if (type == SharedMediaType.photo) {
+      // Use ImageViewerScreen for photos with zoom capability
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ImageViewerScreen(
+            imageUrl: media.url,
+            heroTag: 'media_${media.id}_full',
+            title: media.fileName,
+          ),
+        ),
+      );
+    } else if (type == SharedMediaType.video) {
+      // Use MediaViewer for videos (supports Chewie player)
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              title: AppText(
+                media.fileName ?? 'Video',
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+            body: MediaViewer(
+              mediaUrl: media.url,
+              mediaType: MediaType.video,
+            ),
+          ),
+        ),
+      );
+    }
   }
 
-  void _openFile(SharedMedia file) {
-    // TODO: Implement file download/open
-    // launchUrl(Uri.parse(file.url));
+  void _openFile(SharedMedia file) async {
+    // Open file URL in external browser/download
+    final uri = Uri.parse(file.url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      // Show error snackbar if can't launch
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: AppText(context.l10n.errorOpeningFile),
+          ),
+        );
+      }
+    }
   }
 
-  void _openLink(SharedMedia link) {
-    // TODO: Implement link opening
-    // launchUrl(Uri.parse(link.url));
+  void _openLink(SharedMedia link) async {
+    // Open link in external browser
+    final uri = Uri.parse(link.url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      // Show error snackbar if can't launch
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: AppText(context.l10n.errorOpeningLink),
+          ),
+        );
+      }
+    }
   }
 
   String _formatFileSize(int? bytes) {
@@ -520,4 +861,12 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
     }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
+}
+
+/// Helper class for timeline grouping
+class _TimelineGroup {
+  final String key;
+  final List<SharedMedia> items;
+
+  _TimelineGroup({required this.key, required this.items});
 }

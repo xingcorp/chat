@@ -1466,6 +1466,65 @@ class AppLocalizationsVi extends AppLocalizations {
   String get fileExtensionDefault => 'TỆP';
 
   @override
+  String get searchMedia => 'Tìm kiếm media...';
+
+  @override
+  String get thisWeek => 'Tuần này';
+
+  @override
+  String get thisMonth => 'Tháng này';
+
+  @override
+  String get older => 'Cũ hơn';
+
+  @override
+  String dateFormatDayMonth(int day, String monthName) {
+    return '$day tháng $monthName';
+  }
+
+  @override
+  String get monthJanuary => '1';
+
+  @override
+  String get monthFebruary => '2';
+
+  @override
+  String get monthMarch => '3';
+
+  @override
+  String get monthApril => '4';
+
+  @override
+  String get monthMay => '5';
+
+  @override
+  String get monthJune => '6';
+
+  @override
+  String get monthJuly => '7';
+
+  @override
+  String get monthAugust => '8';
+
+  @override
+  String get monthSeptember => '9';
+
+  @override
+  String get monthOctober => '10';
+
+  @override
+  String get monthNovember => '11';
+
+  @override
+  String get monthDecember => '12';
+
+  @override
+  String get errorOpeningFile => 'Không thể mở tệp này';
+
+  @override
+  String get errorOpeningLink => 'Không thể mở liên kết này';
+
+  @override
   String get viewAll => 'Xem tất cả';
 
   @override

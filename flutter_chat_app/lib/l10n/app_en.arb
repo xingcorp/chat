@@ -2616,6 +2616,86 @@
     "description": "Default file extension when unknown"
   },
 
+  "searchMedia": "Search media...",
+  "@searchMedia": {
+    "description": "Search placeholder for media gallery"
+  },
+
+  "today": "Today",
+  "@today": {
+    "description": "Timeline group for today"
+  },
+
+  "yesterday": "Yesterday",
+  "@yesterday": {
+    "description": "Timeline group for yesterday"
+  },
+
+  "thisWeek": "This Week",
+  "@thisWeek": {
+    "description": "Timeline group for this week"
+  },
+
+  "thisMonth": "This Month",
+  "@thisMonth": {
+    "description": "Timeline group for this month"
+  },
+
+  "older": "Older",
+  "@older": {
+    "description": "Timeline group for older items"
+  },
+
+  "dateFormatDayMonth": "{day} {monthName}",
+  "@dateFormatDayMonth": {
+    "description": "Date format for day and month (e.g., 15 Feb)",
+    "placeholders": {
+      "day": {
+        "type": "int",
+        "description": "Day of the month"
+      },
+      "monthName": {
+        "type": "String",
+        "description": "Month name"
+      }
+    }
+  },
+
+  "monthJanuary": "Jan",
+  "@monthJanuary": { "description": "Short month name" },
+  "monthFebruary": "Feb",
+  "@monthFebruary": { "description": "Short month name" },
+  "monthMarch": "Mar",
+  "@monthMarch": { "description": "Short month name" },
+  "monthApril": "Apr",
+  "@monthApril": { "description": "Short month name" },
+  "monthMay": "May",
+  "@monthMay": { "description": "Short month name" },
+  "monthJune": "Jun",
+  "@monthJune": { "description": "Short month name" },
+  "monthJuly": "Jul",
+  "@monthJuly": { "description": "Short month name" },
+  "monthAugust": "Aug",
+  "@monthAugust": { "description": "Short month name" },
+  "monthSeptember": "Sep",
+  "@monthSeptember": { "description": "Short month name" },
+  "monthOctober": "Oct",
+  "@monthOctober": { "description": "Short month name" },
+  "monthNovember": "Nov",
+  "@monthNovember": { "description": "Short month name" },
+  "monthDecember": "Dec",
+  "@monthDecember": { "description": "Short month name" },
+
+  "errorOpeningFile": "Cannot open this file",
+  "@errorOpeningFile": {
+    "description": "Error message when file cannot be opened"
+  },
+
+  "errorOpeningLink": "Cannot open this link",
+  "@errorOpeningLink": {
+    "description": "Error message when link cannot be opened"
+  },
+
   "viewAll": "View All",
   "@viewAll": {
     "description": "Button to view all items"

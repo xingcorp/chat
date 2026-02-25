@@ -1465,6 +1465,65 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileExtensionDefault => 'FILE';
 
   @override
+  String get searchMedia => 'Search media...';
+
+  @override
+  String get thisWeek => 'This Week';
+
+  @override
+  String get thisMonth => 'This Month';
+
+  @override
+  String get older => 'Older';
+
+  @override
+  String dateFormatDayMonth(int day, String monthName) {
+    return '$day $monthName';
+  }
+
+  @override
+  String get monthJanuary => 'Jan';
+
+  @override
+  String get monthFebruary => 'Feb';
+
+  @override
+  String get monthMarch => 'Mar';
+
+  @override
+  String get monthApril => 'Apr';
+
+  @override
+  String get monthMay => 'May';
+
+  @override
+  String get monthJune => 'Jun';
+
+  @override
+  String get monthJuly => 'Jul';
+
+  @override
+  String get monthAugust => 'Aug';
+
+  @override
+  String get monthSeptember => 'Sep';
+
+  @override
+  String get monthOctober => 'Oct';
+
+  @override
+  String get monthNovember => 'Nov';
+
+  @override
+  String get monthDecember => 'Dec';
+
+  @override
+  String get errorOpeningFile => 'Cannot open this file';
+
+  @override
+  String get errorOpeningLink => 'Cannot open this link';
+
+  @override
   String get viewAll => 'View All';
 
   @override
