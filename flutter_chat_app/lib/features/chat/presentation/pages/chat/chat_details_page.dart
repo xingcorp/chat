@@ -648,30 +648,55 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
     
     if (messageIndex != null) {
-      // Message found, scroll to it
+      // Message found, scroll to it and highlight
       _isProgrammaticScroll = true;
       _scrollController.scrollToIndex(
         messageIndex,
         preferPosition: AutoScrollPosition.middle,
       ).then((_) {
         if (mounted) {
-          setState(() {
+          safeSetState(() {
             _isProgrammaticScroll = false;
             _pendingScrollToMessageId = null;
+            _highlightedMessageId = messageId;
+          });
+          // Clear highlight after 2 seconds
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) safeSetState(() => _highlightedMessageId = null);
           });
         }
       });
     } else {
-      // Message not found, increment attempts
+      // Message not found — load more older messages if possible
       _pendingScrollAttempts++;
       if (_pendingScrollAttempts < _maxPendingScrollAttempts) {
-        // Retry after a short delay
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) _attemptJumpToMessage();
-        });
+        if (!state.hasReachedMax) {
+          // Trigger loading more messages, _handleBlocStateChanges will
+          // re-attempt the scroll when new messages arrive
+          _loadMore();
+        } else {
+          // All messages loaded but target not found — show feedback
+          _pendingScrollToMessageId = null;
+          _pendingScrollAttempts = 0;
+          if (mounted) {
+            AppSnackBar.show(
+              context: context,
+              message: context.l10n.messageNotFound,
+              type: FeedbackType.warning,
+            );
+          }
+        }
       } else {
         // Max attempts reached, give up
         _pendingScrollToMessageId = null;
+        _pendingScrollAttempts = 0;
+        if (mounted) {
+          AppSnackBar.show(
+            context: context,
+            message: context.l10n.messageNotFound,
+            type: FeedbackType.warning,
+          );
+        }
       }
     }
   }

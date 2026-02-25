@@ -11,6 +11,7 @@ import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_reposi
 import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_html_content.dart';
 
 /// Panel for searching messages within a conversation.
 ///
@@ -398,7 +399,11 @@ class _MessageSearchPanelState extends BaseState<MessageSearchPanel> {
           ),
         ),
       ),
-      title: _buildHighlightedText(result.message, isDark, keyword),
+      title: AppHtmlContent(
+        data: result.message,
+        baseStyle: AppTextStyles.bodyMedium,
+        maxLines: 2,
+      ),
       subtitle: Text(
         '${result.senderName ?? ''} • ${_formatDate(result.createdAt)}',
         style: AppTextStyles.bodySmall.copyWith(
@@ -410,87 +415,6 @@ class _MessageSearchPanelState extends BaseState<MessageSearchPanel> {
         overflow: TextOverflow.ellipsis,
       ),
       onTap: () => _onResultTap(result),
-    );
-  }
-
-  /// Highlights all occurrences of the keyword in the text
-  Widget _buildHighlightedText(String text, bool isDark, String? keyword) {
-    if (keyword == null || keyword.isEmpty) {
-      return Text(
-        text,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: AppTextStyles.bodyMedium.copyWith(
-          color: isDark
-              ? AppColors.textPrimaryDarkMode
-              : AppColors.textPrimary,
-        ),
-      );
-    }
-
-    final lowerText = text.toLowerCase();
-    final lowerKeyword = keyword.toLowerCase();
-    final spans = <TextSpan>[];
-    int start = 0;
-
-    while (true) {
-      final index = lowerText.indexOf(lowerKeyword, start);
-      if (index == -1) {
-        if (start < text.length) {
-          spans.add(TextSpan(
-            text: text.substring(start),
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: isDark
-                  ? AppColors.textPrimaryDarkMode
-                  : AppColors.textPrimary,
-            ),
-          ));
-        }
-        break;
-      }
-
-      // Text before match
-      if (index > start) {
-        spans.add(TextSpan(
-          text: text.substring(start, index),
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: isDark
-                ? AppColors.textPrimaryDarkMode
-                : AppColors.textPrimary,
-          ),
-        ));
-      }
-
-      // Highlighted match
-      spans.add(TextSpan(
-        text: text.substring(index, index + keyword.length),
-        style: AppTextStyles.bodyMedium.copyWith(
-          backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-          color: AppColors.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      ));
-
-      start = index + keyword.length;
-    }
-
-    if (spans.isEmpty) {
-      return Text(
-        text,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: AppTextStyles.bodyMedium.copyWith(
-          color: isDark
-              ? AppColors.textPrimaryDarkMode
-              : AppColors.textPrimary,
-        ),
-      );
-    }
-
-    return RichText(
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-      text: TextSpan(children: spans),
     );
   }
 
