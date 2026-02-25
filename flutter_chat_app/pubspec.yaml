@@ -131,6 +131,9 @@ dependencies:
   permission_handler: ^12.0.1
   app_settings: ^6.1.1
 
+  # Social
+  share_plus: ^12.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

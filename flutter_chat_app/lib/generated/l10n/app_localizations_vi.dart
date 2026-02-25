@@ -528,6 +528,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get removePhoto => 'Xóa ảnh';
 
   @override
+  String get call => 'Gọi';
+
+  @override
   String get camera => 'Máy ảnh';
 
   @override

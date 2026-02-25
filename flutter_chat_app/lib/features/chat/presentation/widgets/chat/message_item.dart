@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
+import 'package:flutter_chat_app/core/extensions/text_span_builder.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
@@ -89,12 +90,20 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     final raw = widget.uiState.content;
     final normalized = raw.formatChatMessage(mentionNameById: mentionNameById);
 
-    final spans = _parseMentionSpans(
+    final spans = TextSpanBuilder.buildSpans(
       rawContent: raw,
       normalizedContent: normalized,
       textStyle: TextStyle(
         color: textColor,
         fontSize: 16.0,
+      ),
+      linkStyle: TextStyle(
+        color: widget.uiState.isFromCurrentUser
+            ? textColor
+            : theme.colorScheme.primary,
+        fontSize: 16.0,
+        fontWeight: FontWeight.w600,
+        decoration: TextDecoration.underline,
       ),
       mentionStyle: TextStyle(
         color: theme.colorScheme.primary,
@@ -110,6 +119,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
           },
         );
       },
+      context: context,
     );
 
     return RichText(
@@ -238,7 +248,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     Widget messageContent = GestureDetector(
       onTap: widget.isSelectionMode
           ? () => widget.onSelectionChanged?.call(!widget.isSelected)
-          : widget.onTap,
+          : null,
       onLongPress: widget.onLongPress,
       child: Container(
         color: widget.isSelected

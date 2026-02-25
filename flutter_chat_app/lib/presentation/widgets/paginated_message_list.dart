@@ -5,7 +5,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/presentation/widgets/date_separator.dart';
-import 'package:flutter_chat_app/presentation/widgets/message_item.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/core/services/date_formatter_service.dart';
 import 'package:flutter_chat_app/core/utils/debouncer.dart';
 
@@ -568,14 +569,14 @@ class _PaginatedMessageListState extends State<PaginatedMessageList> {
     if (item is ChatMessage) {
       // Kiểm tra nếu cần highlight tin nhắn
       final bool isHighlighted = widget.initialScrollMessageId == item.id;
-      
+
       return MessageItem(
-        message: item,
-        sender: item.sender,
-        isCurrentUser: item.sender.id == widget.currentUserId,
+        uiState: MessageUIState.fromMessage(item).copyWith(
+          isHighlighted: isHighlighted,
+          isFromCurrentUser: item.sender.id == widget.currentUserId,
+        ),
         onTap: widget.onMessageTap != null ? () => widget.onMessageTap!(item) : null,
         onLongPress: widget.onMessageLongPress != null ? () => widget.onMessageLongPress!(item) : null,
-        isHighlighted: isHighlighted,
       );
     }
     

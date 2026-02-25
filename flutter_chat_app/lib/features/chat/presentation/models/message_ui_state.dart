@@ -72,6 +72,9 @@ class ReplyMessagePreview {
   /// URL preview (cho IMAGE/VIDEO)
   final String? previewUrl;
 
+  /// Alias for id - the original message ID being replied to
+  String get originalMessageId => id;
+
   const ReplyMessagePreview({
     required this.id,
     required this.senderName,
@@ -290,6 +293,59 @@ class MessageUIState {
     this.isFromCurrentUser = false,
     this.systemEvent,
   });
+
+  /// Create a copy with modified fields
+  MessageUIState copyWith({
+    ChatMessage? message,
+    MessageListItemType? itemType,
+    BubblePosition? position,
+    bool? showAvatar,
+    bool? showSenderName,
+    bool? showTimestamp,
+    String? formattedTime,
+    bool? showDateSeparator,
+    String? dateSeparatorText,
+    List<ReactionGroup>? groupedReactions,
+    ReplyMessagePreview? replyMessage,
+    ForwardMessageInfo? forwardInfo,
+    bool? hasMention,
+    bool? hasLink,
+    String? previewLink,
+    bool? isSending,
+    bool? isFailed,
+    bool? isEdited,
+    bool? isDeleted,
+    bool? isLastRead,
+    bool? isHighlighted,
+    bool? isFromCurrentUser,
+    SystemEventInfo? systemEvent,
+  }) {
+    return MessageUIState(
+      message: message ?? this.message,
+      itemType: itemType ?? this.itemType,
+      position: position ?? this.position,
+      showAvatar: showAvatar ?? this.showAvatar,
+      showSenderName: showSenderName ?? this.showSenderName,
+      showTimestamp: showTimestamp ?? this.showTimestamp,
+      formattedTime: formattedTime ?? this.formattedTime,
+      showDateSeparator: showDateSeparator ?? this.showDateSeparator,
+      dateSeparatorText: dateSeparatorText ?? this.dateSeparatorText,
+      groupedReactions: groupedReactions ?? this.groupedReactions,
+      replyMessage: replyMessage ?? this.replyMessage,
+      forwardInfo: forwardInfo ?? this.forwardInfo,
+      hasMention: hasMention ?? this.hasMention,
+      hasLink: hasLink ?? this.hasLink,
+      previewLink: previewLink ?? this.previewLink,
+      isSending: isSending ?? this.isSending,
+      isFailed: isFailed ?? this.isFailed,
+      isEdited: isEdited ?? this.isEdited,
+      isDeleted: isDeleted ?? this.isDeleted,
+      isLastRead: isLastRead ?? this.isLastRead,
+      isHighlighted: isHighlighted ?? this.isHighlighted,
+      isFromCurrentUser: isFromCurrentUser ?? this.isFromCurrentUser,
+      systemEvent: systemEvent ?? this.systemEvent,
+    );
+  }
 
   /// Factory cho date separator item
   factory MessageUIState.dateSeparator(String text) {

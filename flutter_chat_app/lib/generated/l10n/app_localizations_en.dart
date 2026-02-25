@@ -527,6 +527,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removePhoto => 'Remove Photo';
 
   @override
+  String get call => 'Call';
+
+  @override
   String get camera => 'Camera';
 
   @override

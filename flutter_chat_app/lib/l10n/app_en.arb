@@ -872,6 +872,11 @@
     "description": "Button text to remove a photo"
   },
 
+  "call": "Call",
+  "@call": {
+    "description": "Call button text for phone action"
+  },
+
   "camera": "Camera",
   "@camera": {
     "description": "Camera option"

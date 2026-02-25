@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/presentation/widgets/message_item.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:logger/logger.dart';
 
 /// **ENTERPRISE VIRTUALIZED MESSAGE LIST**
@@ -289,9 +290,9 @@ class _VirtualizedMessageListState extends State<VirtualizedMessageList>
         _itemHeights[index] = height;
       },
       child: MessageItem(
-        message: message,
-        sender: message.sender,
-        isCurrentUser: message.isFromCurrentUser,
+        uiState: MessageUIState.fromMessage(message).copyWith(
+          isFromCurrentUser: message.isFromCurrentUser,
+        ),
         onTap: widget.onMessageTap != null
             ? () => widget.onMessageTap!(message)
             : null,

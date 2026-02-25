@@ -1076,6 +1076,12 @@ abstract class AppLocalizations {
   /// **'Remove Photo'**
   String get removePhoto;
 
+  /// Call button text for phone action
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get call;
+
   /// Camera option
   ///
   /// In en, this message translates to:
