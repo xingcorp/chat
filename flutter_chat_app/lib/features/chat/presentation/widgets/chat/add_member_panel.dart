@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
@@ -45,6 +46,7 @@ class _AddMemberPanelState extends State<AddMemberPanel> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   final Set<String> _selectedUserIds = {};
+  Timer? _debounceTimer;
   
   List<SelectableUser> _searchResults = [];
   bool _isLoading = false;
@@ -59,6 +61,7 @@ class _AddMemberPanelState extends State<AddMemberPanel> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -241,7 +244,14 @@ class _AddMemberPanelState extends State<AddMemberPanel> {
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _performSearch(),
               onChanged: (value) {
+                // Debounce search - trigger after 300ms delay
+                _debounceTimer?.cancel();
                 setState(() {});
+                if (value.trim().length > 1) {
+                  _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+                    _performSearch();
+                  });
+                }
               },
             ),
           ),

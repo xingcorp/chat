@@ -669,17 +669,23 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
       },
     };
     
+    debugPrint('[SearchMessages] Variables: $variables');
+    
     final result = await _client.query(
       ChatQueries.searchMessages,
       variables: variables,
       operationName: 'SearchMessages',
     );
     
+    debugPrint('[SearchMessages] Result: $result');
+    
     final data = result['chatSearch'] as List<dynamic>?;
     if (data == null) {
-      throw Exception('Failed to search messages');
+      debugPrint('[SearchMessages] No data returned');
+      return [];
     }
     
+    debugPrint('[SearchMessages] Found ${data.length} results');
     return data.map((json) => MessageDto.fromJson(json as Map<String, dynamic>)).toList();
   }
   

@@ -2784,5 +2784,40 @@
   "searchMembers": "Search members",
   "@searchMembers": {
     "description": "Hint text for search members field"
+  },
+
+  "searchMessagesTitle": "Search Messages",
+  "@searchMessagesTitle": {
+    "description": "Title for message search panel"
+  },
+
+  "typeToSearchMessages": "Type to search messages",
+  "@typeToSearchMessages": {
+    "description": "Hint text when search panel is empty"
+  },
+
+  "searchErrorOffline": "You are offline. Please check your connection and try again.",
+  "@searchErrorOffline": {
+    "description": "Error message when search fails due to no internet"
+  },
+
+  "searchErrorGeneric": "Search failed. Please try again.",
+  "@searchErrorGeneric": {
+    "description": "Generic error message when search fails"
+  },
+
+  "searchResultCount": "{count} results found",
+  "@searchResultCount": {
+    "description": "Number of search results found",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "loadMore": "Load more",
+  "@loadMore": {
+    "description": "Button text to load more results"
   }
 }

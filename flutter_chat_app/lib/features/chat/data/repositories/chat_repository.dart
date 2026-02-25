@@ -880,40 +880,36 @@ class ChatRepositoryImpl implements IChatRepository {
     String? conversationId,
     int limit = 50,
   }) async {
+    // Validate input
+    if (keyword.trim().isEmpty) {
+      return const Left(ValidationFailure(message: 'Search keyword cannot be empty'));
+    }
+
     return _executeWithMonitoring('search_messages', () async {
-      try {
-        _logger.i('Searching messages with keyword: $keyword');
-
-        // Check network connectivity
-        if (!await _networkInfo.isConnected) {
-          _logger.w('No internet connection');
-          return Left(NetworkFailure(message: 'No internet connection'));
-        }
-
-        // Search via remote data source
-        final messageDtos = await _remoteDataSource.searchMessages(
-          keyword: keyword,
-          conversationIds: conversationId != null ? [conversationId] : null,
-          size: limit,
-        );
-
-        // Map MessageDto to MessageSearchResult
-        final results = messageDtos.map((dto) => MessageSearchResult(
-          id: dto.id,
-          message: dto.content,
-          type: dto.type,
-          createdAt: DateTime.fromMillisecondsSinceEpoch(dto.createdAt),
-          conversationId: dto.chatId,
-          senderId: dto.senderId,
-          senderName: dto.sender?.fullName,
-        )).toList();
-
-        _logger.d('Found ${results.length} messages matching keyword');
-        return Right(results);
-      } catch (e) {
-        _logger.e('Failed to search messages: $e');
-        return Left(UnknownFailure(message: 'Failed to search messages: $e'));
+      // Check network connectivity
+      if (!await _networkInfo.isConnected) {
+        return Left(NetworkFailure(message: 'No internet connection'));
       }
+
+      // Search via remote data source
+      final messageDtos = await _remoteDataSource.searchMessages(
+        keyword: keyword,
+        conversationIds: conversationId != null ? [conversationId] : null,
+        size: limit,
+      );
+
+      // Map MessageDto to MessageSearchResult
+      final results = messageDtos.map((dto) => MessageSearchResult(
+        id: dto.id,
+        message: dto.content,
+        type: dto.type,
+        createdAt: DateTime.fromMillisecondsSinceEpoch(dto.createdAt),
+        conversationId: dto.chatId,
+        senderId: dto.senderId,
+        senderName: dto.sender?.fullName,
+      )).toList();
+
+      return Right(results);
     });
   }
 }

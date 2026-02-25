@@ -1,58 +1,42 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 
-/// Result item from message search
-class MessageSearchResult {
-  final String id;
-  final String message;
-  final String type;
-  final DateTime createdAt;
-  final String conversationId;
-  final String? senderId;
-  final String? senderName;
-
-  const MessageSearchResult({
-    required this.id,
-    required this.message,
-    required this.type,
-    required this.createdAt,
-    required this.conversationId,
-    this.senderId,
-    this.senderName,
-  });
-}
-
-/// Panel for searching messages within a conversation
-class MessageSearchPanel extends StatefulWidget {
+/// Panel for searching messages within a conversation.
+///
+/// Uses [MessageSearchBloc] for state management with proper
+/// error handling, pagination, and offline-aware messaging.
+class MessageSearchPanel extends BaseStatefulWidget {
   /// Conversation ID to search in
   final String conversationId;
-  
+
   /// Callback when a search result is selected
   final void Function(MessageSearchResult result)? onResultSelected;
-  
-  /// Callback to perform the actual search (calls backend)
-  final Future<List<MessageSearchResult>> Function(String keyword)? onSearch;
 
   const MessageSearchPanel({
-    Key? key,
+    super.key,
     required this.conversationId,
     this.onResultSelected,
-    this.onSearch,
-  }) : super(key: key);
+  });
 
   @override
   State<MessageSearchPanel> createState() => _MessageSearchPanelState();
 }
 
-class _MessageSearchPanelState extends State<MessageSearchPanel> {
+class _MessageSearchPanelState extends BaseState<MessageSearchPanel> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  
-  List<MessageSearchResult> _results = [];
-  bool _isLoading = false;
-  bool _hasSearched = false;
-  String _keyword = '';
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -62,238 +46,366 @@ class _MessageSearchPanelState extends State<MessageSearchPanel> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
-  Future<void> _performSearch() async {
-    final keyword = _searchController.text.trim();
-    if (keyword.isEmpty) {
-      setState(() {
-        _results = [];
-        _hasSearched = false;
-        _keyword = '';
-      });
+  void _onSearchChanged(String value) {
+    _debounceTimer?.cancel();
+    final keyword = value.trim();
+
+    if (keyword.length <= 1) {
+      if (keyword.isEmpty) {
+        context.read<MessageSearchBloc>().add(const MessageSearchEvent.clear());
+      }
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _keyword = keyword;
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      context.read<MessageSearchBloc>().add(
+            MessageSearchEvent.search(
+              keyword: keyword,
+              conversationId: widget.conversationId,
+            ),
+          );
     });
+  }
 
-    try {
-      if (widget.onSearch != null) {
-        final results = await widget.onSearch!(keyword);
-        if (mounted) {
-          setState(() {
-            _results = results;
-            _isLoading = false;
-            _hasSearched = true;
-          });
-        }
-      } else {
-        // Placeholder: no search callback provided
-        if (mounted) {
-          setState(() {
-            _results = [];
-            _isLoading = false;
-            _hasSearched = true;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _hasSearched = true;
-        });
-      }
-    }
+  void _onSubmitted(String value) {
+    final keyword = value.trim();
+    if (keyword.isEmpty) return;
+
+    _debounceTimer?.cancel();
+    context.read<MessageSearchBloc>().add(
+          MessageSearchEvent.search(
+            keyword: keyword,
+            conversationId: widget.conversationId,
+          ),
+        );
+  }
+
+  void _onClearSearch() {
+    _searchController.clear();
+    context.read<MessageSearchBloc>().add(const MessageSearchEvent.clear());
+    _focusNode.requestFocus();
   }
 
   void _onResultTap(MessageSearchResult result) {
-    if (widget.onResultSelected != null) {
-      widget.onResultSelected!(result);
-    }
+    widget.onResultSelected?.call(result);
     Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.7,
       ),
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        color: isDark
+            ? AppColors.backgroundDarkMode
+            : AppColors.background,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppDimens.radiusLarge),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 8),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: theme.dividerColor,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.searchMessages,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-          ),
-          
-          // Search input
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              controller: _searchController,
-              focusNode: _focusNode,
-              decoration: InputDecoration(
-                hintText: l10n.searchMessages,
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _results = [];
-                            _hasSearched = false;
-                            _keyword = '';
-                          });
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
-              textInputAction: TextInputAction.search,
-              onSubmitted: (_) => _performSearch(),
-              onChanged: (value) {
-                // Debounce search would be ideal, but for simplicity we just update UI
-                setState(() {});
-              },
-            ),
-          ),
-          
-          const SizedBox(height: 8),
-          
-          // Results
+          _buildHandle(isDark),
+          _buildHeader(l10n, isDark),
+          _buildSearchInput(l10n, isDark),
+          const SizedBox(height: AppDimens.spaceSmall),
+          Expanded(child: _buildBody(l10n, isDark)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHandle(bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(top: AppDimens.spaceSmall),
+      width: AppDimens.spaceLarge,
+      height: 4,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.borderDarkMode : AppColors.border,
+        borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
+      ),
+    );
+  }
+
+  Widget _buildHeader(AppLocalizations l10n, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.all(AppDimens.paddingMedium),
+      child: Row(
+        children: [
           Expanded(
-            child: _buildResults(theme, l10n),
+            child: Text(
+              l10n.searchMessagesTitle,
+              style: AppTextStyles.titleMedium.copyWith(
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? AppColors.textPrimaryDarkMode
+                    : AppColors.textPrimary,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.close,
+              color: isDark
+                  ? AppColors.iconDarkMode
+                  : AppColors.icon,
+            ),
+            onPressed: () => Navigator.of(context).pop(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildResults(ThemeData theme, AppLocalizations l10n) {
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-
-    if (!_hasSearched) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.search,
-              size: 48,
-              color: theme.disabledColor,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.searchMessages,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.disabledColor,
-              ),
-            ),
-          ],
+  Widget _buildSearchInput(AppLocalizations l10n, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium),
+      child: TextField(
+        controller: _searchController,
+        focusNode: _focusNode,
+        decoration: InputDecoration(
+          hintText: l10n.searchMessages,
+          prefixIcon: Icon(
+            Icons.search,
+            color: isDark ? AppColors.iconDarkMode : AppColors.icon,
+          ),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: Icon(
+                    Icons.clear,
+                    color: isDark ? AppColors.iconDarkMode : AppColors.icon,
+                  ),
+                  onPressed: _onClearSearch,
+                  tooltip: l10n.clearSearch,
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.paddingMedium,
+          ),
         ),
-      );
-    }
+        textInputAction: TextInputAction.search,
+        onSubmitted: _onSubmitted,
+        onChanged: (value) {
+          safeSetState(() {});
+          _onSearchChanged(value);
+        },
+      ),
+    );
+  }
 
-    if (_results.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.search_off,
-              size: 48,
-              color: theme.disabledColor,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.noResults,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.disabledColor,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: _results.length,
-      itemBuilder: (context, index) {
-        final result = _results[index];
-        return _buildResultItem(result, theme);
+  Widget _buildBody(AppLocalizations l10n, bool isDark) {
+    return BlocBuilder<MessageSearchBloc, MessageSearchState>(
+      builder: (context, state) {
+        return state.when(
+          initial: () => _buildInitialState(l10n, isDark),
+          loading: (previousResults, isLoadingMore) {
+            if (isLoadingMore && previousResults.isNotEmpty) {
+              return _buildResultsList(
+                previousResults,
+                l10n,
+                isDark,
+                isLoadingMore: true,
+              );
+            }
+            return const Center(child: CircularProgressIndicator());
+          },
+          loaded: (results, keyword, page, hasMore) {
+            return _buildResultsList(
+              results,
+              l10n,
+              isDark,
+              hasMore: hasMore,
+              keyword: keyword,
+            );
+          },
+          empty: (keyword) => _buildEmptyState(l10n, isDark, keyword),
+          error: (message, failure, keyword) =>
+              _buildErrorState(l10n, isDark, message, failure, keyword),
+        );
       },
     );
   }
 
-  Widget _buildResultItem(MessageSearchResult result, ThemeData theme) {
+  Widget _buildInitialState(AppLocalizations l10n, bool isDark) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.search,
+            size: 48,
+            color: isDark ? AppColors.iconDarkMode : AppColors.icon,
+          ),
+          const SizedBox(height: AppDimens.spaceMedium),
+          Text(
+            l10n.typeToSearchMessages,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: isDark
+                  ? AppColors.textSecondaryDarkMode
+                  : AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(AppLocalizations l10n, bool isDark, String keyword) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 48,
+            color: isDark ? AppColors.iconDarkMode : AppColors.icon,
+          ),
+          const SizedBox(height: AppDimens.spaceMedium),
+          Text(
+            l10n.noSearchResults,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: isDark
+                  ? AppColors.textSecondaryDarkMode
+                  : AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(
+    AppLocalizations l10n,
+    bool isDark,
+    String message,
+    Failure failure,
+    String? keyword,
+  ) {
+    final isOffline = failure is NetworkFailure || failure is ConnectionFailure;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.paddingLarge),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isOffline ? Icons.wifi_off : Icons.error_outline,
+              size: 48,
+              color: isDark ? AppColors.iconDarkMode : AppColors.icon,
+            ),
+            const SizedBox(height: AppDimens.spaceMedium),
+            Text(
+              isOffline ? l10n.searchErrorOffline : l10n.searchErrorGeneric,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: isDark
+                    ? AppColors.textSecondaryDarkMode
+                    : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppDimens.spaceMedium),
+            TextButton.icon(
+              onPressed: () {
+                if (keyword != null && keyword.isNotEmpty) {
+                  context.read<MessageSearchBloc>().add(
+                        MessageSearchEvent.search(
+                          keyword: keyword,
+                          conversationId: widget.conversationId,
+                        ),
+                      );
+                }
+              },
+              icon: const Icon(Icons.refresh),
+              label: Text(l10n.retry),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResultsList(
+    List<MessageSearchResult> results,
+    AppLocalizations l10n,
+    bool isDark, {
+    bool hasMore = false,
+    bool isLoadingMore = false,
+    String? keyword,
+  }) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: AppDimens.spaceSmall),
+      itemCount: results.length + (hasMore || isLoadingMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index >= results.length) {
+          if (isLoadingMore) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          // Load more trigger
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context
+                .read<MessageSearchBloc>()
+                .add(const MessageSearchEvent.loadMore());
+          });
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final result = results[index];
+        return _buildResultItem(result, isDark, keyword);
+      },
+    );
+  }
+
+  Widget _buildResultItem(
+    MessageSearchResult result,
+    bool isDark,
+    String? keyword,
+  ) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: theme.colorScheme.primaryContainer,
+        backgroundColor: isDark
+            ? AppColors.surfaceDarkMode
+            : AppColors.surface,
         child: Text(
           result.senderName?.isNotEmpty == true
               ? result.senderName![0].toUpperCase()
               : '?',
-          style: TextStyle(
-            color: theme.colorScheme.onPrimaryContainer,
+          style: AppTextStyles.titleSmall.copyWith(
+            color: isDark
+                ? AppColors.textPrimaryDarkMode
+                : AppColors.textPrimary,
           ),
         ),
       ),
-      title: _buildHighlightedText(result.message, theme),
+      title: _buildHighlightedText(result.message, isDark, keyword),
       subtitle: Text(
         '${result.senderName ?? ''} • ${_formatDate(result.createdAt)}',
-        style: theme.textTheme.bodySmall,
+        style: AppTextStyles.bodySmall.copyWith(
+          color: isDark
+              ? AppColors.textSecondaryDarkMode
+              : AppColors.textSecondary,
+        ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -301,52 +413,84 @@ class _MessageSearchPanelState extends State<MessageSearchPanel> {
     );
   }
 
-  Widget _buildHighlightedText(String text, ThemeData theme) {
-    if (_keyword.isEmpty) {
+  /// Highlights all occurrences of the keyword in the text
+  Widget _buildHighlightedText(String text, bool isDark, String? keyword) {
+    if (keyword == null || keyword.isEmpty) {
       return Text(
         text,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
+        style: AppTextStyles.bodyMedium.copyWith(
+          color: isDark
+              ? AppColors.textPrimaryDarkMode
+              : AppColors.textPrimary,
+        ),
       );
     }
 
     final lowerText = text.toLowerCase();
-    final lowerKeyword = _keyword.toLowerCase();
-    final index = lowerText.indexOf(lowerKeyword);
+    final lowerKeyword = keyword.toLowerCase();
+    final spans = <TextSpan>[];
+    int start = 0;
 
-    if (index == -1) {
+    while (true) {
+      final index = lowerText.indexOf(lowerKeyword, start);
+      if (index == -1) {
+        if (start < text.length) {
+          spans.add(TextSpan(
+            text: text.substring(start),
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: isDark
+                  ? AppColors.textPrimaryDarkMode
+                  : AppColors.textPrimary,
+            ),
+          ));
+        }
+        break;
+      }
+
+      // Text before match
+      if (index > start) {
+        spans.add(TextSpan(
+          text: text.substring(start, index),
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: isDark
+                ? AppColors.textPrimaryDarkMode
+                : AppColors.textPrimary,
+          ),
+        ));
+      }
+
+      // Highlighted match
+      spans.add(TextSpan(
+        text: text.substring(index, index + keyword.length),
+        style: AppTextStyles.bodyMedium.copyWith(
+          backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+        ),
+      ));
+
+      start = index + keyword.length;
+    }
+
+    if (spans.isEmpty) {
       return Text(
         text,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
+        style: AppTextStyles.bodyMedium.copyWith(
+          color: isDark
+              ? AppColors.textPrimaryDarkMode
+              : AppColors.textPrimary,
+        ),
       );
     }
 
     return RichText(
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
-      text: TextSpan(
-        children: [
-          if (index > 0)
-            TextSpan(
-              text: text.substring(0, index),
-              style: theme.textTheme.bodyMedium,
-            ),
-          TextSpan(
-            text: text.substring(index, index + _keyword.length),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              backgroundColor: theme.colorScheme.primary.withAlpha(51),
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          if (index + _keyword.length < text.length)
-            TextSpan(
-              text: text.substring(index + _keyword.length),
-              style: theme.textTheme.bodyMedium,
-            ),
-        ],
-      ),
+      text: TextSpan(children: spans),
     );
   }
 
@@ -359,7 +503,7 @@ class _MessageSearchPanelState extends State<MessageSearchPanel> {
     } else if (diff.inDays == 1) {
       return context.l10n.yesterday;
     } else if (diff.inDays < 7) {
-      return '${diff.inDays} ${context.l10n.daysAgo(diff.inDays)}';
+      return context.l10n.daysAgo(diff.inDays);
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }

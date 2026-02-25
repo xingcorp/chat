@@ -19,8 +19,9 @@ import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
-import 'package:flutter_chat_app/features/chat/domain/usecases/chat/search_messages_usecase.dart';
 import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
+import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/screens/chat/chat_header.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/attachment_picker_widget.dart';
@@ -548,9 +549,18 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   /// Search users for adding to group
   Future<List<SelectableUser>> _searchUsers(String query) async {
-    // TODO: Implement user search via repository
-    // For now, return empty list
-    return [];
+    try {
+      final userRemoteDataSource = getIt<UserRemoteDataSource>();
+      final users = await userRemoteDataSource.searchUsers(query);
+      return users.map((user) => SelectableUser(
+        id: user.serverId,
+        name: user.displayName,
+        avatarUrl: user.avatarUrl,
+      )).toList();
+    } catch (e) {
+      debugPrint('[AddMember] Error searching users: $e');
+      return [];
+    }
   }
 
   /// Add members to group via API
@@ -584,53 +594,25 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   void _showMessageSearch() {
     if (_chat == null) return;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) => MessageSearchPanel(
-          conversationId: widget.chatId,
-          onResultSelected: (result) {
-            // Jump to message and highlight
-            _jumpToMessage(result.id);
-          },
-          onSearch: (keyword) => _searchMessages(keyword),
+      builder: (sheetContext) => BlocProvider(
+        create: (_) => getIt<MessageSearchBloc>(),
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) => MessageSearchPanel(
+            conversationId: widget.chatId,
+            onResultSelected: (result) {
+              _jumpToMessage(result.id);
+            },
+          ),
         ),
       ),
-    );
-  }
-
-  /// Search messages by keyword
-  Future<List<MessageSearchResult>> _searchMessages(String keyword) async {
-    final searchUseCase = getIt<SearchMessagesUseCase>();
-    
-    final result = await searchUseCase(
-      keyword: keyword,
-      conversationId: widget.chatId,
-    );
-    
-    return result.fold(
-      (failure) {
-        // Return empty list on failure
-        return [];
-      },
-      (items) {
-        // Map use case result to widget result
-        return items.map((item) => MessageSearchResult(
-          id: item.id,
-          message: item.message,
-          type: item.type,
-          createdAt: item.createdAt,
-          conversationId: item.conversationId,
-          senderId: item.senderId,
-          senderName: item.senderName,
-        )).toList();
-      },
     );
   }
 

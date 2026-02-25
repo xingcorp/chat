@@ -230,10 +230,10 @@ abstract class AppLocalizations {
   /// **'No messages yet'**
   String get noMessages;
 
-  /// Load more button text
+  /// Button text to load more results
   ///
   /// In en, this message translates to:
-  /// **'Load More'**
+  /// **'Load more'**
   String get loadMore;
 
   /// Read more button text for expandable messages
@@ -2911,6 +2911,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search members'**
   String get searchMembers;
+
+  /// Title for message search panel
+  ///
+  /// In en, this message translates to:
+  /// **'Search Messages'**
+  String get searchMessagesTitle;
+
+  /// Hint text when search panel is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Type to search messages'**
+  String get typeToSearchMessages;
+
+  /// Error message when search fails due to no internet
+  ///
+  /// In en, this message translates to:
+  /// **'You are offline. Please check your connection and try again.'**
+  String get searchErrorOffline;
+
+  /// Generic error message when search fails
+  ///
+  /// In en, this message translates to:
+  /// **'Search failed. Please try again.'**
+  String get searchErrorGeneric;
+
+  /// Number of search results found
+  ///
+  /// In en, this message translates to:
+  /// **'{count} results found'**
+  String searchResultCount(int count);
 }
 
 class _AppLocalizationsDelegate

@@ -814,5 +814,40 @@
   "searchMembers": "Tìm thành viên",
   "@searchMembers": {
     "description": "Hint text for search members field"
+  },
+
+  "searchMessagesTitle": "Tìm kiếm tin nhắn",
+  "@searchMessagesTitle": {
+    "description": "Title for message search panel"
+  },
+
+  "typeToSearchMessages": "Nhập để tìm kiếm tin nhắn",
+  "@typeToSearchMessages": {
+    "description": "Hint text when search panel is empty"
+  },
+
+  "searchErrorOffline": "Bạn đang ngoại tuyến. Vui lòng kiểm tra kết nối và thử lại.",
+  "@searchErrorOffline": {
+    "description": "Error message when search fails due to no internet"
+  },
+
+  "searchErrorGeneric": "Tìm kiếm thất bại. Vui lòng thử lại.",
+  "@searchErrorGeneric": {
+    "description": "Generic error message when search fails"
+  },
+
+  "searchResultCount": "Tìm thấy {count} kết quả",
+  "@searchResultCount": {
+    "description": "Number of search results found",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "loadMore": "Tải thêm",
+  "@loadMore": {
+    "description": "Button text to load more results"
   }
 }

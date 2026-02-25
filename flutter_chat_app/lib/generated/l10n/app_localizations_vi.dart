@@ -1568,4 +1568,22 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get searchMembers => 'Tìm thành viên';
+
+  @override
+  String get searchMessagesTitle => 'Tìm kiếm tin nhắn';
+
+  @override
+  String get typeToSearchMessages => 'Nhập để tìm kiếm tin nhắn';
+
+  @override
+  String get searchErrorOffline =>
+      'Bạn đang ngoại tuyến. Vui lòng kiểm tra kết nối và thử lại.';
+
+  @override
+  String get searchErrorGeneric => 'Tìm kiếm thất bại. Vui lòng thử lại.';
+
+  @override
+  String searchResultCount(int count) {
+    return 'Tìm thấy $count kết quả';
+  }
 }

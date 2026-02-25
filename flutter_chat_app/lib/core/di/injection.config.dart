@@ -56,7 +56,6 @@ import '../../domain/usecases/message/edit_message_usecase.dart' as _i203;
 import '../../domain/usecases/message/get_messages_usecase.dart' as _i467;
 import '../../domain/usecases/message/mark_as_read_usecase.dart' as _i848;
 import '../../domain/usecases/message/remove_reaction_usecase.dart' as _i539;
-import '../../domain/usecases/message/search_messages_usecase.dart' as _i148;
 import '../../domain/usecases/message/send_message_usecase.dart' as _i67;
 import '../../domain/usecases/message/upload_file_usecase.dart' as _i196;
 import '../../domain/usecases/request_permission_usecase.dart' as _i198;
@@ -88,9 +87,13 @@ import '../../features/chat/domain/usecases/chat/leave_conversation_usecase.dart
     as _i462;
 import '../../features/chat/domain/usecases/chat/search_conversations_usecase.dart'
     as _i130;
+import '../../features/chat/domain/usecases/chat/search_messages_usecase.dart'
+    as _i56;
 import '../../features/chat/domain/usecases/chat/update_group_usecase.dart'
     as _i277;
 import '../../features/chat/presentation/blocs/chat/chat_bloc.dart' as _i863;
+import '../../features/chat/presentation/blocs/message_search/message_search_bloc.dart'
+    as _i704;
 import '../../presentation/blocs/chat_info/chat_info_bloc.dart' as _i915;
 import '../../presentation/blocs/chat_members/chat_members_bloc.dart' as _i1028;
 import '../../presentation/blocs/connection/connection_bloc.dart' as _i81;
@@ -438,10 +441,6 @@ extension GetItInjectableX on _i174.GetIt {
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
-    gh.factory<_i148.SearchMessagesUseCase>(() => _i148.SearchMessagesUseCase(
-          repository: gh<_i572.IMessageRepository>(),
-          logger: gh<_i221.AppLogger>(),
-        ));
     gh.factory<_i539.RemoveReactionUseCase>(() => _i539.RemoveReactionUseCase(
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
@@ -625,6 +624,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i1028.ChatMembersBloc>(() => _i1028.ChatMembersBloc(
           logger: gh<_i974.Logger>(),
           chatRepository: gh<_i81.IChatRepository>(),
+        ));
+    gh.factory<_i56.SearchMessagesUseCase>(() =>
+        _i56.SearchMessagesUseCase(repository: gh<_i81.IChatRepository>()));
+    gh.factory<_i704.MessageSearchBloc>(() => _i704.MessageSearchBloc(
+          searchMessages: gh<_i56.SearchMessagesUseCase>(),
+          logger: gh<_i221.AppLogger>(),
         ));
     gh.factory<_i787.GetConversationsUseCase>(
         () => _i787.GetConversationsUseCase(

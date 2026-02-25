@@ -75,7 +75,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noMessages => 'No messages yet';
 
   @override
-  String get loadMore => 'Load More';
+  String get loadMore => 'Load more';
 
   @override
   String get readMore => 'Read more';
@@ -1567,4 +1567,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchMembers => 'Search members';
+
+  @override
+  String get searchMessagesTitle => 'Search Messages';
+
+  @override
+  String get typeToSearchMessages => 'Type to search messages';
+
+  @override
+  String get searchErrorOffline =>
+      'You are offline. Please check your connection and try again.';
+
+  @override
+  String get searchErrorGeneric => 'Search failed. Please try again.';
+
+  @override
+  String searchResultCount(int count) {
+    return '$count results found';
+  }
 }
