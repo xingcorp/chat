@@ -468,13 +468,24 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     final renderableAttachments = _getRenderableAttachments();
     final contentType = widget.uiState.contentType;
 
-    final bubbleColor = isFromCurrentUser
-        ? theme.colorScheme.primary.withOpacity(0.8)
-        : theme.cardColor;
+    // For file-only messages (no text), use neutral bubble color
+    // to avoid blue background leaking around file tiles
+    final hasTextContent = widget.uiState.content.isNotEmpty;
+    final hasOnlyFiles = renderableAttachments.isNotEmpty &&
+        renderableAttachments.every((a) => a.type != 'image' && a.type != 'video') &&
+        !hasTextContent;
 
-    final textColor = isFromCurrentUser
-        ? theme.colorScheme.onPrimary
-        : theme.textTheme.bodyMedium?.color ?? Colors.black;
+    final bubbleColor = hasOnlyFiles
+        ? theme.colorScheme.surfaceContainerHighest
+        : (isFromCurrentUser
+            ? theme.colorScheme.primary
+            : theme.cardColor);
+
+    final textColor = hasOnlyFiles
+        ? (theme.textTheme.bodyMedium?.color ?? Colors.black)
+        : (isFromCurrentUser
+            ? theme.colorScheme.onPrimary
+            : theme.textTheme.bodyMedium?.color ?? Colors.black);
 
     // Determine if we should use audio/video player instead of media gallery
     final isAudioMessage = contentType == domain.ContentType.audio;
@@ -488,16 +499,9 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       ),
       decoration: BoxDecoration(
         color: widget.uiState.isHighlighted
-            ? bubbleColor.withOpacity(0.7)
+            ? bubbleColor.withValues(alpha: 0.7)
             : bubbleColor,
         borderRadius: _getBubbleBorderRadius(isFromCurrentUser),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 2.0,
-            offset: const Offset(0, 1),
-          ),
-        ],
       ),
       child: ClipRRect(
         borderRadius: _getBubbleBorderRadius(isFromCurrentUser),
@@ -530,6 +534,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
               ),
 
             // Attachment previews (skip for single audio/video with special player)
+            // No padding — media fills bubble edge-to-edge like Telegram/WhatsApp
             if (renderableAttachments.isNotEmpty && !useSpecialPlayer)
               _buildAttachmentPreviews(context, attachments: renderableAttachments),
 
@@ -676,14 +681,11 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     // MediaGallery now handles upload progress overlay internally
     // for each attachment with percentage display
     // Pass message and chatId for reaction/forward support in fullscreen view
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
-      child: MediaGallery(
-        attachments: attachments,
-        layout: MediaGalleryLayout.grid,
-        message: widget.uiState.message,
-        chatId: widget.uiState.chatId,
-      ),
+    return MediaGallery(
+      attachments: attachments,
+      layout: MediaGalleryLayout.grid,
+      message: widget.uiState.message,
+      chatId: widget.uiState.chatId,
     );
   }
 
