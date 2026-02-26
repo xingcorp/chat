@@ -1,9 +1,10 @@
-import 'package:flutter_chat_app/core/utils/either.dart';
-import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/utils/logger.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:injectable/injectable.dart';
+
+import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/utils/either.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 /// Get Messages Use Case
 ///
@@ -21,6 +22,9 @@ class GetMessagesUseCase {
     required AppLogger logger,
   })  : _repository = repository,
         _logger = logger;
+
+  /// Expose repository for direct access (used by MessageBloc for delta sync)
+  IMessageRepository get repository => _repository;
 
   /// Execute use case to get messages
   ///

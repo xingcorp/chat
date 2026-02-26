@@ -106,6 +106,9 @@ dependencies:
   crypto: ^3.0.3
   encrypt: ^5.0.3
 
+  # Async utilities
+  async: ^2.11.0
+
   # Utilities
   intl: ^0.20.2
   uuid: ^4.2.2

@@ -112,4 +112,26 @@ abstract class IMessageRepository {
     required String code,
     required String act,
   });
+
+  // === Phase 2 + 3: Two-Phase Render & Delta Sync ===
+
+  /// **Lấy tin nhắn từ local storage only (cho two-phase render phase 1)**
+  ///
+  /// Returns cached/local messages without hitting the server.
+  /// Returns empty list (not failure) if no local data exists.
+  Future<Either<Failure, List<ChatMessage>>> getMessagesFromLocal(
+    String chatId, {
+    int limit = 20,
+  });
+
+  /// **Lấy tin nhắn delta từ timestamp**
+  ///
+  /// Sử dụng tham số `from` của backend API.
+  /// Returns tin nhắn có createdAt >= fromTimestamp.
+  /// Merges with local data and enforces cache limit.
+  Future<Either<Failure, List<ChatMessage>>> getMessagesDelta(
+    String chatId, {
+    required int fromTimestamp,
+    int limit = 20,
+  });
 }

@@ -6,6 +6,7 @@ import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/models/offline_operation_model.dart';
+import 'package:flutter_chat_app/data/models/sync_metadata_model.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -276,6 +277,7 @@ class WebDatabaseImplementation implements IDatabaseImplementation {
       MessageModelSchema,
       UserModelSchema,
       OfflineOperationModelSchema,
+      SyncMetadataModelSchema,
     ];
 
     await Isar.initialize();
@@ -440,6 +442,7 @@ class NativeDatabaseImplementation implements IDatabaseImplementation {
       MessageModelSchema,
       UserModelSchema,
       OfflineOperationModelSchema,
+      SyncMetadataModelSchema,
     ];
     
     final dir = await getApplicationDocumentsDirectory();

@@ -403,4 +403,119 @@ class MessageMapper {
   static List<MessageDto> toDtoList(List<MessageModel> models) {
     return models.map((model) => toDto(model)).toList();
   }
+
+  /// **Convert ChatMessage domain entity back to MessageModel**
+  ///
+  /// Used by delta sync to save merged domain entities to local storage.
+  /// Reconstructs metadata JSON from domain fields for round-trip fidelity.
+  static MessageModel fromDomain(ChatMessage entity) {
+    // Map ContentType back to MessageType
+    final MessageType type;
+    switch (entity.contentType) {
+      case ContentType.text:
+        type = MessageType.text;
+      case ContentType.image:
+        type = MessageType.image;
+      case ContentType.video:
+        type = MessageType.video;
+      case ContentType.audio:
+        type = MessageType.audio;
+      case ContentType.file:
+        type = MessageType.file;
+      case ContentType.location:
+        type = MessageType.location;
+      case ContentType.link:
+        type = MessageType.text;
+      case ContentType.event:
+        type = MessageType.system;
+    }
+
+    // Reconstruct metadata JSON
+    final metadataMap = <String, dynamic>{
+      'urls': entity.urls,
+      'fileName': entity.fileName,
+      'sender': entity.sender.toJson(),
+      'forwardedFromMessageId': entity.forwardedFromMessageId,
+    };
+
+    // Reconstruct reactions in DTO format for metadata
+    if (entity.reactions.isNotEmpty) {
+      final reactionsByCode = <String, List<String>>{};
+      final reactorNames = <String, String>{};
+      for (final r in entity.reactions) {
+        reactionsByCode.putIfAbsent(r.code, () => []).add(r.userId);
+        if (r.userName != null) {
+          reactorNames[r.userId] = r.userName!;
+        }
+      }
+      metadataMap['reactions'] = reactionsByCode.entries.map((e) => {
+        'code': e.key,
+        'reactorIds': e.value,
+        'reactors': e.value
+            .map((id) => {'id': id, 'fullname': reactorNames[id] ?? id})
+            .toList(),
+      }).toList();
+    }
+
+    // Reconstruct reply message metadata
+    if (entity.replyMessage != null) {
+      final reply = entity.replyMessage!;
+      metadataMap['replyMessage'] = {
+        'id': reply.id,
+        'message': reply.content,
+        'type': reply.contentType.name.toUpperCase(),
+        'urls': reply.urls,
+        'fileName': reply.fileName,
+        if (reply.sender.id.isNotEmpty)
+          'sender': reply.sender.toJson(),
+        'mentionTo': reply.mentionTo
+            .map((m) => {'id': m.id, 'fullname': m.name})
+            .toList(),
+      };
+    }
+
+    // Reconstruct mentionTo JSON
+    final mentionToJson = entity.mentionTo.isNotEmpty
+        ? jsonEncode(
+            entity.mentionTo
+                .map((m) => {'id': m.id, 'name': m.name})
+                .toList(),
+          )
+        : null;
+
+    // Map localStatus to MessageStatus
+    final MessageStatus status;
+    switch (entity.localStatus) {
+      case MessageStatus.pending:
+        status = MessageStatus.pending;
+      case MessageStatus.sending:
+        status = MessageStatus.sending;
+      case MessageStatus.failed:
+        status = MessageStatus.failed;
+      default:
+        status = MessageStatus.sent;
+    }
+
+    return MessageModel(
+      serverId: entity.id.startsWith('draft_') ? null : entity.id,
+      localId: entity.id,
+      chatId: entity.chatId,
+      senderId: entity.sender.id,
+      readBy: entity.readBy,
+      content: entity.content,
+      type: type,
+      status: status,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      editedAt: entity.editedAt,
+      deletedAt: entity.deletedAt,
+      urls: entity.urls,
+      fileName: entity.fileName,
+      forwardedFromMessageId: entity.forwardedFromMessageId,
+      mentionToJson: mentionToJson,
+      replyToMessageId: entity.replyMessageId,
+      metadata: jsonEncode(metadataMap),
+      isDeleted: entity.deletedAt != null,
+    );
+  }
 }

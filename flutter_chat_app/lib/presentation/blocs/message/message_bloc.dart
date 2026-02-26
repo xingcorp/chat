@@ -1,15 +1,23 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:async/async.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:injectable/injectable.dart';
+import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
+import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart' hide MessageReaction;
+import 'package:flutter_chat_app/data/managers/sync_metadata_manager.dart';
+import 'package:flutter_chat_app/data/strategies/gap_detection_logic.dart';
+import 'package:flutter_chat_app/data/strategies/message_merge_strategy.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_list_transformer.dart';
@@ -21,6 +29,7 @@ import 'package:flutter_chat_app/domain/usecases/message/send_message_usecase.da
 import 'package:flutter_chat_app/domain/usecases/message/add_reaction_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/remove_reaction_usecase.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/bloc_error_mixin.dart';
+import 'package:flutter_chat_app/presentation/blocs/message/socket_event_buffer.dart';
 import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'dart:io';
@@ -56,12 +65,24 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   final RealtimeService _realtimeService;
   final ILocationService _locationService;
 
+  // === Phase 2 + 3 Dependencies ===
+  final SyncMetadataManager _syncMetadataManager;
+
   // Logger (injected via DI) - must be AppLogger for BlocErrorMixin
   @override
   final AppLogger logger;
 
   // Map chat ID -> StreamSubscription
   final Map<String, StreamSubscription?> _messageSubscriptions = {};
+
+  // === Phase 2 + 3 Internal State ===
+  final SocketEventBuffer<MessageEvent> _socketEventBuffer = SocketEventBuffer<MessageEvent>();
+  StreamSubscription? _connectionStateSubscription;
+  StreamSubscription? _messageEditedSubscription;
+  StreamSubscription? _messageDeletedSubscription;
+  StreamSubscription? _messageReactionSubscription;
+  CancelableOperation<void>? _backgroundFetchOperation;
+  DateTime? _lastBackgroundedAt;
 
   // UI transform context
   String _currentUserId = '';
@@ -106,6 +127,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     required CacheSyncStrategy cacheSyncStrategy,
     required RealtimeService realtimeService,
     required ILocationService locationService,
+    required SyncMetadataManager syncMetadataManager,
     required this.logger,
   })  : _getMessages = getMessages,
         _sendMessage = sendMessage,
@@ -118,6 +140,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         _cacheSyncStrategy = cacheSyncStrategy,
         _realtimeService = realtimeService,
         _locationService = locationService,
+        _syncMetadataManager = syncMetadataManager,
         super(const MessageInitial()) {
     on<LoadMessages>(_onLoadMessages);
     on<LoadMoreMessages>(_onLoadMoreMessages);
@@ -131,57 +154,113 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     on<ToggleReaction>(_onToggleReaction);
     on<SendMessageWithAttachments>(_onSendMessageWithAttachments);
     on<SendLocationMessage>(_onSendLocationMessage);
+
+    // Phase 2 + 3 event handlers
+    on<_BackgroundFetchCompleted>(_onBackgroundFetchCompleted);
+    on<_BackgroundFetchFailed>(_onBackgroundFetchFailed);
+    on<_ReconnectionDetected>(_onReconnectionDetected);
+    on<AppResumed>(_onAppResumed);
+    on<ReceiveMessageEdited>(_onReceiveMessageEdited);
+    on<ReceiveMessageDeleted>(_onReceiveMessageDeleted);
+    on<ReceiveMessageReaction>(_onReceiveMessageReaction);
+
+    // Subscribe to connection state changes for reconnection detection
+    _connectionStateSubscription = _realtimeService.connectionState
+        .distinct()
+        .pairwise()
+        .where((pair) =>
+          pair.first != SocketConnectionState.connected &&
+          pair.last == SocketConnectionState.connected)
+        .listen((_) => add(const _ReconnectionDetected()));
   }
   
-  /// **Load messages using GetMessagesUseCase - CLEAN ARCHITECTURE**
+  /// **Load messages — Two-Phase Render + Delta Sync**
+  ///
+  /// Phase 1: Emit local data immediately (< 50ms) with background fetch flag
+  /// Phase 2: Background fetch (delta or full) → merge → emit merged state
+  /// Fallback: First-time load (no local data) → standard server fetch
   Future<void> _onLoadMessages(LoadMessages event, Emitter<MessageState> emit) async {
     logger.i('Loading messages for chat: ${event.chatId}');
 
-    if (state is MessagesLoaded && (state as MessagesLoaded).chatId == event.chatId) {
-      // Already loaded messages for this chat, only emit again if force refresh
-      if (!event.forceRefresh) {
-        return;
-      }
-    }
-
-    emit(MessagesLoading(chatId: event.chatId));
-
-    // Execute UseCase
-    final result = await _getMessages(
-      conversationId: event.chatId,
+    // Step 1: Try local data first (Two-Phase Render)
+    final localResult = await _getMessages.repository.getMessagesFromLocal(
+      event.chatId,
       limit: event.limit,
     );
 
-    result.fold(
-      (failure) {
-        logger.e('Failed to load messages', error: failure);
-        emit(MessagesError(
-          chatId: event.chatId,
-          error: failure.message,
-        ));
-      },
-      (messages) {
-        logger.i('Loaded ${messages.length} messages for chat ${event.chatId}');
-
-        // Reset dirty flag after successful load
-        _cacheSyncStrategy.resetChatMessagesDirtyFlag(event.chatId);
-
-        // Subscribe to real-time updates
-        if (event.subscribeToUpdates) {
-          unawaited(_subscribeToMessages(event.chatId));
-        } else {
-          // Ensure old subscription is cancelled if caller disables updates
-          unawaited(_cancelMessageSubscription(event.chatId));
-        }
-
-        emit(MessagesLoaded(
-          chatId: event.chatId,
-          messages: messages,
-          uiMessages: _transformMessages(messages),
-          hasReachedMax: messages.length < event.limit,
-        ));
-      },
+    final hasLocalData = localResult.fold(
+      (_) => false,
+      (messages) => messages.isNotEmpty,
     );
+
+    if (hasLocalData && !event.forceRefresh) {
+      // === TWO-PHASE RENDER PATH ===
+      final localMessages = localResult.fold((_) => <ChatMessage>[], (m) => m);
+
+      // Phase 1: Emit local data immediately
+      emit(MessagesLoaded(
+        chatId: event.chatId,
+        messages: localMessages,
+        uiMessages: _transformMessages(localMessages),
+        hasReachedMax: false,
+        dataSource: MessageDataSource.local,
+        isBackgroundFetching: true,
+      ));
+
+      // Subscribe to real-time updates
+      if (event.subscribeToUpdates) {
+        unawaited(_subscribeToMessages(event.chatId));
+        _subscribeToEditDeleteReaction(event.chatId);
+      } else {
+        unawaited(_cancelMessageSubscription(event.chatId));
+      }
+
+      // Phase 2: Background fetch (delta or full)
+      _startBackgroundFetch(event.chatId, event.limit);
+    } else {
+      // === FIRST-TIME LOAD PATH (Phase 1 behavior) ===
+      emit(MessagesLoading(chatId: event.chatId));
+
+      final result = await _getMessages(
+        conversationId: event.chatId,
+        limit: event.limit,
+      );
+
+      result.fold(
+        (failure) {
+          logger.e('Failed to load messages', error: failure);
+          emit(MessagesError(
+            chatId: event.chatId,
+            error: failure.message,
+          ));
+        },
+        (messages) {
+          logger.i('Loaded ${messages.length} messages for chat ${event.chatId}');
+
+          // Reset dirty flag after successful load
+          _cacheSyncStrategy.resetChatMessagesDirtyFlag(event.chatId);
+
+          // Update sync metadata
+          unawaited(_syncMetadataManager.updateFromMessages(event.chatId, messages));
+
+          // Subscribe to real-time updates
+          if (event.subscribeToUpdates) {
+            unawaited(_subscribeToMessages(event.chatId));
+            _subscribeToEditDeleteReaction(event.chatId);
+          } else {
+            unawaited(_cancelMessageSubscription(event.chatId));
+          }
+
+          emit(MessagesLoaded(
+            chatId: event.chatId,
+            messages: messages,
+            uiMessages: _transformMessages(messages),
+            hasReachedMax: messages.length < event.limit,
+            dataSource: MessageDataSource.server,
+          ));
+        },
+      );
+    }
   }
   
   /// **Load more messages using GetMessagesUseCase (pagination) - CLEAN ARCHITECTURE**
@@ -467,6 +546,257 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     // Mark message list as dirty
     _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
     _cacheSyncStrategy.markChatListDirty();
+  }
+
+  // === Phase 2 + 3: Background Fetch ===
+
+  /// Start background fetch with socket event buffering
+  void _startBackgroundFetch(String chatId, int limit) {
+    _socketEventBuffer.startBuffering();
+    _backgroundFetchOperation?.cancel();
+    _backgroundFetchOperation = CancelableOperation.fromFuture(
+      _performBackgroundFetch(chatId, limit),
+    );
+  }
+
+  /// Perform delta sync or full fetch in background
+  Future<void> _performBackgroundFetch(String chatId, int limit) async {
+    try {
+      final lastTimestamp = _syncMetadataManager.getLastKnownTimestamp(chatId);
+
+      Either<Failure, List<ChatMessage>> result;
+
+      if (lastTimestamp != null) {
+        // Delta sync: only fetch messages since last known timestamp
+        result = await _getMessages.repository.getMessagesDelta(
+          chatId,
+          fromTimestamp: lastTimestamp,
+          limit: limit,
+        );
+
+        // Gap detection
+        final deltaCount = result.fold((_) => 0, (m) => m.length);
+        if (GapDetectionLogic.hasGap(deltaCount: deltaCount, pageSize: limit)) {
+          logger.w('Gap detected in delta sync for chat $chatId, doing full refresh');
+          result = await _getMessages(conversationId: chatId, limit: limit);
+        }
+      } else {
+        // No timestamp — full load
+        result = await _getMessages(conversationId: chatId, limit: limit);
+      }
+
+      result.fold(
+        (failure) => add(_BackgroundFetchFailed(chatId: chatId, error: failure.message)),
+        (messages) => add(_BackgroundFetchCompleted(chatId: chatId, serverMessages: messages)),
+      );
+    } catch (e) {
+      logger.e('Background fetch error', error: e);
+      add(_BackgroundFetchFailed(chatId: chatId, error: e.toString()));
+    }
+  }
+
+  /// Handle background fetch completion — merge local + server
+  void _onBackgroundFetchCompleted(
+    _BackgroundFetchCompleted event,
+    Emitter<MessageState> emit,
+  ) {
+    if (state is! MessagesLoaded) return;
+    final currentState = state as MessagesLoaded;
+
+    // Race condition guard: ignore stale responses for wrong chat
+    if (currentState.chatId != event.chatId) {
+      logger.w('Background fetch completed for wrong chat: ${event.chatId} vs ${currentState.chatId}');
+      _socketEventBuffer.stopBuffering();
+      return;
+    }
+
+    // Merge local + server
+    final merged = MessageMergeStrategy.merge(
+      localMessages: currentState.messages,
+      serverMessages: event.serverMessages,
+    );
+
+    // Update sync metadata
+    unawaited(_syncMetadataManager.updateFromMessages(event.chatId, merged));
+    _cacheSyncStrategy.resetChatMessagesDirtyFlag(event.chatId);
+
+    emit(currentState.copyWith(
+      messages: merged,
+      uiMessages: _transformMessages(merged),
+      dataSource: MessageDataSource.merged,
+      isBackgroundFetching: false,
+      hasReachedMax: event.serverMessages.length < 20,
+    ));
+
+    // Flush buffered socket events
+    final bufferedEvents = _socketEventBuffer.stopBuffering();
+    for (final bufferedEvent in bufferedEvents) {
+      add(bufferedEvent);
+    }
+  }
+
+  /// Handle background fetch failure — keep local data, no error state
+  void _onBackgroundFetchFailed(
+    _BackgroundFetchFailed event,
+    Emitter<MessageState> emit,
+  ) {
+    if (state is! MessagesLoaded) return;
+    final currentState = state as MessagesLoaded;
+
+    if (currentState.chatId != event.chatId) {
+      _socketEventBuffer.stopBuffering();
+      return;
+    }
+
+    logger.w('Background fetch failed for chat ${event.chatId}: ${event.error}');
+
+    emit(currentState.copyWith(
+      isBackgroundFetching: false,
+    ));
+
+    // Flush buffered socket events
+    final bufferedEvents = _socketEventBuffer.stopBuffering();
+    for (final bufferedEvent in bufferedEvents) {
+      add(bufferedEvent);
+    }
+  }
+
+  // === Phase 3: Socket Event Handlers (Edit/Delete/Reaction) ===
+
+  /// Subscribe to edit/delete/reaction streams from RealtimeService.
+  /// Does NOT duplicate room joining — that's handled by _subscribeToMessages.
+  void _subscribeToEditDeleteReaction(String chatId) {
+    _messageEditedSubscription?.cancel();
+    _messageDeletedSubscription?.cancel();
+    _messageReactionSubscription?.cancel();
+
+    _messageEditedSubscription = _realtimeService.messageEditedStream
+        .where((msg) => msg.chatId == chatId)
+        .listen((msg) => add(ReceiveMessageEdited(msg)));
+
+    _messageDeletedSubscription = _realtimeService.messageDeletedStream
+        .listen((msgId) => add(ReceiveMessageDeleted(msgId)));
+
+    _messageReactionSubscription = _realtimeService.messageReactionStream
+        .listen((reaction) => add(ReceiveMessageReaction(
+              messageId: reaction.messageId,
+              code: reaction.code,
+              userId: reaction.userId,
+              userName: reaction.userName,
+              isAdd: reaction.action == ReactionAction.add,
+            )));
+  }
+
+  /// Handle socket message:edit — update message in state
+  void _onReceiveMessageEdited(ReceiveMessageEdited event, Emitter<MessageState> emit) {
+    if (_socketEventBuffer.bufferIfNeeded(event)) return;
+
+    if (state is! MessagesLoaded) return;
+    final currentState = state as MessagesLoaded;
+
+    final updatedMessages = currentState.messages.map((msg) {
+      if (msg.id == event.editedMessage.id) {
+        return event.editedMessage;
+      }
+      return msg;
+    }).toList();
+
+    emit(currentState.copyWith(
+      messages: updatedMessages,
+      uiMessages: _transformMessages(updatedMessages),
+    ));
+
+    unawaited(_syncMetadataManager.updateFromMessages(
+      currentState.chatId,
+      [event.editedMessage],
+    ));
+  }
+
+  /// Handle socket message:delete — remove message from state
+  void _onReceiveMessageDeleted(ReceiveMessageDeleted event, Emitter<MessageState> emit) {
+    if (_socketEventBuffer.bufferIfNeeded(event)) return;
+
+    if (state is! MessagesLoaded) return;
+    final currentState = state as MessagesLoaded;
+
+    final updatedMessages = currentState.messages
+        .where((msg) => msg.id != event.messageId)
+        .toList();
+
+    emit(currentState.copyWith(
+      messages: updatedMessages,
+      uiMessages: _transformMessages(updatedMessages),
+    ));
+  }
+
+  /// Handle socket message:reaction — add/remove reaction on message
+  void _onReceiveMessageReaction(ReceiveMessageReaction event, Emitter<MessageState> emit) {
+    if (_socketEventBuffer.bufferIfNeeded(event)) return;
+
+    if (state is! MessagesLoaded) return;
+    final currentState = state as MessagesLoaded;
+
+    final updatedMessages = currentState.messages.map((msg) {
+      if (msg.id != event.messageId) return msg;
+
+      List<MessageReaction> updatedReactions;
+      if (event.isAdd) {
+        updatedReactions = [
+          ...msg.reactions,
+          MessageReaction(
+            code: event.code,
+            userId: event.userId,
+            userName: event.userName,
+            createdAt: DateTime.now(),
+          ),
+        ];
+      } else {
+        updatedReactions = msg.reactions
+            .where((r) => !(r.code == event.code && r.userId == event.userId))
+            .toList();
+      }
+
+      return msg.copyWith(reactions: updatedReactions);
+    }).toList();
+
+    emit(currentState.copyWith(
+      messages: updatedMessages,
+      uiMessages: _transformMessages(updatedMessages),
+    ));
+  }
+
+  // === Phase 3: Reconnection & App Resume ===
+
+  /// Handle reconnection — trigger delta sync for active conversation
+  void _onReconnectionDetected(_ReconnectionDetected event, Emitter<MessageState> emit) {
+    if (state is! MessagesLoaded) return;
+    final currentState = state as MessagesLoaded;
+
+    logger.i('Reconnection detected, triggering delta sync for chat ${currentState.chatId}');
+    _startBackgroundFetch(currentState.chatId, 20);
+  }
+
+  /// Handle app resume — delta sync if backgrounded > 30 seconds
+  void _onAppResumed(AppResumed event, Emitter<MessageState> emit) {
+    if (state is! MessagesLoaded) return;
+    final currentState = state as MessagesLoaded;
+
+    final now = DateTime.now();
+    if (_lastBackgroundedAt != null) {
+      final backgroundDuration = now.difference(_lastBackgroundedAt!);
+      if (backgroundDuration.inSeconds < 30) {
+        logger.d('App resumed after ${backgroundDuration.inSeconds}s, skipping delta sync');
+        return;
+      }
+    }
+
+    logger.i('App resumed after >30s, triggering delta sync for chat ${currentState.chatId}');
+    _startBackgroundFetch(currentState.chatId, 20);
+  }
+
+  /// Called from Page when app enters background
+  void setBackgroundedAt(DateTime time) {
+    _lastBackgroundedAt = time;
   }
 
   /// Handle refresh messages
@@ -1104,7 +1434,16 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
   @override
   Future<void> close() async {
-    // Cancel all subscriptions when closing bloc
+    // Cancel background fetch
+    _backgroundFetchOperation?.cancel();
+
+    // Cancel Phase 2 + 3 subscriptions
+    _connectionStateSubscription?.cancel();
+    _messageEditedSubscription?.cancel();
+    _messageDeletedSubscription?.cancel();
+    _messageReactionSubscription?.cancel();
+
+    // Cancel existing Phase 1 subscriptions
     for (final chatId in _messageSubscriptions.keys) {
       await _cancelMessageSubscription(chatId);
     }

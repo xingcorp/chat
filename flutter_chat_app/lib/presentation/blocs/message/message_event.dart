@@ -177,4 +177,84 @@ class ToggleReaction extends MessageEvent {
 
   @override
   List<Object?> get props => [messageId, emojiCode];
+}
+
+// === Phase 2 + 3 Events ===
+
+/// Event khi background fetch hoàn tất (internal, không public)
+class _BackgroundFetchCompleted extends MessageEvent {
+  final String chatId;
+  final List<ChatMessage> serverMessages;
+
+  const _BackgroundFetchCompleted({
+    required this.chatId,
+    required this.serverMessages,
+  });
+
+  @override
+  List<Object?> get props => [chatId, serverMessages];
+}
+
+/// Event khi background fetch thất bại (internal)
+class _BackgroundFetchFailed extends MessageEvent {
+  final String chatId;
+  final String error;
+
+  const _BackgroundFetchFailed({
+    required this.chatId,
+    required this.error,
+  });
+
+  @override
+  List<Object?> get props => [chatId, error];
+}
+
+/// Event khi socket reconnect — trigger delta sync
+class _ReconnectionDetected extends MessageEvent {
+  const _ReconnectionDetected();
+}
+
+/// Event khi app resume từ background
+class AppResumed extends MessageEvent {
+  const AppResumed();
+}
+
+/// Event cho socket message:edit
+class ReceiveMessageEdited extends MessageEvent {
+  final ChatMessage editedMessage;
+
+  const ReceiveMessageEdited(this.editedMessage);
+
+  @override
+  List<Object?> get props => [editedMessage];
+}
+
+/// Event cho socket message:delete
+class ReceiveMessageDeleted extends MessageEvent {
+  final String messageId;
+
+  const ReceiveMessageDeleted(this.messageId);
+
+  @override
+  List<Object?> get props => [messageId];
+}
+
+/// Event cho socket message:reaction
+class ReceiveMessageReaction extends MessageEvent {
+  final String messageId;
+  final String code;
+  final String userId;
+  final String userName;
+  final bool isAdd;
+
+  const ReceiveMessageReaction({
+    required this.messageId,
+    required this.code,
+    required this.userId,
+    required this.userName,
+    required this.isAdd,
+  });
+
+  @override
+  List<Object?> get props => [messageId, code, userId, userName, isAdd];
 } 

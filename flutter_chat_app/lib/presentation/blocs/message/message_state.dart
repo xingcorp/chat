@@ -1,5 +1,15 @@
 part of 'message_bloc.dart';
 
+/// Nguồn dữ liệu của tin nhắn hiện tại
+enum MessageDataSource {
+  /// Dữ liệu từ local storage/cache
+  local,
+  /// Dữ liệu từ server (full load hoặc delta)
+  server,
+  /// Dữ liệu đã merge giữa local và server
+  merged,
+}
+
 /// Base class cho các trạng thái tin nhắn
 abstract class MessageState extends Equatable {
   const MessageState();
@@ -32,12 +42,20 @@ class MessagesLoaded extends MessageState {
   /// Lỗi tạm khi pagination fail (không phá state chính, chỉ để reset UI loading)
   final String? paginationError;
 
+  // === Phase 2 + 3 fields ===
+  /// Nguồn dữ liệu hiện tại (default: server — giữ backward compat Phase 1)
+  final MessageDataSource dataSource;
+  /// Đang có background fetch chạy không
+  final bool isBackgroundFetching;
+
   const MessagesLoaded({
     required this.chatId,
     required this.messages,
     this.uiMessages = const [],
     this.hasReachedMax = false,
     this.paginationError,
+    this.dataSource = MessageDataSource.server,
+    this.isBackgroundFetching = false,
   });
 
   MessagesLoaded copyWith({
@@ -46,6 +64,8 @@ class MessagesLoaded extends MessageState {
     List<MessageUIState>? uiMessages,
     bool? hasReachedMax,
     String? paginationError,
+    MessageDataSource? dataSource,
+    bool? isBackgroundFetching,
   }) {
     return MessagesLoaded(
       chatId: chatId ?? this.chatId,
@@ -53,11 +73,16 @@ class MessagesLoaded extends MessageState {
       uiMessages: uiMessages ?? this.uiMessages,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
       paginationError: paginationError,
+      dataSource: dataSource ?? this.dataSource,
+      isBackgroundFetching: isBackgroundFetching ?? this.isBackgroundFetching,
     );
   }
 
   @override
-  List<Object?> get props => [chatId, messages, uiMessages, hasReachedMax, paginationError];
+  List<Object?> get props => [
+    chatId, messages, uiMessages, hasReachedMax, paginationError,
+    dataSource, isBackgroundFetching,
+  ];
 }
 
 /// **Trạng thái khi có lỗi với enterprise error handling**

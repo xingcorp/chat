@@ -27,6 +27,7 @@ import '../../data/datasources/message/message_remote_datasource.dart' as _i102;
 import '../../data/datasources/permissions_datasource.dart' as _i656;
 import '../../data/datasources/user/user_local_datasource.dart' as _i439;
 import '../../data/datasources/user/user_remote_datasource.dart' as _i404;
+import '../../data/managers/sync_metadata_manager.dart' as _i407;
 import '../../data/mappers/socket_io_event_mapper.dart' as _i976;
 import '../../data/repositories/attachment_repository.dart' as _i431;
 import '../../data/repositories/chat_info_repository_impl.dart' as _i855;
@@ -371,6 +372,10 @@ extension GetItInjectableX on _i174.GetIt {
           analyticsService: gh<_i451.IAnalyticsService>(),
           logger: gh<_i221.AppLogger>(),
         ));
+    gh.lazySingleton<_i407.SyncMetadataManager>(() => _i407.SyncMetadataManager(
+          isar: gh<_i338.Isar>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
     gh.singleton<_i706.RealtimeMessagingService>(
         () => _i706.RealtimeMessagingService(
               gh<_i932.NetworkInfo>(),
@@ -579,6 +584,16 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i179.PermissionsService>(),
           gh<_i221.AppLogger>(),
         ));
+    gh.factory<_i1070.PermissionsBloc>(() => _i1070.PermissionsBloc(
+          gh<_i179.PermissionsService>(),
+          gh<_i221.AppLogger>(),
+        ));
+    gh.factoryAsync<_i379.MessageQueueBloc>(() async =>
+        _i379.MessageQueueBloc(await getAsync<_i556.MessageQueueService>()));
+    gh.factory<_i313.TypingBloc>(() => _i313.TypingBloc(
+          realtimeService: gh<_i301.RealtimeService>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
     gh.factory<_i230.MessageBloc>(() => _i230.MessageBloc(
           getMessages: gh<_i467.GetMessagesUseCase>(),
           sendMessage: gh<_i67.SendMessageUseCase>(),
@@ -591,16 +606,7 @@ extension GetItInjectableX on _i174.GetIt {
           cacheSyncStrategy: gh<_i514.CacheSyncStrategy>(),
           realtimeService: gh<_i301.RealtimeService>(),
           locationService: gh<_i669.ILocationService>(),
-          logger: gh<_i221.AppLogger>(),
-        ));
-    gh.factory<_i1070.PermissionsBloc>(() => _i1070.PermissionsBloc(
-          gh<_i179.PermissionsService>(),
-          gh<_i221.AppLogger>(),
-        ));
-    gh.factoryAsync<_i379.MessageQueueBloc>(() async =>
-        _i379.MessageQueueBloc(await getAsync<_i556.MessageQueueService>()));
-    gh.factory<_i313.TypingBloc>(() => _i313.TypingBloc(
-          realtimeService: gh<_i301.RealtimeService>(),
+          syncMetadataManager: gh<_i407.SyncMetadataManager>(),
           logger: gh<_i221.AppLogger>(),
         ));
     gh.lazySingletonAsync<_i1060.ChatMessageService>(

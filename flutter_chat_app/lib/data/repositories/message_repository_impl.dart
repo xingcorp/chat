@@ -13,6 +13,7 @@ import 'package:flutter_chat_app/data/datasources/message/message_remote_datasou
 import 'package:flutter_chat_app/data/dtos/message_dto.dart';
 import 'package:flutter_chat_app/data/mappers/message_mapper.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
+import 'package:flutter_chat_app/data/strategies/message_merge_strategy.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -103,58 +104,62 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     return getMessages(chatId, limit: limit);
   }
 
-  /// **GET MESSAGES WITH PAGINATION - OFFLINE-FIRST STRATEGY**
+  /// **GET MESSAGES WITH PAGINATION**
   ///
   /// **Performance**: <150ms for paginated loading
-  /// **Strategy**: Cache → Local → Remote with background sync
+  /// **Strategy**:
+  ///   - Initial load (cursor == null): Remote-first with local fallback.
+  ///     Users expect to see the latest messages when opening a chat.
+  ///   - Load-more (cursor != null): Offline-first (local/cache → background remote sync).
+  ///     Historical messages are unlikely to change, so stale-while-revalidate is fine.
   @override
   Future<Either<Failure, List<ChatMessage>>> getMessages(String chatId, {int limit = 20, String? cursor}) async {
-    // Cache key version bump: replyMessage selection set was expanded (type/urls/fileName/mentionTo).
-    // Prevent serving stale cached payloads which don't include these fields.
     const cacheVersion = 'v2';
     final cacheKey = 'chat_messages_${chatId}_${limit}_${cursor ?? "initial"}_$cacheVersion';
+
+    // ── Initial load: remote-first ──────────────────────────────────────
+    if (cursor == null) {
+      return _getMessagesRemoteFirst(chatId, limit: limit, cacheKey: cacheKey);
+    }
+
+    // ── Load-more: offline-first ────────────────────────────────────────
+    return _getMessagesOfflineFirst(chatId, limit: limit, cursor: cursor, cacheKey: cacheKey);
+  }
+
+  /// Remote-first strategy for initial message load.
+  /// Try server first; fall back to local cache/DB only on failure or offline.
+  Future<Either<Failure, List<ChatMessage>>> _getMessagesRemoteFirst(
+    String chatId, {
+    required int limit,
+    required String cacheKey,
+  }) async {
+    // If online, try remote first
+    if (await networkInfo.isConnected) {
+      try {
+        final messages = await _fetchAndCacheFromRemote(chatId, limit: limit, cursor: null, cacheKey: cacheKey);
+        return Right(messages);
+      } catch (e) {
+        // Remote failed — fall through to local fallback
+        logger.w('Remote fetch failed for initial load of chat $chatId, falling back to local: $e');
+      }
+    }
+
+    // Offline or remote failed — serve from local
+    return _getMessagesFromLocal(chatId, limit: limit, cursor: null, cacheKey: cacheKey);
+  }
+
+  /// Offline-first strategy for load-more (pagination).
+  /// Serve cached/local data immediately; background-sync from remote.
+  Future<Either<Failure, List<ChatMessage>>> _getMessagesOfflineFirst(
+    String chatId, {
+    required int limit,
+    required String cursor,
+    required String cacheKey,
+  }) async {
     final forceRefresh = _cacheSyncStrategy.shouldRefreshChatMessages(chatId);
 
     return executeOfflineFirst<List<ChatMessage>>(
-      remoteDataSource: () async {
-        logger.d('Fetching messages from server for chat $chatId');
-
-        final cursorTs = cursor != null ? int.tryParse(cursor) : null;
-        
-        // Get DTOs from remote datasource
-        // Use lastKey for cursor-based pagination (DynamoDB ExclusiveStartKey).
-        // The 'from' parameter is a filter ("messages after timestamp"), NOT a
-        // pagination cursor, so it must NOT be used for load-more.
-        final response = await _remoteDataSource.getMessageList(
-          conversationId: chatId,
-          size: limit,
-          lastKey: cursorTs != null
-              ? {'conversationId': chatId, 'createdAt': cursorTs}
-              : null,
-        );
-        final dtos = response.messages;
-        
-        // Convert DTOs to Models using mapper
-        final models = MessageMapper.toModelList(dtos);
-
-        // Save to local database
-        await _localDataSource.saveMessages(models);
-        
-        // Cache API response
-        await _cacheManager.cacheApiResponse(
-          cacheKey,
-          models.map((m) => m.toMap()).toList(),
-          ttl: AppCacheManager.messageTtl,
-        );
-        
-        // Reset dirty flag
-        _cacheSyncStrategy.resetChatMessagesDirtyFlag(chatId);
-        
-        // Prefetch attachment thumbnails
-        _prefetchAttachmentThumbnails(models);
-
-        return models.map((model) => model.toDomain()).toList();
-      },
+      remoteDataSource: () => _fetchAndCacheFromRemote(chatId, limit: limit, cursor: cursor, cacheKey: cacheKey),
       localDataSource: () async {
         // Check cache first if not forcing refresh
         if (!forceRefresh) {
@@ -164,59 +169,100 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
                 .map((item) => MessageModel.fromMap(item as Map<String, dynamic>))
                 .toList(),
           );
-          
+
           if (cachedMessages != null && cachedMessages.isNotEmpty) {
             logger.d('Retrieved messages from cache for chat $chatId');
             return cachedMessages.map((model) => model.toDomain()).toList();
           }
         }
-        
+
         // Get from local database
         final localMessages = await _localDataSource.getMessagesForChat(chatId);
-        
-        // Apply pagination if needed
         final paginatedMessages = _applyPagination(localMessages, limit, cursor);
 
-        // If local is empty but we're online, fetch synchronously from remote.
-        // This avoids the "first open shows empty" issue caused by background
-        // remote sync in executeOfflineFirst.
+        // If local is empty but we're online, fetch synchronously
         if (paginatedMessages.isEmpty && await networkInfo.isConnected) {
-          logger.d('Local messages empty for chat $chatId; fetching from server');
-
-          final cursorTs = cursor != null ? int.tryParse(cursor) : null;
-
-          final response = await _remoteDataSource.getMessageList(
-            conversationId: chatId,
-            size: limit,
-            lastKey: cursorTs != null
-                ? {'conversationId': chatId, 'createdAt': cursorTs}
-                : null,
-          );
-          final models = MessageMapper.toModelList(response.messages);
-
-          await _localDataSource.saveMessages(models);
-          await _cacheManager.cacheApiResponse(
-            cacheKey,
-            models.map((m) => m.toMap()).toList(),
-            ttl: AppCacheManager.messageTtl,
-          );
-          _cacheSyncStrategy.resetChatMessagesDirtyFlag(chatId);
-          _prefetchAttachmentThumbnails(models);
-
-          return models.map((m) => m.toDomain()).toList();
+          logger.d('Local messages empty for load-more in chat $chatId; fetching from server');
+          return _fetchAndCacheFromRemote(chatId, limit: limit, cursor: cursor, cacheKey: cacheKey);
         }
-        
+
         // Cache the result
         await _cacheManager.cacheApiResponse(
           cacheKey,
           paginatedMessages.map((m) => m.toMap()).toList(),
           ttl: AppCacheManager.messageTtl,
         );
-        
+
         return paginatedMessages.map((model) => model.toDomain()).toList();
       },
       operationName: 'getMessages',
     );
+  }
+
+  /// Shared helper: fetch from remote, save to local DB + cache, return domain entities.
+  Future<List<ChatMessage>> _fetchAndCacheFromRemote(
+    String chatId, {
+    required int limit,
+    required String? cursor,
+    required String cacheKey,
+  }) async {
+    logger.d('Fetching messages from server for chat $chatId');
+
+    final cursorTs = cursor != null ? int.tryParse(cursor) : null;
+
+    final response = await _remoteDataSource.getMessageList(
+      conversationId: chatId,
+      size: limit,
+      lastKey: cursorTs != null
+          ? {'conversationId': chatId, 'createdAt': cursorTs}
+          : null,
+    );
+    final dtos = response.messages;
+    final models = MessageMapper.toModelList(dtos);
+
+    await _localDataSource.saveMessages(models);
+
+    await _cacheManager.cacheApiResponse(
+      cacheKey,
+      models.map((m) => m.toMap()).toList(),
+      ttl: AppCacheManager.messageTtl,
+    );
+
+    _cacheSyncStrategy.resetChatMessagesDirtyFlag(chatId);
+    _prefetchAttachmentThumbnails(models);
+
+    return models.map((model) => model.toDomain()).toList();
+  }
+
+  /// Local fallback: try cache first, then local DB.
+  Future<Either<Failure, List<ChatMessage>>> _getMessagesFromLocal(
+    String chatId, {
+    required int limit,
+    required String? cursor,
+    required String cacheKey,
+  }) async {
+    try {
+      // Try cache
+      final cachedMessages = await _cacheManager.getApiResponse<List<MessageModel>>(
+        cacheKey,
+        fromJsonList: (json) => json
+            .map((item) => MessageModel.fromMap(item as Map<String, dynamic>))
+            .toList(),
+      );
+
+      if (cachedMessages != null && cachedMessages.isNotEmpty) {
+        logger.d('Serving cached messages for chat $chatId (local fallback)');
+        return Right(cachedMessages.map((model) => model.toDomain()).toList());
+      }
+
+      // Try local DB
+      final localMessages = await _localDataSource.getMessagesForChat(chatId);
+      final paginatedMessages = _applyPagination(localMessages, limit, cursor);
+      return Right(paginatedMessages.map((model) => model.toDomain()).toList());
+    } catch (e) {
+      logger.e('Local fallback failed for chat $chatId: $e');
+      return Left(CacheFailure(message: 'Failed to load messages from local storage'));
+    }
   }
 
   /// **SEND MESSAGE - ONLINE-FIRST STRATEGY**
@@ -652,6 +698,89 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     }
     
     return messages.take(limit).toList();
+  }
+
+  // === Phase 2 + 3: Two-Phase Render & Delta Sync ===
+
+  /// **GET MESSAGES FROM LOCAL - LOCAL-ONLY STRATEGY**
+  ///
+  /// Returns cached/local messages without hitting the server.
+  /// Returns empty list (not failure) if no local data or read fails.
+  @override
+  Future<Either<Failure, List<ChatMessage>>> getMessagesFromLocal(
+    String chatId, {
+    int limit = 20,
+  }) async {
+    try {
+      final localMessages = await _localDataSource.getMessagesForChat(chatId);
+      if (localMessages.isEmpty) {
+        return const Right([]);
+      }
+
+      // Sort descending and take limit
+      final sorted = _applyPagination(localMessages, limit, null);
+      return Right(sorted.map((model) => model.toDomain()).toList());
+    } catch (e) {
+      logger.w('Local read failed for chat $chatId, returning empty: $e');
+      return const Right([]);
+    }
+  }
+
+  /// **GET MESSAGES DELTA - DELTA SYNC STRATEGY**
+  ///
+  /// Fetches only messages newer than fromTimestamp from server,
+  /// merges with local data, saves merged result, enforces cache limit.
+  @override
+  Future<Either<Failure, List<ChatMessage>>> getMessagesDelta(
+    String chatId, {
+    required int fromTimestamp,
+    int limit = 20,
+  }) async {
+    try {
+      // Fetch delta from server using `from` parameter
+      final response = await _remoteDataSource.getMessageList(
+        conversationId: chatId,
+        size: limit,
+        from: fromTimestamp,
+      );
+      final dtos = response.messages;
+      final serverModels = MessageMapper.toModelList(dtos);
+      final serverMessages = serverModels.map((m) => m.toDomain()).toList();
+
+      // Get local messages for merge
+      final localModels = await _localDataSource.getMessagesForChat(chatId);
+      final localMessages = localModels.map((m) => m.toDomain()).toList();
+
+      // Merge using strategy (server wins, dedup, preserve pending)
+      final merged = MessageMergeStrategy.merge(
+        localMessages: localMessages,
+        serverMessages: serverMessages,
+      );
+
+      // Enforce cache limit: keep newest 500 messages
+      const maxCacheSize = 500;
+      final toCache = merged.length > maxCacheSize
+          ? merged.sublist(0, maxCacheSize)
+          : merged;
+
+      // Save merged result to local storage
+      final modelsToSave = toCache
+          .map((msg) => MessageMapper.fromDomain(msg))
+          .toList();
+      await _localDataSource.saveMessages(modelsToSave);
+
+      // Invalidate old cache keys
+      await _cacheManager.invalidateCache('chat_messages_$chatId');
+      _cacheSyncStrategy.resetChatMessagesDirtyFlag(chatId);
+
+      return Right(merged);
+    } on ServerException catch (e) {
+      logger.e('Delta sync server error for chat $chatId: ${e.message}');
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      logger.e('Delta sync unexpected error for chat $chatId: $e');
+      return Left(UnexpectedFailure(message: 'Delta sync failed: $e'));
+    }
   }
 
   /// Prefetch attachment thumbnails for better UX
