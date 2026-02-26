@@ -999,7 +999,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   Widget _buildMessagesList(BuildContext context, MessageState state) {
-    if (state is MessageInitial || state is MessagesLoading) {
+    // MessageInitial: bloc just created, local cache lookup in progress.
+    // Show nothing (transparent) to avoid a loading-spinner flash when
+    // local data will arrive within 1-2 frames.
+    if (state is MessageInitial) {
+      return const SizedBox.shrink();
+    }
+    if (state is MessagesLoading) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

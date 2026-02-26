@@ -127,18 +127,20 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
           : existing?.membersJson;
 
       // Convert Chat domain entity to ChatModel
+      // Preserve creatorId and createdAt from domain entity
       final chatModel = ChatModel(
         id: existing?.id ?? chat.id.toIsarId(),
         serverId: chat.id,
         name: chat.name,
         type: _mapToDataChatType(chat.type),
+        creatorId: chat.creatorId ?? existing?.creatorId,
         lastMessagePreview: chat.lastMessagePreview,
         lastMessageTime: chat.lastMessageTime,
         unreadCount: chat.unreadCount,
         participantIds: chat.participantIds,
         avatarUrl: chat.avatarUrl,
         membersJson: membersJson,
-        createdAt: DateTime.now(),
+        createdAt: chat.createdAt ?? existing?.createdAt ?? DateTime.now(),
       );
       
       // Save using database service
@@ -176,13 +178,14 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
           serverId: chat.id,
           name: chat.name,
           type: _mapToDataChatType(chat.type),
+          creatorId: chat.creatorId ?? existing?.creatorId,
           lastMessagePreview: chat.lastMessagePreview,
           lastMessageTime: chat.lastMessageTime,
           unreadCount: chat.unreadCount,
           participantIds: chat.participantIds,
           avatarUrl: chat.avatarUrl,
           membersJson: membersJson,
-          createdAt: DateTime.now(),
+          createdAt: chat.createdAt ?? existing?.createdAt ?? DateTime.now(),
         );
         await _databaseService.saveChat(chatModel);
       }

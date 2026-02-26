@@ -227,7 +227,7 @@ class ChatRepositoryImpl implements IChatRepository {
                   localChat.createdAt != null;
 
           if (hasCreateInfo) {
-            _logger.d('Found chat locally');
+            _logger.d('Found chat locally with complete info');
             return Right(localChat);
           }
 

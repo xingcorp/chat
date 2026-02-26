@@ -409,6 +409,13 @@ class ChatModel {
           : GroupType.private;
     }
 
+    // Derive creatorName from members list using creatorId
+    String? derivedCreatorName;
+    if (creatorId != null && members.isNotEmpty) {
+      final creator = members.where((m) => m.userId == creatorId).firstOrNull;
+      derivedCreatorName = creator?.fullName;
+    }
+
     return Chat(
       id: serverId,
       name: name,
@@ -416,6 +423,8 @@ class ChatModel {
       description: description,
       groupType: parsedGroupType,
       creatorId: creatorId,
+      creatorName: derivedCreatorName,
+      createdAt: createdAt,
       members: members,
       lastMessageTime: lastMessageTime,
       lastMessagePreview: lastMessagePreview,
