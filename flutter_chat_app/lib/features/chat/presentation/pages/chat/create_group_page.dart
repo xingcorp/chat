@@ -1,10 +1,21 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
+import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
+import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
+import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/indicators/user_presence_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
+import 'package:get_it/get_it.dart';
+import 'package:image_picker/image_picker.dart';
 
 /// **Create Group Page**
 ///
@@ -12,92 +23,94 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_av
 /// 1. Entering group name
 /// 2. Selecting members from contacts
 /// 3. Optionally adding group avatar
-///
-/// **Architecture:** Presentation Layer
-/// **Pattern:** BLoC for state management
-/// **Navigation:** Returns to chat list on success
-class CreateGroupPage extends StatefulWidget {
-  /// Constructor
+class CreateGroupPage extends BaseStatefulWidget {
   const CreateGroupPage({super.key});
 
   @override
   State<CreateGroupPage> createState() => _CreateGroupPageState();
 }
 
-class _CreateGroupPageState extends State<CreateGroupPage> {
+class _CreateGroupPageState extends BaseState<CreateGroupPage> {
   final TextEditingController _groupNameController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
+  final UserRepository _userRepository = GetIt.instance<UserRepository>();
   final List<String> _selectedUserIds = [];
-  String _searchQuery = '';
+  final List<User> _selectedUsers = [];
 
-  // TODO: Replace with real user data from backend
-  // For now, using mock data until user management is implemented
-  final List<Map<String, dynamic>> _mockContacts = [
-    {
-      'id': 'user-1',
-      'name': 'Nguyễn Văn A',
-      'avatar': null,
-      'isOnline': true,
-    },
-    {
-      'id': 'user-2',
-      'name': 'Trần Thị B',
-      'avatar': null,
-      'isOnline': false,
-    },
-    {
-      'id': 'user-3',
-      'name': 'Lê Văn C',
-      'avatar': null,
-      'isOnline': true,
-    },
-    {
-      'id': 'user-4',
-      'name': 'Phạm Thị D',
-      'avatar': null,
-      'isOnline': false,
-    },
-    {
-      'id': 'user-5',
-      'name': 'Hoàng Văn E',
-      'avatar': null,
-      'isOnline': true,
-    },
-  ];
+  List<User> _contacts = [];
+  bool _isLoading = true;
+  File? _avatarFile;
+  String _searchQuery = '';
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
+    _loadContacts('');
     _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
     _groupNameController.dispose();
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
   void _onSearchChanged() {
-    setState(() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      _loadContacts(_searchController.text.trim());
+    });
+    safeSetState(() {
       _searchQuery = _searchController.text.toLowerCase();
     });
   }
 
-  void _toggleUser(String userId) {
-    setState(() {
-      if (_selectedUserIds.contains(userId)) {
-        _selectedUserIds.remove(userId);
+  Future<void> _loadContacts(String keyword) async {
+    safeSetState(() => _isLoading = true);
+
+    final result = await _userRepository.searchUsers(keyword);
+
+    result.fold(
+      (failure) => safeSetState(() => _isLoading = false),
+      (users) => safeSetState(() {
+        _isLoading = false;
+        _contacts = users;
+      }),
+    );
+  }
+
+  void _toggleUser(User user) {
+    safeSetState(() {
+      if (_selectedUserIds.contains(user.id)) {
+        _selectedUserIds.remove(user.id);
+        _selectedUsers.removeWhere((u) => u.id == user.id);
       } else {
-        _selectedUserIds.add(userId);
+        _selectedUserIds.add(user.id);
+        _selectedUsers.add(user);
       }
     });
+  }
+
+  Future<void> _pickAvatar() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+    if (picked != null) {
+      safeSetState(() => _avatarFile = File(picked.path));
+    }
   }
 
   void _createGroup(BuildContext context) {
     final groupName = _groupNameController.text.trim();
 
-    // Validation
     if (groupName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -118,7 +131,6 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       return;
     }
 
-    // Trigger create group event
     context.read<ChatBloc>().add(
           ChatEvent.createChat(
             type: ChatType.group,
@@ -128,13 +140,10 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
         );
   }
 
-  List<Map<String, dynamic>> get _filteredContacts {
-    if (_searchQuery.isEmpty) {
-      return _mockContacts;
-    }
-    return _mockContacts
-        .where((contact) =>
-            contact['name'].toString().toLowerCase().contains(_searchQuery))
+  List<User> get _filteredContacts {
+    if (_searchQuery.isEmpty) return _contacts;
+    return _contacts
+        .where((u) => (u.fullName ?? u.username).toLowerCase().contains(_searchQuery))
         .toList();
   }
 
@@ -145,18 +154,13 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       child: BlocConsumer<ChatBloc, ChatState>(
         listener: (context, state) {
           state.maybeWhen(
-            loaded: (chats, hasMore, isLoadingMore, page, pageSize, total) {
-              // Group created successfully
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(context.l10n.groupCreated),
-                  backgroundColor: Colors.green,
-                ),
+            chatDetailsLoaded: (chat) {
+              ChatNavigationHelper.replaceToChatDetail(
+                context,
+                chatId: chat.id,
               );
-              Navigator.pop(context);
             },
             error: (message) {
-              // Show error message
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(message),
@@ -168,7 +172,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
           );
         },
         builder: (context, state) {
-          final isLoading = state.maybeWhen(
+          final isCreating = state.maybeWhen(
             loading: () => true,
             orElse: () => false,
           );
@@ -178,10 +182,10 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
               title: Text(context.l10n.createNewGroup),
               actions: [
                 TextButton(
-                  onPressed: isLoading || _selectedUserIds.isEmpty
+                  onPressed: isCreating || _selectedUserIds.isEmpty
                       ? null
                       : () => _createGroup(context),
-                  child: isLoading
+                  child: isCreating
                       ? const SizedBox(
                           width: 20,
                           height: 20,
@@ -208,36 +212,50 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      // Group avatar (placeholder for future implementation)
-                      Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          AppAvatar.initials(
-                            name: context.l10n.groupName,
-                            size: AvatarSize.large,
-                            backgroundColor: Theme.of(context).primaryColor,
-                            foregroundColor: Colors.white,
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.secondary,
-                              shape: BoxShape.circle,
+                      // Group avatar picker
+                      GestureDetector(
+                        onTap: _pickAvatar,
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            _avatarFile != null
+                                ? CircleAvatar(
+                                    radius: 40,
+                                    backgroundImage:
+                                        FileImage(_avatarFile!),
+                                  )
+                                : AppAvatar.initials(
+                                    name: _groupNameController.text.isNotEmpty
+                                        ? _groupNameController.text
+                                        : context.l10n.groupName,
+                                    size: AvatarSize.large,
+                                    backgroundColor:
+                                        Theme.of(context).primaryColor,
+                                    foregroundColor: Colors.white,
+                                  ),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color:
+                                    Theme.of(context).colorScheme.secondary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                size: 16,
+                                color: Colors.white,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 16),
 
                       // Group name field
                       TextField(
                         controller: _groupNameController,
-                        enabled: !isLoading,
+                        enabled: !isCreating,
+                        onChanged: (_) => safeSetState(() {}),
                         decoration: InputDecoration(
                           labelText: context.l10n.groupName,
                           border: const OutlineInputBorder(),
@@ -250,7 +268,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                       // Search contacts
                       TextField(
                         controller: _searchController,
-                        enabled: !isLoading,
+                        enabled: !isCreating,
                         decoration: InputDecoration(
                           labelText: context.l10n.search,
                           border: const OutlineInputBorder(),
@@ -258,9 +276,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                           suffixIcon: _searchQuery.isNotEmpty
                               ? IconButton(
                                   icon: const Icon(Icons.clear),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                  },
+                                  onPressed: () => _searchController.clear(),
                                 )
                               : null,
                         ),
@@ -269,33 +285,25 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                   ),
                 ),
 
-                // Selected contacts horizontal list
-                if (_selectedUserIds.isNotEmpty)
+                // Selected members chip row
+                if (_selectedUsers.isNotEmpty)
                   Container(
                     height: 90,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.surface,
                       border: Border(
-                        top: BorderSide(
-                          color: Theme.of(context).dividerColor,
-                        ),
-                        bottom: BorderSide(
-                          color: Theme.of(context).dividerColor,
-                        ),
+                        top: BorderSide(color: Theme.of(context).dividerColor),
+                        bottom:
+                            BorderSide(color: Theme.of(context).dividerColor),
                       ),
                     ),
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _selectedUserIds.length,
+                      itemCount: _selectedUsers.length,
                       itemBuilder: (context, index) {
-                        final userId = _selectedUserIds[index];
-                        final contact = _mockContacts.firstWhere(
-                          (c) => c['id'] == userId,
-                          orElse: () => {'id': userId, 'name': 'Unknown'},
-                        );
-
+                        final user = _selectedUsers[index];
                         return Padding(
                           padding: const EdgeInsets.only(right: 16),
                           child: Column(
@@ -304,26 +312,23 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                               Stack(
                                 alignment: Alignment.topRight,
                                 children: [
-                                  AppAvatar.initials(
-                                    name: contact['name'].toString(),
+                                  AppHeroAvatar(
+                                    id: user.id,
+                                    imageUrl: user.avatar,
+                                    displayName: user.fullName ?? user.username,
                                     size: AvatarSize.medium,
-                                    backgroundColor:
-                                        Theme.of(context).primaryColor,
-                                    foregroundColor: Colors.white,
+                                    hasBorder: false,
                                   ),
                                   GestureDetector(
-                                    onTap: () => _toggleUser(userId),
+                                    onTap: () => _toggleUser(user),
                                     child: Container(
                                       padding: const EdgeInsets.all(2),
                                       decoration: const BoxDecoration(
                                         color: Colors.red,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(
-                                        Icons.close,
-                                        size: 14,
-                                        color: Colors.white,
-                                      ),
+                                      child: const Icon(Icons.close,
+                                          size: 14, color: Colors.white),
                                     ),
                                   ),
                                 ],
@@ -332,7 +337,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                               SizedBox(
                                 width: 60,
                                 child: Text(
-                                  contact['name'].toString(),
+                                  user.fullName ?? user.username,
                                   style: const TextStyle(fontSize: 12),
                                   overflow: TextOverflow.ellipsis,
                                   textAlign: TextAlign.center,
@@ -345,54 +350,48 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                     ),
                   ),
 
-                // All contacts list
+                // Contacts list
                 Expanded(
-                  child: _filteredContacts.isEmpty
-                      ? Center(
-                          child: Text(
-                            context.l10n.noSearchResults,
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: _filteredContacts.length,
-                          itemBuilder: (context, index) {
-                            final contact = _filteredContacts[index];
-                            final userId = contact['id'].toString();
-                            final isSelected = _selectedUserIds.contains(userId);
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _filteredContacts.isEmpty
+                          ? Center(
+                              child: Text(
+                                context.l10n.noSearchResults,
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: _filteredContacts.length,
+                              itemBuilder: (context, index) {
+                                final user = _filteredContacts[index];
+                                final isSelected =
+                                    _selectedUserIds.contains(user.id);
 
-                            return ListTile(
-                              enabled: !isLoading,
-                              leading: AppAvatar.initials(
-                                name: contact['name'].toString(),
-                                size: AvatarSize.medium,
-                                backgroundColor: Theme.of(context).primaryColor,
-                                foregroundColor: Colors.white,
-                              ),
-                              title: Text(contact['name'].toString()),
-                              subtitle: Text(
-                                contact['isOnline'] == true
-                                    ? context.l10n.online
-                                    : context.l10n.offline,
-                                style: TextStyle(
-                                  color: contact['isOnline'] == true
-                                      ? Colors.green
-                                      : Colors.grey,
-                                ),
-                              ),
-                              trailing: isSelected
-                                  ? const Icon(
-                                      Icons.check_circle,
-                                      color: Colors.green,
-                                    )
-                                  : const Icon(
-                                      Icons.check_circle_outline,
-                                      color: Colors.grey,
+                                return ListTile(
+                                  enabled: !isCreating,
+                                  leading: UserPresenceBadge(
+                                    isConnected: user.isOnline,
+                                    lastSeenAt: user.lastSeen,
+                                    indicatorSize: 12.0,
+                                    child: AppHeroAvatar(
+                                      id: user.id,
+                                      imageUrl: user.avatar,
+                                      displayName: user.fullName ?? user.username,
+                                      size: AvatarSize.medium,
+                                      hasBorder: false,
                                     ),
-                              onTap: () => _toggleUser(userId),
-                            );
-                          },
-                        ),
+                                  ),
+                                  title: Text(user.fullName ?? user.username),
+                                  trailing: isSelected
+                                      ? const Icon(Icons.check_circle,
+                                          color: Colors.green)
+                                      : const Icon(Icons.check_circle_outline,
+                                          color: Colors.grey),
+                                  onTap: () => _toggleUser(user),
+                                );
+                              },
+                            ),
                 ),
               ],
             ),

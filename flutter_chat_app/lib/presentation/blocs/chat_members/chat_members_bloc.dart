@@ -154,25 +154,35 @@ class ChatMembersBloc extends BaseBloc<ChatMembersEvent, ChatMembersState> {
     ChatMembersRemove event,
     Emitter<ChatMembersState> emit,
   ) async {
-    emit(const ChatMembersLoading(message: 'Removing member...'));
-
-    _logger.d('Removing member: memberId=${event.memberId}');
-
-    // TODO: Call repository to remove member
-    // For now, just update local state
-    _allMembers = _allMembers.where((m) => m.userId != event.memberId).toList();
-    
     final currentState = state;
     MembersSortType sortType = MembersSortType.adminFirst;
     if (currentState is ChatMembersLoaded) {
       sortType = currentState.sortType;
     }
-    
-    final sortedMembers = _sortMembers(_allMembers, sortType);
-    emit(ChatMembersMemberRemoved(
-      memberId: event.memberId,
-      remainingMembers: sortedMembers,
-    ));
+
+    emit(const ChatMembersLoading(message: 'Removing member...'));
+
+    _logger.d('Removing member: chatId=${event.chatId}, memberId=${event.memberId}');
+
+    final result = await _chatRepository.removeParticipants(
+      chatId: event.chatId,
+      userIds: [event.memberId],
+    );
+
+    result.fold(
+      (failure) {
+        _logger.e('Failed to remove member: ${failure.message}');
+        emit(ChatMembersError(message: failure.message));
+      },
+      (_) {
+        _allMembers = _allMembers.where((m) => m.userId != event.memberId).toList();
+        final sortedMembers = _sortMembers(_allMembers, sortType);
+        emit(ChatMembersMemberRemoved(
+          memberId: event.memberId,
+          remainingMembers: sortedMembers,
+        ));
+      },
+    );
   }
 
   /// Handler: Make admin

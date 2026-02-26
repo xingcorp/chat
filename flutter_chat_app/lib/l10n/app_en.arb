@@ -2860,5 +2860,20 @@
   "newConversation": "New conversation",
   "@newConversation": {
     "description": "Menu item to start a new direct conversation"
+  },
+
+  "removeMemberFromGroup": "Remove from group",
+  "@removeMemberFromGroup": {
+    "description": "Button to remove a member from the group"
+  },
+
+  "confirmRemoveMember": "Are you sure you want to remove {name} from the group?",
+  "@confirmRemoveMember": {
+    "description": "Confirmation dialog when removing a member",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -2965,6 +2965,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New conversation'**
   String get newConversation;
+
+  /// Button to remove a member from the group
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from group'**
+  String get removeMemberFromGroup;
+
+  /// Confirmation dialog when removing a member
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove {name} from the group?'**
+  String confirmRemoveMember(String name);
 }
 
 class _AppLocalizationsDelegate

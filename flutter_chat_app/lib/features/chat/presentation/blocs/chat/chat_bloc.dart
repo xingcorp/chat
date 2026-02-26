@@ -303,9 +303,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       },
       (chat) {
         logger.i('Chat created successfully: ${chat.id}');
-
-        // Reload chats to include the new one
-        add(const ChatEvent.loadChats(forceRefresh: true));
+        emit(ChatState.chatDetailsLoaded(chat: chat));
       },
     );
   }

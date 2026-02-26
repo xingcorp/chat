@@ -694,10 +694,16 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     required String conversationId,
     required List<String> memberIds,
   }) async {
-    // Use updateGroup to add members
+    // Get current members and merge with new ones to avoid replacing existing members
+    final chat = await getConversationDetail(conversationId: conversationId);
+    final currentMemberIds = chat.members
+        .map((m) => m.userId)
+        .whereType<String>()
+        .toSet();
+    final mergedMemberIds = {...currentMemberIds, ...memberIds}.toList();
     await updateGroup(
       conversationId: conversationId,
-      memberIds: memberIds,
+      memberIds: mergedMemberIds,
     );
   }
   
@@ -706,11 +712,18 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     required String conversationId,
     required List<String> memberIds,
   }) async {
-    // Note: Backend API doesn't have a direct remove members endpoint
-    // This would need to be implemented by getting current members,
-    // filtering out the ones to remove, and calling updateGroup
-    // For now, throw unimplemented error
-    throw UnimplementedError('Remove members not yet implemented in backend API');
+    // Backend uses editGroup with updated memberIds to remove members
+    // Get current members, filter out the ones to remove, then call updateGroup
+    final chat = await getConversationDetail(conversationId: conversationId);
+    final remainingMemberIds = chat.members
+        .map((m) => m.userId)
+        .whereType<String>()
+        .where((id) => !memberIds.contains(id))
+        .toList();
+    await updateGroup(
+      conversationId: conversationId,
+      memberIds: remainingMemberIds,
+    );
   }
   
   @override

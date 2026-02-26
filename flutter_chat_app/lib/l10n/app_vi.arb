@@ -857,5 +857,20 @@
   "newConversation": "Thêm cuộc hội thoại",
   "@newConversation": {
     "description": "Menu item to start a new direct conversation"
+  },
+
+  "removeMemberFromGroup": "Xóa khỏi nhóm",
+  "@removeMemberFromGroup": {
+    "description": "Button to remove a member from the group"
+  },
+
+  "confirmRemoveMember": "Bạn có chắc muốn xóa {name} khỏi nhóm không?",
+  "@confirmRemoveMember": {
+    "description": "Confirmation dialog when removing a member",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

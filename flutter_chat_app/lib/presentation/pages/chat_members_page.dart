@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
@@ -158,6 +159,22 @@ class _ChatMembersPageState extends State<ChatMembersPage> {
       Navigator.of(context).pop();
       Navigator.of(context).pop();
     }
+    if (state is ChatMembersMemberRemoved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.removeMemberFromGroup),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+    if (state is ChatMembersError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildBody(BuildContext context, ChatMembersState state) {
@@ -295,16 +312,30 @@ class _ChatMembersPageState extends State<ChatMembersPage> {
   }
 
   Widget _buildMembersList(BuildContext context, ChatMembersLoaded state) {
+    final currentUserId = GetIt.instance<CurrentUserProvider>().currentUserId;
+    final isCurrentUserAdmin = state.members.any(
+      (m) => m.userId == currentUserId && m.isAdmin,
+    );
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingSmall),
       itemCount: state.filteredMembers.length,
-      itemBuilder: (context, index) => _buildMemberItem(context, state.filteredMembers[index]),
+      itemBuilder: (context, index) => _buildMemberItem(
+        context,
+        state.filteredMembers[index],
+        currentUserId: currentUserId,
+        isCurrentUserAdmin: isCurrentUserAdmin,
+      ),
     );
   }
 
-  Widget _buildMemberItem(BuildContext context, ConversationMember member) {
+  Widget _buildMemberItem(
+    BuildContext context,
+    ConversationMember member, {
+    String currentUserId = '',
+    bool isCurrentUserAdmin = false,
+  }) {
     final l10n = context.l10n;
-    final isCurrentUser = widget.currentUserId != null && member.userId == widget.currentUserId;
+    final isCurrentUser = currentUserId.isNotEmpty && member.userId == currentUserId;
 
     return InkWell(
       onTap: () {},
@@ -410,8 +441,43 @@ class _ChatMembersPageState extends State<ChatMembersPage> {
                 ],
               ),
             ),
+            if (isCurrentUserAdmin && !isCurrentUser)
+              IconButton(
+                icon: const Icon(Icons.person_remove_outlined),
+                color: AppColors.error,
+                tooltip: context.l10n.removeMemberFromGroup,
+                onPressed: () => _confirmRemoveMember(context, member),
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmRemoveMember(BuildContext context, ConversationMember member) {
+    final l10n = context.l10n;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.removeMemberFromGroup),
+        content: Text(l10n.confirmRemoveMember(member.fullName ?? l10n.unknownUser)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _bloc.add(ChatMembersRemove(
+                chatId: widget.chat.id,
+                memberId: member.userId,
+              ));
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: Text(l10n.remove),
+          ),
+        ],
       ),
     );
   }

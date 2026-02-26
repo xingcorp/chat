@@ -1604,4 +1604,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get newConversation => 'Thêm cuộc hội thoại';
+
+  @override
+  String get removeMemberFromGroup => 'Xóa khỏi nhóm';
+
+  @override
+  String confirmRemoveMember(String name) {
+    return 'Bạn có chắc muốn xóa $name khỏi nhóm không?';
+  }
 }

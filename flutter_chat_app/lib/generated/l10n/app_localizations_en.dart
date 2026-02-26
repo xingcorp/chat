@@ -1603,4 +1603,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newConversation => 'New conversation';
+
+  @override
+  String get removeMemberFromGroup => 'Remove from group';
+
+  @override
+  String confirmRemoveMember(String name) {
+    return 'Are you sure you want to remove $name from the group?';
+  }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
+import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
@@ -24,34 +27,43 @@ class ContactsPage extends BaseStatefulWidget {
 
 class _ContactsPageState extends BaseState<ContactsPage> {
   final UserRepository _userRepository = GetIt.instance<UserRepository>();
+  final IChatRemoteDataSource _chatRemoteDataSource = GetIt.instance<IChatRemoteDataSource>();
   final TextEditingController _searchController = TextEditingController();
 
   List<User> _contacts = [];
-  List<User> _filteredContacts = [];
   bool _isLoading = true;
   String? _errorMessage;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
-    _loadContacts();
+    _loadContacts('');
     _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadContacts() async {
+  void _onSearchChanged() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      _loadContacts(_searchController.text.trim());
+    });
+  }
+
+  Future<void> _loadContacts(String keyword) async {
     safeSetState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
-    final result = await _userRepository.getUserContacts();
+    final result = await _userRepository.searchUsers(keyword);
 
     result.fold(
       (failure) {
@@ -60,38 +72,17 @@ class _ContactsPageState extends BaseState<ContactsPage> {
           _errorMessage = failure.message;
         });
       },
-      (contacts) {
+      (users) {
         safeSetState(() {
           _isLoading = false;
-          _contacts = contacts;
-          _filteredContacts = contacts;
+          _contacts = users;
         });
       },
     );
   }
 
-  void _onSearchChanged() {
-    final query = _searchController.text.toLowerCase();
-    if (query.isEmpty) {
-      safeSetState(() {
-        _filteredContacts = _contacts;
-      });
-    } else {
-      safeSetState(() {
-        _filteredContacts = _contacts.where((user) {
-          final name = user.fullName?.toLowerCase() ?? '';
-          final username = user.username.toLowerCase();
-          final email = user.email.toLowerCase();
-          return name.contains(query) ||
-                 username.contains(query) ||
-                 email.contains(query);
-        }).toList();
-      });
-    }
-  }
-
   Future<void> _onRefresh() async {
-    await _loadContacts();
+    await _loadContacts(_searchController.text.trim());
   }
 
   @override
@@ -161,7 +152,7 @@ class _ContactsPageState extends BaseState<ContactsPage> {
       return _buildErrorState(context);
     }
 
-    if (_filteredContacts.isEmpty) {
+    if (_contacts.isEmpty) {
       return _buildEmptyState(context);
     }
 
@@ -169,13 +160,13 @@ class _ContactsPageState extends BaseState<ContactsPage> {
       onRefresh: _onRefresh,
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingSmall),
-        itemCount: _filteredContacts.length,
+        itemCount: _contacts.length,
         separatorBuilder: (context, index) => const Divider(
           height: 1,
           indent: AppDimens.spaceHuge,
         ),
         itemBuilder: (context, index) {
-          return _buildContactItem(context, _filteredContacts[index]);
+          return _buildContactItem(context, _contacts[index]);
         },
       ),
     );
@@ -220,24 +211,23 @@ class _ContactsPageState extends BaseState<ContactsPage> {
         icon: const Icon(Icons.chat_bubble_outline),
         onPressed: () => _startChat(user),
       ),
-      onTap: () => _viewProfile(user),
+      onTap: () => _navigateToChat(user),
     );
   }
 
   void _startChat(User user) async {
-    // Navigate to chat with this user
-    await ChatNavigationHelper.navigateToChatDetail(
-      context,
-      chatId: user.id,
-    );
+    await _navigateToChat(user);
   }
 
-  void _viewProfile(User user) {
-    // Navigate to user profile
-    Navigator.of(context).pushNamed(
-      '/users/${user.id}',
-      arguments: {'displayName': user.fullName},
-    );
+  Future<void> _navigateToChat(User user) async {
+    try {
+      final chat = await _chatRemoteDataSource.createDirectChat(receiverId: user.id);
+      if (!mounted) return;
+      await ChatNavigationHelper.navigateToChatDetail(context, chatId: chat.id);
+    } catch (_) {
+      if (!mounted) return;
+      await ChatNavigationHelper.navigateToChatDetail(context, chatId: user.id);
+    }
   }
 
   Widget _buildEmptyState(BuildContext context) {
@@ -293,7 +283,7 @@ class _ContactsPageState extends BaseState<ContactsPage> {
           ),
           const SizedBox(height: AppDimens.spaceLarge),
           ElevatedButton.icon(
-            onPressed: _loadContacts,
+            onPressed: () => _loadContacts(_searchController.text.trim()),
             icon: const Icon(Icons.refresh),
             label: Text(context.l10n.retryOperation),
           ),

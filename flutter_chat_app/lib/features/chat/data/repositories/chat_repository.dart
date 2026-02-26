@@ -310,7 +310,7 @@ class ChatRepositoryImpl implements IChatRepository {
         final remoteResult = isGroup
             ? await _remoteDataSource.createGroupChat(
                 name: name,
-                groupType: 'private', // Default to private group
+                groupType: 'Private', // Default to private group
                 memberIds: participantIds,
               )
             : await _remoteDataSource.createDirectChat(
