@@ -455,10 +455,7 @@ class MediaGallery extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: files.map((file) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 4.0),
-          child: _buildFileTile(context, file),
-        );
+        return _buildFileTile(context, file);
       }).toList(),
     );
   }
@@ -479,10 +476,7 @@ class MediaGallery extends StatelessWidget {
             },
       child: Container(
         padding: const EdgeInsets.all(12.0),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(8.0),
-        ),
+        color: theme.colorScheme.surfaceContainerHighest,
         child: Row(
           children: [
             // File icon or upload progress indicator
@@ -515,7 +509,7 @@ class MediaGallery extends StatelessWidget {
                         color: theme.colorScheme.primary,
                       ),
                     )
-                  else
+                  else if (file.size > 0)
                     Text(
                       _formatFileSize(file.size),
                       style: theme.textTheme.bodySmall?.copyWith(

@@ -469,7 +469,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     final contentType = widget.uiState.contentType;
 
     final bubbleColor = isFromCurrentUser
-        ? theme.colorScheme.primary.withOpacity(0.8)
+        ? theme.colorScheme.primary
         : theme.cardColor;
 
     final textColor = isFromCurrentUser
@@ -488,16 +488,9 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       ),
       decoration: BoxDecoration(
         color: widget.uiState.isHighlighted
-            ? bubbleColor.withOpacity(0.7)
+            ? bubbleColor.withValues(alpha: 0.7)
             : bubbleColor,
         borderRadius: _getBubbleBorderRadius(isFromCurrentUser),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 2.0,
-            offset: const Offset(0, 1),
-          ),
-        ],
       ),
       child: ClipRRect(
         borderRadius: _getBubbleBorderRadius(isFromCurrentUser),
@@ -530,6 +523,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
               ),
 
             // Attachment previews (skip for single audio/video with special player)
+            // No padding — media fills bubble edge-to-edge like Telegram/WhatsApp
             if (renderableAttachments.isNotEmpty && !useSpecialPlayer)
               _buildAttachmentPreviews(context, attachments: renderableAttachments),
 
@@ -676,14 +670,11 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     // MediaGallery now handles upload progress overlay internally
     // for each attachment with percentage display
     // Pass message and chatId for reaction/forward support in fullscreen view
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
-      child: MediaGallery(
-        attachments: attachments,
-        layout: MediaGalleryLayout.grid,
-        message: widget.uiState.message,
-        chatId: widget.uiState.chatId,
-      ),
+    return MediaGallery(
+      attachments: attachments,
+      layout: MediaGalleryLayout.grid,
+      message: widget.uiState.message,
+      chatId: widget.uiState.chatId,
     );
   }
 
