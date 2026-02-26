@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:flutter_chat_app/core/network/connectivity/connectivity_service.dart';
 import 'package:flutter_chat_app/core/network/http/http_client_interface.dart';
@@ -23,7 +23,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 @lazySingleton
 class EnhancedRealtimeConnectionService implements IRealtimeConnectionService {
   /// Logger
-  final Logger _logger;
+  final AppLogger _logger;
   
   /// HTTP client cho các request như long polling
   final IHttpClient _httpClient;

@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_members/chat_members_event.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_members/chat_members_state.dart';
@@ -11,13 +11,13 @@ import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_reposi
 /// TUÂN THỦ: PHẢI extend BaseBloc, KHÔNG extend Bloc trực tiếp
 @injectable
 class ChatMembersBloc extends BaseBloc<ChatMembersEvent, ChatMembersState> {
-  final Logger _logger;
+  final AppLogger _logger;
   final IChatRepository _chatRepository;
   Chat? _currentChat;
   List<ConversationMember> _allMembers = [];
 
   ChatMembersBloc({
-    required Logger logger,
+    required AppLogger logger,
     required IChatRepository chatRepository,
   })  : _logger = logger,
         _chatRepository = chatRepository,

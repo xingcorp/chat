@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart';
 import 'package:flutter_chat_app/domain/entities/chat_info/shared_media.dart';
@@ -14,11 +14,11 @@ import 'package:flutter_chat_app/data/models/chat_info/notification_settings_mod
 @LazySingleton(as: IChatInfoRepository)
 class ChatInfoRepositoryImpl implements IChatInfoRepository {
   final IChatInfoRemoteDataSource _remoteDataSource;
-  final Logger _logger;
+  final AppLogger _logger;
 
   ChatInfoRepositoryImpl({
     required IChatInfoRemoteDataSource remoteDataSource,
-    required Logger logger,
+    required AppLogger logger,
   })  : _remoteDataSource = remoteDataSource,
         _logger = logger;
 

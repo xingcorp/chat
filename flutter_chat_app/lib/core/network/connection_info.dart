@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:rxdart/rxdart.dart';
 
 /// Interface cho dịch vụ thông tin kết nối
@@ -101,7 +101,7 @@ class ConnectionDetails {
 @lazySingleton
 class ConnectionInfo implements IConnectionInfo {
   /// Logger
-  final Logger _logger;
+  final AppLogger _logger;
   
   /// Connectivity plugin
   final Connectivity _connectivity;
@@ -138,8 +138,8 @@ class ConnectionInfo implements IConnectionInfo {
   bool _isInitialized = false;
   
   /// Constructor
-  ConnectionInfo(this._connectivity, {Logger? logger}) 
-    : _logger = logger ?? Logger() {
+  ConnectionInfo(this._connectivity, {AppLogger? logger}) 
+    : _logger = logger ?? AppLogger() {
     _initialize();
   }
   

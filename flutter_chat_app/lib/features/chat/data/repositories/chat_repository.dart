@@ -15,7 +15,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 
 import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
 import 'package:flutter_chat_app/core/error/failures.dart';
@@ -40,7 +40,7 @@ class ChatRepositoryImpl implements IChatRepository {
   final ChatLocalDataSource _localDataSource;
   final IChatRemoteDataSource _remoteDataSource;
   final INetworkInfo _networkInfo;
-  final Logger _logger;
+  final AppLogger _logger;
 
   // Performance metrics
   final Map<String, int> _operationCounts = {};
@@ -53,7 +53,7 @@ class ChatRepositoryImpl implements IChatRepository {
     required ChatLocalDataSource localDataSource,
     required IChatRemoteDataSource remoteDataSource,
     required INetworkInfo networkInfo,
-    required Logger logger,
+    required AppLogger logger,
   })  : _localDataSource = localDataSource,
         _remoteDataSource = remoteDataSource,
         _networkInfo = networkInfo,
@@ -285,7 +285,7 @@ class ChatRepositoryImpl implements IChatRepository {
   }) async {
     return await _executeWithMonitoring('create_chat', () async {
       try {
-        _logger.i('Creating chat', error: {'name': name, 'isGroup': isGroup});
+        _logger.i('Creating chat', {'name': name, 'isGroup': isGroup});
 
         // Create chat entity from parameters
         final chat = Chat(
@@ -548,16 +548,28 @@ class ChatRepositoryImpl implements IChatRepository {
   Future<Either<Failure, List<Chat>>> searchChats(String searchTerm, {int limit = 20}) async {
     return await _executeWithMonitoring('search_chats', () async {
       try {
-        debugPrint('🔍 Searching chats: "$searchTerm" (limit: $limit)');
+        // Call remote API with keyword filter (same as Angular frontend)
+        if (await _networkInfo.isConnected) {
+          try {
+            final remoteResult = await _remoteDataSource.getConversationList(
+              keyword: searchTerm,
+              size: limit,
+              page: 0,
+            );
+            final remoteChats = remoteResult.toDomainList();
+            return Right(remoteChats);
+          } on app_exceptions.ServerException catch (e) {
+            _logger.w('Server error searching chats, falling back to local', error: e);
+          } on app_exceptions.NetworkException catch (e) {
+            _logger.w('Network error searching chats, falling back to local', error: e);
+          }
+        }
 
-        // Search locally first for instant results
+        // Fallback to local search when offline or remote fails
         final localResults = await _localDataSource.searchChats(searchTerm, limit: limit);
-        debugPrint('✅ Found ${localResults.length} local results');
-
         return Right(localResults);
 
       } catch (e) {
-        debugPrint('❌ Search chats failed: $e');
         return Left(CacheFailure(message: 'Failed to search chats: $e'));
       }
     });

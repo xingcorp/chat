@@ -5,7 +5,6 @@ import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
-import 'package:logger/logger.dart';
 
 /// **ENTERPRISE-GRADE BASE REPOSITORY**
 ///
@@ -20,7 +19,7 @@ import 'package:logger/logger.dart';
 /// - executeSyncStrategy: Background synchronization
 abstract class BaseRepository {
   final NetworkInfo networkInfo;
-  final Logger logger;
+  final AppLogger logger;
   final IPerformanceMonitor performanceMonitor;
 
   BaseRepository({

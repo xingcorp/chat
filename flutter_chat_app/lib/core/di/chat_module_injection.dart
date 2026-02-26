@@ -18,6 +18,8 @@ import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:flutter_chat_app/core/utils/logger.dart' show AppLogger;
+
 import 'package:flutter_chat_app/chat_config.dart';
 import 'package:flutter_chat_app/core/config/app_config.dart';
 import 'package:flutter_chat_app/core/error/retry_config.dart' as app_retry;
@@ -617,7 +619,7 @@ class ChatModuleInjection {
       () => socket_mgr.SocketManager(
         serverUrl: _getIt<String>(instanceName: 'socketUrl'),
         options: _getIt<Map<String, dynamic>>(),
-        logger: _getIt<Logger>(),
+        logger: _getIt<AppLogger>(),
         tokenProvider: _getIt<TokenProvider>(),
       ),
     );

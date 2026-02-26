@@ -7,20 +7,12 @@
 /// in the generated injection.config.dart.
 
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 
 @module
 abstract class ExternalModule {
-  /// Logger singleton for the entire app
+  /// AppLogger singleton for the entire app
+  /// Used by all @injectable classes that depend on AppLogger
   @singleton
-  Logger get logger => Logger(
-    printer: PrettyPrinter(
-      methodCount: 1,
-      errorMethodCount: 5,
-      lineLength: 100,
-      colors: true,
-      printEmojis: true,
-      printTime: true,
-    ),
-  );
+  AppLogger get appLogger => AppLogger();
 }

@@ -9,12 +9,12 @@ import 'package:flutter_chat_app/core/network/monitoring/socket_message_analytic
 import 'package:flutter_chat_app/core/network/monitoring/socket_metric_types.dart';
 import 'package:flutter_chat_app/core/network/monitoring/socket_rate_limit_analytics.dart';
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 
 /// Service tích hợp theo dõi phân tích dữ liệu Socket
 @injectable
 class SocketAnalytics {
-  final Logger _logger;
+  final AppLogger _logger;
   final IAnalyticsService _analyticsService;
   
   // Tracking components
@@ -75,10 +75,10 @@ class SocketAnalytics {
   /// Constructor
   SocketAnalytics({
     required IAnalyticsService analyticsService,
-    Logger? logger,
+    AppLogger? logger,
   }) :
     _analyticsService = analyticsService,
-    _logger = logger ?? Logger() {
+    _logger = logger ?? AppLogger() {
     // Initialize components
     _connectionAnalytics = SocketConnectionAnalytics(
       analyticsService: analyticsService,

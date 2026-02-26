@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_event.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_state.dart';
@@ -23,7 +23,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
   final UnblockUserUseCase _unblockUserUseCase;
   final ReportChatUseCase _reportChatUseCase;
   final IChatInfoRepository _repository;
-  final Logger _logger;
+  final AppLogger _logger;
 
   ChatInfoBloc({
     required GetSharedMediaUseCase getSharedMediaUseCase,
@@ -33,7 +33,7 @@ class ChatInfoBloc extends BaseBloc<ChatInfoEvent, ChatInfoState> {
     required UnblockUserUseCase unblockUserUseCase,
     required ReportChatUseCase reportChatUseCase,
     required IChatInfoRepository repository,
-    required Logger logger,
+    required AppLogger logger,
   })  : _getSharedMediaUseCase = getSharedMediaUseCase,
         _getNotificationSettingsUseCase = getNotificationSettingsUseCase,
         _updateNotificationSettingsUseCase = updateNotificationSettingsUseCase,

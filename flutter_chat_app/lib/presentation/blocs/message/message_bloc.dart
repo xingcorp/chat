@@ -5,7 +5,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
@@ -56,9 +56,9 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   final RealtimeService _realtimeService;
   final ILocationService _locationService;
 
-  // Logger (injected via DI) - must be Logger for BlocErrorMixin
+  // Logger (injected via DI) - must be AppLogger for BlocErrorMixin
   @override
-  final Logger logger;
+  final AppLogger logger;
 
   // Map chat ID -> StreamSubscription
   final Map<String, StreamSubscription?> _messageSubscriptions = {};

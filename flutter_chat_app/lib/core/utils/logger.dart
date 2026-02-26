@@ -182,11 +182,17 @@ class AppLogger {
   }
   
   /// Log warning message (alias for warning)
-  void w(String message, [Map<String, dynamic>? context]) {
-    warning(message, context);
+  void w(String message, {dynamic error, StackTrace? stackTrace, Map<String, dynamic>? context}) {
+    if (error != null || stackTrace != null) {
+      _logger.w(message, error: error, stackTrace: stackTrace);
+    } else if (context != null) {
+      _logWithContext(Level.warning, message, context);
+    } else {
+      _logger.w(message);
+    }
   }
 
-  /// Log error message
+  /// Log error message (positional params for backward compat)
   void error(String message, [dynamic error, StackTrace? stackTrace]) {
     if (error != null) {
       _logger.e(message, error: error, stackTrace: stackTrace);
@@ -195,9 +201,13 @@ class AppLogger {
     }
   }
   
-  /// Log error message (alias for error)
-  void e(String message, [dynamic error, StackTrace? stackTrace]) {
-    this.error(message, error, stackTrace);
+  /// Log error message (named params for Logger API compat)
+  void e(String message, {dynamic error, StackTrace? stackTrace}) {
+    if (error != null) {
+      _logger.e(message, error: error, stackTrace: stackTrace);
+    } else {
+      _logger.e(message);
+    }
   }
 
   /// Log trace message
@@ -205,8 +215,22 @@ class AppLogger {
     _logWithContext(Level.trace, message, context);
   }
 
+  /// Log trace message (alias for trace, compatible with Logger.t())
+  void t(String message, [Map<String, dynamic>? context]) {
+    trace(message, context);
+  }
+
   /// Log fatal message
   void fatal(String message, [dynamic error, StackTrace? stackTrace]) {
+    if (error != null) {
+      _logger.f(message, error: error, stackTrace: stackTrace);
+    } else {
+      _logger.f(message);
+    }
+  }
+
+  /// Log fatal message (named params alias)
+  void f(String message, {dynamic error, StackTrace? stackTrace}) {
     if (error != null) {
       _logger.f(message, error: error, stackTrace: stackTrace);
     } else {

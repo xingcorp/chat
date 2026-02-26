@@ -1,8 +1,6 @@
 ---
-title: Chat Feature Implementation Guide
-inclusion: conditional
+inclusion: fileMatch
 fileMatchPattern: "flutter_chat_app/lib/**/*{chat,message,conversation}*.dart"
-priority: high
 ---
 
 # Chat Feature Implementation Guide

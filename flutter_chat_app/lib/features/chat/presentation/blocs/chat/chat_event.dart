@@ -89,4 +89,12 @@ class ChatEvent with _$ChatEvent {
   
   /// Chat updated from real-time source
   const factory ChatEvent.chatUpdated({required Chat chat}) = _ChatUpdated;
+
+  /// Search conversations by keyword (calls remote API like Angular frontend)
+  const factory ChatEvent.searchChats({
+    required String keyword,
+  }) = _SearchChats;
+
+  /// Clear search and reload normal chat list
+  const factory ChatEvent.clearSearch() = _ClearSearch;
 } 

@@ -1,12 +1,12 @@
 
 import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/core/network/monitoring/socket_metric_types.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 
 /// Lớp theo dõi phân tích lỗi Socket
 class SocketErrorAnalytics {
   final IAnalyticsService _analyticsService;
-  final Logger _logger;
+  final AppLogger _logger;
   
   // Error tracking
   final Map<String, int> _failedEvents = {};
@@ -21,11 +21,11 @@ class SocketErrorAnalytics {
   /// Constructor
   SocketErrorAnalytics({
     required IAnalyticsService analyticsService,
-    Logger? logger,
+    AppLogger? logger,
     int maxRecentErrors = 20,
   }) : 
     _analyticsService = analyticsService,
-    _logger = logger ?? Logger(),
+    _logger = logger ?? AppLogger(),
     _maxRecentErrors = maxRecentErrors;
   
   /// Track a failed socket event

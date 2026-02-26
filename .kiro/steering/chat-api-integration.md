@@ -1,8 +1,6 @@
 ---
-title: Chat API Integration Guide
-inclusion: conditional
+inclusion: fileMatch
 fileMatchPattern: "flutter_chat_app/lib/**/*chat*.dart"
-priority: high
 ---
 
 # Chat API Integration Guide

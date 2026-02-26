@@ -1,29 +1,25 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/chat_module.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
-import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
-import 'package:flutter_chat_app/core/services/date_formatter_service.dart';
+import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_conversation_tile.dart';
-import 'package:get_it/get_it.dart';
-
-import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
-
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/lists/app_list_view.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:get_it/get_it.dart';
 
 // Service locator instance
 final getIt = GetIt.instance;
@@ -45,32 +41,52 @@ class ChatListPage extends BaseStatefulWidget {
 
 class _ChatListPageState extends BaseState<ChatListPage> {
   late final ChatBloc _chatBloc;
-  static const int _pageSize = 20;
-  int _currentPage = 0;
-  bool _isLoadingMore = false;
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
+  bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
     _chatBloc = getIt<ChatBloc>();
-    // Load initial conversations
     _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
     _chatBloc.close();
     super.dispose();
   }
 
-  Future<void> _onRefresh() async {
-    safeSetState(() {
-      _currentPage = 0;
-      _isLoadingMore = false;
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (value.trim().isEmpty) {
+        _chatBloc.add(const ChatEvent.clearSearch());
+      } else {
+        _chatBloc.add(ChatEvent.searchChats(keyword: value));
+      }
     });
-    _chatBloc.add(const ChatEvent.loadChats(forceRefresh: true));
-    
-    // Wait for the state to update
+  }
+
+  void _toggleSearch() {
+    safeSetState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchController.clear();
+        _chatBloc.add(const ChatEvent.clearSearch());
+      }
+    });
+  }
+
+  Future<void> _onRefresh() async {
+    if (_isSearching && _searchController.text.trim().isNotEmpty) {
+      _chatBloc.add(ChatEvent.searchChats(keyword: _searchController.text));
+    } else {
+      _chatBloc.add(const ChatEvent.loadChats(forceRefresh: true));
+    }
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
@@ -80,13 +96,27 @@ class _ChatListPageState extends BaseState<ChatListPage> {
       value: _chatBloc,
       child: Scaffold(
         appBar: AppBar(
-          title: AppText(context.l10n.chats),
+          title: _isSearching
+              ? TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  onChanged: _onSearchChanged,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: context.l10n.searchConversations,
+                    hintStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    border: InputBorder.none,
+                  ),
+                )
+              : AppText(context.l10n.chats),
           actions: [
             IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                // TODO: Navigate to search page
-              },
+              icon: Icon(_isSearching ? Icons.close : Icons.search),
+              onPressed: _toggleSearch,
             ),
             PopupMenuButton<String>(
               onSelected: (value) {
@@ -112,15 +142,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
         body: BlocConsumer<ChatBloc, ChatState>(
           listener: (context, state) {
             state.whenOrNull(
-              loaded: (chats, hasMore, isLoadingMore, page, pageSize, total) {
-                safeSetState(() {
-                  _isLoadingMore = false;
-                });
-              },
               error: (message) {
-                safeSetState(() {
-                  _isLoadingMore = false;
-                });
                 AppSnackBar.show(
                   context: context,
                   message: message,

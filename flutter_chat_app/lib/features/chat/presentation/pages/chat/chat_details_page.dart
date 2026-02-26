@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
-import 'package:scroll_to_index/scroll_to_index.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -18,10 +18,10 @@ import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
-import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
-import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
-import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
+import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
+import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/screens/chat/chat_header.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/attachment_picker_widget.dart';
@@ -71,7 +71,10 @@ class ChatDetailsPage extends BaseStatefulWidget {
 class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   final MentionTextEditingController _messageController = MentionTextEditingController();
   final FocusNode _messageFocusNode = FocusNode();
-  late final AutoScrollController _scrollController;
+  final ItemScrollController _itemScrollController = ItemScrollController();
+  final ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
+  final ScrollOffsetController _scrollOffsetController = ScrollOffsetController();
+  final ScrollOffsetListener _scrollOffsetListener = ScrollOffsetListener.create();
   late final MessageBloc _messageBloc;
   late final GetConversationDetailUseCase _getConversationDetail;
   Chat? _chat;
@@ -87,15 +90,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     '😡',
   ];
 
-  bool _isProgrammaticScroll = false;
-
   static const int _pageSize = 50;
   bool _isLoadingMore = false;
   DateTime? _lastLoadMoreAt;
   String? _lastLoadMoreCursor;
   String? _pendingScrollToMessageId;
   int _pendingScrollAttempts = 0;
-  static const int _maxPendingScrollAttempts = 8;
+  static const int _maxPendingScrollAttempts = 20;
 
   // ══════════════════════════════════════════
   // Reply / Edit state
@@ -144,8 +145,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _messageBloc = getIt<MessageBloc>();
     _getConversationDetail = getIt<GetConversationDetailUseCase>();
 
-    _scrollController = AutoScrollController(axis: Axis.vertical);
-    _scrollController.addListener(_onScroll);
+    _itemPositionsListener.itemPositions.addListener(_onPositionsChanged);
 
     // Initial load
     _messageBloc.add(
@@ -263,16 +263,30 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     );
   }
 
-  void _onScroll() {
-    if (_isProgrammaticScroll) return;
-    final position = _scrollController.position;
-    if (position.hasPixels) {
-      if (position.extentAfter < 200) {
+  /// Detect load-more and scroll-to-bottom FAB via visible item positions.
+  void _onPositionsChanged() {
+    final positions = _itemPositionsListener.itemPositions.value;
+    if (positions.isEmpty) return;
+
+    // --- Load more: check if max visible index is near the end ---
+    final state = _messageBloc.state;
+    if (state is MessagesLoaded) {
+      final maxVisibleIndex = positions
+          .map((p) => p.index)
+          .reduce((a, b) => a > b ? a : b);
+      final totalItems = state.uiMessages.length;
+
+      if (maxVisibleIndex >= totalItems - 3 && !_isLoadingMore) {
         _loadMore();
       }
     }
 
-    final showFab = _scrollController.offset > 200;
+    // --- Scroll-to-bottom FAB: show when newest message (index 0) is not visible ---
+    final minVisibleIndex = positions
+        .where((p) => p.itemTrailingEdge > 0 && p.itemLeadingEdge < 1)
+        .map((p) => p.index)
+        .fold<int?>(null, (prev, idx) => prev == null ? idx : (idx < prev ? idx : prev));
+    final showFab = minVisibleIndex != null && minVisibleIndex > 2;
     if (showFab != _showScrollToBottom) {
       safeSetState(() {
         _showScrollToBottom = showFab;
@@ -296,9 +310,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     final cursor = state.messages.isNotEmpty
         ? state.messages.last.createdAt.millisecondsSinceEpoch.toString()
         : null;
-    if (cursor != null && cursor == _lastLoadMoreCursor) {
-      return;
-    }
+    if (cursor != null && cursor == _lastLoadMoreCursor) return;
 
     _lastLoadMoreAt = now;
     _lastLoadMoreCursor = cursor;
@@ -312,7 +324,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _messageController.removeListener(_handleControllerChanges);
     _messageController.dispose();
     _messageFocusNode.dispose();
-    _scrollController.dispose();
+    _itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);
     _messageBloc.close();
     _typingSubscription?.cancel();
     _readReceiptSubscription?.cancel();
@@ -467,17 +479,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       return;
     }
 
-    _scrollController.scrollToIndex(
-      index,
-      preferPosition: AutoScrollPosition.middle,
+    _itemScrollController.scrollTo(
+      index: index,
       duration: const Duration(milliseconds: 400),
+      alignment: 0.4, // roughly center in viewport
     );
-
-    _isProgrammaticScroll = true;
-    Future.delayed(const Duration(milliseconds: 550), () {
-      if (!mounted) return;
-      _isProgrammaticScroll = false;
-    });
 
     safeSetState(() => _highlightedMessageId = targetMessageId);
     Future.delayed(const Duration(seconds: 2), () {
@@ -486,10 +492,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   void _scrollToBottom() {
-    _scrollController.animateTo(
-      0,
+    _itemScrollController.scrollTo(
+      index: 0,
       duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
     );
     safeSetState(() {
       _showScrollToBottom = false;
@@ -631,7 +636,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     
     final state = _messageBloc.state;
     if (state is! MessagesLoaded) {
-      // Messages not loaded yet, will retry later
+      // Messages not loaded yet, _handleBlocStateChanges will retry
       return;
     }
     
@@ -648,46 +653,27 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
     
     if (messageIndex != null) {
-      // Message found, scroll to it and highlight
-      _isProgrammaticScroll = true;
-      _scrollController.scrollToIndex(
-        messageIndex,
-        preferPosition: AutoScrollPosition.middle,
-      ).then((_) {
-        if (mounted) {
-          safeSetState(() {
-            _isProgrammaticScroll = false;
-            _pendingScrollToMessageId = null;
-            _highlightedMessageId = messageId;
-          });
-          // Clear highlight after 2 seconds
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted) safeSetState(() => _highlightedMessageId = null);
-          });
-        }
+      // Message found — scroll to it and highlight
+      _pendingScrollToMessageId = null;
+      _pendingScrollAttempts = 0;
+
+      _itemScrollController.scrollTo(
+        index: messageIndex,
+        duration: const Duration(milliseconds: 400),
+        alignment: 0.4,
+      );
+
+      safeSetState(() => _highlightedMessageId = messageId);
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) safeSetState(() => _highlightedMessageId = null);
       });
     } else {
-      // Message not found — load more older messages if possible
-      _pendingScrollAttempts++;
-      if (_pendingScrollAttempts < _maxPendingScrollAttempts) {
-        if (!state.hasReachedMax) {
-          // Trigger loading more messages, _handleBlocStateChanges will
-          // re-attempt the scroll when new messages arrive
-          _loadMore();
-        } else {
-          // All messages loaded but target not found — show feedback
-          _pendingScrollToMessageId = null;
-          _pendingScrollAttempts = 0;
-          if (mounted) {
-            AppSnackBar.show(
-              context: context,
-              message: context.l10n.messageNotFound,
-              type: FeedbackType.warning,
-            );
-          }
-        }
+      // Message not found — trigger load-more.
+      // _handleBlocStateChanges will handle subsequent retries.
+      if (!state.hasReachedMax) {
+        _loadMore();
       } else {
-        // Max attempts reached, give up
+        // All messages loaded but target not found
         _pendingScrollToMessageId = null;
         _pendingScrollAttempts = 0;
         if (mounted) {
@@ -927,26 +913,62 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   void _handleBlocStateChanges(BuildContext context, MessageState state) {
     if (state is MessagesLoaded) {
+      final wasLoadingMore = _isLoadingMore;
       safeSetState(() => _isLoadingMore = false);
+
+      // Workaround: ScrollablePositionedList with reverse:true doesn't
+      // recalculate its internal scroll extent after itemCount increases.
+      // A jumpTo on the current visible index forces a full re-layout so
+      // the user can keep scrolling to the newly loaded older messages.
+      if (wasLoadingMore) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          try {
+            final positions =
+                _itemPositionsListener.itemPositions.value.toList();
+            if (positions.isEmpty) return;
+
+            // Find the topmost visible item (highest index in reverse list
+            // = oldest visible message).
+            positions.sort((a, b) => b.index.compareTo(a.index));
+            final anchor = positions.first;
+
+            _itemScrollController.jumpTo(
+              index: anchor.index,
+              alignment: anchor.itemLeadingEdge,
+            );
+          } catch (_) {
+          }
+        });
+      }
+
       final pendingId = _pendingScrollToMessageId;
       if (pendingId != null && pendingId.isNotEmpty) {
         final index = state.uiMessages.indexWhere((m) => m.id == pendingId);
         if (index != -1) {
           _pendingScrollToMessageId = null;
           _pendingScrollAttempts = 0;
-          _scrollController.scrollToIndex(
-            index,
-            preferPosition: AutoScrollPosition.middle,
-            duration: const Duration(milliseconds: 400),
-          );
-          _isProgrammaticScroll = true;
-          Future.delayed(const Duration(milliseconds: 550), () {
+
+          // Use WidgetsBinding to ensure the list has rebuilt with new data
+          WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-            _isProgrammaticScroll = false;
+            _itemScrollController.scrollTo(
+              index: index,
+              duration: const Duration(milliseconds: 400),
+              alignment: 0.4,
+            );
+          });
+
+          safeSetState(() => _highlightedMessageId = pendingId);
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) safeSetState(() => _highlightedMessageId = null);
           });
         } else if (!state.hasReachedMax && _pendingScrollAttempts < _maxPendingScrollAttempts) {
           _pendingScrollAttempts++;
-          _loadMore();
+          // Bypass _loadMore() throttle — directly request more messages
+          // so the pending scroll isn't blocked by the 700ms guard.
+          safeSetState(() => _isLoadingMore = true);
+          _messageBloc.add(const LoadMoreMessages(limit: _pageSize));
         } else {
           _pendingScrollToMessageId = null;
           _pendingScrollAttempts = 0;
@@ -991,7 +1013,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     } else if (state is MessagesLoaded) {
       if (state.uiMessages.isEmpty) return _buildEmptyState(context);
       return ChatMessageTimeline(
-        scrollController: _scrollController,
+        itemScrollController: _itemScrollController,
+        itemPositionsListener: _itemPositionsListener,
+        scrollOffsetController: _scrollOffsetController,
+        scrollOffsetListener: _scrollOffsetListener,
         uiMessages: state.uiMessages,
         hasMore: !state.hasReachedMax,
         isLoadingMore: _isLoadingMore,

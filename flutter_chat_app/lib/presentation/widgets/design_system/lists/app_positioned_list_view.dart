@@ -1,46 +1,58 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
-import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-/// A generic, reusable list view component with pagination, pull-to-refresh,
-/// and state management.
+/// A generic, reusable positioned list view component built on top of
+/// [ScrollablePositionedList] from the `scrollable_positioned_list` package.
+///
+/// Provides programmatic scroll-to-index capabilities, which is useful for
+/// chat message lists, search result navigation, and any list where you need
+/// to jump to a specific item by index.
 ///
 /// Features:
-/// - Generic type support for type-safe item rendering
+/// - Scroll to any item by index with animation
+/// - Track visible item positions via [ItemPositionsListener]
 /// - Pull-to-refresh functionality
 /// - Infinite scroll with pagination
 /// - Empty, loading, and error state handling
-/// - Customizable state widgets
-/// - Performance optimized with lazy loading
-/// - Accessibility compliant
+/// - Separator support
+/// - Reverse mode (for chat-style bottom-to-top lists)
 /// - Dark mode support
 ///
 /// Example:
 /// ```dart
-/// AppListView<User>(
-///   items: users,
-///   itemBuilder: (context, user, index) => UserListItem(user: user),
-///   onRefresh: () async {
-///     await fetchUsers();
-///   },
-///   onLoadMore: () async {
-///     await loadMoreUsers();
-///   },
-///   hasMore: hasMoreUsers,
-///   isLoading: isLoadingUsers,
-///   error: errorMessage,
-///   onRetry: () => retryFetch(),
+/// final itemScrollController = ItemScrollController();
+/// final itemPositionsListener = ItemPositionsListener.create();
+///
+/// AppPositionedListView<Message>(
+///   items: messages,
+///   itemBuilder: (context, message, index) => MessageBubble(message: message),
+///   itemScrollController: itemScrollController,
+///   itemPositionsListener: itemPositionsListener,
+///   reverse: true,
+///   onLoadMore: () async => await loadOlderMessages(),
+///   hasMore: hasMoreMessages,
 /// )
+///
+/// // Scroll to item at index 5
+/// itemScrollController.scrollTo(
+///   index: 5,
+///   duration: Duration(milliseconds: 300),
+/// );
 /// ```
-class AppListView<T> extends BaseStatefulWidget {
-  /// Creates an [AppListView].
-  const AppListView({
+class AppPositionedListView<T> extends BaseStatefulWidget {
+  /// Creates an [AppPositionedListView].
+  const AppPositionedListView({
     required this.items,
     required this.itemBuilder,
+    this.itemScrollController,
+    this.scrollOffsetController,
+    this.itemPositionsListener,
+    this.scrollOffsetListener,
     this.onRefresh,
     this.onLoadMore,
     this.hasMore = false,
@@ -54,21 +66,18 @@ class AppListView<T> extends BaseStatefulWidget {
     this.physics,
     this.padding,
     this.shrinkWrap = false,
-    this.primary,
     this.scrollDirection = Axis.vertical,
     this.reverse = false,
-    this.controller,
-    this.itemExtent,
-    this.prototypeItem,
+    this.initialScrollIndex = 0,
+    this.initialAlignment = 0.0,
     this.addAutomaticKeepAlives = true,
     this.addRepaintBoundaries = true,
     this.addSemanticIndexes = true,
-    this.cacheExtent,
+    this.minCacheExtent,
     this.semanticChildCount,
     this.dragStartBehavior = DragStartBehavior.start,
     this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
-    this.restorationId,
-    this.clipBehavior = Clip.hardEdge,
+    this.loadMoreThreshold = 3,
     super.key,
   });
 
@@ -78,11 +87,24 @@ class AppListView<T> extends BaseStatefulWidget {
   /// Builder function for each item in the list.
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
 
+  /// Controller for programmatic scrolling to specific items.
+  /// Use [ItemScrollController.scrollTo] or [ItemScrollController.jumpTo].
+  final ItemScrollController? itemScrollController;
+
+  /// Controller for programmatic scrolling by offset.
+  final ScrollOffsetController? scrollOffsetController;
+
+  /// Listener that reports which items are currently visible.
+  final ItemPositionsListener? itemPositionsListener;
+
+  /// Listener that reports scroll offset changes.
+  final ScrollOffsetListener? scrollOffsetListener;
+
   /// Callback when user pulls to refresh.
   /// If null, pull-to-refresh is disabled.
   final Future<void> Function()? onRefresh;
 
-  /// Callback when user scrolls near the bottom.
+  /// Callback when user scrolls near the edge (top or bottom depending on [reverse]).
   /// Used for pagination/infinite scroll.
   final Future<void> Function()? onLoadMore;
 
@@ -93,7 +115,6 @@ class AppListView<T> extends BaseStatefulWidget {
   final bool isLoading;
 
   /// Error message to display.
-  /// If not null, shows error state.
   final String? error;
 
   /// Callback when user taps retry button in error state.
@@ -115,28 +136,24 @@ class AppListView<T> extends BaseStatefulWidget {
   final ScrollPhysics? physics;
 
   /// Padding around the list.
-  final EdgeInsetsGeometry? padding;
+  final EdgeInsets? padding;
 
   /// Whether the list should shrink-wrap its contents.
   final bool shrinkWrap;
-
-  /// Whether this is the primary scroll view.
-  final bool? primary;
 
   /// The scroll direction.
   final Axis scrollDirection;
 
   /// Whether to reverse the scroll direction.
+  /// Useful for chat lists where newest items are at the bottom.
   final bool reverse;
 
-  /// Optional scroll controller.
-  final ScrollController? controller;
+  /// Index of the item to initially align within the viewport.
+  final int initialScrollIndex;
 
-  /// The extent of each item in the scroll direction.
-  final double? itemExtent;
-
-  /// A prototype item to use for sizing.
-  final Widget? prototypeItem;
+  /// Determines where the leading edge of the item at [initialScrollIndex]
+  /// should be placed. 0.0 = top, 1.0 = bottom.
+  final double initialAlignment;
 
   /// Whether to wrap children in AutomaticKeepAlive widgets.
   final bool addAutomaticKeepAlives;
@@ -147,8 +164,8 @@ class AppListView<T> extends BaseStatefulWidget {
   /// Whether to wrap children in IndexedSemantics widgets.
   final bool addSemanticIndexes;
 
-  /// The cache extent for the viewport.
-  final double? cacheExtent;
+  /// The minimum cache extent for the viewport.
+  final double? minCacheExtent;
 
   /// The number of children for semantic purposes.
   final int? semanticChildCount;
@@ -159,51 +176,49 @@ class AppListView<T> extends BaseStatefulWidget {
   /// Defines how the keyboard dismissal should be handled.
   final ScrollViewKeyboardDismissBehavior keyboardDismissBehavior;
 
-  /// Restoration ID for state restoration.
-  final String? restorationId;
-
-  /// The clip behavior for the list.
-  final Clip clipBehavior;
+  /// Number of items from the edge to trigger [onLoadMore].
+  /// Default is 3 items from the edge.
+  final int loadMoreThreshold;
 
   @override
-  AppListViewState<T> createState() => AppListViewState<T>();
+  AppPositionedListViewState<T> createState() =>
+      AppPositionedListViewState<T>();
 }
 
-/// State for [AppListView].
-class AppListViewState<T> extends BaseState<AppListView<T>> {
-  late ScrollController _scrollController;
+/// State for [AppPositionedListView].
+class AppPositionedListViewState<T>
+    extends BaseState<AppPositionedListView<T>> {
   bool _isLoadingMore = false;
 
   @override
   void initState() {
     super.initState();
-    _scrollController = widget.controller ?? ScrollController();
-    _scrollController.addListener(_onScroll);
+    widget.itemPositionsListener?.itemPositions.addListener(_onPositionsChanged);
   }
 
   @override
   void dispose() {
-    if (widget.controller == null) {
-      _scrollController.dispose();
-    } else {
-      _scrollController.removeListener(_onScroll);
-    }
+    widget.itemPositionsListener?.itemPositions
+        .removeListener(_onPositionsChanged);
     super.dispose();
   }
 
-  void _onScroll() {
-    if (_isNearBottom() && !_isLoadingMore && widget.hasMore && !widget.isLoading) {
+  void _onPositionsChanged() {
+    if (_isLoadingMore || !widget.hasMore || widget.isLoading) return;
+    if (widget.onLoadMore == null) return;
+
+    final positions = widget.itemPositionsListener?.itemPositions.value;
+    if (positions == null || positions.isEmpty) return;
+
+    final totalItems = widget.items.length;
+    if (totalItems == 0) return;
+
+    final maxIndex = positions
+        .map((p) => p.index)
+        .reduce((a, b) => a > b ? a : b);
+    if (maxIndex >= totalItems - widget.loadMoreThreshold) {
       _loadMore();
     }
-  }
-
-  bool _isNearBottom() {
-    if (!_scrollController.hasClients) return false;
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.position.pixels;
-    // Trigger when 90% scrolled
-    final near = currentScroll >= (maxScroll * 0.9);
-    return near;
   }
 
   Future<void> _loadMore() async {
@@ -246,24 +261,26 @@ class AppListViewState<T> extends BaseState<AppListView<T>> {
   }
 
   Widget _buildList(BuildContext context) {
-    final listView = ListView.separated(
-      controller: _scrollController,
+    final itemCount = widget.items.length;
+
+    final listView = ScrollablePositionedList.separated(
+      itemCount: itemCount,
+      itemScrollController: widget.itemScrollController,
+      scrollOffsetController: widget.scrollOffsetController,
+      itemPositionsListener: widget.itemPositionsListener,
+      scrollOffsetListener: widget.scrollOffsetListener,
+      initialScrollIndex: widget.initialScrollIndex,
+      initialAlignment: widget.initialAlignment,
       physics: widget.physics,
       padding: widget.padding ?? const EdgeInsets.all(AppDimens.paddingMedium),
       shrinkWrap: widget.shrinkWrap,
-      primary: widget.primary,
       scrollDirection: widget.scrollDirection,
       reverse: widget.reverse,
-      // itemExtent, prototypeItem, semanticChildCount not supported by ListView.separated
       addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
       addRepaintBoundaries: widget.addRepaintBoundaries,
       addSemanticIndexes: widget.addSemanticIndexes,
-      cacheExtent: widget.cacheExtent,
-      dragStartBehavior: widget.dragStartBehavior,
-      keyboardDismissBehavior: widget.keyboardDismissBehavior,
-      restorationId: widget.restorationId,
-      clipBehavior: widget.clipBehavior,
-      itemCount: widget.items.length + (widget.hasMore ? 1 : 0),
+      minCacheExtent: widget.minCacheExtent,
+      semanticChildCount: widget.semanticChildCount ?? itemCount,
       separatorBuilder: (context, index) {
         if (widget.separatorBuilder != null) {
           return widget.separatorBuilder!(context, index);
@@ -271,11 +288,9 @@ class AppListViewState<T> extends BaseState<AppListView<T>> {
         return const SizedBox.shrink();
       },
       itemBuilder: (context, index) {
-        // Show bottom loading indicator
-        if (index >= widget.items.length) {
-          return _buildBottomLoader(context);
+        if (index < 0 || index >= widget.items.length) {
+          return const SizedBox.shrink();
         }
-
         final item = widget.items[index];
         return widget.itemBuilder(context, item, index);
       },
@@ -290,24 +305,6 @@ class AppListViewState<T> extends BaseState<AppListView<T>> {
     }
 
     return listView;
-  }
-
-  Widget _buildBottomLoader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimens.paddingMedium),
-      child: Center(
-        child: SizedBox(
-          width: AppDimens.iconSizeMedium,
-          height: AppDimens.iconSizeMedium,
-          child: Semantics(
-            label: context.l10n.loadingMore,
-            child: const CircularProgressIndicator(
-              strokeWidth: 2.0,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildEmptyState(BuildContext context) {

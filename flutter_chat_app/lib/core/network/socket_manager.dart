@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
 import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
@@ -25,7 +25,7 @@ class SocketManager {
   final Map<String, dynamic> _options;
 
   /// Logger instance
-  final Logger _logger;
+  final AppLogger _logger;
   
   /// Analytics service for tracking performance
   final IAnalyticsService? _analytics;
@@ -66,12 +66,12 @@ class SocketManager {
   SocketManager({
     @Named('socketUrl') required String serverUrl,
     Map<String, dynamic> options = const {},
-    Logger? logger,
+    AppLogger? logger,
     IAnalyticsService? analytics,
     TokenProvider? tokenProvider,
   }) : _serverUrl = serverUrl,
        _options = options,
-       _logger = logger ?? Logger(),
+       _logger = logger ?? AppLogger(),
        _analytics = analytics,
        _tokenProvider = tokenProvider;
   

@@ -1,8 +1,6 @@
 ---
-title: Backend NestJS Patterns & Best Practices
-inclusion: conditional
+inclusion: fileMatch
 fileMatchPattern: "src/**/*.ts"
-priority: medium
 ---
 
 # NestJS Backend Patterns & Best Practices

@@ -94,7 +94,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       '''
       query OfficeEmployeeFullOrgChartList(\$filter: UserOrgChartFilter!) {
         officeEmployeeFullOrgChartList(filter: \$filter) {
-          list {
+          officeUsers {
             id
             fullname
             phone
@@ -120,7 +120,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
     final response = result['officeEmployeeFullOrgChartList'] as Map<String, dynamic>?;
     if (response == null) return [];
 
-    final usersData = response['list'] as List<dynamic>?;
+    final usersData = response['officeUsers'] as List<dynamic>?;
     if (usersData == null) return [];
 
     return usersData.map((userData) => UserModel.fromMap(userData)).toList();
@@ -132,7 +132,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       '''
       query OfficeEmployeeFullOrgChartList(\$filter: UserOrgChartFilter!) {
         officeEmployeeFullOrgChartList(filter: \$filter) {
-          list {
+          officeUsers {
             id
             fullname
             phone
@@ -156,7 +156,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
     final response = result['officeEmployeeFullOrgChartList'] as Map<String, dynamic>?;
     if (response == null) return [];
 
-    final contactsData = response['list'] as List<dynamic>?;
+    final contactsData = response['officeUsers'] as List<dynamic>?;
     if (contactsData == null) return [];
 
     return contactsData.map((contactData) => UserModel.fromMap(contactData)).toList();

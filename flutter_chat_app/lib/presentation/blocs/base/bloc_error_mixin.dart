@@ -10,11 +10,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:logger/logger.dart';
 
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/localization/error_localization_service.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 
 /// **BLoC Error Handling Mixin**
 ///
@@ -22,7 +22,7 @@ import 'package:flutter_chat_app/core/utils/either.dart';
 /// Following single responsibility principle and clean architecture
 mixin BlocErrorMixin<Event, State> on BlocBase<State> {
   /// Logger instance for error tracking
-  Logger get logger => Logger();
+  AppLogger get logger => AppLogger();
 
   /// Error localization service instance
   ErrorLocalizationService get _errorLocalizationService =>

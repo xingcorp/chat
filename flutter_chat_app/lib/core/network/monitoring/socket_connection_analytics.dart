@@ -1,11 +1,11 @@
 
 import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 
 /// Lớp theo dõi phân tích kết nối Socket
 class SocketConnectionAnalytics {
   final IAnalyticsService _analyticsService;
-  final Logger _logger;
+  final AppLogger _logger;
   
   // Connection tracking
   int _disconnectionCount = 0;
@@ -17,10 +17,10 @@ class SocketConnectionAnalytics {
   /// Constructor
   SocketConnectionAnalytics({
     required IAnalyticsService analyticsService,
-    Logger? logger,
+    AppLogger? logger,
   }) : 
     _analyticsService = analyticsService,
-    _logger = logger ?? Logger();
+    _logger = logger ?? AppLogger();
   
   /// Track a new socket connection attempt
   void trackConnectionAttempt() {

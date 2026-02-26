@@ -1,8 +1,6 @@
 ---
-title: Chat Offline-First & Real-time Features
-inclusion: conditional
+inclusion: fileMatch
 fileMatchPattern: "flutter_chat_app/lib/**/*{offline,sync,socket,realtime}*.dart"
-priority: high
 ---
 
 # Chat Offline-First & Real-time Features

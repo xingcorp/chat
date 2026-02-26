@@ -187,14 +187,14 @@ class AttachmentQueueService {
               _pendingAttachments.add(attachment);
             }
           } catch (e) {
-            _logger.e('Lỗi phân tích attachment', e);
+            _logger.e('Lỗi phân tích attachment', error: e);
           }
         }
         
         _logger.i('Đã khôi phục ${_pendingAttachments.length} attachments');
       }
     } catch (e) {
-      _logger.e('Lỗi khôi phục hàng đợi attachment', e);
+      _logger.e('Lỗi khôi phục hàng đợi attachment', error: e);
     }
   }
   
@@ -218,7 +218,7 @@ class AttachmentQueueService {
       // Lưu vào bộ nhớ
       await _localStorageService.setString(_storageKey, queueJson);
     } catch (e) {
-      _logger.e('Lỗi lưu hàng đợi attachment', e);
+      _logger.e('Lỗi lưu hàng đợi attachment', error: e);
     }
   }
   
@@ -285,7 +285,7 @@ class AttachmentQueueService {
       _checkScheduledRetries();
       
     } catch (e) {
-      _logger.e('Lỗi xử lý hàng đợi', e);
+      _logger.e('Lỗi xử lý hàng đợi', error: e);
     } finally {
       _isProcessing = false;
     }
@@ -458,7 +458,7 @@ class AttachmentQueueService {
       await _cacheAttachment(successAttachment);
       
     } catch (e, stackTrace) {
-      _logger.e('Lỗi tải lên attachment', e, stackTrace);
+      _logger.e('Lỗi tải lên attachment', error: e, stackTrace: stackTrace);
       
       // Phân loại lỗi
       final errorType = _categorizeError(e);
@@ -637,7 +637,7 @@ class AttachmentQueueService {
         _logger.d('Đã lưu attachment vào cache: $cacheKey');
       }
     } catch (e) {
-      _logger.e('Lỗi cache attachment', e);
+      _logger.e('Lỗi cache attachment', error: e);
     }
   }
   

@@ -93,6 +93,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     on<_NewMessageReceived>(_onNewMessageReceived);
     on<_ConnectivityChanged>(_onConnectivityChanged);
     on<_ChatUpdated>(_onChatUpdated);
+    on<_SearchChats>(_onSearchChats);
+    on<_ClearSearch>(_onClearSearch);
   }
 
   /// **Load chats using GetConversationsUseCase - CLEAN ARCHITECTURE**
@@ -410,6 +412,52 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       emit(ChatState.loaded(chats: updatedChats));
       logger.i('Chat list updated with new data');
     }
+  }
+
+  /// **Search conversations using SearchConversationsUseCase**
+  ///
+  /// Calls remote API with keyword filter (same approach as Angular frontend).
+  Future<void> _onSearchChats(
+    _SearchChats event,
+    Emitter<ChatState> emit,
+  ) async {
+    final keyword = event.keyword.trim();
+    if (keyword.isEmpty) {
+      add(const ChatEvent.clearSearch());
+      return;
+    }
+
+    emit(const ChatState.loading());
+
+    final result = await _searchConversations(
+      query: keyword,
+      limit: 100,
+    );
+
+    result.fold(
+      (failure) {
+        logger.e('Search conversations failed: ${failure.message}');
+        emit(ChatState.error(message: getUserErrorMessage(failure)));
+      },
+      (chats) {
+        emit(ChatState.loaded(
+          chats: chats,
+          hasMore: false,
+          isLoadingMore: false,
+          page: 0,
+          pageSize: 100,
+          total: chats.length,
+        ));
+      },
+    );
+  }
+
+  /// **Clear search and reload normal chat list**
+  Future<void> _onClearSearch(
+    _ClearSearch event,
+    Emitter<ChatState> emit,
+  ) async {
+    add(const ChatEvent.loadChats(forceRefresh: false));
   }
 
   /// Pre-fetch avatars for better UX

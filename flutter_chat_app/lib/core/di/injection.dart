@@ -26,6 +26,8 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:flutter_chat_app/core/utils/logger.dart';
+
 import 'package:flutter_chat_app/core/network/connectivity/connectivity_service.dart'
     as net_connectivity;
 import 'package:flutter_chat_app/core/error/retry_config.dart' as app_retry;
@@ -201,7 +203,7 @@ Future<void> configureDependencies() async {
       () => socket_mgr.SocketManager(
         serverUrl: getIt<String>(instanceName: 'socketUrl'),
         options: getIt<Map<String, dynamic>>(),
-        logger: getIt<Logger>(),
+        logger: getIt<AppLogger>(),
         tokenProvider: getIt<TokenProvider>(),
       ),
     );

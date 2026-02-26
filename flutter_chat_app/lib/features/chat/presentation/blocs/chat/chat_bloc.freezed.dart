@@ -45,6 +45,8 @@ mixin _$ChatEvent {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -73,6 +75,8 @@ mixin _$ChatEvent {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -101,6 +105,8 @@ mixin _$ChatEvent {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -123,6 +129,8 @@ mixin _$ChatEvent {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -144,6 +152,8 @@ mixin _$ChatEvent {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -165,6 +175,8 @@ mixin _$ChatEvent {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -280,6 +292,8 @@ class _$LoadChatsImpl implements _LoadChats {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return loadChats(forceRefresh);
   }
@@ -311,6 +325,8 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return loadChats?.call(forceRefresh);
   }
@@ -342,6 +358,8 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (loadChats != null) {
@@ -370,6 +388,8 @@ class _$LoadChatsImpl implements _LoadChats {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return loadChats(this);
   }
@@ -394,6 +414,8 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return loadChats?.call(this);
   }
@@ -418,6 +440,8 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (loadChats != null) {
@@ -501,6 +525,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return loadMoreChats();
   }
@@ -532,6 +558,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return loadMoreChats?.call();
   }
@@ -563,6 +591,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (loadMoreChats != null) {
@@ -591,6 +621,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return loadMoreChats(this);
   }
@@ -615,6 +647,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return loadMoreChats?.call(this);
   }
@@ -639,6 +673,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (loadMoreChats != null) {
@@ -744,6 +780,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return loadChatDetails(chatId);
   }
@@ -775,6 +813,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return loadChatDetails?.call(chatId);
   }
@@ -806,6 +846,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (loadChatDetails != null) {
@@ -834,6 +876,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return loadChatDetails(this);
   }
@@ -858,6 +902,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return loadChatDetails?.call(this);
   }
@@ -882,6 +928,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (loadChatDetails != null) {
@@ -1011,6 +1059,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return loadMessages(chatId, limit, offset);
   }
@@ -1042,6 +1092,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return loadMessages?.call(chatId, limit, offset);
   }
@@ -1073,6 +1125,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (loadMessages != null) {
@@ -1101,6 +1155,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return loadMessages(this);
   }
@@ -1125,6 +1181,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return loadMessages?.call(this);
   }
@@ -1149,6 +1207,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (loadMessages != null) {
@@ -1305,6 +1365,8 @@ class _$SendMessageImpl implements _SendMessage {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return sendMessage(chatId, content, contentType, attachmentIds);
   }
@@ -1336,6 +1398,8 @@ class _$SendMessageImpl implements _SendMessage {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return sendMessage?.call(chatId, content, contentType, attachmentIds);
   }
@@ -1367,6 +1431,8 @@ class _$SendMessageImpl implements _SendMessage {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (sendMessage != null) {
@@ -1395,6 +1461,8 @@ class _$SendMessageImpl implements _SendMessage {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return sendMessage(this);
   }
@@ -1419,6 +1487,8 @@ class _$SendMessageImpl implements _SendMessage {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return sendMessage?.call(this);
   }
@@ -1443,6 +1513,8 @@ class _$SendMessageImpl implements _SendMessage {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (sendMessage != null) {
@@ -1600,6 +1672,8 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return createChat(type, name, description, participantIds);
   }
@@ -1631,6 +1705,8 @@ class _$CreateChatImpl implements _CreateChat {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return createChat?.call(type, name, description, participantIds);
   }
@@ -1662,6 +1738,8 @@ class _$CreateChatImpl implements _CreateChat {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (createChat != null) {
@@ -1690,6 +1768,8 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return createChat(this);
   }
@@ -1714,6 +1794,8 @@ class _$CreateChatImpl implements _CreateChat {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return createChat?.call(this);
   }
@@ -1738,6 +1820,8 @@ class _$CreateChatImpl implements _CreateChat {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (createChat != null) {
@@ -1881,6 +1965,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return updateChat(chatId, name, description, avatar);
   }
@@ -1912,6 +1998,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return updateChat?.call(chatId, name, description, avatar);
   }
@@ -1943,6 +2031,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (updateChat != null) {
@@ -1971,6 +2061,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return updateChat(this);
   }
@@ -1995,6 +2087,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return updateChat?.call(this);
   }
@@ -2019,6 +2113,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (updateChat != null) {
@@ -2135,6 +2231,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return leaveChat(chatId);
   }
@@ -2166,6 +2264,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return leaveChat?.call(chatId);
   }
@@ -2197,6 +2297,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (leaveChat != null) {
@@ -2225,6 +2327,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return leaveChat(this);
   }
@@ -2249,6 +2353,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return leaveChat?.call(this);
   }
@@ -2273,6 +2379,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (leaveChat != null) {
@@ -2399,6 +2507,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return addUsersToChat(chatId, userIds);
   }
@@ -2430,6 +2540,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return addUsersToChat?.call(chatId, userIds);
   }
@@ -2461,6 +2573,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (addUsersToChat != null) {
@@ -2489,6 +2603,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return addUsersToChat(this);
   }
@@ -2513,6 +2629,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return addUsersToChat?.call(this);
   }
@@ -2537,6 +2655,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (addUsersToChat != null) {
@@ -2666,6 +2786,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return removeUsersFromChat(chatId, userIds);
   }
@@ -2697,6 +2819,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return removeUsersFromChat?.call(chatId, userIds);
   }
@@ -2728,6 +2852,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (removeUsersFromChat != null) {
@@ -2756,6 +2882,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return removeUsersFromChat(this);
   }
@@ -2780,6 +2908,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return removeUsersFromChat?.call(this);
   }
@@ -2804,6 +2934,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (removeUsersFromChat != null) {
@@ -2934,6 +3066,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return markMessagesAsRead(chatId, messageIds);
   }
@@ -2965,6 +3099,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return markMessagesAsRead?.call(chatId, messageIds);
   }
@@ -2996,6 +3132,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (markMessagesAsRead != null) {
@@ -3024,6 +3162,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return markMessagesAsRead(this);
   }
@@ -3048,6 +3188,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return markMessagesAsRead?.call(this);
   }
@@ -3072,6 +3214,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (markMessagesAsRead != null) {
@@ -3158,6 +3302,8 @@ class _$SyncChatsImpl implements _SyncChats {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return syncChats();
   }
@@ -3189,6 +3335,8 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return syncChats?.call();
   }
@@ -3220,6 +3368,8 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (syncChats != null) {
@@ -3248,6 +3398,8 @@ class _$SyncChatsImpl implements _SyncChats {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return syncChats(this);
   }
@@ -3272,6 +3424,8 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return syncChats?.call(this);
   }
@@ -3296,6 +3450,8 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (syncChats != null) {
@@ -3400,6 +3556,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return syncMessages(chatId);
   }
@@ -3431,6 +3589,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return syncMessages?.call(chatId);
   }
@@ -3462,6 +3622,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (syncMessages != null) {
@@ -3490,6 +3652,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return syncMessages(this);
   }
@@ -3514,6 +3678,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return syncMessages?.call(this);
   }
@@ -3538,6 +3704,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (syncMessages != null) {
@@ -3649,6 +3817,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return newMessageReceived(message);
   }
@@ -3680,6 +3850,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return newMessageReceived?.call(message);
   }
@@ -3711,6 +3883,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (newMessageReceived != null) {
@@ -3739,6 +3913,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return newMessageReceived(this);
   }
@@ -3763,6 +3939,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return newMessageReceived?.call(this);
   }
@@ -3787,6 +3965,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (newMessageReceived != null) {
@@ -3899,6 +4079,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return connectivityChanged(isConnected);
   }
@@ -3930,6 +4112,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return connectivityChanged?.call(isConnected);
   }
@@ -3961,6 +4145,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (connectivityChanged != null) {
@@ -3989,6 +4175,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return connectivityChanged(this);
   }
@@ -4013,6 +4201,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return connectivityChanged?.call(this);
   }
@@ -4037,6 +4227,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (connectivityChanged != null) {
@@ -4149,6 +4341,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return messageStatusUpdated(message);
   }
@@ -4180,6 +4374,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return messageStatusUpdated?.call(message);
   }
@@ -4211,6 +4407,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (messageStatusUpdated != null) {
@@ -4239,6 +4437,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return messageStatusUpdated(this);
   }
@@ -4263,6 +4463,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return messageStatusUpdated?.call(this);
   }
@@ -4287,6 +4489,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (messageStatusUpdated != null) {
@@ -4397,6 +4601,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     required TResult Function(bool isConnected) connectivityChanged,
     required TResult Function(QueuedMessage message) messageStatusUpdated,
     required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
   }) {
     return chatUpdated(chat);
   }
@@ -4428,6 +4634,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult? Function(bool isConnected)? connectivityChanged,
     TResult? Function(QueuedMessage message)? messageStatusUpdated,
     TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
   }) {
     return chatUpdated?.call(chat);
   }
@@ -4459,6 +4667,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult Function(bool isConnected)? connectivityChanged,
     TResult Function(QueuedMessage message)? messageStatusUpdated,
     TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
     required TResult orElse(),
   }) {
     if (chatUpdated != null) {
@@ -4487,6 +4697,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     required TResult Function(_ConnectivityChanged value) connectivityChanged,
     required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
     required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
   }) {
     return chatUpdated(this);
   }
@@ -4511,6 +4723,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult? Function(_ConnectivityChanged value)? connectivityChanged,
     TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
   }) {
     return chatUpdated?.call(this);
   }
@@ -4535,6 +4749,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult Function(_ConnectivityChanged value)? connectivityChanged,
     TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
     TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
     required TResult orElse(),
   }) {
     if (chatUpdated != null) {
@@ -4551,6 +4767,494 @@ abstract class _ChatUpdated implements ChatEvent {
   @JsonKey(ignore: true)
   _$$ChatUpdatedImplCopyWith<_$ChatUpdatedImpl> get copyWith =>
       throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$SearchChatsImplCopyWith<$Res> {
+  factory _$$SearchChatsImplCopyWith(
+          _$SearchChatsImpl value, $Res Function(_$SearchChatsImpl) then) =
+      __$$SearchChatsImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({String keyword});
+}
+
+/// @nodoc
+class __$$SearchChatsImplCopyWithImpl<$Res>
+    extends _$ChatEventCopyWithImpl<$Res, _$SearchChatsImpl>
+    implements _$$SearchChatsImplCopyWith<$Res> {
+  __$$SearchChatsImplCopyWithImpl(
+      _$SearchChatsImpl _value, $Res Function(_$SearchChatsImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? keyword = null,
+  }) {
+    return _then(_$SearchChatsImpl(
+      keyword: null == keyword
+          ? _value.keyword
+          : keyword // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$SearchChatsImpl implements _SearchChats {
+  const _$SearchChatsImpl({required this.keyword});
+
+  @override
+  final String keyword;
+
+  @override
+  String toString() {
+    return 'ChatEvent.searchChats(keyword: $keyword)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$SearchChatsImpl &&
+            (identical(other.keyword, keyword) || other.keyword == keyword));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, keyword);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$SearchChatsImplCopyWith<_$SearchChatsImpl> get copyWith =>
+      __$$SearchChatsImplCopyWithImpl<_$SearchChatsImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
+    required TResult Function(String chatId) loadChatDetails,
+    required TResult Function(String chatId, int limit, int offset)
+        loadMessages,
+    required TResult Function(String chatId, String content,
+            ContentType contentType, List<String> attachmentIds)
+        sendMessage,
+    required TResult Function(ChatType type, String? name, String? description,
+            List<String> participantIds)
+        createChat,
+    required TResult Function(
+            String chatId, String? name, String? description, String? avatar)
+        updateChat,
+    required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId, List<String> userIds)
+        addUsersToChat,
+    required TResult Function(String chatId, List<String> userIds)
+        removeUsersFromChat,
+    required TResult Function(String chatId, List<String> messageIds)
+        markMessagesAsRead,
+    required TResult Function() syncChats,
+    required TResult Function(String chatId) syncMessages,
+    required TResult Function(ChatMessage message) newMessageReceived,
+    required TResult Function(bool isConnected) connectivityChanged,
+    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
+  }) {
+    return searchChats(keyword);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
+    TResult? Function(String chatId)? loadChatDetails,
+    TResult? Function(String chatId, int limit, int offset)? loadMessages,
+    TResult? Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult? Function(ChatType type, String? name, String? description,
+            List<String> participantIds)?
+        createChat,
+    TResult? Function(
+            String chatId, String? name, String? description, String? avatar)?
+        updateChat,
+    TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult? Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult? Function()? syncChats,
+    TResult? Function(String chatId)? syncMessages,
+    TResult? Function(ChatMessage message)? newMessageReceived,
+    TResult? Function(bool isConnected)? connectivityChanged,
+    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
+  }) {
+    return searchChats?.call(keyword);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
+    TResult Function(String chatId)? loadChatDetails,
+    TResult Function(String chatId, int limit, int offset)? loadMessages,
+    TResult Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult Function(ChatType type, String? name, String? description,
+            List<String> participantIds)?
+        createChat,
+    TResult Function(
+            String chatId, String? name, String? description, String? avatar)?
+        updateChat,
+    TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult Function()? syncChats,
+    TResult Function(String chatId)? syncMessages,
+    TResult Function(ChatMessage message)? newMessageReceived,
+    TResult Function(bool isConnected)? connectivityChanged,
+    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
+    required TResult orElse(),
+  }) {
+    if (searchChats != null) {
+      return searchChats(keyword);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
+    required TResult Function(_LoadChatDetails value) loadChatDetails,
+    required TResult Function(_LoadMessages value) loadMessages,
+    required TResult Function(_SendMessage value) sendMessage,
+    required TResult Function(_CreateChat value) createChat,
+    required TResult Function(_UpdateChat value) updateChat,
+    required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_AddUsersToChat value) addUsersToChat,
+    required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
+    required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
+    required TResult Function(_SyncChats value) syncChats,
+    required TResult Function(_SyncMessages value) syncMessages,
+    required TResult Function(_NewMessageReceived value) newMessageReceived,
+    required TResult Function(_ConnectivityChanged value) connectivityChanged,
+    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
+  }) {
+    return searchChats(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
+    TResult? Function(_LoadChatDetails value)? loadChatDetails,
+    TResult? Function(_LoadMessages value)? loadMessages,
+    TResult? Function(_SendMessage value)? sendMessage,
+    TResult? Function(_CreateChat value)? createChat,
+    TResult? Function(_UpdateChat value)? updateChat,
+    TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_AddUsersToChat value)? addUsersToChat,
+    TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult? Function(_SyncChats value)? syncChats,
+    TResult? Function(_SyncMessages value)? syncMessages,
+    TResult? Function(_NewMessageReceived value)? newMessageReceived,
+    TResult? Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
+  }) {
+    return searchChats?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
+    TResult Function(_LoadChatDetails value)? loadChatDetails,
+    TResult Function(_LoadMessages value)? loadMessages,
+    TResult Function(_SendMessage value)? sendMessage,
+    TResult Function(_CreateChat value)? createChat,
+    TResult Function(_UpdateChat value)? updateChat,
+    TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_AddUsersToChat value)? addUsersToChat,
+    TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult Function(_SyncChats value)? syncChats,
+    TResult Function(_SyncMessages value)? syncMessages,
+    TResult Function(_NewMessageReceived value)? newMessageReceived,
+    TResult Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
+    required TResult orElse(),
+  }) {
+    if (searchChats != null) {
+      return searchChats(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _SearchChats implements ChatEvent {
+  const factory _SearchChats({required final String keyword}) =
+      _$SearchChatsImpl;
+
+  String get keyword;
+  @JsonKey(ignore: true)
+  _$$SearchChatsImplCopyWith<_$SearchChatsImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$ClearSearchImplCopyWith<$Res> {
+  factory _$$ClearSearchImplCopyWith(
+          _$ClearSearchImpl value, $Res Function(_$ClearSearchImpl) then) =
+      __$$ClearSearchImplCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$ClearSearchImplCopyWithImpl<$Res>
+    extends _$ChatEventCopyWithImpl<$Res, _$ClearSearchImpl>
+    implements _$$ClearSearchImplCopyWith<$Res> {
+  __$$ClearSearchImplCopyWithImpl(
+      _$ClearSearchImpl _value, $Res Function(_$ClearSearchImpl) _then)
+      : super(_value, _then);
+}
+
+/// @nodoc
+
+class _$ClearSearchImpl implements _ClearSearch {
+  const _$ClearSearchImpl();
+
+  @override
+  String toString() {
+    return 'ChatEvent.clearSearch()';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is _$ClearSearchImpl);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
+    required TResult Function(String chatId) loadChatDetails,
+    required TResult Function(String chatId, int limit, int offset)
+        loadMessages,
+    required TResult Function(String chatId, String content,
+            ContentType contentType, List<String> attachmentIds)
+        sendMessage,
+    required TResult Function(ChatType type, String? name, String? description,
+            List<String> participantIds)
+        createChat,
+    required TResult Function(
+            String chatId, String? name, String? description, String? avatar)
+        updateChat,
+    required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId, List<String> userIds)
+        addUsersToChat,
+    required TResult Function(String chatId, List<String> userIds)
+        removeUsersFromChat,
+    required TResult Function(String chatId, List<String> messageIds)
+        markMessagesAsRead,
+    required TResult Function() syncChats,
+    required TResult Function(String chatId) syncMessages,
+    required TResult Function(ChatMessage message) newMessageReceived,
+    required TResult Function(bool isConnected) connectivityChanged,
+    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
+  }) {
+    return clearSearch();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
+    TResult? Function(String chatId)? loadChatDetails,
+    TResult? Function(String chatId, int limit, int offset)? loadMessages,
+    TResult? Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult? Function(ChatType type, String? name, String? description,
+            List<String> participantIds)?
+        createChat,
+    TResult? Function(
+            String chatId, String? name, String? description, String? avatar)?
+        updateChat,
+    TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult? Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult? Function()? syncChats,
+    TResult? Function(String chatId)? syncMessages,
+    TResult? Function(ChatMessage message)? newMessageReceived,
+    TResult? Function(bool isConnected)? connectivityChanged,
+    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
+  }) {
+    return clearSearch?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
+    TResult Function(String chatId)? loadChatDetails,
+    TResult Function(String chatId, int limit, int offset)? loadMessages,
+    TResult Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult Function(ChatType type, String? name, String? description,
+            List<String> participantIds)?
+        createChat,
+    TResult Function(
+            String chatId, String? name, String? description, String? avatar)?
+        updateChat,
+    TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult Function()? syncChats,
+    TResult Function(String chatId)? syncMessages,
+    TResult Function(ChatMessage message)? newMessageReceived,
+    TResult Function(bool isConnected)? connectivityChanged,
+    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
+    required TResult orElse(),
+  }) {
+    if (clearSearch != null) {
+      return clearSearch();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
+    required TResult Function(_LoadChatDetails value) loadChatDetails,
+    required TResult Function(_LoadMessages value) loadMessages,
+    required TResult Function(_SendMessage value) sendMessage,
+    required TResult Function(_CreateChat value) createChat,
+    required TResult Function(_UpdateChat value) updateChat,
+    required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_AddUsersToChat value) addUsersToChat,
+    required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
+    required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
+    required TResult Function(_SyncChats value) syncChats,
+    required TResult Function(_SyncMessages value) syncMessages,
+    required TResult Function(_NewMessageReceived value) newMessageReceived,
+    required TResult Function(_ConnectivityChanged value) connectivityChanged,
+    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
+  }) {
+    return clearSearch(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
+    TResult? Function(_LoadChatDetails value)? loadChatDetails,
+    TResult? Function(_LoadMessages value)? loadMessages,
+    TResult? Function(_SendMessage value)? sendMessage,
+    TResult? Function(_CreateChat value)? createChat,
+    TResult? Function(_UpdateChat value)? updateChat,
+    TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_AddUsersToChat value)? addUsersToChat,
+    TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult? Function(_SyncChats value)? syncChats,
+    TResult? Function(_SyncMessages value)? syncMessages,
+    TResult? Function(_NewMessageReceived value)? newMessageReceived,
+    TResult? Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
+  }) {
+    return clearSearch?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
+    TResult Function(_LoadChatDetails value)? loadChatDetails,
+    TResult Function(_LoadMessages value)? loadMessages,
+    TResult Function(_SendMessage value)? sendMessage,
+    TResult Function(_CreateChat value)? createChat,
+    TResult Function(_UpdateChat value)? updateChat,
+    TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_AddUsersToChat value)? addUsersToChat,
+    TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult Function(_SyncChats value)? syncChats,
+    TResult Function(_SyncMessages value)? syncMessages,
+    TResult Function(_NewMessageReceived value)? newMessageReceived,
+    TResult Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
+    required TResult orElse(),
+  }) {
+    if (clearSearch != null) {
+      return clearSearch(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ClearSearch implements ChatEvent {
+  const factory _ClearSearch() = _$ClearSearchImpl;
 }
 
 /// @nodoc

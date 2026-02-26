@@ -119,13 +119,18 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
       remoteDataSource: () async {
         logger.d('Fetching messages from server for chat $chatId');
 
-        final fromTs = cursor != null ? int.tryParse(cursor) : null;
+        final cursorTs = cursor != null ? int.tryParse(cursor) : null;
         
         // Get DTOs from remote datasource
+        // Use lastKey for cursor-based pagination (DynamoDB ExclusiveStartKey).
+        // The 'from' parameter is a filter ("messages after timestamp"), NOT a
+        // pagination cursor, so it must NOT be used for load-more.
         final response = await _remoteDataSource.getMessageList(
           conversationId: chatId,
           size: limit,
-          from: fromTs,
+          lastKey: cursorTs != null
+              ? {'conversationId': chatId, 'createdAt': cursorTs}
+              : null,
         );
         final dtos = response.messages;
         
@@ -178,12 +183,14 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         if (paginatedMessages.isEmpty && await networkInfo.isConnected) {
           logger.d('Local messages empty for chat $chatId; fetching from server');
 
-          final fromTs = cursor != null ? int.tryParse(cursor) : null;
+          final cursorTs = cursor != null ? int.tryParse(cursor) : null;
 
           final response = await _remoteDataSource.getMessageList(
             conversationId: chatId,
             size: limit,
-            from: fromTs,
+            lastKey: cursorTs != null
+                ? {'conversationId': chatId, 'createdAt': cursorTs}
+                : null,
           );
           final models = MessageMapper.toModelList(response.messages);
 
@@ -624,8 +631,20 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     
     if (cursor != null) {
-      // Find cursor position and take messages after it
-      final cursorIndex = messages.indexWhere((m) => m.serverId == cursor || m.localId == cursor);
+      // Cursor is a timestamp (millisecondsSinceEpoch) — find messages OLDER
+      // than this timestamp for the next page.
+      final cursorTs = int.tryParse(cursor);
+      if (cursorTs != null) {
+        final cursorDate = DateTime.fromMillisecondsSinceEpoch(cursorTs);
+        final olderMessages = messages
+            .where((m) => m.createdAt.isBefore(cursorDate))
+            .toList();
+        return olderMessages.take(limit).toList();
+      }
+
+      // Fallback: try matching by message ID
+      final cursorIndex = messages.indexWhere(
+          (m) => m.serverId == cursor || m.localId == cursor);
       if (cursorIndex >= 0) {
         final startIndex = cursorIndex + 1;
         return messages.skip(startIndex).take(limit).toList();
