@@ -1,5 +1,6 @@
 import 'package:graphql_flutter/graphql_flutter.dart' show FetchPolicy;
 import 'package:injectable/injectable.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter_chat_app/core/network/graphql_client.dart';
 import 'package:flutter_chat_app/core/services/realtime_messaging_service.dart';
@@ -142,6 +143,32 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
     if (data == null) {
       throw Exception('Failed to fetch message list');
     }
+
+    if (kDebugMode) {
+      final messages = data['messages'];
+      if (messages is List) {
+        final eventCount = messages.where((m) {
+          if (m is! Map<String, dynamic>) return false;
+          final t = (m['type'] as String?)?.toLowerCase();
+          return t == 'log' || t == 'event' || t == 'system';
+        }).length;
+        debugPrint(
+          '[getMessageList] conversationId=$conversationId size=$size received=${messages.length} eventCount=$eventCount',
+        );
+
+        for (final m in messages) {
+          if (m is! Map<String, dynamic>) continue;
+          final t = (m['type'] as String?)?.toLowerCase();
+          if (t != 'log' && t != 'event' && t != 'system') continue;
+          final actionType = m['actionType'];
+          final targetUsers = m['targetUsers'];
+          debugPrint(
+            '[getMessageList:event] id=${m['id']} type=${m['type']} actionType=$actionType targetUsers=${targetUsers is List ? targetUsers.length : 0} message=${m['message']}',
+          );
+          break;
+        }
+      }
+    }
     
     return MessageListResponseDto.fromJson(data);
   }
@@ -185,6 +212,15 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
     final data = result['chatMessageAdd'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to send message');
+    }
+
+    if (kDebugMode) {
+      final t = (data['type'] as String?)?.toLowerCase();
+      if (t == 'log' || t == 'event' || t == 'system') {
+        debugPrint(
+          '[sendMessage:event] id=${data['id']} type=${data['type']} actionType=${data['actionType']} targetUsers=${(data['targetUsers'] as List?)?.length ?? 0} message=${data['message']}',
+        );
+      }
     }
     
     return MessageDto.fromJson(data);

@@ -1,8 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:isar/isar.dart';
-import 'package:uuid/uuid.dart';
 
 part 'message_model.g.dart';
 
@@ -668,15 +668,83 @@ class MessageModel {
       case MessageType.system:
         contentType = ContentType.event; // Map system to event in domain
         break;
-      default:
-        contentType = ContentType.text;
+    }
+
+    final actionType = metadataMap['actionType'] as String?;
+    final newValue = metadataMap['newValue'] as String?;
+    final oldValue = metadataMap['oldValue'] as String?;
+
+    MessageSender? actor;
+    final actorMeta = metadataMap['actor'];
+    if (actorMeta is Map<String, dynamic>) {
+      final id = (actorMeta['id'] as String?) ?? '';
+      final fullName = actorMeta['fullname'] ?? actorMeta['fullName'] ?? actorMeta['name'];
+      final name = (fullName is String && fullName.trim().isNotEmpty) ? fullName.trim() : id;
+
+      String? avatar;
+      final imageUrls = actorMeta['imageUrls'];
+      if (imageUrls is List && imageUrls.isNotEmpty) {
+        final first = imageUrls.first;
+        if (first is String && first.trim().isNotEmpty) {
+          avatar = first.trim();
+        }
+      }
+
+      if (id.isNotEmpty) {
+        actor = MessageSender(id: id, name: name, avatar: avatar);
+      }
+    } else {
+      final actorId = metadataMap['actorId'] as String?;
+      if (actorId != null && actorId.trim().isNotEmpty) {
+        actor = MessageSender(id: actorId.trim(), name: actorId.trim());
+      }
+    }
+
+    final targetUsers = <MessageSender>[];
+    final targetUsersMeta = metadataMap['targetUsers'];
+    if (targetUsersMeta is List) {
+      for (final u in targetUsersMeta) {
+        if (u is! Map<String, dynamic>) continue;
+        final id = (u['id'] as String?) ?? '';
+        final fullName = u['fullname'] ?? u['fullName'] ?? u['name'];
+        final name = (fullName is String && fullName.trim().isNotEmpty) ? fullName.trim() : id;
+
+        String? avatar;
+        final imageUrls = u['imageUrls'];
+        if (imageUrls is List && imageUrls.isNotEmpty) {
+          final first = imageUrls.first;
+          if (first is String && first.trim().isNotEmpty) {
+            avatar = first.trim();
+          }
+        }
+
+        if (id.isNotEmpty) {
+          targetUsers.add(MessageSender(id: id, name: name, avatar: avatar));
+        }
+      }
+    } else {
+      final ids = metadataMap['targetUserIds'];
+      if (ids is List) {
+        for (final id in ids) {
+          if (id is String && id.trim().isNotEmpty) {
+            targetUsers.add(MessageSender(id: id.trim(), name: id.trim()));
+          }
+        }
+      }
+    }
+
+    if (kDebugMode && (contentType == ContentType.event || actionType != null)) {
+      debugPrint(
+        '[MessageModel.toDomain] id=${serverId ?? localId} type=$type contentType=$contentType '
+        'actionType=$actionType targets=${targetUsers.map((e) => e.name).join(', ')}',
+      );
     }
 
     // Create MessageSender from senderId (prefer metadata sender for name/avatar)
     final sender = MessageSender(
       id: senderId,
-      name: (senderName != null && senderName!.isNotEmpty)
-          ? senderName!
+      name: (senderName != null && senderName.isNotEmpty)
+          ? senderName
           : senderId,
       avatar: senderAvatar,
     );
@@ -824,6 +892,11 @@ class MessageModel {
       forwardedFromMessageId: forwardedFromMessageId,
       replyMessageId: replyMessageId,
       replyMessage: replyMessage,
+      actionType: actionType,
+      actor: actor,
+      targetUsers: targetUsers,
+      newValue: newValue,
+      oldValue: oldValue,
       mentionTo: mentionedUsers,
       readBy: readBy,
       deliveredTo: status == MessageStatus.delivered || status == MessageStatus.read

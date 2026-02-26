@@ -122,7 +122,7 @@ Refactoring nội bộ MessageBloc và các thành phần liên quan để tuân
     - Generate random failures during background fetch, verify local data preserved và `isBackgroundFetching == false`
     - **Validates: Requirements 4.6**
 
-- [-] 8. Final checkpoint — Ensure all tests pass
+- [x] 8. Final checkpoint — Ensure all tests pass
   - Chạy `dart run build_runner build --delete-conflicting-outputs` lần cuối
   - Ensure all tests pass, ask the user if questions arise.
 

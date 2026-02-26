@@ -148,6 +148,36 @@ class MessageMapper {
       );
     }
 
+    // Convert actor (system events)
+    MessageSender? actorSender;
+    if (dto.actor != null) {
+      actorSender = MessageSender(
+        id: dto.actor!.id,
+        name: dto.actor!.fullName,
+        avatar: dto.actor!.imageUrls.isNotEmpty ? dto.actor!.imageUrls.first : null,
+      );
+    } else if (dto.actorId != null) {
+      actorSender = MessageSender(id: dto.actorId!, name: 'Unknown');
+    }
+
+    // Convert target users (system events)
+    final targetUserSenders = dto.targetUsers
+        .map(
+          (u) => MessageSender(
+            id: u.id,
+            name: u.fullName,
+            avatar: u.imageUrls.isNotEmpty ? u.imageUrls.first : null,
+          ),
+        )
+        .toList();
+
+    // If backend only provides IDs, keep minimal placeholders
+    if (targetUserSenders.isEmpty && dto.targetUserIds.isNotEmpty) {
+      targetUserSenders.addAll(
+        dto.targetUserIds.map((id) => MessageSender(id: id, name: 'Unknown')),
+      );
+    }
+
     return ChatMessage(
       id: dto.id,
       chatId: dto.chatId,
@@ -163,6 +193,11 @@ class MessageMapper {
       replyMessageId: dto.replyMessageId,
       replyMessage: replyMessage,
       reactions: reactions,
+      actionType: dto.actionType,
+      actor: actorSender,
+      targetUsers: targetUserSenders,
+      newValue: dto.newValue,
+      oldValue: dto.oldValue,
     );
   }
 
@@ -184,6 +219,7 @@ class MessageMapper {
         return ContentType.location;
       case 'link':
         return ContentType.link;
+      case 'log':
       case 'event':
         return ContentType.event;
       case 'voice_note':
@@ -254,6 +290,11 @@ class MessageMapper {
       case 'location':
         type = MessageType.location;
         break;
+      case 'log':
+      case 'event':
+      case 'system':
+        type = MessageType.system;
+        break;
       default:
         type = MessageType.text;
         break;
@@ -277,6 +318,14 @@ class MessageMapper {
       'replyMessage': dto.replyMessage?.toJson(),
       'forwardedFromMessageId': dto.forwardedFromMessageId,
       'sender': dto.sender?.toJson(),
+      // System event fields
+      'actionType': dto.actionType,
+      'newValue': dto.newValue,
+      'oldValue': dto.oldValue,
+      'actor': dto.actor?.toJson(),
+      'actorId': dto.actorId,
+      'targetUsers': dto.targetUsers.map((u) => u.toJson()).toList(),
+      'targetUserIds': dto.targetUserIds,
     });
 
     final mentionToJson = dto.mentionTo
@@ -436,6 +485,12 @@ class MessageMapper {
       'fileName': entity.fileName,
       'sender': entity.sender.toJson(),
       'forwardedFromMessageId': entity.forwardedFromMessageId,
+      // System event fields
+      'actionType': entity.actionType,
+      'newValue': entity.newValue,
+      'oldValue': entity.oldValue,
+      'actor': entity.actor?.toJson(),
+      'targetUsers': entity.targetUsers.map((u) => u.toJson()).toList(),
     };
 
     // Reconstruct reactions in DTO format for metadata

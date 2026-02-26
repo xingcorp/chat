@@ -2222,6 +2222,42 @@
     }
   },
 
+  "eventChangeBackground": "{actor} changed the group background",
+  "@eventChangeBackground": {
+    "description": "System event when someone changes the group background",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+
+  "eventPromoteAdmin": "{actor} promoted {targets} to admin",
+  "@eventPromoteAdmin": {
+    "description": "System event when someone promotes a member to admin",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "targets": {
+        "type": "String"
+      }
+    }
+  },
+
+  "eventDemoteAdmin": "{actor} demoted {targets} from admin",
+  "@eventDemoteAdmin": {
+    "description": "System event when someone demotes an admin",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "targets": {
+        "type": "String"
+      }
+    }
+  },
+
   "eventPerformedAction": "{actor} performed an action",
   "@eventPerformedAction": {
     "description": "Fallback system event text",

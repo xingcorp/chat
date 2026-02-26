@@ -15,6 +15,27 @@ enum MessageDataSource {
 class MessageState extends BaseState with _$MessageState {
   const MessageState._();
 
+  /// Override props để Equatable (từ BaseState) so sánh đúng các field.
+  /// Freezed không tự sinh == khi class extends Equatable, nên phải khai báo
+  /// props thủ công — nếu không, props = [] → mọi state đều "bằng nhau"
+  /// → BLoC emit bị suppress → UI không cập nhật.
+  @override
+  List<Object?> get props => map(
+    initial: (_) => const [],
+    loading: (s) => [s.chatId],
+    loaded: (s) => [
+      s.chatId,
+      s.messages,
+      s.uiMessages,
+      s.hasReachedMax,
+      s.paginationError,
+      s.dataSource,
+      s.isBackgroundFetching,
+      s.conversationDetail,
+    ],
+    error: (s) => [s.chatId, s.error, s.previousMessages],
+  );
+
   /// Trạng thái ban đầu
   const factory MessageState.initial() = MessageInitial;
 

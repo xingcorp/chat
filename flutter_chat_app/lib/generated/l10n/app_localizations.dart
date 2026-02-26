@@ -2402,6 +2402,24 @@ abstract class AppLocalizations {
   /// **'{actor} joined the group'**
   String eventJoinConversation(String actor);
 
+  /// System event when someone changes the group background
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} changed the group background'**
+  String eventChangeBackground(String actor);
+
+  /// System event when someone promotes a member to admin
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} promoted {targets} to admin'**
+  String eventPromoteAdmin(String actor, String targets);
+
+  /// System event when someone demotes an admin
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} demoted {targets} from admin'**
+  String eventDemoteAdmin(String actor, String targets);
+
   /// Fallback system event text
   ///
   /// In en, this message translates to:

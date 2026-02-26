@@ -268,6 +268,15 @@ class ChatQueries {
             id
             fullname
           }
+          # System event fields (khớp Angular: CONVERSATION_GET_MESSAGE)
+          actionType
+          newValue
+          oldValue
+          targetUsers {
+            id
+            fullname
+            imageUrls
+          }
         }
       }
     }
@@ -492,6 +501,15 @@ class ChatMutations {
             fullname
           }
         }
+        # System event fields (khớp Angular)
+        actionType
+        newValue
+        oldValue
+        targetUsers {
+          id
+          fullname
+          imageUrls
+        }
       }
     }
   ''';
@@ -665,6 +683,15 @@ class ChatSubscriptions {
           imageUrls
         }
         conversationId
+        # System event fields
+        actionType
+        newValue
+        oldValue
+        targetUsers {
+          id
+          fullname
+          imageUrls
+        }
       }
     }
   ''';

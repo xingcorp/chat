@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:async/async.dart';
@@ -7,36 +8,35 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
-import 'package:flutter_chat_app/presentation/blocs/base/base_state.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
-import 'package:flutter_chat_app/core/error/failures.dart';
-import 'package:flutter_chat_app/core/utils/either.dart';
-import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
+import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
+import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart' hide MessageReaction;
+import 'package:flutter_chat_app/core/utils/either.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/data/managers/sync_metadata_manager.dart';
 import 'package:flutter_chat_app/data/strategies/gap_detection_logic.dart';
 import 'package:flutter_chat_app/data/strategies/message_merge_strategy.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
-import 'package:flutter_chat_app/features/chat/presentation/models/message_list_transformer.dart';
+import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
+import 'package:flutter_chat_app/domain/usecases/message/add_reaction_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/delete_message_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/edit_message_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/get_messages_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/mark_as_read_usecase.dart';
-import 'package:flutter_chat_app/domain/usecases/message/send_message_usecase.dart';
-import 'package:flutter_chat_app/domain/usecases/message/add_reaction_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/remove_reaction_usecase.dart';
-import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
-import 'package:flutter_chat_app/presentation/blocs/message/socket_event_buffer.dart';
-import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
-import 'package:flutter_chat_app/core/services/location_service.dart';
+import 'package:flutter_chat_app/domain/usecases/message/send_message_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
-import 'dart:io';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_list_transformer.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
+import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/base/base_state.dart';
+import 'package:flutter_chat_app/presentation/blocs/message/socket_event_buffer.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 part 'message_event.dart';
 part 'message_state.dart';
@@ -303,6 +303,13 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
             hasReachedMax: messages.length < event.limit,
             dataSource: MessageDataSource.server,
           ));
+
+          // Apply pending conversation detail if it arrived during the await
+          final firstLoadState = state;
+          if (firstLoadState is MessagesLoaded) {
+            final withDetail = _applyPendingConversationDetail(firstLoadState);
+            if (withDetail != firstLoadState) emit(withDetail as MessagesLoaded);
+          }
         },
       );
     }
@@ -367,16 +374,20 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   }
   
   /// **Send message using SendMessageUseCase - CLEAN ARCHITECTURE**
+  ///
+  /// Re-reads `state` after await to avoid stale-state race conditions
+  /// when concurrent events (background fetch, real-time) modify state
+  /// during the API call.
   Future<void> _onSendMessage(SendMessage event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
 
-    final currentState = state as MessagesLoaded;
+    final chatId = (state as MessagesLoaded).chatId;
 
-    logger.i('Sending message in chat: ${currentState.chatId}');
+    logger.i('Sending message in chat: $chatId');
 
     // Execute UseCase
     final result = await _sendMessage(
-      conversationId: currentState.chatId,
+      conversationId: chatId,
       content: event.content,
       senderId: event.senderId,
       type: event.contentType,
@@ -384,27 +395,41 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       replyMessageId: event.replyMessageId,
     );
 
+    // Re-read state after await — it may have changed during the API call
+    final freshState = state;
+    if (freshState is! MessagesLoaded) {
+      logger.w('State changed during sendMessage await (now ${freshState.runtimeType}), skipping emit');
+      return;
+    }
+
     result.fold(
       (failure) {
         logger.e('Failed to send message', error: failure);
         emit(MessageState.error(
-          chatId: currentState.chatId,
+          chatId: freshState.chatId,
           error: failure.message,
-          previousMessages: currentState.messages,
+          previousMessages: freshState.messages,
         ));
       },
       (newMessage) {
         logger.i('Message sent successfully: ${newMessage.id}');
-        
-        // Add new message to the beginning of the list (optimistic update)
-        final allMessages = [newMessage, ...currentState.messages];
-        emit(currentState.copyWith(
+
+        // Deduplicate: check if message already exists (e.g. from real-time echo)
+        final alreadyExists = freshState.messages.any((m) => m.id == newMessage.id);
+        if (alreadyExists) {
+          logger.d('Message ${newMessage.id} already in list (real-time echo arrived first)');
+          return;
+        }
+
+        // Add new message to the beginning of the list
+        final allMessages = [newMessage, ...freshState.messages];
+        emit(freshState.copyWith(
           messages: allMessages,
           uiMessages: _transformMessages(allMessages),
         ));
 
         // Mark message list as dirty
-        _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
+        _cacheSyncStrategy.markChatMessagesDirty(freshState.chatId);
         _cacheSyncStrategy.markChatListDirty();
       },
     );
@@ -414,8 +439,6 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   Future<void> _onEditMessage(EditMessage event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
 
-    final currentState = state as MessagesLoaded;
-
     logger.i('Editing message: ${event.messageId}');
 
     // Execute UseCase
@@ -424,27 +447,30 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       content: event.content,
     );
 
+    // Re-read state after await
+    final freshState = state;
+    if (freshState is! MessagesLoaded) return;
+
     result.fold(
       (failure) {
         logger.e('Failed to edit message', error: failure);
         emit(MessageState.error(
-          chatId: currentState.chatId,
+          chatId: freshState.chatId,
           error: failure.message,
-          previousMessages: currentState.messages,
+          previousMessages: freshState.messages,
         ));
       },
       (_) {
         logger.i('Message edited successfully');
         
         // Update message in list with new content
-        final updatedMessages = currentState.messages.map((msg) {
+        final updatedMessages = freshState.messages.map((msg) {
           if (msg.id == event.messageId) {
-            // Create updated message with new content
             return ChatMessage(
               id: msg.id,
               chatId: msg.chatId,
               sender: msg.sender,
-              content: event.content, // Use new content
+              content: event.content,
               contentType: msg.contentType,
               createdAt: msg.createdAt,
               updatedAt: DateTime.now(),
@@ -458,13 +484,12 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           return msg;
         }).toList();
 
-        emit(currentState.copyWith(
+        emit(freshState.copyWith(
           messages: updatedMessages,
           uiMessages: _transformMessages(updatedMessages),
         ));
 
-        // Mark message list as dirty
-        _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
+        _cacheSyncStrategy.markChatMessagesDirty(freshState.chatId);
       },
     );
   }
@@ -473,40 +498,37 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   Future<void> _onDeleteMessage(DeleteMessage event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
 
-    final currentState = state as MessagesLoaded;
-
     logger.i('Deleting message: ${event.messageId}');
 
-    // Create params for UseCase
     final params = DeleteMessageParams(messageId: event.messageId);
-
-    // Execute UseCase
     final result = await _deleteMessage(params);
+
+    // Re-read state after await
+    final freshState = state;
+    if (freshState is! MessagesLoaded) return;
 
     result.fold(
       (failure) {
         logger.e('Failed to delete message', error: failure);
         emit(MessageState.error(
-          chatId: currentState.chatId,
+          chatId: freshState.chatId,
           error: failure.message,
-          previousMessages: currentState.messages,
+          previousMessages: freshState.messages,
         ));
       },
       (_) {
         logger.i('Message deleted successfully');
         
-        // Remove message from list
-        final updatedMessages = currentState.messages
+        final updatedMessages = freshState.messages
             .where((msg) => msg.id != event.messageId)
             .toList();
 
-        emit(currentState.copyWith(
+        emit(freshState.copyWith(
           messages: updatedMessages,
           uiMessages: _transformMessages(updatedMessages),
         ));
 
-        // Mark message list as dirty
-        _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
+        _cacheSyncStrategy.markChatMessagesDirty(freshState.chatId);
         _cacheSyncStrategy.markChatListDirty();
       },
     );
@@ -692,6 +714,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       dataSource: MessageDataSource.merged,
       isBackgroundFetching: false,
       hasReachedMax: event.serverMessages.length < 20,
+      // copyWith preserves conversationDetail automatically (freezed)
+      // — no need to explicitly re-assign it
     ));
 
     logger.i('[TwoPhase] _onBackgroundFetchCompleted EMITTED new state: mergedCount=${merged.length} dataSource=merged bgFetching=false blocHashCode=$hashCode');
@@ -1514,21 +1538,30 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     LoadConversationDetail event,
     Emitter<MessageState> emit,
   ) async {
+    logger.i('[ConvDetail] _onLoadConversationDetail START chatId=${event.chatId} currentState=${state.runtimeType}');
+
     final result = await _getConversationDetail(event.chatId);
 
     result.fold(
       (failure) {
         // Log lỗi nhưng KHÔNG emit error state
-        logger.e('Failed to load conversation detail', error: failure);
+        logger.e('[ConvDetail] Failed to load conversation detail', error: failure);
       },
       (chat) {
-        if (chat == null) return;
+        if (chat == null) {
+          logger.w('[ConvDetail] Use case returned null chat for chatId=${event.chatId}');
+          return;
+        }
+
+        logger.i('[ConvDetail] Got chat: name=${chat.name} members=${chat.members.length}');
+
         if (state is MessagesLoaded) {
-          final currentState = state as MessagesLoaded;
-          emit(currentState.copyWith(conversationDetail: chat));
+          final loadedState = state as MessagesLoaded;
+          emit(loadedState.copyWith(conversationDetail: chat));
+          logger.i('[ConvDetail] EMITTED state with conversationDetail');
         } else {
           // State chưa sẵn sàng — lưu tạm để apply khi MessagesLoaded được emit
-          logger.i('Conversation detail arrived before MessagesLoaded, storing as pending');
+          logger.i('[ConvDetail] State is ${state.runtimeType}, storing as pending');
           _pendingConversationDetail = chat;
         }
       },

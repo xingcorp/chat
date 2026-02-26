@@ -450,11 +450,13 @@ class MessageListTransformer {
   /// Build system event info từ domain entity
   ///
   /// Khớp Angular: generateActionText(message) trong conversation.component.ts
+  /// Angular dùng message.sender?.fullname cho actor name (không phải actor)
   /// Handles: ADD_MEMBER, REMOVE_MEMBER, LEAVE_CONVERSATION, CHANGE_NAME,
   ///          CHANGE_AVATAR, CREATE_CONVERSATION, PIN_MESSAGE, UNPIN_MESSAGE
   static SystemEventInfo _buildSystemEventInfo(ChatMessage message) {
     final actionType = message.actionType ?? 'UNKNOWN';
-    final actorName = message.actor?.name;
+    // Khớp Angular: dùng sender.name làm actor (Angular: message.sender?.fullname)
+    final actorName = message.sender.name;
     final targetNames =
         message.targetUsers.map((u) => u.name).toList();
 
@@ -490,15 +492,23 @@ class MessageListTransformer {
   }) {
     final l10n = L10nHelper.current;
     final actor = actorName ?? l10n.eventSomeone;
-    final targets = targetUserNames.join(', ');
+    final targets = targetUserNames.where((n) => n.trim().isNotEmpty).join(', ');
 
     switch (actionType.toUpperCase()) {
       case 'ADD_MEMBER':
+        if (targets.isEmpty && fallbackContent?.isNotEmpty == true) {
+          return fallbackContent!;
+        }
         return l10n.eventAddMember(actor, targets);
       case 'REMOVE_MEMBER':
+        if (targets.isEmpty && fallbackContent?.isNotEmpty == true) {
+          return fallbackContent!;
+        }
         return l10n.eventRemoveMember(actor, targets);
       case 'LEAVE_CONVERSATION':
         return l10n.eventLeaveConversation(actor);
+      case 'JOIN_CONVERSATION':
+        return l10n.eventJoinConversation(actor);
       case 'CHANGE_NAME':
         if (oldValue != null && newValue != null) {
           return l10n.eventChangeNameFromTo(actor, oldValue, newValue);
@@ -506,14 +516,18 @@ class MessageListTransformer {
         return l10n.eventChangeName(actor, newValue ?? '');
       case 'CHANGE_AVATAR':
         return l10n.eventChangeAvatar(actor);
+      case 'CHANGE_BACKGROUND':
+        return l10n.eventChangeBackground(actor);
       case 'CREATE_CONVERSATION':
         return l10n.eventCreateConversation(actor);
       case 'PIN_MESSAGE':
         return l10n.eventPinMessage(actor);
       case 'UNPIN_MESSAGE':
         return l10n.eventUnpinMessage(actor);
-      case 'JOIN_CONVERSATION':
-        return l10n.eventJoinConversation(actor);
+      case 'PROMOTE_ADMIN':
+        return l10n.eventPromoteAdmin(actor, targets);
+      case 'DEMOTE_ADMIN':
+        return l10n.eventDemoteAdmin(actor, targets);
       default:
         // Fallback: dùng content gốc nếu không map được actionType
         return fallbackContent?.isNotEmpty == true

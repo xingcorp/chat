@@ -219,8 +219,7 @@ class ChatRepositoryImpl implements IChatRepository {
         // Try local first for instant response
         final localChat = await _localDataSource.getChatById(id);
 
-        // If local chat exists AND has member list, use it.
-        // Member list is required for header member count and @mention suggestions.
+        // If local chat exists AND has member list with creator info, use it directly.
         if (localChat != null && localChat.members.isNotEmpty) {
           final hasCreateInfo =
               (localChat.creatorName?.trim().isNotEmpty ?? false) ||
@@ -234,6 +233,8 @@ class ChatRepositoryImpl implements IChatRepository {
           // Local cache is missing group creation info needed for UI header.
           // Fall through to remote fetch when possible.
           _logger.d('Found chat locally but missing creator info; fetching remote');
+        } else if (localChat != null) {
+          _logger.d('Found chat locally but members empty; will try remote, fallback to local');
         }
         
         // Check network connectivity
@@ -258,6 +259,11 @@ class ChatRepositoryImpl implements IChatRepository {
 
         } on app_exceptions.ServerException catch (e) {
           _logger.e('Server error fetching chat', error: e);
+          // Fall back to local data if available, even without members
+          if (localChat != null) {
+            _logger.w('Server error, falling back to local chat');
+            return Right(localChat);
+          }
           return const Right(null);
         } on app_exceptions.NetworkException catch (e) {
           _logger.e('Network error fetching chat', error: e);

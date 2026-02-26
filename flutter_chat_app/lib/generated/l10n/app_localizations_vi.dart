@@ -1278,6 +1278,21 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String eventChangeBackground(String actor) {
+    return '$actor đã thay đổi hình nền nhóm';
+  }
+
+  @override
+  String eventPromoteAdmin(String actor, String targets) {
+    return '$actor đã thăng cấp $targets lên quản trị viên';
+  }
+
+  @override
+  String eventDemoteAdmin(String actor, String targets) {
+    return '$actor đã hạ cấp $targets khỏi quản trị viên';
+  }
+
+  @override
   String eventPerformedAction(String actor) {
     return '$actor đã thực hiện hành động';
   }

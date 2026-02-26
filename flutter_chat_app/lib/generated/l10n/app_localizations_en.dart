@@ -1277,6 +1277,21 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String eventChangeBackground(String actor) {
+    return '$actor changed the group background';
+  }
+
+  @override
+  String eventPromoteAdmin(String actor, String targets) {
+    return '$actor promoted $targets to admin';
+  }
+
+  @override
+  String eventDemoteAdmin(String actor, String targets) {
+    return '$actor demoted $targets from admin';
+  }
+
+  @override
   String eventPerformedAction(String actor) {
     return '$actor performed an action';
   }

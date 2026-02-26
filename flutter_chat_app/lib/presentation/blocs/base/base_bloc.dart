@@ -1,394 +1,276 @@
 import 'dart:async';
 
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
-import 'package:logger/logger.dart';
-import 'package:get_it/get_it.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/base_state.dart';
+import 'package:get_it/get_it.dart';
+import 'package:logger/logger.dart';
 
 /// Lớp cơ sở trừu tượng cho tất cả các BLoC.
-/// EventType là kiểu dữ liệu cho các sự kiện mà BLoC này xử lý.
-abstract class BaseBloc<EventType, StateType extends BaseState> extends Bloc<EventType, StateType> {
-  // Danh sách các subscription cần hủy khi đóng BLoC
+///
+/// Cung cấp: logging, error reporting, analytics, performance monitoring.
+///
+/// **QUAN TRỌNG**: Không emit BaseLoading/BaseError trực tiếp vì subclass
+/// dùng freezed state (MessageState, ChatInfoState, ...) — BaseError/BaseLoading
+/// không thể cast sang các freezed StateType. Subclass tự emit state phù hợp.
+abstract class BaseBloc<EventType, StateType extends BaseState>
+    extends Bloc<EventType, StateType> {
   final _subscriptions = <StreamSubscription>{};
-  
-  // Logger chuyên nghiệp thay vì print()
   final _logger = Logger();
-
-  // Service locator cho DI
   final GetIt _serviceLocator = GetIt.instance;
-  
-  // Services
-  late final ICrashReporter _crashReporter;
-  late final IAnalyticsService _analyticsService;
-  late final IPerformanceMonitor _performanceMonitor;
 
-  // Khởi tạo BLoC với trạng thái ban đầu.
-  BaseBloc(StateType initialState) : super(initialState) {
-    // Khởi tạo services từ DI container
+  // Nullable services — tránh LateInitializationError
+  ICrashReporter? _crashReporter;
+  IAnalyticsService? _analyticsService;
+  IPerformanceMonitor? _performanceMonitor;
+
+  BaseBloc(super.initialState) {
     _initServices();
-    
-    // Cấu hình xử lý sự kiện
     _registerEventHandlers();
-    
-    // Lắng nghe sự kiện thay đổi kết nối mạng
-    _setupConnectivityListener();
   }
-  
+
   /// Đăng ký handlers cho các sự kiện, có thể ghi đè bởi lớp con
   @protected
-  void _registerEventHandlers() {
-    // Lớp con có thể ghi đè để đăng ký handlers cho các sự kiện cụ thể
-  }
-  
-  /// Xử lý lỗi với báo cáo lỗi, phân loại và logging
+  void _registerEventHandlers() {}
+
+  /// Xử lý lỗi — public API cho subclass
   @protected
   void handleError(Object error, StackTrace stackTrace) {
     _handleError(error, stackTrace);
   }
-  
-  /// Khởi tạo các services cần thiết
+
+  /// Phân loại lỗi — public API cho subclass
+  ErrorType classifyError(dynamic error) => _classifyError(error);
+
+  /// Trích xuất thông báo lỗi thân thiện với người dùng
+  String extractUserFriendlyMessage(dynamic error, ErrorType type) {
+    switch (type) {
+      case ErrorType.network:
+        return 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.';
+      case ErrorType.authentication:
+        return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+      case ErrorType.authorization:
+        return 'Bạn không có quyền truy cập chức năng này.';
+      case ErrorType.validation:
+        return 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
+      case ErrorType.server:
+        return 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.';
+      case ErrorType.timeout:
+        return 'Yêu cầu quá thời gian. Vui lòng thử lại sau.';
+      case ErrorType.notFound:
+        return 'Không tìm thấy thông tin yêu cầu.';
+      default:
+        return 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // Private helpers
+  // ═══════════════════════════════════════════
+
+  /// Khởi tạo services — mỗi service init riêng để 1 fail không ảnh hưởng còn lại
   void _initServices() {
     try {
       _crashReporter = _serviceLocator.get<ICrashReporter>();
+    } catch (_) {}
+    try {
       _analyticsService = _serviceLocator.get<IAnalyticsService>();
+    } catch (_) {}
+    try {
       _performanceMonitor = _serviceLocator.get<IPerformanceMonitor>();
-    } catch (e) {
-      _logger.w('Một số services không khả dụng: $e');
-    }
-  }
-  
-  /// Theo dõi sự thay đổi kết nối mạng
-  void _setupConnectivityListener() {
-    // Lắng nghe thay đổi kết nối mạng nếu cần
-  }
-  
-  /// Phương thức được gọi khi kết nối mạng được khôi phục
-  void _handleConnectivityRestored() {
-    // Subclasses có thể ghi đè phương thức này để thực hiện các hành động
-    // khi kết nối được khôi phục
+    } catch (_) {}
   }
 
-  /// Xử lý lỗi với báo cáo lỗi, phân loại và logging
+  /// Xử lý lỗi: log + crash report + analytics. KHÔNG emit state.
   void _handleError(Object error, StackTrace stackTrace) {
-    // Phân loại lỗi
-    ErrorType errorType = _classifyError(error);
-    
-    // Ghi log lỗi
-    _logger.e('[${runtimeType.toString()}] Error: $error');
-    
-    // Báo cáo lỗi đến dịch vụ theo dõi lỗi từ xa
-    try {
-      _crashReporter.recordError(error, stackTrace, reason: "BLoC Error");
-    } catch (e) {
-      _logger.w('Không thể báo cáo lỗi: $e');
-    }
+    final errorType = _classifyError(error);
+    _logger.e('[$runtimeType] Error ($errorType): $error');
 
-    // Phát ra trạng thái BaseError nếu trạng thái hiện tại chưa phải là lỗi
-    if (state is! BaseError) {
-      String errorMessage = _extractUserFriendlyMessage(error, errorType);
-      emit(BaseError(
-        errorMessage, 
-        error: error, 
-        stackTrace: stackTrace,
-        type: errorType,
-        shouldRetry: errorType == ErrorType.network || errorType == ErrorType.timeout
-      ) as StateType);
-    }
-
-    // Tracking analytics
     try {
-      _analyticsService.logError(
-        errorType: '${runtimeType.toString()}_error',
-        errorMessage: error.toString(),
-        errorDetails: stackTrace.toString(),
-      );
-    } catch (e) {
-      _logger.w('Không thể ghi nhận analytics: $e');
-    }
+      _crashReporter?.recordError(error, stackTrace, reason: 'BLoC Error');
+    } catch (_) {}
+
+    try {
+      final analytics = _analyticsService;
+      if (analytics != null) {
+        analytics.logError(
+          errorType: '${runtimeType}_error',
+          errorMessage: error.toString(),
+          errorDetails: stackTrace.toString(),
+        );
+      }
+    } catch (_) {}
   }
-  
-  /// Phân loại lỗi thành các loại khác nhau
+
   ErrorType _classifyError(dynamic error) {
-    // Phân loại lỗi dựa trên thông điệp
-    if (error.toString().contains('timeout') || error.toString().contains('timed out')) {
+    final msg = error.toString().toLowerCase();
+    if (msg.contains('timeout') || msg.contains('timed out')) {
       return ErrorType.timeout;
-    } else if (error.toString().contains('network') || 
-               error.toString().contains('socket') ||
-               error.toString().contains('connection')) {
+    }
+    if (msg.contains('network') ||
+        msg.contains('socket') ||
+        msg.contains('connection')) {
       return ErrorType.network;
-    } else if (error.toString().contains('authentication') || 
-               error.toString().contains('unauthenticated') ||
-               error.toString().contains('401')) {
+    }
+    if (msg.contains('authentication') ||
+        msg.contains('unauthenticated') ||
+        msg.contains('401')) {
       return ErrorType.authentication;
-    } else if (error.toString().contains('permission') || 
-               error.toString().contains('403') ||
-               error.toString().contains('forbidden')) {
+    }
+    if (msg.contains('permission') ||
+        msg.contains('403') ||
+        msg.contains('forbidden')) {
       return ErrorType.authorization;
-    } else if (error.toString().contains('not found') || 
-               error.toString().contains('404')) {
+    }
+    if (msg.contains('not found') || msg.contains('404')) {
       return ErrorType.notFound;
-    } else if (error.toString().contains('validation') || 
-               error.toString().contains('422')) {
+    }
+    if (msg.contains('validation') || msg.contains('422')) {
       return ErrorType.validation;
-    } else if (error.toString().contains('server') || 
-               error.toString().contains('500')) {
+    }
+    if (msg.contains('server') || msg.contains('500')) {
       return ErrorType.server;
     }
-    
     return ErrorType.general;
   }
-  
-  /// Trích xuất thông báo lỗi thân thiện với người dùng
-  String _extractUserFriendlyMessage(dynamic error, ErrorType type) {
-    switch (type) {
-      case ErrorType.network:
-        return "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.";
-      case ErrorType.authentication:
-        return "Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại.";
-      case ErrorType.authorization:
-        return "Bạn không có quyền truy cập chức năng này.";
-      case ErrorType.validation:
-        return "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin đã nhập.";
-      case ErrorType.server:
-        return "Máy chủ đang gặp sự cố. Vui lòng thử lại sau.";
-      case ErrorType.timeout:
-        return "Yêu cầu quá thời gian. Vui lòng thử lại sau.";
-      case ErrorType.notFound:
-        return "Không tìm thấy thông tin yêu cầu.";
-      default:
-        return "Đã có lỗi xảy ra. Vui lòng thử lại.";
-    }
-  }
 
-  /// Phương thức tiện ích để phát ra trạng thái Loading.
-  void emitLoading({String? message, double? progress}) {
-    if (state is! BaseLoading) { // Tránh phát ra loading liên tiếp
-      emit(BaseLoading(message: message, progress: progress) as StateType);
-    } else if (progress != null) {
-      // Cập nhật tiến độ nếu đã ở trạng thái loading
-      final currentState = state as BaseLoading;
-      if (currentState.progress != progress || currentState.message != message) {
-        emit(BaseLoading(message: message ?? currentState.message, progress: progress) as StateType);
-      }
-    }
-  }
+  // ═══════════════════════════════════════════
+  // Retry utility
+  // ═══════════════════════════════════════════
 
-  /// Phương thức tiện ích để phát ra trạng thái Error.
-  void emitError(
-    String message, 
-    {
-      dynamic error, 
-      StackTrace? stackTrace, 
-      ErrorType type = ErrorType.general,
-      bool shouldRetry = false,
-      Duration retryAfter = const Duration(seconds: 5),
-    }
-  ) {
-    if (state is! BaseError) {
-      final errorState = BaseError(
-        message,
-        error: error,
-        stackTrace: stackTrace,
-        type: type,
-        shouldRetry: shouldRetry,
-        retryAfter: retryAfter,
-      );
-      
-      emit(errorState as StateType);
-      
-      // Báo cáo lỗi đến dịch vụ theo dõi lỗi từ xa
-      try {
-        if (error != null && stackTrace != null) {
-          _crashReporter.recordError(error, stackTrace, reason: message);
-        }
-      } catch (e) {
-        _logger.w('Không thể báo cáo lỗi: $e');
-      }
-    }
-  }
-  
-  /// Thực thi một thao tác với cơ chế thử lại tự động
+  /// Thực thi operation với retry. Trả về null nếu thất bại.
+  /// Subclass tự quyết định emit loading/error state phù hợp.
   Future<T?> executeWithRetry<T>(
-    Future<T> Function() operation,
-    {
-      int maxRetries = 3, 
-      Duration retryDelay = const Duration(seconds: 2),
-      bool emitLoadingState = true,
-      String? loadingMessage,
-    }
-  ) async {
-    int attempts = 0;
-    
-    if (emitLoadingState) {
-      emitLoading(message: loadingMessage);
-    }
-    
-    final operationName = '${runtimeType.toString()}_operation';
-    
+    Future<T> Function() operation, {
+    int maxRetries = 3,
+    Duration retryDelay = const Duration(seconds: 2),
+    String? operationLabel,
+  }) async {
+    final opName = operationLabel ?? '${runtimeType}_operation';
+    var attempts = 0;
+
     try {
-      // Start performance tracing
-      await _performanceMonitor.startTrace(
+      _performanceMonitor?.startTrace(
         TraceType.custom,
-        customTraceName: operationName,
-        attributes: {
-          'retry_max': maxRetries.toString(),
-          'bloc': runtimeType.toString(),
-        },
+        customTraceName: opName,
+        attributes: {'retry_max': '$maxRetries', 'bloc': '$runtimeType'},
       );
+    } catch (_) {}
 
-      T? result;
-      while (attempts < maxRetries) {
-        try {
-          result = await operation();
-
-          // Add success attribute
-          await _performanceMonitor.addTraceAttribute(
-            TraceType.custom,
-            customTraceName: operationName,
-            attributeName: 'result',
-            value: 'success'
-          );
-
-          break; // Success, exit retry loop
-        } catch (e, stackTrace) {
-          attempts++;
-          _logger.w('Thao tác thất bại (lần thử $attempts/$maxRetries): $e');
-
-          if (attempts >= maxRetries) {
-            // Đã hết số lần thử, phát ra lỗi
-            final errorType = _classifyError(e);
-            emitError(
-              _extractUserFriendlyMessage(e, errorType),
-              error: e,
-              stackTrace: stackTrace,
-              type: errorType
-            );
-
-            // Add failure attribute
-            await _performanceMonitor.addTraceAttribute(
-              TraceType.custom,
-              customTraceName: operationName,
-              attributeName: 'result',
-              value: 'failed'
-            );
-
-            result = null;
-            break;
-          }
-
-          // Chờ trước khi thử lại
-          await Future.delayed(retryDelay * attempts);
-        }
-      }
-
-      // Stop performance tracing
-      await _performanceMonitor.stopTrace(
-        TraceType.custom,
-        customTraceName: operationName,
-      );
-
-      return result;
-    } catch (e) {
-      _logger.e('Lỗi khi theo dõi hiệu suất: $e');
-
-      // Stop tracing on error
+    T? result;
+    while (attempts < maxRetries) {
       try {
-        await _performanceMonitor.stopTrace(
-          TraceType.custom,
-          customTraceName: operationName,
-        );
-      } catch (_) {}
-
-      return null;
+        result = await operation();
+        try {
+          _performanceMonitor?.addTraceAttribute(
+            TraceType.custom,
+            customTraceName: opName,
+            attributeName: 'result',
+            value: 'success',
+          );
+        } catch (_) {}
+        break;
+      } catch (e, stackTrace) {
+        attempts++;
+        _logger.w('Thao tác thất bại (lần thử $attempts/$maxRetries): $e');
+        if (attempts >= maxRetries) {
+          _handleError(e, stackTrace);
+          try {
+            _performanceMonitor?.addTraceAttribute(
+              TraceType.custom,
+              customTraceName: opName,
+              attributeName: 'result',
+              value: 'failed',
+            );
+          } catch (_) {}
+          break;
+        }
+        await Future.delayed(retryDelay * attempts);
+      }
     }
+
+    try {
+      _performanceMonitor?.stopTrace(
+        TraceType.custom,
+        customTraceName: opName,
+      );
+    } catch (_) {}
+
+    return result;
   }
-  
-  /// Thêm subscription để theo dõi và hủy khi BLoC đóng
+
+  /// Thêm subscription để tự hủy khi BLoC đóng
   void addSubscription(StreamSubscription subscription) {
     _subscriptions.add(subscription);
   }
 
+  // ═══════════════════════════════════════════
+  // Lifecycle overrides
+  // ═══════════════════════════════════════════
+
   @override
   void onChange(Change<StateType> change) {
     super.onChange(change);
-    
-    final String stateChangeSummary = 
+    final summary =
         '${change.currentState.runtimeType} -> ${change.nextState.runtimeType}';
-    
-    // Ghi log thay đổi trạng thái
-    _logger.d('[${runtimeType.toString()}] State change: $stateChangeSummary');
-    
-    // Analytics 
+    _logger.d('[$runtimeType] State change: $summary');
+
     try {
-      _analyticsService.logEvent(
+      _analyticsService?.logEvent(
         AnalyticsEvent.custom,
         customEventName: 'state_change',
-        parameters: {
-          'bloc': runtimeType.toString(),
-          'transition': stateChangeSummary
-        }
+        parameters: {'bloc': '$runtimeType', 'transition': summary},
       );
-    } catch (e) {
-      // Bỏ qua lỗi analytics
-    }
+    } catch (_) {}
   }
 
   @override
   void onTransition(Transition<EventType, StateType> transition) {
     super.onTransition(transition);
-    
-    final transitionName = '${runtimeType.toString()}_transition';
-    
-    final String transitionSummary = 
-        '${transition.event.runtimeType} caused ${transition.currentState.runtimeType} -> ${transition.nextState.runtimeType}';
-    
-    // Ghi log các transition
-    _logger.d('[${runtimeType.toString()}] Transition: $transitionSummary');
-    
-    // Theo dõi hiệu suất transition
+    final summary =
+        '${transition.event.runtimeType} caused '
+        '${transition.currentState.runtimeType} -> ${transition.nextState.runtimeType}';
+    _logger.d('[$runtimeType] Transition: $summary');
+
+    final monitor = _performanceMonitor;
+    if (monitor == null) return;
+
+    final traceName = '${runtimeType}_transition';
     try {
-      _performanceMonitor.startTrace(
+      monitor.startTrace(
         TraceType.custom,
-        customTraceName: transitionName,
+        customTraceName: traceName,
         attributes: {
-          'event_type': transition.event.runtimeType.toString(),
-          'from_state': transition.currentState.runtimeType.toString(),
-          'to_state': transition.nextState.runtimeType.toString(),
-        }
+          'event_type': '${transition.event.runtimeType}',
+          'from_state': '${transition.currentState.runtimeType}',
+          'to_state': '${transition.nextState.runtimeType}',
+        },
       );
-      
-      // Dừng trace sau khi transition xong
+      // Stop trace sau 100ms — wrap trong try-catch riêng
       Future.delayed(const Duration(milliseconds: 100), () {
-        _performanceMonitor.stopTrace(
-          TraceType.custom,
-          customTraceName: transitionName
-        );
+        try {
+          monitor.stopTrace(TraceType.custom, customTraceName: traceName);
+        } catch (_) {}
       });
-    } catch (e) {
-      // Bỏ qua lỗi monitoring
-    }
+    } catch (_) {}
   }
-  
-  /// Ghi đè để xử lý lỗi
+
   @override
   void onError(Object error, StackTrace stackTrace) {
     _handleError(error, stackTrace);
     super.onError(error, stackTrace);
   }
-  
+
   @override
   Future<void> close() {
-    // Hủy tất cả subscription khi đóng BLoC
-    for (final subscription in _subscriptions) {
-      subscription.cancel();
+    for (final sub in _subscriptions) {
+      sub.cancel();
     }
     _subscriptions.clear();
-    
-    _logger.d('[${runtimeType.toString()}] Closed');
+    _logger.d('[$runtimeType] Closed');
     return super.close();
   }
-} 
+}
