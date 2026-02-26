@@ -468,13 +468,24 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     final renderableAttachments = _getRenderableAttachments();
     final contentType = widget.uiState.contentType;
 
-    final bubbleColor = isFromCurrentUser
-        ? theme.colorScheme.primary
-        : theme.cardColor;
+    // For file-only messages (no text), use neutral bubble color
+    // to avoid blue background leaking around file tiles
+    final hasTextContent = widget.uiState.content.isNotEmpty;
+    final hasOnlyFiles = renderableAttachments.isNotEmpty &&
+        renderableAttachments.every((a) => a.type != 'image' && a.type != 'video') &&
+        !hasTextContent;
 
-    final textColor = isFromCurrentUser
-        ? theme.colorScheme.onPrimary
-        : theme.textTheme.bodyMedium?.color ?? Colors.black;
+    final bubbleColor = hasOnlyFiles
+        ? theme.colorScheme.surfaceContainerHighest
+        : (isFromCurrentUser
+            ? theme.colorScheme.primary
+            : theme.cardColor);
+
+    final textColor = hasOnlyFiles
+        ? (theme.textTheme.bodyMedium?.color ?? Colors.black)
+        : (isFromCurrentUser
+            ? theme.colorScheme.onPrimary
+            : theme.textTheme.bodyMedium?.color ?? Colors.black);
 
     // Determine if we should use audio/video player instead of media gallery
     final isAudioMessage = contentType == domain.ContentType.audio;
