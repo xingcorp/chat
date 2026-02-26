@@ -10,93 +10,40 @@ enum MessageDataSource {
   merged,
 }
 
-/// Base class cho các trạng thái tin nhắn
-abstract class MessageState extends Equatable {
-  const MessageState();
+/// Trạng thái tin nhắn sử dụng @freezed + BaseState
+@freezed
+class MessageState extends BaseState with _$MessageState {
+  const MessageState._();
 
-  @override
-  List<Object?> get props => [];
-}
+  /// Trạng thái ban đầu
+  const factory MessageState.initial() = MessageInitial;
 
-/// Trạng thái ban đầu
-class MessageInitial extends MessageState {
-  const MessageInitial();
-}
+  /// Trạng thái đang tải tin nhắn
+  const factory MessageState.loading({
+    required String chatId,
+  }) = MessagesLoading;
 
-/// Trạng thái đang tải tin nhắn
-class MessagesLoading extends MessageState {
-  final String chatId;
-
-  const MessagesLoading({required this.chatId});
-
-  @override
-  List<Object?> get props => [chatId];
-}
-
-/// Trạng thái khi tải tin nhắn thành công
-class MessagesLoaded extends MessageState {
-  final String chatId;
-  final List<ChatMessage> messages;
-  final List<MessageUIState> uiMessages;
-  final bool hasReachedMax;
-  /// Lỗi tạm khi pagination fail (không phá state chính, chỉ để reset UI loading)
-  final String? paginationError;
-
-  // === Phase 2 + 3 fields ===
-  /// Nguồn dữ liệu hiện tại (default: server — giữ backward compat Phase 1)
-  final MessageDataSource dataSource;
-  /// Đang có background fetch chạy không
-  final bool isBackgroundFetching;
-
-  const MessagesLoaded({
-    required this.chatId,
-    required this.messages,
-    this.uiMessages = const [],
-    this.hasReachedMax = false,
-    this.paginationError,
-    this.dataSource = MessageDataSource.server,
-    this.isBackgroundFetching = false,
-  });
-
-  MessagesLoaded copyWith({
-    String? chatId,
-    List<ChatMessage>? messages,
-    List<MessageUIState>? uiMessages,
-    bool? hasReachedMax,
+  /// Trạng thái khi tải tin nhắn thành công
+  const factory MessageState.loaded({
+    required String chatId,
+    required List<ChatMessage> messages,
+    @Default([]) List<MessageUIState> uiMessages,
+    @Default(false) bool hasReachedMax,
     String? paginationError,
-    MessageDataSource? dataSource,
-    bool? isBackgroundFetching,
-  }) {
-    return MessagesLoaded(
-      chatId: chatId ?? this.chatId,
-      messages: messages ?? this.messages,
-      uiMessages: uiMessages ?? this.uiMessages,
-      hasReachedMax: hasReachedMax ?? this.hasReachedMax,
-      paginationError: paginationError,
-      dataSource: dataSource ?? this.dataSource,
-      isBackgroundFetching: isBackgroundFetching ?? this.isBackgroundFetching,
-    );
-  }
+    // === Phase 2 + 3 fields ===
+    /// Nguồn dữ liệu hiện tại (default: server — giữ backward compat Phase 1)
+    @Default(MessageDataSource.server) MessageDataSource dataSource,
+    /// Đang có background fetch chạy không
+    @Default(false) bool isBackgroundFetching,
+    /// Thông tin conversation từ GetConversationDetailUseCase
+    Chat? conversationDetail,
+  }) = MessagesLoaded;
 
-  @override
-  List<Object?> get props => [
-    chatId, messages, uiMessages, hasReachedMax, paginationError,
-    dataSource, isBackgroundFetching,
-  ];
-}
-
-/// **Trạng thái khi có lỗi với enterprise error handling**
-class MessagesError extends MessageState {
-  final String chatId;
-  final String error;
-  final List<ChatMessage>? previousMessages; // Preserve previous messages for better UX
-
-  const MessagesError({
-    required this.chatId,
-    required this.error,
-    this.previousMessages,
-  });
-
-  @override
-  List<Object?> get props => [chatId, error, previousMessages];
+  /// Trạng thái khi có lỗi với enterprise error handling
+  const factory MessageState.error({
+    required String chatId,
+    required String error,
+    /// Preserve previous messages for better UX
+    List<ChatMessage>? previousMessages,
+  }) = MessagesError;
 }

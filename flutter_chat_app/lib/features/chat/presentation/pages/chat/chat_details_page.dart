@@ -20,7 +20,6 @@ import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
-import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/screens/chat/chat_header.dart';
@@ -76,7 +75,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   final ScrollOffsetController _scrollOffsetController = ScrollOffsetController();
   final ScrollOffsetListener _scrollOffsetListener = ScrollOffsetListener.create();
   late final MessageBloc _messageBloc;
-  late final GetConversationDetailUseCase _getConversationDetail;
+
   Chat? _chat;
   String _currentUserId = '';
   bool _hasInitializedContext = false;
@@ -143,7 +142,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     // When chatId changes in desktop view, ValueKey forces a new State instance, 
     // ensuring clean state and correct bloc scope.
     _messageBloc = getIt<MessageBloc>();
-    _getConversationDetail = getIt<GetConversationDetailUseCase>();
 
     _itemPositionsListener.itemPositions.addListener(_onPositionsChanged);
 
@@ -156,7 +154,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       ),
     );
 
-    unawaited(_loadChatHeader());
+    _messageBloc.add(LoadConversationDetail(chatId: widget.chatId));
     _setupRealtimeSubscriptions();
 
     // Single listener for efficiency
@@ -237,31 +235,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
   }
 
-  Future<void> _loadChatHeader() async {
-    final result = await _getConversationDetail(widget.chatId);
-    if (!mounted) return;
-    
-    result.fold(
-      (_) {},
-      (chat) {
-        if (chat == null) return;
-        safeSetState(() {
-          _chat = chat;
-        });
 
-        _messageController.updateMentions({
-          for (final m in chat.members)
-            if (m.userId.isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
-              m.userId: m.fullName!.trim(),
-        });
-
-        _messageBloc.setTransformContext(
-          currentUserId: _currentUserId,
-          isGroupChat: chat.type == ChatType.group,
-        );
-      },
-    );
-  }
 
   /// Detect load-more and scroll-to-bottom FAB via visible item positions.
   void _onPositionsChanged() {
@@ -593,8 +567,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   /// Refresh chat info after adding members
   void _refreshChatInfo() {
-    // Reload chat header info
-    _loadChatHeader();
+    // Reload chat header info via BLoC
+    _messageBloc.add(LoadConversationDetail(chatId: widget.chatId));
   }
 
   void _showMessageSearch() {
@@ -913,6 +887,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   void _handleBlocStateChanges(BuildContext context, MessageState state) {
     if (state is MessagesLoaded) {
+      // Update conversation detail when available from BLoC state
+      final detail = state.conversationDetail;
+      if (detail != null && detail != _chat) {
+        _chat = detail;
+        _messageBloc.setTransformContext(
+          currentUserId: _currentUserId,
+          isGroupChat: _chat?.type == ChatType.group,
+        );
+      }
+
       final wasLoadingMore = _isLoadingMore;
       safeSetState(() => _isLoadingMore = false);
 

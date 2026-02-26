@@ -2,10 +2,13 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:async/async.dart';
-import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:flutter_chat_app/presentation/blocs/base/base_state.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
@@ -28,14 +31,16 @@ import 'package:flutter_chat_app/domain/usecases/message/mark_as_read_usecase.da
 import 'package:flutter_chat_app/domain/usecases/message/send_message_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/add_reaction_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/remove_reaction_usecase.dart';
-import 'package:flutter_chat_app/presentation/blocs/base/bloc_error_mixin.dart';
+import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/socket_event_buffer.dart';
 import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
+import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
 import 'dart:io';
 
 part 'message_event.dart';
 part 'message_state.dart';
+part 'message_bloc.freezed.dart';
 
 /// **ENTERPRISE MESSAGE BLOC - CLEAN ARCHITECTURE**
 ///
@@ -47,7 +52,7 @@ part 'message_state.dart';
 /// - Error handling: Comprehensive with user-friendly messages
 /// - Real-time updates: <100ms delivery
 @injectable
-class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
+class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   // UseCases (Domain Layer)
   final GetMessagesUseCase _getMessages;
   final SendMessageUseCase _sendMessage;
@@ -56,6 +61,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   final MarkAsReadUseCase _markAsRead;
   final AddReactionUseCase _addReaction;
   final RemoveReactionUseCase _removeReaction;
+  final GetConversationDetailUseCase _getConversationDetail;
 
   // Repositories
   final IAttachmentRepository _attachmentRepository;
@@ -68,8 +74,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   // === Phase 2 + 3 Dependencies ===
   final SyncMetadataManager _syncMetadataManager;
 
-  // Logger (injected via DI) - must be AppLogger for BlocErrorMixin
-  @override
+  // Logger (injected via DI)
   final AppLogger logger;
 
   // Map chat ID -> StreamSubscription
@@ -89,6 +94,10 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   bool _isGroupChat = false;
   String? _lastReadMessageId;
   String? _highlightedMessageId;
+
+  // Pending conversation detail — stored when LoadConversationDetail resolves
+  // before state is MessagesLoaded (race condition between concurrent event handlers)
+  Chat? _pendingConversationDetail;
 
   /// Cập nhật context cho UI transform (gọi từ Page khi mở chat)
   void setTransformContext({
@@ -114,6 +123,18 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     );
   }
 
+  /// Apply pending conversation detail to a freshly emitted MessagesLoaded state.
+  /// Returns the state with detail applied, or the original state if nothing pending.
+  MessageState _applyPendingConversationDetail(MessagesLoaded loadedState) {
+    final pending = _pendingConversationDetail;
+    if (pending != null) {
+      _pendingConversationDetail = null;
+      logger.i('Applying pending conversation detail to MessagesLoaded state');
+      return loadedState.copyWith(conversationDetail: pending);
+    }
+    return loadedState;
+  }
+
   /// Constructor with UseCases injection
   MessageBloc({
     required GetMessagesUseCase getMessages,
@@ -128,6 +149,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     required RealtimeService realtimeService,
     required ILocationService locationService,
     required SyncMetadataManager syncMetadataManager,
+    required GetConversationDetailUseCase getConversationDetail,
     required this.logger,
   })  : _getMessages = getMessages,
         _sendMessage = sendMessage,
@@ -141,7 +163,8 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         _realtimeService = realtimeService,
         _locationService = locationService,
         _syncMetadataManager = syncMetadataManager,
-        super(const MessageInitial()) {
+        _getConversationDetail = getConversationDetail,
+        super(const MessageState.initial()) {
     on<LoadMessages>(_onLoadMessages);
     on<LoadMoreMessages>(_onLoadMoreMessages);
     on<SendMessage>(_onSendMessage);
@@ -163,6 +186,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     on<ReceiveMessageEdited>(_onReceiveMessageEdited);
     on<ReceiveMessageDeleted>(_onReceiveMessageDeleted);
     on<ReceiveMessageReaction>(_onReceiveMessageReaction);
+    on<LoadConversationDetail>(_onLoadConversationDetail);
 
     // Subscribe to connection state changes for reconnection detection
     _connectionStateSubscription = _realtimeService.connectionState
@@ -208,7 +232,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       logger.i('[TwoPhase] Taking TWO-PHASE path (hasLocal=true, forceRefresh=false)');
 
       // Phase 1: Emit local data immediately
-      emit(MessagesLoaded(
+      emit(MessageState.loaded(
         chatId: event.chatId,
         messages: localMessages,
         uiMessages: _transformMessages(localMessages),
@@ -216,6 +240,13 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         dataSource: MessageDataSource.local,
         isBackgroundFetching: true,
       ));
+
+      // Apply pending conversation detail if it arrived before this emit
+      final phase1State = state;
+      if (phase1State is MessagesLoaded) {
+        final withDetail = _applyPendingConversationDetail(phase1State);
+        if (withDetail != phase1State) emit(withDetail as MessagesLoaded);
+      }
 
       logger.i('[TwoPhase] Phase 1 EMITTED: localCount=${localMessages.length} dataSource=local bgFetching=true blocHashCode=$hashCode');
 
@@ -232,7 +263,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     } else {
       // === FIRST-TIME LOAD PATH (Phase 1 behavior) ===
       logger.i('[TwoPhase] Taking FIRST-TIME path (hasLocal=$hasLocalData, forceRefresh=${event.forceRefresh})');
-      emit(MessagesLoading(chatId: event.chatId));
+      emit(MessageState.loading(chatId: event.chatId));
 
       final result = await _getMessages(
         conversationId: event.chatId,
@@ -242,7 +273,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       result.fold(
         (failure) {
           logger.e('[TwoPhase] First-time load FAILED: ${failure.message}', error: failure);
-          emit(MessagesError(
+          emit(MessageState.error(
             chatId: event.chatId,
             error: failure.message,
           ));
@@ -265,7 +296,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
             unawaited(_cancelMessageSubscription(event.chatId));
           }
 
-          emit(MessagesLoaded(
+          emit(MessageState.loaded(
             chatId: event.chatId,
             messages: messages,
             uiMessages: _transformMessages(messages),
@@ -356,7 +387,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     result.fold(
       (failure) {
         logger.e('Failed to send message', error: failure);
-        emit(MessagesError(
+        emit(MessageState.error(
           chatId: currentState.chatId,
           error: failure.message,
           previousMessages: currentState.messages,
@@ -396,7 +427,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     result.fold(
       (failure) {
         logger.e('Failed to edit message', error: failure);
-        emit(MessagesError(
+        emit(MessageState.error(
           chatId: currentState.chatId,
           error: failure.message,
           previousMessages: currentState.messages,
@@ -455,7 +486,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     result.fold(
       (failure) {
         logger.e('Failed to delete message', error: failure);
-        emit(MessagesError(
+        emit(MessageState.error(
           chatId: currentState.chatId,
           error: failure.message,
           previousMessages: currentState.messages,
@@ -854,7 +885,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   
   /// Handle clear messages
   void _onClearMessages(ClearMessages event, Emitter<MessageState> emit) {
-    emit(const MessageInitial());
+    emit(const MessageState.initial());
   }
   
   /// **Cancel real-time message subscription - ENTERPRISE CLEANUP**
@@ -1473,6 +1504,35 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       default:
         return 'DOC';
     }
+  }
+
+  /// Load conversation detail — log errors, never break message state
+  ///
+  /// If state is not yet MessagesLoaded (race condition with LoadMessages),
+  /// stores the detail in [_pendingConversationDetail] for later application.
+  Future<void> _onLoadConversationDetail(
+    LoadConversationDetail event,
+    Emitter<MessageState> emit,
+  ) async {
+    final result = await _getConversationDetail(event.chatId);
+
+    result.fold(
+      (failure) {
+        // Log lỗi nhưng KHÔNG emit error state
+        logger.e('Failed to load conversation detail', error: failure);
+      },
+      (chat) {
+        if (chat == null) return;
+        if (state is MessagesLoaded) {
+          final currentState = state as MessagesLoaded;
+          emit(currentState.copyWith(conversationDetail: chat));
+        } else {
+          // State chưa sẵn sàng — lưu tạm để apply khi MessagesLoaded được emit
+          logger.i('Conversation detail arrived before MessagesLoaded, storing as pending');
+          _pendingConversationDetail = chat;
+        }
+      },
+    );
   }
 
   @override

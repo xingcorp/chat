@@ -258,3 +258,14 @@ class ReceiveMessageReaction extends MessageEvent {
   @override
   List<Object?> get props => [messageId, code, userId, userName, isAdd];
 } 
+
+
+/// Event load conversation detail (thay thế việc gọi UseCase trực tiếp từ Page)
+class LoadConversationDetail extends MessageEvent {
+  final String chatId;
+
+  const LoadConversationDetail({required this.chatId});
+
+  @override
+  List<Object?> get props => [chatId];
+}

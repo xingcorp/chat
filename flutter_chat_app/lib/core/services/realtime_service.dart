@@ -274,51 +274,37 @@ class RealtimeService {
 
     // New message events
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('message:sent').listen((data) {
-        _handleNewMessage(data);
-      }),
+      _socketManager.on<Map<String, dynamic>>('message:sent').listen(_handleNewMessage),
     );
 
     // Message edit events
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('message:edit').listen((data) {
-        _handleMessageEdit(data);
-      }),
+      _socketManager.on<Map<String, dynamic>>('message:edit').listen(_handleMessageEdit),
     );
 
     // Message delete events
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('message:delete').listen((data) {
-        _handleMessageDelete(data);
-      }),
+      _socketManager.on<Map<String, dynamic>>('message:delete').listen(_handleMessageDelete),
     );
 
     // Message reaction events
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('message:reaction').listen((data) {
-        _handleMessageReaction(data);
-      }),
+      _socketManager.on<Map<String, dynamic>>('message:reaction').listen(_handleMessageReaction),
     );
 
     // Typing indicator events
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('message:typing').listen((data) {
-        _handleTypingIndicator(data);
-      }),
+      _socketManager.on<Map<String, dynamic>>('message:typing').listen(_handleTypingIndicator),
     );
 
     // Message read events
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('message:read').listen((data) {
-        _handleReadReceipt(data);
-      }),
+      _socketManager.on<Map<String, dynamic>>('message:read').listen(_handleReadReceipt),
     );
 
     // User status events (if available)
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('user:status').listen((data) {
-        _handleUserStatus(data);
-      }),
+      _socketManager.on<Map<String, dynamic>>('user:status').listen(_handleUserStatus),
     );
 
     _logger.i('Real-time socket listeners initialized');

@@ -594,21 +594,6 @@ extension GetItInjectableX on _i174.GetIt {
           realtimeService: gh<_i301.RealtimeService>(),
           logger: gh<_i221.AppLogger>(),
         ));
-    gh.factory<_i230.MessageBloc>(() => _i230.MessageBloc(
-          getMessages: gh<_i467.GetMessagesUseCase>(),
-          sendMessage: gh<_i67.SendMessageUseCase>(),
-          editMessage: gh<_i203.EditMessageUseCase>(),
-          deleteMessage: gh<_i434.DeleteMessageUseCase>(),
-          markAsRead: gh<_i848.MarkAsReadUseCase>(),
-          addReaction: gh<_i409.AddReactionUseCase>(),
-          removeReaction: gh<_i539.RemoveReactionUseCase>(),
-          attachmentRepository: gh<_i817.IAttachmentRepository>(),
-          cacheSyncStrategy: gh<_i514.CacheSyncStrategy>(),
-          realtimeService: gh<_i301.RealtimeService>(),
-          locationService: gh<_i669.ILocationService>(),
-          syncMetadataManager: gh<_i407.SyncMetadataManager>(),
-          logger: gh<_i221.AppLogger>(),
-        ));
     gh.lazySingletonAsync<_i1060.ChatMessageService>(
         () async => _i1060.ChatMessageService(
               await getAsync<_i556.MessageQueueService>(),
@@ -677,6 +662,22 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i56.SearchMessagesUseCase>(() =>
         _i56.SearchMessagesUseCase(repository: gh<_i81.IChatRepository>()));
+    gh.factory<_i230.MessageBloc>(() => _i230.MessageBloc(
+          getMessages: gh<_i467.GetMessagesUseCase>(),
+          sendMessage: gh<_i67.SendMessageUseCase>(),
+          editMessage: gh<_i203.EditMessageUseCase>(),
+          deleteMessage: gh<_i434.DeleteMessageUseCase>(),
+          markAsRead: gh<_i848.MarkAsReadUseCase>(),
+          addReaction: gh<_i409.AddReactionUseCase>(),
+          removeReaction: gh<_i539.RemoveReactionUseCase>(),
+          attachmentRepository: gh<_i817.IAttachmentRepository>(),
+          cacheSyncStrategy: gh<_i514.CacheSyncStrategy>(),
+          realtimeService: gh<_i301.RealtimeService>(),
+          locationService: gh<_i669.ILocationService>(),
+          syncMetadataManager: gh<_i407.SyncMetadataManager>(),
+          getConversationDetail: gh<_i899.GetConversationDetailUseCase>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
     gh.factory<_i704.MessageSearchBloc>(() => _i704.MessageSearchBloc(
           searchMessages: gh<_i56.SearchMessagesUseCase>(),
           logger: gh<_i221.AppLogger>(),

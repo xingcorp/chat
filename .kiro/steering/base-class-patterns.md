@@ -1,36 +1,45 @@
+---
+inclusion: always
+---
+
 # Base Class Patterns - MANDATORY
 
-> All code MUST follow these patterns. No exceptions.
+> All code MUST use these base classes and patterns. No exceptions.
 
-## 1. BLoC - Extend BaseBloc
+## Source Files
+
+- BaseWidget/BaseState: #[[file:flutter_chat_app/lib/core/base/base_widget.dart]]
+- BaseBloc: #[[file:flutter_chat_app/lib/presentation/blocs/base/base_bloc.dart]]
+- BaseBlocState: #[[file:flutter_chat_app/lib/presentation/blocs/base/base_state.dart]]
+- BaseUseCase: #[[file:flutter_chat_app/lib/core/base/base_usecase.dart]]
+- BaseRepository: #[[file:flutter_chat_app/lib/core/base/base_repository.dart]]
+- AppConstants: #[[file:flutter_chat_app/lib/core/constants/app_constants.dart]]
+- Logger: #[[file:flutter_chat_app/lib/core/utils/logger.dart]]
+
+## 1. BLoC → extend BaseBloc
 
 ```dart
 // ✅ CORRECT
 @injectable
 class ChatBloc extends BaseBloc<ChatEvent, ChatState> {
-  ChatBloc({required UseCase useCase, required Logger logger})
-      : super(const ChatState.initial()) {
-    on<Event>(_onEvent);
-  }
+  ChatBloc({required IRepository repository, required Logger logger})
+      : super(const ChatState.initial()) { on<Event>(_onEvent); }
   
   Future<void> _onEvent(Event event, Emitter<State> emit) async {
     emitLoading(message: 'Loading...');
-    final result = await useCase();
+    final result = await _repository.getData();
     result.fold(
       (failure) => emitError(failure.message, error: failure),
-      (data) => emit(State.success(data)),
+      (data) => emit(State.loaded(data: data)),
     );
   }
 }
-
-// ❌ WRONG - Don't extend Bloc directly
-class ChatBloc extends Bloc<ChatEvent, ChatState> { }
+// ❌ WRONG: class ChatBloc extends Bloc<...> { }
 ```
 
-## 2. State - Extend BaseState
+## 2. State → extend BaseState + @freezed
 
 ```dart
-// ✅ CORRECT
 @freezed
 class ChatState extends BaseState with _$ChatState {
   const factory ChatState.initial() = ChatInitial;
@@ -38,170 +47,69 @@ class ChatState extends BaseState with _$ChatState {
   const factory ChatState.loaded({required List<Data> data}) = ChatLoaded;
   const factory ChatState.error({required String message}) = ChatError;
 }
-
-// ❌ WRONG
-abstract class ChatState extends Equatable { }
+// ❌ WRONG: abstract class ChatState extends Equatable { }
 ```
 
-## 3. StatefulWidget - Extend BaseStatefulWidget
+## 3. Widgets → extend BaseStatefulWidget / BaseStatelessWidget
 
 ```dart
-// ✅ CORRECT
+// StatefulWidget
 class MyWidget extends BaseStatefulWidget {
   const MyWidget({super.key});
-  
   @override
   MyWidgetState createState() => MyWidgetState();
 }
-
 class MyWidgetState extends BaseState<MyWidget> {
-  @override
-  void onAppResumed() { }
-  
-  void _update() {
-    safeSetState(() { }); // Use safeSetState, not setState
-  }
-  
+  void _update() { safeSetState(() { }); } // NOT setState
   @override
   Widget build(BuildContext context) => Container();
 }
 
-// ❌ WRONG
-class MyWidget extends StatefulWidget { }
-```
-
-## 4. StatelessWidget - Extend BaseStatelessWidget
-
-```dart
-// ✅ CORRECT
+// StatelessWidget
 class MyWidget extends BaseStatelessWidget {
   const MyWidget({super.key});
-  
   @override
   Widget buildContent(BuildContext context) => Container();
 }
-
-// ❌ WRONG
-class MyWidget extends StatelessWidget { }
+// ❌ WRONG: extends StatefulWidget / StatelessWidget
 ```
 
-## 5. Constants - Use AppConstants
+## 4. Constants → AppConstants / AppDimens
 
 ```dart
-// ✅ CORRECT
-Container(
-  padding: const EdgeInsets.all(AppConstants.kDefaultPadding),
-  margin: const EdgeInsets.symmetric(horizontal: AppConstants.kSmallPadding),
-  decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(AppConstants.kDefaultBorderRadius),
-  ),
-)
-
-AnimatedOpacity(duration: AppConstants.kDefaultAnimationDuration)
-
-if (file.size > AppConstants.kMaxAttachmentSize) { }
-
-// ❌ WRONG - Hardcoded values
-padding: const EdgeInsets.all(16.0)
-margin: const EdgeInsets.symmetric(horizontal: 8.0)
-borderRadius: BorderRadius.circular(12.0)
-duration: Duration(milliseconds: 300)
-if (file.size > 25 * 1024 * 1024) { }
+// ✅ padding: EdgeInsets.all(AppConstants.kDefaultPadding)
+// ✅ borderRadius: BorderRadius.circular(AppConstants.kDefaultBorderRadius)
+// ✅ duration: AppConstants.kDefaultAnimationDuration
+// ❌ padding: EdgeInsets.all(16.0)  — no hardcoded values
 ```
 
-## 6. Logging - Use Logger
+## 5. Logging → Logger (never print)
 
 ```dart
-// ✅ CORRECT
-@injectable
-class UseCase {
-  final Logger _logger;
-  
-  UseCase({required Logger logger}) : _logger = logger;
-  
-  Future<void> call() async {
-    _logger.i('Starting operation');
-    _logger.e('Error occurred', error: exception);
-  }
-}
-
-// ❌ WRONG
-print('Starting operation');
-debugPrint('Error occurred');
+// ✅ _logger.i('Operation completed');  _logger.e('Failed', error: e);
+// ❌ print('...');  debugPrint('...');
 ```
 
-## 7. Localization - Use context.l10n
+## 6. Localization → context.l10n (never hardcode strings)
 
 ```dart
-// ✅ CORRECT
-Text(context.l10n.addReaction)
-Text(context.l10n.editMessage)
-SnackBar(content: Text(context.l10n.errorAddingReaction))
-
-// ❌ WRONG
-Text('Add Reaction')
-Text('Edit Message')
+// ✅ AppText(context.l10n.save)   AppButton(label: context.l10n.confirm)
+// ❌ AppText('Save')   AppButton(label: 'Confirm')
 ```
 
-## 8. DI - Use @injectable
+## 7. DI → @injectable annotations
 
 ```dart
-// ✅ CORRECT
-@injectable
-class UseCase {
-  final Repository _repository;
-  final Logger _logger;
-  
-  UseCase({required Repository repository, required Logger logger})
-      : _repository = repository, _logger = logger;
-}
-
-@LazySingleton(as: IRepository)
-class RepositoryImpl implements IRepository { }
-
-// ❌ WRONG
-class UseCase {
-  final repository = RepositoryImpl();
-}
+// ✅ @injectable class UseCase { UseCase({required IRepo repo}); }
+// ✅ @LazySingleton(as: IRepo) class RepoImpl implements IRepo { }
+// ❌ final repo = RepoImpl();  — no manual instantiation
 ```
 
-## 9. Reuse Widgets
+## 8. Other Rules
 
-```dart
-// ✅ CORRECT
-ErrorDisplayWidget(failure: failure, onRetry: onRetry)
-ConnectionStatusWidget(showDetails: true)
-
-// ❌ WRONG - Don't recreate
-Widget _buildError(String message) => Container(child: Text(message));
-```
-
-## 10. Use const
-
-```dart
-// ✅ CORRECT
-const SizedBox(height: AppConstants.kDefaultPadding)
-const Divider()
-const CircularProgressIndicator()
-
-// ❌ WRONG
-SizedBox(height: AppConstants.kDefaultPadding)
-Divider()
-```
-
-## Checklist
-
-- [ ] BLoCs extend `BaseBloc<Event, State>`
-- [ ] States extend `BaseState`
-- [ ] StatefulWidgets extend `BaseStatefulWidget`
-- [ ] StatelessWidgets extend `BaseStatelessWidget`
-- [ ] Use `AppConstants` for dimensions/durations
-- [ ] Use `Logger` (no `print()`)
-- [ ] Use `context.l10n` for strings
-- [ ] Use `@injectable` for DI
-- [ ] Reuse common widgets
-- [ ] Use `const` constructors
-
----
-
-**Status**: MANDATORY | **Updated**: 2025-01-28
+- Use `const` constructors wherever possible
+- Use `final` over `var` for immutables
+- Use `is` checks, not `as` casts
+- Use `??` / `?.`, not `!` null assertion
+- Dispose streams/subscriptions in `close()` / `dispose()`
+- Reuse existing widgets (ErrorDisplayWidget, ConnectionStatusWidget)
