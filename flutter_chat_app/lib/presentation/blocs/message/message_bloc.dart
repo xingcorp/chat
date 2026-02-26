@@ -180,7 +180,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   /// Phase 2: Background fetch (delta or full) → merge → emit merged state
   /// Fallback: First-time load (no local data) → standard server fetch
   Future<void> _onLoadMessages(LoadMessages event, Emitter<MessageState> emit) async {
-    logger.i('Loading messages for chat: ${event.chatId}');
+    logger.i('[TwoPhase] _onLoadMessages START chatId=${event.chatId} limit=${event.limit} forceRefresh=${event.forceRefresh}');
 
     // Step 1: Try local data first (Two-Phase Render)
     final localResult = await _getMessages.repository.getMessagesFromLocal(
@@ -193,9 +193,19 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       (messages) => messages.isNotEmpty,
     );
 
+    localResult.fold(
+      (failure) => logger.w('[TwoPhase] getMessagesFromLocal FAILED: ${failure.message}'),
+      (messages) {
+        final newestTs = messages.isNotEmpty ? messages.first.createdAt.toIso8601String() : 'N/A';
+        final oldestTs = messages.isNotEmpty ? messages.last.createdAt.toIso8601String() : 'N/A';
+        logger.i('[TwoPhase] getMessagesFromLocal: count=${messages.length} newest=$newestTs oldest=$oldestTs');
+      },
+    );
+
     if (hasLocalData && !event.forceRefresh) {
       // === TWO-PHASE RENDER PATH ===
       final localMessages = localResult.fold((_) => <ChatMessage>[], (m) => m);
+      logger.i('[TwoPhase] Taking TWO-PHASE path (hasLocal=true, forceRefresh=false)');
 
       // Phase 1: Emit local data immediately
       emit(MessagesLoaded(
@@ -206,6 +216,8 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
         dataSource: MessageDataSource.local,
         isBackgroundFetching: true,
       ));
+
+      logger.i('[TwoPhase] Phase 1 EMITTED: localCount=${localMessages.length} dataSource=local bgFetching=true blocHashCode=$hashCode');
 
       // Subscribe to real-time updates
       if (event.subscribeToUpdates) {
@@ -219,6 +231,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       _startBackgroundFetch(event.chatId, event.limit);
     } else {
       // === FIRST-TIME LOAD PATH (Phase 1 behavior) ===
+      logger.i('[TwoPhase] Taking FIRST-TIME path (hasLocal=$hasLocalData, forceRefresh=${event.forceRefresh})');
       emit(MessagesLoading(chatId: event.chatId));
 
       final result = await _getMessages(
@@ -228,14 +241,15 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
       result.fold(
         (failure) {
-          logger.e('Failed to load messages', error: failure);
+          logger.e('[TwoPhase] First-time load FAILED: ${failure.message}', error: failure);
           emit(MessagesError(
             chatId: event.chatId,
             error: failure.message,
           ));
         },
         (messages) {
-          logger.i('Loaded ${messages.length} messages for chat ${event.chatId}');
+          final newestTs = messages.isNotEmpty ? messages.first.createdAt.toIso8601String() : 'N/A';
+          logger.i('[TwoPhase] First-time load OK: count=${messages.length} newest=$newestTs');
 
           // Reset dirty flag after successful load
           _cacheSyncStrategy.resetChatMessagesDirtyFlag(event.chatId);
@@ -563,11 +577,13 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
   Future<void> _performBackgroundFetch(String chatId, int limit) async {
     try {
       final lastTimestamp = _syncMetadataManager.getLastKnownTimestamp(chatId);
+      logger.i('[TwoPhase] _performBackgroundFetch chatId=$chatId lastTimestamp=$lastTimestamp limit=$limit');
 
       Either<Failure, List<ChatMessage>> result;
 
       if (lastTimestamp != null) {
         // Delta sync: only fetch messages since last known timestamp
+        logger.i('[TwoPhase] Doing DELTA sync from=${DateTime.fromMillisecondsSinceEpoch(lastTimestamp).toIso8601String()}');
         result = await _getMessages.repository.getMessagesDelta(
           chatId,
           fromTimestamp: lastTimestamp,
@@ -576,21 +592,31 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
         // Gap detection
         final deltaCount = result.fold((_) => 0, (m) => m.length);
+        logger.i('[TwoPhase] Delta result: count=$deltaCount (gap threshold=$limit)');
         if (GapDetectionLogic.hasGap(deltaCount: deltaCount, pageSize: limit)) {
-          logger.w('Gap detected in delta sync for chat $chatId, doing full refresh');
+          logger.w('[TwoPhase] Gap detected (deltaCount=$deltaCount >= pageSize=$limit), doing FULL refresh');
           result = await _getMessages(conversationId: chatId, limit: limit);
         }
       } else {
         // No timestamp — full load
+        logger.i('[TwoPhase] No lastTimestamp, doing FULL load');
         result = await _getMessages(conversationId: chatId, limit: limit);
       }
 
       result.fold(
-        (failure) => add(_BackgroundFetchFailed(chatId: chatId, error: failure.message)),
-        (messages) => add(_BackgroundFetchCompleted(chatId: chatId, serverMessages: messages)),
+        (failure) {
+          logger.e('[TwoPhase] Background fetch FAILED: ${failure.message}');
+          add(_BackgroundFetchFailed(chatId: chatId, error: failure.message));
+        },
+        (messages) {
+          final newestTs = messages.isNotEmpty ? messages.first.createdAt.toIso8601String() : 'N/A';
+          final oldestTs = messages.isNotEmpty ? messages.last.createdAt.toIso8601String() : 'N/A';
+          logger.i('[TwoPhase] Background fetch OK: count=${messages.length} newest=$newestTs oldest=$oldestTs');
+          add(_BackgroundFetchCompleted(chatId: chatId, serverMessages: messages));
+        },
       );
     } catch (e) {
-      logger.e('Background fetch error', error: e);
+      logger.e('[TwoPhase] Background fetch EXCEPTION', error: e);
       add(_BackgroundFetchFailed(chatId: chatId, error: e.toString()));
     }
   }
@@ -600,21 +626,30 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
     _BackgroundFetchCompleted event,
     Emitter<MessageState> emit,
   ) {
-    if (state is! MessagesLoaded) return;
+    if (state is! MessagesLoaded) {
+      logger.w('[TwoPhase] _onBackgroundFetchCompleted: state is NOT MessagesLoaded (${state.runtimeType}), ignoring');
+      return;
+    }
     final currentState = state as MessagesLoaded;
 
     // Race condition guard: ignore stale responses for wrong chat
     if (currentState.chatId != event.chatId) {
-      logger.w('Background fetch completed for wrong chat: ${event.chatId} vs ${currentState.chatId}');
+      logger.w('[TwoPhase] Background fetch completed for WRONG chat: event=${event.chatId} vs current=${currentState.chatId}');
       _socketEventBuffer.stopBuffering();
       return;
     }
+
+    logger.i('[TwoPhase] _onBackgroundFetchCompleted: localCount=${currentState.messages.length} serverCount=${event.serverMessages.length}');
 
     // Merge local + server
     final merged = MessageMergeStrategy.merge(
       localMessages: currentState.messages,
       serverMessages: event.serverMessages,
     );
+
+    final newestTs = merged.isNotEmpty ? merged.first.createdAt.toIso8601String() : 'N/A';
+    final oldestTs = merged.isNotEmpty ? merged.last.createdAt.toIso8601String() : 'N/A';
+    logger.i('[TwoPhase] Merge result: count=${merged.length} newest=$newestTs oldest=$oldestTs');
 
     // Update sync metadata
     unawaited(_syncMetadataManager.updateFromMessages(event.chatId, merged));
@@ -628,8 +663,13 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       hasReachedMax: event.serverMessages.length < 20,
     ));
 
+    logger.i('[TwoPhase] _onBackgroundFetchCompleted EMITTED new state: mergedCount=${merged.length} dataSource=merged bgFetching=false blocHashCode=$hashCode');
+
     // Flush buffered socket events
     final bufferedEvents = _socketEventBuffer.stopBuffering();
+    if (bufferedEvents.isNotEmpty) {
+      logger.i('[TwoPhase] Flushing ${bufferedEvents.length} buffered socket events');
+    }
     for (final bufferedEvent in bufferedEvents) {
       add(bufferedEvent);
     }
@@ -648,7 +688,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
       return;
     }
 
-    logger.w('Background fetch failed for chat ${event.chatId}: ${event.error}');
+    logger.w('[TwoPhase] Background fetch FAILED for chat ${event.chatId}: ${event.error} — keeping ${currentState.messages.length} local messages');
 
     emit(currentState.copyWith(
       isBackgroundFetching: false,
@@ -656,6 +696,9 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> with BlocErrorMixin {
 
     // Flush buffered socket events
     final bufferedEvents = _socketEventBuffer.stopBuffering();
+    if (bufferedEvents.isNotEmpty) {
+      logger.i('[TwoPhase] Flushing ${bufferedEvents.length} buffered socket events after failure');
+    }
     for (final bufferedEvent in bufferedEvents) {
       add(bufferedEvent);
     }

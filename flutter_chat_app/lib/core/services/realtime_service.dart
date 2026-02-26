@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';
 import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
@@ -27,7 +28,16 @@ import 'package:rxdart/rxdart.dart';
 @singleton
 class RealtimeService {
   final EnhancedSocketManager _socketManager;
-  final Logger _logger = Logger();
+  final Logger _logger = Logger(
+    printer: PrettyPrinter(
+      methodCount: 1,
+      errorMethodCount: 3,
+      lineLength: 120,
+      colors: !kIsWeb,
+      printEmojis: true,
+      dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
+    ),
+  );
 
   // Stream controllers for real-time events
   final BehaviorSubject<SocketConnectionState> _connectionStateController = 
@@ -481,8 +491,8 @@ class RealtimeService {
       
       _typingController.add(typingIndicator);
       _logger.t('Typing indicator processed: ${typingIndicator.userId} - ${typingIndicator.isTyping}');
-    } catch (e) {
-      _logger.e('Error handling typing indicator: $e');
+    } catch (e, stackTrace) {
+      _logger.e('Error handling typing indicator: $e', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -499,8 +509,8 @@ class RealtimeService {
       
       _readReceiptController.add(readReceipt);
       _logger.t('Read receipt processed: ${readReceipt.messageId}');
-    } catch (e) {
-      _logger.e('Error handling read receipt: $e');
+    } catch (e, stackTrace) {
+      _logger.e('Error handling read receipt: $e', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -517,8 +527,8 @@ class RealtimeService {
       
       _userStatusController.add(userStatus);
       _logger.t('User status processed: ${userStatus.userId} - ${userStatus.status}');
-    } catch (e) {
-      _logger.e('Error handling user status: $e');
+    } catch (e, stackTrace) {
+      _logger.e('Error handling user status: $e', error: e, stackTrace: stackTrace);
     }
   }
 

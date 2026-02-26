@@ -714,14 +714,19 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     try {
       final localMessages = await _localDataSource.getMessagesForChat(chatId);
       if (localMessages.isEmpty) {
+        logger.i('[TwoPhase][Repo] getMessagesFromLocal chatId=$chatId: Isar returned 0 messages');
         return const Right([]);
       }
 
       // Sort descending and take limit
       final sorted = _applyPagination(localMessages, limit, null);
-      return Right(sorted.map((model) => model.toDomain()).toList());
+      final domainMessages = sorted.map((model) => model.toDomain()).toList();
+      final newestTs = domainMessages.isNotEmpty ? domainMessages.first.createdAt.toIso8601String() : 'N/A';
+      final oldestTs = domainMessages.isNotEmpty ? domainMessages.last.createdAt.toIso8601String() : 'N/A';
+      logger.i('[TwoPhase][Repo] getMessagesFromLocal chatId=$chatId: isarTotal=${localMessages.length} returned=${domainMessages.length} newest=$newestTs oldest=$oldestTs');
+      return Right(domainMessages);
     } catch (e) {
-      logger.w('Local read failed for chat $chatId, returning empty: $e');
+      logger.w('[TwoPhase][Repo] getMessagesFromLocal FAILED for chat $chatId, returning empty: $e');
       return const Right([]);
     }
   }
@@ -737,6 +742,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     int limit = 20,
   }) async {
     try {
+      logger.i('[TwoPhase][Repo] getMessagesDelta chatId=$chatId from=${DateTime.fromMillisecondsSinceEpoch(fromTimestamp).toIso8601String()} limit=$limit');
+
       // Fetch delta from server using `from` parameter
       final response = await _remoteDataSource.getMessageList(
         conversationId: chatId,
@@ -747,15 +754,21 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
       final serverModels = MessageMapper.toModelList(dtos);
       final serverMessages = serverModels.map((m) => m.toDomain()).toList();
 
+      final serverNewest = serverMessages.isNotEmpty ? serverMessages.first.createdAt.toIso8601String() : 'N/A';
+      logger.i('[TwoPhase][Repo] Delta server response: dtoCount=${dtos.length} domainCount=${serverMessages.length} newest=$serverNewest');
+
       // Get local messages for merge
       final localModels = await _localDataSource.getMessagesForChat(chatId);
       final localMessages = localModels.map((m) => m.toDomain()).toList();
+      logger.i('[TwoPhase][Repo] Local messages for merge: count=${localMessages.length}');
 
       // Merge using strategy (server wins, dedup, preserve pending)
       final merged = MessageMergeStrategy.merge(
         localMessages: localMessages,
         serverMessages: serverMessages,
       );
+
+      logger.i('[TwoPhase][Repo] Merge result: count=${merged.length}');
 
       // Enforce cache limit: keep newest 500 messages
       const maxCacheSize = 500;
@@ -775,10 +788,10 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
 
       return Right(merged);
     } on ServerException catch (e) {
-      logger.e('Delta sync server error for chat $chatId: ${e.message}');
+      logger.e('[TwoPhase][Repo] Delta sync ServerException for chat $chatId: ${e.message}');
       return Left(ServerFailure(message: e.message));
     } catch (e) {
-      logger.e('Delta sync unexpected error for chat $chatId: $e');
+      logger.e('[TwoPhase][Repo] Delta sync UNEXPECTED error for chat $chatId: $e');
       return Left(UnexpectedFailure(message: 'Delta sync failed: $e'));
     }
   }

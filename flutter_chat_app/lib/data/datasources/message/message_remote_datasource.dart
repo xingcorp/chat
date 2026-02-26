@@ -1,10 +1,12 @@
+import 'package:graphql_flutter/graphql_flutter.dart' show FetchPolicy;
+import 'package:injectable/injectable.dart';
+
 import 'package:flutter_chat_app/core/network/graphql_client.dart';
 import 'package:flutter_chat_app/core/services/realtime_messaging_service.dart';
 import 'package:flutter_chat_app/data/dtos/message_dto.dart';
 import 'package:flutter_chat_app/data/graphql/chat_operations.dart';
 import 'package:flutter_chat_app/data/mappers/socket_io_event_mapper.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
-import 'package:injectable/injectable.dart';
 
 /// **Message Remote Data Source Interface**
 ///
@@ -124,9 +126,15 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
       },
     };
     
+    // CRITICAL: Use networkOnly to bypass GraphQL HiveStore cache.
+    // The app has its own cache layers (AppCacheManager + Isar).
+    // Using the default cacheAndNetwork policy returns stale cached
+    // responses when the same query variables are used, which causes
+    // the "new messages not showing" bug.
     final result = await _client.query(
       ChatQueries.getMessageList,
       variables: variables,
+      fetchPolicy: FetchPolicy.networkOnly,
       operationName: 'GetMessageList',
     );
     
@@ -330,6 +338,7 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
     final result = await _client.query(
       ChatQueries.searchMessages,
       variables: variables,
+      fetchPolicy: FetchPolicy.networkOnly,
       operationName: 'SearchMessages',
     );
     
