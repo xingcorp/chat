@@ -3,9 +3,20 @@ import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' as domain;
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_popup_menu.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
 import 'package:photo_view/photo_view.dart';
 
 /// Màn hình xem hình ảnh với khả năng zoom và phóng to
+/// Supports reactions and forwarding when ChatMessage is provided
 class ImageViewerScreen extends StatefulWidget {
   /// URL hình ảnh
   final String imageUrl;
@@ -16,19 +27,27 @@ class ImageViewerScreen extends StatefulWidget {
   /// Tiêu đề
   final String? title;
   
+  /// Optional ChatMessage for reaction/forward support
+  final domain.ChatMessage? message;
+  
+  /// Chat ID for forwarding
+  final String? chatId;
+  
   /// Constructor
   const ImageViewerScreen({
     Key? key,
     required this.imageUrl,
     required this.heroTag,
     this.title,
+    this.message,
+    this.chatId,
   }) : super(key: key);
   
   @override
   State<ImageViewerScreen> createState() => _ImageViewerScreenState();
 }
 
-class _ImageViewerScreenState extends State<ImageViewerScreen> with SingleTickerProviderStateMixin {
+class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProviderStateMixin {
   /// Lấy cấu hình animation
   final animationService = GetIt.I<AnimationService>();
   
@@ -41,11 +60,11 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with SingleTicker
   /// Animation cho AppBar
   late Animation<double> _appBarOpacityAnimation;
   
+  /// Animation cho bottom overlay
+  late Animation<double> _bottomOverlayAnimation;
+  
   /// Có hiện UI không
   bool _showUI = true;
-  
-  /// Đang thực hiện gesture không
-  bool _isGestureActive = false;
   
   @override
   void initState() {
@@ -68,13 +87,22 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with SingleTicker
     
     _colorAnimation = ColorTween(
       begin: Colors.black,
-      end: Colors.black.withOpacity(0.5),
+      end: Colors.black.withValues(alpha: 0.5),
     ).animate(_animationController);
     
     _appBarOpacityAnimation = Tween<double>(
       begin: 1.0,
       end: 0.0,
     ).animate(_animationController);
+    
+    // Bottom overlay animation (slide up from bottom)
+    _bottomOverlayAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
     
     // Khởi tạo hiển thị UI
     _animationController.value = 0.0;
@@ -108,10 +136,13 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with SingleTicker
   
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasMessage = widget.message != null;
+    
     return Scaffold(
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(theme),
       body: GestureDetector(
         onTap: _toggleUI,
         behavior: HitTestBehavior.opaque,
@@ -149,14 +180,12 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with SingleTicker
                         value: event.expectedTotalBytes != null
                             ? event.cumulativeBytesLoaded / event.expectedTotalBytes!
                             : null,
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                       ),
                     );
                   },
                   onScaleEnd: (_, __, ___) {
-                    setState(() {
-                      _isGestureActive = false;
-                    });
+                    // No action needed
                   },
                   scaleStateCycle: (currentState) {
                     // Chu kỳ trạng thái khi double tap
@@ -174,13 +203,12 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with SingleTicker
                         _animationController.forward();
                       });
                     }
-                    
-                    setState(() {
-                      _isGestureActive = true;
-                    });
                   },
                 ),
               ),
+              
+              // Bottom overlay with forward/reaction bar (only if message provided)
+              if (hasMessage) _buildBottomOverlay(context, theme),
             ],
           ),
         ),
@@ -188,8 +216,8 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with SingleTicker
     );
   }
   
-  /// Tạo AppBar với animation
-  PreferredSizeWidget _buildAppBar() {
+  /// Tạo AppBar với animation và design system components
+  PreferredSizeWidget _buildAppBar(ThemeData theme) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
       child: AnimatedBuilder(
@@ -198,34 +226,239 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with SingleTicker
           return Opacity(
             opacity: 1.0 - _appBarOpacityAnimation.value,
             child: AppBar(
-              backgroundColor: Colors.black.withOpacity(0.4),
+              backgroundColor: Colors.black.withValues(alpha: 0.4),
               elevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+              leading: AppIconButton(
+                icon: Icons.arrow_back,
                 onPressed: () => Navigator.of(context).pop(),
+                tooltip: context.l10n.backOnline, // Using closest available key
               ),
               title: Text(
-                widget.title ?? 'Hình ảnh',
-                style: const TextStyle(color: Colors.white),
+                widget.title ?? context.l10n.imageMessage,
+                style: TextStyle(color: theme.colorScheme.onSurface),
               ),
               actions: [
-                IconButton(
-                  icon: const Icon(Icons.share, color: Colors.white),
-                  onPressed: () {
-                    // Implement share functionality
-                  },
+                AppIconButton(
+                  icon: Icons.share,
+                  onPressed: _handleShare,
+                  tooltip: context.l10n.share,
                 ),
-                IconButton(
-                  icon: const Icon(Icons.download, color: Colors.white),
-                  onPressed: () {
-                    // Implement download functionality
-                  },
+                AppIconButton(
+                  icon: Icons.download,
+                  onPressed: _handleDownload,
+                  tooltip: context.l10n.download,
+                ),
+                // Options menu (⋮)
+                AppPopupMenu<String>(
+                  icon: Icons.more_vert,
+                  items: [
+                    PopupMenuItem(
+                      value: 'info',
+                      child: Text(context.l10n.imageMessage),
+                    ),
+                    PopupMenuItem(
+                      value: 'save',
+                      child: Text(context.l10n.download),
+                    ),
+                    if (widget.message != null)
+                      PopupMenuItem(
+                        value: 'forward',
+                        child: Text(context.l10n.forward),
+                      ),
+                  ],
+                  onSelected: _handleMenuOption,
                 ),
               ],
             ),
           );
         },
       ),
+    );
+  }
+  
+  /// Build bottom overlay with forward button and reaction bar
+  Widget _buildBottomOverlay(BuildContext context, ThemeData theme) {
+    final message = widget.message!;
+    final groupedReactions = _groupReactions(message.reactions);
+    
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: AnimatedBuilder(
+        animation: _bottomOverlayAnimation,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, 100 * _bottomOverlayAnimation.value),
+            child: Opacity(
+              opacity: 1.0 - _bottomOverlayAnimation.value,
+              child: child,
+            ),
+          );
+        },
+        child: Container(
+          padding: EdgeInsets.only(
+            left: 16.0,
+            right: 16.0,
+            top: 12.0,
+            bottom: MediaQuery.of(context).padding.bottom + 12.0,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.6),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16.0)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Forward button row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildActionButton(
+                    icon: Icons.forward,
+                    label: context.l10n.forward,
+                    onTap: _handleForward,
+                  ),
+                  const SizedBox(width: 24.0),
+                  _buildActionButton(
+                    icon: Icons.emoji_emotions_outlined,
+                    label: context.l10n.addReaction, // Using available key
+                    onTap: () => _showReactionPicker(context),
+                  ),
+                ],
+              ),
+              
+              // Reaction bar (if any reactions exist)
+              if (groupedReactions.isNotEmpty) ...[
+                const SizedBox(height: 12.0),
+                ReactionBar(
+                  groupedReactions: groupedReactions,
+                  showAddButton: true,
+                  onReactionTap: (emojiCode, reactorIds, reactorNames) {
+                    ReactionDetailModal.show(
+                      context,
+                      emojiCode: emojiCode,
+                      reactorNames: reactorNames,
+                    );
+                  },
+                  onReactionLongPress: (emojiCode, isCurrentlyReacted) {
+                    if (isCurrentlyReacted && widget.message != null) {
+                      context.read<MessageBloc>().add(
+                        ToggleReaction(
+                          messageId: widget.message!.id,
+                          emojiCode: emojiCode,
+                        ),
+                      );
+                    }
+                  },
+                  onAddReaction: () => _showReactionPicker(context),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  /// Build action button for bottom overlay
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12.0),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 24.0),
+            const SizedBox(height: 4.0),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12.0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  /// Group reactions by emoji code
+  List<ReactionGroup> _groupReactions(List<domain.MessageReaction> reactions) {
+    final Map<String, ReactionGroup> groups = {};
+    
+    for (final reaction in reactions) {
+      if (!groups.containsKey(reaction.code)) {
+        groups[reaction.code] = ReactionGroup(
+          code: reaction.code,
+          reactorIds: [],
+          reactorNames: [],
+        );
+      }
+      groups[reaction.code]!.reactorIds.add(reaction.userId);
+      groups[reaction.code]!.reactorNames.add(reaction.userName ?? reaction.userId);
+    }
+    
+    return groups.values.toList();
+  }
+  
+  /// Show reaction picker bottom sheet
+  void _showReactionPicker(BuildContext context) {
+    EmojiPickerBottomSheet.show(
+      context,
+      onEmojiSelected: (emoji) {
+        if (widget.message != null) {
+          context.read<MessageBloc>().add(
+            ToggleReaction(
+              messageId: widget.message!.id,
+              emojiCode: emoji,
+            ),
+          );
+        }
+      },
+    );
+  }
+  
+  /// Handle share action
+  void _handleShare() {
+    // TODO: Implement share functionality
+  }
+  
+  /// Handle download action
+  void _handleDownload() {
+    // TODO: Implement download functionality
+  }
+  
+  /// Handle menu option selection
+  void _handleMenuOption(String value) {
+    switch (value) {
+      case 'info':
+        // TODO: Show image info dialog
+        break;
+      case 'save':
+        _handleDownload();
+        break;
+      case 'forward':
+        _handleForward();
+        break;
+    }
+  }
+  
+  /// Handle forward action
+  void _handleForward() {
+    if (widget.message == null) return;
+    
+    showForwardMessageSheet(
+      context,
+      messages: [widget.message!],
+      sourceChatId: widget.chatId,
     );
   }
 } 

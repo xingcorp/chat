@@ -675,11 +675,14 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
 
     // MediaGallery now handles upload progress overlay internally
     // for each attachment with percentage display
+    // Pass message and chatId for reaction/forward support in fullscreen view
     return Padding(
       padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
       child: MediaGallery(
         attachments: attachments,
         layout: MediaGalleryLayout.grid,
+        message: widget.uiState.message,
+        chatId: widget.uiState.chatId,
       ),
     );
   }

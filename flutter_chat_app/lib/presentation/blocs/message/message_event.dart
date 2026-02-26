@@ -269,3 +269,24 @@ class LoadConversationDetail extends MessageEvent {
   @override
   List<Object?> get props => [chatId];
 }
+
+/// Sự kiện chuyển tiếp tin nhắn đến chat khác
+class ForwardMessage extends MessageEvent {
+  /// ID tin nhắn gốc cần chuyển tiếp
+  final String messageId;
+  
+  /// ID chat đích để chuyển tiếp đến
+  final String targetChatId;
+  
+  /// ID chat gốc (optional, for context)
+  final String? sourceChatId;
+
+  const ForwardMessage({
+    required this.messageId,
+    required this.targetChatId,
+    this.sourceChatId,
+  });
+
+  @override
+  List<Object?> get props => [messageId, targetChatId, sourceChatId];
+}

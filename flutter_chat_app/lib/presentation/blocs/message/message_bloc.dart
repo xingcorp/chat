@@ -187,6 +187,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     on<ReceiveMessageDeleted>(_onReceiveMessageDeleted);
     on<ReceiveMessageReaction>(_onReceiveMessageReaction);
     on<LoadConversationDetail>(_onLoadConversationDetail);
+    on<ForwardMessage>(_onForwardMessage);
 
     // Subscribe to connection state changes for reconnection detection
     _connectionStateSubscription = _realtimeService.connectionState
@@ -529,6 +530,62 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         ));
 
         _cacheSyncStrategy.markChatMessagesDirty(freshState.chatId);
+        _cacheSyncStrategy.markChatListDirty();
+      },
+    );
+  }
+
+  /// **Forward message to another chat**
+  /// 
+  /// Creates a copy of the message in the target chat with forwardedFromMessageId reference.
+  Future<void> _onForwardMessage(ForwardMessage event, Emitter<MessageState> emit) async {
+    if (state is! MessagesLoaded) return;
+    
+    final currentState = state as MessagesLoaded;
+    
+    // Get the original message from current state
+    final originalMessage = currentState.messages.firstWhere(
+      (m) => m.id == event.messageId,
+      orElse: () {
+        logger.w('Cannot forward: original message ${event.messageId} not found');
+        return ChatMessage(
+          id: '',
+          chatId: '',
+          sender: MessageSender(id: '', name: 'Unknown'),
+          content: '',
+          contentType: ContentType.text,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+      },
+    );
+    
+    if (originalMessage.id.isEmpty) return;
+
+    logger.i('Forwarding message ${event.messageId} to chat ${event.targetChatId}');
+
+    // Execute SendMessageUseCase to forward to target chat
+    // Note: forwardedFromMessageId is set in the message content metadata
+    final result = await _sendMessage(
+      conversationId: event.targetChatId,
+      content: originalMessage.content,
+      senderId: originalMessage.sender.id,
+      type: originalMessage.contentType.name,
+      urls: originalMessage.attachments.map((a) => a.id).toList(),
+    );
+
+    result.fold(
+      (failure) {
+        logger.e('Failed to forward message', error: failure);
+        emit(MessageState.error(
+          chatId: currentState.chatId,
+          error: failure.message,
+          previousMessages: currentState.messages,
+        ));
+      },
+      (_) {
+        logger.i('Message forwarded successfully');
+        // Mark chat list as dirty (new message in target chat)
         _cacheSyncStrategy.markChatListDirty();
       },
     );

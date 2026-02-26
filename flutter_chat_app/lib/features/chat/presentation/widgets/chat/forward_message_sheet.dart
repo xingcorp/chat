@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
 
 /// Bottom sheet for selecting a chat to forward a message to.
 ///
 /// Displays search + scrollable chat list using ChatBloc state.
 class ForwardMessageSheet extends StatefulWidget {
   final List<ChatMessage>? messagesToForward;
+  final String? sourceChatId;
 
   const ForwardMessageSheet({
     Key? key,
     this.messagesToForward,
+    this.sourceChatId,
   }) : super(key: key);
 
   @override
@@ -27,11 +31,34 @@ class _ForwardMessageSheetState extends State<ForwardMessageSheet> {
     _searchController.dispose();
     super.dispose();
   }
+  
+  void _handleForwardToChat(String targetChatId) {
+    if (widget.messagesToForward == null || widget.messagesToForward!.isEmpty) return;
+    
+    for (final message in widget.messagesToForward!) {
+      context.read<MessageBloc>().add(ForwardMessage(
+        messageId: message.id,
+        targetChatId: targetChatId,
+        sourceChatId: widget.sourceChatId,
+      ));
+    }
+    
+    Navigator.of(context).pop();
+    
+    // Show confirmation
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(context.l10n.forwardMessage),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
+    final chatState = context.watch<ChatBloc>().state;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
@@ -84,25 +111,118 @@ class _ForwardMessageSheetState extends State<ForwardMessageSheet> {
               ),
             ),
             const Divider(height: 1),
-            // Placeholder list - will be connected to ChatBloc
+            // Chat list from ChatBloc
             Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.forward_to_inbox, size: 48, color: theme.disabledColor),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.selectChat,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.textTheme.bodySmall?.color,
+              child: chatState.maybeWhen(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                loaded: (chats, _, __, ___, ____, _____) {
+                  final filteredChats = chats.where((chat) {
+                    if (_searchQuery.isEmpty) return true;
+                    final chatName = chat.name ?? '';
+                    return chatName.toLowerCase().contains(_searchQuery);
+                  }).toList();
+                  
+                  if (filteredChats.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.search_off, size: 48, color: theme.disabledColor),
+                            const SizedBox(height: 16),
+                            Text(
+                              l10n.selectChat,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.textTheme.bodySmall?.color,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                    );
+                  }
+                  
+                  return ListView.builder(
+                    controller: scrollController,
+                    itemCount: filteredChats.length,
+                    itemBuilder: (context, index) {
+                      final chat = filteredChats[index];
+                      final chatName = chat.name ?? '';
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: theme.colorScheme.primaryContainer,
+                          child: Text(
+                            chatName.isNotEmpty ? chatName[0].toUpperCase() : '?',
+                            style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
+                          ),
+                        ),
+                        title: Text(chatName.isEmpty ? 'Unknown' : chatName),
+                        subtitle: Text(
+                          chat.lastMessage ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onTap: () => _handleForwardToChat(chat.id),
+                      );
+                    },
+                  );
+                },
+                messagesLoaded: (chats, _, __) {
+                  final filteredChats = (chats ?? []).where((chat) {
+                    if (_searchQuery.isEmpty) return true;
+                    final chatName = chat.name ?? '';
+                    return chatName.toLowerCase().contains(_searchQuery);
+                  }).toList();
+                  
+                  if (filteredChats.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.forward_to_inbox, size: 48, color: theme.disabledColor),
+                            const SizedBox(height: 16),
+                            Text(
+                              l10n.selectChat,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.textTheme.bodySmall?.color,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  
+                  return ListView.builder(
+                    controller: scrollController,
+                    itemCount: filteredChats.length,
+                    itemBuilder: (context, index) {
+                      final chat = filteredChats[index];
+                      final chatName = chat.name ?? '';
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: theme.colorScheme.primaryContainer,
+                          child: Text(
+                            chatName.isNotEmpty ? chatName[0].toUpperCase() : '?',
+                            style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
+                          ),
+                        ),
+                        title: Text(chatName.isEmpty ? 'Unknown' : chatName),
+                        subtitle: Text(
+                          chat.lastMessage ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onTap: () => _handleForwardToChat(chat.id),
+                      );
+                    },
+                  );
+                },
+                error: (msg) => Center(child: Text(msg)),
+                orElse: () => const Center(child: CircularProgressIndicator()),
               ),
             ),
           ],
@@ -116,6 +236,7 @@ class _ForwardMessageSheetState extends State<ForwardMessageSheet> {
 Future<void> showForwardMessageSheet(
   BuildContext context, {
   List<ChatMessage>? messages,
+  String? sourceChatId,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -124,6 +245,9 @@ Future<void> showForwardMessageSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
-    builder: (_) => ForwardMessageSheet(messagesToForward: messages),
+    builder: (_) => ForwardMessageSheet(
+      messagesToForward: messages,
+      sourceChatId: sourceChatId,
+    ),
   );
 }

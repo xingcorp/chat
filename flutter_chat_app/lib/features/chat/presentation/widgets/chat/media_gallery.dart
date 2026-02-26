@@ -7,6 +7,15 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_popup_menu.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
 
 final Map<String, double> _imageAspectRatioCache = {};
 
@@ -21,17 +30,26 @@ final Map<String, double> _imageAspectRatioCache = {};
 /// - Video thumbnails với play icon
 /// - Tap → fullscreen gallery với swipe
 /// - Zoom/pinch support
+/// - Optional ChatMessage for reactions and forwarding
 class MediaGallery extends StatelessWidget {
   /// Danh sách attachments
   final List<MessageAttachment> attachments;
 
   /// Layout mode: grid hoặc list
   final MediaGalleryLayout layout;
+  
+  /// Optional ChatMessage for reactions and forwarding in fullscreen view
+  final ChatMessage? message;
+  
+  /// Chat ID for forwarding
+  final String? chatId;
 
   const MediaGallery({
     Key? key,
     required this.attachments,
     this.layout = MediaGalleryLayout.grid,
+    this.message,
+    this.chatId,
   }) : super(key: key);
 
   @override
@@ -586,6 +604,8 @@ class MediaGallery extends StatelessWidget {
         builder: (_) => FullscreenGallery(
           attachments: attachments,
           initialIndex: initialIndex,
+          message: message,
+          chatId: chatId,
         ),
       ),
     );
@@ -846,14 +866,23 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
 }
 
 /// Fullscreen gallery với swipe navigation
+/// Supports reactions and forwarding when ChatMessage is provided
 class FullscreenGallery extends StatefulWidget {
   final List<MessageAttachment> attachments;
   final int initialIndex;
+  
+  /// Optional ChatMessage for reactions and forwarding
+  final ChatMessage? message;
+  
+  /// Chat ID for forwarding
+  final String? chatId;
 
   const FullscreenGallery({
     Key? key,
     required this.attachments,
     this.initialIndex = 0,
+    this.message,
+    this.chatId,
   }) : super(key: key);
 
   @override
@@ -863,6 +892,7 @@ class FullscreenGallery extends StatefulWidget {
 class _FullscreenGalleryState extends State<FullscreenGallery> {
   late PageController _pageController;
   late int _currentIndex;
+  bool _showUI = true;
 
   @override
   void initState() {
@@ -876,12 +906,68 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
     _pageController.dispose();
     super.dispose();
   }
+  
+  void _toggleUI() {
+    setState(() {
+      _showUI = !_showUI;
+    });
+  }
+  
+  /// Group reactions by emoji code
+  List<ReactionGroup> _groupReactions(List<MessageReaction> reactions) {
+    final Map<String, ReactionGroup> groups = {};
+    
+    for (final reaction in reactions) {
+      if (!groups.containsKey(reaction.code)) {
+        groups[reaction.code] = ReactionGroup(
+          code: reaction.code,
+          reactorIds: [],
+          reactorNames: [],
+        );
+      }
+      groups[reaction.code]!.reactorIds.add(reaction.userId);
+      groups[reaction.code]!.reactorNames.add(reaction.userName ?? reaction.userId);
+    }
+    
+    return groups.values.toList();
+  }
+  
+  /// Show reaction picker bottom sheet
+  void _showReactionPicker(BuildContext context) {
+    EmojiPickerBottomSheet.show(
+      context,
+      onEmojiSelected: (emoji) {
+        if (widget.message != null) {
+          context.read<MessageBloc>().add(
+            ToggleReaction(
+              messageId: widget.message!.id,
+              emojiCode: emoji,
+            ),
+          );
+        }
+      },
+    );
+  }
+  
+  /// Handle forward action
+  void _handleForward() {
+    if (widget.message == null) return;
+    
+    showForwardMessageSheet(
+      context,
+      messages: [widget.message!],
+      sourceChatId: widget.chatId,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final hasMessage = widget.message != null;
+    final groupedReactions = hasMessage ? _groupReactions(widget.message!.reactions) : <ReactionGroup>[];
+    
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
+      appBar: _showUI ? AppBar(
         backgroundColor: Colors.black87,
         foregroundColor: Colors.white,
         title: Text(
@@ -889,40 +975,158 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
           style: const TextStyle(color: Colors.white),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.download),
+          AppIconButton(
+            icon: Icons.download,
             onPressed: () {
               // TODO: Download current image
               debugPrint('Download: ${widget.attachments[_currentIndex].url}');
             },
+            tooltip: context.l10n.download,
           ),
+          if (hasMessage)
+            AppPopupMenu<String>(
+              icon: Icons.more_vert,
+              items: [
+                PopupMenuItem(
+                  value: 'forward',
+                  child: Text(context.l10n.forward),
+                ),
+              ],
+              onSelected: (value) {
+                if (value == 'forward') _handleForward();
+              },
+            ),
         ],
+      ) : null,
+      body: GestureDetector(
+        onTap: _toggleUI,
+        behavior: HitTestBehavior.opaque,
+        child: Stack(
+          children: [
+            PhotoViewGallery.builder(
+              pageController: _pageController,
+              itemCount: widget.attachments.length,
+              builder: (context, index) {
+                final attachment = widget.attachments[index];
+                return PhotoViewGalleryPageOptions(
+                  imageProvider: CachedNetworkImageProvider(attachment.url),
+                  minScale: PhotoViewComputedScale.contained,
+                  maxScale: PhotoViewComputedScale.covered * 2,
+                  heroAttributes: PhotoViewHeroAttributes(tag: attachment.id),
+                );
+              },
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              scrollPhysics: const BouncingScrollPhysics(),
+              backgroundDecoration: const BoxDecoration(color: Colors.black),
+              loadingBuilder: (context, event) => Center(
+                child: CircularProgressIndicator(
+                  value: event == null
+                      ? 0
+                      : event.cumulativeBytesLoaded / (event.expectedTotalBytes ?? 1),
+                ),
+              ),
+            ),
+            
+            // Bottom overlay with forward/reaction bar
+            if (hasMessage && _showUI) Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: EdgeInsets.only(
+                  left: 16.0,
+                  right: 16.0,
+                  top: 12.0,
+                  bottom: MediaQuery.of(context).padding.bottom + 12.0,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16.0)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Action buttons row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildActionButton(
+                          icon: Icons.forward,
+                          label: context.l10n.forward,
+                          onTap: _handleForward,
+                        ),
+                        const SizedBox(width: 24.0),
+                        _buildActionButton(
+                          icon: Icons.emoji_emotions_outlined,
+                          label: context.l10n.addReaction,
+                          onTap: () => _showReactionPicker(context),
+                        ),
+                      ],
+                    ),
+                    
+                    // Reaction bar (if any reactions exist)
+                    if (groupedReactions.isNotEmpty) ...[
+                      const SizedBox(height: 12.0),
+                      ReactionBar(
+                        groupedReactions: groupedReactions,
+                        showAddButton: true,
+                        onReactionTap: (emojiCode, reactorIds, reactorNames) {
+                          ReactionDetailModal.show(
+                            context,
+                            emojiCode: emojiCode,
+                            reactorNames: reactorNames,
+                          );
+                        },
+                        onReactionLongPress: (emojiCode, isCurrentlyReacted) {
+                          if (isCurrentlyReacted && widget.message != null) {
+                            context.read<MessageBloc>().add(
+                              ToggleReaction(
+                                messageId: widget.message!.id,
+                                emojiCode: emojiCode,
+                              ),
+                            );
+                          }
+                        },
+                        onAddReaction: () => _showReactionPicker(context),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      body: PhotoViewGallery.builder(
-        pageController: _pageController,
-        itemCount: widget.attachments.length,
-        builder: (context, index) {
-          final attachment = widget.attachments[index];
-          return PhotoViewGalleryPageOptions(
-            imageProvider: CachedNetworkImageProvider(attachment.url),
-            minScale: PhotoViewComputedScale.contained,
-            maxScale: PhotoViewComputedScale.covered * 2,
-            heroAttributes: PhotoViewHeroAttributes(tag: attachment.id),
-          );
-        },
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        scrollPhysics: const BouncingScrollPhysics(),
-        backgroundDecoration: const BoxDecoration(color: Colors.black),
-        loadingBuilder: (context, event) => Center(
-          child: CircularProgressIndicator(
-            value: event == null
-                ? 0
-                : event.cumulativeBytesLoaded / (event.expectedTotalBytes ?? 1),
-          ),
+    );
+  }
+  
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12.0),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 24.0),
+            const SizedBox(height: 4.0),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12.0,
+              ),
+            ),
+          ],
         ),
       ),
     );

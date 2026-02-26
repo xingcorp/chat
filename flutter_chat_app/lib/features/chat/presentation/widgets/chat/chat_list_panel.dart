@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_conversation_tile.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
@@ -29,7 +32,10 @@ class ChatListPanel extends BaseStatefulWidget {
 
 class _ChatListPanelState extends BaseState<ChatListPanel> {
   late final ChatBloc _chatBloc;
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
   bool _isLoadingMore = false;
+  bool _isSearching = false;
 
   @override
   void initState() {
@@ -40,15 +46,42 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
     _chatBloc.close();
     super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (value.trim().isEmpty) {
+        _chatBloc.add(const ChatEvent.clearSearch());
+      } else {
+        _chatBloc.add(ChatEvent.searchChats(keyword: value));
+      }
+    });
+  }
+
+  void _toggleSearch() {
+    safeSetState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchController.clear();
+        _chatBloc.add(const ChatEvent.clearSearch());
+      }
+    });
   }
 
   Future<void> _onRefresh() async {
     safeSetState(() {
       _isLoadingMore = false;
     });
-    _chatBloc.add(const ChatEvent.loadChats(forceRefresh: true));
+    if (_isSearching && _searchController.text.trim().isNotEmpty) {
+      _chatBloc.add(ChatEvent.searchChats(keyword: _searchController.text));
+    } else {
+      _chatBloc.add(const ChatEvent.loadChats(forceRefresh: true));
+    }
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
@@ -66,10 +99,28 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                 padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingSmall),
                 child: Row(
                   children: [
-                    Expanded(child: AppText(context.l10n.chats)),
+                    Expanded(
+                      child: _isSearching
+                          ? TextField(
+                              controller: _searchController,
+                              autofocus: true,
+                              onChanged: _onSearchChanged,
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textPrimary,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: context.l10n.searchConversations,
+                                hintStyle: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                                border: InputBorder.none,
+                              ),
+                            )
+                          : AppText(context.l10n.chats),
+                    ),
                     IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: () {},
+                      icon: Icon(_isSearching ? Icons.close : Icons.search),
+                      onPressed: _toggleSearch,
                     ),
                   ],
                 ),
