@@ -122,6 +122,27 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                       icon: Icon(_isSearching ? Icons.close : Icons.search),
                       onPressed: _toggleSearch,
                     ),
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.add),
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'newConversation':
+                            ChatNavigationHelper.navigateToContacts(context);
+                          case 'newGroup':
+                            ChatNavigationHelper.navigateToCreateGroup(context);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'newConversation',
+                          child: AppText(context.l10n.newConversation),
+                        ),
+                        PopupMenuItem(
+                          value: 'newGroup',
+                          child: AppText(context.l10n.createNewGroup),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

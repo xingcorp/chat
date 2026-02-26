@@ -7,6 +7,7 @@ import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/create_group_page.dart';
+import 'package:flutter_chat_app/features/contacts/presentation/pages/contacts_page.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
 
@@ -141,6 +142,12 @@ class ChatModule {
     return const _ChatPackageWrapper(child: CreateGroupPage());
   }
 
+  /// Returns the contacts page widget.
+  static Widget contactsPage() {
+    _ensureInitialized();
+    return const _ChatPackageWrapper(child: ContactsPage());
+  }
+
   // ===========================================================
   // Route Helpers — convenience methods that return MaterialPageRoute
   // ===========================================================
@@ -182,6 +189,19 @@ class ChatModule {
     return MaterialPageRoute<void>(
       builder: (_) => const _ChatPackageWrapper(child: CreateGroupPage()),
       settings: const RouteSettings(name: '/chat/create-group'),
+    );
+  }
+
+  /// Returns a [MaterialPageRoute] to the contacts page.
+  ///
+  /// ```dart
+  /// Navigator.push(context, ChatModule.contactsRoute());
+  /// ```
+  static Route<dynamic> contactsRoute() {
+    _ensureInitialized();
+    return MaterialPageRoute<void>(
+      builder: (_) => const _ChatPackageWrapper(child: ContactsPage()),
+      settings: const RouteSettings(name: '/chat/contacts'),
     );
   }
 

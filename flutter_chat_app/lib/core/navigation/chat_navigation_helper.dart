@@ -4,6 +4,7 @@ import 'package:flutter_chat_app/chat_module.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/create_group_page.dart';
+import 'package:flutter_chat_app/features/contacts/presentation/pages/contacts_page.dart';
 
 /// Helper for internal navigation within the chat module.
 ///
@@ -90,6 +91,21 @@ class ChatNavigationHelper {
     }
   }
 
+  /// Navigate to contacts page.
+  static Future<void> navigateToContacts(BuildContext context) {
+    if (isPackageMode) {
+      return Navigator.push(context, ChatModule.contactsRoute());
+    } else {
+      return Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ContactsPage(),
+          settings: const RouteSettings(name: '/chat/contacts'),
+        ),
+      );
+    }
+  }
+
   // ===========================================================
   // Route Builders (for advanced use cases)
   // ===========================================================
@@ -128,6 +144,18 @@ class ChatNavigationHelper {
       return MaterialPageRoute(
         builder: (_) => const CreateGroupPage(),
         settings: const RouteSettings(name: '/chat/create-group'),
+      );
+    }
+  }
+
+  /// Returns a route to contacts page.
+  static Route<dynamic> contactsRoute() {
+    if (isPackageMode) {
+      return ChatModule.contactsRoute();
+    } else {
+      return MaterialPageRoute(
+        builder: (_) => const ContactsPage(),
+        settings: const RouteSettings(name: '/chat/contacts'),
       );
     }
   }

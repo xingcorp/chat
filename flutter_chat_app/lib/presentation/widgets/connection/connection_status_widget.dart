@@ -71,7 +71,7 @@ class ConnectionStatusWidget extends StatelessWidget {
 
   /// **Build Banner Status**
   Widget _buildBannerStatus(BuildContext context, ws.ConnectionState state) {
-    final statusInfo = _getConnectionStatusInfo(state);
+    final statusInfo = _getConnectionStatusInfo(context, state);
 
     if (state == ws.ConnectionState.connected) {
       return const SizedBox.shrink();
@@ -137,7 +137,7 @@ class ConnectionStatusWidget extends StatelessWidget {
 
   /// **Build Card Status**
   Widget _buildCardStatus(BuildContext context, ws.ConnectionState state) {
-    final statusInfo = _getConnectionStatusInfo(state);
+    final statusInfo = _getConnectionStatusInfo(context, state);
     
     return Card(
       margin: const EdgeInsets.all(16),
@@ -234,7 +234,7 @@ class ConnectionStatusWidget extends StatelessWidget {
           _buildDetailRow(
             context,
             'Trạng thái kết nối:',
-            _getConnectionStateText(state),
+            _getConnectionStateText(context, state),
           ),
           _buildDetailRow(
             context,
@@ -277,7 +277,7 @@ class ConnectionStatusWidget extends StatelessWidget {
   }
 
   /// **Get Connection Status Info**
-  ConnectionStatusInfo _getConnectionStatusInfo(ws.ConnectionState state) {
+  ConnectionStatusInfo _getConnectionStatusInfo(BuildContext context, ws.ConnectionState state) {
     switch (state) {
       case ws.ConnectionState.connected:
         return ConnectionStatusInfo(
@@ -342,7 +342,7 @@ class ConnectionStatusWidget extends StatelessWidget {
   }
 
   /// **Get Connection State Text**
-  String _getConnectionStateText(ws.ConnectionState state) {
+  String _getConnectionStateText(BuildContext context, ws.ConnectionState state) {
     switch (state) {
       case ws.ConnectionState.connected:
         return 'Đã kết nối';

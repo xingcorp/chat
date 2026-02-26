@@ -67,8 +67,8 @@ abstract class AppLocalizations {
 
   final String localeName;
 
-  static AppLocalizations of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
+  static AppLocalizations? of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
@@ -2959,6 +2959,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} results found'**
   String searchResultCount(int count);
+
+  /// Menu item to start a new direct conversation
+  ///
+  /// In en, this message translates to:
+  /// **'New conversation'**
+  String get newConversation;
 }
 
 class _AppLocalizationsDelegate

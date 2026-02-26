@@ -2855,5 +2855,10 @@
   "loadMore": "Load more",
   "@loadMore": {
     "description": "Button text to load more results"
+  },
+
+  "newConversation": "New conversation",
+  "@newConversation": {
+    "description": "Menu item to start a new direct conversation"
   }
 }

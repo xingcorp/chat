@@ -119,21 +119,23 @@ class _ChatListPageState extends BaseState<ChatListPage> {
               onPressed: _toggleSearch,
             ),
             PopupMenuButton<String>(
+              icon: const Icon(Icons.add),
               onSelected: (value) {
-                if (value == 'newGroup') {
-                  // TODO: Navigate to create group page
-                } else if (value == 'settings') {
-                  // TODO: Navigate to settings page
+                switch (value) {
+                  case 'newConversation':
+                    ChatNavigationHelper.navigateToContacts(context);
+                  case 'newGroup':
+                    ChatNavigationHelper.navigateToCreateGroup(context);
                 }
               },
               itemBuilder: (context) => [
                 PopupMenuItem(
-                  value: 'newGroup',
-                  child: Text(context.l10n.createNewGroup),
+                  value: 'newConversation',
+                  child: AppText(context.l10n.newConversation),
                 ),
                 PopupMenuItem(
-                  value: 'settings',
-                  child: Text(context.l10n.settingsTitle),
+                  value: 'newGroup',
+                  child: AppText(context.l10n.createNewGroup),
                 ),
               ],
             ),
@@ -267,12 +269,6 @@ class _ChatListPageState extends BaseState<ChatListPage> {
               },
             );
           },
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            // TODO: Navigate to contacts or new chat
-          },
-          child: const Icon(Icons.chat),
         ),
         bottomNavigationBar: (!widget.showBottomNavBar || (ChatModule.config?.hideBottomNavBar ?? false))
             ? null

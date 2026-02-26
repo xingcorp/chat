@@ -1600,4 +1600,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String searchResultCount(int count) {
     return '$count results found';
   }
+
+  @override
+  String get newConversation => 'New conversation';
 }

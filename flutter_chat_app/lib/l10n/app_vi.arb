@@ -852,5 +852,10 @@
   "loadMore": "Tải thêm",
   "@loadMore": {
     "description": "Button text to load more results"
+  },
+
+  "newConversation": "Thêm cuộc hội thoại",
+  "@newConversation": {
+    "description": "Menu item to start a new direct conversation"
   }
 }

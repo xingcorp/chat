@@ -1601,4 +1601,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String searchResultCount(int count) {
     return 'Tìm thấy $count kết quả';
   }
+
+  @override
+  String get newConversation => 'Thêm cuộc hội thoại';
 }

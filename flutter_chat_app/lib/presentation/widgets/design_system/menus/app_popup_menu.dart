@@ -132,7 +132,7 @@ class AppPopupMenu<T> extends BaseStatelessWidget {
       itemBuilder: (context) => items,
       onSelected: onSelected,
       onCanceled: onCanceled,
-      tooltip: tooltip ?? l10n.messageOptions,
+      tooltip: tooltip ?? l10n?.messageOptions,
       position: position,
       elevation: elevation ?? 8,
       padding: padding ?? EdgeInsets.zero,

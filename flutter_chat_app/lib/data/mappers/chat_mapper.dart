@@ -25,17 +25,18 @@ class ChatMapper {
   ///
   /// **Returns:** ChatModel ready for Isar storage
   static ChatModel toModel(ChatDto dto, String currentUserId) {
-    // Extract participant IDs from members
+    // Extract participant IDs from members (filter out nulls)
     final participantIds = dto.members
         .map((m) => m.userId)
+        .whereType<String>()
         .toList();
-    
+
     // Find admin (first member with admin=true)
     final adminMember = dto.members.firstWhere(
       (m) => m.admin,
       orElse: () => const MemberDto(id: '', userId: ''),
     );
-    final adminId = adminMember.userId.isNotEmpty ? adminMember.userId : null;
+    final adminId = (adminMember.userId?.isNotEmpty ?? false) ? adminMember.userId : null;
     
     // Find current user's member to get unreadCount
     final currentUserMember = dto.members.firstWhere(
