@@ -284,6 +284,11 @@ class LoadConversationDetail extends MessageEvent {
   List<Object?> get props => [chatId];
 }
 
+/// Event fetch frequently used reactions
+class FetchFrequentReactions extends MessageEvent {
+  const FetchFrequentReactions();
+}
+
 /// Sự kiện chuyển tiếp tin nhắn đến chat khác
 class ForwardMessage extends MessageEvent {
   /// ID tin nhắn gốc cần chuyển tiếp

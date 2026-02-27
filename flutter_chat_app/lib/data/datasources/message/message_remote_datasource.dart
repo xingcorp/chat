@@ -400,12 +400,16 @@ class MessageRemoteDataSourceImpl implements IMessageRemoteDataSource {
     );
     
     // Listen to 'message:sent' event and map to MessageDto
+    // Use MessageDto.fromJson directly to preserve system event fields (targetUsers, actionType, etc.)
     return _realtimeService.messages
         .where((msg) => msg.type == 'message:sent')
         .where((msg) => msg.data['conversationId'] == chatId)
         .map((msg) {
-          final chatMessage = _eventMapper.mapMessageSent(msg.data);
-          return _chatMessageToDto(chatMessage);
+          final messageData = msg.data['message'] as Map<String, dynamic>?;
+          if (messageData == null) {
+            throw FormatException('No message data in message:sent event');
+          }
+          return MessageDto.fromJson(messageData);
         });
   }
   

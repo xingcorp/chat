@@ -581,6 +581,22 @@ class ChatMutations {
     }
   ''';
 
+  /// **Get Frequently Used Reactions**
+  ///
+  /// Fetches top emoji reactions used most by current user.
+  /// Returns top 10 emoji codes from Redis sorted set (zrevrange).
+  ///
+  /// **Variables:** none
+  ///
+  /// **Returns:** List of emoji code strings (e.g. ['👍', '❤️', ...])
+  ///
+  /// **Note:** Mutation semantics — backend updates Redis usage score on each react.
+  static const String getFrequentlyUsedReactions = r'''
+    mutation GetFrequentlyUsedReactions {
+      chatReactionFrequentlyUsed
+    }
+  ''';
+
   /// **Delete Message History**
   ///
   /// Deletes all message history in a conversation for current user.

@@ -79,15 +79,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   String _currentUserId = '';
   bool _hasInitializedContext = false;
 
-  static const List<String> _quickReactions = <String>[
-    '👍',
-    '❤️',
-    '😂',
-    '😮',
-    '😢',
-    '😡',
-  ];
-
   static const int _pageSize = 50;
   bool _isLoadingMore = false;
   DateTime? _lastLoadMoreAt;
@@ -140,6 +131,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     // When chatId changes in desktop view, ValueKey forces a new State instance, 
     // ensuring clean state and correct bloc scope.
     _messageBloc = getIt<MessageBloc>();
+    _messageBloc.add(const FetchFrequentReactions());
 
     _itemPositionsListener.itemPositions.addListener(_onPositionsChanged);
 
@@ -1275,7 +1267,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                       child: Wrap(
                         spacing: 10, runSpacing: 10,
                         children: [
-                          for (final emoji in _quickReactions)
+                          for (final emoji in (_messageBloc.state is MessagesLoaded)
+                              ? (_messageBloc.state as MessagesLoaded).frequentReactions
+                              : const <String>['👍', '❤️', '😂', '😮', '😢', '😡'])
                             _buildReactionItem(ctx, emoji, () {
                               Navigator.pop(ctx);
                               _messageBloc.add(ToggleReaction(messageId: message.id, emojiCode: emoji));

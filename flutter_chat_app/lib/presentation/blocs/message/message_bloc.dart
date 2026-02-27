@@ -14,6 +14,7 @@ import 'package:uuid/uuid.dart';
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
+import 'package:flutter_chat_app/core/services/frequent_reaction_service.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart' hide MessageReaction;
 import 'package:flutter_chat_app/core/utils/either.dart';
@@ -70,6 +71,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   final CacheSyncStrategy _cacheSyncStrategy;
   final RealtimeService _realtimeService;
   final ILocationService _locationService;
+  final FrequentReactionService _frequentReactionService;
 
   // === Phase 2 + 3 Dependencies ===
   final SyncMetadataManager _syncMetadataManager;
@@ -160,6 +162,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     required ILocationService locationService,
     required SyncMetadataManager syncMetadataManager,
     required GetConversationDetailUseCase getConversationDetail,
+    required FrequentReactionService frequentReactionService,
     required this.logger,
   })  : _getMessages = getMessages,
         _sendMessage = sendMessage,
@@ -174,6 +177,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         _locationService = locationService,
         _syncMetadataManager = syncMetadataManager,
         _getConversationDetail = getConversationDetail,
+        _frequentReactionService = frequentReactionService,
         super(const MessageState.initial()) {
     on<LoadMessages>(_onLoadMessages);
     on<LoadMoreMessages>(_onLoadMoreMessages);
@@ -199,6 +203,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     on<ReceiveMessageRead>(_onReceiveMessageRead);
     on<LoadConversationDetail>(_onLoadConversationDetail);
     on<ForwardMessage>(_onForwardMessage);
+    on<FetchFrequentReactions>(_onFetchFrequentReactions);
 
     // Subscribe to connection state changes for reconnection detection
     _connectionStateSubscription = _realtimeService.connectionState
@@ -600,6 +605,19 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         _cacheSyncStrategy.markChatListDirty();
       },
     );
+  }
+
+  /// Fetch frequently used reactions và emit vào state
+  Future<void> _onFetchFrequentReactions(
+    FetchFrequentReactions event,
+    Emitter<MessageState> emit,
+  ) async {
+    if (state is! MessagesLoaded) return;
+    final currentState = state as MessagesLoaded;
+
+    await _frequentReactionService.fetch();
+    final reactions = _frequentReactionService.currentReactions;
+    emit(currentState.copyWith(frequentReactions: reactions));
   }
 
   /// **Mark chat as read using MarkAsReadUseCase - DEBOUNCED + RETRY**
@@ -1245,6 +1263,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           logger.i('Reaction updated successfully');
           // Success - optimistic update already shown
           // Real-time socket will sync the full reaction list with reactors
+          _frequentReactionService.invalidateAfterReaction();
         },
       );
     } catch (e, stackTrace) {

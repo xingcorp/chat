@@ -32,6 +32,7 @@ class MessageState extends BaseState with _$MessageState {
       s.dataSource,
       s.isBackgroundFetching,
       s.conversationDetail,
+      s.frequentReactions,
     ],
     error: (s) => [s.chatId, s.error, s.previousMessages],
   );
@@ -58,6 +59,8 @@ class MessageState extends BaseState with _$MessageState {
     @Default(false) bool isBackgroundFetching,
     /// Thông tin conversation từ GetConversationDetailUseCase
     Chat? conversationDetail,
+    /// Danh sách emoji reactions hay dùng nhất của user
+    @Default(<String>['👍', '❤️', '😂', '😮', '😢', '😡']) List<String> frequentReactions,
   }) = MessagesLoaded;
 
   /// Trạng thái khi có lỗi với enterprise error handling
