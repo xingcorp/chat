@@ -1651,4 +1651,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get readReceiptTitle => 'Read by';
+
+  @override
+  String get conversationNotFound =>
+      'Conversation not found or has been deleted';
+
+  @override
+  String get cannotOpenConversation => 'Cannot open conversation';
 }

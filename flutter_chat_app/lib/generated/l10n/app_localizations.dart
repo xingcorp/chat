@@ -3025,6 +3025,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Read by'**
   String get readReceiptTitle;
+
+  /// Error message when conversation from notification doesn't exist
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation not found or has been deleted'**
+  String get conversationNotFound;
+
+  /// Error message when unable to open conversation from notification
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot open conversation'**
+  String get cannotOpenConversation;
 }
 
 class _AppLocalizationsDelegate
