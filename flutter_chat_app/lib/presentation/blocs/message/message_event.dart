@@ -257,7 +257,21 @@ class ReceiveMessageReaction extends MessageEvent {
 
   @override
   List<Object?> get props => [messageId, code, userId, userName, isAdd];
-} 
+}
+
+/// Event cho socket message:read
+class ReceiveMessageRead extends MessageEvent {
+  final String messageId;
+  final String readerId;
+
+  const ReceiveMessageRead({
+    required this.messageId,
+    required this.readerId,
+  });
+
+  @override
+  List<Object?> get props => [messageId, readerId];
+}
 
 
 /// Event load conversation detail (thay thế việc gọi UseCase trực tiếp từ Page)

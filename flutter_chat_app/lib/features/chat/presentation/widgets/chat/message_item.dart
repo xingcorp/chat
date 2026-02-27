@@ -24,7 +24,8 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_p
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/audio_player_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/video_player_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/link_preview_card.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/read_receipt_avatars.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/chat/read_receipt_avatars.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/chat/read_receipt_bottom_sheet.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/expandable_rich_text.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
@@ -45,8 +46,8 @@ class MessageItem extends StatefulWidget {
   // Reply preview tap (scroll to original)
   final VoidCallback? onReplyPreviewTap;
 
-  // Read receipts
-  final List<ReaderInfo>? readReceipts;
+  // Group chat flag for read receipts
+  final bool isGroupChat;
 
   const MessageItem({
     Key? key,
@@ -58,7 +59,7 @@ class MessageItem extends StatefulWidget {
     this.onSelectionChanged,
     this.onSwipeReply,
     this.onReplyPreviewTap,
-    this.readReceipts,
+    this.isGroupChat = false,
   }) : super(key: key);
 
   @override
@@ -345,14 +346,21 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
               ],
             ),
 
-            // Read receipt avatars below own messages at last/standalone position
+            // Read receipt avatars below own messages
             if (isCurrentUser &&
-                isLast &&
-                widget.readReceipts != null &&
-                widget.readReceipts!.isNotEmpty)
+                widget.uiState.readReceiptReaders.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(right: 8.0, top: 4.0),
-                child: ReadReceiptAvatars(readers: widget.readReceipts!),
+                child: ReadReceiptAvatars(
+                  readers: widget.uiState.readReceiptReaders,
+                  isGroupChat: widget.isGroupChat,
+                  onTap: widget.isGroupChat
+                      ? () => ReadReceiptBottomSheet.show(
+                            context,
+                            widget.uiState.readReceiptReaders,
+                          )
+                      : null,
+                ),
               ),
           ],
         ),

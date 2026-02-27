@@ -358,23 +358,21 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
     }
     
     final chatState = context.read<ChatBloc>().state;
-    final isGroupChat = chatState.whenOrNull(
+    final chatForCurrentConversation = chatState.whenOrNull(
           messagesLoaded: (chats, chatId, messages) {
-            return chats
-                    ?.firstWhere(
-                      (c) => c.id == widget.chatId,
-                      orElse: () => Chat(id: widget.chatId),
-                    )
-                    .type ==
-                ChatType.group;
+            return chats?.firstWhere(
+              (c) => c.id == widget.chatId,
+              orElse: () => Chat(id: widget.chatId),
+            );
           },
-        ) ??
-        false;
+        );
+    final isGroupChat = chatForCurrentConversation?.type == ChatType.group;
 
     final uiStates = MessageListTransformer.transform(
       messages: messages,
       currentUserId: currentUserId,
       isGroupChat: isGroupChat,
+      members: chatForCurrentConversation?.members ?? const [],
     );
     
     final widgets = List<Widget>.generate(messages.length, (index) {
@@ -615,23 +613,23 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                 }
                 
                 final chatState = context.read<ChatBloc>().state;
-                final isGroupChat = chatState.whenOrNull(
+                final chatForCurrentConversation = chatState.whenOrNull(
                       messagesLoaded: (chats, chatId, messages) {
-                        return chats
-                                ?.firstWhere(
-                                  (c) => c.id == widget.chatId,
-                                  orElse: () => Chat(id: widget.chatId),
-                                )
-                                .type ==
-                            ChatType.group;
+                        return chats?.firstWhere(
+                          (c) => c.id == widget.chatId,
+                          orElse: () => Chat(id: widget.chatId),
+                        );
                       },
-                    ) ??
-                    false;
+                    );
+                final isGroupChat =
+                    chatForCurrentConversation?.type == ChatType.group;
 
                 final uiStates = MessageListTransformer.transform(
                   messages: messages,
                   currentUserId: currentUserId,
                   isGroupChat: isGroupChat,
+                  members:
+                      chatForCurrentConversation?.members ?? const [],
                 );
 
                 // Use ListView.builder with key-based items and AutoScrollController

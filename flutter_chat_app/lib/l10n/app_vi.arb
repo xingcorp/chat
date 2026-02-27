@@ -872,5 +872,32 @@
         "type": "String"
       }
     }
+  },
+
+  "readByCount": "{count, plural, =0{Chưa ai đọc} =1{Đã xem bởi 1 người} other{Đã xem bởi {count} người}}",
+  "@readByCount": {
+    "description": "Pluralized read receipt count showing how many people have read the message",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "compact"
+      }
+    }
+  },
+
+  "readByNames": "Đã xem bởi {names}",
+  "@readByNames": {
+    "description": "Read receipt label showing names of people who have read the message",
+    "placeholders": {
+      "names": {
+        "type": "String",
+        "example": "Nguyễn Văn A, Trần Thị B"
+      }
+    }
+  },
+
+  "readReceiptTitle": "Đã xem bởi",
+  "@readReceiptTitle": {
+    "description": "Title for the bottom sheet showing full reader list"
   }
 }

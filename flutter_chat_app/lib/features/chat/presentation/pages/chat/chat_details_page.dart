@@ -31,7 +31,6 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/mention
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/add_member_panel.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_search_panel.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/read_receipt_avatars.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reply_preview.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/typing_indicator.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
@@ -125,15 +124,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   int _newMessageCount = 0;
 
   // ══════════════════════════════════════════
-  // Read receipts state
-  // ══════════════════════════════════════════
-  final Map<String, List<ReaderInfo>> _readReceipts = {};
-  StreamSubscription? _readReceiptSubscription;
-
-  // ══════════════════════════════════════════
   // Highlight state (scroll-to-reply)
   // ══════════════════════════════════════════
   String? _highlightedMessageId;
+
+  // ══════════════════════════════════════════
+  // Mark-as-read state
+  // ══════════════════════════════════════════
+  bool _hasMarkedAsReadOnOpen = false;
 
   @override
   void initState() {
@@ -202,21 +200,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       });
     });
 
-    // Read receipts
-    _readReceiptSubscription = realtimeService.readReceiptStream
-        .where((e) => e.chatId == widget.chatId)
-        .listen((event) {
-      safeSetState(() {
-        final readers = _readReceipts[event.messageId] ?? [];
-        if (!readers.any((r) => r.userId == event.readerId)) {
-          readers.add(ReaderInfo(
-            userId: event.readerId,
-            name: event.readerName,
-          ));
-          _readReceipts[event.messageId] = readers;
-        }
-      });
-    });
+    // Read receipts are handled by MessageBloc (ReceiveMessageRead event)
+    // which updates readBy on messages and re-transforms to readReceiptReaders
   }
 
   @override
@@ -266,6 +251,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         _showScrollToBottom = showFab;
         if (!showFab) _newMessageCount = 0;
       });
+
+      // When user scrolls back to bottom (newest messages visible),
+      // mark chat as read for any unread messages (Req 5.2).
+      // The BLoC's 500ms debounce handles rapid scroll events.
+      if (!showFab) {
+        _messageBloc.add(MarkChatAsRead(widget.chatId));
+      }
     }
   }
 
@@ -301,7 +293,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);
     _messageBloc.close();
     _typingSubscription?.cancel();
-    _readReceiptSubscription?.cancel();
     _typingDebounceTimer?.cancel();
     super.dispose();
   }
@@ -897,6 +888,17 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         );
       }
 
+      // Mark chat as read when first loaded with unread messages (Req 5.1)
+      if (!_hasMarkedAsReadOnOpen && state.messages.isNotEmpty) {
+        _hasMarkedAsReadOnOpen = true;
+        _messageBloc.add(MarkChatAsRead(widget.chatId));
+      }
+
+      // Mark as read when new real-time messages arrive and user is at bottom
+      if (_hasMarkedAsReadOnOpen && !_showScrollToBottom && state.messages.isNotEmpty) {
+        _messageBloc.add(MarkChatAsRead(widget.chatId));
+      }
+
       final wasLoadingMore = _isLoadingMore;
       safeSetState(() => _isLoadingMore = false);
 
@@ -1181,7 +1183,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                 onSelectionChanged: (_) => _toggleSelection(uiState.id),
                 onSwipeReply: () { if (uiState.message != null) _startReply(uiState.message!); },
                 onReplyPreviewTap: () => _scrollToMessage(uiState.replyMessage?.id, allMessages),
-                readReceipts: _readReceipts[uiState.id],
+                isGroupChat: _chat?.type == ChatType.group,
                 onLongPress: () { if (!_isSelectionMode && uiState.message != null) _showMessageOptions(context, uiState.message!, uiState.isFromCurrentUser); },
                 onTap: () { if (_isSelectionMode) _toggleSelection(uiState.id); },
               ),

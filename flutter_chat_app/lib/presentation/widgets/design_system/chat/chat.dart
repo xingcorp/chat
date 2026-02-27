@@ -37,6 +37,8 @@ export 'app_read_receipt.dart';
 export 'app_reply_preview.dart';
 export 'app_typing_indicator.dart';
 export 'app_voice_waveform.dart';
+export 'read_receipt_avatars.dart';
+export 'read_receipt_bottom_sheet.dart';
 
 // Enums
 export 'chat_enums.dart';

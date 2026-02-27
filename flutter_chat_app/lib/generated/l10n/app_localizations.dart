@@ -67,8 +67,8 @@ abstract class AppLocalizations {
 
   final String localeName;
 
-  static AppLocalizations? of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
@@ -2977,6 +2977,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to remove {name} from the group?'**
   String confirmRemoveMember(String name);
+
+  /// Pluralized read receipt count showing how many people have read the message
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No one has read} =1{Read by 1 person} other{Read by {count} people}}'**
+  String readByCount(int count);
+
+  /// Read receipt label showing names of people who have read the message
+  ///
+  /// In en, this message translates to:
+  /// **'Read by {names}'**
+  String readByNames(String names);
+
+  /// Title for the bottom sheet showing full reader list
+  ///
+  /// In en, this message translates to:
+  /// **'Read by'**
+  String get readReceiptTitle;
 }
 
 class _AppLocalizationsDelegate

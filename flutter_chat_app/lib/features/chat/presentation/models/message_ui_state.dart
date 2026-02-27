@@ -1,3 +1,4 @@
+import 'package:flutter_chat_app/domain/entities/reader_info.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 /// Vị trí bubble trong group tin nhắn liên tiếp
@@ -248,6 +249,13 @@ class MessageUIState {
   final SystemEventInfo? systemEvent;
 
   // ══════════════════════════════════════════
+  // Read Receipt
+  // ══════════════════════════════════════════
+
+  /// Danh sách reader cần hiển thị avatar tại tin nhắn này
+  final List<ReaderInfo> readReceiptReaders;
+
+  // ══════════════════════════════════════════
   // Delegate getters sang domain entity
   // ══════════════════════════════════════════
 
@@ -292,6 +300,7 @@ class MessageUIState {
     this.isHighlighted = false,
     this.isFromCurrentUser = false,
     this.systemEvent,
+    this.readReceiptReaders = const [],
   });
 
   /// Create a copy with modified fields
@@ -319,6 +328,7 @@ class MessageUIState {
     bool? isHighlighted,
     bool? isFromCurrentUser,
     SystemEventInfo? systemEvent,
+    List<ReaderInfo>? readReceiptReaders,
   }) {
     return MessageUIState(
       message: message ?? this.message,
@@ -344,6 +354,7 @@ class MessageUIState {
       isHighlighted: isHighlighted ?? this.isHighlighted,
       isFromCurrentUser: isFromCurrentUser ?? this.isFromCurrentUser,
       systemEvent: systemEvent ?? this.systemEvent,
+      readReceiptReaders: readReceiptReaders ?? this.readReceiptReaders,
     );
   }
 

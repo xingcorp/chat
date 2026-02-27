@@ -6,11 +6,11 @@ Triển khai theo thứ tự Domain → Data → Presentation → DI → Tích h
 
 ## Tasks
 
-- [ ] 1. Tạo `ReaderInfo` entity và `ReadReceiptCalculator` trong Domain layer
-  - [ ] 1.1 Tạo `ReaderInfo` class tại `flutter_chat_app/lib/domain/entities/reader_info.dart`
+- [x] 1. Tạo `ReaderInfo` entity và `ReadReceiptCalculator` trong Domain layer
+  - [x] 1.1 Tạo `ReaderInfo` class tại `flutter_chat_app/lib/domain/entities/reader_info.dart`
     - Class với `userId`, `fullName?`, `avatarUrl?` và `const` constructor
     - _Requirements: 6.4, 1.1_
-  - [ ] 1.2 Tạo `ReadReceiptCalculator` tại `flutter_chat_app/lib/domain/utils/read_receipt_calculator.dart`
+  - [x] 1.2 Tạo `ReadReceiptCalculator` tại `flutter_chat_app/lib/domain/utils/read_receipt_calculator.dart`
     - Static method `computeLastReadPositions` nhận `List<ChatMessage>`, `currentUserId`, `List<ConversationMember>`
     - Thuật toán O(n): duyệt messages từ mới nhất → cũ nhất, gán mỗi reader vào message cuối cùng do currentUser gửi mà reader đã đọc, dừng sớm khi tất cả reader đã gán
     - Loại trừ currentUser khỏi kết quả, chỉ xét messages do currentUser gửi
@@ -33,32 +33,32 @@ Triển khai theo thứ tự Domain → Data → Presentation → DI → Tích h
     - Test file: `flutter_chat_app/test/domain/utils/read_receipt_calculator_test.dart`
     - Generator: random readBy + random ConversationMember lists
 
-- [ ] 2. Mở rộng `MessageUIState` và `MessageListTransformer`
-  - [ ] 2.1 Thêm field `readReceiptReaders` vào `MessageUIState` tại `flutter_chat_app/lib/features/chat/presentation/models/message_ui_state.dart`
+- [x] 2. Mở rộng `MessageUIState` và `MessageListTransformer`
+  - [x] 2.1 Thêm field `readReceiptReaders` vào `MessageUIState` tại `flutter_chat_app/lib/features/chat/presentation/models/message_ui_state.dart`
     - Thêm `final List<ReaderInfo> readReceiptReaders` với default `const []`
     - Cập nhật constructor và `copyWith` nếu cần
     - _Requirements: 1.1, 6.4_
-  - [ ] 2.2 Mở rộng `MessageListTransformer.transform()` tại `flutter_chat_app/lib/features/chat/presentation/models/message_list_transformer.dart`
+  - [x] 2.2 Mở rộng `MessageListTransformer.transform()` tại `flutter_chat_app/lib/features/chat/presentation/models/message_list_transformer.dart`
     - Thêm parameter `List<ConversationMember> members`
     - Gọi `ReadReceiptCalculator.computeLastReadPositions()` trong transform
     - Gán kết quả vào `MessageUIState.readReceiptReaders` cho mỗi message
     - Cache kết quả — chỉ tính lại khi readBy thay đổi
     - _Requirements: 1.1, 8.1, 8.2_
 
-- [ ] 3. Checkpoint — Đảm bảo domain logic và transformer hoạt động
+- [x] 3. Checkpoint — Đảm bảo domain logic và transformer hoạt động
   - Đảm bảo tất cả tests pass, hỏi user nếu có thắc mắc.
 
-- [ ] 4. Thêm `ReceiveMessageRead` event và xử lý socket trong `MessageBloc`
-  - [ ] 4.1 Thêm `ReceiveMessageRead` event vào `flutter_chat_app/lib/presentation/blocs/message/message_event.dart`
+- [x] 4. Thêm `ReceiveMessageRead` event và xử lý socket trong `MessageBloc`
+  - [x] 4.1 Thêm `ReceiveMessageRead` event vào `flutter_chat_app/lib/presentation/blocs/message/message_event.dart`
     - Event với `messageId` và `readerId`, theo pattern của `ReceiveMessageEdited`/`ReceiveMessageReaction`
     - _Requirements: 4.1, 4.3_
-  - [ ] 4.2 Thêm handler `_onReceiveMessageRead` trong `flutter_chat_app/lib/presentation/blocs/message/message_bloc.dart`
+  - [x] 4.2 Thêm handler `_onReceiveMessageRead` trong `flutter_chat_app/lib/presentation/blocs/message/message_bloc.dart`
     - Buffer nếu đang background fetch (dùng `SocketEventBuffer`)
     - Tìm message trong state, thêm readerId vào readBy nếu chưa có (idempotent)
     - Bỏ qua nếu messageId không tồn tại trong state (log warning, không emit)
     - Re-transform messages → emit state mới
     - _Requirements: 4.1, 4.3, 4.4_
-  - [ ] 4.3 Subscribe `readReceiptStream` trong `MessageBloc`
+  - [x] 4.3 Subscribe `readReceiptStream` trong `MessageBloc`
     - Thêm subscription trong method subscribe socket events (cùng chỗ với edit/delete/reaction)
     - Filter theo chatId, map sang `ReceiveMessageRead` event
     - Dispose subscription trong `close()`
@@ -69,8 +69,8 @@ Triển khai theo thứ tự Domain → Data → Presentation → DI → Tích h
     - Test file: `flutter_chat_app/test/presentation/blocs/message/message_bloc_read_receipt_test.dart`
     - Generator: random message state + random ReceiveMessageRead events
 
-- [ ] 5. Triển khai debounced mark-as-read trong `MessageBloc`
-  - [ ] 5.1 Mở rộng handler `MarkChatAsRead` trong `flutter_chat_app/lib/presentation/blocs/message/message_bloc.dart`
+- [x] 5. Triển khai debounced mark-as-read trong `MessageBloc`
+  - [x] 5.1 Mở rộng handler `MarkChatAsRead` trong `flutter_chat_app/lib/presentation/blocs/message/message_bloc.dart`
     - Thêm `_markAsReadDebouncer` (Timer 500ms)
     - Chỉ gọi mutation `chatMessageUpdateRead` sau khi debounce hoàn tất
     - Retry tối đa 2 lần với backoff 1 giây khi thất bại
@@ -83,16 +83,16 @@ Triển khai theo thứ tự Domain → Data → Presentation → DI → Tích h
     - Test file: `flutter_chat_app/test/presentation/blocs/message/message_bloc_debounce_test.dart`
     - Generator: random sequences of mark-as-read calls
 
-- [ ] 6. Checkpoint — Đảm bảo BLoC logic hoạt động đúng
+- [x] 6. Checkpoint — Đảm bảo BLoC logic hoạt động đúng
   - Đảm bảo tất cả tests pass, hỏi user nếu có thắc mắc.
 
-- [ ] 7. Tạo widget `ReadReceiptAvatars` và `ReadReceiptBottomSheet`
-  - [ ] 7.1 Thêm localization keys vào ARB files
+- [x] 7. Tạo widget `ReadReceiptAvatars` và `ReadReceiptBottomSheet`
+  - [x] 7.1 Thêm localization keys vào ARB files
     - Thêm keys vào `flutter_chat_app/lib/l10n/app_en.arb`: `readByCount` (pluralized), `readByNames` (parameterized), `readReceiptTitle`
     - Thêm keys tương ứng vào `flutter_chat_app/lib/l10n/app_vi.arb`
     - Chạy `flutter gen-l10n`
     - _Requirements: 7.2_
-  - [ ] 7.2 Tạo `ReadReceiptAvatars` widget tại `flutter_chat_app/lib/presentation/widgets/design_system/chat/read_receipt_avatars.dart`
+  - [x] 7.2 Tạo `ReadReceiptAvatars` widget tại `flutter_chat_app/lib/presentation/widgets/design_system/chat/read_receipt_avatars.dart`
     - Extends `BaseStatelessWidget`, sử dụng `AppAvatar` với kích thước 16dp
     - Direct chat: hiển thị 1 avatar
     - Group chat: hiển thị tối đa 4 avatar + badge "+N" khi > 5 readers
@@ -103,7 +103,7 @@ Triển khai theo thứ tự Domain → Data → Presentation → DI → Tích h
     - Sử dụng `AppColors`, `AppDimens`, `const` constructor
     - Căn phải, khoảng cách `AppDimens.spacingXSmall` từ bubble
     - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.2, 3.4, 6.1, 6.2, 7.1, 7.2, 7.3, 8.3_
-  - [ ] 7.3 Tạo `ReadReceiptBottomSheet` tại `flutter_chat_app/lib/presentation/widgets/design_system/chat/read_receipt_bottom_sheet.dart`
+  - [x] 7.3 Tạo `ReadReceiptBottomSheet` tại `flutter_chat_app/lib/presentation/widgets/design_system/chat/read_receipt_bottom_sheet.dart`
     - Sử dụng `AppModalBottomSheet` để hiển thị danh sách đầy đủ readers
     - Mỗi item: `AppAvatar` + `AppText` với tên reader
     - Sắp xếp theo thứ tự thời gian đọc
@@ -122,25 +122,25 @@ Triển khai theo thứ tự Domain → Data → Presentation → DI → Tích h
     - Test semantics label
     - _Requirements: 2.1, 2.2, 3.1, 3.2, 7.2_
 
-- [ ] 8. Tích hợp `ReadReceiptAvatars` vào Message List
-  - [ ] 8.1 Tích hợp widget vào message bubble item trong `ChatDetailsPage`
+- [x] 8. Tích hợp `ReadReceiptAvatars` vào Message List
+  - [x] 8.1 Tích hợp widget vào message bubble item trong `ChatDetailsPage`
     - Thêm `ReadReceiptAvatars` bên dưới message bubble cho tin nhắn do currentUser gửi
     - Truyền `readReceiptReaders` từ `MessageUIState`
     - Truyền `isGroupChat` flag
     - Kết nối `onTap` với `ReadReceiptBottomSheet.show()` cho group chat
     - Đảm bảo không ảnh hưởng pagination và vị trí scroll
     - _Requirements: 6.1, 6.2, 6.3, 6.5_
-  - [ ] 8.2 Cập nhật các call sites của `MessageListTransformer.transform()` để truyền `members` parameter
+  - [x] 8.2 Cập nhật các call sites của `MessageListTransformer.transform()` để truyền `members` parameter
     - Cập nhật trong `MessageBloc._transformMessages()`
     - Cập nhật trong `OptimizedChatScreen` và `OptimizedMessageList` nếu gọi trực tiếp
     - _Requirements: 6.4_
-  - [ ] 8.3 Trigger `MarkChatAsRead` khi mở chat và khi cuộn tới tin nhắn chưa đọc
+  - [x] 8.3 Trigger `MarkChatAsRead` khi mở chat và khi cuộn tới tin nhắn chưa đọc
     - Gọi khi mở cuộc trò chuyện có tin nhắn chưa đọc
     - Gọi khi cuộn tới tin nhắn chưa đọc mới (debounced bởi BLoC)
     - _Requirements: 5.1, 5.2_
 
-- [ ] 9. Chạy code generation và kiểm tra tích hợp
-  - [ ] 9.1 Chạy `dart run build_runner build --delete-conflicting-outputs` và `flutter gen-l10n`
+- [x] 9. Chạy code generation và kiểm tra tích hợp
+  - [x] 9.1 Chạy `dart run build_runner build --delete-conflicting-outputs` và `flutter gen-l10n`
     - Đảm bảo freezed/injectable code gen thành công
     - Đảm bảo localization gen thành công
   - [ ]* 9.2 Viết unit tests cho tích hợp end-to-end
@@ -149,7 +149,7 @@ Triển khai theo thứ tự Domain → Data → Presentation → DI → Tích h
     - Test userId không có trong members → avatar mặc định
     - _Requirements: 4.1, 6.4, 6.5_
 
-- [ ] 10. Final checkpoint — Đảm bảo tất cả tests pass
+- [x] 10. Final checkpoint — Đảm bảo tất cả tests pass
   - Đảm bảo tất cả tests pass, hỏi user nếu có thắc mắc.
 
 ## Ghi chú

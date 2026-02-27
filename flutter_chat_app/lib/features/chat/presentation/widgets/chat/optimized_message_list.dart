@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_list_transformer.dart';
@@ -40,6 +41,9 @@ class OptimizedMessageList extends StatefulWidget {
   /// Whether this is a group chat (affects message display)
   final bool isGroupChat;
   
+  /// Conversation members for read receipt display
+  final List<ConversationMember> members;
+  
   /// Controller for programmatically scrolling to specific messages
   final AutoScrollController? scrollController;
   
@@ -60,6 +64,7 @@ class OptimizedMessageList extends StatefulWidget {
     this.isLoadingMore = false,
     required this.currentUserId,
     this.isGroupChat = false,
+    this.members = const [],
     this.scrollController,
     this.onScrollStateChanged,
     this.estimatedItemHeight = 80.0,
@@ -236,6 +241,7 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
       messages: widget.messages,
       currentUserId: widget.currentUserId,
       isGroupChat: widget.isGroupChat,
+      members: widget.members,
     );
     
     // Performance trace

@@ -1611,4 +1611,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String confirmRemoveMember(String name) {
     return 'Are you sure you want to remove $name from the group?';
   }
+
+  @override
+  String readByCount(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Read by $countString people',
+      one: 'Read by 1 person',
+      zero: 'No one has read',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String readByNames(String names) {
+    return 'Read by $names';
+  }
+
+  @override
+  String get readReceiptTitle => 'Read by';
 }

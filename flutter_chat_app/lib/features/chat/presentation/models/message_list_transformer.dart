@@ -1,8 +1,11 @@
 import 'package:intl/intl.dart';
-import 'package:flutter_chat_app/core/localization/l10n_helper.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/core/localization/l10n_helper.dart';
+import 'package:flutter_chat_app/domain/entities/reader_info.dart';
+import 'package:flutter_chat_app/domain/utils/read_receipt_calculator.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 // import 'package:flutter/foundation.dart'; // Commented out - was only used for replyPreview debug logs
 
 /// Transform danh sách domain entity → danh sách UI state
@@ -67,6 +70,7 @@ class MessageListTransformer {
     String? lastReadMessageId,
     String? highlightedMessageId,
     bool isGroupChat = false,
+    List<ConversationMember> members = const [],
   }) {
     if (messages.isEmpty) return const [];
 
@@ -77,6 +81,16 @@ class MessageListTransformer {
       for (final m in messages)
         if (m.id.isNotEmpty) m.id: m,
     };
+
+    // Compute read receipt positions — O(n) via ReadReceiptCalculator
+    // Only computed when members are provided (non-empty)
+    final readReceiptPositions = members.isEmpty
+        ? const <String, List<ReaderInfo>>{}
+        : ReadReceiptCalculator.computeLastReadPositions(
+            messages: messages,
+            currentUserId: currentUserId,
+            members: members,
+          );
 
     for (int i = 0; i < messages.length; i++) {
       final current = messages[i];
@@ -167,6 +181,8 @@ class MessageListTransformer {
         isLastRead: current.id == lastReadMessageId,
         isHighlighted: current.id == highlightedMessageId,
         isFromCurrentUser: isCurrentUser,
+        readReceiptReaders:
+            readReceiptPositions[current.id] ?? const [],
       ));
     }
 

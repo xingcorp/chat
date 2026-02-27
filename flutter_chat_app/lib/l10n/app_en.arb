@@ -2875,5 +2875,32 @@
         "type": "String"
       }
     }
+  },
+
+  "readByCount": "{count, plural, =0{No one has read} =1{Read by 1 person} other{Read by {count} people}}",
+  "@readByCount": {
+    "description": "Pluralized read receipt count showing how many people have read the message",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "compact"
+      }
+    }
+  },
+
+  "readByNames": "Read by {names}",
+  "@readByNames": {
+    "description": "Read receipt label showing names of people who have read the message",
+    "placeholders": {
+      "names": {
+        "type": "String",
+        "example": "John, Jane"
+      }
+    }
+  },
+
+  "readReceiptTitle": "Read by",
+  "@readReceiptTitle": {
+    "description": "Title for the bottom sheet showing full reader list"
   }
 }

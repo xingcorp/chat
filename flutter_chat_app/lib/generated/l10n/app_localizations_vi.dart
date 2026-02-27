@@ -1612,4 +1612,29 @@ class AppLocalizationsVi extends AppLocalizations {
   String confirmRemoveMember(String name) {
     return 'Bạn có chắc muốn xóa $name khỏi nhóm không?';
   }
+
+  @override
+  String readByCount(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Đã xem bởi $countString người',
+      one: 'Đã xem bởi 1 người',
+      zero: 'Chưa ai đọc',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String readByNames(String names) {
+    return 'Đã xem bởi $names';
+  }
+
+  @override
+  String get readReceiptTitle => 'Đã xem bởi';
 }

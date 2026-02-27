@@ -86,8 +86,12 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   StreamSubscription? _messageEditedSubscription;
   StreamSubscription? _messageDeletedSubscription;
   StreamSubscription? _messageReactionSubscription;
+  StreamSubscription? _readReceiptSubscription;
   CancelableOperation<void>? _backgroundFetchOperation;
   DateTime? _lastBackgroundedAt;
+
+  // Debounced mark-as-read
+  Timer? _markAsReadDebouncer;
 
   // UI transform context
   String _currentUserId = '';
@@ -114,12 +118,18 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
   /// Transform messages thành UI state
   List<MessageUIState> _transformMessages(List<ChatMessage> messages) {
+    // Extract members from conversationDetail for read receipt calculation
+    final members = state is MessagesLoaded
+        ? (state as MessagesLoaded).conversationDetail?.members ?? const []
+        : const <ConversationMember>[];
+
     return MessageListTransformer.transform(
       messages: messages,
       currentUserId: _currentUserId,
       lastReadMessageId: _lastReadMessageId,
       highlightedMessageId: _highlightedMessageId,
       isGroupChat: _isGroupChat,
+      members: members,
     );
   }
 
@@ -186,6 +196,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     on<ReceiveMessageEdited>(_onReceiveMessageEdited);
     on<ReceiveMessageDeleted>(_onReceiveMessageDeleted);
     on<ReceiveMessageReaction>(_onReceiveMessageReaction);
+    on<ReceiveMessageRead>(_onReceiveMessageRead);
     on<LoadConversationDetail>(_onLoadConversationDetail);
     on<ForwardMessage>(_onForwardMessage);
 
@@ -591,28 +602,62 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     );
   }
 
-  /// **Mark chat as read using MarkAsReadUseCase - CLEAN ARCHITECTURE**
+  /// **Mark chat as read using MarkAsReadUseCase - DEBOUNCED + RETRY**
+  ///
+  /// Debounces 500ms to avoid excessive API calls when scrolling fast.
+  /// Retries up to 2 times with 1 second backoff on failure.
+  /// Logs errors silently — never shows error to user (non-critical).
   Future<void> _onMarkChatAsRead(MarkChatAsRead event, Emitter<MessageState> emit) async {
-    logger.i('Marking chat as read: ${event.chatId}');
+    logger.i('MarkChatAsRead received: ${event.chatId} (debouncing 500ms)');
 
-    // Create params for UseCase
-    final params = MarkAsReadParams(conversationId: event.chatId);
+    // Cancel any existing debounce timer — use latest event data
+    _markAsReadDebouncer?.cancel();
 
-    // Execute UseCase
-    final result = await _markAsRead(params);
+    // Start new 500ms debounce timer
+    _markAsReadDebouncer = Timer(const Duration(milliseconds: 500), () {
+      _executeMarkAsReadWithRetry(event.chatId);
+    });
+  }
 
-    result.fold(
-      (failure) {
-        logger.w('Failed to mark chat as read: ${failure.toString()}');
-        // Don't emit error for this operation, it's not critical
-      },
-      (_) {
-        logger.i('Chat marked as read successfully');
-        
-        // Mark chat list as dirty (unread count changed)
-        _cacheSyncStrategy.markChatListDirty();
-      },
-    );
+  /// Execute the actual mark-as-read mutation with retry logic.
+  /// Retries up to 2 times with 1 second backoff between attempts.
+  Future<void> _executeMarkAsReadWithRetry(String chatId) async {
+    const maxRetries = 2;
+    const retryBackoff = Duration(seconds: 1);
+
+    for (var attempt = 0; attempt <= maxRetries; attempt++) {
+      final params = MarkAsReadParams(conversationId: chatId);
+      final result = await _markAsRead(params);
+
+      final succeeded = result.fold(
+        (failure) {
+          if (attempt < maxRetries) {
+            logger.w(
+              'markChatAsRead failed (attempt ${attempt + 1}/${maxRetries + 1}): '
+              '${failure.message}, retrying in ${retryBackoff.inSeconds}s',
+            );
+          } else {
+            logger.e(
+              'markChatAsRead failed after ${maxRetries + 1} attempts: ${failure.message}',
+              error: failure,
+            );
+          }
+          return false;
+        },
+        (_) {
+          logger.i('Chat marked as read successfully: $chatId');
+          _cacheSyncStrategy.markChatListDirty();
+          return true;
+        },
+      );
+
+      if (succeeded) return;
+
+      // Wait before retry (skip wait on last attempt)
+      if (attempt < maxRetries) {
+        await Future<void>.delayed(retryBackoff);
+      }
+    }
   }
 
   /// Handle real-time message received via WebSocket
@@ -824,6 +869,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     _messageEditedSubscription?.cancel();
     _messageDeletedSubscription?.cancel();
     _messageReactionSubscription?.cancel();
+    _readReceiptSubscription?.cancel();
 
     _messageEditedSubscription = _realtimeService.messageEditedStream
         .where((msg) => msg.chatId == chatId)
@@ -839,6 +885,13 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
               userId: reaction.userId,
               userName: reaction.userName,
               isAdd: reaction.action == ReactionAction.add,
+            )));
+
+    _readReceiptSubscription = _realtimeService.readReceiptStream
+        .where((receipt) => receipt.chatId == chatId)
+        .listen((receipt) => add(ReceiveMessageRead(
+              messageId: receipt.messageId,
+              readerId: receipt.readerId,
             )));
   }
 
@@ -913,6 +966,43 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
       return msg.copyWith(reactions: updatedReactions);
     }).toList();
+
+    emit(currentState.copyWith(
+      messages: updatedMessages,
+      uiMessages: _transformMessages(updatedMessages),
+    ));
+  }
+
+  /// Handle socket message:read — add readerId to message's readBy list
+  void _onReceiveMessageRead(ReceiveMessageRead event, Emitter<MessageState> emit) {
+    if (_socketEventBuffer.bufferIfNeeded(event)) return;
+
+    if (state is! MessagesLoaded) return;
+    final currentState = state as MessagesLoaded;
+
+    // Find the message by messageId
+    final messageIndex = currentState.messages.indexWhere(
+      (msg) => msg.id == event.messageId,
+    );
+
+    if (messageIndex == -1) {
+      logger.w('ReceiveMessageRead: messageId=${event.messageId} not found in state, ignoring');
+      return;
+    }
+
+    final message = currentState.messages[messageIndex];
+
+    // Idempotent: skip if readerId already in readBy
+    if (message.readBy.contains(event.readerId)) return;
+
+    // Create updated message with new readBy list
+    final updatedMessage = message.copyWith(
+      readBy: [...message.readBy, event.readerId],
+    );
+
+    // Replace message in list
+    final updatedMessages = List<ChatMessage>.from(currentState.messages);
+    updatedMessages[messageIndex] = updatedMessage;
 
     emit(currentState.copyWith(
       messages: updatedMessages,
@@ -1627,6 +1717,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
   @override
   Future<void> close() async {
+    // Cancel debounce timer
+    _markAsReadDebouncer?.cancel();
+
     // Cancel background fetch
     _backgroundFetchOperation?.cancel();
 
@@ -1635,6 +1728,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     _messageEditedSubscription?.cancel();
     _messageDeletedSubscription?.cancel();
     _messageReactionSubscription?.cancel();
+    _readReceiptSubscription?.cancel();
 
     // Cancel existing Phase 1 subscriptions
     for (final chatId in _messageSubscriptions.keys) {
