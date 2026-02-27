@@ -490,16 +490,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) => AddMemberPanel(
-          conversationId: widget.chatId,
-          currentMemberIds: currentMemberIds,
-          onSearchUsers: (query) => _searchUsers(query),
-          onAddMembers: (userIds) => _addMembersToGroup(userIds),
-        ),
+      builder: (context) => AddMemberPanel(
+        conversationId: widget.chatId,
+        currentMemberIds: currentMemberIds,
+        onSearchUsers: (query) => _searchUsers(query),
+        onAddMembers: (userIds) => _addMembersToGroup(userIds),
       ),
     ).then((result) {
       // If members were added successfully, refresh chat info
@@ -815,7 +810,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
     return BlocProvider<MessageBloc>.value(
       value: _messageBloc,
-      child: Scaffold(
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
         appBar: _isSelectionMode
             ? _buildSelectionAppBar()
             : _buildNormalAppBar(chatTitle),
@@ -863,6 +860,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
             if (_isEditMode) _buildEditModeBar(),
             _buildMessageInputArea(),
           ],
+        ),
         ),
       ),
     );

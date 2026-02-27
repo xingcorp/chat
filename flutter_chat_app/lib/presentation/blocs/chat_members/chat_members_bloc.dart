@@ -177,9 +177,18 @@ class ChatMembersBloc extends BaseBloc<ChatMembersEvent, ChatMembersState> {
       (_) {
         _allMembers = _allMembers.where((m) => m.userId != event.memberId).toList();
         final sortedMembers = _sortMembers(_allMembers, sortType);
+        // Emit removed state first so listener can show SnackBar
         emit(ChatMembersMemberRemoved(
           memberId: event.memberId,
           remainingMembers: sortedMembers,
+        ));
+        // Then emit loaded state so UI rebuilds with updated members list
+        emit(ChatMembersLoaded(
+          members: _allMembers,
+          filteredMembers: sortedMembers,
+          sortType: sortType,
+          creatorName: _currentChat?.creatorName,
+          createdAt: _currentChat?.createdAt,
         ));
       },
     );
