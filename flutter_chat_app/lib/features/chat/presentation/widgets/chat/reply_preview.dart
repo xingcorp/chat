@@ -51,7 +51,9 @@ class ReplyPreview extends StatelessWidget {
         : theme.colorScheme.primary.withValues(alpha: 0.08);
 
     // Accent color: primary color
-    final accentColor = theme.colorScheme.primary;
+    final accentColor = isFromCurrentUser
+        ? Colors.white.withValues(alpha: 0.9)
+        : theme.colorScheme.primary;
 
     // Text color
     final textColor = isFromCurrentUser

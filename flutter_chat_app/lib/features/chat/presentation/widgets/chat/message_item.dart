@@ -483,15 +483,20 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     // For file-only messages (no text), use neutral bubble color
     // to avoid blue background leaking around file tiles
     final hasTextContent = widget.uiState.content.isNotEmpty;
+    final hasOnlyMedia = renderableAttachments.isNotEmpty &&
+        renderableAttachments.every((a) => a.type == 'image' || a.type == 'video') &&
+        !hasTextContent;
     final hasOnlyFiles = renderableAttachments.isNotEmpty &&
         renderableAttachments.every((a) => a.type != 'image' && a.type != 'video') &&
         !hasTextContent;
 
+    final isOnPrimaryBackground = isFromCurrentUser && !hasOnlyMedia;
+
     final bubbleColor = hasOnlyFiles
-        ? theme.colorScheme.surfaceContainerHighest
-        : (isFromCurrentUser
-            ? theme.colorScheme.primary
-            : theme.cardColor);
+        ? (isFromCurrentUser ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest)
+        : (hasOnlyMedia
+            ? Colors.transparent
+            : (isFromCurrentUser ? theme.colorScheme.primary : theme.cardColor));
 
     final textColor = hasOnlyFiles
         ? (theme.textTheme.bodyMedium?.color ?? Colors.black)
@@ -548,7 +553,56 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
             // Attachment previews (skip for single audio/video with special player)
             // No padding — media fills bubble edge-to-edge like Telegram/WhatsApp
             if (renderableAttachments.isNotEmpty && !useSpecialPlayer)
-              _buildAttachmentPreviews(context, attachments: renderableAttachments),
+              Stack(
+                children: [
+                  _buildAttachmentPreviews(
+                    context,
+                    attachments: renderableAttachments,
+                    isFromCurrentUser: isFromCurrentUser,
+                    isOnPrimaryBackground: isOnPrimaryBackground,
+                  ),
+                  if (hasOnlyMedia)
+                    Positioned(
+                      right: 8.0,
+                      bottom: 8.0,
+                      child: ReactionBar(
+                        groupedReactions: widget.uiState.groupedReactions,
+                        isFromCurrentUser: isFromCurrentUser,
+                        showAddButton: true,
+                        onReactionTap: (emojiCode, reactorIds, reactorNames) {
+                          ReactionDetailModal.show(
+                            context,
+                            emojiCode: emojiCode,
+                            reactorNames: reactorNames,
+                          );
+                        },
+                        onReactionLongPress: (emojiCode, isCurrentlyReacted) {
+                          if (isCurrentlyReacted) {
+                            context.read<MessageBloc>().add(
+                                  ToggleReaction(
+                                    messageId: widget.uiState.id,
+                                    emojiCode: emojiCode,
+                                  ),
+                                );
+                          }
+                        },
+                        onAddReaction: () {
+                          EmojiPickerBottomSheet.show(
+                            context,
+                            onEmojiSelected: (emoji) {
+                              context.read<MessageBloc>().add(
+                                    ToggleReaction(
+                                      messageId: widget.uiState.id,
+                                      emojiCode: emoji,
+                                    ),
+                                  );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
 
             // Message content
             if (widget.uiState.content.isNotEmpty || renderableAttachments.isEmpty)
@@ -609,7 +663,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
               ),
 
             // Reactions bar (phia duoi content)
-            if (widget.uiState.groupedReactions.isNotEmpty)
+            if (widget.uiState.groupedReactions.isNotEmpty && !hasOnlyMedia)
               Padding(
                 padding: const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 8.0),
                 child: ReactionBar(
@@ -688,6 +742,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
   Widget _buildAttachmentPreviews(
     BuildContext context, {
     required List<domain.MessageAttachment> attachments,
+    required bool isFromCurrentUser,
+    required bool isOnPrimaryBackground,
   }) {
     if (attachments.isEmpty) return const SizedBox.shrink();
 
@@ -699,6 +755,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       layout: MediaGalleryLayout.grid,
       message: widget.uiState.message,
       chatId: widget.uiState.chatId,
+      isFromCurrentUser: isFromCurrentUser,
+      isOnPrimaryBackground: isOnPrimaryBackground,
     );
   }
 

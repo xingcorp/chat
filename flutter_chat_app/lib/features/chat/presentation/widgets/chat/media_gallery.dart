@@ -44,12 +44,18 @@ class MediaGallery extends StatelessWidget {
   /// Chat ID for forwarding
   final String? chatId;
 
+  final bool isFromCurrentUser;
+
+  final bool isOnPrimaryBackground;
+
   const MediaGallery({
     Key? key,
     required this.attachments,
     this.layout = MediaGalleryLayout.grid,
     this.message,
     this.chatId,
+    this.isFromCurrentUser = false,
+    this.isOnPrimaryBackground = false,
   }) : super(key: key);
 
   @override
@@ -467,6 +473,31 @@ class MediaGallery extends StatelessWidget {
     final isUploading = file.isUploading;
     final uploadProgress = file.uploadProgress ?? 0.0;
 
+    // Follow same pattern as ReplyPreview, LinkPreviewCard:
+    // - on primary bubble -> use white/onPrimary colors
+    // - isFromCurrentUser == false -> use theme neutral colors
+    final tileBackgroundColor = isOnPrimaryBackground
+        ? theme.colorScheme.onPrimary.withValues(alpha: 0.12)
+        : theme.colorScheme.surfaceContainerHighest;
+
+    final primaryIconColor = isOnPrimaryBackground
+        ? theme.colorScheme.onPrimary.withValues(alpha: 0.9)
+        : theme.colorScheme.primary;
+
+    final titleTextStyle = isOnPrimaryBackground
+        ? theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onPrimary,
+          )
+        : theme.textTheme.bodyMedium;
+
+    final subTextColor = isOnPrimaryBackground
+        ? theme.colorScheme.onPrimary.withValues(alpha: 0.8)
+        : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7);
+
+    final downloadIconColor = isOnPrimaryBackground
+        ? theme.colorScheme.onPrimary.withValues(alpha: 0.85)
+        : theme.iconTheme.color?.withValues(alpha: 0.7);
+
     return GestureDetector(
       onTap: isUploading
           ? null // Disable tap during upload
@@ -476,7 +507,7 @@ class MediaGallery extends StatelessWidget {
             },
       child: Container(
         padding: const EdgeInsets.all(12.0),
-        color: theme.colorScheme.surfaceContainerHighest,
+        color: tileBackgroundColor,
         child: Row(
           children: [
             // File icon or upload progress indicator
@@ -485,7 +516,7 @@ class MediaGallery extends StatelessWidget {
             else
               Icon(
                 _getFileIcon(file.type),
-                color: theme.colorScheme.primary,
+                color: primaryIconColor,
                 size: 32,
               ),
             const SizedBox(width: 12.0),
@@ -496,7 +527,7 @@ class MediaGallery extends StatelessWidget {
                 children: [
                   Text(
                     file.name.isNotEmpty ? file.name : 'File',
-                    style: theme.textTheme.bodyMedium,
+                    style: titleTextStyle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -506,14 +537,14 @@ class MediaGallery extends StatelessWidget {
                     Text(
                       'Uploading... ${(uploadProgress * 100).toInt()}%',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.primary,
+                        color: primaryIconColor,
                       ),
                     )
                   else if (file.size > 0)
                     Text(
                       _formatFileSize(file.size),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                        color: subTextColor,
                       ),
                     ),
                 ],
@@ -522,7 +553,7 @@ class MediaGallery extends StatelessWidget {
             if (!isUploading)
               Icon(
                 Icons.download,
-                color: theme.iconTheme.color?.withValues(alpha: 0.7),
+                color: downloadIconColor,
                 size: 20,
               ),
           ],
