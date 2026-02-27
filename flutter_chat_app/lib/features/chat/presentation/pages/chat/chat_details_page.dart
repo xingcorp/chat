@@ -19,7 +19,6 @@ import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
-import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/screens/chat/chat_header.dart';
@@ -35,6 +34,9 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reply_p
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/typing_indicator.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_event.dart';
+import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_state.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_bloc.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
@@ -74,6 +76,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   final ScrollOffsetController _scrollOffsetController = ScrollOffsetController();
   final ScrollOffsetListener _scrollOffsetListener = ScrollOffsetListener.create();
   late final MessageBloc _messageBloc;
+  late final ConversationDetailBloc _convDetailBloc;
 
   Chat? _chat;
   String _currentUserId = '';
@@ -131,6 +134,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     // When chatId changes in desktop view, ValueKey forces a new State instance, 
     // ensuring clean state and correct bloc scope.
     _messageBloc = getIt<MessageBloc>();
+    _convDetailBloc = getIt<ConversationDetailBloc>();
     _messageBloc.add(const FetchFrequentReactions());
 
     _itemPositionsListener.itemPositions.addListener(_onPositionsChanged);
@@ -144,7 +148,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       ),
     );
 
-    _messageBloc.add(LoadConversationDetail(chatId: widget.chatId));
+    _convDetailBloc.add(LoadConversationDetail(chatId: widget.chatId));
     _setupRealtimeSubscriptions();
 
     // Single listener for efficiency
@@ -284,6 +288,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _messageFocusNode.dispose();
     _itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);
     _messageBloc.close();
+    _convDetailBloc.close();
     _typingSubscription?.cancel();
     _typingDebounceTimer?.cancel();
     super.dispose();
@@ -483,9 +488,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   void _showAddMember() {
     if (_chat == null) return;
-    
+
     final currentMemberIds = _chat?.members.map((m) => m.userId).toList() ?? [];
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -496,12 +501,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         onSearchUsers: (query) => _searchUsers(query),
         onAddMembers: (userIds) => _addMembersToGroup(userIds),
       ),
-    ).then((result) {
-      // If members were added successfully, refresh chat info
-      if (result == true) {
-        _refreshChatInfo();
-      }
-    });
+    );
   }
 
   /// Search users for adding to group
@@ -520,33 +520,22 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
   }
 
-  /// Add members to group via API
+  /// Add members to group via ConversationDetailBloc
   Future<bool> _addMembersToGroup(List<String> userIds) async {
-    try {
-      // Use the remote data source directly to add members
-      final remoteDataSource = getIt<IChatRemoteDataSource>();
-      await remoteDataSource.addMembersToGroup(
-        conversationId: widget.chatId,
-        memberIds: userIds,
-      );
-      return true;
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.errorOccurred),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return false;
-    }
-  }
+    _convDetailBloc.add(AddMembersToGroup(
+      chatId: widget.chatId,
+      userIds: userIds,
+    ));
 
-  /// Refresh chat info after adding members
-  void _refreshChatInfo() {
-    // Reload chat header info via BLoC
-    _messageBloc.add(LoadConversationDetail(chatId: widget.chatId));
+    // Wait for BLoC to process and emit result
+    final state = await _convDetailBloc.stream.firstWhere(
+      (s) =>
+          s is ConversationDetailMembersAdded ||
+          s is ConversationDetailLoaded ||
+          s is ConversationDetailError,
+    );
+
+    return state is! ConversationDetailError;
   }
 
   void _showMessageSearch() {
@@ -808,11 +797,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         ? _chat!.name!.trim()
         : context.l10n.chats;
 
-    return BlocProvider<MessageBloc>.value(
-      value: _messageBloc,
-      child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Scaffold(
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<MessageBloc>.value(value: _messageBloc),
+        BlocProvider<ConversationDetailBloc>.value(value: _convDetailBloc),
+      ],
+      child: BlocListener<ConversationDetailBloc, ConversationDetailState>(
+        listener: _handleConversationDetailStateChanges,
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Scaffold(
         appBar: _isSelectionMode
             ? _buildSelectionAppBar()
             : _buildNormalAppBar(chatTitle),
@@ -863,21 +857,31 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         ),
         ),
       ),
+      ),
     );
+  }
+
+  void _handleConversationDetailStateChanges(
+    BuildContext context,
+    ConversationDetailState state,
+  ) {
+    if (state is ConversationDetailLoaded) {
+      final chat = state.chat;
+      if (chat != _chat) {
+        _chat = chat;
+        _messageBloc.setTransformContext(
+          currentUserId: _currentUserId,
+          isGroupChat: _chat?.type == ChatType.group,
+          conversationName: chat.name,
+        );
+        _messageBloc.add(UpdateConversationMembers(chat.members));
+        safeSetState(() {});
+      }
+    }
   }
 
   void _handleBlocStateChanges(BuildContext context, MessageState state) {
     if (state is MessagesLoaded) {
-      // Update conversation detail when available from BLoC state
-      final detail = state.conversationDetail;
-      if (detail != null && detail != _chat) {
-        _chat = detail;
-        _messageBloc.setTransformContext(
-          currentUserId: _currentUserId,
-          isGroupChat: _chat?.type == ChatType.group,
-        );
-      }
-
       // Mark chat as read when first loaded with unread messages (Req 5.1)
       if (!_hasMarkedAsReadOnOpen && state.messages.isNotEmpty) {
         _hasMarkedAsReadOnOpen = true;

@@ -274,14 +274,14 @@ class ReceiveMessageRead extends MessageEvent {
 }
 
 
-/// Event load conversation detail (thay thế việc gọi UseCase trực tiếp từ Page)
-class LoadConversationDetail extends MessageEvent {
-  final String chatId;
+/// Event cập nhật danh sách members từ ConversationDetailBloc (cho read receipts)
+class UpdateConversationMembers extends MessageEvent {
+  final List<ConversationMember> members;
 
-  const LoadConversationDetail({required this.chatId});
+  const UpdateConversationMembers(this.members);
 
   @override
-  List<Object?> get props => [chatId];
+  List<Object?> get props => [members];
 }
 
 /// Event fetch frequently used reactions

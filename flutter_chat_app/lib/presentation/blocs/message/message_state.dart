@@ -31,7 +31,7 @@ class MessageState extends BaseState with _$MessageState {
       s.paginationError,
       s.dataSource,
       s.isBackgroundFetching,
-      s.conversationDetail,
+      s.conversationMembers,
       s.frequentReactions,
     ],
     error: (s) => [s.chatId, s.error, s.previousMessages],
@@ -57,8 +57,8 @@ class MessageState extends BaseState with _$MessageState {
     @Default(MessageDataSource.server) MessageDataSource dataSource,
     /// Đang có background fetch chạy không
     @Default(false) bool isBackgroundFetching,
-    /// Thông tin conversation từ GetConversationDetailUseCase
-    Chat? conversationDetail,
+    /// Danh sách members từ ConversationDetailBloc (cho read receipts)
+    @Default([]) List<ConversationMember> conversationMembers,
     /// Danh sách emoji reactions hay dùng nhất của user
     @Default(<String>['👍', '❤️', '😂', '😮', '😢', '😡']) List<String> frequentReactions,
   }) = MessagesLoaded;

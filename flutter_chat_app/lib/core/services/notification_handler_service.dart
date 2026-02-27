@@ -64,7 +64,7 @@ class NotificationHandlerService {
     Map<String, dynamic> data,
   ) async {
     try {
-      _logger.d('Handling notification tap', data);
+      _logger.d('Handling notification tap: ${data.toString()}');
 
       // Parse metadata
       final metadata = data['metadata'] as Map<String, dynamic>?;

@@ -28,7 +28,7 @@ mixin _$MessageState {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)
         loaded,
     required TResult Function(
@@ -48,7 +48,7 @@ mixin _$MessageState {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)?
         loaded,
     TResult? Function(
@@ -68,7 +68,7 @@ mixin _$MessageState {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)?
         loaded,
     TResult Function(
@@ -156,7 +156,7 @@ class _$MessageInitialImpl extends MessageInitial {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)
         loaded,
     required TResult Function(
@@ -179,7 +179,7 @@ class _$MessageInitialImpl extends MessageInitial {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)?
         loaded,
     TResult? Function(
@@ -202,7 +202,7 @@ class _$MessageInitialImpl extends MessageInitial {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)?
         loaded,
     TResult Function(
@@ -318,7 +318,7 @@ class _$MessagesLoadingImpl extends MessagesLoading {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)
         loaded,
     required TResult Function(
@@ -341,7 +341,7 @@ class _$MessagesLoadingImpl extends MessagesLoading {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)?
         loaded,
     TResult? Function(
@@ -364,7 +364,7 @@ class _$MessagesLoadingImpl extends MessagesLoading {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)?
         loaded,
     TResult Function(
@@ -441,7 +441,7 @@ abstract class _$$MessagesLoadedImplCopyWith<$Res> {
       String? paginationError,
       MessageDataSource dataSource,
       bool isBackgroundFetching,
-      Chat? conversationDetail,
+      List<ConversationMember> conversationMembers,
       List<String> frequentReactions});
 }
 
@@ -463,7 +463,7 @@ class __$$MessagesLoadedImplCopyWithImpl<$Res>
     Object? paginationError = freezed,
     Object? dataSource = null,
     Object? isBackgroundFetching = null,
-    Object? conversationDetail = freezed,
+    Object? conversationMembers = null,
     Object? frequentReactions = null,
   }) {
     return _then(_$MessagesLoadedImpl(
@@ -495,10 +495,10 @@ class __$$MessagesLoadedImplCopyWithImpl<$Res>
           ? _value.isBackgroundFetching
           : isBackgroundFetching // ignore: cast_nullable_to_non_nullable
               as bool,
-      conversationDetail: freezed == conversationDetail
-          ? _value.conversationDetail
-          : conversationDetail // ignore: cast_nullable_to_non_nullable
-              as Chat?,
+      conversationMembers: null == conversationMembers
+          ? _value._conversationMembers
+          : conversationMembers // ignore: cast_nullable_to_non_nullable
+              as List<ConversationMember>,
       frequentReactions: null == frequentReactions
           ? _value._frequentReactions
           : frequentReactions // ignore: cast_nullable_to_non_nullable
@@ -518,7 +518,7 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
       this.paginationError,
       this.dataSource = MessageDataSource.server,
       this.isBackgroundFetching = false,
-      this.conversationDetail,
+      final List<ConversationMember> conversationMembers = const [],
       final List<String> frequentReactions = const <String>[
         '👍',
         '❤️',
@@ -529,6 +529,7 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
       ]})
       : _messages = messages,
         _uiMessages = uiMessages,
+        _conversationMembers = conversationMembers,
         _frequentReactions = frequentReactions,
         super._();
 
@@ -567,9 +568,18 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
   @JsonKey()
   final bool isBackgroundFetching;
 
-  /// Thông tin conversation từ GetConversationDetailUseCase
+  /// Danh sách members từ ConversationDetailBloc (cho read receipts)
+  final List<ConversationMember> _conversationMembers;
+
+  /// Danh sách members từ ConversationDetailBloc (cho read receipts)
   @override
-  final Chat? conversationDetail;
+  @JsonKey()
+  List<ConversationMember> get conversationMembers {
+    if (_conversationMembers is EqualUnmodifiableListView)
+      return _conversationMembers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_conversationMembers);
+  }
 
   /// Danh sách emoji reactions hay dùng nhất của user
   final List<String> _frequentReactions;
@@ -604,7 +614,7 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)
         loaded,
     required TResult Function(
@@ -619,7 +629,7 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
         paginationError,
         dataSource,
         isBackgroundFetching,
-        conversationDetail,
+        conversationMembers,
         frequentReactions);
   }
 
@@ -636,7 +646,7 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)?
         loaded,
     TResult? Function(
@@ -651,7 +661,7 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
         paginationError,
         dataSource,
         isBackgroundFetching,
-        conversationDetail,
+        conversationMembers,
         frequentReactions);
   }
 
@@ -668,7 +678,7 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)?
         loaded,
     TResult Function(
@@ -685,7 +695,7 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
           paginationError,
           dataSource,
           isBackgroundFetching,
-          conversationDetail,
+          conversationMembers,
           frequentReactions);
     }
     return orElse();
@@ -738,7 +748,7 @@ abstract class MessagesLoaded extends MessageState {
       final String? paginationError,
       final MessageDataSource dataSource,
       final bool isBackgroundFetching,
-      final Chat? conversationDetail,
+      final List<ConversationMember> conversationMembers,
       final List<String> frequentReactions}) = _$MessagesLoadedImpl;
   const MessagesLoaded._() : super._();
 
@@ -753,8 +763,8 @@ abstract class MessagesLoaded extends MessageState {
   /// Đang có background fetch chạy không
   bool get isBackgroundFetching;
 
-  /// Thông tin conversation từ GetConversationDetailUseCase
-  Chat? get conversationDetail;
+  /// Danh sách members từ ConversationDetailBloc (cho read receipts)
+  List<ConversationMember> get conversationMembers;
 
   /// Danh sách emoji reactions hay dùng nhất của user
   List<String> get frequentReactions;
@@ -852,7 +862,7 @@ class _$MessagesErrorImpl extends MessagesError {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)
         loaded,
     required TResult Function(
@@ -875,7 +885,7 @@ class _$MessagesErrorImpl extends MessagesError {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)?
         loaded,
     TResult? Function(
@@ -898,7 +908,7 @@ class _$MessagesErrorImpl extends MessagesError {
             String? paginationError,
             MessageDataSource dataSource,
             bool isBackgroundFetching,
-            Chat? conversationDetail,
+            List<ConversationMember> conversationMembers,
             List<String> frequentReactions)?
         loaded,
     TResult Function(

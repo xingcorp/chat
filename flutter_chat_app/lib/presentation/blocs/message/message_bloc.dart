@@ -31,7 +31,6 @@ import 'package:flutter_chat_app/domain/usecases/message/mark_as_read_usecase.da
 import 'package:flutter_chat_app/domain/usecases/message/remove_reaction_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/send_message_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/notification/send_push_notification_usecase.dart';
-import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_list_transformer.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/base_bloc.dart';
@@ -63,7 +62,6 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   final MarkAsReadUseCase _markAsRead;
   final AddReactionUseCase _addReaction;
   final RemoveReactionUseCase _removeReaction;
-  final GetConversationDetailUseCase _getConversationDetail;
   final SendPushNotificationUseCase _sendPushNotification;
 
   // Repositories
@@ -102,10 +100,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   bool _isGroupChat = false;
   String? _lastReadMessageId;
   String? _highlightedMessageId;
-
-  // Pending conversation detail — stored when LoadConversationDetail resolves
-  // before state is MessagesLoaded (race condition between concurrent event handlers)
-  Chat? _pendingConversationDetail;
+  String _conversationName = 'Chat';
 
   // Pending frequent reactions — stored when FetchFrequentReactions resolves
   // before state is MessagesLoaded (race condition on initial load)
@@ -117,18 +112,20 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     bool isGroupChat = false,
     String? lastReadMessageId,
     String? highlightedMessageId,
+    String? conversationName,
   }) {
     _currentUserId = currentUserId;
     _isGroupChat = isGroupChat;
     _lastReadMessageId = lastReadMessageId;
     _highlightedMessageId = highlightedMessageId;
+    if (conversationName != null) _conversationName = conversationName;
   }
 
   /// Transform messages thành UI state
   List<MessageUIState> _transformMessages(List<ChatMessage> messages) {
-    // Extract members from conversationDetail for read receipt calculation
+    // Extract members from state for read receipt calculation
     final members = state is MessagesLoaded
-        ? (state as MessagesLoaded).conversationDetail?.members ?? const []
+        ? (state as MessagesLoaded).conversationMembers
         : const <ConversationMember>[];
 
     return MessageListTransformer.transform(
@@ -139,18 +136,6 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       isGroupChat: _isGroupChat,
       members: members,
     );
-  }
-
-  /// Apply pending conversation detail to a freshly emitted MessagesLoaded state.
-  /// Returns the state with detail applied, or the original state if nothing pending.
-  MessageState _applyPendingConversationDetail(MessagesLoaded loadedState) {
-    final pending = _pendingConversationDetail;
-    if (pending != null) {
-      _pendingConversationDetail = null;
-      logger.i('Applying pending conversation detail to MessagesLoaded state');
-      return loadedState.copyWith(conversationDetail: pending);
-    }
-    return loadedState;
   }
 
   /// Apply pending frequent reactions to a freshly emitted MessagesLoaded state.
@@ -177,7 +162,6 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     required RealtimeService realtimeService,
     required ILocationService locationService,
     required SyncMetadataManager syncMetadataManager,
-    required GetConversationDetailUseCase getConversationDetail,
     required FrequentReactionService frequentReactionService,
     required SendPushNotificationUseCase sendPushNotification,
     required this.logger,
@@ -193,7 +177,6 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         _realtimeService = realtimeService,
         _locationService = locationService,
         _syncMetadataManager = syncMetadataManager,
-        _getConversationDetail = getConversationDetail,
         _frequentReactionService = frequentReactionService,
         _sendPushNotification = sendPushNotification,
         super(const MessageState.initial()) {
@@ -219,7 +202,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     on<ReceiveMessageDeleted>(_onReceiveMessageDeleted);
     on<ReceiveMessageReaction>(_onReceiveMessageReaction);
     on<ReceiveMessageRead>(_onReceiveMessageRead);
-    on<LoadConversationDetail>(_onLoadConversationDetail);
+    on<UpdateConversationMembers>(_onUpdateConversationMembers);
     on<ForwardMessage>(_onForwardMessage);
     on<FetchFrequentReactions>(_onFetchFrequentReactions);
 
@@ -276,11 +259,10 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         isBackgroundFetching: true,
       ));
 
-      // Apply pending conversation detail if it arrived before this emit
+      // Apply pending frequent reactions if they arrived before this emit
       final phase1State = state;
       if (phase1State is MessagesLoaded) {
-        var updated = _applyPendingConversationDetail(phase1State);
-        updated = _applyPendingFrequentReactions(updated as MessagesLoaded);
+        final updated = _applyPendingFrequentReactions(phase1State);
         if (updated != phase1State) emit(updated);
       }
 
@@ -340,11 +322,10 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
             dataSource: MessageDataSource.server,
           ));
 
-          // Apply pending conversation detail if it arrived during the await
+          // Apply pending frequent reactions if they arrived during the await
           final firstLoadState = state;
           if (firstLoadState is MessagesLoaded) {
-            var updated = _applyPendingConversationDetail(firstLoadState);
-            updated = _applyPendingFrequentReactions(updated as MessagesLoaded);
+            final updated = _applyPendingFrequentReactions(firstLoadState);
             if (updated != firstLoadState) emit(updated);
           }
         },
@@ -472,7 +453,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         // Send push notification if message has mentions (fire-and-forget)
         if (newMessage.mentionTo.isNotEmpty) {
           final mentionIds = newMessage.mentionTo.map((m) => m.id).toList();
-          final conversationName = freshState.conversationDetail?.name ?? 'Chat';
+          final conversationName = _conversationName;
 
           logger.i('Sending push notification to ${mentionIds.length} mentioned users');
 
@@ -1574,7 +1555,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     // Send push notification if message has mentions (fire-and-forget)
     if (serverMessage.mentionTo.isNotEmpty) {
       final mentionIds = serverMessage.mentionTo.map((m) => m.id).toList();
-      final conversationName = currentState.conversationDetail?.name ?? 'Chat';
+      final conversationName = _conversationName;
 
       logger.i('Sending push notification to ${mentionIds.length} mentioned users');
 
@@ -1735,7 +1716,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           // Send push notification if message has mentions (fire-and-forget)
           if (message.mentionTo.isNotEmpty) {
             final mentionIds = message.mentionTo.map((m) => m.id).toList();
-            final conversationName = currentState.conversationDetail?.name ?? 'Chat';
+            final conversationName = _conversationName;
 
             logger.i('Sending push notification to ${mentionIds.length} mentioned users');
 
@@ -1798,42 +1779,16 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     }
   }
 
-  /// Load conversation detail — log errors, never break message state
-  ///
-  /// If state is not yet MessagesLoaded (race condition with LoadMessages),
-  /// stores the detail in [_pendingConversationDetail] for later application.
-  Future<void> _onLoadConversationDetail(
-    LoadConversationDetail event,
+  /// Update conversation members list (dispatched by Page when ConversationDetailBloc emits)
+  void _onUpdateConversationMembers(
+    UpdateConversationMembers event,
     Emitter<MessageState> emit,
-  ) async {
-    logger.i('[ConvDetail] _onLoadConversationDetail START chatId=${event.chatId} currentState=${state.runtimeType}');
-
-    final result = await _getConversationDetail(event.chatId);
-
-    result.fold(
-      (failure) {
-        // Log lỗi nhưng KHÔNG emit error state
-        logger.e('[ConvDetail] Failed to load conversation detail', error: failure);
-      },
-      (chat) {
-        if (chat == null) {
-          logger.w('[ConvDetail] Use case returned null chat for chatId=${event.chatId}');
-          return;
-        }
-
-        logger.i('[ConvDetail] Got chat: name=${chat.name} members=${chat.members.length}');
-
-        if (state is MessagesLoaded) {
-          final loadedState = state as MessagesLoaded;
-          emit(loadedState.copyWith(conversationDetail: chat));
-          logger.i('[ConvDetail] EMITTED state with conversationDetail');
-        } else {
-          // State chưa sẵn sàng — lưu tạm để apply khi MessagesLoaded được emit
-          logger.i('[ConvDetail] State is ${state.runtimeType}, storing as pending');
-          _pendingConversationDetail = chat;
-        }
-      },
-    );
+  ) {
+    if (state is MessagesLoaded) {
+      final loadedState = state as MessagesLoaded;
+      emit(loadedState.copyWith(conversationMembers: event.members));
+      logger.i('[ConvMembers] Updated members: count=${event.members.length}');
+    }
   }
 
   @override

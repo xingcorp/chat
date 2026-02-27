@@ -644,11 +644,15 @@ class ChatRepositoryImpl implements IChatRepository {
 
         debugPrint('✅ Participants added successfully');
 
-        // Update local chat data
-        final chat = await _localDataSource.getChatById(chatId);
-        if (chat != null) {
-          // In real implementation, would update participants list
-          await _localDataSource.saveChat(chat);
+        // Fetch fresh data from remote to get updated member list
+        try {
+          final freshRemote = await _remoteDataSource.getChatById(chatId);
+          final freshChat = freshRemote.toDomain();
+          await _localDataSource.saveChat(freshChat);
+          debugPrint('✅ Local cache updated with fresh member list');
+        } catch (e) {
+          // Non-critical: local cache will be refreshed on next getChatById call
+          debugPrint('⚠️ Could not refresh local cache after adding members: $e');
         }
 
         return const Right(true);
