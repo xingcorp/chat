@@ -29,6 +29,7 @@ import 'package:flutter_chat_app/domain/usecases/message/get_messages_usecase.da
 import 'package:flutter_chat_app/domain/usecases/message/mark_as_read_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/remove_reaction_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/send_message_usecase.dart';
+import 'package:flutter_chat_app/domain/usecases/notification/send_push_notification_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_list_transformer.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
@@ -62,6 +63,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   final AddReactionUseCase _addReaction;
   final RemoveReactionUseCase _removeReaction;
   final GetConversationDetailUseCase _getConversationDetail;
+  final SendPushNotificationUseCase _sendPushNotification;
 
   // Repositories
   final IAttachmentRepository _attachmentRepository;
@@ -160,6 +162,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     required ILocationService locationService,
     required SyncMetadataManager syncMetadataManager,
     required GetConversationDetailUseCase getConversationDetail,
+    required SendPushNotificationUseCase sendPushNotification,
     required this.logger,
   })  : _getMessages = getMessages,
         _sendMessage = sendMessage,
@@ -174,6 +177,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         _locationService = locationService,
         _syncMetadataManager = syncMetadataManager,
         _getConversationDetail = getConversationDetail,
+        _sendPushNotification = sendPushNotification,
         super(const MessageState.initial()) {
     on<LoadMessages>(_onLoadMessages);
     on<LoadMoreMessages>(_onLoadMoreMessages);
@@ -443,6 +447,26 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         // Mark message list as dirty
         _cacheSyncStrategy.markChatMessagesDirty(freshState.chatId);
         _cacheSyncStrategy.markChatListDirty();
+
+        // Send push notification if message has mentions (fire-and-forget)
+        if (newMessage.mentionTo.isNotEmpty) {
+          final mentionIds = newMessage.mentionTo.map((m) => m.id).toList();
+          final conversationName = freshState.conversationDetail?.name ?? 'Chat';
+          
+          logger.i('Sending push notification to ${mentionIds.length} mentioned users');
+          
+          // Fire-and-forget: don't await, don't block UI
+          unawaited(_sendPushNotification.call(
+            receiverIds: mentionIds,
+            title: conversationName,
+            content: newMessage.content,
+            metadata: {
+              'conversationId': newMessage.chatId,
+              'messageId': newMessage.id,
+              'type': 'mention',
+            },
+          ));
+        }
       },
     );
   }
@@ -1489,6 +1513,26 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       messages: messages,
       uiMessages: _transformMessages(messages),
     ));
+
+    // Send push notification if message has mentions (fire-and-forget)
+    if (serverMessage.mentionTo.isNotEmpty) {
+      final mentionIds = serverMessage.mentionTo.map((m) => m.id).toList();
+      final conversationName = currentState.conversationDetail?.name ?? 'Chat';
+      
+      logger.i('Sending push notification to ${mentionIds.length} mentioned users');
+      
+      // Fire-and-forget: don't await, don't block UI
+      unawaited(_sendPushNotification.call(
+        receiverIds: mentionIds,
+        title: conversationName,
+        content: serverMessage.content,
+        metadata: {
+          'conversationId': serverMessage.chatId,
+          'messageId': serverMessage.id,
+          'type': 'mention',
+        },
+      ));
+    }
   }
 
   /// Update attachment upload progress (matched by clientId)
@@ -1630,6 +1674,26 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
             messages: updatedMessages,
             uiMessages: _transformMessages(updatedMessages),
           ));
+
+          // Send push notification if message has mentions (fire-and-forget)
+          if (message.mentionTo.isNotEmpty) {
+            final mentionIds = message.mentionTo.map((m) => m.id).toList();
+            final conversationName = currentState.conversationDetail?.name ?? 'Chat';
+            
+            logger.i('Sending push notification to ${mentionIds.length} mentioned users');
+            
+            // Fire-and-forget: don't await, don't block UI
+            unawaited(_sendPushNotification.call(
+              receiverIds: mentionIds,
+              title: conversationName,
+              content: message.content,
+              metadata: {
+                'conversationId': message.chatId,
+                'messageId': message.id,
+                'type': 'mention',
+              },
+            ));
+          }
         },
       );
     } catch (e, stackTrace) {

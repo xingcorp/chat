@@ -2927,5 +2927,15 @@
   "readReceiptTitle": "Read by",
   "@readReceiptTitle": {
     "description": "Title for the bottom sheet showing full reader list"
+  },
+
+  "conversationNotFound": "Conversation not found or has been deleted",
+  "@conversationNotFound": {
+    "description": "Error message when conversation from notification doesn't exist"
+  },
+
+  "cannotOpenConversation": "Cannot open conversation",
+  "@cannotOpenConversation": {
+    "description": "Error message when unable to open conversation from notification"
   }
 }

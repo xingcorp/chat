@@ -904,5 +904,15 @@
   "readReceiptTitle": "Đã xem bởi",
   "@readReceiptTitle": {
     "description": "Title for the bottom sheet showing full reader list"
+  },
+
+  "conversationNotFound": "Cuộc trò chuyện không tồn tại hoặc đã bị xóa",
+  "@conversationNotFound": {
+    "description": "Error message when conversation from notification doesn't exist"
+  },
+
+  "cannotOpenConversation": "Không thể mở cuộc trò chuyện",
+  "@cannotOpenConversation": {
+    "description": "Error message when unable to open conversation from notification"
   }
 }

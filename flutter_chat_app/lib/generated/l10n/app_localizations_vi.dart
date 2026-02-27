@@ -1652,4 +1652,11 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get readReceiptTitle => 'Đã xem bởi';
+
+  @override
+  String get conversationNotFound =>
+      'Cuộc trò chuyện không tồn tại hoặc đã bị xóa';
+
+  @override
+  String get cannotOpenConversation => 'Không thể mở cuộc trò chuyện';
 }

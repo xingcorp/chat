@@ -648,6 +648,29 @@ class ChatMutations {
       }
     }
   ''';
+
+  /// **Notify User**
+  ///
+  /// Triggers push notification to specified users via Firebase Cloud Messaging.
+  ///
+  /// **Variables:**
+  /// - arguments: ChatNotifyUserData
+  ///   - receiverIds: [String!] (required, list of user IDs to notify)
+  ///   - title: String! (required, notification title)
+  ///   - content: String! (required, notification body text)
+  ///   - metadata: JSON (optional, additional data for deep linking)
+  ///
+  /// **Returns:** Boolean (true if notification sent successfully)
+  ///
+  /// **Use Cases:**
+  /// - Mention notifications: notify users when mentioned in messages
+  /// - Important messages: trigger push for high-priority content
+  /// - Custom alerts: send targeted notifications to specific users
+  static const String notifyUser = r'''
+    mutation NotifyUser($arguments: ChatNotifyUserData!) {
+      chatNotifyUser(arguments: $arguments)
+    }
+  ''';
 }
 
 /// **CHAT SUBSCRIPTIONS**
