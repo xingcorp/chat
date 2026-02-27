@@ -41,7 +41,7 @@ extension ChatStateExtension on ChatState {
   /// Get chats list (backward compatibility)
   List<Chat> get chats {
     return whenOrNull(
-      loaded: (chats, _, __, ___, ____, _____) => chats,
+      loaded: (chats, _, __, ___, ____, _____, _______, ________, _________, __________) => chats,
       messagesLoaded: (chats, _, __) => chats ?? [],
     ) ?? [];
   }

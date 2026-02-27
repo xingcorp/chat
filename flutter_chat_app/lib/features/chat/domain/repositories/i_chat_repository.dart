@@ -23,7 +23,7 @@ abstract class IChatRepository {
   Future<Either<Failure, List<Chat>>> getChats();
 
   /// Get user's chat list by page with offline-first strategy.
-  Future<Either<Failure, PagedResult<Chat>>> getChatsPage(PageRequest request);
+  Future<Either<Failure, PagedResult<Chat>>> getChatsPage(PageRequest request, {String? typeFilter});
 
   /// Get chat details by ID with online-first strategy (fresh data)
   Future<Either<Failure, Chat?>> getChatById(String chatId);

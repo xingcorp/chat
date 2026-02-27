@@ -404,6 +404,21 @@ class AppLocalizationsVi extends AppLocalizations {
       'Chưa có cuộc trò chuyện. Bắt đầu trò chuyện mới!';
 
   @override
+  String get allConversations => 'Tất cả';
+
+  @override
+  String get directConversations => 'Cá nhân';
+
+  @override
+  String get groupConversations => 'Nhóm';
+
+  @override
+  String get noDirectConversations => 'Không có chat cá nhân';
+
+  @override
+  String get noGroupConversations => 'Không có nhóm';
+
+  @override
   String get noMessagesInChat => 'Chưa có tin nhắn. Gửi tin nhắn đầu tiên!';
 
   @override

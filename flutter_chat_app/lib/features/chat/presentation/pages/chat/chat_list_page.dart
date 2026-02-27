@@ -9,8 +9,10 @@ import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_conversation_tile.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/conversation_type_tab_bar.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
@@ -183,27 +185,43 @@ class _ChatListPageState extends BaseState<ChatListPage> {
                   ],
                 ),
               ),
-              loaded: (chats, hasMore, isLoadingMore, page, pageSize, total) {
-                return AppListView<Chat>(
-                  items: chats,
-                  isLoading: isLoadingMore,
-                  hasMore: hasMore,
-                  onRefresh: _onRefresh,
-                  onLoadMore: () async {
-                    if (isLoadingMore) return;
-                    _chatBloc.add(const ChatEvent.loadMoreChats());
-                  },
-                  emptyWidget: _buildEmptyState(context),
-                  separatorBuilder: (context, index) => Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    indent: 68, // Avatar width (48) + left padding (12) + gap (8)
-                    endIndent: 0,
-                    color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
-                  ),
-                  itemBuilder: (context, chat, index) {
-                    return _buildChatListItem(context, chat);
-                  },
+              loaded: (chats, hasMore, isLoadingMore, page, pageSize, total, activeFilter, cachedLists, filterPages, filterHasMore) {
+                return Column(
+                  children: [
+                    ConversationTypeTabBar(
+                      activeFilter: activeFilter,
+                      onFilterChanged: (filter) {
+                        _chatBloc.add(ChatEvent.changeConversationTypeFilter(filter: filter));
+                      },
+                    ),
+                    Expanded(
+                      child: isLoadingMore && chats.isEmpty
+                          ? Center(
+                              child: AppProgressIndicator.circular(label: context.l10n.loading),
+                            )
+                          : AppListView<Chat>(
+                              items: chats,
+                              isLoading: isLoadingMore,
+                              hasMore: hasMore,
+                              onRefresh: _onRefresh,
+                              onLoadMore: () async {
+                                if (isLoadingMore) return;
+                                _chatBloc.add(const ChatEvent.loadMoreChats());
+                              },
+                              emptyWidget: _buildEmptyState(context, activeFilter: activeFilter),
+                              separatorBuilder: (context, index) => Divider(
+                                height: 1,
+                                thickness: 0.5,
+                                indent: 68,
+                                endIndent: 0,
+                                color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+                              ),
+                              itemBuilder: (context, chat, index) {
+                                return _buildChatListItem(context, chat);
+                              },
+                            ),
+                    ),
+                  ],
                 );
               },
               error: (message) {
@@ -326,7 +344,12 @@ class _ChatListPageState extends BaseState<ChatListPage> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, {ConversationTypeFilter activeFilter = ConversationTypeFilter.all}) {
+    final message = switch (activeFilter) {
+      ConversationTypeFilter.direct => context.l10n.noDirectConversations,
+      ConversationTypeFilter.group => context.l10n.noGroupConversations,
+      _ => context.l10n.noConversations,
+    };
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -338,7 +361,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
           ),
           const SizedBox(height: AppDimens.spaceMedium),
           AppText(
-            context.l10n.noConversations,
+            message,
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
             ),

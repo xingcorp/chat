@@ -129,6 +129,11 @@
   "leavingConversation": "Đang rời khỏi cuộc trò chuyện...",
 
   "noConversations": "Chưa có cuộc trò chuyện. Bắt đầu trò chuyện mới!",
+  "allConversations": "Tất cả",
+  "directConversations": "Cá nhân",
+  "groupConversations": "Nhóm",
+  "noDirectConversations": "Không có chat cá nhân",
+  "noGroupConversations": "Không có nhóm",
   "noMessagesInChat": "Chưa có tin nhắn. Gửi tin nhắn đầu tiên!",
   "noSearchResults": "Không tìm thấy kết quả nào.",
 

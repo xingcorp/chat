@@ -29,11 +29,11 @@ class GetConversationsUseCase {
   /// Returns Either<Failure, PagedResult<Chat>>
   /// - Left: Failure (NetworkFailure, ServerFailure, etc.)
   /// - Right: PagedResult of Chat entities
-  Future<Either<Failure, PagedResult<Chat>>> call(PageRequest request) async {
+  Future<Either<Failure, PagedResult<Chat>>> call(PageRequest request, {String? typeFilter}) async {
     _logger.info('GetConversationsUseCase: Starting operation');
 
     try {
-      final result = await _repository.getChatsPage(request);
+      final result = await _repository.getChatsPage(request, typeFilter: typeFilter);
 
       return result.fold(
         (failure) {

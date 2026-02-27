@@ -403,6 +403,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noConversations => 'No conversations yet. Start a new chat!';
 
   @override
+  String get allConversations => 'All';
+
+  @override
+  String get directConversations => 'Direct';
+
+  @override
+  String get groupConversations => 'Groups';
+
+  @override
+  String get noDirectConversations => 'No direct conversations';
+
+  @override
+  String get noGroupConversations => 'No group conversations';
+
+  @override
   String get noMessagesInChat => 'No messages yet. Send the first message!';
 
   @override

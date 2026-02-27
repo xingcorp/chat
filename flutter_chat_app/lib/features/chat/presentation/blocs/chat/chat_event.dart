@@ -97,4 +97,9 @@ class ChatEvent with _$ChatEvent {
 
   /// Clear search and reload normal chat list
   const factory ChatEvent.clearSearch() = _ClearSearch;
+
+  /// Change conversation type filter (All / Direct / Group)
+  const factory ChatEvent.changeConversationTypeFilter({
+    required ConversationTypeFilter filter,
+  }) = _ChangeConversationTypeFilter;
 } 

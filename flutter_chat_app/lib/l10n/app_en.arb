@@ -662,6 +662,31 @@
     "description": "Empty state message when there are no conversations"
   },
 
+  "allConversations": "All",
+  "@allConversations": {
+    "description": "Tab label for all conversations"
+  },
+
+  "directConversations": "Direct",
+  "@directConversations": {
+    "description": "Tab label for direct (1-1) conversations"
+  },
+
+  "groupConversations": "Groups",
+  "@groupConversations": {
+    "description": "Tab label for group conversations"
+  },
+
+  "noDirectConversations": "No direct conversations",
+  "@noDirectConversations": {
+    "description": "Empty state message when there are no direct conversations"
+  },
+
+  "noGroupConversations": "No group conversations",
+  "@noGroupConversations": {
+    "description": "Empty state message when there are no group conversations"
+  },
+
   "noMessagesInChat": "No messages yet. Send the first message!",
   "@noMessagesInChat": {
     "description": "Empty state message when there are no messages in a chat"

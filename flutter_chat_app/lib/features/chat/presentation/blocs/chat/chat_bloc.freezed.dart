@@ -47,6 +47,8 @@ mixin _$ChatEvent {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -77,6 +79,8 @@ mixin _$ChatEvent {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -107,6 +111,8 @@ mixin _$ChatEvent {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -131,6 +137,8 @@ mixin _$ChatEvent {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -154,6 +162,8 @@ mixin _$ChatEvent {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -177,6 +187,8 @@ mixin _$ChatEvent {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -294,6 +306,8 @@ class _$LoadChatsImpl implements _LoadChats {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return loadChats(forceRefresh);
   }
@@ -327,6 +341,8 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return loadChats?.call(forceRefresh);
   }
@@ -360,6 +376,8 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (loadChats != null) {
@@ -390,6 +408,8 @@ class _$LoadChatsImpl implements _LoadChats {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return loadChats(this);
   }
@@ -416,6 +436,8 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return loadChats?.call(this);
   }
@@ -442,6 +464,8 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (loadChats != null) {
@@ -527,6 +551,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return loadMoreChats();
   }
@@ -560,6 +586,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return loadMoreChats?.call();
   }
@@ -593,6 +621,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (loadMoreChats != null) {
@@ -623,6 +653,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return loadMoreChats(this);
   }
@@ -649,6 +681,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return loadMoreChats?.call(this);
   }
@@ -675,6 +709,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (loadMoreChats != null) {
@@ -782,6 +818,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return loadChatDetails(chatId);
   }
@@ -815,6 +853,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return loadChatDetails?.call(chatId);
   }
@@ -848,6 +888,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (loadChatDetails != null) {
@@ -878,6 +920,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return loadChatDetails(this);
   }
@@ -904,6 +948,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return loadChatDetails?.call(this);
   }
@@ -930,6 +976,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (loadChatDetails != null) {
@@ -1061,6 +1109,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return loadMessages(chatId, limit, offset);
   }
@@ -1094,6 +1144,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return loadMessages?.call(chatId, limit, offset);
   }
@@ -1127,6 +1179,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (loadMessages != null) {
@@ -1157,6 +1211,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return loadMessages(this);
   }
@@ -1183,6 +1239,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return loadMessages?.call(this);
   }
@@ -1209,6 +1267,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (loadMessages != null) {
@@ -1367,6 +1427,8 @@ class _$SendMessageImpl implements _SendMessage {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return sendMessage(chatId, content, contentType, attachmentIds);
   }
@@ -1400,6 +1462,8 @@ class _$SendMessageImpl implements _SendMessage {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return sendMessage?.call(chatId, content, contentType, attachmentIds);
   }
@@ -1433,6 +1497,8 @@ class _$SendMessageImpl implements _SendMessage {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (sendMessage != null) {
@@ -1463,6 +1529,8 @@ class _$SendMessageImpl implements _SendMessage {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return sendMessage(this);
   }
@@ -1489,6 +1557,8 @@ class _$SendMessageImpl implements _SendMessage {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return sendMessage?.call(this);
   }
@@ -1515,6 +1585,8 @@ class _$SendMessageImpl implements _SendMessage {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (sendMessage != null) {
@@ -1674,6 +1746,8 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return createChat(type, name, description, participantIds);
   }
@@ -1707,6 +1781,8 @@ class _$CreateChatImpl implements _CreateChat {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return createChat?.call(type, name, description, participantIds);
   }
@@ -1740,6 +1816,8 @@ class _$CreateChatImpl implements _CreateChat {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (createChat != null) {
@@ -1770,6 +1848,8 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return createChat(this);
   }
@@ -1796,6 +1876,8 @@ class _$CreateChatImpl implements _CreateChat {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return createChat?.call(this);
   }
@@ -1822,6 +1904,8 @@ class _$CreateChatImpl implements _CreateChat {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (createChat != null) {
@@ -1967,6 +2051,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return updateChat(chatId, name, description, avatar);
   }
@@ -2000,6 +2086,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return updateChat?.call(chatId, name, description, avatar);
   }
@@ -2033,6 +2121,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (updateChat != null) {
@@ -2063,6 +2153,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return updateChat(this);
   }
@@ -2089,6 +2181,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return updateChat?.call(this);
   }
@@ -2115,6 +2209,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (updateChat != null) {
@@ -2233,6 +2329,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return leaveChat(chatId);
   }
@@ -2266,6 +2364,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return leaveChat?.call(chatId);
   }
@@ -2299,6 +2399,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (leaveChat != null) {
@@ -2329,6 +2431,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return leaveChat(this);
   }
@@ -2355,6 +2459,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return leaveChat?.call(this);
   }
@@ -2381,6 +2487,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (leaveChat != null) {
@@ -2509,6 +2617,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return addUsersToChat(chatId, userIds);
   }
@@ -2542,6 +2652,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return addUsersToChat?.call(chatId, userIds);
   }
@@ -2575,6 +2687,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (addUsersToChat != null) {
@@ -2605,6 +2719,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return addUsersToChat(this);
   }
@@ -2631,6 +2747,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return addUsersToChat?.call(this);
   }
@@ -2657,6 +2775,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (addUsersToChat != null) {
@@ -2788,6 +2908,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return removeUsersFromChat(chatId, userIds);
   }
@@ -2821,6 +2943,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return removeUsersFromChat?.call(chatId, userIds);
   }
@@ -2854,6 +2978,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (removeUsersFromChat != null) {
@@ -2884,6 +3010,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return removeUsersFromChat(this);
   }
@@ -2910,6 +3038,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return removeUsersFromChat?.call(this);
   }
@@ -2936,6 +3066,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (removeUsersFromChat != null) {
@@ -3068,6 +3200,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return markMessagesAsRead(chatId, messageIds);
   }
@@ -3101,6 +3235,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return markMessagesAsRead?.call(chatId, messageIds);
   }
@@ -3134,6 +3270,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (markMessagesAsRead != null) {
@@ -3164,6 +3302,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return markMessagesAsRead(this);
   }
@@ -3190,6 +3330,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return markMessagesAsRead?.call(this);
   }
@@ -3216,6 +3358,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (markMessagesAsRead != null) {
@@ -3304,6 +3448,8 @@ class _$SyncChatsImpl implements _SyncChats {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return syncChats();
   }
@@ -3337,6 +3483,8 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return syncChats?.call();
   }
@@ -3370,6 +3518,8 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (syncChats != null) {
@@ -3400,6 +3550,8 @@ class _$SyncChatsImpl implements _SyncChats {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return syncChats(this);
   }
@@ -3426,6 +3578,8 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return syncChats?.call(this);
   }
@@ -3452,6 +3606,8 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (syncChats != null) {
@@ -3558,6 +3714,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return syncMessages(chatId);
   }
@@ -3591,6 +3749,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return syncMessages?.call(chatId);
   }
@@ -3624,6 +3784,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (syncMessages != null) {
@@ -3654,6 +3816,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return syncMessages(this);
   }
@@ -3680,6 +3844,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return syncMessages?.call(this);
   }
@@ -3706,6 +3872,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (syncMessages != null) {
@@ -3819,6 +3987,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return newMessageReceived(message);
   }
@@ -3852,6 +4022,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return newMessageReceived?.call(message);
   }
@@ -3885,6 +4057,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (newMessageReceived != null) {
@@ -3915,6 +4089,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return newMessageReceived(this);
   }
@@ -3941,6 +4117,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return newMessageReceived?.call(this);
   }
@@ -3967,6 +4145,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (newMessageReceived != null) {
@@ -4081,6 +4261,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return connectivityChanged(isConnected);
   }
@@ -4114,6 +4296,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return connectivityChanged?.call(isConnected);
   }
@@ -4147,6 +4331,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (connectivityChanged != null) {
@@ -4177,6 +4363,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return connectivityChanged(this);
   }
@@ -4203,6 +4391,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return connectivityChanged?.call(this);
   }
@@ -4229,6 +4419,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (connectivityChanged != null) {
@@ -4343,6 +4535,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return messageStatusUpdated(message);
   }
@@ -4376,6 +4570,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return messageStatusUpdated?.call(message);
   }
@@ -4409,6 +4605,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (messageStatusUpdated != null) {
@@ -4439,6 +4637,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return messageStatusUpdated(this);
   }
@@ -4465,6 +4665,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return messageStatusUpdated?.call(this);
   }
@@ -4491,6 +4693,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (messageStatusUpdated != null) {
@@ -4603,6 +4807,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return chatUpdated(chat);
   }
@@ -4636,6 +4842,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return chatUpdated?.call(chat);
   }
@@ -4669,6 +4877,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (chatUpdated != null) {
@@ -4699,6 +4909,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return chatUpdated(this);
   }
@@ -4725,6 +4937,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return chatUpdated?.call(this);
   }
@@ -4751,6 +4965,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (chatUpdated != null) {
@@ -4862,6 +5078,8 @@ class _$SearchChatsImpl implements _SearchChats {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return searchChats(keyword);
   }
@@ -4895,6 +5113,8 @@ class _$SearchChatsImpl implements _SearchChats {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return searchChats?.call(keyword);
   }
@@ -4928,6 +5148,8 @@ class _$SearchChatsImpl implements _SearchChats {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (searchChats != null) {
@@ -4958,6 +5180,8 @@ class _$SearchChatsImpl implements _SearchChats {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return searchChats(this);
   }
@@ -4984,6 +5208,8 @@ class _$SearchChatsImpl implements _SearchChats {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return searchChats?.call(this);
   }
@@ -5010,6 +5236,8 @@ class _$SearchChatsImpl implements _SearchChats {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (searchChats != null) {
@@ -5096,6 +5324,8 @@ class _$ClearSearchImpl implements _ClearSearch {
     required TResult Function(Chat chat) chatUpdated,
     required TResult Function(String keyword) searchChats,
     required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
   }) {
     return clearSearch();
   }
@@ -5129,6 +5359,8 @@ class _$ClearSearchImpl implements _ClearSearch {
     TResult? Function(Chat chat)? chatUpdated,
     TResult? Function(String keyword)? searchChats,
     TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
   }) {
     return clearSearch?.call();
   }
@@ -5162,6 +5394,8 @@ class _$ClearSearchImpl implements _ClearSearch {
     TResult Function(Chat chat)? chatUpdated,
     TResult Function(String keyword)? searchChats,
     TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (clearSearch != null) {
@@ -5192,6 +5426,8 @@ class _$ClearSearchImpl implements _ClearSearch {
     required TResult Function(_ChatUpdated value) chatUpdated,
     required TResult Function(_SearchChats value) searchChats,
     required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
   }) {
     return clearSearch(this);
   }
@@ -5218,6 +5454,8 @@ class _$ClearSearchImpl implements _ClearSearch {
     TResult? Function(_ChatUpdated value)? chatUpdated,
     TResult? Function(_SearchChats value)? searchChats,
     TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
   }) {
     return clearSearch?.call(this);
   }
@@ -5244,6 +5482,8 @@ class _$ClearSearchImpl implements _ClearSearch {
     TResult Function(_ChatUpdated value)? chatUpdated,
     TResult Function(_SearchChats value)? searchChats,
     TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
     required TResult orElse(),
   }) {
     if (clearSearch != null) {
@@ -5258,13 +5498,301 @@ abstract class _ClearSearch implements ChatEvent {
 }
 
 /// @nodoc
+abstract class _$$ChangeConversationTypeFilterImplCopyWith<$Res> {
+  factory _$$ChangeConversationTypeFilterImplCopyWith(
+          _$ChangeConversationTypeFilterImpl value,
+          $Res Function(_$ChangeConversationTypeFilterImpl) then) =
+      __$$ChangeConversationTypeFilterImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({ConversationTypeFilter filter});
+}
+
+/// @nodoc
+class __$$ChangeConversationTypeFilterImplCopyWithImpl<$Res>
+    extends _$ChatEventCopyWithImpl<$Res, _$ChangeConversationTypeFilterImpl>
+    implements _$$ChangeConversationTypeFilterImplCopyWith<$Res> {
+  __$$ChangeConversationTypeFilterImplCopyWithImpl(
+      _$ChangeConversationTypeFilterImpl _value,
+      $Res Function(_$ChangeConversationTypeFilterImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? filter = null,
+  }) {
+    return _then(_$ChangeConversationTypeFilterImpl(
+      filter: null == filter
+          ? _value.filter
+          : filter // ignore: cast_nullable_to_non_nullable
+              as ConversationTypeFilter,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ChangeConversationTypeFilterImpl
+    implements _ChangeConversationTypeFilter {
+  const _$ChangeConversationTypeFilterImpl({required this.filter});
+
+  @override
+  final ConversationTypeFilter filter;
+
+  @override
+  String toString() {
+    return 'ChatEvent.changeConversationTypeFilter(filter: $filter)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ChangeConversationTypeFilterImpl &&
+            (identical(other.filter, filter) || other.filter == filter));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, filter);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ChangeConversationTypeFilterImplCopyWith<
+          _$ChangeConversationTypeFilterImpl>
+      get copyWith => __$$ChangeConversationTypeFilterImplCopyWithImpl<
+          _$ChangeConversationTypeFilterImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
+    required TResult Function(String chatId) loadChatDetails,
+    required TResult Function(String chatId, int limit, int offset)
+        loadMessages,
+    required TResult Function(String chatId, String content,
+            ContentType contentType, List<String> attachmentIds)
+        sendMessage,
+    required TResult Function(ChatType type, String? name, String? description,
+            List<String> participantIds)
+        createChat,
+    required TResult Function(
+            String chatId, String? name, String? description, String? avatar)
+        updateChat,
+    required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId, List<String> userIds)
+        addUsersToChat,
+    required TResult Function(String chatId, List<String> userIds)
+        removeUsersFromChat,
+    required TResult Function(String chatId, List<String> messageIds)
+        markMessagesAsRead,
+    required TResult Function() syncChats,
+    required TResult Function(String chatId) syncMessages,
+    required TResult Function(ChatMessage message) newMessageReceived,
+    required TResult Function(bool isConnected) connectivityChanged,
+    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
+  }) {
+    return changeConversationTypeFilter(filter);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
+    TResult? Function(String chatId)? loadChatDetails,
+    TResult? Function(String chatId, int limit, int offset)? loadMessages,
+    TResult? Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult? Function(ChatType type, String? name, String? description,
+            List<String> participantIds)?
+        createChat,
+    TResult? Function(
+            String chatId, String? name, String? description, String? avatar)?
+        updateChat,
+    TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult? Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult? Function()? syncChats,
+    TResult? Function(String chatId)? syncMessages,
+    TResult? Function(ChatMessage message)? newMessageReceived,
+    TResult? Function(bool isConnected)? connectivityChanged,
+    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
+  }) {
+    return changeConversationTypeFilter?.call(filter);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
+    TResult Function(String chatId)? loadChatDetails,
+    TResult Function(String chatId, int limit, int offset)? loadMessages,
+    TResult Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult Function(ChatType type, String? name, String? description,
+            List<String> participantIds)?
+        createChat,
+    TResult Function(
+            String chatId, String? name, String? description, String? avatar)?
+        updateChat,
+    TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult Function()? syncChats,
+    TResult Function(String chatId)? syncMessages,
+    TResult Function(ChatMessage message)? newMessageReceived,
+    TResult Function(bool isConnected)? connectivityChanged,
+    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
+    required TResult orElse(),
+  }) {
+    if (changeConversationTypeFilter != null) {
+      return changeConversationTypeFilter(filter);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
+    required TResult Function(_LoadChatDetails value) loadChatDetails,
+    required TResult Function(_LoadMessages value) loadMessages,
+    required TResult Function(_SendMessage value) sendMessage,
+    required TResult Function(_CreateChat value) createChat,
+    required TResult Function(_UpdateChat value) updateChat,
+    required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_AddUsersToChat value) addUsersToChat,
+    required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
+    required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
+    required TResult Function(_SyncChats value) syncChats,
+    required TResult Function(_SyncMessages value) syncMessages,
+    required TResult Function(_NewMessageReceived value) newMessageReceived,
+    required TResult Function(_ConnectivityChanged value) connectivityChanged,
+    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
+  }) {
+    return changeConversationTypeFilter(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
+    TResult? Function(_LoadChatDetails value)? loadChatDetails,
+    TResult? Function(_LoadMessages value)? loadMessages,
+    TResult? Function(_SendMessage value)? sendMessage,
+    TResult? Function(_CreateChat value)? createChat,
+    TResult? Function(_UpdateChat value)? updateChat,
+    TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_AddUsersToChat value)? addUsersToChat,
+    TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult? Function(_SyncChats value)? syncChats,
+    TResult? Function(_SyncMessages value)? syncMessages,
+    TResult? Function(_NewMessageReceived value)? newMessageReceived,
+    TResult? Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
+  }) {
+    return changeConversationTypeFilter?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
+    TResult Function(_LoadChatDetails value)? loadChatDetails,
+    TResult Function(_LoadMessages value)? loadMessages,
+    TResult Function(_SendMessage value)? sendMessage,
+    TResult Function(_CreateChat value)? createChat,
+    TResult Function(_UpdateChat value)? updateChat,
+    TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_AddUsersToChat value)? addUsersToChat,
+    TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult Function(_SyncChats value)? syncChats,
+    TResult Function(_SyncMessages value)? syncMessages,
+    TResult Function(_NewMessageReceived value)? newMessageReceived,
+    TResult Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
+    required TResult orElse(),
+  }) {
+    if (changeConversationTypeFilter != null) {
+      return changeConversationTypeFilter(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ChangeConversationTypeFilter implements ChatEvent {
+  const factory _ChangeConversationTypeFilter(
+          {required final ConversationTypeFilter filter}) =
+      _$ChangeConversationTypeFilterImpl;
+
+  ConversationTypeFilter get filter;
+  @JsonKey(ignore: true)
+  _$$ChangeConversationTypeFilterImplCopyWith<
+          _$ChangeConversationTypeFilterImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$ChatState {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats, bool hasMore,
-            bool isLoadingMore, int page, int pageSize, int total)
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -5284,8 +5812,17 @@ mixin _$ChatState {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -5305,8 +5842,17 @@ mixin _$ChatState {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -5428,8 +5974,17 @@ class _$InitialImpl implements _Initial {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats, bool hasMore,
-            bool isLoadingMore, int page, int pageSize, int total)
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -5452,8 +6007,17 @@ class _$InitialImpl implements _Initial {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -5476,8 +6040,17 @@ class _$InitialImpl implements _Initial {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -5602,8 +6175,17 @@ class _$LoadingImpl implements _Loading {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats, bool hasMore,
-            bool isLoadingMore, int page, int pageSize, int total)
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -5626,8 +6208,17 @@ class _$LoadingImpl implements _Loading {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -5650,8 +6241,17 @@ class _$LoadingImpl implements _Loading {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -5748,7 +6348,11 @@ abstract class _$$LoadedImplCopyWith<$Res> {
       bool isLoadingMore,
       int page,
       int pageSize,
-      int total});
+      int total,
+      ConversationTypeFilter activeFilter,
+      Map<ConversationTypeFilter, List<Chat>> cachedLists,
+      Map<ConversationTypeFilter, int> filterPages,
+      Map<ConversationTypeFilter, bool> filterHasMore});
 }
 
 /// @nodoc
@@ -5768,6 +6372,10 @@ class __$$LoadedImplCopyWithImpl<$Res>
     Object? page = null,
     Object? pageSize = null,
     Object? total = null,
+    Object? activeFilter = null,
+    Object? cachedLists = null,
+    Object? filterPages = null,
+    Object? filterHasMore = null,
   }) {
     return _then(_$LoadedImpl(
       chats: null == chats
@@ -5794,6 +6402,22 @@ class __$$LoadedImplCopyWithImpl<$Res>
           ? _value.total
           : total // ignore: cast_nullable_to_non_nullable
               as int,
+      activeFilter: null == activeFilter
+          ? _value.activeFilter
+          : activeFilter // ignore: cast_nullable_to_non_nullable
+              as ConversationTypeFilter,
+      cachedLists: null == cachedLists
+          ? _value._cachedLists
+          : cachedLists // ignore: cast_nullable_to_non_nullable
+              as Map<ConversationTypeFilter, List<Chat>>,
+      filterPages: null == filterPages
+          ? _value._filterPages
+          : filterPages // ignore: cast_nullable_to_non_nullable
+              as Map<ConversationTypeFilter, int>,
+      filterHasMore: null == filterHasMore
+          ? _value._filterHasMore
+          : filterHasMore // ignore: cast_nullable_to_non_nullable
+              as Map<ConversationTypeFilter, bool>,
     ));
   }
 }
@@ -5807,8 +6431,18 @@ class _$LoadedImpl implements _Loaded {
       this.isLoadingMore = false,
       this.page = 0,
       this.pageSize = 25,
-      this.total = 0})
-      : _chats = chats;
+      this.total = 0,
+      this.activeFilter = ConversationTypeFilter.all,
+      final Map<ConversationTypeFilter, List<Chat>> cachedLists =
+          const <ConversationTypeFilter, List<Chat>>{},
+      final Map<ConversationTypeFilter, int> filterPages =
+          const <ConversationTypeFilter, int>{},
+      final Map<ConversationTypeFilter, bool> filterHasMore =
+          const <ConversationTypeFilter, bool>{}})
+      : _chats = chats,
+        _cachedLists = cachedLists,
+        _filterPages = filterPages,
+        _filterHasMore = filterHasMore;
 
   final List<Chat> _chats;
   @override
@@ -5833,10 +6467,39 @@ class _$LoadedImpl implements _Loaded {
   @override
   @JsonKey()
   final int total;
+  @override
+  @JsonKey()
+  final ConversationTypeFilter activeFilter;
+  final Map<ConversationTypeFilter, List<Chat>> _cachedLists;
+  @override
+  @JsonKey()
+  Map<ConversationTypeFilter, List<Chat>> get cachedLists {
+    if (_cachedLists is EqualUnmodifiableMapView) return _cachedLists;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_cachedLists);
+  }
+
+  final Map<ConversationTypeFilter, int> _filterPages;
+  @override
+  @JsonKey()
+  Map<ConversationTypeFilter, int> get filterPages {
+    if (_filterPages is EqualUnmodifiableMapView) return _filterPages;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_filterPages);
+  }
+
+  final Map<ConversationTypeFilter, bool> _filterHasMore;
+  @override
+  @JsonKey()
+  Map<ConversationTypeFilter, bool> get filterHasMore {
+    if (_filterHasMore is EqualUnmodifiableMapView) return _filterHasMore;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_filterHasMore);
+  }
 
   @override
   String toString() {
-    return 'ChatState.loaded(chats: $chats, hasMore: $hasMore, isLoadingMore: $isLoadingMore, page: $page, pageSize: $pageSize, total: $total)';
+    return 'ChatState.loaded(chats: $chats, hasMore: $hasMore, isLoadingMore: $isLoadingMore, page: $page, pageSize: $pageSize, total: $total, activeFilter: $activeFilter, cachedLists: $cachedLists, filterPages: $filterPages, filterHasMore: $filterHasMore)';
   }
 
   @override
@@ -5851,7 +6514,15 @@ class _$LoadedImpl implements _Loaded {
             (identical(other.page, page) || other.page == page) &&
             (identical(other.pageSize, pageSize) ||
                 other.pageSize == pageSize) &&
-            (identical(other.total, total) || other.total == total));
+            (identical(other.total, total) || other.total == total) &&
+            (identical(other.activeFilter, activeFilter) ||
+                other.activeFilter == activeFilter) &&
+            const DeepCollectionEquality()
+                .equals(other._cachedLists, _cachedLists) &&
+            const DeepCollectionEquality()
+                .equals(other._filterPages, _filterPages) &&
+            const DeepCollectionEquality()
+                .equals(other._filterHasMore, _filterHasMore));
   }
 
   @override
@@ -5862,7 +6533,11 @@ class _$LoadedImpl implements _Loaded {
       isLoadingMore,
       page,
       pageSize,
-      total);
+      total,
+      activeFilter,
+      const DeepCollectionEquality().hash(_cachedLists),
+      const DeepCollectionEquality().hash(_filterPages),
+      const DeepCollectionEquality().hash(_filterHasMore));
 
   @JsonKey(ignore: true)
   @override
@@ -5875,8 +6550,17 @@ class _$LoadedImpl implements _Loaded {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats, bool hasMore,
-            bool isLoadingMore, int page, int pageSize, int total)
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -5891,7 +6575,8 @@ class _$LoadedImpl implements _Loaded {
     required TResult Function() offline,
     required TResult Function(String message) error,
   }) {
-    return loaded(chats, hasMore, isLoadingMore, page, pageSize, total);
+    return loaded(chats, hasMore, isLoadingMore, page, pageSize, total,
+        activeFilter, cachedLists, filterPages, filterHasMore);
   }
 
   @override
@@ -5899,8 +6584,17 @@ class _$LoadedImpl implements _Loaded {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -5915,7 +6609,8 @@ class _$LoadedImpl implements _Loaded {
     TResult? Function()? offline,
     TResult? Function(String message)? error,
   }) {
-    return loaded?.call(chats, hasMore, isLoadingMore, page, pageSize, total);
+    return loaded?.call(chats, hasMore, isLoadingMore, page, pageSize, total,
+        activeFilter, cachedLists, filterPages, filterHasMore);
   }
 
   @override
@@ -5923,8 +6618,17 @@ class _$LoadedImpl implements _Loaded {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -5941,7 +6645,8 @@ class _$LoadedImpl implements _Loaded {
     required TResult orElse(),
   }) {
     if (loaded != null) {
-      return loaded(chats, hasMore, isLoadingMore, page, pageSize, total);
+      return loaded(chats, hasMore, isLoadingMore, page, pageSize, total,
+          activeFilter, cachedLists, filterPages, filterHasMore);
     }
     return orElse();
   }
@@ -6012,7 +6717,11 @@ abstract class _Loaded implements ChatState {
       final bool isLoadingMore,
       final int page,
       final int pageSize,
-      final int total}) = _$LoadedImpl;
+      final int total,
+      final ConversationTypeFilter activeFilter,
+      final Map<ConversationTypeFilter, List<Chat>> cachedLists,
+      final Map<ConversationTypeFilter, int> filterPages,
+      final Map<ConversationTypeFilter, bool> filterHasMore}) = _$LoadedImpl;
 
   List<Chat> get chats;
   bool get hasMore;
@@ -6020,6 +6729,10 @@ abstract class _Loaded implements ChatState {
   int get page;
   int get pageSize;
   int get total;
+  ConversationTypeFilter get activeFilter;
+  Map<ConversationTypeFilter, List<Chat>> get cachedLists;
+  Map<ConversationTypeFilter, int> get filterPages;
+  Map<ConversationTypeFilter, bool> get filterHasMore;
   @JsonKey(ignore: true)
   _$$LoadedImplCopyWith<_$LoadedImpl> get copyWith =>
       throw _privateConstructorUsedError;
@@ -6092,8 +6805,17 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats, bool hasMore,
-            bool isLoadingMore, int page, int pageSize, int total)
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -6116,8 +6838,17 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -6140,8 +6871,17 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -6307,8 +7047,17 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats, bool hasMore,
-            bool isLoadingMore, int page, int pageSize, int total)
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -6331,8 +7080,17 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -6355,8 +7113,17 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -6552,8 +7319,17 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats, bool hasMore,
-            bool isLoadingMore, int page, int pageSize, int total)
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -6576,8 +7352,17 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -6600,8 +7385,17 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -6771,8 +7565,17 @@ class _$MessageSendingImpl implements _MessageSending {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats, bool hasMore,
-            bool isLoadingMore, int page, int pageSize, int total)
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -6795,8 +7598,17 @@ class _$MessageSendingImpl implements _MessageSending {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -6819,8 +7631,17 @@ class _$MessageSendingImpl implements _MessageSending {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -7015,8 +7836,17 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats, bool hasMore,
-            bool isLoadingMore, int page, int pageSize, int total)
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -7039,8 +7869,17 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -7063,8 +7902,17 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -7201,8 +8049,17 @@ class _$SyncingImpl implements _Syncing {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats, bool hasMore,
-            bool isLoadingMore, int page, int pageSize, int total)
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -7225,8 +8082,17 @@ class _$SyncingImpl implements _Syncing {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -7249,8 +8115,17 @@ class _$SyncingImpl implements _Syncing {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -7375,8 +8250,17 @@ class _$OfflineImpl implements _Offline {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats, bool hasMore,
-            bool isLoadingMore, int page, int pageSize, int total)
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -7399,8 +8283,17 @@ class _$OfflineImpl implements _Offline {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -7423,8 +8316,17 @@ class _$OfflineImpl implements _Offline {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -7575,8 +8477,17 @@ class _$ErrorImpl implements _Error {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Chat> chats, bool hasMore,
-            bool isLoadingMore, int page, int pageSize, int total)
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -7599,8 +8510,17 @@ class _$ErrorImpl implements _Error {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -7623,8 +8543,17 @@ class _$ErrorImpl implements _Error {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Chat> chats, bool hasMore, bool isLoadingMore,
-            int page, int pageSize, int total)?
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,

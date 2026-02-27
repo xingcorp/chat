@@ -17,6 +17,10 @@ class ChatState with _$ChatState {
     @Default(0) int page,
     @Default(25) int pageSize,
     @Default(0) int total,
+    @Default(ConversationTypeFilter.all) ConversationTypeFilter activeFilter,
+    @Default(<ConversationTypeFilter, List<Chat>>{}) Map<ConversationTypeFilter, List<Chat>> cachedLists,
+    @Default(<ConversationTypeFilter, int>{}) Map<ConversationTypeFilter, int> filterPages,
+    @Default(<ConversationTypeFilter, bool>{}) Map<ConversationTypeFilter, bool> filterHasMore,
   }) = _Loaded;
   
   /// Chat details loaded state

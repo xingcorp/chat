@@ -830,6 +830,36 @@ abstract class AppLocalizations {
   /// **'No conversations yet. Start a new chat!'**
   String get noConversations;
 
+  /// Tab label for all conversations
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allConversations;
+
+  /// Tab label for direct (1-1) conversations
+  ///
+  /// In en, this message translates to:
+  /// **'Direct'**
+  String get directConversations;
+
+  /// Tab label for group conversations
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get groupConversations;
+
+  /// Empty state message when there are no direct conversations
+  ///
+  /// In en, this message translates to:
+  /// **'No direct conversations'**
+  String get noDirectConversations;
+
+  /// Empty state message when there are no group conversations
+  ///
+  /// In en, this message translates to:
+  /// **'No group conversations'**
+  String get noGroupConversations;
+
   /// Empty state message when there are no messages in a chat
   ///
   /// In en, this message translates to:

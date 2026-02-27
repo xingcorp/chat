@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 /// Bottom sheet for selecting a chat to forward a message to.
 ///
@@ -115,7 +115,7 @@ class _ForwardMessageSheetState extends State<ForwardMessageSheet> {
             Expanded(
               child: chatState.maybeWhen(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                loaded: (chats, _, __, ___, ____, _____) {
+                loaded: (chats, _, __, ___, ____, _____, _______, ________, _________, __________) {
                   final filteredChats = chats.where((chat) {
                     if (_searchQuery.isEmpty) return true;
                     final chatName = chat.name ?? '';

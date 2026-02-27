@@ -139,7 +139,7 @@ class ChatRepositoryImpl implements IChatRepository {
   }
 
   @override
-  Future<Either<Failure, PagedResult<Chat>>> getChatsPage(PageRequest request) async {
+  Future<Either<Failure, PagedResult<Chat>>> getChatsPage(PageRequest request, {String? typeFilter}) async {
     return _executeWithMonitoring('get_chats_page', () async {
       final localChats = await _localDataSource.getChats();
       try {
@@ -162,6 +162,7 @@ class ChatRepositoryImpl implements IChatRepository {
         final remoteResult = await _remoteDataSource.getConversationList(
           size: request.size,
           page: request.page,
+          type: typeFilter,
         );
 
         final remoteChats = remoteResult.toDomainList();

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
+import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/delete_conversation_usecase.dart';
 import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -95,6 +96,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     on<_ChatUpdated>(_onChatUpdated);
     on<_SearchChats>(_onSearchChats);
     on<_ClearSearch>(_onClearSearch);
+    on<_ChangeConversationTypeFilter>(_onChangeConversationTypeFilter);
   }
 
   /// **Load chats using GetConversationsUseCase - CLEAN ARCHITECTURE**
@@ -102,127 +104,169 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     _LoadChats event,
     Emitter<ChatState> emit,
   ) async {
-    final pageSize = state.whenOrNull(
-          loaded: (_, __, ___, ____, pageSize, _____) => pageSize,
-        ) ??
-        25;
+    final current = state.whenOrNull(
+      loaded: (chats, hasMore, isLoadingMore, page, pageSize, total,
+          activeFilter, cachedLists, filterPages, filterHasMore) => (
+        pageSize: pageSize,
+        activeFilter: activeFilter,
+        cachedLists: cachedLists,
+        filterPages: filterPages,
+        filterHasMore: filterHasMore,
+      ),
+    );
+
+    final pageSize = current?.pageSize ?? 25;
+    final activeFilter = current?.activeFilter ?? ConversationTypeFilter.all;
+
+    // On refresh, clear the cache for the current tab so it re-fetches
+    final cachedLists = Map<ConversationTypeFilter, List<Chat>>.from(
+      current?.cachedLists ?? {},
+    );
+    final filterPages = Map<ConversationTypeFilter, int>.from(
+      current?.filterPages ?? {},
+    );
+    final filterHasMore = Map<ConversationTypeFilter, bool>.from(
+      current?.filterHasMore ?? {},
+    );
+
+    if (event.forceRefresh) {
+      cachedLists.remove(activeFilter);
+      filterPages.remove(activeFilter);
+      filterHasMore.remove(activeFilter);
+    }
 
     emit(const ChatState.loading());
 
-    logger.i('Loading conversations using UseCase');
+    logger.i('Loading conversations using UseCase (filter: $activeFilter)');
 
-    // Check if cache refresh is needed
     final shouldRefresh = event.forceRefresh || _cacheSyncStrategy.shouldRefreshChatList();
 
-    // Execute UseCase
     final request = PageRequest.first(size: pageSize);
-    final result = await _getConversations(request);
+    final result = await _getConversations(
+      request,
+      typeFilter: activeFilter.apiValue,
+    );
 
     result.fold(
-        (failure) {
-          logger.e('Failed to load conversations: ${failure.message}');
-          emit(ChatState.error(message: getUserErrorMessage(failure)));
-        },
-        (paged) {
-          final chats = paged.items;
-          // Backend `total` is not reliable (it can be equal to the current page length).
-          // Use a simple heuristic consistent with the Angular frontend:
-          // - If a page returns exactly `pageSize` items, assume there may be more.
-          // - Stop when a page returns fewer than `pageSize` items (including empty).
-          final effectiveHasMore = chats.length == request.size;
+      (failure) {
+        logger.e('Failed to load conversations: ${failure.message}');
+        emit(ChatState.error(message: getUserErrorMessage(failure)));
+      },
+      (paged) {
+        final chats = paged.items;
+        final effectiveHasMore = chats.length == request.size;
 
-          // Reset dirty flag after successful load
-          if (shouldRefresh) {
-            _cacheSyncStrategy.resetChatListDirtyFlag();
-          }
+        if (shouldRefresh) {
+          _cacheSyncStrategy.resetChatListDirtyFlag();
+        }
 
-          // Pre-cache avatars for better UX
-          _prefetchAvatars(chats);
+        _prefetchAvatars(chats);
+        _subscribeToRealTimeUpdates();
 
-          // Subscribe to real-time updates
-          _subscribeToRealTimeUpdates();
+        cachedLists[activeFilter] = chats;
+        filterPages[activeFilter] = 0;
+        filterHasMore[activeFilter] = effectiveHasMore;
 
-          emit(
-            ChatState.loaded(
-              chats: chats,
-              hasMore: effectiveHasMore,
-              isLoadingMore: false,
-              page: 0,
-              pageSize: pageSize,
-              total: chats.length,
-            ),
-          );
-        },
-      );
+        emit(ChatState.loaded(
+          chats: chats,
+          hasMore: effectiveHasMore,
+          isLoadingMore: false,
+          page: 0,
+          pageSize: pageSize,
+          total: chats.length,
+          activeFilter: activeFilter,
+          cachedLists: cachedLists,
+          filterPages: filterPages,
+          filterHasMore: filterHasMore,
+        ));
+      },
+    );
   }
 
   Future<void> _onLoadMoreChats(
     _LoadMoreChats event,
     Emitter<ChatState> emit,
   ) async {
-    final current = state.whenOrNull(loaded: (chats, hasMore, isLoadingMore, page, pageSize, total) {
-      return (
+    final current = state.whenOrNull(
+      loaded: (chats, hasMore, isLoadingMore, page, pageSize, total,
+          activeFilter, cachedLists, filterPages, filterHasMore) => (
         chats: chats,
         hasMore: hasMore,
         isLoadingMore: isLoadingMore,
         page: page,
         pageSize: pageSize,
         total: total,
-      );
-    });
+        activeFilter: activeFilter,
+        cachedLists: cachedLists,
+        filterPages: filterPages,
+        filterHasMore: filterHasMore,
+      ),
+    );
 
     if (current == null) return;
     if (!current.hasMore) return;
     if (current.isLoadingMore) return;
 
-    emit(
-      ChatState.loaded(
-        chats: current.chats,
-        hasMore: current.hasMore,
-        isLoadingMore: true,
-        page: current.page,
-        pageSize: current.pageSize,
-        total: current.total,
-      ),
-    );
+    final cachedLists = Map<ConversationTypeFilter, List<Chat>>.from(current.cachedLists);
+    final filterPages = Map<ConversationTypeFilter, int>.from(current.filterPages);
+    final filterHasMore = Map<ConversationTypeFilter, bool>.from(current.filterHasMore);
 
-    final nextRequest = PageRequest(
-      page: current.page + 1,
-      size: current.pageSize,
-    );
+    emit(ChatState.loaded(
+      chats: current.chats,
+      hasMore: current.hasMore,
+      isLoadingMore: true,
+      page: current.page,
+      pageSize: current.pageSize,
+      total: current.total,
+      activeFilter: current.activeFilter,
+      cachedLists: cachedLists,
+      filterPages: filterPages,
+      filterHasMore: filterHasMore,
+    ));
 
-    final result = await _getConversations(nextRequest);
+    final nextPage = current.page + 1;
+    final nextRequest = PageRequest(page: nextPage, size: current.pageSize);
+
+    final result = await _getConversations(
+      nextRequest,
+      typeFilter: current.activeFilter.apiValue,
+    );
 
     result.fold(
       (failure) {
         logger.e('Failed to load more conversations: ${failure.message}');
-        emit(
-          ChatState.loaded(
-            chats: current.chats,
-            hasMore: current.hasMore,
-            isLoadingMore: false,
-            page: current.page,
-            pageSize: current.pageSize,
-            total: current.total,
-          ),
-        );
+        emit(ChatState.loaded(
+          chats: current.chats,
+          hasMore: current.hasMore,
+          isLoadingMore: false,
+          page: current.page,
+          pageSize: current.pageSize,
+          total: current.total,
+          activeFilter: current.activeFilter,
+          cachedLists: cachedLists,
+          filterPages: filterPages,
+          filterHasMore: filterHasMore,
+        ));
       },
       (paged) {
         if (paged.items.isEmpty) {
-          emit(
-            ChatState.loaded(
-              chats: current.chats,
-              hasMore: false,
-              isLoadingMore: false,
-              page: current.page,
-              pageSize: current.pageSize,
-              total: current.chats.length,
-            ),
-          );
+          filterHasMore[current.activeFilter] = false;
+          emit(ChatState.loaded(
+            chats: current.chats,
+            hasMore: false,
+            isLoadingMore: false,
+            page: current.page,
+            pageSize: current.pageSize,
+            total: current.chats.length,
+            activeFilter: current.activeFilter,
+            cachedLists: cachedLists,
+            filterPages: filterPages,
+            filterHasMore: filterHasMore,
+          ));
           return;
         }
 
-        final merged = <Chat>[...current.chats];
+        final merged = List<Chat>.from(current.chats);
         var addedNew = 0;
         for (final c in paged.items) {
           final idx = merged.indexWhere((x) => x.id == c.id);
@@ -234,20 +278,24 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
           }
         }
 
-        // Continue paging only when the returned page is full.
-        // If backend returns fewer than `pageSize`, we reached the end.
         final effectiveHasMore = addedNew > 0 && paged.items.length == nextRequest.size;
 
-        emit(
-          ChatState.loaded(
-            chats: merged,
-            hasMore: effectiveHasMore,
-            isLoadingMore: false,
-            page: nextRequest.page,
-            pageSize: current.pageSize,
-            total: merged.length,
-          ),
-        );
+        cachedLists[current.activeFilter] = merged;
+        filterPages[current.activeFilter] = nextPage;
+        filterHasMore[current.activeFilter] = effectiveHasMore;
+
+        emit(ChatState.loaded(
+          chats: merged,
+          hasMore: effectiveHasMore,
+          isLoadingMore: false,
+          page: nextPage,
+          pageSize: current.pageSize,
+          total: merged.length,
+          activeFilter: current.activeFilter,
+          cachedLists: cachedLists,
+          filterPages: filterPages,
+          filterHasMore: filterHasMore,
+        ));
       },
     );
   }
@@ -399,15 +447,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     Emitter<ChatState> emit,
   ) async {
     logger.d('Chat updated: ${event.chat.id}');
-    
-    // Update chat in current state if loaded
+
     if (state is _Loaded) {
       final currentState = state as _Loaded;
       final updatedChats = currentState.chats.map((chat) {
         return chat.id == event.chat.id ? event.chat : chat;
       }).toList();
-      
-      emit(ChatState.loaded(chats: updatedChats));
+
+      emit(_preserveLoaded(currentState, chats: updatedChats));
       logger.i('Chat list updated with new data');
     }
   }
@@ -438,6 +485,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
         emit(ChatState.error(message: getUserErrorMessage(failure)));
       },
       (chats) {
+        // Search results don't filter by type — preserve activeFilter from current state
+        final activeFilter = state.whenOrNull(
+              loaded: (_, __, ___, ____, _____, ______, activeFilter, _______, ________, _________) =>
+                  activeFilter,
+            ) ??
+            ConversationTypeFilter.all;
         emit(ChatState.loaded(
           chats: chats,
           hasMore: false,
@@ -445,6 +498,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
           page: 0,
           pageSize: 100,
           total: chats.length,
+          activeFilter: activeFilter,
         ));
       },
     );
@@ -456,6 +510,119 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     Emitter<ChatState> emit,
   ) async {
     add(const ChatEvent.loadChats(forceRefresh: false));
+  }
+
+  /// **Change conversation type filter**
+  ///
+  /// Switches the active tab filter. Uses cached data when available,
+  /// otherwise fetches from remote with the appropriate type filter.
+  /// Requirements: 2.1, 2.2, 2.3, 2.4, 2.5
+  Future<void> _onChangeConversationTypeFilter(
+    _ChangeConversationTypeFilter event,
+    Emitter<ChatState> emit,
+  ) async {
+    final filter = event.filter;
+
+    // Extract current loaded state fields (if loaded)
+    final current = state.whenOrNull(
+      loaded: (chats, hasMore, isLoadingMore, page, pageSize, total,
+          activeFilter, cachedLists, filterPages, filterHasMore) => (
+        chats: chats,
+        hasMore: hasMore,
+        page: page,
+        pageSize: pageSize,
+        total: total,
+        activeFilter: activeFilter,
+        cachedLists: cachedLists,
+        filterPages: filterPages,
+        filterHasMore: filterHasMore,
+      ),
+    );
+
+    final pageSize = current?.pageSize ?? 25;
+    final cachedLists = Map<ConversationTypeFilter, List<Chat>>.from(
+      current?.cachedLists ?? {},
+    );
+    final filterPages = Map<ConversationTypeFilter, int>.from(
+      current?.filterPages ?? {},
+    );
+    final filterHasMore = Map<ConversationTypeFilter, bool>.from(
+      current?.filterHasMore ?? {},
+    );
+
+    // Cache the current tab's list before switching
+    if (current != null) {
+      cachedLists[current.activeFilter] = current.chats;
+    }
+
+    // Check cache hit for the new filter
+    final cached = cachedLists[filter];
+    if (cached != null && cached.isNotEmpty) {
+      logger.i('ChangeConversationTypeFilter: cache hit for $filter');
+      emit(ChatState.loaded(
+        chats: cached,
+        hasMore: filterHasMore[filter] ?? false,
+        isLoadingMore: false,
+        page: filterPages[filter] ?? 0,
+        pageSize: pageSize,
+        total: cached.length,
+        activeFilter: filter,
+        cachedLists: cachedLists,
+        filterPages: filterPages,
+        filterHasMore: filterHasMore,
+      ));
+      return;
+    }
+
+    // No cache — emit loading then fetch
+    emit(ChatState.loaded(
+      chats: const [],
+      hasMore: false,
+      isLoadingMore: true,
+      page: 0,
+      pageSize: pageSize,
+      total: 0,
+      activeFilter: filter,
+      cachedLists: cachedLists,
+      filterPages: filterPages,
+      filterHasMore: filterHasMore,
+    ));
+
+    logger.i('ChangeConversationTypeFilter: fetching for $filter');
+
+    final request = PageRequest.first(size: pageSize);
+    final result = await _getConversations(
+      request,
+      typeFilter: filter.apiValue,
+    );
+
+    result.fold(
+      (failure) {
+        logger.e('ChangeConversationTypeFilter: failed for $filter: ${failure.message}');
+        emit(ChatState.error(message: getUserErrorMessage(failure)));
+      },
+      (paged) {
+        final chats = paged.items;
+        final effectiveHasMore = chats.length == request.size;
+
+        cachedLists[filter] = chats;
+        filterPages[filter] = 0;
+        filterHasMore[filter] = effectiveHasMore;
+
+        emit(ChatState.loaded(
+          chats: chats,
+          hasMore: effectiveHasMore,
+          isLoadingMore: false,
+          page: 0,
+          pageSize: pageSize,
+          total: chats.length,
+          activeFilter: filter,
+          cachedLists: cachedLists,
+          filterPages: filterPages,
+          filterHasMore: filterHasMore,
+        ));
+      },
+    );
   }
 
   /// Pre-fetch avatars for better UX
@@ -546,7 +713,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       return bt.compareTo(at);
     });
 
-    emit(ChatState.loaded(chats: updatedChats));
+    emit(_preserveLoaded(currentState, chats: updatedChats));
   }
 
   Future<void> _onMarkMessagesAsRead(
@@ -558,7 +725,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       final updatedChats = currentState.chats
           .map((c) => c.id == event.chatId ? c.copyWith(unreadCount: 0) : c)
           .toList();
-      emit(ChatState.loaded(chats: updatedChats));
+      emit(_preserveLoaded(currentState, chats: updatedChats));
     }
 
     final result = await _markAsRead(MarkAsReadParams(conversationId: event.chatId));
@@ -600,7 +767,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
 
     final updatedChats = List<Chat>.from(currentState.chats);
     updatedChats[idx] = chat.copyWith(typingUserIds: typing);
-    emit(ChatState.loaded(chats: updatedChats));
+    emit(_preserveLoaded(currentState, chats: updatedChats));
   }
 
   void _clearTypingStatus(String chatId, String userId) {
@@ -618,7 +785,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     typing.remove(userId);
     final updatedChats = List<Chat>.from(currentState.chats);
     updatedChats[idx] = chat.copyWith(typingUserIds: typing);
-    emit(ChatState.loaded(chats: updatedChats));
+    emit(_preserveLoaded(currentState, chats: updatedChats));
   }
 
   void _applyReadReceipt(MessageReadReceipt receipt) {
@@ -637,7 +804,24 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
 
     final updatedChats = List<Chat>.from(currentState.chats);
     updatedChats[idx] = chat.copyWith(unreadCount: 0);
-    emit(ChatState.loaded(chats: updatedChats));
+    emit(_preserveLoaded(currentState, chats: updatedChats));
+  }
+
+  /// Emit a new loaded state preserving all filter/cache/pagination fields
+  /// from [current], only replacing [chats] (and optionally other fields).
+  ChatState _preserveLoaded(_Loaded current, {required List<Chat> chats}) {
+    return ChatState.loaded(
+      chats: chats,
+      hasMore: current.hasMore,
+      isLoadingMore: current.isLoadingMore,
+      page: current.page,
+      pageSize: current.pageSize,
+      total: current.total,
+      activeFilter: current.activeFilter,
+      cachedLists: current.cachedLists,
+      filterPages: current.filterPages,
+      filterHasMore: current.filterHasMore,
+    );
   }
 
   @override
