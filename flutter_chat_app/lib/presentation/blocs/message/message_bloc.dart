@@ -222,7 +222,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   /// Phase 2: Background fetch (delta or full) → merge → emit merged state
   /// Fallback: First-time load (no local data) → standard server fetch
   Future<void> _onLoadMessages(LoadMessages event, Emitter<MessageState> emit) async {
-    logger.i('[TwoPhase] _onLoadMessages START chatId=${event.chatId} limit=${event.limit} forceRefresh=${event.forceRefresh}');
+    // logger.i('[TwoPhase] _onLoadMessages START chatId=${event.chatId} limit=${event.limit} forceRefresh=${event.forceRefresh}');
 
     // Step 1: Try local data first (Two-Phase Render)
     final localResult = await _getMessages.repository.getMessagesFromLocal(
@@ -236,18 +236,18 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     );
 
     localResult.fold(
-      (failure) => logger.w('[TwoPhase] getMessagesFromLocal FAILED: ${failure.message}'),
+      (failure) => logger.w('[TwoPhase] getMessagesFromLocal FAILED: ${failure.message}'), // keep warning
       (messages) {
         final newestTs = messages.isNotEmpty ? messages.first.createdAt.toIso8601String() : 'N/A';
         final oldestTs = messages.isNotEmpty ? messages.last.createdAt.toIso8601String() : 'N/A';
-        logger.i('[TwoPhase] getMessagesFromLocal: count=${messages.length} newest=$newestTs oldest=$oldestTs');
+        // logger.i('[TwoPhase] getMessagesFromLocal: count=${messages.length} newest=$newestTs oldest=$oldestTs');
       },
     );
 
     if (hasLocalData && !event.forceRefresh) {
       // === TWO-PHASE RENDER PATH ===
       final localMessages = localResult.fold((_) => <ChatMessage>[], (m) => m);
-      logger.i('[TwoPhase] Taking TWO-PHASE path (hasLocal=true, forceRefresh=false)');
+      // logger.i('[TwoPhase] Taking TWO-PHASE path (hasLocal=true, forceRefresh=false)');
 
       // Phase 1: Emit local data immediately
       emit(MessageState.loaded(
@@ -266,7 +266,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         if (updated != phase1State) emit(updated);
       }
 
-      logger.i('[TwoPhase] Phase 1 EMITTED: localCount=${localMessages.length} dataSource=local bgFetching=true blocHashCode=$hashCode');
+      // logger.i('[TwoPhase] Phase 1 EMITTED: localCount=${localMessages.length} dataSource=local bgFetching=true blocHashCode=$hashCode');
 
       // Subscribe to real-time updates
       if (event.subscribeToUpdates) {
@@ -280,7 +280,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       _startBackgroundFetch(event.chatId, event.limit);
     } else {
       // === FIRST-TIME LOAD PATH (Phase 1 behavior) ===
-      logger.i('[TwoPhase] Taking FIRST-TIME path (hasLocal=$hasLocalData, forceRefresh=${event.forceRefresh})');
+      // logger.i('[TwoPhase] Taking FIRST-TIME path (hasLocal=$hasLocalData, forceRefresh=${event.forceRefresh})');
       emit(MessageState.loading(chatId: event.chatId));
 
       final result = await _getMessages(
@@ -298,7 +298,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         },
         (messages) {
           final newestTs = messages.isNotEmpty ? messages.first.createdAt.toIso8601String() : 'N/A';
-          logger.i('[TwoPhase] First-time load OK: count=${messages.length} newest=$newestTs');
+          // logger.i('[TwoPhase] First-time load OK: count=${messages.length} newest=$newestTs');
 
           // Reset dirty flag after successful load
           _cacheSyncStrategy.resetChatMessagesDirtyFlag(event.chatId);
@@ -365,7 +365,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         emit(currentState.copyWith(paginationError: failure.message));
       },
       (nextMessages) {
-        logger.i('Loaded ${nextMessages.length} more messages');
+        // logger.i('Loaded ${nextMessages.length} more messages');
 
         if (nextMessages.isEmpty) {
           // No more messages
@@ -449,6 +449,12 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         // Mark message list as dirty
         _cacheSyncStrategy.markChatMessagesDirty(freshState.chatId);
         _cacheSyncStrategy.markChatListDirty();
+
+        // Debug: Log mention info
+        logger.d('Message mentions check: mentionTo.length=${newMessage.mentionTo.length}, content="${newMessage.content}"');
+        if (newMessage.mentionTo.isNotEmpty) {
+          logger.d('Mentions: ${newMessage.mentionTo.map((m) => '${m.name}(${m.id})').join(', ')}');
+        }
 
         // Send push notification if message has mentions (fire-and-forget)
         if (newMessage.mentionTo.isNotEmpty) {
@@ -650,7 +656,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   /// Retries up to 2 times with 1 second backoff on failure.
   /// Logs errors silently — never shows error to user (non-critical).
   Future<void> _onMarkChatAsRead(MarkChatAsRead event, Emitter<MessageState> emit) async {
-    logger.i('MarkChatAsRead received: ${event.chatId} (debouncing 500ms)');
+    // logger.i('MarkChatAsRead received: ${event.chatId} (debouncing 500ms)');
 
     // Cancel any existing debounce timer — use latest event data
     _markAsReadDebouncer?.cancel();
@@ -687,7 +693,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           return false;
         },
         (_) {
-          logger.i('Chat marked as read successfully: $chatId');
+          // logger.i('Chat marked as read successfully: $chatId');
           _cacheSyncStrategy.markChatListDirty();
           return true;
         },
@@ -774,13 +780,13 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   Future<void> _performBackgroundFetch(String chatId, int limit) async {
     try {
       final lastTimestamp = _syncMetadataManager.getLastKnownTimestamp(chatId);
-      logger.i('[TwoPhase] _performBackgroundFetch chatId=$chatId lastTimestamp=$lastTimestamp limit=$limit');
+      // logger.i('[TwoPhase] _performBackgroundFetch chatId=$chatId lastTimestamp=$lastTimestamp limit=$limit');
 
       Either<Failure, List<ChatMessage>> result;
 
       if (lastTimestamp != null) {
         // Delta sync: only fetch messages since last known timestamp
-        logger.i('[TwoPhase] Doing DELTA sync from=${DateTime.fromMillisecondsSinceEpoch(lastTimestamp).toIso8601String()}');
+        // logger.i('[TwoPhase] Doing DELTA sync from=${DateTime.fromMillisecondsSinceEpoch(lastTimestamp).toIso8601String()}');
         result = await _getMessages.repository.getMessagesDelta(
           chatId,
           fromTimestamp: lastTimestamp,
@@ -789,14 +795,14 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
         // Gap detection
         final deltaCount = result.fold((_) => 0, (m) => m.length);
-        logger.i('[TwoPhase] Delta result: count=$deltaCount (gap threshold=$limit)');
+        // logger.i('[TwoPhase] Delta result: count=$deltaCount (gap threshold=$limit)');
         if (GapDetectionLogic.hasGap(deltaCount: deltaCount, pageSize: limit)) {
           logger.w('[TwoPhase] Gap detected (deltaCount=$deltaCount >= pageSize=$limit), doing FULL refresh');
           result = await _getMessages(conversationId: chatId, limit: limit);
         }
       } else {
         // No timestamp — full load
-        logger.i('[TwoPhase] No lastTimestamp, doing FULL load');
+        // logger.i('[TwoPhase] No lastTimestamp, doing FULL load');
         result = await _getMessages(conversationId: chatId, limit: limit);
       }
 
@@ -808,7 +814,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         (messages) {
           final newestTs = messages.isNotEmpty ? messages.first.createdAt.toIso8601String() : 'N/A';
           final oldestTs = messages.isNotEmpty ? messages.last.createdAt.toIso8601String() : 'N/A';
-          logger.i('[TwoPhase] Background fetch OK: count=${messages.length} newest=$newestTs oldest=$oldestTs');
+          // logger.i('[TwoPhase] Background fetch OK: count=${messages.length} newest=$newestTs oldest=$oldestTs');
           add(_BackgroundFetchCompleted(chatId: chatId, serverMessages: messages));
         },
       );
@@ -836,7 +842,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       return;
     }
 
-    logger.i('[TwoPhase] _onBackgroundFetchCompleted: localCount=${currentState.messages.length} serverCount=${event.serverMessages.length}');
+    // logger.i('[TwoPhase] _onBackgroundFetchCompleted: localCount=${currentState.messages.length} serverCount=${event.serverMessages.length}');
 
     // Merge local + server
     final merged = MessageMergeStrategy.merge(
@@ -846,7 +852,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     final newestTs = merged.isNotEmpty ? merged.first.createdAt.toIso8601String() : 'N/A';
     final oldestTs = merged.isNotEmpty ? merged.last.createdAt.toIso8601String() : 'N/A';
-    logger.i('[TwoPhase] Merge result: count=${merged.length} newest=$newestTs oldest=$oldestTs');
+    // logger.i('[TwoPhase] Merge result: count=${merged.length} newest=$newestTs oldest=$oldestTs');
 
     // Update sync metadata
     unawaited(_syncMetadataManager.updateFromMessages(event.chatId, merged));
@@ -1125,7 +1131,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   /// **Performance**: <100ms cleanup
   /// **Strategy**: Clean subscription cancellation with room exit
   Future<void> _cancelMessageSubscription(String chatId) async {
-    logger.d('Cancelling real-time subscription for chat: $chatId');
+    // logger.d('Cancelling real-time subscription for chat: $chatId');
 
     final subscription = _messageSubscriptions[chatId];
     if (subscription != null) {
@@ -1151,7 +1157,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   /// **Performance**: <100ms message delivery
   /// **Strategy**: WebSocket subscription with automatic room management
   Future<void> _subscribeToMessages(String chatId) async {
-    logger.i('Subscribing to real-time messages for chat: $chatId');
+    // logger.i('Subscribing to real-time messages for chat: $chatId');
 
     // Cancel existing subscription if any
     await _cancelMessageSubscription(chatId);

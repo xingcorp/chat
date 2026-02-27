@@ -75,10 +75,10 @@ class GetMessagesUseCase {
           return Left(failure);
         },
         (messages) {
-          _logger.info('GetMessagesUseCase: Success', {
-            'conversationId': conversationId,
-            'messageCount': messages.length,
-          });
+          // _logger.info('GetMessagesUseCase: Success', {
+          //   'conversationId': conversationId,
+          //   'messageCount': messages.length,
+          // });
           return Right(messages);
         },
       );

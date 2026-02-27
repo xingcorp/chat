@@ -7,7 +7,7 @@ class AppBlocObserver extends BlocObserver {
   void onCreate(BlocBase<dynamic> bloc) {
     super.onCreate(bloc);
     if (kDebugMode) {
-      debugPrint('onCreate -- ${bloc.runtimeType}');
+      // debugPrint('onCreate -- ${bloc.runtimeType}');
     }
   }
 
@@ -15,7 +15,7 @@ class AppBlocObserver extends BlocObserver {
   void onEvent(Bloc<dynamic, dynamic> bloc, Object? event) {
     super.onEvent(bloc, event);
     if (kDebugMode) {
-      debugPrint('onEvent -- ${bloc.runtimeType}, $event');
+      // debugPrint('onEvent -- ${bloc.runtimeType}, $event');
     }
   }
 
@@ -23,7 +23,7 @@ class AppBlocObserver extends BlocObserver {
   void onChange(BlocBase<dynamic> bloc, Change<dynamic> change) {
     super.onChange(bloc, change);
     if (kDebugMode) {
-      debugPrint('onChange -- ${bloc.runtimeType}, $change');
+      // debugPrint('onChange -- ${bloc.runtimeType}, $change');
     }
   }
 
@@ -31,7 +31,7 @@ class AppBlocObserver extends BlocObserver {
   void onTransition(Bloc<dynamic, dynamic> bloc, Transition<dynamic, dynamic> transition) {
     super.onTransition(bloc, transition);
     if (kDebugMode) {
-      debugPrint('onTransition -- ${bloc.runtimeType}, $transition');
+      // debugPrint('onTransition -- ${bloc.runtimeType}, $transition');
     }
   }
 
@@ -44,11 +44,11 @@ class AppBlocObserver extends BlocObserver {
     super.onError(bloc, error, stackTrace);
   }
 
-  @override
-  void onClose(BlocBase<dynamic> bloc) {
-    super.onClose(bloc);
-    if (kDebugMode) {
-      debugPrint('onClose -- ${bloc.runtimeType}');
-    }
-  }
+  // @override
+  // void onClose(BlocBase<dynamic> bloc) {
+  //   super.onClose(bloc);
+  //   if (kDebugMode) {
+  //     debugPrint('onClose -- ${bloc.runtimeType}');
+  //   }
+  // }
 } 

@@ -102,7 +102,7 @@ Future<void> configureDependencies() async {
     ),
   );
 
-  logger.i('🚀 Initializing Dependency Injection...');
+  // logger.i('🚀 Initializing Dependency Injection...');
   final stopwatch = Stopwatch()..start();
 
   try {
@@ -264,7 +264,7 @@ Future<void> configureDependencies() async {
 /// - SharedPreferences: For local storage
 /// - Connectivity: For network status monitoring
 Future<void> _registerExternalDependencies(Logger logger) async {
-  logger.d('📦 Registering external dependencies...');
+  // logger.d('📦 Registering external dependencies...');
 
   // Logger - required by many services
   if (!getIt.isRegistered<Logger>()) {
@@ -367,14 +367,14 @@ Future<void> _registerExternalDependencies(Logger logger) async {
 
   socketUrl = socketUrl.replaceFirst(RegExp(r'/+$'), '');
 
-  logger.i('Resolved endpoints (dotenv):');
-  logger.i('  API_BASE_URL=$apiBaseUrl');
-  logger.i('  GRAPHQL_API_URL(raw)=$graphQlApiUrlRaw');
-  logger.i('  GRAPHQL_WS_URL(raw)=$graphQlWsUrlRaw');
-  logger.i('  SOCKET_URL(raw)=$socketUrlRaw');
-  logger.i('  graphQlApiUrl=$graphQlApiUrl');
-  logger.i('  graphQlWsUrl=$graphQlWsUrl');
-  logger.i('  socketUrl=$socketUrl');
+  // logger.i('Resolved endpoints (dotenv):');
+  // logger.i('  API_BASE_URL=$apiBaseUrl');
+  // logger.i('  GRAPHQL_API_URL(raw)=$graphQlApiUrlRaw');
+  // logger.i('  GRAPHQL_WS_URL(raw)=$graphQlWsUrlRaw');
+  // logger.i('  SOCKET_URL(raw)=$socketUrlRaw');
+  // logger.i('  graphQlApiUrl=$graphQlApiUrl');
+  // logger.i('  graphQlWsUrl=$graphQlWsUrl');
+  // logger.i('  socketUrl=$socketUrl');
 
   if (!getIt.isRegistered<String>(instanceName: 'socketUrl')) {
     getIt.registerSingleton<String>(socketUrl, instanceName: 'socketUrl');
@@ -507,7 +507,7 @@ Future<void> _registerExternalDependencies(Logger logger) async {
     );
   }
 
-  logger.d('✅ External dependencies registered');
+  // logger.d('✅ External dependencies registered');
 }
 
 /// Reset DI container (for testing)

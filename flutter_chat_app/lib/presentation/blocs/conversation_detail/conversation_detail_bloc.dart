@@ -35,7 +35,7 @@ class ConversationDetailBloc
     LoadConversationDetail event,
     Emitter<ConversationDetailState> emit,
   ) async {
-    _logger.i('[ConvDetail] Loading conversation detail: chatId=${event.chatId}');
+    // _logger.i('[ConvDetail] Loading conversation detail: chatId=${event.chatId}');
 
     final result = await _getConversationDetail(event.chatId);
 
@@ -54,8 +54,7 @@ class ConversationDetailBloc
           return;
         }
 
-        _logger.i(
-            '[ConvDetail] Loaded: name=${chat.name} members=${chat.members.length}');
+        // _logger.i('[ConvDetail] Loaded: name=${chat.name} members=${chat.members.length}');
         emit(ConversationDetailLoaded(chat: chat));
       },
     );

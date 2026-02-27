@@ -40,7 +40,7 @@ class CacheSyncStrategy {
   /// Đánh dấu chat list đã thay đổi (khi có chat mới hoặc cập nhật)
   void markChatListDirty() {
     _chatListDirty = true;
-    _logger.t('Đánh dấu chat list đã thay đổi');
+    // _logger.t('Đánh dấu chat list đã thay đổi');
   }
   
   /// Đánh dấu chi tiết của một chat đã thay đổi
@@ -121,7 +121,7 @@ class CacheSyncStrategy {
   /// Reset dirty flag sau khi đã làm mới tin nhắn chat
   void resetChatMessagesDirtyFlag(String chatId) {
     _chatMessagesDirty[chatId] = false;
-    _logger.t('Reset dirty flag cho tin nhắn chat $chatId');
+    // _logger.t('Reset dirty flag cho tin nhắn chat $chatId');
   }
   
   /// Reset dirty flag sau khi đã làm mới dữ liệu người dùng

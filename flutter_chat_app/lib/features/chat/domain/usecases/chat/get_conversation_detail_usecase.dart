@@ -30,9 +30,9 @@ class GetConversationDetailUseCase {
   /// - Left: Failure (NetworkFailure, ServerFailure, etc.)
   /// - Right: Chat entity or null if not found
   Future<Either<Failure, Chat?>> call(String conversationId) async {
-    _logger.info('GetConversationDetailUseCase: Starting operation', {
-      'conversationId': conversationId,
-    });
+    // _logger.info('GetConversationDetailUseCase: Starting operation', {
+    //   'conversationId': conversationId,
+    // });
 
     try {
       final result = await _repository.getChatById(conversationId);
@@ -43,10 +43,10 @@ class GetConversationDetailUseCase {
           return Left(failure);
         },
         (conversation) {
-          _logger.info('GetConversationDetailUseCase: Success', {
-            'conversationId': conversationId,
-            'found': conversation != null,
-          });
+          // _logger.info('GetConversationDetailUseCase: Success', {
+          //   'conversationId': conversationId,
+          //   'found': conversation != null,
+          // });
           return Right(conversation);
         },
       );

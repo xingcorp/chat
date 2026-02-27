@@ -415,7 +415,7 @@ class PerformanceService {
       // Save to active traces
       _activeTraces[traceName] = trace;
       
-      _logger.d('Started trace: $traceName');
+      // _logger.d('Started trace: $traceName');
     } catch (e) {
       _logger.e('Error starting trace: $e');
     }
@@ -445,7 +445,7 @@ class PerformanceService {
       // Stop trace
       await trace.stop();
       
-      _logger.d('Stopped trace: $traceName');
+      // _logger.d('Stopped trace: $traceName');
     } catch (e) {
       _logger.e('Error stopping trace: $e');
     }

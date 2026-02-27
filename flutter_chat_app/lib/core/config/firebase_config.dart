@@ -50,8 +50,8 @@ class FirebaseConfigManager {
       final config = FlavorConfig.instance;
       final firebaseOptions = _getFirebaseOptions(config.flavor);
 
-      _logger.info('Initializing Firebase for ${config.flavor.name} environment...');
-      _logger.info('Firebase project: ${firebaseOptions.projectId}');
+      // _logger.info('Initializing Firebase for ${config.flavor.name} environment...');
+      // _logger.info('Firebase project: ${firebaseOptions.projectId}');
 
       if (kIsWeb) {
         // Web: Single default app instance
@@ -67,8 +67,8 @@ class FirebaseConfigManager {
       }
 
       _isInitialized = true;
-      _logger.info('Firebase initialized successfully');
-      _logger.info('Firebase app ID: ${firebaseOptions.appId}');
+      // _logger.info('Firebase initialized successfully');
+      // _logger.info('Firebase app ID: ${firebaseOptions.appId}');
 
       // Initialize Firebase services based on flavor config
       await _initializeFirebaseServices(config);
@@ -113,30 +113,30 @@ class FirebaseConfigManager {
       // Initialize Analytics if enabled
       if (config.environment.enableAnalytics) {
         // await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
-        _logger.info('Firebase Analytics enabled');
+        // _logger.info('Firebase Analytics enabled');
       } else {
-        _logger.info('Firebase Analytics disabled for ${config.flavor.name}');
+        // _logger.info('Firebase Analytics disabled for ${config.flavor.name}');
       }
 
       // Initialize Crashlytics if enabled
       if (config.environment.enableCrashlytics) {
         // await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
-        _logger.info('Firebase Crashlytics enabled');
+        // _logger.info('Firebase Crashlytics enabled');
       } else {
-        _logger.info('Firebase Crashlytics disabled for ${config.flavor.name}');
+        // _logger.info('Firebase Crashlytics disabled for ${config.flavor.name}');
       }
 
       // Initialize Performance Monitoring if enabled
       if (config.environment.enablePerformanceMonitoring) {
         // await FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
-        _logger.info('Firebase Performance Monitoring enabled');
+        // _logger.info('Firebase Performance Monitoring enabled');
       } else {
-        _logger.info('Firebase Performance disabled for ${config.flavor.name}');
+        // _logger.info('Firebase Performance disabled for ${config.flavor.name}');
       }
 
       // Initialize Messaging (always enabled for push notifications)
       // await FirebaseMessaging.instance.requestPermission();
-      _logger.info('Firebase Messaging initialized');
+      // _logger.info('Firebase Messaging initialized');
 
     } catch (e, stackTrace) {
       _logger.error('Failed to initialize Firebase services', e, stackTrace);
@@ -185,10 +185,10 @@ class FirebaseConfigManager {
           'Project ID mismatch: expected $expectedProjectId, got $actualProjectId'
         );
       } else {
-        _logger.info('Firebase project ID verified: $actualProjectId');
+        // _logger.info('Firebase project ID verified: $actualProjectId');
       }
 
-      _logger.info('Firebase connection verified successfully');
+      // _logger.info('Firebase connection verified successfully');
 
     } catch (e, stackTrace) {
       _logger.error('Firebase connection verification failed', e, stackTrace);

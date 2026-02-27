@@ -733,12 +733,12 @@ class MessageModel {
       }
     }
 
-    if (kDebugMode && (contentType == ContentType.event || actionType != null)) {
-      debugPrint(
-        '[MessageModel.toDomain] id=${serverId ?? localId} type=$type contentType=$contentType '
-        'actionType=$actionType targets=${targetUsers.map((e) => e.name).join(', ')}',
-      );
-    }
+    // if (kDebugMode && (contentType == ContentType.event || actionType != null)) {
+    //   debugPrint(
+    //     '[MessageModel.toDomain] id=${serverId ?? localId} type=$type contentType=$contentType '
+    //     'actionType=$actionType targets=${targetUsers.map((e) => e.name).join(', ')}',
+    //   );
+    // }
 
     // Create MessageSender from senderId (prefer metadata sender for name/avatar)
     final sender = MessageSender(

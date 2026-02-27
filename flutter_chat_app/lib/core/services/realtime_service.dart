@@ -535,7 +535,7 @@ class RealtimeService {
   Future<Either<Failure, bool>> _leaveChatRoom(String chatId) async {
     try {
       if (!_joinedChats.contains(chatId)) {
-        _logger.d('Not in chat room: $chatId');
+        // _logger.d('Not in chat room: $chatId');
         return const Right(true);
       }
 

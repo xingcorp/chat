@@ -41,9 +41,9 @@ class MarkAsReadUseCase {
         _logger = logger;
 
   Future<Either<Failure, void>> call(MarkAsReadParams params) async {
-    _logger.info('MarkAsReadUseCase: Starting operation', {
-      'conversationId': params.conversationId,
-    });
+    // _logger.info('MarkAsReadUseCase: Starting operation', {
+    //   'conversationId': params.conversationId,
+    // });
 
     // Validate input
     final validationResult = _validateParams(params);
@@ -62,9 +62,9 @@ class MarkAsReadUseCase {
         return Left(failure);
       },
       (_) {
-        _logger.info('MarkAsReadUseCase: Success', {
-          'conversationId': params.conversationId,
-        });
+        // _logger.info('MarkAsReadUseCase: Success', {
+        //   'conversationId': params.conversationId,
+        // });
         return const Right(null);
       },
     );

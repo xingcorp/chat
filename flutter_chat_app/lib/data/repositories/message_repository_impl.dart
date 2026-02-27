@@ -206,7 +206,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     required String? cursor,
     required String cacheKey,
   }) async {
-    logger.d('Fetching messages from server for chat $chatId');
+    // logger.d('Fetching messages from server for chat $chatId');
 
     final cursorTs = cursor != null ? int.tryParse(cursor) : null;
 
@@ -400,11 +400,11 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
           readCount: 1000000,
         );
         
-        logger.i('Marked chat as read: $chatId');
+        // logger.i('Marked chat as read: $chatId');
       },
       localDataSource: () async {
         // Mark locally
-        logger.i('Marked chat as read locally: $chatId');
+        // logger.i('Marked chat as read locally: $chatId');
       },
       operationName: 'markChatAsRead',
     );
@@ -825,7 +825,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         _mediaCacheManager.prefetchThumbnails(videoUrls);
       }
 
-      logger.d('Prefetched ${imageUrls.length} image and ${videoUrls.length} video thumbnails');
+      // logger.d('Prefetched ${imageUrls.length} image and ${videoUrls.length} video thumbnails');
     } catch (e) {
       logger.w('Error prefetching thumbnails: $e');
     }

@@ -248,7 +248,7 @@ class AnalyticsService implements IAnalyticsService {
         parameters: convertedParams,
       );
       
-      _logger.t('Đã ghi nhận sự kiện: $eventName với ${convertedParams.length} parameters');
+      // _logger.t('Đã ghi nhận sự kiện: $eventName với ${convertedParams.length} parameters');
     } catch (e) {
       _logger.e('Lỗi khi ghi nhận sự kiện: $e');
       // Don't report analytics errors to prevent circular dependencies

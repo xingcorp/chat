@@ -215,7 +215,7 @@ class ChatRepositoryImpl implements IChatRepository {
   Future<Either<Failure, Chat?>> getChatById(String id) async {
     return _executeWithMonitoring('get_chat_by_id', () async {
       try {
-        _logger.d('Getting chat by ID: $id');
+        // _logger.d('Getting chat by ID: $id');
         
         // Try local first for instant response
         final localChat = await _localDataSource.getChatById(id);
@@ -227,7 +227,7 @@ class ChatRepositoryImpl implements IChatRepository {
                   localChat.createdAt != null;
 
           if (hasCreateInfo) {
-            _logger.d('Found chat locally with complete info');
+            // _logger.d('Found chat locally with complete info');
             return Right(localChat);
           }
 

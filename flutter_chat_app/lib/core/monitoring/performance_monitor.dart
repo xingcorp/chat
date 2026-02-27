@@ -106,7 +106,7 @@ class PerformanceMonitor implements IPerformanceMonitor {
       // Save to active traces list
       _activeTraces[traceName] = trace;
       
-      _logger.t('Started trace: $traceName');
+      // _logger.t('Started trace: $traceName');
     } catch (e) {
       _logger.e('Error starting trace: $e');
     }
@@ -140,7 +140,7 @@ class PerformanceMonitor implements IPerformanceMonitor {
       // Stop trace
       await trace.stop();
       
-      _logger.t('Stopped trace: $traceName');
+      // _logger.t('Stopped trace: $traceName');
     } catch (e) {
       _logger.e('Error stopping trace: $e');
     }

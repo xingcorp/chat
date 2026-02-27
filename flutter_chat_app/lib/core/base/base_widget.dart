@@ -27,40 +27,40 @@ abstract class BaseState<T extends BaseStatefulWidget> extends State<T> with Wid
   @override
   void initState() {
     _mounted = true;
-    LogUtils.d(_tag, 'initState()');
+    // LogUtils.d(_tag, 'initState()');
     WidgetsBinding.instance.addObserver(this);
     super.initState();
   }
 
   @override
   void didChangeDependencies() {
-    LogUtils.d(_tag, 'didChangeDependencies()');
+    // LogUtils.d(_tag, 'didChangeDependencies()');
     super.didChangeDependencies();
   }
   
   @override
   void didUpdateWidget(T oldWidget) {
-    LogUtils.d(_tag, 'didUpdateWidget()');
+    // LogUtils.d(_tag, 'didUpdateWidget()');
     super.didUpdateWidget(oldWidget);
   }
   
   @override
   void deactivate() {
-    LogUtils.d(_tag, 'deactivate()');
+    // LogUtils.d(_tag, 'deactivate()');
     super.deactivate();
   }
   
   @override
   void dispose() {
     _mounted = false;
-    LogUtils.d(_tag, 'dispose()');
+    // LogUtils.d(_tag, 'dispose()');
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
   
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    LogUtils.d(_tag, 'didChangeAppLifecycleState: $state');
+    // LogUtils.d(_tag, 'didChangeAppLifecycleState: $state');
     
     // Handle app lifecycle state changes
     switch (state) {

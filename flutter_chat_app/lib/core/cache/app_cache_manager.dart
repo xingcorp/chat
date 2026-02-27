@@ -126,7 +126,7 @@ class AppCacheManager {
       final jsonData = jsonEncode(_toEncodable(data));
       await _apiCacheBox.put(key, jsonData);
       await _prefs.setInt('${key}_expiry', expiry.millisecondsSinceEpoch);
-      _logger.t('Đã cache API response: $key');
+      // _logger.t('Đã cache API response: $key');
     } catch (e) {
       _logger.e('Lỗi khi cache API response: $e');
     }

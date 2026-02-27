@@ -42,17 +42,17 @@ Triển khai: GraphQL operation → Data layer → Domain layer → Tích hợp 
     - Non-blocking: không await, fire-and-forget
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 5. Cập nhật Deep Link Handling
+- [x] 5. Cập nhật Deep Link Handling
   - [x] 5.1 Cập nhật notification tap handler hiện có để parse `metadata.conversationId`
   - [x] 5.2 Navigate đến `ChatDetailsPage` khi tap notification có conversationId
   - [x] 5.3 Xử lý trường hợp conversation không tồn tại — hiển thị `AppSnackBar`
     - _Requirements: 4.1, 4.2, 4.3_
 
-- [ ] 6. DI Registration và Code Generation
-  - [~] 6.1 Đảm bảo `PushNotificationRemoteDataSource`, `PushNotificationRepositoryImpl`, `SendPushNotificationUseCase` đăng ký trong DI
-  - [~] 6.2 Chạy `dart run build_runner build --delete-conflicting-outputs`
+- [x] 6. DI Registration và Code Generation
+  - [x] 6.1 Đảm bảo `PushNotificationRemoteDataSource`, `PushNotificationRepositoryImpl`, `SendPushNotificationUseCase` đăng ký trong DI
+  - [x] 6.2 Chạy `dart run build_runner build --delete-conflicting-outputs`
 
-- [ ] 7. Final checkpoint
+- [x] 7. Final checkpoint
   - Đảm bảo push notification gửi thành công khi mention user
 
 ## Ghi chú
