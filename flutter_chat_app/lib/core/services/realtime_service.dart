@@ -483,13 +483,21 @@ class RealtimeService {
   }
 
   /// **Handle read receipt event**
+  ///
+  /// Backend sends: `{ message: { id, conversationId, ... }, reader: { id, fullname, ... } }`
+  /// `conversationId` may be at top level OR inside `message` — check both.
   void _handleReadReceipt(Map<String, dynamic> data) {
     try {
+      final message = data['message'] as Map<String, dynamic>?;
+      final reader = data['reader'] as Map<String, dynamic>?;
+
       final readReceipt = MessageReadReceipt(
-        chatId: data['conversationId'] as String? ?? '',
-        messageId: data['message']?['id'] as String? ?? '',
-        readerId: data['reader']?['id'] as String? ?? '',
-        readerName: data['reader']?['fullname'] as String? ?? 'Unknown',
+        chatId: data['conversationId'] as String?
+            ?? message?['conversationId'] as String?
+            ?? '',
+        messageId: message?['id'] as String? ?? '',
+        readerId: reader?['id'] as String? ?? '',
+        readerName: reader?['fullname'] as String? ?? 'Unknown',
         readAt: DateTime.now(),
       );
       
