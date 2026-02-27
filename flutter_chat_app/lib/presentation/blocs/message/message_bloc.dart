@@ -128,6 +128,15 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         ? (state as MessagesLoaded).conversationMembers
         : const <ConversationMember>[];
 
+    return _transformMessagesWithMembers(messages, members);
+  }
+
+  /// Transform messages with explicit members list (for cases where state
+  /// hasn't been emitted yet, e.g. UpdateConversationMembers handler)
+  List<MessageUIState> _transformMessagesWithMembers(
+    List<ChatMessage> messages,
+    List<ConversationMember> members,
+  ) {
     return MessageListTransformer.transform(
       messages: messages,
       currentUserId: _currentUserId,
@@ -1786,13 +1795,23 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   }
 
   /// Update conversation members list (dispatched by Page when ConversationDetailBloc emits)
+  ///
+  /// Re-transforms messages to resolve system event names from updated members
+  /// (socket events may arrive before members list is updated)
   void _onUpdateConversationMembers(
     UpdateConversationMembers event,
     Emitter<MessageState> emit,
   ) {
     if (state is MessagesLoaded) {
       final loadedState = state as MessagesLoaded;
-      emit(loadedState.copyWith(conversationMembers: event.members));
+      // Update members first, then re-transform so system events resolve names
+      final updatedState = loadedState.copyWith(conversationMembers: event.members);
+      emit(updatedState.copyWith(
+        uiMessages: _transformMessagesWithMembers(
+          updatedState.messages,
+          event.members,
+        ),
+      ));
       logger.i('[ConvMembers] Updated members: count=${event.members.length}');
     }
   }

@@ -483,7 +483,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           ),
         ),
       ),
-    );
+    ).then((_) {
+      // Refresh conversation detail after info panel closes
+      // (members may have been added/removed)
+      if (_chat != null) {
+        _convDetailBloc.add(LoadConversationDetail(chatId: _chat!.id));
+      }
+    });
   }
 
   void _showAddMember() {

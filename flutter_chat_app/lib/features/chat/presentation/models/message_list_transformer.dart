@@ -105,7 +105,7 @@ class MessageListTransformer {
       if (current.contentType == ContentType.event) {
         result.add(MessageUIState.systemEvent(
           message: current,
-          eventInfo: _buildSystemEventInfo(current),
+          eventInfo: _buildSystemEventInfo(current, members),
         ));
         continue;
       }
@@ -469,12 +469,32 @@ class MessageListTransformer {
   /// Angular dùng message.sender?.fullname cho actor name (không phải actor)
   /// Handles: ADD_MEMBER, REMOVE_MEMBER, LEAVE_CONVERSATION, CHANGE_NAME,
   ///          CHANGE_AVATAR, CREATE_CONVERSATION, PIN_MESSAGE, UNPIN_MESSAGE
-  static SystemEventInfo _buildSystemEventInfo(ChatMessage message) {
+  ///
+  /// [members] dùng để resolve tên khi socket event thiếu sender/targetUsers info
+  static SystemEventInfo _buildSystemEventInfo(
+    ChatMessage message,
+    List<ConversationMember> members,
+  ) {
     final actionType = message.actionType ?? 'UNKNOWN';
-    // Khớp Angular: dùng sender.name làm actor (Angular: message.sender?.fullname)
-    final actorName = message.sender.name;
-    final targetNames =
-        message.targetUsers.map((u) => u.name).toList();
+
+    // Build member lookup map: userId -> fullName
+    final memberNameById = <String, String>{
+      for (final m in members)
+        if (m.userId.isNotEmpty && (m.fullName?.isNotEmpty ?? false))
+          m.userId: m.fullName!,
+    };
+
+    // Resolve actor name: prefer message data, fallback to members lookup
+    final rawActorName = message.sender.name;
+    final actorName = (rawActorName.isNotEmpty && rawActorName != 'Unknown')
+        ? rawActorName
+        : memberNameById[message.sender.id] ?? rawActorName;
+
+    // Resolve target user names: prefer message data, fallback to members lookup
+    final targetNames = message.targetUsers.map((u) {
+      if (u.name.isNotEmpty && u.name != 'Unknown') return u.name;
+      return memberNameById[u.id] ?? u.name;
+    }).toList();
 
     final formattedText = _generateActionText(
       actionType: actionType,
