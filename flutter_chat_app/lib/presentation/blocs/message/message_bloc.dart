@@ -105,6 +105,10 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   // before state is MessagesLoaded (race condition between concurrent event handlers)
   Chat? _pendingConversationDetail;
 
+  // Pending frequent reactions — stored when FetchFrequentReactions resolves
+  // before state is MessagesLoaded (race condition on initial load)
+  List<String>? _pendingFrequentReactions;
+
   /// Cập nhật context cho UI transform (gọi từ Page khi mở chat)
   void setTransformContext({
     required String currentUserId,
@@ -143,6 +147,16 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       _pendingConversationDetail = null;
       logger.i('Applying pending conversation detail to MessagesLoaded state');
       return loadedState.copyWith(conversationDetail: pending);
+    }
+    return loadedState;
+  }
+
+  /// Apply pending frequent reactions to a freshly emitted MessagesLoaded state.
+  MessagesLoaded _applyPendingFrequentReactions(MessagesLoaded loadedState) {
+    final pending = _pendingFrequentReactions;
+    if (pending != null) {
+      _pendingFrequentReactions = null;
+      return loadedState.copyWith(frequentReactions: pending);
     }
     return loadedState;
   }
@@ -261,8 +275,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       // Apply pending conversation detail if it arrived before this emit
       final phase1State = state;
       if (phase1State is MessagesLoaded) {
-        final withDetail = _applyPendingConversationDetail(phase1State);
-        if (withDetail != phase1State) emit(withDetail as MessagesLoaded);
+        var updated = _applyPendingConversationDetail(phase1State);
+        updated = _applyPendingFrequentReactions(updated as MessagesLoaded);
+        if (updated != phase1State) emit(updated);
       }
 
       logger.i('[TwoPhase] Phase 1 EMITTED: localCount=${localMessages.length} dataSource=local bgFetching=true blocHashCode=$hashCode');
@@ -324,8 +339,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           // Apply pending conversation detail if it arrived during the await
           final firstLoadState = state;
           if (firstLoadState is MessagesLoaded) {
-            final withDetail = _applyPendingConversationDetail(firstLoadState);
-            if (withDetail != firstLoadState) emit(withDetail as MessagesLoaded);
+            var updated = _applyPendingConversationDetail(firstLoadState);
+            updated = _applyPendingFrequentReactions(updated as MessagesLoaded);
+            if (updated != firstLoadState) emit(updated);
           }
         },
       );
@@ -612,12 +628,15 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     FetchFrequentReactions event,
     Emitter<MessageState> emit,
   ) async {
-    if (state is! MessagesLoaded) return;
-    final currentState = state as MessagesLoaded;
-
     await _frequentReactionService.fetch();
     final reactions = _frequentReactionService.currentReactions;
-    emit(currentState.copyWith(frequentReactions: reactions));
+
+    if (state is MessagesLoaded) {
+      emit((state as MessagesLoaded).copyWith(frequentReactions: reactions));
+    } else {
+      // State chưa sẵn sàng — lưu tạm để apply khi MessagesLoaded được emit
+      _pendingFrequentReactions = reactions;
+    }
   }
 
   /// **Mark chat as read using MarkAsReadUseCase - DEBOUNCED + RETRY**
@@ -962,11 +981,20 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     if (state is! MessagesLoaded) return;
     final currentState = state as MessagesLoaded;
 
+    bool hasChanges = false;
     final updatedMessages = currentState.messages.map((msg) {
       if (msg.id != event.messageId) return msg;
 
       List<MessageReaction> updatedReactions;
       if (event.isAdd) {
+        // Idempotent: skip if this exact reaction (code + userId) already exists.
+        // This prevents duplicates when optimistic update already applied the reaction.
+        final alreadyExists = msg.reactions.any(
+          (r) => r.code == event.code && r.userId == event.userId,
+        );
+        if (alreadyExists) return msg;
+
+        hasChanges = true;
         updatedReactions = [
           ...msg.reactions,
           MessageReaction(
@@ -977,6 +1005,13 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           ),
         ];
       } else {
+        // Idempotent: only remove if the reaction actually exists.
+        final exists = msg.reactions.any(
+          (r) => r.code == event.code && r.userId == event.userId,
+        );
+        if (!exists) return msg;
+
+        hasChanges = true;
         updatedReactions = msg.reactions
             .where((r) => !(r.code == event.code && r.userId == event.userId))
             .toList();
@@ -984,6 +1019,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
       return msg.copyWith(reactions: updatedReactions);
     }).toList();
+
+    // Only emit if state actually changed to avoid unnecessary rebuilds.
+    if (!hasChanges) return;
 
     emit(currentState.copyWith(
       messages: updatedMessages,

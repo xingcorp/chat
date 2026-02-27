@@ -429,12 +429,17 @@ class RealtimeService {
       final userId = reactor?['id']?.toString() ?? '';
       final userName = reactor?['fullname']?.toString() ?? 'Unknown';
       
+      // Backend sends act as 'ADD'/'REVOKE' (GraphQL) or numeric '1'/'0' (socket).
+      // Normalize both formats to ensure correct parsing.
+      final normalizedAct = act.toUpperCase();
+      final isAdd = normalizedAct == 'ADD' || normalizedAct == '1';
+
       final reaction = MessageReaction(
         messageId: messageId,
         code: code,
         userId: userId,
         userName: userName,
-        action: act == 'ADD' ? ReactionAction.add : ReactionAction.remove,
+        action: isAdd ? ReactionAction.add : ReactionAction.remove,
       );
       
       // Emit to reaction stream
