@@ -40,6 +40,9 @@ class ReactionBar extends StatelessWidget {
   /// Hiển thị nút "+" để thêm reaction không
   final bool showAddButton;
 
+  /// Tin nhắn có phải từ current user không (để điều chỉnh màu trên bubble primary)
+  final bool isFromCurrentUser;
+
   const ReactionBar({
     Key? key,
     required this.groupedReactions,
@@ -47,6 +50,7 @@ class ReactionBar extends StatelessWidget {
     this.onReactionLongPress,
     this.onAddReaction,
     this.showAddButton = true,
+    this.isFromCurrentUser = false,
   }) : super(key: key);
 
   @override
@@ -107,11 +111,19 @@ class ReactionBar extends StatelessWidget {
     ReactionGroup reaction,
   ) {
     final isReacted = reaction.isReactedByCurrentUser;
+    // For current user's messages (blue bubble): use white-based colors for visibility
+    // For other users' messages (light bubble): use primary-based colors
     final backgroundColor = isReacted
-        ? theme.colorScheme.primary.withValues(alpha: 0.15)
-        : theme.colorScheme.surfaceContainerHighest;
+        ? (isFromCurrentUser
+            ? theme.colorScheme.onPrimary.withValues(alpha: 0.25)
+            : theme.colorScheme.primary.withValues(alpha: 0.15))
+        : (isFromCurrentUser
+            ? theme.colorScheme.onPrimary.withValues(alpha: 0.15)
+            : theme.colorScheme.surfaceContainerHighest);
     final borderColor = isReacted
-        ? theme.colorScheme.primary
+        ? (isFromCurrentUser
+            ? theme.colorScheme.onPrimary.withValues(alpha: 0.6)
+            : theme.colorScheme.primary)
         : theme.colorScheme.outline.withValues(alpha: 0.3);
 
     return _AnimatedReactionChip(
@@ -141,9 +153,15 @@ class ReactionBar extends StatelessWidget {
             style: TextStyle(
               fontSize: 13.0,
               fontWeight: isReacted ? FontWeight.w700 : FontWeight.w500,
+              // For current user's messages: use onPrimary (white) text
+              // For other users' messages: use primary (blue) for reacted, default otherwise
               color: isReacted
-                  ? theme.colorScheme.primary
-                  : theme.textTheme.bodyMedium?.color,
+                  ? (isFromCurrentUser
+                      ? theme.colorScheme.onPrimary
+                      : theme.colorScheme.primary)
+                  : (isFromCurrentUser
+                      ? theme.colorScheme.onPrimary.withValues(alpha: 0.9)
+                      : theme.textTheme.bodyMedium?.color),
             ),
             child: Text('${reaction.count}'),
           ),
@@ -153,6 +171,17 @@ class ReactionBar extends StatelessWidget {
   }
 
   Widget _buildAddButton(BuildContext context, ThemeData theme) {
+    // For current user's messages: use white-based colors
+    final bgColor = isFromCurrentUser
+        ? theme.colorScheme.onPrimary.withValues(alpha: 0.15)
+        : theme.colorScheme.surfaceContainerHighest;
+    final borderColor = isFromCurrentUser
+        ? theme.colorScheme.onPrimary.withValues(alpha: 0.4)
+        : theme.colorScheme.outline.withValues(alpha: 0.3);
+    final iconColor = isFromCurrentUser
+        ? theme.colorScheme.onPrimary.withValues(alpha: 0.8)
+        : theme.colorScheme.onSurfaceVariant;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -163,9 +192,9 @@ class ReactionBar extends StatelessWidget {
           width: 32.0,
           height: 32.0,
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
+            color: bgColor,
             border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.3),
+              color: borderColor,
               width: 1.0,
             ),
             borderRadius: BorderRadius.circular(16.0),
@@ -173,7 +202,7 @@ class ReactionBar extends StatelessWidget {
           child: Icon(
             Icons.add_rounded,
             size: 18.0,
-            color: theme.colorScheme.onSurfaceVariant,
+            color: iconColor,
           ),
         ),
       ),

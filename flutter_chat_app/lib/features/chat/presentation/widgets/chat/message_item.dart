@@ -108,7 +108,11 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
         decoration: TextDecoration.underline,
       ),
       mentionStyle: TextStyle(
-        color: theme.colorScheme.primary,
+        // For current user: use onPrimary (white) since bubble is primary (blue)
+        // For other users: use primary (blue) for visibility on light background
+        color: widget.uiState.isFromCurrentUser
+            ? theme.colorScheme.onPrimary
+            : theme.colorScheme.primary,
         fontSize: 16.0,
         fontWeight: FontWeight.w600,
       ),
@@ -610,6 +614,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                 padding: const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 8.0),
                 child: ReactionBar(
                   groupedReactions: widget.uiState.groupedReactions,
+                  isFromCurrentUser: isFromCurrentUser,
                   showAddButton: true,
                   // Tap → xem danh sách ai đã react (như Messenger/WhatsApp)
                   onReactionTap: (emojiCode, reactorIds, reactorNames) {

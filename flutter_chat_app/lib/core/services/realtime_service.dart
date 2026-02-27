@@ -28,16 +28,31 @@ import 'package:rxdart/rxdart.dart';
 @singleton
 class RealtimeService {
   final EnhancedSocketManager _socketManager;
-  final Logger _logger = Logger(
-    printer: PrettyPrinter(
+  
+  /// Custom printer for web that safely handles null values in stackTrace
+  static LogPrinter _createPrinter() {
+    if (kIsWeb) {
+      // On web, use a simpler printer to avoid null pointer issues
+      return PrettyPrinter(
+        methodCount: 0,
+        errorMethodCount: 0,
+        lineLength: 80,
+        colors: false,
+        printEmojis: false,
+        dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
+      );
+    }
+    return PrettyPrinter(
       methodCount: 1,
       errorMethodCount: 3,
       lineLength: 120,
-      colors: !kIsWeb,
+      colors: true,
       printEmojis: true,
       dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
-    ),
-  );
+    );
+  }
+  
+  final Logger _logger = Logger(printer: _createPrinter());
 
   // Stream controllers for real-time events
   final BehaviorSubject<SocketConnectionState> _connectionStateController = 
