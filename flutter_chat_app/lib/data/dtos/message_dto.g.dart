@@ -23,6 +23,10 @@ _$MessageDtoImpl _$$MessageDtoImplFromJson(Map<String, dynamic> json) =>
           : ReplyMessageDto.fromJson(
               json['replyMessage'] as Map<String, dynamic>),
       forwardedFromMessageId: json['forwardedFromMessageId'] as String?,
+      forwardedFromMessage: json['forwardedFromMessage'] == null
+          ? null
+          : MessageDto.fromJson(
+              json['forwardedFromMessage'] as Map<String, dynamic>),
       fileName: json['fileName'] as String?,
       senderId: json['senderId'] as String,
       sender: json['sender'] == null
@@ -70,6 +74,7 @@ Map<String, dynamic> _$$MessageDtoImplToJson(_$MessageDtoImpl instance) =>
       'replyMessageId': instance.replyMessageId,
       'replyMessage': instance.replyMessage,
       'forwardedFromMessageId': instance.forwardedFromMessageId,
+      'forwardedFromMessage': instance.forwardedFromMessage,
       'fileName': instance.fileName,
       'senderId': instance.senderId,
       'sender': instance.sender,

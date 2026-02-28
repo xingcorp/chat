@@ -192,6 +192,10 @@ class MessageMapper {
       mentionTo: mentions,
       replyMessageId: dto.replyMessageId,
       replyMessage: replyMessage,
+      forwardedFromMessageId: dto.forwardedFromMessageId,
+      forwardedFromMessage: dto.forwardedFromMessage != null
+          ? toEntity(dto.forwardedFromMessage!)
+          : null,
       reactions: reactions,
       actionType: dto.actionType,
       actor: actorSender,
@@ -317,6 +321,7 @@ class MessageMapper {
       'mentionTo': dto.mentionTo.map((m) => m.toJson()).toList(),
       'replyMessage': dto.replyMessage?.toJson(),
       'forwardedFromMessageId': dto.forwardedFromMessageId,
+      'forwardedFromMessage': dto.forwardedFromMessage?.toJson(),
       'sender': dto.sender?.toJson(),
       // System event fields
       'actionType': dto.actionType,
@@ -388,6 +393,14 @@ class MessageMapper {
     final fileName = metadataMap['fileName'] as String?;
     final forwardedFromMessageId = metadataMap['forwardedFromMessageId'] as String?;
     
+    // Parse forwarded message from metadata
+    MessageDto? forwardedFromMessage;
+    if (metadataMap['forwardedFromMessage'] != null) {
+      forwardedFromMessage = MessageDto.fromJson(
+        metadataMap['forwardedFromMessage'] as Map<String, dynamic>,
+      );
+    }
+    
     // Parse reactions from metadata
     final reactions = <ReactionDto>[];
     if (metadataMap['reactions'] != null) {
@@ -433,6 +446,7 @@ class MessageMapper {
       replyMessageId: model.replyToMessageId,
       replyMessage: replyMessage,
       forwardedFromMessageId: forwardedFromMessageId,
+      forwardedFromMessage: forwardedFromMessage,
       fileName: fileName,
       senderId: model.senderId,
       sender: sender,
@@ -485,6 +499,7 @@ class MessageMapper {
       'fileName': entity.fileName,
       'sender': entity.sender.toJson(),
       'forwardedFromMessageId': entity.forwardedFromMessageId,
+      'forwardedFromMessage': entity.forwardedFromMessage?.toJson(),
       // System event fields
       'actionType': entity.actionType,
       'newValue': entity.newValue,

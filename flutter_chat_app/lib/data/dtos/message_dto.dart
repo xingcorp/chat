@@ -27,6 +27,7 @@ class MessageDto with _$MessageDto {
     String? replyMessageId,
     ReplyMessageDto? replyMessage,
     String? forwardedFromMessageId,
+    MessageDto? forwardedFromMessage,
     String? fileName,
     required String senderId,
     SenderDto? sender,

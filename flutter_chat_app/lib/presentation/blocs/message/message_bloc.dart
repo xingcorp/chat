@@ -603,12 +603,18 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     // Execute SendMessageUseCase to forward to target chat
     // Pass forwardedFromMessageId so backend can track the original message
+    // Use attachment URLs (not IDs) for media files
+    final attachmentUrls = originalMessage.attachments
+        .where((a) => a.url.isNotEmpty)
+        .map((a) => a.url)
+        .toList();
+    
     final result = await _sendMessage(
       conversationId: event.targetChatId,
       content: originalMessage.content,
       senderId: originalMessage.sender.id,
       type: originalMessage.contentType.name,
-      urls: originalMessage.attachments.map((a) => a.id).toList(),
+      urls: attachmentUrls,
       forwardedFromMessageId: originalMessage.id,
     );
 

@@ -31,6 +31,7 @@ mixin _$MessageDto {
   String? get replyMessageId => throw _privateConstructorUsedError;
   ReplyMessageDto? get replyMessage => throw _privateConstructorUsedError;
   String? get forwardedFromMessageId => throw _privateConstructorUsedError;
+  MessageDto? get forwardedFromMessage => throw _privateConstructorUsedError;
   String? get fileName => throw _privateConstructorUsedError;
   String get senderId => throw _privateConstructorUsedError;
   SenderDto? get sender => throw _privateConstructorUsedError;
@@ -71,6 +72,7 @@ abstract class $MessageDtoCopyWith<$Res> {
       String? replyMessageId,
       ReplyMessageDto? replyMessage,
       String? forwardedFromMessageId,
+      MessageDto? forwardedFromMessage,
       String? fileName,
       String senderId,
       SenderDto? sender,
@@ -87,6 +89,7 @@ abstract class $MessageDtoCopyWith<$Res> {
       String? oldValue});
 
   $ReplyMessageDtoCopyWith<$Res>? get replyMessage;
+  $MessageDtoCopyWith<$Res>? get forwardedFromMessage;
   $SenderDtoCopyWith<$Res>? get sender;
   $SenderDtoCopyWith<$Res>? get actor;
 }
@@ -114,6 +117,7 @@ class _$MessageDtoCopyWithImpl<$Res, $Val extends MessageDto>
     Object? replyMessageId = freezed,
     Object? replyMessage = freezed,
     Object? forwardedFromMessageId = freezed,
+    Object? forwardedFromMessage = freezed,
     Object? fileName = freezed,
     Object? senderId = null,
     Object? sender = freezed,
@@ -170,6 +174,10 @@ class _$MessageDtoCopyWithImpl<$Res, $Val extends MessageDto>
           ? _value.forwardedFromMessageId
           : forwardedFromMessageId // ignore: cast_nullable_to_non_nullable
               as String?,
+      forwardedFromMessage: freezed == forwardedFromMessage
+          ? _value.forwardedFromMessage
+          : forwardedFromMessage // ignore: cast_nullable_to_non_nullable
+              as MessageDto?,
       fileName: freezed == fileName
           ? _value.fileName
           : fileName // ignore: cast_nullable_to_non_nullable
@@ -243,6 +251,18 @@ class _$MessageDtoCopyWithImpl<$Res, $Val extends MessageDto>
 
   @override
   @pragma('vm:prefer-inline')
+  $MessageDtoCopyWith<$Res>? get forwardedFromMessage {
+    if (_value.forwardedFromMessage == null) {
+      return null;
+    }
+
+    return $MessageDtoCopyWith<$Res>(_value.forwardedFromMessage!, (value) {
+      return _then(_value.copyWith(forwardedFromMessage: value) as $Val);
+    });
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
   $SenderDtoCopyWith<$Res>? get sender {
     if (_value.sender == null) {
       return null;
@@ -285,6 +305,7 @@ abstract class _$$MessageDtoImplCopyWith<$Res>
       String? replyMessageId,
       ReplyMessageDto? replyMessage,
       String? forwardedFromMessageId,
+      MessageDto? forwardedFromMessage,
       String? fileName,
       String senderId,
       SenderDto? sender,
@@ -302,6 +323,8 @@ abstract class _$$MessageDtoImplCopyWith<$Res>
 
   @override
   $ReplyMessageDtoCopyWith<$Res>? get replyMessage;
+  @override
+  $MessageDtoCopyWith<$Res>? get forwardedFromMessage;
   @override
   $SenderDtoCopyWith<$Res>? get sender;
   @override
@@ -329,6 +352,7 @@ class __$$MessageDtoImplCopyWithImpl<$Res>
     Object? replyMessageId = freezed,
     Object? replyMessage = freezed,
     Object? forwardedFromMessageId = freezed,
+    Object? forwardedFromMessage = freezed,
     Object? fileName = freezed,
     Object? senderId = null,
     Object? sender = freezed,
@@ -385,6 +409,10 @@ class __$$MessageDtoImplCopyWithImpl<$Res>
           ? _value.forwardedFromMessageId
           : forwardedFromMessageId // ignore: cast_nullable_to_non_nullable
               as String?,
+      forwardedFromMessage: freezed == forwardedFromMessage
+          ? _value.forwardedFromMessage
+          : forwardedFromMessage // ignore: cast_nullable_to_non_nullable
+              as MessageDto?,
       fileName: freezed == fileName
           ? _value.fileName
           : fileName // ignore: cast_nullable_to_non_nullable
@@ -459,6 +487,7 @@ class _$MessageDtoImpl implements _MessageDto {
       this.replyMessageId,
       this.replyMessage,
       this.forwardedFromMessageId,
+      this.forwardedFromMessage,
       this.fileName,
       required this.senderId,
       this.sender,
@@ -511,6 +540,8 @@ class _$MessageDtoImpl implements _MessageDto {
   final ReplyMessageDto? replyMessage;
   @override
   final String? forwardedFromMessageId;
+  @override
+  final MessageDto? forwardedFromMessage;
   @override
   final String? fileName;
   @override
@@ -579,7 +610,7 @@ class _$MessageDtoImpl implements _MessageDto {
 
   @override
   String toString() {
-    return 'MessageDto(id: $id, content: $content, urls: $urls, type: $type, createdAt: $createdAt, editAt: $editAt, deletedAt: $deletedAt, replyMessageId: $replyMessageId, replyMessage: $replyMessage, forwardedFromMessageId: $forwardedFromMessageId, fileName: $fileName, senderId: $senderId, sender: $sender, chatId: $chatId, readerIds: $readerIds, reactions: $reactions, mentionTo: $mentionTo, actionType: $actionType, actorId: $actorId, actor: $actor, targetUserIds: $targetUserIds, targetUsers: $targetUsers, newValue: $newValue, oldValue: $oldValue)';
+    return 'MessageDto(id: $id, content: $content, urls: $urls, type: $type, createdAt: $createdAt, editAt: $editAt, deletedAt: $deletedAt, replyMessageId: $replyMessageId, replyMessage: $replyMessage, forwardedFromMessageId: $forwardedFromMessageId, forwardedFromMessage: $forwardedFromMessage, fileName: $fileName, senderId: $senderId, sender: $sender, chatId: $chatId, readerIds: $readerIds, reactions: $reactions, mentionTo: $mentionTo, actionType: $actionType, actorId: $actorId, actor: $actor, targetUserIds: $targetUserIds, targetUsers: $targetUsers, newValue: $newValue, oldValue: $oldValue)';
   }
 
   @override
@@ -602,6 +633,8 @@ class _$MessageDtoImpl implements _MessageDto {
                 other.replyMessage == replyMessage) &&
             (identical(other.forwardedFromMessageId, forwardedFromMessageId) ||
                 other.forwardedFromMessageId == forwardedFromMessageId) &&
+            (identical(other.forwardedFromMessage, forwardedFromMessage) ||
+                other.forwardedFromMessage == forwardedFromMessage) &&
             (identical(other.fileName, fileName) ||
                 other.fileName == fileName) &&
             (identical(other.senderId, senderId) ||
@@ -642,6 +675,7 @@ class _$MessageDtoImpl implements _MessageDto {
         replyMessageId,
         replyMessage,
         forwardedFromMessageId,
+        forwardedFromMessage,
         fileName,
         senderId,
         sender,
@@ -684,6 +718,7 @@ abstract class _MessageDto implements MessageDto {
       final String? replyMessageId,
       final ReplyMessageDto? replyMessage,
       final String? forwardedFromMessageId,
+      final MessageDto? forwardedFromMessage,
       final String? fileName,
       required final String senderId,
       final SenderDto? sender,
@@ -723,6 +758,8 @@ abstract class _MessageDto implements MessageDto {
   ReplyMessageDto? get replyMessage;
   @override
   String? get forwardedFromMessageId;
+  @override
+  MessageDto? get forwardedFromMessage;
   @override
   String? get fileName;
   @override
