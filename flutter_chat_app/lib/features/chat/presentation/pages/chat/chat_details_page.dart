@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:flutter_chat_app/core/base/base_widget.dart';
@@ -763,53 +764,78 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   Future<void> _processAndSendImage(File imageFile, {Uint8List? bytes, String? name, int? size}) async {
     final l10n = context.l10n;
+    var currentFile = imageFile;
+    Uint8List? currentBytes = bytes;
+    String? currentName = name;
+
     try {
-      // On web, we already have bytes from picker
-      // On mobile, compress image first
-      Uint8List? imageBytes = bytes;
+      while (true) {
+        // On web, we already have bytes from picker
+        // On mobile, compress image first
+        Uint8List? imageBytes = currentBytes;
 
-      if (!kIsWeb) {
-        // Mobile: compress image
-        final compressedImage = await ImageCompressionHelper.compressImage(imageFile);
-        if (!mounted) return;
+        if (!kIsWeb) {
+          // Mobile: compress image
+          final compressedImage = await ImageCompressionHelper.compressImage(currentFile);
+          if (!mounted) return;
 
-        if (compressedImage == null) {
-          AppSnackBar.show(context: context, message: l10n.imageCompressionFailed, type: FeedbackType.error);
-          return;
+          if (compressedImage == null) {
+            AppSnackBar.show(context: context, message: l10n.imageCompressionFailed, type: FeedbackType.error);
+            return;
+          }
+
+          imageBytes = await compressedImage.readAsBytes();
         }
 
-        imageBytes = await compressedImage.readAsBytes();
-      }
-
-      // Open preview screen with image for editing before sending
-      if (!mounted) return;
-      final result = await Navigator.of(context).push<ImagePreviewResult>(
-        MaterialPageRoute(
-          builder: (ctx) => BlocProvider.value(
-            value: context.read<ChatBloc>(),
-            child: ImagePreviewScreen(
-              imageFile: kIsWeb ? null : imageFile,
-              imageBytes: imageBytes,
-              fileName: name,
-              chatId: widget.chatId,
+        // Open preview screen with image for editing before sending
+        if (!mounted) return;
+        final result = await Navigator.of(context).push<ImagePreviewResult>(
+          MaterialPageRoute(
+            builder: (ctx) => BlocProvider.value(
+              value: context.read<ChatBloc>(),
+              child: ImagePreviewScreen(
+                imageFile: kIsWeb ? null : currentFile,
+                imageBytes: imageBytes,
+                fileName: currentName,
+                chatId: widget.chatId,
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      // User cancelled - don't send
-      if (result == null || result.isCancelled) return;
+        // User wants to retake - re-open camera
+        if (result != null && result.isRetake) {
+          if (!mounted) return;
+          final picker = ImagePicker();
+          final retaken = await picker.pickImage(
+            source: ImageSource.camera,
+            maxWidth: 1920,
+            maxHeight: 1920,
+            imageQuality: 85,
+          );
+          if (retaken == null || !mounted) return;
 
-      // User sent - send with progress display via SendMessageWithAttachments
-      _messageBloc.add(
-        SendMessageWithAttachments(
-          content: '',
-          senderId: _currentUserId,
-          localFilePaths: const [],
-          fileBytes: [result.editedBytes!],
-          fileNames: [result.fileName ?? 'image_${DateTime.now().millisecondsSinceEpoch}.jpg'],
-        ),
-      );
+          currentFile = File(retaken.path);
+          currentBytes = kIsWeb ? await retaken.readAsBytes() : null;
+          currentName = retaken.name;
+          continue;
+        }
+
+        // User cancelled - don't send
+        if (result == null || result.isCancelled) return;
+
+        // User sent - send with progress display via SendMessageWithAttachments
+        _messageBloc.add(
+          SendMessageWithAttachments(
+            content: '',
+            senderId: _currentUserId,
+            localFilePaths: const [],
+            fileBytes: [result.editedBytes!],
+            fileNames: [result.fileName ?? 'image_${DateTime.now().millisecondsSinceEpoch}.jpg'],
+          ),
+        );
+        return;
+      }
     } catch (e) {
       if (mounted) {
         AppSnackBar.show(

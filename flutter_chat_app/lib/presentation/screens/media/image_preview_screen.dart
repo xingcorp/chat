@@ -19,16 +19,27 @@ class ImagePreviewResult {
   /// Whether user cancelled
   final bool isCancelled;
 
+  /// Whether user wants to retake photo
+  final bool isRetake;
+
   const ImagePreviewResult({
     this.editedBytes,
     this.fileName,
     this.isCancelled = false,
+    this.isRetake = false,
   });
 
   const ImagePreviewResult.cancelled()
       : editedBytes = null,
         fileName = null,
-        isCancelled = true;
+        isCancelled = true,
+        isRetake = false;
+
+  const ImagePreviewResult.retake()
+      : editedBytes = null,
+        fileName = null,
+        isCancelled = true,
+        isRetake = true;
 }
 
 /// Preview screen for images before sending
@@ -155,7 +166,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                         _buildActionButton(
                           icon: Icons.camera_alt,
                           label: context.l10n.retake,
-                          onPressed: () => Navigator.of(context).pop(const ImagePreviewResult.cancelled()),
+                          onPressed: () => Navigator.of(context).pop(const ImagePreviewResult.retake()),
                         ),
                         // Edit button
                         _buildActionButton(
