@@ -290,34 +290,46 @@ extension ChatDtoMapper on ChatDto {
       for (final m in domainMembers)
         if ((m.userId).isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
           m.userId: m.fullName!.trim(),
+      // Include mentionTo from lastMessage for proper mention resolution
+      if (lastMessage?.mentionTo case final mention?
+          when mention.id.isNotEmpty &&
+              (mention.fullName?.trim().isNotEmpty ?? false))
+        mention.id: mention.fullName!.trim(),
     };
 
-    final formattedPreview = lastMessage?.message?.formatChatMessage(
-      mentionNameById: mentionNameById,
-    );
+    final msgType = (lastMessage?.type ?? '').trim().toLowerCase();
+    final fileName = lastMessage?.fileName?.trim();
 
-    final resolvedPreview = (formattedPreview?.trim().isNotEmpty ?? false)
-        ? formattedPreview
-        : () {
-            final type = (lastMessage?.type ?? '').trim().toLowerCase();
-            final fileName = lastMessage?.fileName?.trim();
-
-            switch (type) {
-              case 'image':
-                return '📷 Photo';
-              case 'video':
-                return '📹 Video';
-              case 'audio':
-                return '🎧 Audio';
-              case 'file':
-              case 'document':
-                return fileName != null && fileName.isNotEmpty
-                    ? '📄 $fileName'
-                    : '📄 File';
-              default:
-                return fileName != null && fileName.isNotEmpty ? fileName : null;
-            }
-          }();
+    // For system event types, show generic system label (no actionType in LastMessageDto)
+    final resolvedPreview = () {
+      switch (msgType) {
+        case 'log':
+        case 'event':
+          return '⚙ Thông báo hệ thống';
+        case 'image':
+          return '📷 ${_formatPreviewContent(lastMessage?.message, mentionNameById) ?? 'Photo'}';
+        case 'video':
+          return '📹 ${_formatPreviewContent(lastMessage?.message, mentionNameById) ?? 'Video'}';
+        case 'audio':
+        case 'voice_note':
+          return '🎧 ${_formatPreviewContent(lastMessage?.message, mentionNameById) ?? 'Audio'}';
+        case 'doc':
+        case 'file':
+        case 'document':
+          final name = fileName != null && fileName.isNotEmpty ? fileName : 'File';
+          return '📄 $name';
+        case 'location':
+          return '📍 Vị trí';
+        case 'link':
+          final content = _formatPreviewContent(lastMessage?.message, mentionNameById);
+          return content ?? '🔗 Liên kết';
+        default:
+          // Text or unknown type — format mentions in content
+          final content = _formatPreviewContent(lastMessage?.message, mentionNameById);
+          if (content != null && content.isNotEmpty) return content;
+          return fileName != null && fileName.isNotEmpty ? fileName : null;
+      }
+    }();
 
     return Chat(
       id: id,
@@ -339,7 +351,17 @@ extension ChatDtoMapper on ChatDto {
       createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
     );
   }
-  
+
+  /// Format message content with mention resolution, returns null if empty.
+  String? _formatPreviewContent(
+    String? message,
+    Map<String, String> mentionNameById,
+  ) {
+    if (message == null || message.trim().isEmpty) return null;
+    final formatted = message.formatChatMessage(mentionNameById: mentionNameById);
+    return formatted.trim().isNotEmpty ? formatted.trim() : null;
+  }
+
   /// Map string type to ChatType enum
   ChatType _mapChatType(String type) {
     switch (type.toLowerCase()) {

@@ -10,6 +10,9 @@ import 'package:flutter_chat_app/domain/entities/chat_info/notification_settings
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_event.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_state.dart';
+import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_event.dart';
+import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_state.dart';
 import 'package:flutter_chat_app/presentation/pages/shared_media_gallery_page.dart';
 import 'package:flutter_chat_app/presentation/pages/chat_members_page.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_header.dart';
@@ -35,6 +38,7 @@ class ChatInfoPanel extends BaseStatefulWidget {
 
 class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
   // Local state
+  late Chat _chat;
   bool _isMuted = false;
   bool _isBlocked = false;
   List<SharedMedia> _photos = [];
@@ -45,6 +49,7 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
   @override
   void initState() {
     super.initState();
+    _chat = widget.chat;
     _loadInitialData();
   }
 
@@ -82,7 +87,15 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ChatInfoBloc, ChatInfoState>(
+    return BlocListener<ConversationDetailBloc, ConversationDetailState>(
+      listener: (context, convState) {
+        if (convState is ConversationDetailLoaded) {
+          setState(() {
+            _chat = convState.chat;
+          });
+        }
+      },
+      child: BlocListener<ChatInfoBloc, ChatInfoState>(
       listener: (context, state) {
         // Handle state changes
         if (state is ChatInfoNotificationSettingsLoaded ||
@@ -184,10 +197,10 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
             ),
 
             // Members Section (for group chats)
-            if (widget.chat.type == ChatType.group) ...[
+            if (_chat.type == ChatType.group) ...[
               SliverToBoxAdapter(
                 child: ChatInfoMembersSection(
-                  chat: widget.chat,
+                  chat: _chat,
                   onTap: () => _handleViewMembers(context),
                 ),
               ),
@@ -240,6 +253,7 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -408,11 +422,16 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
       context,
       MaterialPageRoute(
         builder: (context) => ChatMembersPage(
-          chat: widget.chat,
-          // currentUserId will be fetched from UserBloc in the page
+          chat: _chat,
         ),
       ),
-    );
+    ).then((_) {
+      // Refresh conversation detail when returning from members page
+      // (members may have been added/removed)
+      context.read<ConversationDetailBloc>().add(
+            LoadConversationDetail(chatId: _chat.id),
+          );
+    });
   }
 
   void _handleDeleteChat() {

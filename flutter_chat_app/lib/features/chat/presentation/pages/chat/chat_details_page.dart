@@ -471,8 +471,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => BlocProvider(
-        create: (_) => getIt<ChatInfoBloc>(),
+      builder: (context) => MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => getIt<ChatInfoBloc>()),
+          BlocProvider<ConversationDetailBloc>.value(value: _convDetailBloc),
+        ],
         child: DraggableScrollableSheet(
           initialChildSize: 0.9,
           minChildSize: 0.5,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/core/formatters/message_preview_formatter.dart';
 import 'package:flutter_chat_app/core/formatters/relative_time_formatter.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -89,11 +88,7 @@ class ChatConversationTile extends StatelessWidget {
                         child: AppText(
                           isTyping
                               ? context.l10n.typing
-                              : MessagePreviewFormatter.format(
-                                  context: context,
-                                  text: previewText,
-                                  attachments: null,
-                                ),
+                              : previewText,
                           style: AppTextStyles.bodySmall.copyWith(
                             color: hasUnread ? primaryTextColor : secondaryTextColor,
                             fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,

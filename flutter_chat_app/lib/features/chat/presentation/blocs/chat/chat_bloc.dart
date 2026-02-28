@@ -11,6 +11,7 @@ import 'package:injectable/injectable.dart';
 
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
 import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
+import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
@@ -695,9 +696,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     final existingChat = currentState.chats[idx];
     final isIncoming = message.sender.id != _currentUserProvider.currentUserId;
 
+    final preview = _formatMessagePreview(message, existingChat.members);
+
     final updatedChat = existingChat.copyWith(
       lastMessageTime: message.createdAt,
-      lastMessagePreview: message.content,
+      lastMessagePreview: preview,
       unreadCount: isIncoming ? (existingChat.unreadCount + 1) : existingChat.unreadCount,
     );
 
@@ -822,6 +825,72 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       filterPages: current.filterPages,
       filterHasMore: current.filterHasMore,
     );
+  }
+
+  /// Format message preview based on content type for chat list display.
+  ///
+  /// Handles all message types: text, media, system events, forwarded, etc.
+  /// Resolves mentions using conversation members.
+  String _formatMessagePreview(
+    ChatMessage message,
+    List<ConversationMember> members,
+  ) {
+    final mentionNameById = <String, String>{
+      for (final m in members)
+        if (m.userId.isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
+          m.userId: m.fullName!.trim(),
+      for (final m in message.mentionTo)
+        if (m.id.isNotEmpty && m.name.trim().isNotEmpty)
+          m.id: m.name.trim(),
+    };
+
+    String formatContent(String? content) {
+      if (content == null || content.trim().isEmpty) return '';
+      return content.formatChatMessage(mentionNameById: mentionNameById).trim();
+    }
+
+    // System events
+    if (message.contentType == ContentType.event) {
+      return '⚙ Thông báo hệ thống';
+    }
+
+    // Forwarded messages
+    if (message.forwardedFromMessageId != null) {
+      final content = formatContent(message.content);
+      if (content.isNotEmpty) return '↩ $content';
+      return switch (message.contentType) {
+        ContentType.image => '↩ 📷 Photo',
+        ContentType.video => '↩ 📹 Video',
+        ContentType.audio => '↩ 🎧 Audio',
+        ContentType.file => '↩ 📄 ${message.fileName ?? "File"}',
+        _ => '↩ Tin nhắn chuyển tiếp',
+      };
+    }
+
+    // Media types
+    switch (message.contentType) {
+      case ContentType.image:
+        final text = formatContent(message.content);
+        return text.isNotEmpty ? '📷 $text' : '📷 Photo';
+      case ContentType.video:
+        final text = formatContent(message.content);
+        return text.isNotEmpty ? '📹 $text' : '📹 Video';
+      case ContentType.audio:
+        final text = formatContent(message.content);
+        return text.isNotEmpty ? '🎧 $text' : '🎧 Audio';
+      case ContentType.file:
+        final name = message.fileName?.trim();
+        return name != null && name.isNotEmpty ? '📄 $name' : '📄 File';
+      case ContentType.location:
+        return '📍 Vị trí';
+      case ContentType.link:
+        final text = formatContent(message.content);
+        return text.isNotEmpty ? text : '🔗 Liên kết';
+      case ContentType.text:
+      case ContentType.event:
+        final text = formatContent(message.content);
+        return text.isNotEmpty ? text : message.content;
+    }
   }
 
   @override

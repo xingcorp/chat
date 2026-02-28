@@ -336,13 +336,19 @@ extension MessageDtoMapper on MessageDto {
     }
 
     // Convert target users (system events)
-    final targetUserSenders = targetUsers
-        .map((u) => MessageSender(
-              id: u.id,
-              name: u.fullName,
-              avatar: u.imageUrls.isNotEmpty ? u.imageUrls.first : null,
-            ))
-        .toList();
+    // Socket events only send targetUserIds (string[]), not full targetUsers objects.
+    // Fallback: create MessageSender from targetUserIds so name can be resolved later.
+    final targetUserSenders = targetUsers.isNotEmpty
+        ? targetUsers
+            .map((u) => MessageSender(
+                  id: u.id,
+                  name: u.fullName,
+                  avatar: u.imageUrls.isNotEmpty ? u.imageUrls.first : null,
+                ))
+            .toList()
+        : targetUserIds
+            .map((id) => MessageSender(id: id, name: 'Unknown'))
+            .toList();
 
     return ChatMessage(
       id: id,
