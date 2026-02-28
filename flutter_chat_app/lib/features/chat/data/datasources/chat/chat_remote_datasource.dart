@@ -271,6 +271,7 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     final result = await _client.query(
       ChatQueries.getConversationDetail,
       variables: variables,
+      fetchPolicy: FetchPolicy.networkOnly,
       operationName: 'GetConversationDetail',
     );
     
@@ -284,9 +285,15 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
 
   @override
   Future<ChatDto> getConversationMembers(String conversationId) async {
+    // CRITICAL: Use networkOnly to bypass GraphQL HiveStore cache.
+    // The app has its own cache layers (AppCacheManager + Isar).
+    // Using the default cacheAndNetwork policy can return stale cached
+    // member data (e.g. admin=false), causing the admin badge and
+    // remove-member button to disappear intermittently.
     final result = await _client.query(
       ChatQueries.getConversationMembers,
       variables: {'conversationId': conversationId},
+      fetchPolicy: FetchPolicy.networkOnly,
       operationName: 'GetConversationMembers',
     );
 

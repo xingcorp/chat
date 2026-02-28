@@ -193,7 +193,7 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
 
             // Chat Info Header
             SliverToBoxAdapter(
-              child: ChatInfoHeader(chat: widget.chat),
+              child: ChatInfoHeader(chat: _chat),
             ),
 
             // Members Section (for group chats)
@@ -418,19 +418,20 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
   }
 
   void _handleViewMembers(BuildContext context) {
+    final convDetailBloc = context.read<ConversationDetailBloc>();
+    final chatId = _chat.id;
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ChatMembersPage(
+        builder: (_) => ChatMembersPage(
           chat: _chat,
         ),
       ),
     ).then((_) {
       // Refresh conversation detail when returning from members page
-      // (members may have been added/removed)
-      context.read<ConversationDetailBloc>().add(
-            LoadConversationDetail(chatId: _chat.id),
-          );
+      if (mounted) {
+        convDetailBloc.add(LoadConversationDetail(chatId: chatId));
+      }
     });
   }
 
