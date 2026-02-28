@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/utils/optimized_repaint_boundary.dart';
 
@@ -9,25 +10,31 @@ import 'package:flutter_chat_app/core/utils/optimized_repaint_boundary.dart';
 class MediaPreview extends BaseStatefulWidget {
   /// URL của media (ảnh hoặc video)
   final String mediaUrl;
-  
+
   /// URL của thumbnail (chỉ cho video)
   final String? thumbnailUrl;
-  
+
   /// Xác định media là ảnh hay video
   final bool isImage;
-  
+
   /// Chiều rộng hiển thị, mặc định là 200
   final double? width;
-  
+
   /// Chiều cao hiển thị, mặc định là 150
   final double? height;
-  
+
   /// Độ bo góc
   final double? borderRadius;
-  
+
   /// Callback khi nhấn vào media
   final VoidCallback? onTap;
-  
+
+  /// Callback khi nhấn nút chỉnh sửa ảnh
+  final VoidCallback? onEditTap;
+
+  /// Có hiển thị nút chỉnh sửa không
+  final bool showEditButton;
+
   /// Constructor
   const MediaPreview({
     Key? key,
@@ -38,6 +45,8 @@ class MediaPreview extends BaseStatefulWidget {
     this.height,
     this.borderRadius,
     this.onTap,
+    this.onEditTap,
+    this.showEditButton = false,
   }) : super(key: key);
 
   @override
@@ -157,13 +166,43 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
             );
           },
         ),
-        
+
         // Loading indicator
         if (_isLoading) _buildPlaceholder(),
-        
+
         // Error widget
         if (_hasError) _buildErrorWidget(),
+
+        // Nút chỉnh sửa ảnh
+        if (widget.showEditButton && widget.onEditTap != null && !_hasError)
+          Positioned(
+            right: 8,
+            bottom: 8,
+            child: _buildEditButton(),
+          ),
       ],
+    );
+  }
+
+  /// Build nút chỉnh sửa ảnh
+  Widget _buildEditButton() {
+    return Material(
+      color: Colors.white,
+      elevation: 2,
+      shadowColor: Colors.black45,
+      borderRadius: BorderRadius.circular(AppDimens.radiusLarge),
+      child: InkWell(
+        onTap: widget.onEditTap,
+        borderRadius: BorderRadius.circular(AppDimens.radiusLarge),
+        child: Container(
+          padding: const EdgeInsets.all(AppDimens.paddingSmall),
+          child: Icon(
+            Icons.edit,
+            color: AppColors.primary,
+            size: AppDimens.iconSizeXSmall,
+          ),
+        ),
+      ),
     );
   }
   

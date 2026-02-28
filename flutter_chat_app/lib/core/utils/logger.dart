@@ -14,16 +14,17 @@ enum LogLevel {
 
 /// Class tiện ích để ghi log trong ứng dụng
 class LogUtils {
+  /// Platform-aware printer: disable methodCount on web to avoid null stack trace frames
   static final Logger _logger = Logger(
     printer: PrettyPrinter(
-      methodCount: 0,
-      errorMethodCount: 8,
+      methodCount: 0,  // Always 0 for simple logging
+      errorMethodCount: kIsWeb ? 0 : 8,  // Web: 0 for safety
       lineLength: 120,
-      colors: true,
-      printEmojis: true,
-      printTime: true,
+      colors: !kIsWeb,  // Web doesn't support ANSI colors
+      printEmojis: !kIsWeb,  // Web may have encoding issues
+      dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
     ),
-    level: kDebugMode ? Level.verbose : Level.error,
+    level: kDebugMode ? Level.trace : Level.error,
   );
   
   static bool _enabledConsoleLog = kDebugMode;
@@ -135,13 +136,14 @@ class LogUtils {
 /// 
 /// Registered manually in core_module.dart
 class AppLogger {
+  /// Platform-aware printer: disable methodCount on web to avoid null stack trace frames
   static final Logger _logger = Logger(
     printer: PrettyPrinter(
-      methodCount: 1,
-      errorMethodCount: 3,
+      methodCount: kIsWeb ? 0 : 1,  // Web: 0 to avoid null stack frames
+      errorMethodCount: kIsWeb ? 0 : 3,  // Web: 0 for safety
       lineLength: 120,
-      colors: true,
-      printEmojis: true,
+      colors: !kIsWeb,  // Web doesn't support ANSI colors
+      printEmojis: !kIsWeb,  // Web may have encoding issues
       dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
     ),
     level: kDebugMode ? Level.trace : Level.error,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
+import 'package:flutter_chat_app/core/services/image_editor_service.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' as domain;
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
@@ -10,6 +11,8 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_popup_menu.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
@@ -239,6 +242,11 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
               ),
               actions: [
                 AppIconButton(
+                  icon: Icons.edit,
+                  onPressed: _handleEdit,
+                  tooltip: context.l10n.edit,
+                ),
+                AppIconButton(
                   icon: Icons.share,
                   onPressed: _handleShare,
                   tooltip: context.l10n.share,
@@ -248,10 +256,20 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
                   onPressed: _handleDownload,
                   tooltip: context.l10n.download,
                 ),
-                // Options menu (⋮)
+                // Options menu (⋮) - for additional options
                 AppPopupMenu<String>(
                   icon: Icons.more_vert,
                   items: [
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.edit, size: 20),
+                          const SizedBox(width: 8),
+                          Text(context.l10n.edit),
+                        ],
+                      ),
+                    ),
                     PopupMenuItem(
                       value: 'info',
                       child: Text(context.l10n.imageMessage),
@@ -448,6 +466,9 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
   /// Handle menu option selection
   void _handleMenuOption(String value) {
     switch (value) {
+      case 'edit':
+        _handleEdit();
+        break;
       case 'info':
         // TODO: Show image info dialog
         break;
@@ -458,6 +479,24 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
         _handleForward();
         break;
     }
+  }
+
+  /// Handle edit action - open image editor
+  void _handleEdit() {
+    final imageEditorService = GetIt.I<ImageEditorService>();
+
+    imageEditorService.editNetworkImage(
+      context,
+      imageUrl: widget.imageUrl,
+      onComplete: (bytes) {
+        // TODO: Handle edited image - update message or send new message
+        AppSnackBar.show(
+          context: context,
+          message: context.l10n.edited,
+          type: FeedbackType.success,
+        );
+      },
+    );
   }
   
   /// Handle forward action

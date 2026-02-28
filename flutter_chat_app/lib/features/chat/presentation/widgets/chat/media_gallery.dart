@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:get_it/get_it.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/services/image_editor_service.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
@@ -13,6 +15,8 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_popup_menu.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
@@ -987,6 +991,25 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
     );
   }
 
+  /// Handle edit action - open image editor
+  void _handleEdit() {
+    final currentAttachment = widget.attachments[_currentIndex];
+    final imageEditorService = GetIt.I<ImageEditorService>();
+
+    imageEditorService.editNetworkImage(
+      context,
+      imageUrl: currentAttachment.url,
+      onComplete: (bytes) {
+        // TODO: Handle edited image - update message or send new message
+        AppSnackBar.show(
+          context: context,
+          message: context.l10n.edited,
+          type: FeedbackType.success,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasMessage = widget.message != null;
@@ -1002,6 +1025,11 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
           style: const TextStyle(color: Colors.white),
         ),
         actions: [
+          AppIconButton(
+            icon: Icons.edit,
+            onPressed: () => _handleEdit(),
+            tooltip: context.l10n.edit,
+          ),
           AppIconButton(
             icon: Icons.download,
             onPressed: () {
