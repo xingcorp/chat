@@ -42,7 +42,9 @@ class ReactionGroup {
   final List<String> reactorIds;
 
   /// Danh sách tên người react (hiển thị tooltip)
-  final List<String> reactorNames;
+  final Map<String, String> reactorNameById;
+
+  final Map<String, String?> reactorAvatarById;
 
   /// Người dùng hiện tại đã react emoji này chưa
   final bool isReactedByCurrentUser;
@@ -53,7 +55,8 @@ class ReactionGroup {
   const ReactionGroup({
     required this.code,
     required this.reactorIds,
-    this.reactorNames = const [],
+    this.reactorNameById = const {},
+    this.reactorAvatarById = const {},
     this.isReactedByCurrentUser = false,
   });
 }

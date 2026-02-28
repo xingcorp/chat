@@ -334,11 +334,18 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
                 ReactionBar(
                   groupedReactions: groupedReactions,
                   showAddButton: true,
-                  onReactionTap: (emojiCode, reactorIds, reactorNames) {
+                  onReactionTap: (
+                    emojiCode,
+                    reactorIds,
+                    reactorNameById,
+                    reactorAvatarById,
+                  ) {
                     ReactionDetailModal.show(
                       context,
                       emojiCode: emojiCode,
-                      reactorNames: reactorNames,
+                      reactorIds: reactorIds,
+                      reactorNameById: reactorNameById,
+                      reactorAvatarById: reactorAvatarById,
                     );
                   },
                   onReactionLongPress: (emojiCode, isCurrentlyReacted) {
@@ -399,11 +406,13 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
         groups[reaction.code] = ReactionGroup(
           code: reaction.code,
           reactorIds: [],
-          reactorNames: [],
+          reactorNameById: {},
+          reactorAvatarById: {},
         );
       }
       groups[reaction.code]!.reactorIds.add(reaction.userId);
-      groups[reaction.code]!.reactorNames.add(reaction.userName ?? reaction.userId);
+      groups[reaction.code]!.reactorNameById[reaction.userId] =
+          reaction.userName ?? reaction.userId;
     }
     
     return groups.values.toList();

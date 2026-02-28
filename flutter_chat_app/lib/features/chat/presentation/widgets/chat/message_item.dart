@@ -569,11 +569,18 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                         groupedReactions: widget.uiState.groupedReactions,
                         isFromCurrentUser: isFromCurrentUser,
                         showAddButton: true,
-                        onReactionTap: (emojiCode, reactorIds, reactorNames) {
+                        onReactionTap: (
+                          emojiCode,
+                          reactorIds,
+                          reactorNameById,
+                          reactorAvatarById,
+                        ) {
                           ReactionDetailModal.show(
                             context,
                             emojiCode: emojiCode,
-                            reactorNames: reactorNames,
+                            reactorIds: reactorIds,
+                            reactorNameById: reactorNameById,
+                            reactorAvatarById: reactorAvatarById,
                           );
                         },
                         onReactionLongPress: (emojiCode, isCurrentlyReacted) {
@@ -671,11 +678,18 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                   isFromCurrentUser: isFromCurrentUser,
                   showAddButton: true,
                   // Tap → xem danh sách ai đã react (như Messenger/WhatsApp)
-                  onReactionTap: (emojiCode, reactorIds, reactorNames) {
+                  onReactionTap: (
+                    emojiCode,
+                    reactorIds,
+                    reactorNameById,
+                    reactorAvatarById,
+                  ) {
                     ReactionDetailModal.show(
                       context,
                       emojiCode: emojiCode,
-                      reactorNames: reactorNames,
+                      reactorIds: reactorIds,
+                      reactorNameById: reactorNameById,
+                      reactorAvatarById: reactorAvatarById,
                     );
                   },
                   // Long press → thu hồi reaction (nếu mình đã react emoji đó)

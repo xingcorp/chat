@@ -26,7 +26,8 @@ class ReactionBar extends StatelessWidget {
   final void Function(
     String emojiCode,
     List<String> reactorIds,
-    List<String> reactorNames,
+    Map<String, String> reactorNameById,
+    Map<String, String?> reactorAvatarById,
   )? onReactionTap;
 
   /// Callback khi user long press vào emoji để thu hồi reaction (nếu mình đã react)
@@ -134,7 +135,8 @@ class ReactionBar extends StatelessWidget {
       onTap: () => onReactionTap?.call(
         reaction.code,
         reaction.reactorIds,
-        reaction.reactorNames,
+        reaction.reactorNameById,
+        reaction.reactorAvatarById,
       ),
       // Long press → thu hồi reaction (nếu mình đã react)
       onLongPress: () => onReactionLongPress?.call(reaction.code, isReacted),
@@ -317,12 +319,18 @@ class _AnimatedReactionChipState extends State<_AnimatedReactionChip>
 /// Enhanced với slide animation và better UI
 class ReactionDetailModal extends StatefulWidget {
   final String emojiCode;
-  final List<String> reactorNames;
+  final List<String> reactorIds;
+
+  final Map<String, String> reactorNameById;
+
+  final Map<String, String?> reactorAvatarById;
 
   const ReactionDetailModal({
     Key? key,
     required this.emojiCode,
-    required this.reactorNames,
+    required this.reactorIds,
+    this.reactorNameById = const {},
+    this.reactorAvatarById = const {},
   }) : super(key: key);
 
   @override
@@ -332,7 +340,9 @@ class ReactionDetailModal extends StatefulWidget {
   static Future<void> show(
     BuildContext context, {
     required String emojiCode,
-    required List<String> reactorNames,
+    required List<String> reactorIds,
+    Map<String, String> reactorNameById = const {},
+    Map<String, String?> reactorAvatarById = const {},
   }) {
     return showModalBottomSheet(
       context: context,
@@ -340,7 +350,9 @@ class ReactionDetailModal extends StatefulWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => ReactionDetailModal(
         emojiCode: emojiCode,
-        reactorNames: reactorNames,
+        reactorIds: reactorIds,
+        reactorNameById: reactorNameById,
+        reactorAvatarById: reactorAvatarById,
       ),
     );
   }
@@ -473,7 +485,7 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                                     ),
                                   ),
                                   Text(
-                                    '${widget.reactorNames.length} ${widget.reactorNames.length == 1 ? 'person' : 'people'}',
+                                    '${widget.reactorIds.length} ${widget.reactorIds.length == 1 ? 'person' : 'people'}',
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       color: theme.textTheme.bodySmall?.color,
                                     ),
@@ -496,7 +508,7 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
 
                       // Danh sách reactors
                       Flexible(
-                        child: widget.reactorNames.isEmpty
+                        child: widget.reactorIds.isEmpty
                             ? Padding(
                                 padding: const EdgeInsets.all(32.0),
                                 child: Column(
@@ -520,9 +532,11 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                             : ListView.builder(
                                 shrinkWrap: true,
                                 padding: const EdgeInsets.only(bottom: 20.0),
-                                itemCount: widget.reactorNames.length,
+                                itemCount: widget.reactorIds.length,
                                 itemBuilder: (context, index) {
-                                  final name = widget.reactorNames[index];
+                                  final userId = widget.reactorIds[index];
+                                  final name = widget.reactorNameById[userId] ?? userId;
+                                  final avatarUrl = widget.reactorAvatarById[userId];
                                   return TweenAnimationBuilder<double>(
                                     duration: Duration(
                                       milliseconds: 300 + (index * 50),
@@ -544,16 +558,21 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                                         vertical: 4.0,
                                       ),
                                       leading: Hero(
-                                        tag: 'reactor_avatar_$name',
-                                        child: AppAvatar.initials(
-                                          name: name.isNotEmpty ? name : '?',
-                                          size: AvatarSize.medium,
-                                          backgroundColor: _getAvatarColor(
-                                            theme,
-                                            index,
-                                          ),
-                                          foregroundColor: Colors.white,
-                                        ),
+                                        tag: 'reactor_avatar_$userId',
+                                        child: (avatarUrl != null && avatarUrl.trim().isNotEmpty)
+                                            ? AppAvatar.network(
+                                                imageUrl: avatarUrl.trim(),
+                                                size: AvatarSize.medium,
+                                              )
+                                            : AppAvatar.initials(
+                                                name: name.isNotEmpty ? name : '?',
+                                                size: AvatarSize.medium,
+                                                backgroundColor: _getAvatarColor(
+                                                  theme,
+                                                  index,
+                                                ),
+                                                foregroundColor: Colors.white,
+                                              ),
                                       ),
                                       title: Text(
                                         name,

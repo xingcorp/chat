@@ -129,6 +129,7 @@ class MessageListTransformer {
       // ── Reactions grouping ──
       final groupedReactions = _groupReactions(
         current.reactions,
+        members,
         currentUserId,
       );
 
@@ -324,25 +325,40 @@ class MessageListTransformer {
   /// Khớp stream_chat: reactionsMap grouped by type, own reaction prioritized
   static List<ReactionGroup> _groupReactions(
     List<MessageReaction> reactions,
+    List<ConversationMember> members,
     String currentUserId,
   ) {
     if (reactions.isEmpty) return const [];
 
     final Map<String, List<String>> groupMap = {};
-    final Map<String, List<String>> namesMap = {};
+    final Map<String, Map<String, String>> nameByIdMap = {};
+    final Map<String, Map<String, String?>> avatarByIdMap = {};
+
+    final Map<String, ConversationMember> memberByUserId = {
+      for (final m in members)
+        if (m.userId.isNotEmpty) m.userId: m,
+    };
 
     for (final r in reactions) {
       groupMap.putIfAbsent(r.code, () => []).add(r.userId);
-      if (r.userName != null) {
-        namesMap.putIfAbsent(r.code, () => []).add(r.userName!);
-      }
+
+      final member = memberByUserId[r.userId];
+      final name = (member?.fullName?.trim().isNotEmpty ?? false)
+          ? member!.fullName!.trim()
+          : (r.userName?.trim().isNotEmpty ?? false)
+              ? r.userName!.trim()
+              : r.userId;
+
+      nameByIdMap.putIfAbsent(r.code, () => {})[r.userId] = name;
+      avatarByIdMap.putIfAbsent(r.code, () => {})[r.userId] = member?.avatarUrl;
     }
 
     return groupMap.entries.map((entry) {
       return ReactionGroup(
         code: entry.key,
         reactorIds: entry.value,
-        reactorNames: namesMap[entry.key] ?? [],
+        reactorNameById: nameByIdMap[entry.key] ?? const {},
+        reactorAvatarById: avatarByIdMap[entry.key] ?? const {},
         isReactedByCurrentUser: entry.value.contains(currentUserId),
       );
     }).toList()
