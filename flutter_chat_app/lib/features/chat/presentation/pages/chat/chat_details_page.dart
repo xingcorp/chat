@@ -19,7 +19,9 @@ import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
+import 'package:flutter_chat_app/presentation/screens/media/image_preview_screen.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/screens/chat/chat_header.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/attachment_picker_widget.dart';
@@ -388,9 +390,18 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   void _copySelectedMessages(List<MessageUIState> uiMessages) {
     final contents = uiMessages
         .where((m) => _selectedMessageIds.contains(m.id))
+        .where((m) => m.contentType == ContentType.text)
         .map((m) => m.content)
         .where((c) => c.isNotEmpty)
         .join('\n');
+    if (contents.isEmpty) {
+      AppSnackBar.show(
+        context: context,
+        message: context.l10n.onlyTextMessagesCanBeCopied,
+        type: FeedbackType.info,
+      );
+      return;
+    }
     Clipboard.setData(ClipboardData(text: contents));
     AppSnackBar.show(
       context: context,
@@ -753,38 +764,50 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   Future<void> _processAndSendImage(File imageFile, {Uint8List? bytes, String? name, int? size}) async {
     final l10n = context.l10n;
     try {
-      // On web, we already have bytes from picker - no compression needed
-      // On mobile, compress image silently (no toast - progress shows in message bubble)
-      if (kIsWeb && bytes != null) {
-        // Web: use bytes directly (no compression available)
-        _messageBloc.add(
-          SendMessageWithAttachments(
-            content: '',
-            senderId: _currentUserId,
-            localFilePaths: [imageFile.path],
-            fileBytes: [bytes],
-            fileNames: name != null ? [name] : null,
-            fileSizes: size != null ? [size] : null,
-          ),
-        );
-        return;
+      // On web, we already have bytes from picker
+      // On mobile, compress image first
+      Uint8List? imageBytes = bytes;
+
+      if (!kIsWeb) {
+        // Mobile: compress image
+        final compressedImage = await ImageCompressionHelper.compressImage(imageFile);
+        if (!mounted) return;
+
+        if (compressedImage == null) {
+          AppSnackBar.show(context: context, message: l10n.imageCompressionFailed, type: FeedbackType.error);
+          return;
+        }
+
+        imageBytes = await compressedImage.readAsBytes();
       }
 
-      // Mobile: compress image
-      final compressedImage = await ImageCompressionHelper.compressImage(imageFile);
+      // Open preview screen with image for editing before sending
       if (!mounted) return;
+      final result = await Navigator.of(context).push<ImagePreviewResult>(
+        MaterialPageRoute(
+          builder: (ctx) => BlocProvider.value(
+            value: context.read<ChatBloc>(),
+            child: ImagePreviewScreen(
+              imageFile: kIsWeb ? null : imageFile,
+              imageBytes: imageBytes,
+              fileName: name,
+              chatId: widget.chatId,
+            ),
+          ),
+        ),
+      );
 
-      if (compressedImage == null) {
-        AppSnackBar.show(context: context, message: l10n.imageCompressionFailed, type: FeedbackType.error);
-        return;
-      }
+      // User cancelled - don't send
+      if (result == null || result.isCancelled) return;
 
-      // Send message - progress will be shown in the message bubble itself
+      // User sent - send with progress display via SendMessageWithAttachments
       _messageBloc.add(
         SendMessageWithAttachments(
           content: '',
           senderId: _currentUserId,
-          localFilePaths: [compressedImage.path],
+          localFilePaths: const [],
+          fileBytes: [result.editedBytes!],
+          fileNames: [result.fileName ?? 'image_${DateTime.now().millisecondsSinceEpoch}.jpg'],
         ),
       );
     } catch (e) {
@@ -817,6 +840,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       providers: [
         BlocProvider<MessageBloc>.value(value: _messageBloc),
         BlocProvider<ConversationDetailBloc>.value(value: _convDetailBloc),
+        BlocProvider<ChatBloc>(create: (_) => getIt<ChatBloc>()),
       ],
       child: BlocListener<ConversationDetailBloc, ConversationDetailState>(
         listener: _handleConversationDetailStateChanges,
@@ -1304,13 +1328,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                 ),
               ),
               const Divider(height: 1),
-              _buildActionTile(Icons.copy, ctx.l10n.copyMessage, () {
-                Navigator.pop(ctx);
-                Clipboard.setData(ClipboardData(text: message.content));
-                AppSnackBar.show(context: this.context, message: this.context.l10n.messageCopied, type: FeedbackType.success);
-              }),
+              if (message.contentType == ContentType.text)
+                _buildActionTile(Icons.copy, ctx.l10n.copyMessage, () {
+                  Navigator.pop(ctx);
+                  Clipboard.setData(ClipboardData(text: message.content));
+                  AppSnackBar.show(context: this.context, message: this.context.l10n.messageCopied, type: FeedbackType.success);
+                }),
               _buildActionTile(Icons.reply, ctx.l10n.replyMessage, () { Navigator.pop(ctx); _startReply(message); }),
-              if (isCurrentUser) ...[
+              if (isCurrentUser && message.contentType == ContentType.text) ...[
                 _buildActionTile(Icons.edit, ctx.l10n.editMessage, () { Navigator.pop(ctx); _startEditMode(message); }),
                 _buildActionTile(Icons.delete, ctx.l10n.deleteMessage, () { Navigator.pop(ctx); _confirmDeleteMessage(message); }),
               ],

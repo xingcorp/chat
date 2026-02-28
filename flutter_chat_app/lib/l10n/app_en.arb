@@ -520,6 +520,16 @@
     "description": "Message sending status"
   },
 
+  "imagePreview": "Preview",
+  "@imagePreview": {
+    "description": "Image preview screen title"
+  },
+
+  "retake": "Retake",
+  "@retake": {
+    "description": "Retake photo button"
+  },
+
   "cannotLoadMessages": "Cannot load messages",
   "@cannotLoadMessages": {
     "description": "Error when messages fail to load"
@@ -1018,6 +1028,11 @@
   "messageCopied": "Message copied to clipboard",
   "@messageCopied": {
     "description": "Success message when message is copied"
+  },
+
+  "onlyTextMessagesCanBeCopied": "Only text messages can be copied",
+  "@onlyTextMessagesCanBeCopied": {
+    "description": "Info message when trying to copy non-text messages"
   },
 
   "offlineMode": "You are offline. Messages will be sent when you reconnect.",

@@ -13,6 +13,7 @@ import 'package:isar/isar.dart';
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/device_capability_service.dart';
+import 'package:flutter_chat_app/core/services/image_editor_service.dart';
 import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
 import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
@@ -111,6 +112,13 @@ Future<void> registerCoreModule(GetIt getIt) async {
   if (!getIt.isRegistered<IAnalyticsService>()) {
     getIt.registerSingleton<IAnalyticsService>(
       const NoOpAnalyticsService(),
+    );
+  }
+
+  // ImageEditorService - Image editing wrapper for pro_image_editor
+  if (!getIt.isRegistered<ImageEditorService>()) {
+    getIt.registerLazySingleton<ImageEditorService>(
+      () => ImageEditorService(),
     );
   }
 

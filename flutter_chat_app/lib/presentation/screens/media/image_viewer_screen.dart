@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -5,6 +7,10 @@ import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
 import 'package:flutter_chat_app/core/services/image_editor_service.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' as domain;
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' show ContentType;
+import 'package:flutter_chat_app/data/dtos/chat_object_dto.dart';
+import 'package:flutter_chat_app/features/chat/data/datasources/chat_object/chat_object_remote_datasource.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
@@ -488,17 +494,81 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
     imageEditorService.editNetworkImage(
       context,
       imageUrl: widget.imageUrl,
-      onComplete: (bytes) {
-        // TODO: Handle edited image - update message or send new message
+      onComplete: (bytes) => _sendEditedImage(bytes),
+    );
+  }
+
+  /// Send edited image as new message
+  Future<void> _sendEditedImage(Uint8List bytes) async {
+    if (widget.chatId == null) {
+      AppSnackBar.show(
+        context: context,
+        message: 'Cannot send image without chat',
+        type: FeedbackType.error,
+      );
+      return;
+    }
+
+    // Show loading
+    if (!context.mounted) return;
+    AppSnackBar.show(
+      context: context,
+      message: 'Uploading...',
+      type: FeedbackType.info,
+    );
+
+    try {
+      // Get datasource
+      final dataSource = GetIt.I<IChatObjectRemoteDataSource>();
+
+      // Generate presigned URL
+      final fileName = 'edited_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final uploadResponse = await dataSource.generateUploadLinks(
+        files: [
+          GeneratePresignedUrlParams(
+            fileName: fileName,
+            fileType: 'image/jpeg',
+          ),
+        ],
+      );
+
+      // Upload bytes
+      final presignedData = uploadResponse.data.first;
+      await dataSource.uploadBytes(
+        presignedUrl: presignedData.presignedUrl,
+        bytes: bytes,
+        contentType: 'image/jpeg',
+      );
+
+      // Send message - use GetIt since ChatBloc may not be in widget tree
+      if (!context.mounted) return;
+      final chatBloc = GetIt.I<ChatBloc>();
+      chatBloc.add(ChatEvent.sendMessage(
+        chatId: widget.chatId!,
+        content: '',
+        contentType: ContentType.image,
+        attachmentIds: [presignedData.path],
+      ));
+
+      // Navigate back to chat
+      if (context.mounted) {
+        Navigator.of(context).pop();
         AppSnackBar.show(
           context: context,
           message: context.l10n.edited,
           type: FeedbackType.success,
         );
-      },
-    );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      AppSnackBar.show(
+        context: context,
+        message: 'Failed to send image: $e',
+        type: FeedbackType.error,
+      );
+    }
   }
-  
+
   /// Handle forward action
   void _handleForward() {
     if (widget.message == null) return;

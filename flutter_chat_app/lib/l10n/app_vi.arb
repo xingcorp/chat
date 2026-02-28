@@ -99,6 +99,8 @@
   "seen": "Đã xem",
   "sent": "Đã gửi",
   "sending": "Đang gửi...",
+  "imagePreview": "Xem trước",
+  "retake": "Chụp lại",
   "cannotLoadMessages": "Không thể tải tin nhắn",
   "reconnecting": "Đang kết nối lại...",
   "justNow": "Vừa xong",
@@ -210,6 +212,8 @@
   "reactToMessage": "Bày tỏ cảm xúc",
 
   "messageCopied": "Đã sao chép tin nhắn vào clipboard",
+
+  "onlyTextMessagesCanBeCopied": "Chỉ tin nhắn văn bản mới có thể sao chép",
 
   "offlineMode": "Bạn đang ngoại tuyến. Tin nhắn sẽ được gửi khi kết nối lại.",
   "syncingMessages": "Đang đồng bộ tin nhắn...",

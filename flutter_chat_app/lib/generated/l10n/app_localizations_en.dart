@@ -325,6 +325,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sending => 'Sending...';
 
   @override
+  String get imagePreview => 'Preview';
+
+  @override
+  String get retake => 'Retake';
+
+  @override
   String get cannotLoadMessages => 'Cannot load messages';
 
   @override
@@ -609,6 +615,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get messageCopied => 'Message copied to clipboard';
+
+  @override
+  String get onlyTextMessagesCanBeCopied => 'Only text messages can be copied';
 
   @override
   String get offlineMode =>

@@ -55,6 +55,22 @@
         "browser_wait_for",
         "browser_evaluate"
       ]
+    },
+    "tavily": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "tavily-mcp@latest"
+      ],
+      "env": {
+        "TAVILY_API_KEY": "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"
+      },
+      "autoApprove": [
+        "tavily-search",
+        "tavily-extract",
+        "tavily-map",
+        "tavily-crawl"
+      ]
     }
   }
 }

@@ -24,7 +24,41 @@
       "Bash(flutter analyze lib/presentation/screens/media/image_viewer_screen.dart lib/features/chat/presentation/widgets/chat/media_preview.dart lib/core/services/image_editor_service.dart)",
       "Bash(flutter analyze flutter_chat_app/lib/core/services/image_editor_service.dart)",
       "Bash(flutter analyze lib/features/chat/presentation/widgets/chat/media_preview.dart lib/presentation/screens/media/image_viewer_screen.dart)",
-      "Bash(flutter analyze lib/features/chat/presentation/widgets/chat/media_gallery.dart)"
+      "Bash(flutter analyze lib/features/chat/presentation/widgets/chat/media_gallery.dart)",
+      "Bash(curl --version)",
+      "Bash(curl -s \"https://api.tavily.com/search?q=Claude+Opus+4.6+vs+4.5+performance+features+2025\")",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(flutter *)",
+      "Bash(dart *)",
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(node *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(yarn *)",
+      "Bash(pnpm *)",
+      "WebFetch(domain:*)",
+      "WebSearch",
+      "mcp__serena__*",
+      "mcp__context7__*",
+      "mcp__sequential-thinking__*",
+      "mcp__my-answer-engine__*",
+      "mcp__playwright__*",
+      "mcp__magic__*",
+      "mcp__morphllm__*",
+      "mcp__chrome-devtools__*",
+      "mcp__tavily__*"
+    ],
+    "deny": [
+      "Bash(sudo *)",
+      "Bash(chmod 777 *)",
+      "Bash(curl -X POST *)",
+      "Bash(wget *)",
+      "Read(./.env*)",
+      "Read(./**/secrets/**)",
+      "Read(./**/credentials/**)",
+      "Read(~/.ssh/**)"
     ]
   }
 }

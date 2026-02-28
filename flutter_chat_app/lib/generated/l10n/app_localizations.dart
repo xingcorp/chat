@@ -686,6 +686,18 @@ abstract class AppLocalizations {
   /// **'Sending...'**
   String get sending;
 
+  /// Image preview screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get imagePreview;
+
+  /// Retake photo button
+  ///
+  /// In en, this message translates to:
+  /// **'Retake'**
+  String get retake;
+
   /// Error when messages fail to load
   ///
   /// In en, this message translates to:
@@ -1231,6 +1243,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Message copied to clipboard'**
   String get messageCopied;
+
+  /// Info message when trying to copy non-text messages
+  ///
+  /// In en, this message translates to:
+  /// **'Only text messages can be copied'**
+  String get onlyTextMessagesCanBeCopied;
 
   /// Information message when user is offline
   ///

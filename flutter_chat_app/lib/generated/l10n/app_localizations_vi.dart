@@ -325,6 +325,12 @@ class AppLocalizationsVi extends AppLocalizations {
   String get sending => 'Đang gửi...';
 
   @override
+  String get imagePreview => 'Xem trước';
+
+  @override
+  String get retake => 'Chụp lại';
+
+  @override
   String get cannotLoadMessages => 'Không thể tải tin nhắn';
 
   @override
@@ -610,6 +616,10 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get messageCopied => 'Đã sao chép tin nhắn vào clipboard';
+
+  @override
+  String get onlyTextMessagesCanBeCopied =>
+      'Chỉ tin nhắn văn bản mới có thể sao chép';
 
   @override
   String get offlineMode =>
