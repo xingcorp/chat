@@ -548,10 +548,30 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   }
 
   /// **Delete message using DeleteMessageUseCase - CLEAN ARCHITECTURE**
+  ///
+  /// **Soft-delete behavior:** Updates message with `deletedAt` timestamp
+  /// instead of removing from list. UI renders tombstone placeholder.
   Future<void> _onDeleteMessage(DeleteMessage event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
 
     logger.i('Deleting message: ${event.messageId}');
+
+    // Optimistic update: mark message as deleted immediately
+    final currentState = state as MessagesLoaded;
+    final deletedAt = DateTime.now();
+
+    final optimisticallyUpdatedMessages = currentState.messages.map((msg) {
+      if (msg.id == event.messageId) {
+        return msg.copyWith(deletedAt: deletedAt);
+      }
+      return msg;
+    }).toList();
+
+    // Emit optimistic update
+    emit(currentState.copyWith(
+      messages: optimisticallyUpdatedMessages,
+      uiMessages: _transformMessages(optimisticallyUpdatedMessages),
+    ));
 
     final params = DeleteMessageParams(messageId: event.messageId);
     final result = await _deleteMessage(params);
@@ -563,24 +583,22 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     result.fold(
       (failure) {
         logger.e('Failed to delete message', error: failure);
+        // Rollback optimistic update - restore message
+        final restoredMessages = freshState.messages.map((msg) {
+          if (msg.id == event.messageId) {
+            return msg.copyWith(deletedAt: null);
+          }
+          return msg;
+        }).toList();
         emit(MessageState.error(
           chatId: freshState.chatId,
           error: failure.message,
-          previousMessages: freshState.messages,
+          previousMessages: restoredMessages,
         ));
       },
       (_) {
-        logger.i('Message deleted successfully');
-        
-        final updatedMessages = freshState.messages
-            .where((msg) => msg.id != event.messageId)
-            .toList();
-
-        emit(freshState.copyWith(
-          messages: updatedMessages,
-          uiMessages: _transformMessages(updatedMessages),
-        ));
-
+        logger.i('Message deleted successfully (soft-delete)');
+        // Optimistic update already applied, just mark dirty
         _cacheSyncStrategy.markChatMessagesDirty(freshState.chatId);
         _cacheSyncStrategy.markChatListDirty();
       },
@@ -978,21 +996,38 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     ));
   }
 
-  /// Handle socket message:delete — remove message from state
+  /// Handle socket message:delete — mark message as deleted (tombstone)
+  ///
+  /// **Soft-delete behavior:** Updates message with `deletedAt` timestamp
+  /// instead of removing from list. UI renders tombstone placeholder.
   void _onReceiveMessageDeleted(ReceiveMessageDeleted event, Emitter<MessageState> emit) {
     if (_socketEventBuffer.bufferIfNeeded(event)) return;
 
     if (state is! MessagesLoaded) return;
     final currentState = state as MessagesLoaded;
 
-    final updatedMessages = currentState.messages
-        .where((msg) => msg.id != event.messageId)
-        .toList();
+    // Check if message exists
+    final messageExists = currentState.messages.any((msg) => msg.id == event.messageId);
+    if (!messageExists) {
+      logger.w('ReceiveMessageDeleted: messageId=${event.messageId} not found in state');
+      return;
+    }
+
+    // Update message with deletedAt timestamp (soft-delete)
+    final deletedAt = DateTime.now();
+    final updatedMessages = currentState.messages.map((msg) {
+      if (msg.id == event.messageId) {
+        return msg.copyWith(deletedAt: deletedAt);
+      }
+      return msg;
+    }).toList();
 
     emit(currentState.copyWith(
       messages: updatedMessages,
       uiMessages: _transformMessages(updatedMessages),
     ));
+
+    logger.d('Message ${event.messageId} marked as deleted (tombstone)');
   }
 
   /// Handle socket message:reaction — add/remove reaction on message

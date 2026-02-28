@@ -80,7 +80,8 @@ abstract class IChatRemoteDataSource {
   });
   
   /// Edit or delete a message
-  Future<MessageDto> editMessage({
+  /// Returns null for DEL action (partial response), MessageDto for EDIT action
+  Future<MessageDto?> editMessage({
     required String messageId,
     required String act,
     String? message,
@@ -542,7 +543,7 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
   }
   
   @override
-  Future<MessageDto> editMessage({
+  Future<MessageDto?> editMessage({
     required String messageId,
     required String act,
     String? message,
@@ -564,6 +565,12 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     final data = result['chatMessageEdit'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to edit message');
+    }
+    
+    // For DEL action, mutation only returns partial fields (id, message, editAt, deletedAt)
+    // MessageDto requires all fields, so return null for delete operations
+    if (act == 'DEL') {
+      return null; // Delete success - no need to parse partial response
     }
     
     return MessageDto.fromJson(data);

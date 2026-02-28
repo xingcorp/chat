@@ -483,23 +483,21 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     );
   }
 
-  /// **DELETE MESSAGE - ONLINE-FIRST STRATEGY**
+  /// **DELETE MESSAGE - REMOTE-ONLY STRATEGY**
   ///
   /// **Performance**: <150ms for delete operations
+  /// **Strategy**: Remote-only because delete requires server confirmation.
+  /// Server rejection (e.g., ChatMessageNotFound) should not silently succeed locally.
   @override
   Future<Either<Failure, bool>> deleteMessage(String messageId) async {
-    return executeOnlineFirst<bool>(
+    return executeRemoteOnly<bool>(
       remoteDataSource: () async {
-        // Delete message on server
+        // Delete message on server (soft-delete: sets deletedAt timestamp)
+        // Backend expects ChatMessageAct enum: DEL=0, EDIT=1
         await _remoteDataSource.editMessage(
           messageId: messageId,
-          act: 'delete',
+          act: 'DEL',
         );
-        return true;
-      },
-      localDataSource: () async {
-        // Mark as deleted locally
-        logger.i('Deleted message locally: $messageId');
         return true;
       },
       operationName: 'deleteMessage',
@@ -514,9 +512,10 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     return executeOnlineFirst<bool>(
       remoteDataSource: () async {
         // Edit message on server
+        // Backend expects ChatMessageAct enum: DEL=0, EDIT=1
         await _remoteDataSource.editMessage(
           messageId: messageId,
-          act: 'edit',
+          act: 'EDIT',
           message: newContent,
         );
         return true;
