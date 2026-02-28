@@ -704,6 +704,42 @@ class ChatRepositoryImpl implements IChatRepository {
     });
   }
 
+  /// **Update Admins**
+  ///
+  /// Updates admin list for a group chat via chatGroupEdit mutation.
+  @override
+  Future<Either<Failure, bool>> updateAdmins({
+    required String chatId,
+    required List<String> adminIds,
+  }) async {
+    return await _executeWithMonitoring('update_admins', () async {
+      try {
+        debugPrint('👑 Updating admins for chat: $chatId, adminIds: $adminIds');
+
+        await _remoteDataSource.updateGroup(
+          conversationId: chatId,
+          adminIds: adminIds,
+        );
+
+        // Refresh local cache
+        try {
+          final freshChat = await _remoteDataSource.getChatDetails(chatId);
+          final chat = freshChat.toDomain();
+          await _localDataSource.saveChat(chat);
+          debugPrint('✅ Admin list updated and cache refreshed');
+        } catch (e) {
+          debugPrint('⚠️ Could not refresh local cache after admin update: $e');
+        }
+
+        return const Right(true);
+
+      } catch (e) {
+        debugPrint('❌ Update admins failed: $e');
+        return Left(ServerFailure(message: 'Failed to update admins: $e'));
+      }
+    });
+  }
+
   /// **Leave Chat**
   ///
   /// Leaves chat with enterprise cleanup and sync patterns.

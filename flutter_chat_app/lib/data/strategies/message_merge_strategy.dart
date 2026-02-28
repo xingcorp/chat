@@ -1,55 +1,67 @@
 import 'package:flutter_chat_app/core/storage/tombstone_store.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
-/// Thuật toán merge tin nhắn local với server.
-/// Pure function, không side effects, dễ test.
+/// Merge mode xac dinh cach xu ly local messages khong co trong server response.
+enum MergeMode {
+  /// Delta sync: server chi tra ve tin nhan moi/thay doi.
+  /// Local messages KHONG co trong server response duoc GIU NGUYEN.
+  delta,
+
+  /// Full fetch: server tra ve toan bo trang dau tien (source of truth).
+  /// Local messages KHONG co trong server response bi XOA (tru pending/sending).
+  fullPage,
+}
+
+/// Thuat toan merge tin nhan local voi server.
+/// Pure function, khong side effects, de test.
 class MessageMergeStrategy {
-  /// Merge local messages với server messages và tombstones.
+  /// Merge local messages voi server messages va tombstones.
   ///
-  /// Rules:
-  /// 1. Server là source of truth — nếu server không có, message đã bị xóa
-  /// 2. Cập nhật tin nhắn đã edit (server version wins)
-  /// 3. Thêm tin nhắn mới từ server
-  /// 4. Bảo toàn tin nhắn sending/pending (chưa có server ID)
-  /// 5. Merge tombstones (tin nhắn đã xóa) để hiển thị placeholder
-  /// 6. Sort theo createdAt descending
+  /// [mergeMode] quyet dinh cach xu ly local messages:
+  /// - [MergeMode.delta]: Union local + server, server wins khi trung ID.
+  ///   Dung khi server chi tra ve tin nhan moi (delta sync).
+  /// - [MergeMode.fullPage]: Server la source of truth, chi giu pending/sending local.
+  ///   Dung khi server tra ve toan bo trang (initial load, gap recovery).
+  ///
+  /// Rules chung:
+  /// 1. Server version wins khi trung ID (edit, reaction update, v.v.)
+  /// 2. Bao toan tin nhan sending/pending (chua co server ID)
+  /// 3. Merge tombstones (tin nhan da xoa) de hien thi placeholder
+  /// 4. Sort theo createdAt descending
   static List<ChatMessage> merge({
     required List<ChatMessage> localMessages,
     required List<ChatMessage> serverMessages,
     List<MessageTombstone>? tombstones,
+    MergeMode mergeMode = MergeMode.delta,
   }) {
-    // Server is empty — all local messages were deleted or none exist
-    if (serverMessages.isEmpty) {
-      // Only keep pending/sending messages + tombstones
-      final result = <ChatMessage>[];
-      
-      // Add pending/sending messages
-      result.addAll(localMessages.where((msg) =>
-          msg.localStatus == MessageStatus.sending ||
-          msg.localStatus == MessageStatus.pending));
-      
-      // Add tombstones as deleted messages
-      if (tombstones != null && tombstones.isNotEmpty) {
-        result.addAll(tombstones.map((t) => _createDeletedMessage(t)));
-      }
-      
-      result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return result;
-    }
-
-    // Build server ID set for quick lookup
-    final serverIds = serverMessages.map((msg) => msg.id).toSet();
-
     final Map<String, ChatMessage> mergedMap = {};
 
-    // 1. Add all server messages (server is source of truth)
+    // Step 1: Add local messages lam base
+    // Trong delta mode: tat ca local messages deu duoc giu
+    // Trong fullPage mode: chi giu pending/sending
+    for (final msg in localMessages) {
+      if (mergeMode == MergeMode.delta) {
+        // Delta: giu tat ca local messages
+        mergedMap[msg.id] = msg;
+      } else {
+        // FullPage: chi giu pending/sending
+        final isSendingOrPending =
+            msg.localStatus == MessageStatus.sending ||
+            msg.localStatus == MessageStatus.pending;
+        if (isSendingOrPending) {
+          mergedMap[msg.id] = msg;
+        }
+      }
+    }
+
+    // Step 2: Apply server messages (server wins khi trung ID)
     for (final msg in serverMessages) {
       mergedMap[msg.id] = msg;
     }
 
-    // 2. Add tombstones (messages that were deleted locally)
-    // Tombstones are only added if the message is NOT in server response
+    // Step 3: Apply tombstones cho messages KHONG co trong server response
     if (tombstones != null && tombstones.isNotEmpty) {
+      final serverIds = serverMessages.map((msg) => msg.id).toSet();
       for (final tombstone in tombstones) {
         if (!serverIds.contains(tombstone.messageId)) {
           mergedMap[tombstone.messageId] = _createDeletedMessage(tombstone);
@@ -57,20 +69,7 @@ class MessageMergeStrategy {
       }
     }
 
-    // 3. Preserve sending/pending messages that aren't confirmed by server yet
-    for (final msg in localMessages) {
-      final isSendingOrPending = msg.localStatus == MessageStatus.sending ||
-          msg.localStatus == MessageStatus.pending;
-      if (!isSendingOrPending) continue;
-
-      // If server confirmed this message, use server version
-      if (serverIds.contains(msg.id)) continue;
-
-      // Keep local-only pending message
-      mergedMap[msg.id] = msg;
-    }
-
-    // 4. Sort descending by createdAt
+    // Step 4: Sort descending by createdAt
     final result = mergedMap.values.toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 

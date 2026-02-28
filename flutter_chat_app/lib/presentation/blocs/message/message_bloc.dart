@@ -872,6 +872,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       // logger.i('[TwoPhase] _performBackgroundFetch chatId=$chatId lastTimestamp=$lastTimestamp limit=$limit');
 
       Either<Failure, List<ChatMessage>> result;
+      bool isDelta = false;
 
       if (lastTimestamp != null) {
         // Delta sync: only fetch messages since last known timestamp
@@ -888,11 +889,15 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         if (GapDetectionLogic.hasGap(deltaCount: deltaCount, pageSize: limit)) {
           logger.w('[TwoPhase] Gap detected (deltaCount=$deltaCount >= pageSize=$limit), doing FULL refresh');
           result = await _getMessages(conversationId: chatId, limit: limit);
+          isDelta = false;
+        } else {
+          isDelta = true;
         }
       } else {
         // No timestamp — full load
         // logger.i('[TwoPhase] No lastTimestamp, doing FULL load');
         result = await _getMessages(conversationId: chatId, limit: limit);
+        isDelta = false;
       }
 
       result.fold(
@@ -903,8 +908,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         (messages) {
           final newestTs = messages.isNotEmpty ? messages.first.createdAt.toIso8601String() : 'N/A';
           final oldestTs = messages.isNotEmpty ? messages.last.createdAt.toIso8601String() : 'N/A';
-          // logger.i('[TwoPhase] Background fetch OK: count=${messages.length} newest=$newestTs oldest=$oldestTs');
-          add(_BackgroundFetchCompleted(chatId: chatId, serverMessages: messages));
+          // logger.i('[TwoPhase] Background fetch OK: count=${messages.length} newest=$newestTs oldest=$oldestTs isDelta=$isDelta');
+          add(_BackgroundFetchCompleted(chatId: chatId, serverMessages: messages, isDelta: isDelta));
         },
       );
     } catch (e) {
@@ -931,33 +936,42 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       return;
     }
 
-    // logger.i('[TwoPhase] _onBackgroundFetchCompleted: localCount=${currentState.messages.length} serverCount=${event.serverMessages.length}');
+    // logger.i('[TwoPhase] _onBackgroundFetchCompleted: localCount=${currentState.messages.length} serverCount=${event.serverMessages.length} isDelta=${event.isDelta}');
 
     // Get tombstones for this chat (async load from disk if needed)
     await _tombstoneStore.loadFromDisk(event.chatId);
     final tombstones = _tombstoneStore.getTombstonesForChat(event.chatId);
 
-    // Merge local + server + tombstones
+    // Merge local + server + tombstones with correct mode
+    final mergeMode = event.isDelta ? MergeMode.delta : MergeMode.fullPage;
     final merged = MessageMergeStrategy.merge(
       localMessages: currentState.messages,
       serverMessages: event.serverMessages,
       tombstones: tombstones,
+      mergeMode: mergeMode,
     );
 
     final newestTs = merged.isNotEmpty ? merged.first.createdAt.toIso8601String() : 'N/A';
     final oldestTs = merged.isNotEmpty ? merged.last.createdAt.toIso8601String() : 'N/A';
-    // logger.i('[TwoPhase] Merge result: count=${merged.length} newest=$newestTs oldest=$oldestTs');
+    // logger.i('[TwoPhase] Merge result: count=${merged.length} newest=$newestTs oldest=$oldestTs mode=$mergeMode');
 
     // Update sync metadata
     unawaited(_syncMetadataManager.updateFromMessages(event.chatId, merged));
     _cacheSyncStrategy.resetChatMessagesDirtyFlag(event.chatId);
+
+    // hasReachedMax: only meaningful for full page fetch.
+    // Delta sync returning fewer than pageSize does NOT mean we've reached the end —
+    // it just means there are few new messages.
+    final hasReachedMax = event.isDelta
+        ? currentState.hasReachedMax  // preserve existing value for delta
+        : event.serverMessages.length < 20;  // only set for full page fetch
 
     emit(currentState.copyWith(
       messages: merged,
       uiMessages: _transformMessages(merged),
       dataSource: MessageDataSource.merged,
       isBackgroundFetching: false,
-      hasReachedMax: event.serverMessages.length < 20,
+      hasReachedMax: hasReachedMax,
       // copyWith preserves conversationDetail automatically (freezed)
       // — no need to explicitly re-assign it
     ));
@@ -1084,9 +1098,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     final messageIndex = currentState.messages.indexWhere((msg) => msg.id == messageId);
     
     if (messageIndex == -1) {
-      // Message not in current state, add tombstone
+      // Message not in current state, add tombstone at correct position
       final updatedMessages = [...currentState.messages];
-      updatedMessages.insert(messageIndex, deletedMessage.copyWith(
+      updatedMessages.add(deletedMessage.copyWith(
         deletedAt: DateTime.now(),
         content: '', // Clear content for tombstone display
       ));

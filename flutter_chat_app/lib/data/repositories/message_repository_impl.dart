@@ -13,7 +13,7 @@ import 'package:flutter_chat_app/data/datasources/message/message_remote_datasou
 import 'package:flutter_chat_app/data/dtos/message_dto.dart';
 import 'package:flutter_chat_app/data/mappers/message_mapper.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
-import 'package:flutter_chat_app/data/strategies/message_merge_strategy.dart';
+
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -738,7 +738,10 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   /// **GET MESSAGES DELTA - DELTA SYNC STRATEGY**
   ///
   /// Fetches only messages newer than fromTimestamp from server,
-  /// merges with local data, saves merged result, enforces cache limit.
+  /// saves new messages to local cache, returns ONLY the delta messages.
+  ///
+  /// NOTE: Merge voi local state duoc thuc hien o BLoC layer (single merge),
+  /// KHONG merge o day de tranh double-merge bug.
   @override
   Future<Either<Failure, List<ChatMessage>>> getMessagesDelta(
     String chatId, {
@@ -761,36 +764,17 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
       final serverNewest = serverMessages.isNotEmpty ? serverMessages.first.createdAt.toIso8601String() : 'N/A';
       logger.i('[TwoPhase][Repo] Delta server response: dtoCount=${dtos.length} domainCount=${serverMessages.length} newest=$serverNewest');
 
-      // Get local messages for merge
-      final localModels = await _localDataSource.getMessagesForChat(chatId);
-      final localMessages = localModels.map((m) => m.toDomain()).toList();
-      logger.i('[TwoPhase][Repo] Local messages for merge: count=${localMessages.length}');
-
-      // Merge using strategy (server wins, dedup, preserve pending)
-      final merged = MessageMergeStrategy.merge(
-        localMessages: localMessages,
-        serverMessages: serverMessages,
-      );
-
-      logger.i('[TwoPhase][Repo] Merge result: count=${merged.length}');
-
-      // Enforce cache limit: keep newest 500 messages
-      const maxCacheSize = 500;
-      final toCache = merged.length > maxCacheSize
-          ? merged.sublist(0, maxCacheSize)
-          : merged;
-
-      // Save merged result to local storage
-      final modelsToSave = toCache
-          .map((msg) => MessageMapper.fromDomain(msg))
-          .toList();
-      await _localDataSource.saveMessages(modelsToSave);
+      // Save delta messages to local cache (additive — saveMessages does upsert)
+      if (serverModels.isNotEmpty) {
+        await _localDataSource.saveMessages(serverModels);
+      }
 
       // Invalidate old cache keys
       await _cacheManager.invalidateCache('chat_messages_$chatId');
       _cacheSyncStrategy.resetChatMessagesDirtyFlag(chatId);
 
-      return Right(merged);
+      // Return ONLY delta messages — BLoC layer will merge with local state
+      return Right(serverMessages);
     } on ServerException catch (e) {
       logger.e('[TwoPhase][Repo] Delta sync ServerException for chat $chatId: ${e.message}');
       return Left(ServerFailure(message: e.message));

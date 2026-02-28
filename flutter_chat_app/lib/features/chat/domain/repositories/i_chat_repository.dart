@@ -60,6 +60,12 @@ abstract class IChatRepository {
     required List<String> userIds,
   });
 
+  /// Update admin list for a group chat with remote-only strategy
+  Future<Either<Failure, bool>> updateAdmins({
+    required String chatId,
+    required List<String> adminIds,
+  });
+
   /// Leave chat with remote-only strategy
   Future<Either<Failure, bool>> leaveChat(String chatId);
 

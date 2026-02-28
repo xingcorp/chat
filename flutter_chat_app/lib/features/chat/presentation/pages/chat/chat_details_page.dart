@@ -512,7 +512,12 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         onSearchUsers: (query) => _searchUsers(query),
         onAddMembers: (userIds) => _addMembersToGroup(userIds),
       ),
-    );
+    ).then((result) {
+      // Refresh conversation detail after add member panel closes
+      if (result == true && _chat != null) {
+        _convDetailBloc.add(LoadConversationDetail(chatId: _chat!.id));
+      }
+    });
   }
 
   /// Search users for adding to group

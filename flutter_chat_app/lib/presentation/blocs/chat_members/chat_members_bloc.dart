@@ -201,43 +201,65 @@ class ChatMembersBloc extends BaseBloc<ChatMembersEvent, ChatMembersState> {
   ) async {
     emit(const ChatMembersLoading(message: 'Making admin...'));
 
-    _logger.d('Making admin: memberId=${event.memberId}');
+    _logger.d('Making admin: chatId=${event.chatId}, memberId=${event.memberId}');
 
-    // TODO: Call repository to make admin
-    // For now, just update local state
-    _allMembers = _allMembers.map((m) {
-      if (m.userId == event.memberId) {
-        return ConversationMember(
-          id: m.id,
-          userId: m.userId,
-          fullName: m.fullName,
-          avatarUrl: m.avatarUrl,
-          departmentName: m.departmentName,
-          titleName: m.titleName,
-          code: m.code,
-          isAdmin: true,
-          isConnected: m.isConnected,
-          isHidden: m.isHidden,
-          unreadCount: m.unreadCount,
-          lastMessageReadId: m.lastMessageReadId,
-          viewMessagesFrom: m.viewMessagesFrom,
-        );
-      }
-      return m;
-    }).toList();
+    // Build new admin list: current admins + new admin
+    final currentAdminIds = _allMembers
+        .where((m) => m.isAdmin)
+        .map((m) => m.userId)
+        .toList();
 
-    final currentState = state;
-    MembersSortType sortType = MembersSortType.adminFirst;
-    if (currentState is ChatMembersLoaded) {
-      sortType = currentState.sortType;
+    if (!currentAdminIds.contains(event.memberId)) {
+      currentAdminIds.add(event.memberId);
     }
 
-    final sortedMembers = _sortMembers(_allMembers, sortType);
-    emit(ChatMembersAdminUpdated(
-      memberId: event.memberId,
-      isAdmin: true,
-      members: sortedMembers,
-    ));
+    final result = await _chatRepository.updateAdmins(
+      chatId: event.chatId,
+      adminIds: currentAdminIds,
+    );
+
+    result.fold(
+      (failure) {
+        _logger.e('Failed to make admin: ${failure.message}');
+        emit(ChatMembersError(message: failure.message));
+      },
+      (_) {
+        // Update local state
+        _allMembers = _allMembers.map((m) {
+          if (m.userId == event.memberId) {
+            return ConversationMember(
+              id: m.id,
+              userId: m.userId,
+              fullName: m.fullName,
+              avatarUrl: m.avatarUrl,
+              departmentName: m.departmentName,
+              titleName: m.titleName,
+              code: m.code,
+              isAdmin: true,
+              isConnected: m.isConnected,
+              isHidden: m.isHidden,
+              unreadCount: m.unreadCount,
+              lastMessageReadId: m.lastMessageReadId,
+              viewMessagesFrom: m.viewMessagesFrom,
+            );
+          }
+          return m;
+        }).toList();
+
+        final currentState = state;
+        MembersSortType sortType = MembersSortType.adminFirst;
+        if (currentState is ChatMembersLoaded) {
+          sortType = currentState.sortType;
+        }
+
+        final sortedMembers = _sortMembers(_allMembers, sortType);
+        emit(ChatMembersAdminUpdated(
+          memberId: event.memberId,
+          isAdmin: true,
+          members: sortedMembers,
+        ));
+      },
+    );
   }
 
   /// Handler: Remove admin
@@ -247,43 +269,61 @@ class ChatMembersBloc extends BaseBloc<ChatMembersEvent, ChatMembersState> {
   ) async {
     emit(const ChatMembersLoading(message: 'Removing admin...'));
 
-    _logger.d('Removing admin: memberId=${event.memberId}');
+    _logger.d('Removing admin: chatId=${event.chatId}, memberId=${event.memberId}');
 
-    // TODO: Call repository to remove admin
-    // For now, just update local state
-    _allMembers = _allMembers.map((m) {
-      if (m.userId == event.memberId) {
-        return ConversationMember(
-          id: m.id,
-          userId: m.userId,
-          fullName: m.fullName,
-          avatarUrl: m.avatarUrl,
-          departmentName: m.departmentName,
-          titleName: m.titleName,
-          code: m.code,
+    // Build new admin list: current admins minus the target
+    final currentAdminIds = _allMembers
+        .where((m) => m.isAdmin && m.userId != event.memberId)
+        .map((m) => m.userId)
+        .toList();
+
+    final result = await _chatRepository.updateAdmins(
+      chatId: event.chatId,
+      adminIds: currentAdminIds,
+    );
+
+    result.fold(
+      (failure) {
+        _logger.e('Failed to remove admin: ${failure.message}');
+        emit(ChatMembersError(message: failure.message));
+      },
+      (_) {
+        // Update local state
+        _allMembers = _allMembers.map((m) {
+          if (m.userId == event.memberId) {
+            return ConversationMember(
+              id: m.id,
+              userId: m.userId,
+              fullName: m.fullName,
+              avatarUrl: m.avatarUrl,
+              departmentName: m.departmentName,
+              titleName: m.titleName,
+              code: m.code,
+              isAdmin: false,
+              isConnected: m.isConnected,
+              isHidden: m.isHidden,
+              unreadCount: m.unreadCount,
+              lastMessageReadId: m.lastMessageReadId,
+              viewMessagesFrom: m.viewMessagesFrom,
+            );
+          }
+          return m;
+        }).toList();
+
+        final currentState = state;
+        MembersSortType sortType = MembersSortType.adminFirst;
+        if (currentState is ChatMembersLoaded) {
+          sortType = currentState.sortType;
+        }
+
+        final sortedMembers = _sortMembers(_allMembers, sortType);
+        emit(ChatMembersAdminUpdated(
+          memberId: event.memberId,
           isAdmin: false,
-          isConnected: m.isConnected,
-          isHidden: m.isHidden,
-          unreadCount: m.unreadCount,
-          lastMessageReadId: m.lastMessageReadId,
-          viewMessagesFrom: m.viewMessagesFrom,
-        );
-      }
-      return m;
-    }).toList();
-
-    final currentState = state;
-    MembersSortType sortType = MembersSortType.adminFirst;
-    if (currentState is ChatMembersLoaded) {
-      sortType = currentState.sortType;
-    }
-
-    final sortedMembers = _sortMembers(_allMembers, sortType);
-    emit(ChatMembersAdminUpdated(
-      memberId: event.memberId,
-      isAdmin: false,
-      members: sortedMembers,
-    ));
+          members: sortedMembers,
+        ));
+      },
+    );
   }
 
   /// Handler: Leave group
@@ -295,8 +335,18 @@ class ChatMembersBloc extends BaseBloc<ChatMembersEvent, ChatMembersState> {
 
     _logger.d('Leaving group: chatId=${event.chatId}');
 
-    // TODO: Call repository to leave group
-    emit(const ChatMembersLeftGroup());
+    final result = await _chatRepository.leaveChat(event.chatId);
+
+    result.fold(
+      (failure) {
+        _logger.e('Failed to leave group: ${failure.message}');
+        emit(ChatMembersError(message: failure.message));
+      },
+      (_) {
+        _logger.i('Left group successfully: chatId=${event.chatId}');
+        emit(const ChatMembersLeftGroup());
+      },
+    );
   }
 
   /// Helper: Sort members by sort type
