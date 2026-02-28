@@ -50,6 +50,9 @@ class MessageItem extends StatefulWidget {
   // Group chat flag for read receipts
   final bool isGroupChat;
 
+  // Callback when user edits and sends an image from fullscreen gallery
+  final void Function(Uint8List editedBytes, String fileName)? onEditedImageSend;
+
   const MessageItem({
     Key? key,
     required this.uiState,
@@ -61,6 +64,7 @@ class MessageItem extends StatefulWidget {
     this.onSwipeReply,
     this.onReplyPreviewTap,
     this.isGroupChat = false,
+    this.onEditedImageSend,
   }) : super(key: key);
 
   @override
@@ -805,6 +809,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       chatId: widget.uiState.chatId,
       isFromCurrentUser: isFromCurrentUser,
       isOnPrimaryBackground: isOnPrimaryBackground,
+      onEditedImageSend: widget.onEditedImageSend,
     );
   }
 

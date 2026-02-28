@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -7,18 +5,13 @@ import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
 import 'package:flutter_chat_app/core/services/image_editor_service.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' as domain;
-import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' show ContentType;
-import 'package:flutter_chat_app/data/dtos/chat_object_dto.dart';
-import 'package:flutter_chat_app/features/chat/data/datasources/chat_object/chat_object_remote_datasource.dart';
-import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_gallery.dart' show EditedImageResult;
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_popup_menu.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
@@ -494,79 +487,15 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
     imageEditorService.editNetworkImage(
       context,
       imageUrl: widget.imageUrl,
-      onComplete: (bytes) => _sendEditedImage(bytes),
-    );
-  }
-
-  /// Send edited image as new message
-  Future<void> _sendEditedImage(Uint8List bytes) async {
-    if (widget.chatId == null) {
-      AppSnackBar.show(
-        context: context,
-        message: 'Cannot send image without chat',
-        type: FeedbackType.error,
-      );
-      return;
-    }
-
-    // Show loading
-    if (!context.mounted) return;
-    AppSnackBar.show(
-      context: context,
-      message: 'Uploading...',
-      type: FeedbackType.info,
-    );
-
-    try {
-      // Get datasource
-      final dataSource = GetIt.I<IChatObjectRemoteDataSource>();
-
-      // Generate presigned URL
-      final fileName = 'edited_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final uploadResponse = await dataSource.generateUploadLinks(
-        files: [
-          GeneratePresignedUrlParams(
-            fileName: fileName,
-            fileType: 'image/jpeg',
-          ),
-        ],
-      );
-
-      // Upload bytes
-      final presignedData = uploadResponse.data.first;
-      await dataSource.uploadBytes(
-        presignedUrl: presignedData.presignedUrl,
-        bytes: bytes,
-        contentType: 'image/jpeg',
-      );
-
-      // Send message - use GetIt since ChatBloc may not be in widget tree
-      if (!context.mounted) return;
-      final chatBloc = GetIt.I<ChatBloc>();
-      chatBloc.add(ChatEvent.sendMessage(
-        chatId: widget.chatId!,
-        content: '',
-        contentType: ContentType.image,
-        attachmentIds: [presignedData.path],
-      ));
-
-      // Navigate back to chat
-      if (context.mounted) {
-        Navigator.of(context).pop();
-        AppSnackBar.show(
-          context: context,
-          message: context.l10n.edited,
-          type: FeedbackType.success,
+      onComplete: (bytes) {
+        if (!context.mounted) return;
+        final fileName = 'edited_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        // Pop back to caller with edited bytes
+        Navigator.of(context).pop(
+          EditedImageResult(bytes: bytes, fileName: fileName),
         );
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-      AppSnackBar.show(
-        context: context,
-        message: 'Failed to send image: $e',
-        type: FeedbackType.error,
-      );
-    }
+      },
+    );
   }
 
   /// Handle forward action

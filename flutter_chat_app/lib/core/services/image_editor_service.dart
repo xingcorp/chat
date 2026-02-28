@@ -43,6 +43,24 @@ class ImageEditorService {
     return const I18n();
   }
 
+  /// Tạo callbacks chung cho editor
+  ProImageEditorCallbacks _createCallbacks(
+    BuildContext context, {
+    OnImageEdited? onComplete,
+    VoidCallback? onCancel,
+  }) {
+    return ProImageEditorCallbacks(
+      onImageEditingComplete: (Uint8List bytes) async {
+        if (context.mounted) Navigator.of(context).pop();
+        onComplete?.call(bytes);
+      },
+      onCloseEditor: (_) {
+        if (context.mounted) Navigator.of(context).pop();
+        onCancel?.call();
+      },
+    );
+  }
+
   /// Mở editor để chỉnh sửa ảnh từ network URL
   void editNetworkImage(
     BuildContext context, {
@@ -55,12 +73,15 @@ class ImageEditorService {
     final configs = ProImageEditorConfigs(
       i18n: _createI18n(context),
     );
+    final callbacks = _createCallbacks(context, onComplete: onComplete, onCancel: onCancel);
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (ctx) => kIsWeb
-            ? _buildWebNetworkEditor(imageUrl, onComplete, configs)
-            : _buildMobileNetworkEditor(imageUrl, onComplete, configs),
+        builder: (_) => ProImageEditor.network(
+          imageUrl,
+          configs: configs,
+          callbacks: callbacks,
+        ),
       ),
     );
   }
@@ -82,17 +103,14 @@ class ImageEditorService {
     final configs = ProImageEditorConfigs(
       i18n: _createI18n(context),
     );
+    final callbacks = _createCallbacks(context, onComplete: onComplete, onCancel: onCancel);
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (ctx) => ProImageEditor.file(
+        builder: (_) => ProImageEditor.file(
           file,
           configs: configs,
-          callbacks: ProImageEditorCallbacks(
-            onImageEditingComplete: (Uint8List bytes) async {
-              onComplete?.call(bytes);
-            },
-          ),
+          callbacks: callbacks,
         ),
       ),
     );
@@ -110,52 +128,15 @@ class ImageEditorService {
     final configs = ProImageEditorConfigs(
       i18n: _createI18n(context),
     );
+    final callbacks = _createCallbacks(context, onComplete: onComplete, onCancel: onCancel);
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (ctx) => ProImageEditor.memory(
+        builder: (_) => ProImageEditor.memory(
           bytes,
           configs: configs,
-          callbacks: ProImageEditorCallbacks(
-            onImageEditingComplete: (Uint8List editedBytes) async {
-              onComplete?.call(editedBytes);
-            },
-          ),
+          callbacks: callbacks,
         ),
-      ),
-    );
-  }
-
-  /// Build editor cho web (network URL)
-  Widget _buildWebNetworkEditor(
-    String imageUrl,
-    OnImageEdited? onComplete,
-    ProImageEditorConfigs configs,
-  ) {
-    return ProImageEditor.network(
-      imageUrl,
-      configs: configs,
-      callbacks: ProImageEditorCallbacks(
-        onImageEditingComplete: (Uint8List bytes) async {
-          onComplete?.call(bytes);
-        },
-      ),
-    );
-  }
-
-  /// Build editor cho mobile (network URL)
-  Widget _buildMobileNetworkEditor(
-    String imageUrl,
-    OnImageEdited? onComplete,
-    ProImageEditorConfigs configs,
-  ) {
-    return ProImageEditor.network(
-      imageUrl,
-      configs: configs,
-      callbacks: ProImageEditorCallbacks(
-        onImageEditingComplete: (Uint8List bytes) async {
-          onComplete?.call(bytes);
-        },
       ),
     );
   }

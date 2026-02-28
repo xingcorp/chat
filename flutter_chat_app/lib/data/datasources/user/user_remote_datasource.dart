@@ -45,7 +45,6 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
           name
           phone
           email
-          status
           avatar { location }
         }
       }

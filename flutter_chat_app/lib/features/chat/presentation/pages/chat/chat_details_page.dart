@@ -1220,6 +1220,17 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                 isGroupChat: _chat?.type == ChatType.group,
                 onLongPress: () { if (!_isSelectionMode && uiState.message != null) _showMessageOptions(context, uiState.message!, uiState.isFromCurrentUser); },
                 onTap: () { if (_isSelectionMode) _toggleSelection(uiState.id); },
+                onEditedImageSend: (bytes, fileName) {
+                  _messageBloc.add(
+                    SendMessageWithAttachments(
+                      content: '',
+                      senderId: _currentUserId,
+                      localFilePaths: const [],
+                      fileBytes: [bytes],
+                      fileNames: [fileName],
+                    ),
+                  );
+                },
               ),
             ],
           ),
