@@ -591,30 +591,15 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   /// 
   /// Creates a copy of the message in the target chat with forwardedFromMessageId reference.
   Future<void> _onForwardMessage(ForwardMessage event, Emitter<MessageState> emit) async {
-    if (state is! MessagesLoaded) return;
+    // Use message directly from event (UI đã truyền đầy đủ)
+    final originalMessage = event.message;
     
-    final currentState = state as MessagesLoaded;
-    
-    // Get the original message from current state
-    final originalMessage = currentState.messages.firstWhere(
-      (m) => m.id == event.messageId,
-      orElse: () {
-        logger.w('Cannot forward: original message ${event.messageId} not found');
-        return ChatMessage(
-          id: '',
-          chatId: '',
-          sender: MessageSender(id: '', name: 'Unknown'),
-          content: '',
-          contentType: ContentType.text,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-      },
-    );
-    
-    if (originalMessage.id.isEmpty) return;
+    if (originalMessage.id.isEmpty) {
+      logger.w('Cannot forward: message has empty id');
+      return;
+    }
 
-    logger.i('Forwarding message ${event.messageId} to chat ${event.targetChatId}');
+    logger.i('Forwarding message ${originalMessage.id} to chat ${event.targetChatId}');
 
     // Execute SendMessageUseCase to forward to target chat
     // Note: forwardedFromMessageId is set in the message content metadata
@@ -629,14 +614,23 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     result.fold(
       (failure) {
         logger.e('Failed to forward message', error: failure);
-        emit(MessageState.error(
-          chatId: currentState.chatId,
-          error: failure.message,
-          previousMessages: currentState.messages,
-        ));
+        // Emit error state if we have a current chat context
+        state.maybeWhen(
+          loaded: (chatId, messages, _, __, ___, ____, _____, ______, _______) {
+            emit(MessageState.error(
+              chatId: chatId,
+              error: failure.message,
+              previousMessages: messages,
+            ));
+          },
+          orElse: () {
+            // No current chat context, just log
+            logger.w('Forward failed but no current chat context to emit error');
+          },
+        );
       },
-      (_) {
-        logger.i('Message forwarded successfully');
+      (sentMessage) {
+        logger.i('Message forwarded successfully to ${event.targetChatId}');
         // Mark chat list as dirty (new message in target chat)
         _cacheSyncStrategy.markChatListDirty();
       },

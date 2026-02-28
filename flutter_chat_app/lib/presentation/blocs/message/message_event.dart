@@ -291,8 +291,8 @@ class FetchFrequentReactions extends MessageEvent {
 
 /// Sự kiện chuyển tiếp tin nhắn đến chat khác
 class ForwardMessage extends MessageEvent {
-  /// ID tin nhắn gốc cần chuyển tiếp
-  final String messageId;
+  /// Tin nhắn gốc cần chuyển tiếp (full object, không cần tìm trong state)
+  final ChatMessage message;
   
   /// ID chat đích để chuyển tiếp đến
   final String targetChatId;
@@ -301,11 +301,11 @@ class ForwardMessage extends MessageEvent {
   final String? sourceChatId;
 
   const ForwardMessage({
-    required this.messageId,
+    required this.message,
     required this.targetChatId,
     this.sourceChatId,
   });
 
   @override
-  List<Object?> get props => [messageId, targetChatId, sourceChatId];
+  List<Object?> get props => [message.id, targetChatId, sourceChatId];
 }

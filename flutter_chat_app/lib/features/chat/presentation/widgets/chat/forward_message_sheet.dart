@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
@@ -27,6 +28,27 @@ class _ForwardMessageSheetState extends State<ForwardMessageSheet> {
   String _searchQuery = '';
 
   @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final chatBloc = context.read<ChatBloc>();
+      final s = chatBloc.state;
+      final needsLoad = s.maybeWhen(
+        initial: () => true,
+        offline: () => true,
+        error: (_) => true,
+        orElse: () => false,
+      );
+
+      if (needsLoad) {
+        chatBloc.add(const ChatEvent.loadChats());
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -37,7 +59,7 @@ class _ForwardMessageSheetState extends State<ForwardMessageSheet> {
     
     for (final message in widget.messagesToForward!) {
       context.read<MessageBloc>().add(ForwardMessage(
-        messageId: message.id,
+        message: message,
         targetChatId: targetChatId,
         sourceChatId: widget.sourceChatId,
       ));
@@ -222,7 +244,38 @@ class _ForwardMessageSheetState extends State<ForwardMessageSheet> {
                   );
                 },
                 error: (msg) => Center(child: Text(msg)),
-                orElse: () => const Center(child: CircularProgressIndicator()),
+                orElse: () => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.forward_to_inbox,
+                          size: 48,
+                          color: theme.disabledColor,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          l10n.selectChat,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.textTheme.bodySmall?.color,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton(
+                          onPressed: () {
+                            context
+                                .read<ChatBloc>()
+                                .add(const ChatEvent.loadChats(forceRefresh: true));
+                          },
+                          child: Text(l10n.retry),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -238,6 +291,19 @@ Future<void> showForwardMessageSheet(
   List<ChatMessage>? messages,
   String? sourceChatId,
 }) {
+  ChatBloc chatBloc;
+  MessageBloc messageBloc;
+  try {
+    chatBloc = context.read<ChatBloc>();
+  } catch (_) {
+    chatBloc = GetIt.instance<ChatBloc>();
+  }
+  try {
+    messageBloc = context.read<MessageBloc>();
+  } catch (_) {
+    messageBloc = GetIt.instance<MessageBloc>();
+  }
+
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -245,9 +311,15 @@ Future<void> showForwardMessageSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
-    builder: (_) => ForwardMessageSheet(
-      messagesToForward: messages,
-      sourceChatId: sourceChatId,
+    builder: (_) => MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: chatBloc),
+        BlocProvider.value(value: messageBloc),
+      ],
+      child: ForwardMessageSheet(
+        messagesToForward: messages,
+        sourceChatId: sourceChatId,
+      ),
     ),
   );
 }
