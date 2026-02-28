@@ -323,6 +323,13 @@ class ChatMessage {
   final DateTime? editedAt;
 
   /// Thời gian xóa (nếu có)
+  /// 
+  /// **DEPRECATED/UNUSED**: Backend thực hiện hard-delete, không trả về
+  /// tin nhắn đã xóa. Field này giữ lại để:
+  /// - Tương thích với DTO mapping (backend có thể trả về trong tương lai)
+  /// - Forward compatibility nếu backend chuyển sang soft-delete
+  /// 
+  /// Hiện tại UI không render tombstone vì message bị xóa hoàn toàn khỏi list.
   final DateTime? deletedAt;
 
   /// Danh sách URLs (cho image, video, file)
@@ -705,6 +712,9 @@ class ChatMessage {
   }
 
   /// Kiểm tra tin nhắn đã bị xóa
+  /// 
+  /// **DEPRECATED/UNUSED**: Xem comment `deletedAt` field.
+  /// Backend hard-delete nên getter này luôn return false với data từ server.
   bool get isDeleted => deletedAt != null;
 
   /// Kiểm tra tin nhắn đã được đọc bởi người dùng hiện tại

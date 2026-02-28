@@ -245,11 +245,10 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     );
 
     localResult.fold(
-      (failure) => logger.w('[TwoPhase] getMessagesFromLocal FAILED: ${failure.message}'), // keep warning
+      (failure) => logger.w('[TwoPhase] getMessagesFromLocal FAILED: ${failure.message}'),
       (messages) {
         final newestTs = messages.isNotEmpty ? messages.first.createdAt.toIso8601String() : 'N/A';
-        final oldestTs = messages.isNotEmpty ? messages.last.createdAt.toIso8601String() : 'N/A';
-        // logger.i('[TwoPhase] getMessagesFromLocal: count=${messages.length} newest=$newestTs oldest=$oldestTs');
+        logger.d('[TwoPhase] getMessagesFromLocal: count=${messages.length} newest=$newestTs');
       },
     );
 
@@ -548,12 +547,38 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   }
 
   /// **Delete message using DeleteMessageUseCase - CLEAN ARCHITECTURE**
+  ///
+  /// **Hard-delete behavior:** Removes message from list entirely.
+  /// Backend permanently deletes the message.
   Future<void> _onDeleteMessage(DeleteMessage event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
 
-    logger.i('Deleting message: ${event.messageId}');
+    final currentState = state as MessagesLoaded;
+    final chatId = currentState.chatId;
 
-    final params = DeleteMessageParams(messageId: event.messageId);
+    logger.i('Deleting message: ${event.messageId} in chat: $chatId');
+
+    // Store deleted message for potential rollback
+    final deletedMessage = currentState.messages.firstWhere(
+      (msg) => msg.id == event.messageId,
+      orElse: () => throw StateError('Message not found'),
+    );
+
+    // Optimistic update: remove message immediately
+    final optimisticallyUpdatedMessages = currentState.messages
+        .where((msg) => msg.id != event.messageId)
+        .toList();
+
+    // Emit optimistic update
+    emit(currentState.copyWith(
+      messages: optimisticallyUpdatedMessages,
+      uiMessages: _transformMessages(optimisticallyUpdatedMessages),
+    ));
+
+    final params = DeleteMessageParams(
+      chatId: chatId,
+      messageId: event.messageId,
+    );
     final result = await _deleteMessage(params);
 
     // Re-read state after await
@@ -563,24 +588,28 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     result.fold(
       (failure) {
         logger.e('Failed to delete message', error: failure);
+        // Rollback: restore deleted message to its original position
+        final restoredMessages = List<ChatMessage>.from(freshState.messages);
+        final insertIndex = restoredMessages.indexWhere(
+          (msg) => msg.createdAt.isBefore(deletedMessage.createdAt),
+        );
+        if (insertIndex == -1) {
+          restoredMessages.add(deletedMessage);
+        } else {
+          restoredMessages.insert(insertIndex, deletedMessage);
+        }
+        // Re-sort by createdAt descending
+        restoredMessages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        
         emit(MessageState.error(
           chatId: freshState.chatId,
           error: failure.message,
-          previousMessages: freshState.messages,
+          previousMessages: restoredMessages,
         ));
       },
       (_) {
-        logger.i('Message deleted successfully');
-        
-        final updatedMessages = freshState.messages
-            .where((msg) => msg.id != event.messageId)
-            .toList();
-
-        emit(freshState.copyWith(
-          messages: updatedMessages,
-          uiMessages: _transformMessages(updatedMessages),
-        ));
-
+        logger.i('Message deleted successfully (hard-delete)');
+        // Message already removed from state, mark cache dirty
         _cacheSyncStrategy.markChatMessagesDirty(freshState.chatId);
         _cacheSyncStrategy.markChatListDirty();
       },
@@ -978,13 +1007,24 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     ));
   }
 
-  /// Handle socket message:delete — remove message from state
+  /// Handle socket message:delete — mark message as deleted (tombstone)
+  ///
+  /// **Soft-delete behavior:** Updates message with `deletedAt` timestamp
+  /// instead of removing from list. UI renders tombstone placeholder.
   void _onReceiveMessageDeleted(ReceiveMessageDeleted event, Emitter<MessageState> emit) {
     if (_socketEventBuffer.bufferIfNeeded(event)) return;
 
     if (state is! MessagesLoaded) return;
     final currentState = state as MessagesLoaded;
 
+    // Check if message exists
+    final messageExists = currentState.messages.any((msg) => msg.id == event.messageId);
+    if (!messageExists) {
+      logger.w('ReceiveMessageDeleted: messageId=${event.messageId} not found in state');
+      return;
+    }
+
+    // Hard-delete: remove message from list
     final updatedMessages = currentState.messages
         .where((msg) => msg.id != event.messageId)
         .toList();
@@ -993,6 +1033,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       messages: updatedMessages,
       uiMessages: _transformMessages(updatedMessages),
     ));
+
+    logger.d('Message ${event.messageId} removed (hard-delete from socket)');
   }
 
   /// Handle socket message:reaction — add/remove reaction on message

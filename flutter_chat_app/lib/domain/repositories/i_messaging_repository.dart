@@ -27,7 +27,8 @@ abstract class IMessagingRepository {
   );
   
   /// Delete a message
-  Future<Either<Failure, bool>> deleteMessage(String messageId);
+  /// Requires chatId for efficient O(1) local cache deletion
+  Future<Either<Failure, bool>> deleteMessage(String chatId, String messageId);
   
   /// Search messages
   Future<Either<Failure, List<ChatMessage>>> searchMessages(

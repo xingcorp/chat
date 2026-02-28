@@ -6,55 +6,50 @@ class MessageMergeStrategy {
   /// Merge local messages với server messages.
   ///
   /// Rules:
-  /// 1. Deduplicate bằng message ID — server wins khi conflict
-  /// 2. Loại bỏ tin nhắn có deletedAt từ server
-  /// 3. Cập nhật tin nhắn đã edit (server version wins)
-  /// 4. Thêm tin nhắn mới từ server vào đúng vị trí
-  /// 5. Bảo toàn tin nhắn sending/pending (chưa có server ID)
-  /// 6. Sort theo createdAt descending
+  /// 1. Server là source of truth — nếu server không có, message đã bị xóa
+  /// 2. Cập nhật tin nhắn đã edit (server version wins)
+  /// 3. Thêm tin nhắn mới từ server
+  /// 4. Bảo toàn tin nhắn sending/pending (chưa có server ID)
+  /// 5. Sort theo createdAt descending
   static List<ChatMessage> merge({
     required List<ChatMessage> localMessages,
     required List<ChatMessage> serverMessages,
   }) {
-    if (localMessages.isEmpty) return List.from(serverMessages);
-    if (serverMessages.isEmpty) return List.from(localMessages);
+    // Server is empty — all local messages were deleted or none exist
+    if (serverMessages.isEmpty) {
+      // Only keep pending/sending messages
+      return localMessages
+          .where((msg) =>
+              msg.localStatus == MessageStatus.sending ||
+              msg.localStatus == MessageStatus.pending)
+          .toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+
+    // Build server ID set for quick lookup
+    final serverIds = serverMessages.map((msg) => msg.id).toSet();
 
     final Map<String, ChatMessage> mergedMap = {};
 
-    // 1. Add local messages first
-    for (final msg in localMessages) {
+    // 1. Add all server messages (server is source of truth)
+    for (final msg in serverMessages) {
       mergedMap[msg.id] = msg;
     }
 
-    // 2. Override/add server messages (server wins)
-    for (final msg in serverMessages) {
-      if (msg.deletedAt != null) {
-        // Server says deleted — remove from result
-        mergedMap.remove(msg.id);
-      } else {
-        mergedMap[msg.id] = msg;
-      }
-    }
-
-    // 3. Preserve sending/pending messages (local-only, no server confirmation)
+    // 2. Preserve sending/pending messages that aren't confirmed by server yet
     for (final msg in localMessages) {
       final isSendingOrPending = msg.localStatus == MessageStatus.sending ||
           msg.localStatus == MessageStatus.pending;
       if (!isSendingOrPending) continue;
 
-      final isLocalOnly = msg.id.startsWith('draft_') || msg.clientId != null;
-      if (!isLocalOnly) continue;
+      // If server confirmed this message, use server version
+      if (serverIds.contains(msg.id)) continue;
 
-      // Check if server already confirmed this message (match by clientId)
-      final serverConfirmed = msg.clientId != null &&
-          serverMessages.any((s) => s.clientId == msg.clientId);
-
-      if (!serverConfirmed) {
-        mergedMap[msg.id] = msg; // Keep pending message
-      }
+      // Keep local-only pending message
+      mergedMap[msg.id] = msg;
     }
 
-    // 4. Sort descending by createdAt
+    // 3. Sort descending by createdAt
     final result = mergedMap.values.toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 

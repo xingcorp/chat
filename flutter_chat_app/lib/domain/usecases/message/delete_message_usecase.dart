@@ -15,14 +15,16 @@ import 'package:injectable/injectable.dart';
 
 /// Parameters for deleting a message
 class DeleteMessageParams extends Equatable {
+  final String chatId;
   final String messageId;
 
   const DeleteMessageParams({
+    required this.chatId,
     required this.messageId,
   });
 
   @override
-  List<Object> get props => [messageId];
+  List<Object> get props => [chatId, messageId];
 }
 
 /// Delete message use case implementation
@@ -42,6 +44,7 @@ class DeleteMessageUseCase {
 
   Future<Either<Failure, bool>> call(DeleteMessageParams params) async {
     _logger.info('DeleteMessageUseCase: Starting operation', {
+      'chatId': params.chatId,
       'messageId': params.messageId,
     });
 
@@ -53,7 +56,7 @@ class DeleteMessageUseCase {
     }
 
     // Delete message through repository
-    final result = await _repository.deleteMessage(params.messageId);
+    final result = await _repository.deleteMessage(params.chatId, params.messageId);
 
     // Convert Either to Either
     return result.fold(
@@ -63,6 +66,7 @@ class DeleteMessageUseCase {
       },
       (success) {
         _logger.info('DeleteMessageUseCase: Success', {
+          'chatId': params.chatId,
           'messageId': params.messageId,
           'deleted': success,
         });
@@ -73,6 +77,11 @@ class DeleteMessageUseCase {
 
   /// Validate parameters
   ValidationFailure? _validateParams(DeleteMessageParams params) {
+    if (params.chatId.isEmpty) {
+      return const ValidationFailure(
+        message: 'Chat ID cannot be empty',
+      );
+    }
     if (params.messageId.isEmpty) {
       return const ValidationFailure(
         message: 'Message ID cannot be empty',

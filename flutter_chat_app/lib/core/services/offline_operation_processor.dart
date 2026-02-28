@@ -135,6 +135,7 @@ class OfflineOperationProcessor {
     final data = operation.dataMap;
 
     final result = await _messageRepository.deleteMessage(
+      data['chatId'] as String,
       data['messageId'] as String,
     );
 

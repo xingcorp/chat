@@ -44,9 +44,10 @@ class AppAlertDialog extends BaseDialog {
     String? title,
     this.icon,
     this.iconColor,
-    this.actions = const [],
+    List<Widget> actions = const [],
     super.key,
-  }) : _titleText = title;
+  })  : _titleText = title,
+        super(actions: actions);
 
   /// The title text of the dialog (stored internally).
   final String? _titleText;
@@ -59,9 +60,6 @@ class AppAlertDialog extends BaseDialog {
 
   /// Color for the icon.
   final Color? iconColor;
-
-  /// Action buttons for the dialog.
-  final List<Widget> actions;
 
   /// Shows the alert dialog.
   static Future<T?> show<T>({
@@ -114,18 +112,6 @@ class AppAlertDialog extends BaseDialog {
           style: Theme.of(context).textTheme.bodyMedium,
           textAlign: TextAlign.center,
         ),
-        if (actions.isNotEmpty) ...[
-          SizedBox(height: AppDimens.spaceLarge),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              for (int i = 0; i < actions.length; i++) ...[
-                if (i > 0) SizedBox(width: AppDimens.spaceSmall),
-                actions[i],
-              ],
-            ],
-          ),
-        ],
       ],
     );
   }

@@ -251,12 +251,14 @@ class OfflineOperationModel {
   /// Create a delete message operation
   static OfflineOperationModel createDeleteMessage({
     required String operationId,
+    required String chatId,
     required String messageId,
   }) {
     return OfflineOperationModel(
       operationId: operationId,
       type: OperationType.deleteMessage,
       data: jsonEncode({
+        'chatId': chatId,
         'messageId': messageId,
       }),
       timestamp: DateTime.now(),
