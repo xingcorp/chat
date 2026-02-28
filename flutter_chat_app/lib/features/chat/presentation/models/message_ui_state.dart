@@ -403,6 +403,7 @@ class MessageUIState {
       showAvatar: true,
       showSenderName: true,
       showTimestamp: true,
+      isDeleted: message.isDeleted,
     );
   }
 

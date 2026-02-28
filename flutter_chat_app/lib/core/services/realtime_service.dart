@@ -60,7 +60,7 @@ class RealtimeService {
   
   final BehaviorSubject<ChatMessage> _messageController = BehaviorSubject<ChatMessage>();
   final BehaviorSubject<ChatMessage> _messageEditedController = BehaviorSubject<ChatMessage>();
-  final BehaviorSubject<String> _messageDeletedController = BehaviorSubject<String>();
+  final BehaviorSubject<ChatMessage> _messageDeletedController = BehaviorSubject<ChatMessage>();
   final BehaviorSubject<MessageReaction> _messageReactionController = BehaviorSubject<MessageReaction>();
   final BehaviorSubject<TypingIndicator> _typingController = BehaviorSubject<TypingIndicator>();
   final BehaviorSubject<UserStatus> _userStatusController = BehaviorSubject<UserStatus>();
@@ -88,8 +88,8 @@ class RealtimeService {
   /// **Message edited stream**
   Stream<ChatMessage> get messageEditedStream => _messageEditedController.stream;
 
-  /// **Message deleted stream** (emits message ID)
-  Stream<String> get messageDeletedStream => _messageDeletedController.stream;
+  /// **Message deleted stream** (emits full ChatMessage for tombstone support)
+  Stream<ChatMessage> get messageDeletedStream => _messageDeletedController.stream;
 
   /// **Message reaction stream**
   Stream<MessageReaction> get messageReactionStream => _messageReactionController.stream;
@@ -387,7 +387,7 @@ class RealtimeService {
   /// **Handle message delete event - ENTERPRISE MESSAGE DELETION**
   ///
   /// **Performance**: <50ms message deletion processing
-  /// **Strategy**: Extract message ID → Emit to stream
+  /// **Strategy**: Parse full message → Emit to stream (for tombstone support)
   void _handleMessageDelete(Map<String, dynamic> data) {
     try {
       _logger.d('Received message delete event');
@@ -398,16 +398,13 @@ class RealtimeService {
         return;
       }
       
-      final messageId = messageData['id'] as String?;
-      if (messageId == null) {
-        _logger.w('No message ID in delete event');
-        return;
-      }
+      // Parse full message for tombstone support
+      final chatMessage = ChatMessage.fromJson(messageData);
       
-      // Emit message ID to deleted stream
-      _messageDeletedController.add(messageId);
+      // Emit full ChatMessage to deleted stream
+      _messageDeletedController.add(chatMessage);
       
-      _logger.d('Message delete processed and emitted: $messageId');
+      _logger.d('Message delete processed and emitted: ${chatMessage.id}');
     } catch (e, stackTrace) {
       _logger.e('Error handling message delete: $e', error: e, stackTrace: stackTrace);
     }

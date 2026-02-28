@@ -231,12 +231,12 @@ class ReceiveMessageEdited extends MessageEvent {
 
 /// Event cho socket message:delete
 class ReceiveMessageDeleted extends MessageEvent {
-  final String messageId;
+  final ChatMessage deletedMessage;
 
-  const ReceiveMessageDeleted(this.messageId);
+  const ReceiveMessageDeleted(this.deletedMessage);
 
   @override
-  List<Object?> get props => [messageId];
+  List<Object?> get props => [deletedMessage];
 }
 
 /// Event cho socket message:reaction

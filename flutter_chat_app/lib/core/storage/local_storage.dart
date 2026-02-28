@@ -44,6 +44,9 @@ abstract class LocalStorage {
   
   /// Check if a key exists
   Future<bool> containsKey(String key);
+  
+  /// Get all keys (for cleanup operations)
+  Set<String> getKeys();
 }
 
 /// Implementation of local storage using SharedPreferences
@@ -132,5 +135,10 @@ class LocalStorageImpl implements LocalStorage {
   @override
   Future<bool> containsKey(String key) async {
     return _prefs.containsKey(key);
+  }
+  
+  @override
+  Set<String> getKeys() {
+    return _prefs.getKeys();
   }
 } 

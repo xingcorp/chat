@@ -17,6 +17,7 @@ import 'package:flutter_chat_app/core/network/models/socket_connection_state.dar
 import 'package:flutter_chat_app/core/services/frequent_reaction_service.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart' hide MessageReaction;
+import 'package:flutter_chat_app/core/storage/tombstone_store.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/data/managers/sync_metadata_manager.dart';
@@ -72,6 +73,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   final RealtimeService _realtimeService;
   final ILocationService _locationService;
   final FrequentReactionService _frequentReactionService;
+  final TombstoneStore _tombstoneStore;
 
   // === Phase 2 + 3 Dependencies ===
   final SyncMetadataManager _syncMetadataManager;
@@ -173,6 +175,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     required SyncMetadataManager syncMetadataManager,
     required FrequentReactionService frequentReactionService,
     required SendPushNotificationUseCase sendPushNotification,
+    required TombstoneStore tombstoneStore,
     required this.logger,
   })  : _getMessages = getMessages,
         _sendMessage = sendMessage,
@@ -188,6 +191,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         _syncMetadataManager = syncMetadataManager,
         _frequentReactionService = frequentReactionService,
         _sendPushNotification = sendPushNotification,
+        _tombstoneStore = tombstoneStore,
         super(const MessageState.initial()) {
     on<LoadMessages>(_onLoadMessages);
     on<LoadMoreMessages>(_onLoadMoreMessages);
@@ -607,9 +611,14 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           previousMessages: restoredMessages,
         ));
       },
-      (_) {
-        logger.i('Message deleted successfully (hard-delete)');
-        // Message already removed from state, mark cache dirty
+      (_) async {
+        logger.i('Message deleted successfully (tombstone saved)');
+        
+        // Save tombstone for persistence across app restarts
+        final tombstone = MessageTombstone.fromMessage(deletedMessage, DateTime.now());
+        await _tombstoneStore.saveTombstone(tombstone);
+        
+        // Mark cache dirty
         _cacheSyncStrategy.markChatMessagesDirty(freshState.chatId);
         _cacheSyncStrategy.markChatListDirty();
       },
@@ -904,11 +913,11 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     }
   }
 
-  /// Handle background fetch completion — merge local + server
-  void _onBackgroundFetchCompleted(
+  /// Handle background fetch completion — merge local + server + tombstones
+  Future<void> _onBackgroundFetchCompleted(
     _BackgroundFetchCompleted event,
     Emitter<MessageState> emit,
-  ) {
+  ) async {
     if (state is! MessagesLoaded) {
       logger.w('[TwoPhase] _onBackgroundFetchCompleted: state is NOT MessagesLoaded (${state.runtimeType}), ignoring');
       return;
@@ -924,10 +933,15 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     // logger.i('[TwoPhase] _onBackgroundFetchCompleted: localCount=${currentState.messages.length} serverCount=${event.serverMessages.length}');
 
-    // Merge local + server
+    // Get tombstones for this chat (async load from disk if needed)
+    await _tombstoneStore.loadFromDisk(event.chatId);
+    final tombstones = _tombstoneStore.getTombstonesForChat(event.chatId);
+
+    // Merge local + server + tombstones
     final merged = MessageMergeStrategy.merge(
       localMessages: currentState.messages,
       serverMessages: event.serverMessages,
+      tombstones: tombstones,
     );
 
     final newestTs = merged.isNotEmpty ? merged.first.createdAt.toIso8601String() : 'N/A';
@@ -1004,7 +1018,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         .listen((msg) => add(ReceiveMessageEdited(msg)));
 
     _messageDeletedSubscription = _realtimeService.messageDeletedStream
-        .listen((msgId) => add(ReceiveMessageDeleted(msgId)));
+        .where((msg) => msg.chatId == chatId)
+        .listen((msg) => add(ReceiveMessageDeleted(msg)));
 
     _messageReactionSubscription = _realtimeService.messageReactionStream
         .listen((reaction) => add(ReceiveMessageReaction(
@@ -1048,34 +1063,58 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     ));
   }
 
-  /// Handle socket message:delete — mark message as deleted (tombstone)
+  /// Handle socket message:delete — save tombstone and show deleted message placeholder
   ///
-  /// **Soft-delete behavior:** Updates message with `deletedAt` timestamp
-  /// instead of removing from list. UI renders tombstone placeholder.
-  void _onReceiveMessageDeleted(ReceiveMessageDeleted event, Emitter<MessageState> emit) {
+  /// **Tombstone behavior:** Saves deleted message to TombstoneStore
+  /// and updates state to show "Tin nhắn đã bị xoá" placeholder.
+  Future<void> _onReceiveMessageDeleted(ReceiveMessageDeleted event, Emitter<MessageState> emit) async {
     if (_socketEventBuffer.bufferIfNeeded(event)) return;
 
     if (state is! MessagesLoaded) return;
     final currentState = state as MessagesLoaded;
 
-    // Check if message exists
-    final messageExists = currentState.messages.any((msg) => msg.id == event.messageId);
-    if (!messageExists) {
-      logger.w('ReceiveMessageDeleted: messageId=${event.messageId} not found in state');
-      return;
+    final deletedMessage = event.deletedMessage;
+    final messageId = deletedMessage.id;
+
+    // Save tombstone to store (for persistence across app restarts)
+    final tombstone = MessageTombstone.fromMessage(deletedMessage, DateTime.now());
+    await _tombstoneStore.saveTombstone(tombstone);
+
+    // Check if message exists in current state
+    final messageIndex = currentState.messages.indexWhere((msg) => msg.id == messageId);
+    
+    if (messageIndex == -1) {
+      // Message not in current state, add tombstone
+      final updatedMessages = [...currentState.messages];
+      updatedMessages.insert(messageIndex, deletedMessage.copyWith(
+        deletedAt: DateTime.now(),
+        content: '', // Clear content for tombstone display
+      ));
+      updatedMessages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      
+      emit(currentState.copyWith(
+        messages: updatedMessages,
+        uiMessages: _transformMessages(updatedMessages),
+      ));
+    } else {
+      // Message exists, update it to show as deleted
+      final updatedMessages = currentState.messages.map((msg) {
+        if (msg.id == messageId) {
+          return msg.copyWith(
+            deletedAt: DateTime.now(),
+            content: '', // Clear content for tombstone display
+          );
+        }
+        return msg;
+      }).toList();
+
+      emit(currentState.copyWith(
+        messages: updatedMessages,
+        uiMessages: _transformMessages(updatedMessages),
+      ));
     }
 
-    // Hard-delete: remove message from list
-    final updatedMessages = currentState.messages
-        .where((msg) => msg.id != event.messageId)
-        .toList();
-
-    emit(currentState.copyWith(
-      messages: updatedMessages,
-      uiMessages: _transformMessages(updatedMessages),
-    ));
-
-    logger.d('Message ${event.messageId} removed (hard-delete from socket)');
+    logger.d('Message $messageId marked as deleted (tombstone saved)');
   }
 
   /// Handle socket message:reaction — add/remove reaction on message

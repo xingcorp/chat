@@ -27,6 +27,10 @@ class ForwardPreview extends StatelessWidget {
   /// Tin nhắn hiện tại có phải của currentUser không
   final bool isFromCurrentUser;
 
+  /// Whether the parent bubble is painted with primary color.
+  /// For media-only messages, the bubble can be transparent.
+  final bool isOnPrimaryBackground;
+
   /// Callback khi tap vào forward preview (optional)
   final VoidCallback? onTap;
 
@@ -37,6 +41,7 @@ class ForwardPreview extends StatelessWidget {
     Key? key,
     required this.forwardInfo,
     this.isFromCurrentUser = false,
+    this.isOnPrimaryBackground = false,
     this.onTap,
     this.showThumbnail = true,
   }) : super(key: key);
@@ -46,23 +51,25 @@ class ForwardPreview extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = context.l10n;
 
+    final isPrimaryBubble = isFromCurrentUser && isOnPrimaryBackground;
+
     // Background color: lighter variant của bubble color
-    final bgColor = isFromCurrentUser
+    final bgColor = isPrimaryBubble
         ? Colors.white.withValues(alpha: 0.12)
-        : theme.colorScheme.primary.withValues(alpha: 0.06);
+        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.65);
 
     // Accent color: sử dụng màu khác với reply để phân biệt
-    final accentColor = isFromCurrentUser
+    final accentColor = isPrimaryBubble
         ? Colors.white.withValues(alpha: 0.85)
         : theme.colorScheme.secondary;
 
     // Text color
-    final textColor = isFromCurrentUser
+    final textColor = isPrimaryBubble
         ? Colors.white.withValues(alpha: 0.9)
         : theme.textTheme.bodyMedium?.color ?? Colors.black87;
 
     // Forward icon color - sử dụng màu secondary để phân biệt với reply
-    final forwardIconColor = isFromCurrentUser
+    final forwardIconColor = isPrimaryBubble
         ? Colors.white.withValues(alpha: 0.9)
         : theme.colorScheme.secondary;
 

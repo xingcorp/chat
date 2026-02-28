@@ -187,6 +187,7 @@ import '../services/resource_manager_service.dart' as _i558;
 import '../services/sso_auth_service.dart' as _i349;
 import '../services/state_persistence_service.dart' as _i797;
 import '../storage/local_storage.dart' as _i329;
+import '../storage/tombstone_store.dart' as _i677;
 import '../utils/isolate_manager.dart' as _i686;
 import '../utils/logger.dart' as _i221;
 import '../utils/proto_converter.dart' as _i995;
@@ -378,6 +379,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i999.LocalizationService(gh<_i329.LocalStorage>()));
     gh.lazySingleton<_i439.UserLocalDataSourceImpl>(
         () => _i439.UserLocalDataSourceImpl(gh<_i329.LocalStorage>()));
+    gh.lazySingleton<_i677.TombstoneStore>(
+        () => _i677.TombstoneStore(gh<_i329.LocalStorage>()));
     gh.factory<_i128.LocaleCubit>(
         () => _i128.LocaleCubit(gh<_i329.LocalStorage>()));
     gh.factory<_i473.ThemeCubit>(
@@ -620,12 +623,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i179.PermissionsService>(),
           gh<_i221.AppLogger>(),
         ));
-    gh.factoryAsync<_i379.MessageQueueBloc>(() async =>
-        _i379.MessageQueueBloc(await getAsync<_i556.MessageQueueService>()));
-    gh.factory<_i313.TypingBloc>(() => _i313.TypingBloc(
-          realtimeService: gh<_i301.RealtimeService>(),
-          logger: gh<_i221.AppLogger>(),
-        ));
     gh.factory<_i230.MessageBloc>(() => _i230.MessageBloc(
           getMessages: gh<_i467.GetMessagesUseCase>(),
           sendMessage: gh<_i67.SendMessageUseCase>(),
@@ -641,6 +638,13 @@ extension GetItInjectableX on _i174.GetIt {
           syncMetadataManager: gh<_i407.SyncMetadataManager>(),
           frequentReactionService: gh<_i537.FrequentReactionService>(),
           sendPushNotification: gh<_i370.SendPushNotificationUseCase>(),
+          tombstoneStore: gh<_i677.TombstoneStore>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
+    gh.factoryAsync<_i379.MessageQueueBloc>(() async =>
+        _i379.MessageQueueBloc(await getAsync<_i556.MessageQueueService>()));
+    gh.factory<_i313.TypingBloc>(() => _i313.TypingBloc(
+          realtimeService: gh<_i301.RealtimeService>(),
           logger: gh<_i221.AppLogger>(),
         ));
     gh.lazySingletonAsync<_i1060.ChatMessageService>(

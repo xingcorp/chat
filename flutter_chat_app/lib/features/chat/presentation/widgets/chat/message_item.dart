@@ -529,11 +529,19 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
           children: [
             // Forward preview
             if (widget.uiState.forwardInfo != null)
-              _buildForwardPreview(context, isFromCurrentUser),
+              _buildForwardPreview(
+                context,
+                isFromCurrentUser,
+                isOnPrimaryBackground: isOnPrimaryBackground,
+              ),
 
             // Reply preview
             if (widget.uiState.replyMessage != null)
-              _buildReplyPreview(context, isFromCurrentUser),
+              _buildReplyPreview(
+                context,
+                isFromCurrentUser,
+                isOnPrimaryBackground: isOnPrimaryBackground,
+              ),
 
             // Audio player for audio messages
             if (useSpecialPlayer && isAudioMessage)
@@ -746,25 +754,35 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _buildReplyPreview(BuildContext context, bool isFromCurrentUser) {
+  Widget _buildReplyPreview(
+    BuildContext context,
+    bool isFromCurrentUser, {
+    required bool isOnPrimaryBackground,
+  }) {
     final reply = widget.uiState.replyMessage;
     if (reply == null) return const SizedBox.shrink();
 
     return ReplyPreview(
       replyMessage: reply,
       isFromCurrentUser: isFromCurrentUser,
+      isOnPrimaryBackground: isOnPrimaryBackground,
       showThumbnail: true,
       onTap: widget.onReplyPreviewTap ?? () {},
     );
   }
 
-  Widget _buildForwardPreview(BuildContext context, bool isFromCurrentUser) {
+  Widget _buildForwardPreview(
+    BuildContext context,
+    bool isFromCurrentUser, {
+    required bool isOnPrimaryBackground,
+  }) {
     final forwardInfo = widget.uiState.forwardInfo;
     if (forwardInfo == null) return const SizedBox.shrink();
 
     return ForwardPreview(
       forwardInfo: forwardInfo,
       isFromCurrentUser: isFromCurrentUser,
+      isOnPrimaryBackground: isOnPrimaryBackground,
       showThumbnail: true,
     );
   }

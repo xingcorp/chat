@@ -26,6 +26,10 @@ class ReplyPreview extends StatelessWidget {
   /// Tin nhắn hiện tại có phải của currentUser không
   final bool isFromCurrentUser;
 
+  /// Whether the parent bubble is painted with primary color.
+  /// For media-only messages, the bubble can be transparent.
+  final bool isOnPrimaryBackground;
+
   /// Callback khi tap vào reply preview để scroll đến tin gốc
   final VoidCallback? onTap;
 
@@ -36,6 +40,7 @@ class ReplyPreview extends StatelessWidget {
     Key? key,
     required this.replyMessage,
     this.isFromCurrentUser = false,
+    this.isOnPrimaryBackground = false,
     this.onTap,
     this.showThumbnail = true,
   }) : super(key: key);
@@ -45,18 +50,20 @@ class ReplyPreview extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = context.l10n;
 
+    final isPrimaryBubble = isFromCurrentUser && isOnPrimaryBackground;
+
     // Background color: lighter variant của bubble color
-    final bgColor = isFromCurrentUser
+    final bgColor = isPrimaryBubble
         ? Colors.white.withValues(alpha: 0.15)
-        : theme.colorScheme.primary.withValues(alpha: 0.08);
+        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.65);
 
     // Accent color: primary color
-    final accentColor = isFromCurrentUser
+    final accentColor = isPrimaryBubble
         ? Colors.white.withValues(alpha: 0.9)
         : theme.colorScheme.primary;
 
     // Text color
-    final textColor = isFromCurrentUser
+    final textColor = isPrimaryBubble
         ? Colors.white.withValues(alpha: 0.9)
         : theme.textTheme.bodyMedium?.color ?? Colors.black87;
 
