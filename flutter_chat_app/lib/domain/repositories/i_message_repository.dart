@@ -51,7 +51,8 @@ abstract class IMessageRepository {
   /// **Strategy**: executeOnlineFirst (immediate server sync)
   /// **Performance**: <150ms for delete operations
   /// **Security**: Proper authorization and cascade deletion
-  Future<Either<Failure, bool>> deleteMessage(String messageId);
+  /// **chatId**: Required for efficient O(1) local cache deletion
+  Future<Either<Failure, bool>> deleteMessage(String chatId, String messageId);
 
   /// **Cập nhật nội dung tin nhắn**
   ///

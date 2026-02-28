@@ -13,8 +13,9 @@ abstract class MessageLocalDataSource {
   /// Save multiple messages to local storage
   Future<void> saveMessages(List<MessageModel> messages);
   
-  /// Delete a message
-  Future<void> deleteMessage(String messageId);
+  /// Delete a message from a specific chat
+  /// Requires chatId for O(1) lookup instead of O(n*m) search
+  Future<void> deleteMessage(String chatId, String messageId);
   
   /// Delete all messages for a chat
   Future<void> deleteMessagesForChat(String chatId);
@@ -119,10 +120,24 @@ class MessageLocalDataSourceImpl implements MessageLocalDataSource {
   }
   
   @override
-  Future<void> deleteMessage(String messageId) async {
-    // TODO: Implement proper message deletion
-    // For now, this is a placeholder implementation
-    throw UnimplementedError('deleteMessage not yet implemented');
+  Future<void> deleteMessage(String chatId, String messageId) async {
+    try {
+      // Get messages for this specific chat only - O(1) lookup
+      final messages = await getMessagesForChat(chatId);
+      
+      // Filter out the deleted message
+      final filtered = messages.where((m) {
+        return m.serverId != messageId && m.localId != messageId;
+      }).toList();
+
+      // Save updated list if message was found and removed
+      if (filtered.length != messages.length) {
+        final messagesList = filtered.map((m) => m.toMap()).toList();
+        await _localStorage.saveList('messages_$chatId', messagesList);
+      }
+    } catch (e) {
+      throw CacheException(message: 'Failed to delete message: $e');
+    }
   }
   
   @override

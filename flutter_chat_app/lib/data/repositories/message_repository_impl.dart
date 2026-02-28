@@ -488,16 +488,19 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   /// **Performance**: <150ms for delete operations
   /// **Strategy**: Remote-only because delete requires server confirmation.
   /// Server rejection (e.g., ChatMessageNotFound) should not silently succeed locally.
+  /// **chatId**: Required for O(1) local cache deletion.
   @override
-  Future<Either<Failure, bool>> deleteMessage(String messageId) async {
+  Future<Either<Failure, bool>> deleteMessage(String chatId, String messageId) async {
     return executeRemoteOnly<bool>(
       remoteDataSource: () async {
-        // Delete message on server (soft-delete: sets deletedAt timestamp)
+        // Delete message on server (hard-delete: removes from database)
         // Backend expects ChatMessageAct enum: DEL=0, EDIT=1
         await _remoteDataSource.editMessage(
           messageId: messageId,
           act: 'DEL',
         );
+        // Also delete from local cache - O(1) with chatId
+        await _localDataSource.deleteMessage(chatId, messageId);
         return true;
       },
       operationName: 'deleteMessage',
