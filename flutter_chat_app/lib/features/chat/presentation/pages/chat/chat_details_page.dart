@@ -1221,6 +1221,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                 onLongPress: () { if (!_isSelectionMode && uiState.message != null) _showMessageOptions(context, uiState.message!, uiState.isFromCurrentUser); },
                 onTap: () { if (_isSelectionMode) _toggleSelection(uiState.id); },
                 onEditedImageSend: (bytes, fileName) {
+                  debugPrint('[ChatDetailsPage] onEditedImageSend called, bytes=${bytes.length}, fileName=$fileName');
                   _messageBloc.add(
                     SendMessageWithAttachments(
                       content: '',

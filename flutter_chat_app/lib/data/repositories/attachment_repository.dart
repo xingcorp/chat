@@ -47,14 +47,15 @@ class AttachmentRepository implements IAttachmentRepository {
         'hasBytes': bytes != null,
       });
 
-      // Validate inputs
+      // Validate inputs: accept either file or bytes+fileName
+      final bool useBytesUpload = file == null && bytes != null && fileName != null;
       if (kIsWeb) {
         if (bytes == null || fileName == null) {
           throw Exception('Web platform requires bytes and fileName');
         }
       } else {
-        if (file == null) {
-          throw Exception('Mobile platform requires file');
+        if (file == null && !useBytesUpload) {
+          throw Exception('Either file or bytes+fileName must be provided');
         }
       }
 
@@ -64,7 +65,7 @@ class AttachmentRepository implements IAttachmentRepository {
       final String mimeType;
       final int fileSize;
 
-      if (kIsWeb) {
+      if (useBytesUpload || kIsWeb) {
         filename = fileName!;
         extension = filename.split('.').last.toLowerCase();
         mimeType = _getMimeType(extension);
@@ -100,8 +101,8 @@ class AttachmentRepository implements IAttachmentRepository {
       });
 
       // Step 2: Upload file binary to presigned URL
-      // Cross-platform: use bytes directly on web, read from file on mobile
-      if (kIsWeb) {
+      // Cross-platform: use bytes on web or when file is not available, read from file on mobile
+      if (useBytesUpload || kIsWeb) {
         await _chatObjectDataSource.uploadBytes(
           presignedUrl: uploadData.presignedUrl,
           bytes: bytes!,

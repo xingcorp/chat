@@ -1502,9 +1502,15 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     // Determine message type from first file
     // Cross-platform: use fileNames on web (path might be blob URL), path on mobile
+    // Also handle case where localFilePaths is empty but fileBytes/fileNames provided
+    final bool useFileBytes = event.localFilePaths.isEmpty &&
+        event.fileBytes != null &&
+        event.fileBytes!.isNotEmpty &&
+        event.fileNames != null &&
+        event.fileNames!.isNotEmpty;
+
     String extension;
-    if (kIsWeb && event.fileNames != null && event.fileNames!.isNotEmpty) {
-      // Web: extract extension from fileName (path might be blob URL)
+    if ((kIsWeb || useFileBytes) && event.fileNames != null && event.fileNames!.isNotEmpty) {
       extension = event.fileNames!.first.split('.').last.toLowerCase();
     } else {
       // Mobile: extract extension from path
@@ -1514,45 +1520,70 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     final contentType = _getContentTypeFromExtension(extension);
 
     // Create attachments with local paths (for immediate display)
-    // Cross-platform: use event data on web, File operations on mobile
-    final localAttachments = await Future.wait(
-      event.localFilePaths.asMap().entries.map((entry) async {
-        final index = entry.key;
-        final path = entry.value;
-
-        // Get file name - from event on web, from path on mobile
-        final fileName = kIsWeb && event.fileNames != null && index < event.fileNames!.length
+    // Cross-platform: use event data on web or when fileBytes provided, File operations on mobile
+    final List<MessageAttachment> localAttachments;
+    if (useFileBytes) {
+      // fileBytes mode: create attachments from bytes (works on any platform)
+      localAttachments = List.generate(event.fileBytes!.length, (index) {
+        final fileName = event.fileNames != null && index < event.fileNames!.length
             ? event.fileNames![index]
-            : path.split('/').last.split('\\').last;
-
-        // Get file size - from event on web, from File on mobile
-        int fileSize = 0;
-        if (kIsWeb && event.fileSizes != null && index < event.fileSizes!.length) {
-          fileSize = event.fileSizes![index];
-        } else if (!kIsWeb) {
-          // Mobile only: use dart:io File operations
-          final file = File(path);
-          fileSize = await file.exists() ? await file.length() : 0;
-        }
-
-        // Get file bytes - from event on web (for display during upload)
-        Uint8List? fileBytes;
-        if (kIsWeb && event.fileBytes != null && index < event.fileBytes!.length) {
-          fileBytes = Uint8List.fromList(event.fileBytes![index]);
-        }
+            : 'file_$index';
+        final fileBytes = Uint8List.fromList(event.fileBytes![index]);
+        final fileSize = event.fileSizes != null && index < event.fileSizes!.length
+            ? event.fileSizes![index]
+            : fileBytes.length;
 
         return MessageAttachment(
           id: 'local_${clientId}_$index',
-          url: '', // Empty - will be filled after upload
+          url: '',
           type: messageType.toLowerCase(),
           size: fileSize,
           name: fileName,
-          localPath: path,
-          localBytes: fileBytes, // Web: bytes for display
-          uploadProgress: 0.0, // Starting upload
+          localPath: '',
+          localBytes: fileBytes,
+          uploadProgress: 0.0,
         );
-      }),
-    );
+      });
+    } else {
+      localAttachments = await Future.wait(
+        event.localFilePaths.asMap().entries.map((entry) async {
+          final index = entry.key;
+          final path = entry.value;
+
+          // Get file name - from event on web, from path on mobile
+          final fileName = kIsWeb && event.fileNames != null && index < event.fileNames!.length
+              ? event.fileNames![index]
+              : path.split('/').last.split('\\').last;
+
+          // Get file size - from event on web, from File on mobile
+          int fileSize = 0;
+          if (kIsWeb && event.fileSizes != null && index < event.fileSizes!.length) {
+            fileSize = event.fileSizes![index];
+          } else if (!kIsWeb) {
+            // Mobile only: use dart:io File operations
+            final file = File(path);
+            fileSize = await file.exists() ? await file.length() : 0;
+          }
+
+          // Get file bytes - from event on web (for display during upload)
+          Uint8List? fileBytes;
+          if (kIsWeb && event.fileBytes != null && index < event.fileBytes!.length) {
+            fileBytes = Uint8List.fromList(event.fileBytes![index]);
+          }
+
+          return MessageAttachment(
+            id: 'local_${clientId}_$index',
+            url: '', // Empty - will be filled after upload
+            type: messageType.toLowerCase(),
+            size: fileSize,
+            name: fileName,
+            localPath: path,
+            localBytes: fileBytes, // Web: bytes for display
+            uploadProgress: 0.0, // Starting upload
+          );
+        }),
+      );
+    }
 
     // Step 1: Create optimistic message with sending status and show immediately
     final optimisticMessage = ChatMessage(
@@ -1588,21 +1619,28 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     try {
       // Step 2: Upload all files with progress tracking
       final uploadedUrls = <String>[];
+      final int fileCount = useFileBytes ? event.fileBytes!.length : event.localFilePaths.length;
 
-      for (var i = 0; i < event.localFilePaths.length; i++) {
-        final filePath = event.localFilePaths[i];
+      for (var i = 0; i < fileCount; i++) {
+        final filePath = !useFileBytes && i < event.localFilePaths.length
+            ? event.localFilePaths[i]
+            : '';
 
-        // Cross-platform: use bytes on web, File on mobile
+        // Use bytes when in fileBytes mode or on web
+        final bool useBytesForUpload = useFileBytes || kIsWeb;
+        final Uint8List? uploadBytes = useBytesForUpload && event.fileBytes != null && i < event.fileBytes!.length
+            ? Uint8List.fromList(event.fileBytes![i])
+            : null;
+        final String? uploadFileName = event.fileNames != null && i < event.fileNames!.length
+            ? event.fileNames![i]
+            : null;
+
         final result = await _attachmentRepository.uploadAttachment(
           messageId: draftId,
           chatId: currentState.chatId,
-          file: kIsWeb ? null : File(filePath),
-          bytes: kIsWeb && event.fileBytes != null && i < event.fileBytes!.length
-              ? Uint8List.fromList(event.fileBytes![i])
-              : null,
-          fileName: kIsWeb && event.fileNames != null && i < event.fileNames!.length
-              ? event.fileNames![i]
-              : null,
+          file: useBytesForUpload ? null : File(filePath),
+          bytes: uploadBytes,
+          fileName: uploadFileName,
           onProgress: (progress) {
             // Update progress for this attachment
             _updateAttachmentProgress(
@@ -1628,9 +1666,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       logger.i('All files uploaded successfully: ${uploadedUrls.length}');
 
       // Step 3: Send message with uploaded URLs
-      // Get fileName from first file (matching Angular frontend behavior)
-      // Cross-platform: use fileNames on web, extract from path on mobile
-      final fileName = kIsWeb && event.fileNames != null && event.fileNames!.isNotEmpty
+      // Get fileName from first file
+      final fileName = event.fileNames != null && event.fileNames!.isNotEmpty
           ? event.fileNames!.first
           : event.localFilePaths.isNotEmpty
               ? event.localFilePaths.first.split('/').last.split('\\').last

@@ -650,8 +650,10 @@ class MediaGallery extends StatelessWidget {
       ),
     );
 
+    debugPrint('[MediaGallery] FullscreenGallery popped, result=$result, onEditedImageSend=${onEditedImageSend != null}');
     // If user edited an image, callback to parent
     if (result != null && onEditedImageSend != null) {
+      debugPrint('[MediaGallery] calling onEditedImageSend with ${result.bytes.length} bytes');
       onEditedImageSend!(result.bytes, result.fileName);
     }
   }
@@ -1012,12 +1014,15 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
     final currentAttachment = widget.attachments[_currentIndex];
     final imageEditorService = GetIt.I<ImageEditorService>();
 
+    debugPrint('[FullscreenGallery] _handleEdit called, url=${currentAttachment.url}');
     imageEditorService.editNetworkImage(
       context,
       imageUrl: currentAttachment.url,
       onComplete: (bytes) {
+        debugPrint('[FullscreenGallery] onComplete called, bytes=${bytes.length}, mounted=${context.mounted}');
         if (!context.mounted) return;
         final fileName = 'edited_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        debugPrint('[FullscreenGallery] popping with EditedImageResult');
         // Pop back to caller with edited bytes
         Navigator.of(context).pop(
           EditedImageResult(bytes: bytes, fileName: fileName),

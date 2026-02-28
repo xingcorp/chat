@@ -49,12 +49,27 @@ class ImageEditorService {
     OnImageEdited? onComplete,
     VoidCallback? onCancel,
   }) {
+    // Track whether editing completed successfully to avoid double-pop.
+    // onCloseEditor fires after onImageEditingComplete, so we must skip
+    // the pop in onCloseEditor when editing was completed.
+    bool editingCompleted = false;
+
     return ProImageEditorCallbacks(
       onImageEditingComplete: (Uint8List bytes) async {
-        if (context.mounted) Navigator.of(context).pop();
+        debugPrint('[ImageEditorService] onImageEditingComplete called, bytes=${bytes.length}');
+        editingCompleted = true;
+        if (context.mounted) {
+          debugPrint('[ImageEditorService] popping editor');
+          Navigator.of(context).pop();
+        }
         onComplete?.call(bytes);
       },
       onCloseEditor: (_) {
+        debugPrint('[ImageEditorService] onCloseEditor called, editingCompleted=$editingCompleted');
+        if (editingCompleted) {
+          // Editor already popped by onImageEditingComplete, skip pop
+          return;
+        }
         if (context.mounted) Navigator.of(context).pop();
         onCancel?.call();
       },
