@@ -278,6 +278,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     List<String> attachmentIds = const [],
     String? replyMessageId,
     String? fileName,
+    String? forwardedFromMessageId,
   }) async {
     // Create local message with sending status
     final localId = _uuid.v4();
@@ -322,6 +323,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
           urls: attachmentIds,
           fileName: fileName,
           replyMessageId: replyMessageId,
+          forwardedFromMessageId: forwardedFromMessageId,
           createdAt: DateTime.now().millisecondsSinceEpoch,
         );
         

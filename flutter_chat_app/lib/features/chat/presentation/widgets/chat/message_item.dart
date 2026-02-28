@@ -20,6 +20,7 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_p
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_gallery.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reply_preview.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_preview.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/audio_player_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/video_player_widget.dart';
@@ -526,6 +527,10 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
           crossAxisAlignment: messageAlignment,
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Forward preview
+            if (widget.uiState.forwardInfo != null)
+              _buildForwardPreview(context, isFromCurrentUser),
+
             // Reply preview
             if (widget.uiState.replyMessage != null)
               _buildReplyPreview(context, isFromCurrentUser),
@@ -750,6 +755,17 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
       isFromCurrentUser: isFromCurrentUser,
       showThumbnail: true,
       onTap: widget.onReplyPreviewTap ?? () {},
+    );
+  }
+
+  Widget _buildForwardPreview(BuildContext context, bool isFromCurrentUser) {
+    final forwardInfo = widget.uiState.forwardInfo;
+    if (forwardInfo == null) return const SizedBox.shrink();
+
+    return ForwardPreview(
+      forwardInfo: forwardInfo,
+      isFromCurrentUser: isFromCurrentUser,
+      showThumbnail: true,
     );
   }
 

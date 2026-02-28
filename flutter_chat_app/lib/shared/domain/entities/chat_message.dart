@@ -334,6 +334,9 @@ class ChatMessage {
   /// ID tin nhắn được forward từ đâu
   final String? forwardedFromMessageId;
 
+  /// Tin nhắn gốc được forward (nested object từ backend)
+  final ChatMessage? forwardedFromMessage;
+
   /// ID tin nhắn được reply (khớp Angular: replyMessageId)
   final String? replyMessageId;
 
@@ -395,6 +398,7 @@ class ChatMessage {
     this.urls = const [],
     this.fileName,
     this.forwardedFromMessageId,
+    this.forwardedFromMessage,
     this.replyMessageId,
     this.replyMessage,
     this.actionType,
@@ -425,6 +429,7 @@ class ChatMessage {
     List<String>? urls,
     String? fileName,
     String? forwardedFromMessageId,
+    ChatMessage? forwardedFromMessage,
     String? replyMessageId,
     ChatMessage? replyMessage,
     String? actionType,
@@ -455,6 +460,7 @@ class ChatMessage {
       urls: urls ?? this.urls,
       fileName: fileName ?? this.fileName,
       forwardedFromMessageId: forwardedFromMessageId ?? this.forwardedFromMessageId,
+      forwardedFromMessage: forwardedFromMessage ?? this.forwardedFromMessage,
       replyMessageId: replyMessageId ?? this.replyMessageId,
       replyMessage: replyMessage ?? this.replyMessage,
       actionType: actionType ?? this.actionType,
@@ -501,6 +507,9 @@ class ChatMessage {
       urls: (json['urls'] as List?)?.map((e) => e as String).toList() ?? [],
       fileName: json['fileName'] as String?,
       forwardedFromMessageId: json['forwardedFromMessageId'] as String?,
+      forwardedFromMessage: json['forwardedFromMessage'] != null
+          ? ChatMessage.fromJson(json['forwardedFromMessage'] as Map<String, dynamic>)
+          : null,
       replyMessageId: json['replyMessageId'] as String?,
       replyMessage: json['replyMessage'] != null
           ? ChatMessage.fromJson(json['replyMessage'] as Map<String, dynamic>)
@@ -543,6 +552,7 @@ class ChatMessage {
       'urls': urls,
       'fileName': fileName,
       'forwardedFromMessageId': forwardedFromMessageId,
+      if (forwardedFromMessage != null) 'forwardedFromMessage': forwardedFromMessage!.toJson(),
       'replyMessageId': replyMessageId,
       if (replyMessage != null) 'replyMessage': replyMessage!.toJson(),
       if (actionType != null) 'actionType': actionType,
@@ -598,6 +608,7 @@ class ChatMessage {
       _listEquals(other.urls, urls) &&
       other.fileName == fileName &&
       other.forwardedFromMessageId == forwardedFromMessageId &&
+      other.forwardedFromMessage == forwardedFromMessage &&
       other.replyMessageId == replyMessageId &&
       other.actionType == actionType &&
       other.actor == actor &&
@@ -625,6 +636,7 @@ class ChatMessage {
       urls.hashCode ^
       (fileName?.hashCode ?? 0) ^
       (forwardedFromMessageId?.hashCode ?? 0) ^
+      (forwardedFromMessage?.hashCode ?? 0) ^
       (replyMessageId?.hashCode ?? 0) ^
       (actionType?.hashCode ?? 0) ^
       (actor?.hashCode ?? 0) ^

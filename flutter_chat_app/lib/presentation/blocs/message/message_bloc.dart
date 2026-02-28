@@ -602,13 +602,14 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     logger.i('Forwarding message ${originalMessage.id} to chat ${event.targetChatId}');
 
     // Execute SendMessageUseCase to forward to target chat
-    // Note: forwardedFromMessageId is set in the message content metadata
+    // Pass forwardedFromMessageId so backend can track the original message
     final result = await _sendMessage(
       conversationId: event.targetChatId,
       content: originalMessage.content,
       senderId: originalMessage.sender.id,
       type: originalMessage.contentType.name,
       urls: originalMessage.attachments.map((a) => a.id).toList(),
+      forwardedFromMessageId: originalMessage.id,
     );
 
     result.fold(

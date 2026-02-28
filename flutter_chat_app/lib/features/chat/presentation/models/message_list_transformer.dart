@@ -137,11 +137,7 @@ class MessageListTransformer {
       final replyPreview = _buildReplyPreview(current, messageById);
 
       // ── Forward info ──
-      final forwardInfo = current.forwardedFromMessageId != null
-          ? ForwardMessageInfo(
-              originalMessageId: current.forwardedFromMessageId!,
-            )
-          : null;
+      final forwardInfo = _buildForwardInfo(current);
 
       // ── Content analysis ──
       final contentText = current.content;
@@ -472,6 +468,78 @@ class MessageListTransformer {
             if (m.id.isNotEmpty && m.name.trim().isNotEmpty) m.id: m.name.trim(),
         };
         return reply.content.formatChatMessage(mentionNameById: mentionNameById);
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // Forward Info
+  // ══════════════════════════════════════════
+
+  /// Build forward info từ domain entity
+  ///
+  /// Khớp Angular: forwardedFromMessage { sender.fullname, type, message, urls, fileName }
+  static ForwardMessageInfo? _buildForwardInfo(ChatMessage message) {
+    final forwardId = message.forwardedFromMessageId;
+    final forwardMsg = message.forwardedFromMessage;
+
+    // Không có forward info
+    if (forwardId == null && forwardMsg == null) return null;
+
+    // Có forward object - lấy data từ đó
+    if (forwardMsg != null) {
+      final previewText = _getForwardPreviewText(forwardMsg);
+      String? previewUrl;
+      if (forwardMsg.urls.isNotEmpty &&
+          (forwardMsg.contentType == ContentType.image ||
+              forwardMsg.contentType == ContentType.video)) {
+        previewUrl = forwardMsg.urls.first;
+      }
+
+      return ForwardMessageInfo(
+        originalMessageId: forwardMsg.id,
+        originalSenderName: forwardMsg.sender.name,
+        originalSenderAvatar: forwardMsg.sender.avatar,
+        contentType: forwardMsg.contentType,
+        previewText: previewText,
+        previewUrl: previewUrl,
+      );
+    }
+
+    // Chỉ có ID - tạo placeholder
+    if (forwardId != null && forwardId.isNotEmpty) {
+      return ForwardMessageInfo(
+        originalMessageId: forwardId,
+      );
+    }
+
+    return null;
+  }
+
+  /// Tạo preview text cho forward message theo content type
+  static String _getForwardPreviewText(ChatMessage msg) {
+    final l10n = L10nHelper.current;
+    switch (msg.contentType) {
+      case ContentType.image:
+        return l10n.replyPreviewImage;
+      case ContentType.video:
+        return l10n.replyPreviewVideo;
+      case ContentType.audio:
+        return l10n.replyPreviewAudio;
+      case ContentType.file:
+        return l10n.replyPreviewFile(msg.fileName ?? '');
+      case ContentType.location:
+        return l10n.replyPreviewLocation;
+      case ContentType.link:
+        return msg.content.isNotEmpty ? msg.content : l10n.replyPreviewLink;
+      case ContentType.event:
+        return l10n.replyPreviewSystemEvent;
+      case ContentType.text:
+      default:
+        final mentionNameById = <String, String>{
+          for (final m in msg.mentionTo)
+            if (m.id.isNotEmpty && m.name.trim().isNotEmpty) m.id: m.name.trim(),
+        };
+        return msg.content.formatChatMessage(mentionNameById: mentionNameById);
     }
   }
 

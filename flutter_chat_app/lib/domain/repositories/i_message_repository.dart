@@ -74,6 +74,7 @@ abstract class IMessageRepository {
     List<String> attachmentIds = const [],
     String? replyMessageId,
     String? fileName,
+    String? forwardedFromMessageId,
   });
 
   /// **Kiểm tra xung đột tin nhắn**

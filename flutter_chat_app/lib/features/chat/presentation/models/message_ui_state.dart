@@ -90,13 +90,34 @@ class ReplyMessagePreview {
 }
 
 /// Forward message info
+///
+/// Khớp Angular: forwardedFromMessage { sender.fullname, type, message, urls, fileName }
 class ForwardMessageInfo {
+  /// ID tin nhắn gốc
   final String originalMessageId;
+
+  /// Tên người gửi tin nhắn gốc
   final String? originalSenderName;
+
+  /// Avatar người gửi tin nhắn gốc
+  final String? originalSenderAvatar;
+
+  /// Loại nội dung tin nhắn gốc
+  final ContentType? contentType;
+
+  /// Nội dung preview: text hoặc "[Hình ảnh]", "[Video]", "[File] filename"
+  final String? previewText;
+
+  /// URL preview (cho IMAGE/VIDEO)
+  final String? previewUrl;
 
   const ForwardMessageInfo({
     required this.originalMessageId,
     this.originalSenderName,
+    this.originalSenderAvatar,
+    this.contentType,
+    this.previewText,
+    this.previewUrl,
   });
 }
 

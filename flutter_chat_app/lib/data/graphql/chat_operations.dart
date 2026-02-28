@@ -247,6 +247,18 @@ class ChatQueries {
             }
           }
           forwardedFromMessageId
+          forwardedFromMessage {
+            id
+            message
+            urls
+            type
+            fileName
+            sender {
+              id
+              fullname
+              imageUrls
+            }
+          }
           fileName
           senderId
           sender {

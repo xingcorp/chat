@@ -41,6 +41,7 @@ class SendMessageUseCase {
     List<String> urls = const [],
     String? fileName,
     String? replyMessageId,
+    String? forwardedFromMessageId,
   }) async {
     _logger.info('SendMessageUseCase: Starting operation', {
       'conversationId': conversationId,
@@ -73,6 +74,7 @@ class SendMessageUseCase {
         attachmentIds: urls,
         replyMessageId: replyMessageId,
         fileName: fileName,
+        forwardedFromMessageId: forwardedFromMessageId,
       );
 
       return result.fold(
