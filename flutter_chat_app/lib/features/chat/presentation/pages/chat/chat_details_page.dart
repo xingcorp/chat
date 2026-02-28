@@ -402,27 +402,29 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   void _deleteSelectedMessages() {
     final count = _selectedMessageIds.length;
-    AppAlertDialog.show(
+    AppAlertDialog.show<bool>(
       context: context,
       title: context.l10n.deleteMessage,
       content: context.l10n.confirmDeleteMultiple(count),
       actions: [
         AppButton.text(
           text: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
         ),
         AppButton.primary(
           text: context.l10n.delete,
           onPressed: () {
-            Navigator.pop(context);
-            for (final id in _selectedMessageIds) {
-              _messageBloc.add(DeleteMessage(id));
-            }
-            _exitSelectionMode();
+            Navigator.of(context, rootNavigator: true).pop(true);
           },
         ),
       ],
-    );
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      for (final id in _selectedMessageIds) {
+        _messageBloc.add(DeleteMessage(id));
+      }
+      _exitSelectionMode();
+    });
   }
 
   void _forwardSelectedMessages() {
@@ -1361,23 +1363,25 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   void _confirmDeleteMessage(ChatMessage message) {
-    AppAlertDialog.show(
+    AppAlertDialog.show<bool>(
       context: context,
       title: context.l10n.deleteMessage,
       content: context.l10n.confirmDelete,
       actions: [
         AppButton.text(
           text: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
         ),
         AppButton.primary(
           text: context.l10n.delete,
           onPressed: () {
-            Navigator.pop(context);
-            _messageBloc.add(DeleteMessage(message.id));
+            Navigator.of(context, rootNavigator: true).pop(true);
           },
         ),
       ],
-    );
+    ).then((confirmed) {
+      if (confirmed != true) return;
+      _messageBloc.add(DeleteMessage(message.id));
+    });
   }
 }
