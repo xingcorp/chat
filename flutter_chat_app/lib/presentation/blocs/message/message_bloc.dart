@@ -793,7 +793,13 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     }
 
     // Add new message (from other users or self from another device)
-    final allMessages = [event.message, ...currentState.messages];
+    // For system events (ADD_MEMBER, REMOVE_MEMBER, etc.), socket only sends
+    // targetUserIds without names. Enrich with names from current members list.
+    final enrichedMessage = _enrichSystemEventTargetNames(
+      event.message,
+      currentState.conversationMembers,
+    );
+    final allMessages = [enrichedMessage, ...currentState.messages];
     emit(currentState.copyWith(
       messages: allMessages,
       uiMessages: _transformMessages(allMessages),
@@ -802,6 +808,41 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     // Mark message list as dirty
     _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
     _cacheSyncStrategy.markChatListDirty();
+  }
+
+  /// Enrich system event messages with target user names from members list.
+  ///
+  /// Socket events only send `targetUserIds` (no fullName), resulting in
+  /// 'Unknown' target names. This resolves names from the current members list.
+  /// For REMOVE_MEMBER, the member may already be removed — in that case,
+  /// the transformer's fallback to `message.content` handles it.
+  ChatMessage _enrichSystemEventTargetNames(
+    ChatMessage message,
+    List<ConversationMember> members,
+  ) {
+    // Only enrich system event messages that have unresolved target users
+    if (message.targetUsers.isEmpty) return message;
+    if (!message.targetUsers.any((u) => u.name == 'Unknown' || u.name.trim().isEmpty)) {
+      return message;
+    }
+
+    // Build lookup map: userId -> fullName
+    final memberNameById = <String, String>{
+      for (final m in members)
+        if (m.userId.isNotEmpty && (m.fullName?.isNotEmpty ?? false))
+          m.userId: m.fullName!,
+    };
+
+    final enrichedTargets = message.targetUsers.map((u) {
+      if (u.name.isNotEmpty && u.name != 'Unknown') return u;
+      final resolvedName = memberNameById[u.id];
+      if (resolvedName != null) {
+        return MessageSender(id: u.id, name: resolvedName, avatar: u.avatar);
+      }
+      return u;
+    }).toList();
+
+    return message.copyWith(targetUsers: enrichedTargets);
   }
 
   // === Phase 2 + 3: Background Fetch ===

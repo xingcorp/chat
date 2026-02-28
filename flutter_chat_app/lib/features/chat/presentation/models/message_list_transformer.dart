@@ -575,15 +575,29 @@ class MessageListTransformer {
         : memberNameById[message.sender.id] ?? rawActorName;
 
     // Resolve target user names: prefer message data, fallback to members lookup
+    // Also check message.actor for additional name source (socket events
+    // may carry actor object with full name, separate from sender)
     final targetNames = message.targetUsers.map((u) {
       if (u.name.isNotEmpty && u.name != 'Unknown') return u.name;
       return memberNameById[u.id] ?? u.name;
     }).toList();
 
+    // If all target names are still 'Unknown' after resolution, and we have
+    // fallbackContent from the backend (the `content` field), use that instead.
+    // This handles socket events which only send targetUserIds without names,
+    // and where the target user may no longer be in the members list
+    // (e.g., REMOVE_MEMBER removes them before the system message is rendered).
+    final bool allTargetsUnknown = targetNames.isNotEmpty &&
+        targetNames.every((n) => n == 'Unknown' || n.trim().isEmpty);
+    final bool hasFallbackContent =
+        message.content.isNotEmpty && message.content != 'Unknown';
+
     final formattedText = _generateActionText(
       actionType: actionType,
       actorName: actorName,
-      targetUserNames: targetNames,
+      targetUserNames: allTargetsUnknown && hasFallbackContent
+          ? const [] // Force fallback to content
+          : targetNames,
       newValue: message.newValue,
       oldValue: message.oldValue,
       fallbackContent: message.content,
