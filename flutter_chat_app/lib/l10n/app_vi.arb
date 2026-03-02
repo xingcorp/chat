@@ -964,5 +964,13 @@
 
   "lastSeenAt": "Lần cuối truy cập: {time}",
 
-  "currentlyOnline": "Đang trực tuyến"
+  "currentlyOnline": "Đang trực tuyến",
+
+  "stickers": "Sticker",
+
+  "recentStickers": "Gần đây",
+
+  "noStickersAvailable": "Không có sticker",
+
+  "replyPreviewSticker": "Sticker"
 }

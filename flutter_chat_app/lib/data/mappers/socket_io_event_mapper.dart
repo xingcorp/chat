@@ -322,6 +322,8 @@ class SocketIOEventMapper {
         return ContentType.link;
       case 'event':
         return ContentType.event;
+      case 'sticker':
+        return ContentType.sticker;
       default:
         return ContentType.text;
     }

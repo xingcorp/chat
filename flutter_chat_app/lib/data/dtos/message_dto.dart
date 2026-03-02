@@ -194,6 +194,9 @@ extension MessageDtoMapper on MessageDto {
       case 'event':
         contentType = ContentType.event;
         break;
+      case 'sticker':
+        contentType = ContentType.sticker;
+        break;
       default:
         contentType = ContentType.text;
         break;
@@ -288,6 +291,9 @@ extension MessageDtoMapper on MessageDto {
         case 'log':
         case 'event':
           replyContentType = ContentType.event;
+          break;
+        case 'sticker':
+          replyContentType = ContentType.sticker;
           break;
       }
 

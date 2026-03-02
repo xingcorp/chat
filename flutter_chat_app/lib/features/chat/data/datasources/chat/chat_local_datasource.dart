@@ -318,6 +318,8 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         return MessageType.contact;
       case ContentType.event:
         return MessageType.system;
+      case ContentType.sticker:
+        return MessageType.sticker;
     }
   }
   

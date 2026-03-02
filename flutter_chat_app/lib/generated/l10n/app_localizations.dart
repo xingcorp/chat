@@ -3187,6 +3187,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Currently online'**
   String get currentlyOnline;
+
+  /// Label for sticker picker button and title
+  ///
+  /// In en, this message translates to:
+  /// **'Stickers'**
+  String get stickers;
+
+  /// Tab label for recently used stickers
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get recentStickers;
+
+  /// Empty state text when there are no stickers to show
+  ///
+  /// In en, this message translates to:
+  /// **'No stickers available'**
+  String get noStickersAvailable;
+
+  /// Preview label for sticker reply/forward messages
+  ///
+  /// In en, this message translates to:
+  /// **'Sticker'**
+  String get replyPreviewSticker;
 }
 
 class _AppLocalizationsDelegate

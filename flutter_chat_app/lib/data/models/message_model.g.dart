@@ -55,7 +55,8 @@ const MessageModelSchema = IsarGeneratedSchema(
           "file": 4,
           "location": 5,
           "contact": 6,
-          "system": 7
+          "system": 7,
+          "sticker": 8
         },
       ),
       IsarPropertySchema(
@@ -1073,6 +1074,7 @@ const _messageModelType = {
   5: MessageType.location,
   6: MessageType.contact,
   7: MessageType.system,
+  8: MessageType.sticker,
 };
 const _messageModelStatus = {
   0: MessageStatus.pending,

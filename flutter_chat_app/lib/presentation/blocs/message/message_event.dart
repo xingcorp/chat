@@ -53,7 +53,24 @@ class SendMessage extends MessageEvent {
   });
 
   @override
-  List<Object?> get props => [content, senderId, contentType, attachmentIds, replyMessageId];
+  List<Object?> get props =>
+      [content, senderId, contentType, attachmentIds, replyMessageId];
+}
+
+/// Sự kiện gửi sticker
+class SendSticker extends MessageEvent {
+  final String stickerCode;
+  final String senderId;
+  final String? replyMessageId;
+
+  const SendSticker({
+    required this.stickerCode,
+    required this.senderId,
+    this.replyMessageId,
+  });
+
+  @override
+  List<Object?> get props => [stickerCode, senderId, replyMessageId];
 }
 
 /// Sự kiện gửi tin nhắn với file đính kèm (upload + send)
@@ -90,7 +107,15 @@ class SendMessageWithAttachments extends MessageEvent {
   });
 
   @override
-  List<Object?> get props => [content, senderId, localFilePaths, replyMessageId, fileBytes, fileNames, fileSizes];
+  List<Object?> get props => [
+        content,
+        senderId,
+        localFilePaths,
+        replyMessageId,
+        fileBytes,
+        fileNames,
+        fileSizes
+      ];
 }
 
 /// Sự kiện gửi vị trí
@@ -277,7 +302,6 @@ class ReceiveMessageRead extends MessageEvent {
   List<Object?> get props => [messageId, readerId];
 }
 
-
 /// Event cập nhật danh sách members từ ConversationDetailBloc (cho read receipts)
 class UpdateConversationMembers extends MessageEvent {
   final List<ConversationMember> members;
@@ -314,10 +338,10 @@ class JumpToMessage extends MessageEvent {
 class ForwardMessage extends MessageEvent {
   /// Tin nhắn gốc cần chuyển tiếp (full object, không cần tìm trong state)
   final ChatMessage message;
-  
+
   /// ID chat đích để chuyển tiếp đến
   final String targetChatId;
-  
+
   /// ID chat gốc (optional, for context)
   final String? sourceChatId;
 

@@ -18,6 +18,7 @@ import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
+import 'package:flutter_chat_app/domain/entities/sticker.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
@@ -42,7 +43,9 @@ import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversa
 import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_state.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_bloc.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/chat/sticker_picker.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_alert_dialog.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
@@ -72,12 +75,16 @@ class ChatDetailsPage extends BaseStatefulWidget {
 }
 
 class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
-  final MentionTextEditingController _messageController = MentionTextEditingController();
+  final MentionTextEditingController _messageController =
+      MentionTextEditingController();
   final FocusNode _messageFocusNode = FocusNode();
   final ItemScrollController _itemScrollController = ItemScrollController();
-  final ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
-  final ScrollOffsetController _scrollOffsetController = ScrollOffsetController();
-  final ScrollOffsetListener _scrollOffsetListener = ScrollOffsetListener.create();
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
+  final ScrollOffsetController _scrollOffsetController =
+      ScrollOffsetController();
+  final ScrollOffsetListener _scrollOffsetListener =
+      ScrollOffsetListener.create();
   late final MessageBloc _messageBloc;
   late final ConversationDetailBloc _convDetailBloc;
 
@@ -135,7 +142,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   void initState() {
     super.initState();
     // MessageBloc is a factory in DI, so this instance is unique to this page instance.
-    // When chatId changes in desktop view, ValueKey forces a new State instance, 
+    // When chatId changes in desktop view, ValueKey forces a new State instance,
     // ensuring clean state and correct bloc scope.
     _messageBloc = getIt<MessageBloc>();
     _convDetailBloc = getIt<ConversationDetailBloc>();
@@ -220,8 +227,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
   }
 
-
-
   /// Detect load-more and scroll-to-bottom FAB via visible item positions.
   void _onPositionsChanged() {
     final positions = _itemPositionsListener.itemPositions.value;
@@ -230,9 +235,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     // --- Load more: check if max visible index is near the end ---
     final state = _messageBloc.state;
     if (state is MessagesLoaded) {
-      final maxVisibleIndex = positions
-          .map((p) => p.index)
-          .reduce((a, b) => a > b ? a : b);
+      final maxVisibleIndex =
+          positions.map((p) => p.index).reduce((a, b) => a > b ? a : b);
       final totalItems = state.uiMessages.length;
 
       if (maxVisibleIndex >= totalItems - 3 && !_isLoadingMore) {
@@ -244,7 +248,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     final minVisibleIndex = positions
         .where((p) => p.itemTrailingEdge > 0 && p.itemLeadingEdge < 1)
         .map((p) => p.index)
-        .fold<int?>(null, (prev, idx) => prev == null ? idx : (idx < prev ? idx : prev));
+        .fold<int?>(null,
+            (prev, idx) => prev == null ? idx : (idx < prev ? idx : prev));
     final showFab = minVisibleIndex != null && minVisibleIndex > 2;
     if (showFab != _showScrollToBottom) {
       safeSetState(() {
@@ -265,7 +270,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     if (_isLoadingMore) return;
 
     final now = DateTime.now();
-    if (_lastLoadMoreAt != null && now.difference(_lastLoadMoreAt!) < const Duration(milliseconds: 700)) {
+    if (_lastLoadMoreAt != null &&
+        now.difference(_lastLoadMoreAt!) < const Duration(milliseconds: 700)) {
       return;
     }
 
@@ -422,7 +428,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       actions: [
         AppButton.text(
           text: context.l10n.cancel,
-          onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
+          onPressed: () =>
+              Navigator.of(context, rootNavigator: true).pop(false),
         ),
         AppButton.primary(
           text: context.l10n.delete,
@@ -445,7 +452,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _exitSelectionMode();
   }
 
-  void _scrollToMessage(String? targetMessageId, List<MessageUIState> uiMessages) {
+  void _scrollToMessage(
+      String? targetMessageId, List<MessageUIState> uiMessages) {
     if (targetMessageId == null) return;
 
     final index = uiMessages.indexWhere((m) => m.id == targetMessageId);
@@ -538,11 +546,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     try {
       final userRemoteDataSource = getIt<UserRemoteDataSource>();
       final users = await userRemoteDataSource.searchUsers(query);
-      return users.map((user) => SelectableUser(
-        id: user.serverId,
-        name: user.displayName,
-        avatarUrl: user.avatarUrl,
-      )).toList();
+      return users
+          .map((user) => SelectableUser(
+                id: user.serverId,
+                name: user.displayName,
+                avatarUrl: user.avatarUrl,
+              ))
+          .toList();
     } catch (e) {
       debugPrint('[AddMember] Error searching users: $e');
       return [];
@@ -599,16 +609,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   /// Attempt to jump to pending message
   void _attemptJumpToMessage() {
     if (_pendingScrollToMessageId == null) return;
-    
+
     final state = _messageBloc.state;
     if (state is! MessagesLoaded) {
       // Messages not loaded yet, _handleBlocStateChanges will retry
       return;
     }
-    
+
     final messageId = _pendingScrollToMessageId!;
     final messages = state.uiMessages;
-    
+
     // Find the message index
     int? messageIndex;
     for (int i = 0; i < messages.length; i++) {
@@ -617,7 +627,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         break;
       }
     }
-    
+
     if (messageIndex != null) {
       // Message found — scroll to it and highlight
       _pendingScrollToMessageId = null;
@@ -662,6 +672,24 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   // Media Handlers
   // ══════════════════════════════════════════
 
+  void _showStickerPicker() {
+    StickerPickerBottomSheet.show(
+      context,
+      onStickerSelected: _sendSticker,
+    );
+  }
+
+  void _sendSticker(Sticker sticker) {
+    _messageBloc.add(
+      SendSticker(
+        stickerCode: sticker.code,
+        senderId: _currentUserId,
+        replyMessageId: _replyingToMessage?.id,
+      ),
+    );
+    _cancelReply();
+  }
+
   void _showAttachmentPicker() {
     AttachmentPickerBottomSheet.show(
       context,
@@ -672,13 +700,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     );
   }
 
-  void _handleImageFromCamera(File imageFile, {Uint8List? bytes, String? name, int? size}) =>
+  void _handleImageFromCamera(File imageFile,
+          {Uint8List? bytes, String? name, int? size}) =>
       _processAndSendImage(imageFile, bytes: bytes, name: name, size: size);
 
-  void _handleImageFromGallery(File imageFile, {Uint8List? bytes, String? name, int? size}) =>
+  void _handleImageFromGallery(File imageFile,
+          {Uint8List? bytes, String? name, int? size}) =>
       _processAndSendImage(imageFile, bytes: bytes, name: name, size: size);
 
-  void _handleFileSelected(File file, {Uint8List? bytes, String? name, int? size}) {
+  void _handleFileSelected(File file,
+      {Uint8List? bytes, String? name, int? size}) {
     // Cross-platform: on web, use name as path placeholder; on mobile, use actual path
     final filePath = kIsWeb && name != null ? name : file.path;
     _messageBloc.add(
@@ -764,7 +795,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
   }
 
-  Future<void> _processAndSendImage(File imageFile, {Uint8List? bytes, String? name, int? size}) async {
+  Future<void> _processAndSendImage(File imageFile,
+      {Uint8List? bytes, String? name, int? size}) async {
     final l10n = context.l10n;
     var currentFile = imageFile;
     Uint8List? currentBytes = bytes;
@@ -778,11 +810,15 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
         if (!kIsWeb) {
           // Mobile: compress image
-          final compressedImage = await ImageCompressionHelper.compressImage(currentFile);
+          final compressedImage =
+              await ImageCompressionHelper.compressImage(currentFile);
           if (!mounted) return;
 
           if (compressedImage == null) {
-            AppSnackBar.show(context: context, message: l10n.imageCompressionFailed, type: FeedbackType.error);
+            AppSnackBar.show(
+                context: context,
+                message: l10n.imageCompressionFailed,
+                type: FeedbackType.error);
             return;
           }
 
@@ -833,7 +869,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
             senderId: _currentUserId,
             localFilePaths: const [],
             fileBytes: [result.editedBytes!],
-            fileNames: [result.fileName ?? 'image_${DateTime.now().millisecondsSinceEpoch}.jpg'],
+            fileNames: [
+              result.fileName ??
+                  'image_${DateTime.now().millisecondsSinceEpoch}.jpg'
+            ],
           ),
         );
         return;
@@ -875,56 +914,56 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           child: Scaffold(
-        appBar: _isSelectionMode
-            ? _buildSelectionAppBar()
-            : _buildNormalAppBar(chatTitle),
-        body: Column(
-          children: [
-            Expanded(
-              child: Stack(
-                children: [
-                  BlocConsumer<MessageBloc, MessageState>(
-                    listener: _handleBlocStateChanges,
-                    builder: _buildMessagesList,
-                  ),
-                  if (_showScrollToBottom)
-                    Positioned(
-                      bottom: 16,
-                      right: 16,
-                      child: Badge(
-                        isLabelVisible: _newMessageCount > 0,
-                        label: Text('$_newMessageCount'),
-                        child: FloatingActionButton.small(
-                          heroTag: 'scrollToBottom',
-                          onPressed: _scrollToBottom,
-                          tooltip: context.l10n.scrollToBottom,
-                          child: const Icon(Icons.keyboard_arrow_down),
-                        ),
+            appBar: _isSelectionMode
+                ? _buildSelectionAppBar()
+                : _buildNormalAppBar(chatTitle),
+            body: Column(
+              children: [
+                Expanded(
+                  child: Stack(
+                    children: [
+                      BlocConsumer<MessageBloc, MessageState>(
+                        listener: _handleBlocStateChanges,
+                        builder: _buildMessagesList,
                       ),
-                    ),
-                ],
-              ),
-            ),
-            TypingIndicatorWithFade(
-              isTyping: _isOtherTyping,
-              displayName: _typingUserName,
-            ),
-            if (_replyingToMessage != null)
-              ReplyInputBar(
-                replyMessage: ReplyMessagePreview(
-                  id: _replyingToMessage!.id,
-                  senderName: _replyingToMessage!.sender.name,
-                  contentType: _replyingToMessage!.contentType,
-                  previewText: _replyingToMessage!.content,
+                      if (_showScrollToBottom)
+                        Positioned(
+                          bottom: 16,
+                          right: 16,
+                          child: Badge(
+                            isLabelVisible: _newMessageCount > 0,
+                            label: Text('$_newMessageCount'),
+                            child: FloatingActionButton.small(
+                              heroTag: 'scrollToBottom',
+                              onPressed: _scrollToBottom,
+                              tooltip: context.l10n.scrollToBottom,
+                              child: const Icon(Icons.keyboard_arrow_down),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-                onCancel: _cancelReply,
-              ),
-            if (_isEditMode) _buildEditModeBar(),
-            _buildMessageInputArea(),
-          ],
+                TypingIndicatorWithFade(
+                  isTyping: _isOtherTyping,
+                  displayName: _typingUserName,
+                ),
+                if (_replyingToMessage != null)
+                  ReplyInputBar(
+                    replyMessage: ReplyMessagePreview(
+                      id: _replyingToMessage!.id,
+                      senderName: _replyingToMessage!.sender.name,
+                      contentType: _replyingToMessage!.contentType,
+                      previewText: _replyingToMessage!.content,
+                    ),
+                    onCancel: _cancelReply,
+                  ),
+                if (_isEditMode) _buildEditModeBar(),
+                _buildMessageInputArea(),
+              ],
+            ),
+          ),
         ),
-        ),
-      ),
       ),
     );
   }
@@ -957,7 +996,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       }
 
       // Mark as read when new real-time messages arrive and user is at bottom
-      if (_hasMarkedAsReadOnOpen && !_showScrollToBottom && state.messages.isNotEmpty) {
+      if (_hasMarkedAsReadOnOpen &&
+          !_showScrollToBottom &&
+          state.messages.isNotEmpty) {
         _messageBloc.add(MarkChatAsRead(widget.chatId));
       }
 
@@ -985,8 +1026,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               index: anchor.index,
               alignment: anchor.itemLeadingEdge,
             );
-          } catch (_) {
-          }
+          } catch (_) {}
         });
       }
 
@@ -1093,14 +1133,18 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         hasMore: !state.hasReachedMax,
         isLoadingMore: _isLoadingMore,
         onRefresh: _onRefresh,
-        itemBuilder: (context, uiState, allUiMessages) => _buildListItem(context, uiState, allUiMessages),
+        itemBuilder: (context, uiState, allUiMessages) =>
+            _buildListItem(context, uiState, allUiMessages),
       );
     } else if (state is MessagesError) {
-      return _buildErrorState(context, state.error, () => _messageBloc.add(LoadMessages(
-        chatId: widget.chatId,
-        limit: _pageSize,
-        forceRefresh: true,
-      )));
+      return _buildErrorState(
+          context,
+          state.error,
+          () => _messageBloc.add(LoadMessages(
+                chatId: widget.chatId,
+                limit: _pageSize,
+                forceRefresh: true,
+              )));
     }
     return Center(child: AppText(context.l10n.errorOccurred));
   }
@@ -1112,12 +1156,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         border: Border(
           top: BorderSide(color: Theme.of(context).dividerColor),
-          left: BorderSide(color: Theme.of(context).colorScheme.tertiary, width: 3),
+          left: BorderSide(
+              color: Theme.of(context).colorScheme.tertiary, width: 3),
         ),
       ),
       child: Row(
         children: [
-          Icon(Icons.edit, size: 16, color: Theme.of(context).colorScheme.tertiary),
+          Icon(Icons.edit,
+              size: 16, color: Theme.of(context).colorScheme.tertiary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -1148,11 +1194,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       padding: const EdgeInsets.all(AppDimens.paddingSmall),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            iconSize: 28.0,
+          AppIconButton(
+            icon: Icons.add_circle_outline,
             onPressed: _showAttachmentPicker,
-            tooltip: 'Attachments',
+            tooltip: context.l10n.attachments,
           ),
           Expanded(
             child: _chat != null && _chat!.members.isNotEmpty
@@ -1174,15 +1219,21 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                     onSubmitted: (_) => _sendMessage(),
                   ),
           ),
+          AppIconButton(
+            icon: Icons.sticky_note_2_outlined,
+            onPressed: _showStickerPicker,
+            tooltip: context.l10n.stickers,
+          ),
           IconButton(
             icon: const Icon(Icons.emoji_emotions_outlined),
             iconSize: 28.0,
             onPressed: () => EmojiPickerBottomSheet.show(
               context,
-              onEmojiSelected: (emoji) => EmojiTextEditingHelper.insertEmoji(_messageController, emoji),
+              onEmojiSelected: (emoji) =>
+                  EmojiTextEditingHelper.insertEmoji(_messageController, emoji),
               textController: _messageController,
             ),
-            tooltip: 'Insert emoji',
+            tooltip: context.l10n.insertEmoji,
           ),
           IconButton(
             icon: Icon(
@@ -1190,7 +1241,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               color: Theme.of(context).colorScheme.primary,
             ),
             iconSize: 28.0,
-            onPressed: _messageController.text.trim().isNotEmpty ? _sendMessage : null,
+            onPressed:
+                _messageController.text.trim().isNotEmpty ? _sendMessage : null,
             tooltip: _isEditMode ? context.l10n.save : context.l10n.send,
           ),
         ],
@@ -1208,7 +1260,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         chat: _chat!,
         onBackPressed: () => Navigator.of(context).pop(),
         onInfoPressed: _showChatInfo,
-        onAddMemberPressed: _chat!.type == ChatType.group ? _showAddMember : null,
+        onAddMemberPressed:
+            _chat!.type == ChatType.group ? _showAddMember : null,
         onSearchPressed: _showMessageSearch,
       );
     }
@@ -1217,8 +1270,18 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText(chatTitle, style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-          AppText(subtitleText, style: AppTextStyles.labelSmall.copyWith(color: _isOtherTyping ? AppColors.primary : AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+          AppText(chatTitle,
+              style: AppTextStyles.titleMedium
+                  .copyWith(fontWeight: FontWeight.w600),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
+          AppText(subtitleText,
+              style: AppTextStyles.labelSmall.copyWith(
+                  color: _isOtherTyping
+                      ? AppColors.primary
+                      : AppColors.textSecondary),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
         ],
       ),
     );
@@ -1226,20 +1289,33 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   PreferredSizeWidget _buildSelectionAppBar() {
     return AppBar(
-      leading: IconButton(icon: const Icon(Icons.close), onPressed: _exitSelectionMode),
-      title: AppText(context.l10n.selectedCount(_selectedMessageIds.length), style: AppTextStyles.titleMedium),
+      leading: IconButton(
+          icon: const Icon(Icons.close), onPressed: _exitSelectionMode),
+      title: AppText(context.l10n.selectedCount(_selectedMessageIds.length),
+          style: AppTextStyles.titleMedium),
       actions: [
-        IconButton(icon: const Icon(Icons.copy), tooltip: context.l10n.copyMessage, onPressed: () {
-          final state = _messageBloc.state;
-          if (state is MessagesLoaded) _copySelectedMessages(state.uiMessages);
-        }),
-        IconButton(icon: const Icon(Icons.forward), tooltip: context.l10n.forwardMessage, onPressed: _forwardSelectedMessages),
-        IconButton(icon: const Icon(Icons.delete), tooltip: context.l10n.deleteMessage, onPressed: _deleteSelectedMessages),
+        IconButton(
+            icon: const Icon(Icons.copy),
+            tooltip: context.l10n.copyMessage,
+            onPressed: () {
+              final state = _messageBloc.state;
+              if (state is MessagesLoaded)
+                _copySelectedMessages(state.uiMessages);
+            }),
+        IconButton(
+            icon: const Icon(Icons.forward),
+            tooltip: context.l10n.forwardMessage,
+            onPressed: _forwardSelectedMessages),
+        IconButton(
+            icon: const Icon(Icons.delete),
+            tooltip: context.l10n.deleteMessage,
+            onPressed: _deleteSelectedMessages),
       ],
     );
   }
 
-  Widget _buildListItem(BuildContext context, MessageUIState uiState, List<MessageUIState> allMessages) {
+  Widget _buildListItem(BuildContext context, MessageUIState uiState,
+      List<MessageUIState> allMessages) {
     switch (uiState.itemType) {
       case MessageListItemType.dateSeparator:
         return _buildDateSeparator(uiState.dateSeparatorText ?? '');
@@ -1251,23 +1327,36 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         final isHighlighted = _highlightedMessageId == uiState.id;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          color: isHighlighted ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+          color: isHighlighted
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+              : Colors.transparent,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (uiState.showDateSeparator) _buildDateSeparator(uiState.dateSeparatorText ?? ''),
+              if (uiState.showDateSeparator)
+                _buildDateSeparator(uiState.dateSeparatorText ?? ''),
               MessageItem(
                 uiState: uiState,
                 isSelectionMode: _isSelectionMode,
                 isSelected: _selectedMessageIds.contains(uiState.id),
                 onSelectionChanged: (_) => _toggleSelection(uiState.id),
-                onSwipeReply: () { if (uiState.message != null) _startReply(uiState.message!); },
-                onReplyPreviewTap: () => _scrollToMessage(uiState.replyMessage?.id, allMessages),
+                onSwipeReply: () {
+                  if (uiState.message != null) _startReply(uiState.message!);
+                },
+                onReplyPreviewTap: () =>
+                    _scrollToMessage(uiState.replyMessage?.id, allMessages),
                 isGroupChat: _chat?.type == ChatType.group,
-                onLongPress: () { if (!_isSelectionMode && uiState.message != null) _showMessageOptions(context, uiState.message!, uiState.isFromCurrentUser); },
-                onTap: () { if (_isSelectionMode) _toggleSelection(uiState.id); },
+                onLongPress: () {
+                  if (!_isSelectionMode && uiState.message != null)
+                    _showMessageOptions(
+                        context, uiState.message!, uiState.isFromCurrentUser);
+                },
+                onTap: () {
+                  if (_isSelectionMode) _toggleSelection(uiState.id);
+                },
                 onEditedImageSend: (bytes, fileName) {
-                  debugPrint('[ChatDetailsPage] onEditedImageSend called, bytes=${bytes.length}, fileName=$fileName');
+                  debugPrint(
+                      '[ChatDetailsPage] onEditedImageSend called, bytes=${bytes.length}, fileName=$fileName');
                   _messageBloc.add(
                     SendMessageWithAttachments(
                       content: '',
@@ -1290,9 +1379,15 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       padding: const EdgeInsets.symmetric(vertical: AppDimens.spaceSmall),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium, vertical: AppDimens.paddingXSmall),
-          decoration: BoxDecoration(color: AppColors.textSecondary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(AppDimens.radiusSmall)),
-          child: AppText(text, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.paddingMedium,
+              vertical: AppDimens.paddingXSmall),
+          decoration: BoxDecoration(
+              color: AppColors.textSecondary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppDimens.radiusSmall)),
+          child: AppText(text,
+              style: AppTextStyles.labelSmall
+                  .copyWith(color: AppColors.textSecondary)),
         ),
       ),
     );
@@ -1303,9 +1398,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       padding: const EdgeInsets.symmetric(vertical: AppDimens.spaceSmall),
       child: Row(
         children: [
-          Expanded(child: Divider(color: AppColors.error.withValues(alpha: 0.5))),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingSmall), child: AppText(context.l10n.unreadSeparatorLabel, style: AppTextStyles.labelSmall.copyWith(color: AppColors.error))),
-          Expanded(child: Divider(color: AppColors.error.withValues(alpha: 0.5))),
+          Expanded(
+              child: Divider(color: AppColors.error.withValues(alpha: 0.5))),
+          Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.paddingSmall),
+              child: AppText(context.l10n.unreadSeparatorLabel,
+                  style: AppTextStyles.labelSmall
+                      .copyWith(color: AppColors.error))),
+          Expanded(
+              child: Divider(color: AppColors.error.withValues(alpha: 0.5))),
         ],
       ),
     );
@@ -1313,8 +1415,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   Widget _buildSystemEvent(MessageUIState uiState) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppDimens.spaceSmall, horizontal: AppDimens.paddingMedium),
-      child: Center(child: AppText(uiState.systemEvent?.formattedText ?? uiState.content, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontStyle: FontStyle.italic), textAlign: TextAlign.center)),
+      padding: const EdgeInsets.symmetric(
+          vertical: AppDimens.spaceSmall, horizontal: AppDimens.paddingMedium),
+      child: Center(
+          child: AppText(uiState.systemEvent?.formattedText ?? uiState.content,
+              style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary, fontStyle: FontStyle.italic),
+              textAlign: TextAlign.center)),
     );
   }
 
@@ -1323,27 +1430,39 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.chat_bubble_outline, size: AppDimens.iconSizeXXLarge, color: AppColors.textSecondary),
+          Icon(Icons.chat_bubble_outline,
+              size: AppDimens.iconSizeXXLarge, color: AppColors.textSecondary),
           const SizedBox(height: AppDimens.spaceMedium),
-          AppText(context.l10n.noMessagesInChat, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
+          AppText(context.l10n.noMessagesInChat,
+              style: AppTextStyles.bodyMedium
+                  .copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center),
         ],
       ),
     );
   }
 
-  Widget _buildErrorState(BuildContext context, String message, VoidCallback? retryAction) {
+  Widget _buildErrorState(
+      BuildContext context, String message, VoidCallback? retryAction) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.paddingLarge),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: AppDimens.iconSizeXXLarge, color: AppColors.error),
+            Icon(Icons.error_outline,
+                size: AppDimens.iconSizeXXLarge, color: AppColors.error),
             const SizedBox(height: AppDimens.spaceMedium),
-            AppText(message, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
+            AppText(message,
+                style: AppTextStyles.bodyMedium
+                    .copyWith(color: AppColors.textSecondary),
+                textAlign: TextAlign.center),
             if (retryAction != null) ...[
               const SizedBox(height: AppDimens.spaceLarge),
-              AppButton.primary(text: context.l10n.retryOperation, icon: Icons.refresh, onPressed: retryAction),
+              AppButton.primary(
+                  text: context.l10n.retryOperation,
+                  icon: Icons.refresh,
+                  onPressed: retryAction),
             ],
           ],
         ),
@@ -1351,7 +1470,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     );
   }
 
-  void _showMessageOptions(BuildContext context, ChatMessage message, bool isCurrentUser) {
+  void _showMessageOptions(
+      BuildContext context, ChatMessage message, bool isCurrentUser) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -1366,14 +1486,25 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                   children: [
                     Expanded(
                       child: Wrap(
-                        spacing: 10, runSpacing: 10,
+                        spacing: 10,
+                        runSpacing: 10,
                         children: [
-                          for (final emoji in (_messageBloc.state is MessagesLoaded)
-                              ? (_messageBloc.state as MessagesLoaded).frequentReactions
-                              : const <String>['👍', '❤️', '😂', '😮', '😢', '😡'])
+                          for (final emoji
+                              in (_messageBloc.state is MessagesLoaded)
+                                  ? (_messageBloc.state as MessagesLoaded)
+                                      .frequentReactions
+                                  : const <String>[
+                                      '👍',
+                                      '❤️',
+                                      '😂',
+                                      '😮',
+                                      '😢',
+                                      '😡'
+                                    ])
                             _buildReactionItem(ctx, emoji, () {
                               Navigator.pop(ctx);
-                              _messageBloc.add(ToggleReaction(messageId: message.id, emojiCode: emoji));
+                              _messageBloc.add(ToggleReaction(
+                                  messageId: message.id, emojiCode: emoji));
                             }),
                         ],
                       ),
@@ -1381,7 +1512,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                     const SizedBox(width: 10),
                     _buildAddReactionItem(ctx, () {
                       Navigator.pop(ctx);
-                      EmojiPickerBottomSheet.show(this.context, onEmojiSelected: (emoji) => _messageBloc.add(ToggleReaction(messageId: message.id, emojiCode: emoji)));
+                      EmojiPickerBottomSheet.show(this.context,
+                          onEmojiSelected: (emoji) => _messageBloc.add(
+                              ToggleReaction(
+                                  messageId: message.id, emojiCode: emoji)));
                     }),
                   ],
                 ),
@@ -1391,15 +1525,33 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                 _buildActionTile(Icons.copy, ctx.l10n.copyMessage, () {
                   Navigator.pop(ctx);
                   Clipboard.setData(ClipboardData(text: message.content));
-                  AppSnackBar.show(context: this.context, message: this.context.l10n.messageCopied, type: FeedbackType.success);
+                  AppSnackBar.show(
+                      context: this.context,
+                      message: this.context.l10n.messageCopied,
+                      type: FeedbackType.success);
                 }),
-              _buildActionTile(Icons.reply, ctx.l10n.replyMessage, () { Navigator.pop(ctx); _startReply(message); }),
+              _buildActionTile(Icons.reply, ctx.l10n.replyMessage, () {
+                Navigator.pop(ctx);
+                _startReply(message);
+              }),
               if (isCurrentUser && message.contentType == ContentType.text) ...[
-                _buildActionTile(Icons.edit, ctx.l10n.editMessage, () { Navigator.pop(ctx); _startEditMode(message); }),
-                _buildActionTile(Icons.delete, ctx.l10n.deleteMessage, () { Navigator.pop(ctx); _confirmDeleteMessage(message); }),
+                _buildActionTile(Icons.edit, ctx.l10n.editMessage, () {
+                  Navigator.pop(ctx);
+                  _startEditMode(message);
+                }),
+                _buildActionTile(Icons.delete, ctx.l10n.deleteMessage, () {
+                  Navigator.pop(ctx);
+                  _confirmDeleteMessage(message);
+                }),
               ],
-              _buildActionTile(Icons.forward, ctx.l10n.forwardMessage, () { Navigator.pop(ctx); showForwardMessageSheet(this.context, messages: [message]); }),
-              _buildActionTile(Icons.checklist, ctx.l10n.selectAll, () { Navigator.pop(ctx); _enterSelectionMode(message.id); }),
+              _buildActionTile(Icons.forward, ctx.l10n.forwardMessage, () {
+                Navigator.pop(ctx);
+                showForwardMessageSheet(this.context, messages: [message]);
+              }),
+              _buildActionTile(Icons.checklist, ctx.l10n.selectAll, () {
+                Navigator.pop(ctx);
+                _enterSelectionMode(message.id);
+              }),
             ],
           ),
         ),
@@ -1407,7 +1559,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     );
   }
 
-  Widget _buildReactionItem(BuildContext context, String emoji, VoidCallback onTap) {
+  Widget _buildReactionItem(
+      BuildContext context, String emoji, VoidCallback onTap) {
     return InkWell(
       borderRadius: BorderRadius.circular(999),
       onTap: onTap,
@@ -1438,7 +1591,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           border: Border.all(color: Theme.of(context).dividerColor),
           borderRadius: BorderRadius.circular(999),
         ),
-        child: Icon(Icons.add, size: 20, color: Theme.of(context).iconTheme.color),
+        child:
+            Icon(Icons.add, size: 20, color: Theme.of(context).iconTheme.color),
       ),
     );
   }
@@ -1459,7 +1613,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       actions: [
         AppButton.text(
           text: context.l10n.cancel,
-          onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
+          onPressed: () =>
+              Navigator.of(context, rootNavigator: true).pop(false),
         ),
         AppButton.primary(
           text: context.l10n.delete,

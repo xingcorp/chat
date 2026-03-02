@@ -25,6 +25,9 @@ enum ContentType {
   
   /// Sự kiện
   event,
+
+  /// Sticker
+  sticker,
 }
 
 /// Trạng thái tin nhắn
@@ -79,6 +82,8 @@ String getContentTypeName(ContentType type) {
       return 'Liên kết';
     case ContentType.event:
       return 'Sự kiện';
+    case ContentType.sticker:
+      return 'Sticker';
   }
 }
 
@@ -684,6 +689,7 @@ class ChatMessage {
   bool get hasMedia => contentType == ContentType.image || 
                       contentType == ContentType.video || 
                       contentType == ContentType.audio || 
+                      contentType == ContentType.sticker ||
                       (contentType == ContentType.file && attachments.isNotEmpty);
   
   /// URL media chính của tin nhắn
@@ -702,6 +708,9 @@ class ChatMessage {
   
   /// Kiểm tra tin nhắn có phải là âm thanh
   bool get isAudio => contentType == ContentType.audio;
+
+  /// Kiểm tra tin nhắn có phải sticker
+  bool get isSticker => contentType == ContentType.sticker;
   
   /// Tên tệp đính kèm
   String? get attachmentFileName {

@@ -30,7 +30,10 @@ enum MessageType {
   contact,
   
   /// System message
-  system
+  system,
+
+  /// Sticker message
+  sticker,
 }
 
 /// Model class representing a message
@@ -668,6 +671,9 @@ class MessageModel {
       case MessageType.system:
         contentType = ContentType.event; // Map system to event in domain
         break;
+      case MessageType.sticker:
+        contentType = ContentType.sticker;
+        break;
     }
 
     final actionType = metadataMap['actionType'] as String?;
@@ -835,6 +841,9 @@ class MessageModel {
         case 'event':
           replyContentType = ContentType.event;
           break;
+        case 'sticker':
+          replyContentType = ContentType.sticker;
+          break;
       }
 
       final replyUrls = (replyMeta['urls'] as List?)?.cast<String>() ?? const <String>[];
@@ -922,6 +931,8 @@ class MessageModel {
         return 'location';
       case MessageType.contact:
         return 'contact';
+      case MessageType.sticker:
+        return 'sticker';
       default:
         return 'document';
     }

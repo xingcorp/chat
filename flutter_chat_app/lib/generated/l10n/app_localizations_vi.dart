@@ -1738,4 +1738,16 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get currentlyOnline => 'Đang trực tuyến';
+
+  @override
+  String get stickers => 'Sticker';
+
+  @override
+  String get recentStickers => 'Gần đây';
+
+  @override
+  String get noStickersAvailable => 'Không có sticker';
+
+  @override
+  String get replyPreviewSticker => 'Sticker';
 }

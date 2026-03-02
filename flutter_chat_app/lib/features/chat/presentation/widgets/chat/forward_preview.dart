@@ -272,6 +272,14 @@ class ForwardPreview extends StatelessWidget {
           iconColor,
         );
 
+      case ContentType.sticker:
+        return _buildIconContainer(
+          theme,
+          Icons.emoji_emotions_outlined,
+          size,
+          iconColor,
+        );
+
       case ContentType.event:
         return _buildIconContainer(
           theme,

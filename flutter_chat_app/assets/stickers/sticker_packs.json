@@ -1,0 +1,66 @@
+{
+  "packs": [
+    {
+      "id": "emotion_classic",
+      "name": "Classic",
+      "thumbnail": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f600.png",
+      "stickers": [
+        {
+          "code": "emotion_classic_happy",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f603.png"
+        },
+        {
+          "code": "emotion_classic_love",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f970.png"
+        },
+        {
+          "code": "emotion_classic_laugh",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f602.png"
+        },
+        {
+          "code": "emotion_classic_sad",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f622.png"
+        },
+        {
+          "code": "emotion_classic_think",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f914.png"
+        },
+        {
+          "code": "emotion_classic_angry",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f620.png"
+        }
+      ]
+    },
+    {
+      "id": "animal_friends",
+      "name": "Animals",
+      "thumbnail": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f63a.png",
+      "stickers": [
+        {
+          "code": "animal_friends_cat_love",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f63b.png"
+        },
+        {
+          "code": "animal_friends_cat_happy",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f63a.png"
+        },
+        {
+          "code": "animal_friends_cat_cry",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f63f.png"
+        },
+        {
+          "code": "animal_friends_dog",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f436.png"
+        },
+        {
+          "code": "animal_friends_panda",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f43c.png"
+        },
+        {
+          "code": "animal_friends_bear",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f43b.png"
+        }
+      ]
+    }
+  ]
+}

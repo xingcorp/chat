@@ -649,6 +649,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         return MessageType.file;
       case 'location':
         return MessageType.location;
+      case 'sticker':
+        return MessageType.sticker;
       default:
         return MessageType.text;
     }
@@ -670,6 +672,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         return 'DOC'; // Server uses DOC, not FILE
       case MessageType.location:
         return 'LOCATION';
+      case MessageType.sticker:
+        return 'STICKER';
       default:
         return 'TEXT';
     }

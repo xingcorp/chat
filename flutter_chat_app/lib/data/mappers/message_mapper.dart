@@ -228,6 +228,8 @@ class MessageMapper {
         return ContentType.event;
       case 'voice_note':
         return ContentType.audio;
+      case 'sticker':
+        return ContentType.sticker;
       default:
         return ContentType.text;
     }
@@ -293,6 +295,9 @@ class MessageMapper {
         break;
       case 'location':
         type = MessageType.location;
+        break;
+      case 'sticker':
+        type = MessageType.sticker;
         break;
       case 'log':
       case 'event':
@@ -491,6 +496,8 @@ class MessageMapper {
         type = MessageType.text;
       case ContentType.event:
         type = MessageType.system;
+      case ContentType.sticker:
+        type = MessageType.sticker;
     }
 
     // Reconstruct metadata JSON

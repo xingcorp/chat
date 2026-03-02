@@ -1736,4 +1736,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get currentlyOnline => 'Currently online';
+
+  @override
+  String get stickers => 'Stickers';
+
+  @override
+  String get recentStickers => 'Recent';
+
+  @override
+  String get noStickersAvailable => 'No stickers available';
+
+  @override
+  String get replyPreviewSticker => 'Sticker';
 }

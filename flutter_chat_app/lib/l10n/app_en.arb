@@ -3077,5 +3077,25 @@
   "currentlyOnline": "Currently online",
   "@currentlyOnline": {
     "description": "Status when user is online"
+  },
+
+  "stickers": "Stickers",
+  "@stickers": {
+    "description": "Label for sticker picker button and title"
+  },
+
+  "recentStickers": "Recent",
+  "@recentStickers": {
+    "description": "Tab label for recently used stickers"
+  },
+
+  "noStickersAvailable": "No stickers available",
+  "@noStickersAvailable": {
+    "description": "Empty state text when there are no stickers to show"
+  },
+
+  "replyPreviewSticker": "Sticker",
+  "@replyPreviewSticker": {
+    "description": "Preview label for sticker reply/forward messages"
   }
 }

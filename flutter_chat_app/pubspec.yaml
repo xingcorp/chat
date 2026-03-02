@@ -182,6 +182,7 @@ flutter:
     - assets/icons/
     - assets/translations/
     - assets/animations/
+    - assets/stickers/
     - .env.staging
     - .env.production
 

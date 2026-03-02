@@ -960,6 +960,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
         ContentType.video => '↩ 📹 Video',
         ContentType.audio => '↩ 🎧 Audio',
         ContentType.file => '↩ 📄 ${message.fileName ?? "File"}',
+        ContentType.sticker => '↩ 🎯 Sticker',
         _ => '↩ Tin nhắn chuyển tiếp',
       };
     }
@@ -983,6 +984,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       case ContentType.link:
         final text = formatContent(message.content);
         return text.isNotEmpty ? text : '🔗 Liên kết';
+      case ContentType.sticker:
+        return '🎯 Sticker';
       case ContentType.text:
       case ContentType.event:
         final text = formatContent(message.content);

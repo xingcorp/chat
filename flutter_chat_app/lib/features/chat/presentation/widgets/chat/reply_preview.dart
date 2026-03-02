@@ -160,6 +160,8 @@ class ReplyPreview extends StatelessWidget {
         return l10nHelper.replyPreviewFile('');
       case ContentType.location:
         return l10nHelper.replyPreviewLocation;
+      case ContentType.sticker:
+        return l10nHelper.replyPreviewSticker;
       case ContentType.link:
         return l10nHelper.replyPreviewLink;
       case ContentType.event:
@@ -261,6 +263,14 @@ class ReplyPreview extends StatelessWidget {
         return _buildIconContainer(
           theme,
           Icons.link,
+          size,
+          iconColor,
+        );
+
+      case ContentType.sticker:
+        return _buildIconContainer(
+          theme,
+          Icons.emoji_emotions_outlined,
           size,
           iconColor,
         );

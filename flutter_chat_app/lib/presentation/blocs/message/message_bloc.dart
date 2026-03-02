@@ -16,7 +16,8 @@ import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
 import 'package:flutter_chat_app/core/services/frequent_reaction_service.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
-import 'package:flutter_chat_app/core/services/realtime_service.dart' hide MessageReaction;
+import 'package:flutter_chat_app/core/services/realtime_service.dart'
+    hide MessageReaction;
 import 'package:flutter_chat_app/core/storage/tombstone_store.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
@@ -85,7 +86,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   final Map<String, StreamSubscription?> _messageSubscriptions = {};
 
   // === Phase 2 + 3 Internal State ===
-  final SocketEventBuffer<MessageEvent> _socketEventBuffer = SocketEventBuffer<MessageEvent>();
+  final SocketEventBuffer<MessageEvent> _socketEventBuffer =
+      SocketEventBuffer<MessageEvent>();
   StreamSubscription? _connectionStateSubscription;
   StreamSubscription? _messageEditedSubscription;
   StreamSubscription? _messageDeletedSubscription;
@@ -196,6 +198,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     on<LoadMessages>(_onLoadMessages);
     on<LoadMoreMessages>(_onLoadMoreMessages);
     on<SendMessage>(_onSendMessage);
+    on<SendSticker>(_onSendSticker);
     on<EditMessage>(_onEditMessage);
     on<DeleteMessage>(_onDeleteMessage);
     on<MarkChatAsRead>(_onMarkChatAsRead);
@@ -225,17 +228,18 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         .distinct()
         .pairwise()
         .where((pair) =>
-          pair.first != SocketConnectionState.connected &&
-          pair.last == SocketConnectionState.connected)
+            pair.first != SocketConnectionState.connected &&
+            pair.last == SocketConnectionState.connected)
         .listen((_) => add(const _ReconnectionDetected()));
   }
-  
+
   /// **Load messages — Two-Phase Render + Delta Sync**
   ///
   /// Phase 1: Emit local data immediately (< 50ms) with background fetch flag
   /// Phase 2: Background fetch (delta or full) → merge → emit merged state
   /// Fallback: First-time load (no local data) → standard server fetch
-  Future<void> _onLoadMessages(LoadMessages event, Emitter<MessageState> emit) async {
+  Future<void> _onLoadMessages(
+      LoadMessages event, Emitter<MessageState> emit) async {
     // logger.i('[TwoPhase] _onLoadMessages START chatId=${event.chatId} limit=${event.limit} forceRefresh=${event.forceRefresh}');
 
     // Step 1: Try local data first (Two-Phase Render)
@@ -250,10 +254,14 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     );
 
     localResult.fold(
-      (failure) => logger.w('[TwoPhase] getMessagesFromLocal FAILED: ${failure.message}'),
+      (failure) => logger
+          .w('[TwoPhase] getMessagesFromLocal FAILED: ${failure.message}'),
       (messages) {
-        final newestTs = messages.isNotEmpty ? messages.first.createdAt.toIso8601String() : 'N/A';
-        logger.d('[TwoPhase] getMessagesFromLocal: count=${messages.length} newest=$newestTs');
+        final newestTs = messages.isNotEmpty
+            ? messages.first.createdAt.toIso8601String()
+            : 'N/A';
+        logger.d(
+            '[TwoPhase] getMessagesFromLocal: count=${messages.length} newest=$newestTs');
       },
     );
 
@@ -303,21 +311,25 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
       result.fold(
         (failure) {
-          logger.e('[TwoPhase] First-time load FAILED: ${failure.message}', error: failure);
+          logger.e('[TwoPhase] First-time load FAILED: ${failure.message}',
+              error: failure);
           emit(MessageState.error(
             chatId: event.chatId,
             error: failure.message,
           ));
         },
         (messages) {
-          final newestTs = messages.isNotEmpty ? messages.first.createdAt.toIso8601String() : 'N/A';
+          final newestTs = messages.isNotEmpty
+              ? messages.first.createdAt.toIso8601String()
+              : 'N/A';
           // logger.i('[TwoPhase] First-time load OK: count=${messages.length} newest=$newestTs');
 
           // Reset dirty flag after successful load
           _cacheSyncStrategy.resetChatMessagesDirtyFlag(event.chatId);
 
           // Update sync metadata
-          unawaited(_syncMetadataManager.updateFromMessages(event.chatId, messages));
+          unawaited(
+              _syncMetadataManager.updateFromMessages(event.chatId, messages));
 
           // Subscribe to real-time updates
           if (event.subscribeToUpdates) {
@@ -345,9 +357,10 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       );
     }
   }
-  
+
   /// **Load more messages using GetMessagesUseCase (pagination) - CLEAN ARCHITECTURE**
-  Future<void> _onLoadMoreMessages(LoadMoreMessages event, Emitter<MessageState> emit) async {
+  Future<void> _onLoadMoreMessages(
+      LoadMoreMessages event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
 
     final currentState = state as MessagesLoaded;
@@ -408,12 +421,14 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   ///
   /// Instead of iteratively calling LoadMoreMessages, this loads a page of messages
   /// using the target message's `createdAt` as cursor, then merges with existing messages.
-  Future<void> _onJumpToMessage(JumpToMessage event, Emitter<MessageState> emit) async {
+  Future<void> _onJumpToMessage(
+      JumpToMessage event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
 
     final currentState = state as MessagesLoaded;
 
-    logger.i('JumpToMessage: loading messages from cursor ${event.createdAtMs} for message ${event.messageId}');
+    logger.i(
+        'JumpToMessage: loading messages from cursor ${event.createdAtMs} for message ${event.messageId}');
 
     // Add 1ms to cursor so the target message is included in results.
     // The API returns messages with createdAt < cursor (exclusive),
@@ -457,7 +472,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   /// Re-reads `state` after await to avoid stale-state race conditions
   /// when concurrent events (background fetch, real-time) modify state
   /// during the API call.
-  Future<void> _onSendMessage(SendMessage event, Emitter<MessageState> emit) async {
+  Future<void> _onSendMessage(
+      SendMessage event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
 
     final chatId = (state as MessagesLoaded).chatId;
@@ -477,7 +493,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     // Re-read state after await — it may have changed during the API call
     final freshState = state;
     if (freshState is! MessagesLoaded) {
-      logger.w('State changed during sendMessage await (now ${freshState.runtimeType}), skipping emit');
+      logger.w(
+          'State changed during sendMessage await (now ${freshState.runtimeType}), skipping emit');
       return;
     }
 
@@ -494,9 +511,11 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         logger.i('Message sent successfully: ${newMessage.id}');
 
         // Deduplicate: check if message already exists (e.g. from real-time echo)
-        final alreadyExists = freshState.messages.any((m) => m.id == newMessage.id);
+        final alreadyExists =
+            freshState.messages.any((m) => m.id == newMessage.id);
         if (alreadyExists) {
-          logger.d('Message ${newMessage.id} already in list (real-time echo arrived first)');
+          logger.d(
+              'Message ${newMessage.id} already in list (real-time echo arrived first)');
           return;
         }
 
@@ -512,9 +531,11 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         _cacheSyncStrategy.markChatListDirty();
 
         // Debug: Log mention info
-        logger.d('Message mentions check: mentionTo.length=${newMessage.mentionTo.length}, content="${newMessage.content}"');
+        logger.d(
+            'Message mentions check: mentionTo.length=${newMessage.mentionTo.length}, content="${newMessage.content}"');
         if (newMessage.mentionTo.isNotEmpty) {
-          logger.d('Mentions: ${newMessage.mentionTo.map((m) => '${m.name}(${m.id})').join(', ')}');
+          logger.d(
+              'Mentions: ${newMessage.mentionTo.map((m) => '${m.name}(${m.id})').join(', ')}');
         }
 
         // Send push notification if message has mentions (fire-and-forget)
@@ -522,7 +543,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           final mentionIds = newMessage.mentionTo.map((m) => m.id).toList();
           final conversationName = _conversationName;
 
-          logger.i('Sending push notification to ${mentionIds.length} mentioned users');
+          logger.i(
+              'Sending push notification to ${mentionIds.length} mentioned users');
 
           // Fire-and-forget: don't await, don't block UI
           unawaited(_sendPushNotification.call(
@@ -540,8 +562,86 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     );
   }
 
+  /// Send sticker message with optimistic update.
+  Future<void> _onSendSticker(
+      SendSticker event, Emitter<MessageState> emit) async {
+    if (state is! MessagesLoaded) {
+      logger.w('Cannot send sticker - messages not loaded');
+      return;
+    }
+
+    final currentState = state as MessagesLoaded;
+    const uuid = Uuid();
+    final clientId = uuid.v4();
+    final draftId = 'draft_$clientId';
+
+    ChatMessage? replyMessage;
+    if (event.replyMessageId != null && event.replyMessageId!.isNotEmpty) {
+      final replyId = event.replyMessageId!;
+      final index =
+          currentState.messages.indexWhere((message) => message.id == replyId);
+      if (index >= 0) {
+        replyMessage = currentState.messages[index];
+      }
+    }
+
+    final optimisticMessage = ChatMessage(
+      id: draftId,
+      clientId: clientId,
+      chatId: currentState.chatId,
+      content: event.stickerCode,
+      contentType: ContentType.sticker,
+      sender: MessageSender(
+        id: event.senderId,
+        name: '',
+        avatar: null,
+      ),
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      replyMessageId: event.replyMessageId,
+      replyMessage: replyMessage,
+      readBy: const <String>[],
+      deliveredTo: const <String>[],
+      attachments: const <MessageAttachment>[],
+      reactions: const <MessageReaction>[],
+      mentionTo: const <MessageSender>[],
+      localStatus: MessageStatus.sending,
+    );
+
+    final optimisticMessages = <ChatMessage>[
+      optimisticMessage,
+      ...currentState.messages
+    ];
+    emit(currentState.copyWith(
+      messages: optimisticMessages,
+      uiMessages: _transformMessages(optimisticMessages),
+    ));
+
+    final result = await _sendMessage(
+      conversationId: currentState.chatId,
+      content: event.stickerCode,
+      senderId: event.senderId,
+      type: 'sticker',
+      replyMessageId: event.replyMessageId,
+    );
+
+    result.fold(
+      (failure) {
+        logger.e('Failed to send sticker message', error: failure);
+        _markMessageAsFailed(emit, clientId);
+      },
+      (message) {
+        logger.i('Sticker message sent successfully: ${message.id}');
+        _replaceDraftWithServerMessage(emit, clientId, message);
+        _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
+        _cacheSyncStrategy.markChatListDirty();
+      },
+    );
+  }
+
   /// **Edit message using EditMessageUseCase - CLEAN ARCHITECTURE**
-  Future<void> _onEditMessage(EditMessage event, Emitter<MessageState> emit) async {
+  Future<void> _onEditMessage(
+      EditMessage event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
 
     logger.i('Editing message: ${event.messageId}');
@@ -567,7 +667,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       },
       (_) {
         logger.i('Message edited successfully');
-        
+
         // Update message in list with new content
         final updatedMessages = freshState.messages.map((msg) {
           if (msg.id == event.messageId) {
@@ -603,7 +703,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   ///
   /// **Hard-delete behavior:** Removes message from list entirely.
   /// Backend permanently deletes the message.
-  Future<void> _onDeleteMessage(DeleteMessage event, Emitter<MessageState> emit) async {
+  Future<void> _onDeleteMessage(
+      DeleteMessage event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
 
     final currentState = state as MessagesLoaded;
@@ -653,7 +754,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         }
         // Re-sort by createdAt descending
         restoredMessages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        
+
         emit(MessageState.error(
           chatId: freshState.chatId,
           error: failure.message,
@@ -662,11 +763,12 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       },
       (_) async {
         logger.i('Message deleted successfully (tombstone saved)');
-        
+
         // Save tombstone for persistence across app restarts
-        final tombstone = MessageTombstone.fromMessage(deletedMessage, DateTime.now());
+        final tombstone =
+            MessageTombstone.fromMessage(deletedMessage, DateTime.now());
         await _tombstoneStore.saveTombstone(tombstone);
-        
+
         // Mark cache dirty
         _cacheSyncStrategy.markChatMessagesDirty(freshState.chatId);
         _cacheSyncStrategy.markChatListDirty();
@@ -675,18 +777,20 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   }
 
   /// **Forward message to another chat**
-  /// 
+  ///
   /// Creates a copy of the message in the target chat with forwardedFromMessageId reference.
-  Future<void> _onForwardMessage(ForwardMessage event, Emitter<MessageState> emit) async {
+  Future<void> _onForwardMessage(
+      ForwardMessage event, Emitter<MessageState> emit) async {
     // Use message directly from event (UI đã truyền đầy đủ)
     final originalMessage = event.message;
-    
+
     if (originalMessage.id.isEmpty) {
       logger.w('Cannot forward: message has empty id');
       return;
     }
 
-    logger.i('Forwarding message ${originalMessage.id} to chat ${event.targetChatId}');
+    logger.i(
+        'Forwarding message ${originalMessage.id} to chat ${event.targetChatId}');
 
     // Execute SendMessageUseCase to forward to target chat
     // Pass forwardedFromMessageId so backend can track the original message
@@ -695,7 +799,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         .where((a) => a.url.isNotEmpty)
         .map((a) => a.url)
         .toList();
-    
+
     final result = await _sendMessage(
       conversationId: event.targetChatId,
       content: originalMessage.content,
@@ -719,7 +823,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           },
           orElse: () {
             // No current chat context, just log
-            logger.w('Forward failed but no current chat context to emit error');
+            logger
+                .w('Forward failed but no current chat context to emit error');
           },
         );
       },
@@ -752,7 +857,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   /// Debounces 500ms to avoid excessive API calls when scrolling fast.
   /// Retries up to 2 times with 1 second backoff on failure.
   /// Logs errors silently — never shows error to user (non-critical).
-  Future<void> _onMarkChatAsRead(MarkChatAsRead event, Emitter<MessageState> emit) async {
+  Future<void> _onMarkChatAsRead(
+      MarkChatAsRead event, Emitter<MessageState> emit) async {
     // logger.i('MarkChatAsRead received: ${event.chatId} (debouncing 500ms)');
 
     // Cancel any existing debounce timer — use latest event data
@@ -814,7 +920,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   /// This prevents duplicate messages when:
   /// 1. User sends message → API returns → WebSocket echoes back
   /// 2. User sends rapidly → multiple messages have similar timestamps
-  void _onReceiveRealTimeMessage(ReceiveRealTimeMessage event, Emitter<MessageState> emit) {
+  void _onReceiveRealTimeMessage(
+      ReceiveRealTimeMessage event, Emitter<MessageState> emit) {
     if (state is! MessagesLoaded) return;
 
     final currentState = state as MessagesLoaded;
@@ -825,9 +932,11 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     logger.d('Received real-time message via socket: ${event.message.id}');
 
     // Check if message already exists in list (exact server ID match)
-    final messageExists = currentState.messages.any((msg) => msg.id == event.message.id);
+    final messageExists =
+        currentState.messages.any((msg) => msg.id == event.message.id);
     if (messageExists) {
-      logger.d('Message ${event.message.id} already exists, ignoring WebSocket echo');
+      logger.d(
+          'Message ${event.message.id} already exists, ignoring WebSocket echo');
       return;
     }
 
@@ -835,13 +944,14 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     // API response will handle our own messages, WebSocket is just an echo
     if (event.message.sender.id == _currentUserId) {
       // Check if we have ANY pending draft (message with clientId that hasn't been replaced yet)
-      final hasPendingDraft = currentState.messages.any((msg) =>
-          msg.clientId != null && msg.localStatus != null);
+      final hasPendingDraft = currentState.messages
+          .any((msg) => msg.clientId != null && msg.localStatus != null);
 
       if (hasPendingDraft) {
         // We have pending messages being sent via API
         // The API response will update them, ignore WebSocket echo
-        logger.d('Ignoring self-message from WebSocket (API will handle): ${event.message.id}');
+        logger.d(
+            'Ignoring self-message from WebSocket (API will handle): ${event.message.id}');
         return;
       }
 
@@ -880,7 +990,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   ) {
     // Only enrich system event messages that have unresolved target users
     if (message.targetUsers.isEmpty) return message;
-    if (!message.targetUsers.any((u) => u.name == 'Unknown' || u.name.trim().isEmpty)) {
+    if (!message.targetUsers
+        .any((u) => u.name == 'Unknown' || u.name.trim().isEmpty)) {
       return message;
     }
 
@@ -936,7 +1047,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         final deltaCount = result.fold((_) => 0, (m) => m.length);
         // logger.i('[TwoPhase] Delta result: count=$deltaCount (gap threshold=$limit)');
         if (GapDetectionLogic.hasGap(deltaCount: deltaCount, pageSize: limit)) {
-          logger.w('[TwoPhase] Gap detected (deltaCount=$deltaCount >= pageSize=$limit), doing FULL refresh');
+          logger.w(
+              '[TwoPhase] Gap detected (deltaCount=$deltaCount >= pageSize=$limit), doing FULL refresh');
           result = await _getMessages(conversationId: chatId, limit: limit);
           isDelta = false;
         } else {
@@ -955,10 +1067,15 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           add(_BackgroundFetchFailed(chatId: chatId, error: failure.message));
         },
         (messages) {
-          final newestTs = messages.isNotEmpty ? messages.first.createdAt.toIso8601String() : 'N/A';
-          final oldestTs = messages.isNotEmpty ? messages.last.createdAt.toIso8601String() : 'N/A';
+          final newestTs = messages.isNotEmpty
+              ? messages.first.createdAt.toIso8601String()
+              : 'N/A';
+          final oldestTs = messages.isNotEmpty
+              ? messages.last.createdAt.toIso8601String()
+              : 'N/A';
           // logger.i('[TwoPhase] Background fetch OK: count=${messages.length} newest=$newestTs oldest=$oldestTs isDelta=$isDelta');
-          add(_BackgroundFetchCompleted(chatId: chatId, serverMessages: messages, isDelta: isDelta));
+          add(_BackgroundFetchCompleted(
+              chatId: chatId, serverMessages: messages, isDelta: isDelta));
         },
       );
     } catch (e) {
@@ -973,14 +1090,16 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     Emitter<MessageState> emit,
   ) async {
     if (state is! MessagesLoaded) {
-      logger.w('[TwoPhase] _onBackgroundFetchCompleted: state is NOT MessagesLoaded (${state.runtimeType}), ignoring');
+      logger.w(
+          '[TwoPhase] _onBackgroundFetchCompleted: state is NOT MessagesLoaded (${state.runtimeType}), ignoring');
       return;
     }
     final currentState = state as MessagesLoaded;
 
     // Race condition guard: ignore stale responses for wrong chat
     if (currentState.chatId != event.chatId) {
-      logger.w('[TwoPhase] Background fetch completed for WRONG chat: event=${event.chatId} vs current=${currentState.chatId}');
+      logger.w(
+          '[TwoPhase] Background fetch completed for WRONG chat: event=${event.chatId} vs current=${currentState.chatId}');
       _socketEventBuffer.stopBuffering();
       return;
     }
@@ -1000,8 +1119,10 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       mergeMode: mergeMode,
     );
 
-    final newestTs = merged.isNotEmpty ? merged.first.createdAt.toIso8601String() : 'N/A';
-    final oldestTs = merged.isNotEmpty ? merged.last.createdAt.toIso8601String() : 'N/A';
+    final newestTs =
+        merged.isNotEmpty ? merged.first.createdAt.toIso8601String() : 'N/A';
+    final oldestTs =
+        merged.isNotEmpty ? merged.last.createdAt.toIso8601String() : 'N/A';
     // logger.i('[TwoPhase] Merge result: count=${merged.length} newest=$newestTs oldest=$oldestTs mode=$mergeMode');
 
     // Update sync metadata
@@ -1012,8 +1133,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     // Delta sync returning fewer than pageSize does NOT mean we've reached the end —
     // it just means there are few new messages.
     final hasReachedMax = event.isDelta
-        ? currentState.hasReachedMax  // preserve existing value for delta
-        : event.serverMessages.length < 20;  // only set for full page fetch
+        ? currentState.hasReachedMax // preserve existing value for delta
+        : event.serverMessages.length < 20; // only set for full page fetch
 
     emit(currentState.copyWith(
       messages: merged,
@@ -1025,12 +1146,14 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       // — no need to explicitly re-assign it
     ));
 
-    logger.i('[TwoPhase] _onBackgroundFetchCompleted EMITTED new state: mergedCount=${merged.length} dataSource=merged bgFetching=false blocHashCode=$hashCode');
+    logger.i(
+        '[TwoPhase] _onBackgroundFetchCompleted EMITTED new state: mergedCount=${merged.length} dataSource=merged bgFetching=false blocHashCode=$hashCode');
 
     // Flush buffered socket events
     final bufferedEvents = _socketEventBuffer.stopBuffering();
     if (bufferedEvents.isNotEmpty) {
-      logger.i('[TwoPhase] Flushing ${bufferedEvents.length} buffered socket events');
+      logger.i(
+          '[TwoPhase] Flushing ${bufferedEvents.length} buffered socket events');
     }
     for (final bufferedEvent in bufferedEvents) {
       add(bufferedEvent);
@@ -1050,7 +1173,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       return;
     }
 
-    logger.w('[TwoPhase] Background fetch FAILED for chat ${event.chatId}: ${event.error} — keeping ${currentState.messages.length} local messages');
+    logger.w(
+        '[TwoPhase] Background fetch FAILED for chat ${event.chatId}: ${event.error} — keeping ${currentState.messages.length} local messages');
 
     emit(currentState.copyWith(
       isBackgroundFetching: false,
@@ -1059,7 +1183,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     // Flush buffered socket events
     final bufferedEvents = _socketEventBuffer.stopBuffering();
     if (bufferedEvents.isNotEmpty) {
-      logger.i('[TwoPhase] Flushing ${bufferedEvents.length} buffered socket events after failure');
+      logger.i(
+          '[TwoPhase] Flushing ${bufferedEvents.length} buffered socket events after failure');
     }
     for (final bufferedEvent in bufferedEvents) {
       add(bufferedEvent);
@@ -1102,7 +1227,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   }
 
   /// Handle socket message:edit — update message in state
-  void _onReceiveMessageEdited(ReceiveMessageEdited event, Emitter<MessageState> emit) {
+  void _onReceiveMessageEdited(
+      ReceiveMessageEdited event, Emitter<MessageState> emit) {
     if (_socketEventBuffer.bufferIfNeeded(event)) return;
 
     if (state is! MessagesLoaded) return;
@@ -1130,7 +1256,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   ///
   /// **Tombstone behavior:** Saves deleted message to TombstoneStore
   /// and updates state to show "Tin nhắn đã bị xoá" placeholder.
-  Future<void> _onReceiveMessageDeleted(ReceiveMessageDeleted event, Emitter<MessageState> emit) async {
+  Future<void> _onReceiveMessageDeleted(
+      ReceiveMessageDeleted event, Emitter<MessageState> emit) async {
     if (_socketEventBuffer.bufferIfNeeded(event)) return;
 
     if (state is! MessagesLoaded) return;
@@ -1140,12 +1267,14 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     final messageId = deletedMessage.id;
 
     // Save tombstone to store (for persistence across app restarts)
-    final tombstone = MessageTombstone.fromMessage(deletedMessage, DateTime.now());
+    final tombstone =
+        MessageTombstone.fromMessage(deletedMessage, DateTime.now());
     await _tombstoneStore.saveTombstone(tombstone);
 
     // Check if message exists in current state
-    final messageIndex = currentState.messages.indexWhere((msg) => msg.id == messageId);
-    
+    final messageIndex =
+        currentState.messages.indexWhere((msg) => msg.id == messageId);
+
     if (messageIndex == -1) {
       // Message not in current state, add tombstone at correct position
       final updatedMessages = [...currentState.messages];
@@ -1154,7 +1283,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         content: '', // Clear content for tombstone display
       ));
       updatedMessages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      
+
       emit(currentState.copyWith(
         messages: updatedMessages,
         uiMessages: _transformMessages(updatedMessages),
@@ -1181,7 +1310,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   }
 
   /// Handle socket message:reaction — add/remove reaction on message
-  void _onReceiveMessageReaction(ReceiveMessageReaction event, Emitter<MessageState> emit) {
+  void _onReceiveMessageReaction(
+      ReceiveMessageReaction event, Emitter<MessageState> emit) {
     if (_socketEventBuffer.bufferIfNeeded(event)) return;
 
     if (state is! MessagesLoaded) return;
@@ -1236,7 +1366,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   }
 
   /// Handle socket message:read — add readerId to message's readBy list
-  void _onReceiveMessageRead(ReceiveMessageRead event, Emitter<MessageState> emit) {
+  void _onReceiveMessageRead(
+      ReceiveMessageRead event, Emitter<MessageState> emit) {
     if (_socketEventBuffer.bufferIfNeeded(event)) return;
 
     if (state is! MessagesLoaded) return;
@@ -1248,7 +1379,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     );
 
     if (messageIndex == -1) {
-      logger.w('ReceiveMessageRead: messageId=${event.messageId} not found in state, ignoring');
+      logger.w(
+          'ReceiveMessageRead: messageId=${event.messageId} not found in state, ignoring');
       return;
     }
 
@@ -1275,11 +1407,13 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   // === Phase 3: Reconnection & App Resume ===
 
   /// Handle reconnection — trigger delta sync for active conversation
-  void _onReconnectionDetected(_ReconnectionDetected event, Emitter<MessageState> emit) {
+  void _onReconnectionDetected(
+      _ReconnectionDetected event, Emitter<MessageState> emit) {
     if (state is! MessagesLoaded) return;
     final currentState = state as MessagesLoaded;
 
-    logger.i('Reconnection detected, triggering delta sync for chat ${currentState.chatId}');
+    logger.i(
+        'Reconnection detected, triggering delta sync for chat ${currentState.chatId}');
     _startBackgroundFetch(currentState.chatId, 20);
   }
 
@@ -1292,12 +1426,14 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     if (_lastBackgroundedAt != null) {
       final backgroundDuration = now.difference(_lastBackgroundedAt!);
       if (backgroundDuration.inSeconds < 30) {
-        logger.d('App resumed after ${backgroundDuration.inSeconds}s, skipping delta sync');
+        logger.d(
+            'App resumed after ${backgroundDuration.inSeconds}s, skipping delta sync');
         return;
       }
     }
 
-    logger.i('App resumed after >30s, triggering delta sync for chat ${currentState.chatId}');
+    logger.i(
+        'App resumed after >30s, triggering delta sync for chat ${currentState.chatId}');
     _startBackgroundFetch(currentState.chatId, 20);
   }
 
@@ -1307,20 +1443,21 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   }
 
   /// Handle refresh messages
-  Future<void> _onRefreshMessages(RefreshMessages event, Emitter<MessageState> emit) async {
+  Future<void> _onRefreshMessages(
+      RefreshMessages event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
-    
+
     add(LoadMessages(
       chatId: (state as MessagesLoaded).chatId,
       forceRefresh: true,
     ));
   }
-  
+
   /// Handle clear messages
   void _onClearMessages(ClearMessages event, Emitter<MessageState> emit) {
     emit(const MessageState.initial());
   }
-  
+
   /// **Cancel real-time message subscription - ENTERPRISE CLEANUP**
   ///
   /// **Performance**: <100ms cleanup
@@ -1346,7 +1483,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       },
     );
   }
-  
+
   /// **Subscribe to real-time messages - ENTERPRISE REAL-TIME**
   ///
   /// **Performance**: <100ms message delivery
@@ -1362,7 +1499,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       final connectResult = await _realtimeService.connect();
       final connectOk = connectResult.fold((_) => false, (_) => true);
       if (!connectOk) {
-        logger.e('Failed to connect to real-time server before joining chat room $chatId');
+        logger.e(
+            'Failed to connect to real-time server before joining chat room $chatId');
         return;
       }
     }
@@ -1388,14 +1526,14 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     _messageSubscriptions[chatId] = _realtimeService.messageStream
         .where((message) => message.chatId == chatId)
         .listen(
-          (message) {
-            logger.d('Received real-time message: ${message.id} in chat $chatId');
-            add(ReceiveRealTimeMessage(message));
-          },
-          onError: (error) {
-            logger.e('Error in real-time message stream: $error');
-          },
-        );
+      (message) {
+        logger.d('Received real-time message: ${message.id} in chat $chatId');
+        add(ReceiveRealTimeMessage(message));
+      },
+      onError: (error) {
+        logger.e('Error in real-time message stream: $error');
+      },
+    );
 
     logger.i('Real-time subscription established for chat: $chatId');
   }
@@ -1409,7 +1547,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     final currentState = state as MessagesLoaded;
 
-    logger.i('Toggling reaction ${event.emojiCode} on message ${event.messageId}');
+    logger.i(
+        'Toggling reaction ${event.emojiCode} on message ${event.messageId}');
 
     // Determine if we're adding or removing
     final targetMessage = currentState.messages.firstWhere(
@@ -1431,7 +1570,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       if (isRemoving) {
         // Remove reaction
         updatedReactions = msg.reactions
-            .where((r) => !(r.code == event.emojiCode && r.userId == _currentUserId))
+            .where((r) =>
+                !(r.code == event.emojiCode && r.userId == _currentUserId))
             .toList();
       } else {
         // Add reaction
@@ -1511,7 +1651,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         },
       );
     } catch (e, stackTrace) {
-      logger.e('Unexpected error toggling reaction', error: e, stackTrace: stackTrace);
+      logger.e('Unexpected error toggling reaction',
+          error: e, stackTrace: stackTrace);
 
       // Rollback on unexpected error
       emit(currentState.copyWith(
@@ -1547,7 +1688,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     // This ensures we can match the API response even with rapid sends
     const uuid = Uuid();
     final clientId = uuid.v4();
-    final draftId = 'draft_$clientId'; // Temporary ID until server assigns real one
+    final draftId =
+        'draft_$clientId'; // Temporary ID until server assigns real one
 
     // Determine message type from first file
     // Cross-platform: use fileNames on web (path might be blob URL), path on mobile
@@ -1559,7 +1701,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         event.fileNames!.isNotEmpty;
 
     String extension;
-    if ((kIsWeb || useFileBytes) && event.fileNames != null && event.fileNames!.isNotEmpty) {
+    if ((kIsWeb || useFileBytes) &&
+        event.fileNames != null &&
+        event.fileNames!.isNotEmpty) {
       extension = event.fileNames!.first.split('.').last.toLowerCase();
     } else {
       // Mobile: extract extension from path
@@ -1574,13 +1718,15 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     if (useFileBytes) {
       // fileBytes mode: create attachments from bytes (works on any platform)
       localAttachments = List.generate(event.fileBytes!.length, (index) {
-        final fileName = event.fileNames != null && index < event.fileNames!.length
-            ? event.fileNames![index]
-            : 'file_$index';
+        final fileName =
+            event.fileNames != null && index < event.fileNames!.length
+                ? event.fileNames![index]
+                : 'file_$index';
         final fileBytes = Uint8List.fromList(event.fileBytes![index]);
-        final fileSize = event.fileSizes != null && index < event.fileSizes!.length
-            ? event.fileSizes![index]
-            : fileBytes.length;
+        final fileSize =
+            event.fileSizes != null && index < event.fileSizes!.length
+                ? event.fileSizes![index]
+                : fileBytes.length;
 
         return MessageAttachment(
           id: 'local_${clientId}_$index',
@@ -1600,13 +1746,17 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           final path = entry.value;
 
           // Get file name - from event on web, from path on mobile
-          final fileName = kIsWeb && event.fileNames != null && index < event.fileNames!.length
+          final fileName = kIsWeb &&
+                  event.fileNames != null &&
+                  index < event.fileNames!.length
               ? event.fileNames![index]
               : path.split('/').last.split('\\').last;
 
           // Get file size - from event on web, from File on mobile
           int fileSize = 0;
-          if (kIsWeb && event.fileSizes != null && index < event.fileSizes!.length) {
+          if (kIsWeb &&
+              event.fileSizes != null &&
+              index < event.fileSizes!.length) {
             fileSize = event.fileSizes![index];
           } else if (!kIsWeb) {
             // Mobile only: use dart:io File operations
@@ -1616,7 +1766,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
           // Get file bytes - from event on web (for display during upload)
           Uint8List? fileBytes;
-          if (kIsWeb && event.fileBytes != null && index < event.fileBytes!.length) {
+          if (kIsWeb &&
+              event.fileBytes != null &&
+              index < event.fileBytes!.length) {
             fileBytes = Uint8List.fromList(event.fileBytes![index]);
           }
 
@@ -1668,7 +1820,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     try {
       // Step 2: Upload all files with progress tracking
       final uploadedUrls = <String>[];
-      final int fileCount = useFileBytes ? event.fileBytes!.length : event.localFilePaths.length;
+      final int fileCount =
+          useFileBytes ? event.fileBytes!.length : event.localFilePaths.length;
 
       for (var i = 0; i < fileCount; i++) {
         final filePath = !useFileBytes && i < event.localFilePaths.length
@@ -1677,12 +1830,15 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
         // Use bytes when in fileBytes mode or on web
         final bool useBytesForUpload = useFileBytes || kIsWeb;
-        final Uint8List? uploadBytes = useBytesForUpload && event.fileBytes != null && i < event.fileBytes!.length
+        final Uint8List? uploadBytes = useBytesForUpload &&
+                event.fileBytes != null &&
+                i < event.fileBytes!.length
             ? Uint8List.fromList(event.fileBytes![i])
             : null;
-        final String? uploadFileName = event.fileNames != null && i < event.fileNames!.length
-            ? event.fileNames![i]
-            : null;
+        final String? uploadFileName =
+            event.fileNames != null && i < event.fileNames!.length
+                ? event.fileNames![i]
+                : null;
 
         final result = await _attachmentRepository.uploadAttachment(
           messageId: draftId,
@@ -1739,7 +1895,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           _markMessageAsFailed(emit, clientId);
         },
         (message) {
-          logger.i('Message sent successfully: ${message.id} (clientId: $clientId)');
+          logger.i(
+              'Message sent successfully: ${message.id} (clientId: $clientId)');
 
           // Step 4: Replace optimistic message with server response
           // Match by clientId to handle rapid sends correctly
@@ -1747,7 +1904,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         },
       );
     } catch (e, stackTrace) {
-      logger.e('Error sending message with attachments', error: e, stackTrace: stackTrace);
+      logger.e('Error sending message with attachments',
+          error: e, stackTrace: stackTrace);
       _markMessageAsFailed(emit, clientId);
     }
   }
@@ -1764,10 +1922,12 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     final messages = currentState.messages.map((message) {
       // Match by clientId (not by draftId which could be ambiguous)
       if (message.clientId == clientId) {
-        logger.d('Replacing draft (clientId: $clientId) with server message: ${serverMessage.id}');
+        logger.d(
+            'Replacing draft (clientId: $clientId) with server message: ${serverMessage.id}');
 
         // Preserve file size from draft attachments (backend doesn't return size)
-        final mergedAttachments = serverMessage.attachments.asMap().entries.map((entry) {
+        final mergedAttachments =
+            serverMessage.attachments.asMap().entries.map((entry) {
           final serverAttachment = entry.value;
           // Find corresponding draft attachment by index or URL
           if (entry.key < message.attachments.length) {
@@ -1795,7 +1955,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       final mentionIds = serverMessage.mentionTo.map((m) => m.id).toList();
       final conversationName = _conversationName;
 
-      logger.i('Sending push notification to ${mentionIds.length} mentioned users');
+      logger.i(
+          'Sending push notification to ${mentionIds.length} mentioned users');
 
       // Fire-and-forget: don't await, don't block UI
       unawaited(_sendPushNotification.call(
@@ -1825,7 +1986,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       // Match by clientId for accurate tracking with rapid sends
       if (message.clientId != clientId) return message;
 
-      final updatedAttachments = message.attachments.asMap().entries.map((entry) {
+      final updatedAttachments =
+          message.attachments.asMap().entries.map((entry) {
         if (entry.key != attachmentIndex) return entry.value;
         return entry.value.copyWith(uploadProgress: progress);
       }).toList();
@@ -1956,7 +2118,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
             final mentionIds = message.mentionTo.map((m) => m.id).toList();
             final conversationName = _conversationName;
 
-            logger.i('Sending push notification to ${mentionIds.length} mentioned users');
+            logger.i(
+                'Sending push notification to ${mentionIds.length} mentioned users');
 
             // Fire-and-forget: don't await, don't block UI
             unawaited(_sendPushNotification.call(
@@ -1973,7 +2136,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         },
       );
     } catch (e, stackTrace) {
-      logger.e('Error sending location message', error: e, stackTrace: stackTrace);
+      logger.e('Error sending location message',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -2028,7 +2192,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     if (state is MessagesLoaded) {
       final loadedState = state as MessagesLoaded;
       // Update members first, then re-transform so system events resolve names
-      final updatedState = loadedState.copyWith(conversationMembers: event.members);
+      final updatedState =
+          loadedState.copyWith(conversationMembers: event.members);
       emit(updatedState.copyWith(
         uiMessages: _transformMessagesWithMembers(
           updatedState.messages,

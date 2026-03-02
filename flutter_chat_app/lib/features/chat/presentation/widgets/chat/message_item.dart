@@ -12,7 +12,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' as domain;
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart'
+    as domain;
 import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:flutter_chat_app/presentation/widgets/message_status_indicator.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
@@ -27,6 +28,7 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/video_p
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/link_preview_card.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/read_receipt_avatars.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/read_receipt_bottom_sheet.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/chat/sticker_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/expandable_rich_text.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
@@ -53,7 +55,8 @@ class MessageItem extends StatefulWidget {
   final bool isGroupChat;
 
   // Callback when user edits and sends an image from fullscreen gallery
-  final void Function(Uint8List editedBytes, String fileName)? onEditedImageSend;
+  final void Function(Uint8List editedBytes, String fileName)?
+      onEditedImageSend;
 
   const MessageItem({
     Key? key,
@@ -73,7 +76,8 @@ class MessageItem extends StatefulWidget {
   State<MessageItem> createState() => _MessageItemState();
 }
 
-class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClientMixin {
+class _MessageItemState extends State<MessageItem>
+    with AutomaticKeepAliveClientMixin {
   bool _isMediaLoaded = false;
   bool _isMediaError = false;
   late double _mediaAspectRatio = 16 / 9;
@@ -98,7 +102,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
 
     // Special handling for @all mention - backend may not include it in mentionTo
     // Add fallback if not present
-    if (!mentionNameById.containsKey('all') && widget.uiState.content.contains('[@all]')) {
+    if (!mentionNameById.containsKey('all') &&
+        widget.uiState.content.contains('[@all]')) {
       mentionNameById['all'] = 'All';
     }
 
@@ -249,7 +254,9 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
 
     if (kDebugMode) {
       final replyId = widget.uiState.message?.replyMessageId;
-      if (replyId != null && replyId.isNotEmpty && widget.uiState.replyMessage == null) {
+      if (replyId != null &&
+          replyId.isNotEmpty &&
+          widget.uiState.replyMessage == null) {
         debugPrint(
           '[MessageItem] reply missing uiStateId=${widget.uiState.id} '
           'replyMessageId=$replyId contentType=${widget.uiState.contentType} '
@@ -285,9 +292,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
           top: widget.uiState.showSenderName ? 8.0 : 0.0,
         ),
         child: Column(
-          crossAxisAlignment: isCurrentUser
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             // Message row with avatar for non-current user
@@ -328,7 +334,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                     children: [
                       if (widget.uiState.showSenderName && !isCurrentUser)
                         Padding(
-                          padding: const EdgeInsets.only(left: 4.0, bottom: 4.0),
+                          padding:
+                              const EdgeInsets.only(left: 4.0, bottom: 4.0),
                           child: RepaintBoundary(
                             child: Text(
                               widget.uiState.senderName,
@@ -346,8 +353,7 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                 ),
 
                 // Space for status indicator on own messages
-                if (isCurrentUser)
-                  const SizedBox(width: 4.0),
+                if (isCurrentUser) const SizedBox(width: 4.0),
 
                 // Message status indicator for own messages
                 if (isCurrentUser &&
@@ -356,16 +362,17 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                   RepaintBoundary(
                     child: MessageStatusIndicator(
                       messageId: widget.uiState.id,
-                      messageQueueService: GetIt.instance<MessageQueueService>(),
-                      status: _mapMessageStatusToQueueStatus(widget.uiState.status),
+                      messageQueueService:
+                          GetIt.instance<MessageQueueService>(),
+                      status:
+                          _mapMessageStatusToQueueStatus(widget.uiState.status),
                     ),
                   ),
               ],
             ),
 
             // Read receipt avatars below own messages
-            if (isCurrentUser &&
-                widget.uiState.readReceiptReaders.isNotEmpty)
+            if (isCurrentUser && widget.uiState.readReceiptReaders.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(right: 8.0, top: 4.0),
                 child: ReadReceiptAvatars(
@@ -415,7 +422,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     final urls = widget.uiState.urls;
     if (urls.isEmpty) return const [];
 
-    final typeName = widget.uiState.contentType.toString().split('.').last.toLowerCase();
+    final typeName =
+        widget.uiState.contentType.toString().split('.').last.toLowerCase();
     final attachmentType = switch (typeName) {
       'image' => 'image',
       'video' => 'video',
@@ -440,9 +448,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
 
   Widget _buildMessageBubble(BuildContext context, bool isFromCurrentUser) {
     final ThemeData theme = Theme.of(context);
-    final messageAlignment = isFromCurrentUser
-        ? CrossAxisAlignment.end
-        : CrossAxisAlignment.start;
+    final messageAlignment =
+        isFromCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start;
 
     double bubbleMaxWidth() {
       final screenWidth = MediaQuery.of(context).size.width;
@@ -493,23 +500,38 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     final renderableAttachments = _getRenderableAttachments();
     final contentType = widget.uiState.contentType;
 
+    if (contentType == domain.ContentType.sticker) {
+      return _buildStickerMessageBubble(
+        context,
+        isFromCurrentUser: isFromCurrentUser,
+        messageAlignment: messageAlignment,
+        maxWidth: bubbleMaxWidth(),
+      );
+    }
+
     // For file-only messages (no text), use neutral bubble color
     // to avoid blue background leaking around file tiles
     final hasTextContent = widget.uiState.content.isNotEmpty;
     final hasOnlyMedia = renderableAttachments.isNotEmpty &&
-        renderableAttachments.every((a) => a.type == 'image' || a.type == 'video') &&
+        renderableAttachments
+            .every((a) => a.type == 'image' || a.type == 'video') &&
         !hasTextContent;
     final hasOnlyFiles = renderableAttachments.isNotEmpty &&
-        renderableAttachments.every((a) => a.type != 'image' && a.type != 'video') &&
+        renderableAttachments
+            .every((a) => a.type != 'image' && a.type != 'video') &&
         !hasTextContent;
 
     final isOnPrimaryBackground = isFromCurrentUser && !hasOnlyMedia;
 
     final bubbleColor = hasOnlyFiles
-        ? (isFromCurrentUser ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest)
+        ? (isFromCurrentUser
+            ? theme.colorScheme.primary
+            : theme.colorScheme.surfaceContainerHighest)
         : (hasOnlyMedia
             ? Colors.transparent
-            : (isFromCurrentUser ? theme.colorScheme.primary : theme.cardColor));
+            : (isFromCurrentUser
+                ? theme.colorScheme.primary
+                : theme.cardColor));
 
     final textColor = hasOnlyFiles
         ? (theme.textTheme.bodyMedium?.color ?? Colors.black)
@@ -520,8 +542,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     // Determine if we should use audio/video player instead of media gallery
     final isAudioMessage = contentType == domain.ContentType.audio;
     final isVideoMessage = contentType == domain.ContentType.video;
-    final useSpecialPlayer = (isAudioMessage || isVideoMessage) &&
-        renderableAttachments.length == 1;
+    final useSpecialPlayer =
+        (isAudioMessage || isVideoMessage) && renderableAttachments.length == 1;
 
     return Container(
       constraints: BoxConstraints(
@@ -637,7 +659,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
               ),
 
             // Message content
-            if (widget.uiState.content.isNotEmpty || renderableAttachments.isEmpty)
+            if (widget.uiState.content.isNotEmpty ||
+                renderableAttachments.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12.0,
@@ -697,7 +720,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
             // Reactions bar (phia duoi content)
             if (widget.uiState.groupedReactions.isNotEmpty && !hasOnlyMedia)
               Padding(
-                padding: const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 8.0),
+                padding:
+                    const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 8.0),
                 child: ReactionBar(
                   groupedReactions: widget.uiState.groupedReactions,
                   isFromCurrentUser: isFromCurrentUser,
@@ -721,11 +745,11 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                   onReactionLongPress: (emojiCode, isCurrentlyReacted) {
                     if (isCurrentlyReacted) {
                       context.read<MessageBloc>().add(
-                        ToggleReaction(
-                          messageId: widget.uiState.id,
-                          emojiCode: emojiCode,
-                        ),
-                      );
+                            ToggleReaction(
+                              messageId: widget.uiState.id,
+                              emojiCode: emojiCode,
+                            ),
+                          );
                     }
                   },
                   onAddReaction: () {
@@ -733,11 +757,11 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
                       context,
                       onEmojiSelected: (emoji) {
                         context.read<MessageBloc>().add(
-                          ToggleReaction(
-                            messageId: widget.uiState.id,
-                            emojiCode: emoji,
-                          ),
-                        );
+                              ToggleReaction(
+                                messageId: widget.uiState.id,
+                                emojiCode: emoji,
+                              ),
+                            );
                       },
                     );
                   },
@@ -770,12 +794,14 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     );
   }
 
-  void _showAvatarMenu(BuildContext context, String userId, String displayName, String? avatarUrl) {
+  void _showAvatarMenu(BuildContext context, String userId, String displayName,
+      String? avatarUrl) {
     final l10n = context.l10n;
     final renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox?;
     if (overlay == null) return;
 
     final position = renderBox.localToGlobal(Offset.zero, ancestor: overlay);
@@ -833,7 +859,8 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
   Future<void> _openDirectMessage(BuildContext context, String userId) async {
     try {
       final chatRemoteDataSource = GetIt.I<IChatRemoteDataSource>();
-      final chat = await chatRemoteDataSource.createDirectChat(receiverId: userId);
+      final chat =
+          await chatRemoteDataSource.createDirectChat(receiverId: userId);
       if (!context.mounted) return;
       await ChatNavigationHelper.navigateToChatDetail(context, chatId: chat.id);
     } catch (_) {
@@ -898,8 +925,117 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
     );
   }
 
+  Widget _buildStickerMessageBubble(
+    BuildContext context, {
+    required bool isFromCurrentUser,
+    required CrossAxisAlignment messageAlignment,
+    required double maxWidth,
+  }) {
+    final theme = Theme.of(context);
+    final textColor = theme.textTheme.bodySmall?.color ?? Colors.black;
+
+    return Container(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: Column(
+        crossAxisAlignment: messageAlignment,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.uiState.forwardInfo != null)
+            _buildForwardPreview(
+              context,
+              isFromCurrentUser,
+              isOnPrimaryBackground: false,
+            ),
+          if (widget.uiState.replyMessage != null)
+            _buildReplyPreview(
+              context,
+              isFromCurrentUser,
+              isOnPrimaryBackground: false,
+            ),
+          StickerMessageWidget(
+            stickerCode: widget.uiState.content,
+            size: AppDimens.avatarHuge,
+          ),
+          if (widget.uiState.showTimestamp || widget.uiState.isEdited)
+            Padding(
+              padding: const EdgeInsets.only(top: AppDimens.spaceXSmall),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.uiState.isEdited)
+                    Text(
+                      '${context.l10n.edited}  ',
+                      style: TextStyle(
+                        color: textColor.withOpacity(0.5),
+                        fontSize: 10.0,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  if (widget.uiState.showTimestamp)
+                    Text(
+                      widget.uiState.formattedTime,
+                      style: TextStyle(
+                        color: textColor.withOpacity(0.7),
+                        fontSize: 10.0,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          if (widget.uiState.groupedReactions.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: AppDimens.spaceXSmall),
+              child: ReactionBar(
+                groupedReactions: widget.uiState.groupedReactions,
+                isFromCurrentUser: isFromCurrentUser,
+                showAddButton: true,
+                onReactionTap: (
+                  emojiCode,
+                  reactorIds,
+                  reactorNameById,
+                  reactorAvatarById,
+                ) {
+                  ReactionDetailModal.show(
+                    context,
+                    emojiCode: emojiCode,
+                    reactorIds: reactorIds,
+                    reactorNameById: reactorNameById,
+                    reactorAvatarById: reactorAvatarById,
+                  );
+                },
+                onReactionLongPress: (emojiCode, isCurrentlyReacted) {
+                  if (isCurrentlyReacted) {
+                    context.read<MessageBloc>().add(
+                          ToggleReaction(
+                            messageId: widget.uiState.id,
+                            emojiCode: emojiCode,
+                          ),
+                        );
+                  }
+                },
+                onAddReaction: () {
+                  EmojiPickerBottomSheet.show(
+                    context,
+                    onEmojiSelected: (emoji) {
+                      context.read<MessageBloc>().add(
+                            ToggleReaction(
+                              messageId: widget.uiState.id,
+                              emojiCode: emoji,
+                            ),
+                          );
+                    },
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   /// Map MessageStatus to MessageQueueStatus
-  MessageQueueStatus _mapMessageStatusToQueueStatus(domain.MessageStatus status) {
+  MessageQueueStatus _mapMessageStatusToQueueStatus(
+      domain.MessageStatus status) {
     switch (status) {
       case domain.MessageStatus.pending:
         return MessageQueueStatus.pending;

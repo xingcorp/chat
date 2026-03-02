@@ -458,6 +458,8 @@ class MessageListTransformer {
         return l10n.replyPreviewFile(reply.fileName ?? '');
       case ContentType.location:
         return l10n.replyPreviewLocation;
+      case ContentType.sticker:
+        return l10n.replyPreviewSticker;
       case ContentType.link:
         return reply.content.isNotEmpty ? reply.content : l10n.replyPreviewLink;
       case ContentType.event:
@@ -529,6 +531,8 @@ class MessageListTransformer {
         return l10n.replyPreviewFile(msg.fileName ?? '');
       case ContentType.location:
         return l10n.replyPreviewLocation;
+      case ContentType.sticker:
+        return l10n.replyPreviewSticker;
       case ContentType.link:
         return msg.content.isNotEmpty ? msg.content : l10n.replyPreviewLink;
       case ContentType.event:
