@@ -1667,4 +1667,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cannotOpenConversation => 'Cannot open conversation';
+
+  @override
+  String get deleteMessageNotImplemented =>
+      'Delete message feature is not yet implemented';
+
+  @override
+  String get unknownError => 'Unknown error';
+
+  @override
+  String errorWithMessage(String message) {
+    return 'Error: $message';
+  }
+
+  @override
+  String get selectConversationToStart => 'Select a conversation to start';
+
+  @override
+  String get cannotLoadMedia => 'Cannot load media';
+
+  @override
+  String get attachmentImage => 'Image';
+
+  @override
+  String get attachmentVideo => 'Video';
+
+  @override
+  String get attachmentFile => 'File';
+
+  @override
+  String get attachmentLocation => 'Location';
+
+  @override
+  String get notificationsMuted => 'Notifications muted';
+
+  @override
+  String get notificationsEnabled => 'Notifications enabled';
+
+  @override
+  String get userBlocked => 'User is blocked';
+
+  @override
+  String get blockThisUser => 'Block this user';
+
+  @override
+  String get reportSpamOrAbuse => 'Report spam or abuse';
+
+  @override
+  String get leaveThisGroup => 'Leave this group';
+
+  @override
+  String get deleteThisConversation => 'Delete this conversation';
 }

@@ -478,7 +478,7 @@ class __$$MessageDtoImplCopyWithImpl<$Res>
 class _$MessageDtoImpl implements _MessageDto {
   const _$MessageDtoImpl(
       {required this.id,
-      @JsonKey(name: 'message') required this.content,
+      @JsonKey(name: 'message') this.content = '',
       final List<String> urls = const [],
       required this.type,
       required this.createdAt,
@@ -709,7 +709,7 @@ class _$MessageDtoImpl implements _MessageDto {
 abstract class _MessageDto implements MessageDto {
   const factory _MessageDto(
       {required final String id,
-      @JsonKey(name: 'message') required final String content,
+      @JsonKey(name: 'message') final String content,
       final List<String> urls,
       required final String type,
       required final int createdAt,
@@ -1170,7 +1170,7 @@ class __$$ReplyMessageDtoImplCopyWithImpl<$Res>
 class _$ReplyMessageDtoImpl implements _ReplyMessageDto {
   const _$ReplyMessageDtoImpl(
       {required this.id,
-      @JsonKey(name: 'message') required this.content,
+      @JsonKey(name: 'message') this.content = '',
       this.type,
       final List<String> urls = const [],
       this.fileName,
@@ -1263,7 +1263,7 @@ class _$ReplyMessageDtoImpl implements _ReplyMessageDto {
 abstract class _ReplyMessageDto implements ReplyMessageDto {
   const factory _ReplyMessageDto(
       {required final String id,
-      @JsonKey(name: 'message') required final String content,
+      @JsonKey(name: 'message') final String content,
       final String? type,
       final List<String> urls,
       final String? fileName,

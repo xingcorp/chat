@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_list_panel.dart';
 import 'package:flutter_chat_app/features/home/presentation/pages/main_home_page.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/layouts/app_responsive_layout.dart';
 
 class ChatHomePage extends StatefulWidget {
@@ -57,7 +58,7 @@ class _DesktopEmptyChatPane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ColoredBox(
+    return ColoredBox(
       color: Color(0xFFF3F4F6),
       child: Center(
         child: SizedBox(
@@ -71,7 +72,7 @@ class _DesktopEmptyChatPane extends StatelessWidget {
                   Icon(Icons.chat_bubble_outline, size: 44),
                   SizedBox(height: 12),
                   Text(
-                    'Chọn một cuộc trò chuyện để bắt đầu',
+                    context.l10n.selectConversationToStart,
                     textAlign: TextAlign.center,
                   ),
                 ],

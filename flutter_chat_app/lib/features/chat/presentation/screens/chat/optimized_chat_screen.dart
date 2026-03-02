@@ -41,7 +41,7 @@ extension ChatStateExtension on ChatState {
   /// Get chats list (backward compatibility)
   List<Chat> get chats {
     return whenOrNull(
-      loaded: (chats, _, __, ___, ____, _____, _______, ________, _________, __________) => chats,
+      loaded: (chats, _, __, ___, ____, _____, _______, ________, _________, __________, ___________) => chats,
       messagesLoaded: (chats, _, __) => chats ?? [],
     ) ?? [];
   }
@@ -338,7 +338,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
               // TODO: Implement proper message deletion
               // Would need MessageBloc or different approach
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Chức năng xóa tin nhắn chưa được triển khai')),
+                SnackBar(content: Text(context.l10n.deleteMessageNotImplemented)),
               );
             },
             child: Text(context.l10n.delete, style: TextStyle(color: Colors.red)),
@@ -534,7 +534,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Trả lời ${replyMessage.senderName}',
+                                  context.l10n.replyTo(replyMessage.senderName),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
@@ -588,7 +588,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Lỗi: ${state.errorMessage ?? "Lỗi không xác định"}'),
+                        Text(context.l10n.errorWithMessage(state.errorMessage ?? context.l10n.unknownError)),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _loadInitialMessages,
@@ -607,8 +607,8 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                 }
                 
                 if (messages.isEmpty) {
-                  return const Center(
-                    child: Text('Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!'),
+                  return Center(
+                    child: Text(context.l10n.noMessagesInChat),
                   );
                 }
                 
@@ -811,25 +811,25 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
         children: [
           _buildAttachmentOption(
             icon: Icons.photo,
-            label: 'Hình ảnh',
+            label: context.l10n.attachmentImage,
             color: Colors.purple,
             onTap: () => _handleAttachmentSelection(ContentType.image),
           ),
           _buildAttachmentOption(
             icon: Icons.videocam,
-            label: 'Video',
+            label: context.l10n.attachmentVideo,
             color: Colors.red,
             onTap: () => _handleAttachmentSelection(ContentType.video),
           ),
           _buildAttachmentOption(
             icon: Icons.insert_drive_file,
-            label: 'Tệp tin',
+            label: context.l10n.attachmentFile,
             color: Colors.blue,
             onTap: () => _handleAttachmentSelection(ContentType.file),
           ),
           _buildAttachmentOption(
             icon: Icons.location_on,
-            label: 'Vị trí',
+            label: context.l10n.attachmentLocation,
             color: Colors.green,
             onTap: () => _handleAttachmentSelection(ContentType.location),
           ),

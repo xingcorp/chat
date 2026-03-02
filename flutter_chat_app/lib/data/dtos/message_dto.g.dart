@@ -9,7 +9,7 @@ part of 'message_dto.dart';
 _$MessageDtoImpl _$$MessageDtoImplFromJson(Map<String, dynamic> json) =>
     _$MessageDtoImpl(
       id: json['id'] as String,
-      content: json['message'] as String,
+      content: json['message'] as String? ?? '',
       urls:
           (json['urls'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
@@ -112,7 +112,7 @@ _$ReplyMessageDtoImpl _$$ReplyMessageDtoImplFromJson(
         Map<String, dynamic> json) =>
     _$ReplyMessageDtoImpl(
       id: json['id'] as String,
-      content: json['message'] as String,
+      content: json['message'] as String? ?? '',
       type: json['type'] as String?,
       urls:
           (json['urls'] as List<dynamic>?)?.map((e) => e as String).toList() ??

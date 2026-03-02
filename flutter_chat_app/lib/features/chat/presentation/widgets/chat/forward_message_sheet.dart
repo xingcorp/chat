@@ -137,7 +137,7 @@ class _ForwardMessageSheetState extends State<ForwardMessageSheet> {
             Expanded(
               child: chatState.maybeWhen(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                loaded: (chats, _, __, ___, ____, _____, _______, ________, _________, __________) {
+                loaded: (chats, _, __, ___, ____, _____, _______, ________, _________, __________, ___________) {
                   final filteredChats = chats.where((chat) {
                     if (_searchQuery.isEmpty) return true;
                     final chatName = chat.name ?? '';

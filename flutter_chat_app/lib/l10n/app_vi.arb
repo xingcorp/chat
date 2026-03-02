@@ -918,5 +918,37 @@
   "cannotOpenConversation": "Không thể mở cuộc trò chuyện",
   "@cannotOpenConversation": {
     "description": "Error message when unable to open conversation from notification"
-  }
+  },
+
+  "deleteMessageNotImplemented": "Chức năng xóa tin nhắn chưa được triển khai",
+
+  "unknownError": "Lỗi không xác định",
+
+  "errorWithMessage": "Lỗi: {message}",
+
+  "selectConversationToStart": "Chọn một cuộc trò chuyện để bắt đầu",
+
+  "cannotLoadMedia": "Không thể tải media",
+
+  "attachmentImage": "Hình ảnh",
+
+  "attachmentVideo": "Video",
+
+  "attachmentFile": "Tệp tin",
+
+  "attachmentLocation": "Vị trí",
+
+  "notificationsMuted": "Thông báo đã tắt",
+
+  "notificationsEnabled": "Thông báo đang bật",
+
+  "userBlocked": "Người dùng đã bị chặn",
+
+  "blockThisUser": "Chặn người dùng này",
+
+  "reportSpamOrAbuse": "Báo cáo spam hoặc lạm dụng",
+
+  "leaveThisGroup": "Rời khỏi nhóm này",
+
+  "deleteThisConversation": "Xóa cuộc trò chuyện này"
 }

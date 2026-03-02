@@ -154,7 +154,7 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
               child: BlocConsumer<ChatBloc, ChatState>(
                 listener: (context, state) {
                   state.whenOrNull(
-                    loaded: (chats, hasMore, isLoadingMore, page, pageSize, total, activeFilter, cachedLists, filterPages, filterHasMore) {
+                    loaded: (chats, hasMore, isLoadingMore, page, pageSize, total, activeFilter, cachedLists, filterPages, filterHasMore, isSyncing) {
                       safeSetState(() {
                         _isLoadingMore = false;
                       });
@@ -181,7 +181,7 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                   return state.when(
                     initial: () => _buildLoading(context),
                     loading: () => _buildLoading(context),
-                    loaded: (chats, hasMore, isLoadingMore, page, pageSize, total, activeFilter, cachedLists, filterPages, filterHasMore) {
+                    loaded: (chats, hasMore, isLoadingMore, page, pageSize, total, activeFilter, cachedLists, filterPages, filterHasMore, isSyncing) {
                       return Column(
                         children: [
                           ConversationTypeTabBar(

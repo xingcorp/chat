@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
@@ -234,7 +235,7 @@ class _OptimizedMessageListState extends State<OptimizedMessageList> with Ticker
   @override
   Widget build(BuildContext context) {
     if (widget.messages.isEmpty) {
-      return const Center(child: Text('Không có tin nhắn'));
+      return Center(child: Text(context.l10n.noMessages));
     }
 
     final uiStates = MessageListTransformer.transform(

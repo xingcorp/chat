@@ -95,6 +95,8 @@ import '../../features/chat/domain/usecases/chat/get_local_conversations_usecase
     as _i163;
 import '../../features/chat/domain/usecases/chat/leave_conversation_usecase.dart'
     as _i462;
+import '../../features/chat/domain/usecases/chat/persist_incoming_message_usecase.dart'
+    as _i962;
 import '../../features/chat/domain/usecases/chat/search_conversations_usecase.dart'
     as _i130;
 import '../../features/chat/domain/usecases/chat/search_messages_usecase.dart'
@@ -160,12 +162,14 @@ import '../services/attachment_queue_service.dart' as _i567;
 import '../services/auth_service.dart' as _i745;
 import '../services/background_sync_service.dart' as _i200;
 import '../services/chat_message_service.dart' as _i1060;
+import '../services/chat_module_event_bus.dart' as _i1030;
 import '../services/connectivity_analyzer_service.dart' as _i286;
 import '../services/connectivity_service.dart' as _i47;
 import '../services/cross_platform_file_service.dart' as _i590;
 import '../services/current_user_provider.dart' as _i113;
 import '../services/database_service.dart' as _i665;
 import '../services/device_capability_service.dart' as _i98;
+import '../services/foreground_sync_service.dart' as _i920;
 import '../services/frequent_reaction_service.dart' as _i537;
 import '../services/graphql_subscription_service.dart' as _i98;
 import '../services/image_editor_service.dart' as _i930;
@@ -238,6 +242,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i695.MediaProcessingService());
     gh.lazySingleton<_i982.MediaLocalDataSourceImpl>(
         () => _i982.MediaLocalDataSourceImpl());
+    gh.lazySingleton<_i1030.ChatModuleEventBus>(
+        () => _i1030.ChatModuleEventBus());
     gh.lazySingleton<_i271.UserRepository>(() => _i790.UserRepositoryImpl(
           localDataSource: gh<_i439.UserLocalDataSource>(),
           remoteDataSource: gh<_i404.UserRemoteDataSource>(),
@@ -380,6 +386,11 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.singleton<_i428.IntegrationHub>(
         () => _i428.IntegrationHub(gh<_i665.DatabaseService>()));
+    gh.factory<_i962.PersistIncomingMessageUseCase>(
+        () => _i962.PersistIncomingMessageUseCase(
+              localDataSource: gh<_i1011.ChatLocalDataSource>(),
+              logger: gh<_i221.AppLogger>(),
+            ));
     gh.lazySingleton<_i999.LocalizationService>(
         () => _i999.LocalizationService(gh<_i329.LocalStorage>()));
     gh.lazySingleton<_i677.TombstoneStore>(
@@ -717,6 +728,12 @@ extension GetItInjectableX on _i174.GetIt {
               chatRepository: gh<_i81.IChatRepository>(),
               logger: gh<_i221.AppLogger>(),
             ));
+    gh.lazySingleton<_i920.ForegroundSyncService>(
+        () => _i920.ForegroundSyncService(
+              repository: gh<_i81.IChatRepository>(),
+              eventBus: gh<_i1030.ChatModuleEventBus>(),
+              logger: gh<_i221.AppLogger>(),
+            ));
     gh.lazySingleton<_i89.NotificationHandlerService>(
         () => _i89.NotificationHandlerService(
               logger: gh<_i974.Logger>(),
@@ -734,6 +751,10 @@ extension GetItInjectableX on _i174.GetIt {
           searchMessages: gh<_i56.SearchMessagesUseCase>(),
           logger: gh<_i221.AppLogger>(),
         ));
+    gh.factory<_i1028.ChatMembersBloc>(() => _i1028.ChatMembersBloc(
+          logger: gh<_i221.AppLogger>(),
+          chatRepository: gh<_i81.IChatRepository>(),
+        ));
     gh.factory<_i863.ChatBloc>(() => _i863.ChatBloc(
           gh<_i787.GetConversationsUseCase>(),
           gh<_i163.GetLocalConversationsUseCase>(),
@@ -749,10 +770,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i301.RealtimeService>(),
           gh<_i848.MarkAsReadUseCase>(),
           gh<_i113.CurrentUserProvider>(),
-        ));
-    gh.factory<_i1028.ChatMembersBloc>(() => _i1028.ChatMembersBloc(
-          logger: gh<_i221.AppLogger>(),
-          chatRepository: gh<_i81.IChatRepository>(),
+          gh<_i962.PersistIncomingMessageUseCase>(),
+          gh<_i1030.ChatModuleEventBus>(),
         ));
     gh.factory<_i101.ConversationDetailBloc>(() => _i101.ConversationDetailBloc(
           getConversationDetail: gh<_i899.GetConversationDetailUseCase>(),

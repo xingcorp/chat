@@ -1669,4 +1669,55 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get cannotOpenConversation => 'Không thể mở cuộc trò chuyện';
+
+  @override
+  String get deleteMessageNotImplemented =>
+      'Chức năng xóa tin nhắn chưa được triển khai';
+
+  @override
+  String get unknownError => 'Lỗi không xác định';
+
+  @override
+  String errorWithMessage(String message) {
+    return 'Lỗi: $message';
+  }
+
+  @override
+  String get selectConversationToStart => 'Chọn một cuộc trò chuyện để bắt đầu';
+
+  @override
+  String get cannotLoadMedia => 'Không thể tải media';
+
+  @override
+  String get attachmentImage => 'Hình ảnh';
+
+  @override
+  String get attachmentVideo => 'Video';
+
+  @override
+  String get attachmentFile => 'Tệp tin';
+
+  @override
+  String get attachmentLocation => 'Vị trí';
+
+  @override
+  String get notificationsMuted => 'Thông báo đã tắt';
+
+  @override
+  String get notificationsEnabled => 'Thông báo đang bật';
+
+  @override
+  String get userBlocked => 'Người dùng đã bị chặn';
+
+  @override
+  String get blockThisUser => 'Chặn người dùng này';
+
+  @override
+  String get reportSpamOrAbuse => 'Báo cáo spam hoặc lạm dụng';
+
+  @override
+  String get leaveThisGroup => 'Rời khỏi nhóm này';
+
+  @override
+  String get deleteThisConversation => 'Xóa cuộc trò chuyện này';
 }

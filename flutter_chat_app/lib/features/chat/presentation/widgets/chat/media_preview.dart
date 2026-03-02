@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/utils/optimized_repaint_boundary.dart';
 
@@ -295,8 +296,8 @@ class _MediaPreviewState extends BaseState<MediaPreview> {
               size: 32,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Không thể tải media',
+            Text(
+              context.l10n.cannotLoadMedia,
               style: TextStyle(
                 color: Colors.grey,
                 fontSize: 12,

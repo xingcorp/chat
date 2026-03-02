@@ -58,11 +58,11 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
                 context: context,
                 icon: isMuted ? Icons.notifications_off : Icons.notifications,
                 title: isMuted
-                    ? 'Mute Notifications'
-                    : 'Notifications',
+                    ? context.l10n.muteNotifications
+                    : context.l10n.notifications,
                 subtitle: isMuted
-                    ? 'Notifications muted'
-                    : 'Notifications enabled',
+                    ? context.l10n.notificationsMuted
+                    : context.l10n.notificationsEnabled,
                 onTap: onMuteToggle,
               ),
 
@@ -74,11 +74,11 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
                   context: context,
                   icon: isBlocked ? Icons.block : Icons.person,
                   title: isBlocked
-                      ? 'Unblock User'
-                      : 'Block User',
+                      ? context.l10n.unblockUser
+                      : context.l10n.blockUser,
                   subtitle: isBlocked
-                      ? 'User is blocked'
-                      : 'Block this user',
+                      ? context.l10n.userBlocked
+                      : context.l10n.blockThisUser,
                   onTap: onBlockToggle,
                   isDestructive: !isBlocked,
                 ),
@@ -90,8 +90,8 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
               _buildSettingRow(
                 context: context,
                 icon: Icons.report,
-                title: 'Report Chat',
-                subtitle: 'Report spam or abuse',
+                title: context.l10n.reportChat,
+                subtitle: context.l10n.reportSpamOrAbuse,
                 onTap: onReport,
                 isDestructive: true,
               ),
@@ -113,7 +113,7 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
                   context: context,
                   icon: Icons.exit_to_app,
                   title: context.l10n.leaveGroup,
-                  subtitle: 'Leave this group',
+                  subtitle: context.l10n.leaveThisGroup,
                   onTap: onLeaveGroup,
                   isDestructive: true,
                 ),
@@ -124,8 +124,8 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
               _buildSettingRow(
                 context: context,
                 icon: Icons.delete,
-                title: 'Delete Chat',
-                subtitle: 'Delete this conversation',
+                title: context.l10n.deleteChat,
+                subtitle: context.l10n.deleteThisConversation,
                 onTap: onDeleteChat,
                 isDestructive: true,
               ),

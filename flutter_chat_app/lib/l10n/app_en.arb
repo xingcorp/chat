@@ -2952,5 +2952,90 @@
   "cannotOpenConversation": "Cannot open conversation",
   "@cannotOpenConversation": {
     "description": "Error message when unable to open conversation from notification"
+  },
+
+  "deleteMessageNotImplemented": "Delete message feature is not yet implemented",
+  "@deleteMessageNotImplemented": {
+    "description": "Message when delete message feature is not implemented"
+  },
+
+  "unknownError": "Unknown error",
+  "@unknownError": {
+    "description": "Fallback error message when error details are unknown"
+  },
+
+  "errorWithMessage": "Error: {message}",
+  "@errorWithMessage": {
+    "description": "Error message with details",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+
+  "selectConversationToStart": "Select a conversation to start",
+  "@selectConversationToStart": {
+    "description": "Empty state message on chat home page"
+  },
+
+  "cannotLoadMedia": "Cannot load media",
+  "@cannotLoadMedia": {
+    "description": "Error message when media fails to load"
+  },
+
+  "attachmentImage": "Image",
+  "@attachmentImage": {
+    "description": "Label for image attachment option"
+  },
+
+  "attachmentVideo": "Video",
+  "@attachmentVideo": {
+    "description": "Label for video attachment option"
+  },
+
+  "attachmentFile": "File",
+  "@attachmentFile": {
+    "description": "Label for file attachment option"
+  },
+
+  "attachmentLocation": "Location",
+  "@attachmentLocation": {
+    "description": "Label for location attachment option"
+  },
+
+  "notificationsMuted": "Notifications muted",
+  "@notificationsMuted": {
+    "description": "Subtitle when notifications are muted"
+  },
+
+  "notificationsEnabled": "Notifications enabled",
+  "@notificationsEnabled": {
+    "description": "Subtitle when notifications are enabled"
+  },
+
+  "userBlocked": "User is blocked",
+  "@userBlocked": {
+    "description": "Subtitle when user is blocked"
+  },
+
+  "blockThisUser": "Block this user",
+  "@blockThisUser": {
+    "description": "Subtitle for block user option"
+  },
+
+  "reportSpamOrAbuse": "Report spam or abuse",
+  "@reportSpamOrAbuse": {
+    "description": "Subtitle for report chat option"
+  },
+
+  "leaveThisGroup": "Leave this group",
+  "@leaveThisGroup": {
+    "description": "Subtitle for leave group option"
+  },
+
+  "deleteThisConversation": "Delete this conversation",
+  "@deleteThisConversation": {
+    "description": "Subtitle for delete chat option"
   }
 }

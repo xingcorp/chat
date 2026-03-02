@@ -3055,6 +3055,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cannot open conversation'**
   String get cannotOpenConversation;
+
+  /// Message when delete message feature is not implemented
+  ///
+  /// In en, this message translates to:
+  /// **'Delete message feature is not yet implemented'**
+  String get deleteMessageNotImplemented;
+
+  /// Fallback error message when error details are unknown
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown error'**
+  String get unknownError;
+
+  /// Error message with details
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {message}'**
+  String errorWithMessage(String message);
+
+  /// Empty state message on chat home page
+  ///
+  /// In en, this message translates to:
+  /// **'Select a conversation to start'**
+  String get selectConversationToStart;
+
+  /// Error message when media fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot load media'**
+  String get cannotLoadMedia;
+
+  /// Label for image attachment option
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get attachmentImage;
+
+  /// Label for video attachment option
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get attachmentVideo;
+
+  /// Label for file attachment option
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get attachmentFile;
+
+  /// Label for location attachment option
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get attachmentLocation;
+
+  /// Subtitle when notifications are muted
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications muted'**
+  String get notificationsMuted;
+
+  /// Subtitle when notifications are enabled
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications enabled'**
+  String get notificationsEnabled;
+
+  /// Subtitle when user is blocked
+  ///
+  /// In en, this message translates to:
+  /// **'User is blocked'**
+  String get userBlocked;
+
+  /// Subtitle for block user option
+  ///
+  /// In en, this message translates to:
+  /// **'Block this user'**
+  String get blockThisUser;
+
+  /// Subtitle for report chat option
+  ///
+  /// In en, this message translates to:
+  /// **'Report spam or abuse'**
+  String get reportSpamOrAbuse;
+
+  /// Subtitle for leave group option
+  ///
+  /// In en, this message translates to:
+  /// **'Leave this group'**
+  String get leaveThisGroup;
+
+  /// Subtitle for delete chat option
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this conversation'**
+  String get deleteThisConversation;
 }
 
 class _AppLocalizationsDelegate

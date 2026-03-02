@@ -18,7 +18,7 @@ part 'message_dto.g.dart';
 class MessageDto with _$MessageDto {
   const factory MessageDto({
     required String id,
-    @JsonKey(name: 'message') required String content,
+    @JsonKey(name: 'message') @Default('') String content,
     @Default([]) List<String> urls,
     required String type,
     required int createdAt,
@@ -71,7 +71,7 @@ class SenderDto with _$SenderDto {
 class ReplyMessageDto with _$ReplyMessageDto {
   const factory ReplyMessageDto({
     required String id,
-    @JsonKey(name: 'message') required String content,
+    @JsonKey(name: 'message') @Default('') String content,
     String? type,
     @Default([]) List<String> urls,
     String? fileName,
