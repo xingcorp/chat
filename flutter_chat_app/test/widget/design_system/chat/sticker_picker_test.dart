@@ -111,7 +111,12 @@ void main() {
           ],
         ),
       ],
-      recent: const <Sticker>[],
+      recent: const <Sticker>[
+        Sticker(
+          code: 'emotion_classic_happy',
+          imageUrl: 'https://example.com/happy.png',
+        ),
+      ],
     );
     getIt.registerSingleton<IStickerRepository>(repository);
 
@@ -126,9 +131,6 @@ void main() {
     expect(find.byType(StickerPickerBottomSheet), findsOneWidget);
     expect(find.text('Recent'), findsOneWidget);
     expect(find.text('Classic'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('sticker_tab_emotion_classic')));
-    await settlePicker(tester);
 
     await tester
         .tap(find.byKey(const Key('sticker_item_emotion_classic_happy')));

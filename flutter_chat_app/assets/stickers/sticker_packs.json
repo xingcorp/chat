@@ -1,6 +1,162 @@
 {
   "packs": [
     {
+      "id": "fluent_featured_reactions",
+      "name": "Hot Reactions",
+      "thumbnail": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f603.png",
+      "stickers": [
+        {
+          "code": "fluent_featured_reactions_happy",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f603.png"
+        },
+        {
+          "code": "fluent_featured_reactions_love",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f970.png"
+        },
+        {
+          "code": "fluent_featured_reactions_laugh",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f923.png"
+        },
+        {
+          "code": "fluent_featured_reactions_wow",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f92f.png"
+        },
+        {
+          "code": "fluent_featured_reactions_cool",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f60e.png"
+        },
+        {
+          "code": "fluent_featured_reactions_cry",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f62d.png"
+        },
+        {
+          "code": "fluent_featured_reactions_think",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f914.png"
+        },
+        {
+          "code": "fluent_featured_reactions_angry",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f620.png"
+        }
+      ]
+    },
+    {
+      "id": "fluent_featured_cats",
+      "name": "Cute Cats",
+      "thumbnail": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f63a.png",
+      "stickers": [
+        {
+          "code": "fluent_featured_cats_happy",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f63a.png"
+        },
+        {
+          "code": "fluent_featured_cats_love",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f63b.png"
+        },
+        {
+          "code": "fluent_featured_cats_laugh",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f639.png"
+        },
+        {
+          "code": "fluent_featured_cats_sad",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f63f.png"
+        },
+        {
+          "code": "fluent_featured_cats_wow",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f640.png"
+        },
+        {
+          "code": "fluent_featured_cats_smile",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f63c.png"
+        },
+        {
+          "code": "fluent_featured_cats_kiss",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f63d.png"
+        },
+        {
+          "code": "fluent_featured_cats_angry",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f63e.png"
+        }
+      ]
+    },
+    {
+      "id": "fluent_featured_animals",
+      "name": "Animals 3D",
+      "thumbnail": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f43c.png",
+      "stickers": [
+        {
+          "code": "fluent_featured_animals_dog",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f436.png"
+        },
+        {
+          "code": "fluent_featured_animals_panda",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f43c.png"
+        },
+        {
+          "code": "fluent_featured_animals_rabbit",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f430.png"
+        },
+        {
+          "code": "fluent_featured_animals_koala",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f428.png"
+        },
+        {
+          "code": "fluent_featured_animals_fox",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f98a.png"
+        },
+        {
+          "code": "fluent_featured_animals_bear",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f43b.png"
+        },
+        {
+          "code": "fluent_featured_animals_unicorn",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f984.png"
+        },
+        {
+          "code": "fluent_featured_animals_pig",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f437.png"
+        }
+      ]
+    },
+    {
+      "id": "fluent_featured_party",
+      "name": "Party 3D",
+      "thumbnail": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f973.png",
+      "stickers": [
+        {
+          "code": "fluent_featured_party_confetti",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f389.png"
+        },
+        {
+          "code": "fluent_featured_party_balloon",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f388.png"
+        },
+        {
+          "code": "fluent_featured_party_gift",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f381.png"
+        },
+        {
+          "code": "fluent_featured_party_party",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f973.png"
+        },
+        {
+          "code": "fluent_featured_party_fire",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f525.png"
+        },
+        {
+          "code": "fluent_featured_party_clap",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f44f.png"
+        },
+        {
+          "code": "fluent_featured_party_sparkles",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/2728.png"
+        },
+        {
+          "code": "fluent_featured_party_trophy",
+          "url": "https://uwx.github.io/fluentui-twemoji-3d/export/3D_png/72x72/1f3c6.png"
+        }
+      ]
+    },
+    {
       "id": "emotion_classic",
       "name": "Classic",
       "thumbnail": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f600.png",
@@ -28,6 +184,18 @@
         {
           "code": "emotion_classic_angry",
           "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f620.png"
+        },
+        {
+          "code": "emotion_classic_wow",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f92f.png"
+        },
+        {
+          "code": "emotion_classic_cool",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f60e.png"
+        },
+        {
+          "code": "emotion_classic_party",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f973.png"
         }
       ]
     },
@@ -59,6 +227,135 @@
         {
           "code": "animal_friends_bear",
           "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f43b.png"
+        },
+        {
+          "code": "animal_friends_fox",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f98a.png"
+        },
+        {
+          "code": "animal_friends_rabbit",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f430.png"
+        },
+        {
+          "code": "animal_friends_koala",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f428.png"
+        }
+      ]
+    },
+    {
+      "id": "food_party",
+      "name": "Food",
+      "thumbnail": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f355.png",
+      "stickers": [
+        {
+          "code": "food_party_pizza",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f355.png"
+        },
+        {
+          "code": "food_party_burger",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f354.png"
+        },
+        {
+          "code": "food_party_ramen",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f35c.png"
+        },
+        {
+          "code": "food_party_cake",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f370.png"
+        },
+        {
+          "code": "food_party_coffee",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/2615.png"
+        },
+        {
+          "code": "food_party_icecream",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f366.png"
+        },
+        {
+          "code": "food_party_donut",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f369.png"
+        },
+        {
+          "code": "food_party_bubbletea",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f9cb.png"
+        }
+      ]
+    },
+    {
+      "id": "weather_mood",
+      "name": "Weather",
+      "thumbnail": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png",
+      "stickers": [
+        {
+          "code": "weather_mood_sun",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png"
+        },
+        {
+          "code": "weather_mood_moon",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f319.png"
+        },
+        {
+          "code": "weather_mood_cloud",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/2601.png"
+        },
+        {
+          "code": "weather_mood_rain",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f327.png"
+        },
+        {
+          "code": "weather_mood_thunder",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/26c8.png"
+        },
+        {
+          "code": "weather_mood_snow",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/26c4.png"
+        },
+        {
+          "code": "weather_mood_rainbow",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f308.png"
+        },
+        {
+          "code": "weather_mood_wind",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f32c.png"
+        }
+      ]
+    },
+    {
+      "id": "celebration_time",
+      "name": "Party",
+      "thumbnail": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f389.png",
+      "stickers": [
+        {
+          "code": "celebration_time_confetti",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f389.png"
+        },
+        {
+          "code": "celebration_time_balloon",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f388.png"
+        },
+        {
+          "code": "celebration_time_gift",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f381.png"
+        },
+        {
+          "code": "celebration_time_sparkles",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/2728.png"
+        },
+        {
+          "code": "celebration_time_trophy",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f3c6.png"
+        },
+        {
+          "code": "celebration_time_medal",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f947.png"
+        },
+        {
+          "code": "celebration_time_fire",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f525.png"
+        },
+        {
+          "code": "celebration_time_clap",
+          "url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f44f.png"
         }
       ]
     }

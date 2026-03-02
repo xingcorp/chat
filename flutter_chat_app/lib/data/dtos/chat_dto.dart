@@ -1,6 +1,6 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'chat_dto.freezed.dart';
 part 'chat_dto.g.dart';
@@ -288,7 +288,7 @@ extension ChatDtoMapper on ChatDto {
 
     final mentionNameById = <String, String>{
       for (final m in domainMembers)
-        if ((m.userId).isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
+        if (m.userId.isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
           m.userId: m.fullName!.trim(),
       // Include mentionTo from lastMessage for proper mention resolution
       if (lastMessage?.mentionTo case final mention?
@@ -316,16 +316,21 @@ extension ChatDtoMapper on ChatDto {
         case 'doc':
         case 'file':
         case 'document':
-          final name = fileName != null && fileName.isNotEmpty ? fileName : 'File';
+          final name =
+              fileName != null && fileName.isNotEmpty ? fileName : 'File';
           return '📄 $name';
         case 'location':
           return '📍 Vị trí';
+        case 'sticker':
+          return '🎯 Sticker';
         case 'link':
-          final content = _formatPreviewContent(lastMessage?.message, mentionNameById);
+          final content =
+              _formatPreviewContent(lastMessage?.message, mentionNameById);
           return content ?? '🔗 Liên kết';
         default:
           // Text or unknown type — format mentions in content
-          final content = _formatPreviewContent(lastMessage?.message, mentionNameById);
+          final content =
+              _formatPreviewContent(lastMessage?.message, mentionNameById);
           if (content != null && content.isNotEmpty) return content;
           return fileName != null && fileName.isNotEmpty ? fileName : null;
       }
@@ -335,11 +340,13 @@ extension ChatDtoMapper on ChatDto {
       id: id,
       name: name,
       avatarUrl: imageUrl,
-      lastMessageTime: lastMessageAt != null 
+      lastMessageTime: lastMessageAt != null
           ? DateTime.fromMillisecondsSinceEpoch(lastMessageAt!)
           : null,
       lastMessagePreview: resolvedPreview,
-      unreadCount: personalConversation?.unreadCount ?? members.firstOrNull?.unreadCount ?? 0,
+      unreadCount: personalConversation?.unreadCount ??
+          members.firstOrNull?.unreadCount ??
+          0,
       type: _mapChatType(type),
       participantIds: members
           .map((m) => m.userId ?? m.user?.id)
@@ -358,7 +365,8 @@ extension ChatDtoMapper on ChatDto {
     Map<String, String> mentionNameById,
   ) {
     if (message == null || message.trim().isEmpty) return null;
-    final formatted = message.formatChatMessage(mentionNameById: mentionNameById);
+    final formatted =
+        message.formatChatMessage(mentionNameById: mentionNameById);
     return formatted.trim().isNotEmpty ? formatted.trim() : null;
   }
 
