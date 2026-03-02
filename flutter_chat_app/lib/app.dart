@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_portal/flutter_portal.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:flutter_chat_app/core/app/chat_app_shell.dart';
@@ -58,28 +59,30 @@ class _AppViewState extends State<_AppView> {
           builder: (context, localeState) {
             l10n_helper.L10nHelper.initialize(localeState.locale ?? const Locale('en'));
 
-            return MaterialApp.router(
-              title: 'Flutter Chat App',
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: themeState.themeMode,
-              locale: localeState.locale,
-              supportedLocales: L10n.all,
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
-              builder: (context, child) {
-                return Directionality(
-                  textDirection:
-                      localeState.isRtl ? TextDirection.rtl : TextDirection.ltr,
-                  child: child!,
-                );
-              },
-              routerConfig: _router,
+            return Portal(
+              child: MaterialApp.router(
+                title: 'Flutter Chat App',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: themeState.themeMode,
+                locale: localeState.locale,
+                supportedLocales: L10n.all,
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                builder: (context, child) {
+                  return Directionality(
+                    textDirection:
+                        localeState.isRtl ? TextDirection.rtl : TextDirection.ltr,
+                    child: child!,
+                  );
+                },
+                routerConfig: _router,
+              ),
             );
           },
         );

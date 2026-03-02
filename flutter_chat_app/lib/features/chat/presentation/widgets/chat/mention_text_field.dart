@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:flutter_portal/flutter_portal.dart';
 
 /// Special member class for "@all" mention - mentions everyone in the group
 class _AllConversationMember extends ConversationMember {
@@ -101,14 +101,8 @@ class MentionTextField extends StatefulWidget {
   State<MentionTextField> createState() => _MentionTextFieldState();
 }
 
-class _MentionTextFieldState extends State<MentionTextField>
-    with WidgetsBindingObserver {
-  final LayerLink _layerLink = LayerLink();
-  OverlayEntry? _overlayEntry;
-  static const double _kOverlayGap = 8;
+class _MentionTextFieldState extends State<MentionTextField> {
   static const double _kOverlayMaxHeight = 200;
-  static const double _kOverlayMinUsableHeight = 80;
-  static const double _kOverlayMaxWidth = 420;
   static const double _kTileHeight = 62;
 
   // Mention state
@@ -122,7 +116,6 @@ class _MentionTextFieldState extends State<MentionTextField>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     widget.controller.addListener(_onTextChanged);
     widget.focusNode?.addListener(_onFocusChanged);
   }
@@ -143,19 +136,9 @@ class _MentionTextFieldState extends State<MentionTextField>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     widget.controller.removeListener(_onTextChanged);
     widget.focusNode?.removeListener(_onFocusChanged);
-    _removeOverlay();
     super.dispose();
-  }
-
-  @override
-  void didChangeMetrics() {
-    super.didChangeMetrics();
-    if (_showMentionList && _filteredMembers.isNotEmpty) {
-      _showOverlay();
-    }
   }
 
   void _onTextChanged() {
@@ -165,14 +148,11 @@ class _MentionTextFieldState extends State<MentionTextField>
 
   void _onFocusChanged() {
     final hasFocus = widget.focusNode?.hasFocus ?? false;
-    if (!hasFocus) {
-      if (_showMentionList) {
-        setState(() {
-          _showMentionList = false;
-          _currentMentionQuery = '';
-        });
-      }
-      _removeOverlay();
+    if (!hasFocus && _showMentionList) {
+      setState(() {
+        _showMentionList = false;
+        _currentMentionQuery = '';
+      });
     }
   }
 
@@ -232,7 +212,6 @@ class _MentionTextFieldState extends State<MentionTextField>
           _filteredMembers = combinedMembers;
           _selectedMentionIndex = 0;
         });
-        _showOverlay();
         return;
       }
     }
@@ -245,7 +224,6 @@ class _MentionTextFieldState extends State<MentionTextField>
         _mentionEndIndex = -1;
         _currentMentionQuery = '';
       });
-      _removeOverlay();
     }
   }
 
@@ -293,7 +271,6 @@ class _MentionTextFieldState extends State<MentionTextField>
       _mentionEndIndex = -1;
       _currentMentionQuery = '';
     });
-    _removeOverlay();
 
     // Keep cursor/focus in input after selecting from overlay.
     final focusNode = widget.focusNode;
@@ -330,84 +307,20 @@ class _MentionTextFieldState extends State<MentionTextField>
         code.contains(query);
   }
 
-  void _showOverlay() {
-    if (!mounted || !_showMentionList || _filteredMembers.isEmpty) return;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_showMentionList || _filteredMembers.isEmpty) return;
-      final renderBox = context.findRenderObject() as RenderBox?;
-      if (renderBox == null || !renderBox.hasSize) return;
-      _showOverlayInternal(renderBox);
-    });
-  }
-
-  void _showOverlayInternal(RenderBox renderBox) {
-    _removeOverlay();
-
-    final mediaQuery = MediaQuery.of(context);
-    final screenSize = mediaQuery.size;
-    final keyboardInset = mediaQuery.viewInsets.bottom;
-    final safeTop = mediaQuery.padding.top;
-
-    final inputSize = renderBox.size;
-    final inputTopLeft = renderBox.localToGlobal(Offset.zero);
-    final inputRect = Rect.fromLTWH(
-      inputTopLeft.dx,
-      inputTopLeft.dy,
-      inputSize.width,
-      inputSize.height,
-    );
-
-    final viewportBottom = screenSize.height - keyboardInset;
-    final spaceBelow = (viewportBottom - inputRect.bottom - _kOverlayGap)
-        .clamp(0.0, double.infinity);
-    final spaceAbove =
-        (inputRect.top - safeTop - _kOverlayGap).clamp(0.0, double.infinity);
-
-    final forceAboveOnMobile = !kIsWeb && keyboardInset > 0;
-    final showBelow = !forceAboveOnMobile &&
-        (spaceBelow >= _kOverlayMinUsableHeight || spaceBelow >= spaceAbove);
-    final maxAvailableHeight = showBelow ? spaceBelow : spaceAbove;
-    final double overlayWidth = math.min(
-      math.min(inputRect.width, _kOverlayMaxWidth),
-      screenSize.width - 16,
-    );
-    final hasAllMention = _filteredMembers.isNotEmpty &&
-        _filteredMembers.first is _AllConversationMember;
+  Widget _buildSuggestionsPanel() {
     final double preferredHeight = math.min(
       _kOverlayMaxHeight,
       _filteredMembers.length * _kTileHeight,
     );
-    final double overlayHeight = maxAvailableHeight > 0
-        ? math.min(
-            math.max(maxAvailableHeight, _kTileHeight),
-            preferredHeight,
-          )
-        : preferredHeight;
-    final double left = inputRect.left
-        .clamp(
-          8.0,
-          math.max(8.0, screenSize.width - overlayWidth - 8.0),
-        )
-        .toDouble();
-    final rawTop = showBelow
-        ? inputRect.bottom + _kOverlayGap
-        : inputRect.top - overlayHeight - _kOverlayGap;
-    final double top = rawTop
-        .clamp(
-          safeTop + 4.0,
-          math.max(safeTop + 4.0,
-              screenSize.height - keyboardInset - overlayHeight - 4.0),
-        )
-        .toDouble();
 
-    Widget buildSuggestionsPanel() {
-      return Material(
+    return TextFieldTapRegion(
+      child: Material(
         elevation: 4.0,
         borderRadius: BorderRadius.circular(8.0),
         color: Theme.of(context).cardColor,
         clipBehavior: Clip.antiAlias,
-        child: TextFieldTapRegion(
+        child: SizedBox(
+          height: preferredHeight,
           child: ListView.builder(
             padding: EdgeInsets.zero,
             itemExtent: _kTileHeight,
@@ -430,6 +343,9 @@ class _MentionTextFieldState extends State<MentionTextField>
                         fontWeight:
                             isSelected ? FontWeight.w600 : FontWeight.normal,
                       );
+
+              final hasAllMention = _filteredMembers.isNotEmpty &&
+                  _filteredMembers.first is _AllConversationMember;
 
               return ListTile(
                 dense: false,
@@ -489,40 +405,8 @@ class _MentionTextFieldState extends State<MentionTextField>
             },
           ),
         ),
-      );
-    }
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) => kIsWeb
-          ? Positioned(
-              left: left,
-              top: top,
-              width: overlayWidth,
-              height: overlayHeight,
-              child: buildSuggestionsPanel(),
-            )
-          : CompositedTransformFollower(
-              link: _layerLink,
-              showWhenUnlinked: false,
-              targetAnchor:
-                  showBelow ? Alignment.bottomLeft : Alignment.topLeft,
-              followerAnchor:
-                  showBelow ? Alignment.topLeft : Alignment.bottomLeft,
-              offset: Offset(0, showBelow ? _kOverlayGap : -_kOverlayGap),
-              child: SizedBox(
-                width: overlayWidth,
-                height: overlayHeight,
-                child: buildSuggestionsPanel(),
-              ),
-            ),
+      ),
     );
-
-    Overlay.of(context).insert(_overlayEntry!);
-  }
-
-  void _removeOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
   }
 
   Widget _buildHighlightedName(
@@ -581,8 +465,16 @@ class _MentionTextFieldState extends State<MentionTextField>
 
   @override
   Widget build(BuildContext context) {
-    return CompositedTransformTarget(
-      link: _layerLink,
+    final shouldShow = _showMentionList && _filteredMembers.isNotEmpty;
+
+    return PortalTarget(
+      visible: shouldShow,
+      anchor: const Aligned(
+        follower: Alignment.bottomLeft,
+        target: Alignment.topLeft,
+        widthFactor: 1,
+      ),
+      portalFollower: shouldShow ? _buildSuggestionsPanel() : null,
       child: TextField(
         controller: widget.controller,
         focusNode: widget.focusNode,

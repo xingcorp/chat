@@ -137,6 +137,9 @@ dependencies:
   permission_handler: ^12.0.1
   app_settings: ^6.1.1
 
+  # Portal (for mention overlay positioning)
+  flutter_portal: ^1.1.4
+
   # Social
   share_plus: ^12.0.1
   flutter_html: ^3.0.0
