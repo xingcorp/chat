@@ -1,13 +1,13 @@
 /// Dependency Injection Configuration
-/// 
+///
 /// Professional DI setup using GetIt + Injectable.
 /// Follows Clean Architecture with automatic dependency registration.
-/// 
+///
 /// Performance Targets:
 /// - Startup time: <500ms
 /// - Memory usage: <150MB
 /// - Zero duplicate registrations
-/// 
+///
 /// Author: Senior Flutter/Mobile Architect
 library injection;
 
@@ -36,12 +36,14 @@ import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart'
     as token_module;
 import 'package:flutter_chat_app/core/config/firebase_config.dart';
-import 'package:flutter_chat_app/core/network/graphql_client.dart' as core_graphql;
+import 'package:flutter_chat_app/core/network/graphql_client.dart'
+    as core_graphql;
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/network/http/dio_http_client.dart';
 import 'package:flutter_chat_app/core/network/http/http_client_interface.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
-import 'package:flutter_chat_app/core/network/socket_manager.dart' as socket_mgr;
+import 'package:flutter_chat_app/core/network/socket_manager.dart'
+    as socket_mgr;
 import 'package:flutter_chat_app/core/network/realtime/connection_pool_manager.dart';
 import 'package:flutter_chat_app/core/network/realtime/enhanced_realtime_connection_service.dart';
 import 'package:flutter_chat_app/core/network/realtime/models/realtime_connection_config.dart'
@@ -59,6 +61,10 @@ import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.d
     as media_local_ds;
 import 'package:flutter_chat_app/data/datasources/permissions_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/permissions/web_permissions_datasource.dart';
+import 'package:flutter_chat_app/data/services/gal_media_gallery_saver.dart';
+import 'package:flutter_chat_app/domain/repositories/i_media_repository.dart';
+import 'package:flutter_chat_app/domain/services/i_media_gallery_saver.dart';
+import 'package:flutter_chat_app/domain/usecases/media/save_media_to_gallery_usecase.dart';
 
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
@@ -71,16 +77,16 @@ import 'injection.config.dart';
 import 'modules/core_module.dart';
 
 /// Global service locator instance
-/// 
+///
 /// Use this to access registered dependencies throughout the app.
 /// Example: `final authService = getIt<IAuthService>();`
 final GetIt getIt = GetIt.instance;
 
 /// Initialize all dependencies
-/// 
+///
 /// This must be called before running the app.
 /// Registers external dependencies first, then auto-generated ones.
-/// 
+///
 /// **Performance**: <500ms initialization time
 /// **Memory**: <20MB for DI system
 @InjectableInit(
@@ -243,8 +249,25 @@ Future<void> configureDependencies() async {
       getIt.registerLazySingleton<INetworkInfo>(() => getIt<NetworkInfo>());
     }
 
+    if (!getIt.isRegistered<IMediaGallerySaver>()) {
+      getIt.registerLazySingleton<IMediaGallerySaver>(
+        () => GalMediaGallerySaver(getIt<AppLogger>()),
+      );
+    }
+
+    if (!getIt.isRegistered<SaveMediaToGalleryUseCase>()) {
+      getIt.registerLazySingleton<SaveMediaToGalleryUseCase>(
+        () => SaveMediaToGalleryUseCase(
+          mediaRepository: getIt<IMediaRepository>(),
+          gallerySaver: getIt<IMediaGallerySaver>(),
+          logger: getIt<AppLogger>(),
+        ),
+      );
+    }
+
     stopwatch.stop();
-    logger.i('✅ Dependency Injection initialized in ${stopwatch.elapsedMilliseconds}ms');
+    logger.i(
+        '✅ Dependency Injection initialized in ${stopwatch.elapsedMilliseconds}ms');
 
     // Validate performance
     if (stopwatch.elapsedMilliseconds > 500) {
@@ -258,7 +281,7 @@ Future<void> configureDependencies() async {
 }
 
 /// Register external dependencies that cannot be auto-registered
-/// 
+///
 /// These are third-party packages that need manual registration:
 /// - Logger: For logging throughout the app
 /// - SharedPreferences: For local storage
@@ -297,7 +320,8 @@ Future<void> _registerExternalDependencies(Logger logger) async {
       token_module.TokenRepositoryImpl(
         tokenStorage: getIt<token_module.TokenStorage>(),
         prefs: getIt<SharedPreferences>(),
-        refreshAccessToken: () => getIt<auth_ds.AuthRemoteDataSource>().refreshToken(),
+        refreshAccessToken: () =>
+            getIt<auth_ds.AuthRemoteDataSource>().refreshToken(),
       ),
     );
   }
@@ -350,7 +374,8 @@ Future<void> _registerExternalDependencies(Logger logger) async {
     throw StateError('Missing required environment key: GRAPHQL_WS_URL');
   }
   if (socketUrlRaw.isEmpty) {
-    throw StateError('Missing required environment key: SOCKET_URL (or WEBSOCKET_URL)');
+    throw StateError(
+        'Missing required environment key: SOCKET_URL (or WEBSOCKET_URL)');
   }
 
   final graphQlApiUrl = graphQlApiUrlRaw;
@@ -381,7 +406,8 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   }
 
   if (!getIt.isRegistered<String>(instanceName: 'graphQlApiUrl')) {
-    getIt.registerSingleton<String>(graphQlApiUrl, instanceName: 'graphQlApiUrl');
+    getIt.registerSingleton<String>(graphQlApiUrl,
+        instanceName: 'graphQlApiUrl');
   }
 
   if (!getIt.isRegistered<String>(instanceName: 'graphQlWsUrl')) {
@@ -389,7 +415,8 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   }
 
   if (!getIt.isRegistered<app_retry.RetryConfig>()) {
-    getIt.registerSingleton<app_retry.RetryConfig>(app_retry.RetryConfig.realtime);
+    getIt.registerSingleton<app_retry.RetryConfig>(
+        app_retry.RetryConfig.realtime);
   }
 
   // Initialize Firebase for all platforms
@@ -403,7 +430,8 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   }
 
   if (!getIt.isRegistered<FirebaseAnalytics>()) {
-    getIt.registerLazySingleton<FirebaseAnalytics>(() => FirebaseAnalytics.instance);
+    getIt.registerLazySingleton<FirebaseAnalytics>(
+        () => FirebaseAnalytics.instance);
   }
 
   if (!getIt.isRegistered<FirebaseCrashlytics>()) {
@@ -415,7 +443,8 @@ Future<void> _registerExternalDependencies(Logger logger) async {
     getIt.registerSingleton<int>(5, instanceName: 'connectionPoolMaxPoolSize');
   }
 
-  if (!getIt.isRegistered<int>(instanceName: 'connectionPoolMaxConnectionLifetime')) {
+  if (!getIt.isRegistered<int>(
+      instanceName: 'connectionPoolMaxConnectionLifetime')) {
     getIt.registerSingleton<int>(3600000,
         instanceName: 'connectionPoolMaxConnectionLifetime');
   }
@@ -430,7 +459,8 @@ Future<void> _registerExternalDependencies(Logger logger) async {
         instanceName: 'connectionPoolCleanupInterval');
   }
 
-  if (!getIt.isRegistered<int>(instanceName: 'connectionPoolHealthCheckInterval')) {
+  if (!getIt.isRegistered<int>(
+      instanceName: 'connectionPoolHealthCheckInterval')) {
     getIt.registerSingleton<int>(30000,
         instanceName: 'connectionPoolHealthCheckInterval');
   }
@@ -472,12 +502,13 @@ Future<void> _registerExternalDependencies(Logger logger) async {
 
   if (!getIt.isRegistered<GraphQLClient>()) {
     // Pre-populate env cache for GraphQLClientWrapperImpl.createClient fallback
-    core_graphql.GraphQLClientWrapperImpl.setEnvCache(Map<String, String>.from(dotenv.env));
+    core_graphql.GraphQLClientWrapperImpl.setEnvCache(
+        Map<String, String>.from(dotenv.env));
 
     // Create a GraphQL client with the current token and explicit URLs
     final client = await core_graphql.GraphQLClientWrapperImpl.createClient(
-      accessTokenProvider:
-          () => getIt<token_module.TokenRepository>().getAccessToken(),
+      accessTokenProvider: () =>
+          getIt<token_module.TokenRepository>().getAccessToken(),
       graphqlUrl: graphQlApiUrl,
       graphqlWsUrl: graphQlWsUrl,
     );
@@ -511,7 +542,7 @@ Future<void> _registerExternalDependencies(Logger logger) async {
 }
 
 /// Reset DI container (for testing)
-/// 
+///
 /// **Warning**: Only use this in tests!
 /// This will clear all registered dependencies.
 @visibleForTesting

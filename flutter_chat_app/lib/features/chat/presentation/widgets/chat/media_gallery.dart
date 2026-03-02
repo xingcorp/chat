@@ -9,12 +9,14 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/services/image_editor_service.dart';
+import 'package:flutter_chat_app/domain/usecases/media/save_media_to_gallery_usecase.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_popup_menu.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -60,7 +62,8 @@ class MediaGallery extends StatelessWidget {
   final bool isOnPrimaryBackground;
 
   /// Callback when user edits an image and wants to send it
-  final void Function(Uint8List editedBytes, String fileName)? onEditedImageSend;
+  final void Function(Uint8List editedBytes, String fileName)?
+      onEditedImageSend;
 
   const MediaGallery({
     Key? key,
@@ -80,8 +83,9 @@ class MediaGallery extends StatelessWidget {
     // Lọc attachments theo type
     final images = attachments.where((a) => a.type == 'image').toList();
     final videos = attachments.where((a) => a.type == 'video').toList();
-    final files = attachments.where((a) =>
-        a.type != 'image' && a.type != 'video').toList();
+    final files = attachments
+        .where((a) => a.type != 'image' && a.type != 'video')
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,12 +129,10 @@ class MediaGallery extends StatelessWidget {
           return v;
         }
 
-        final twoColTileHeight = isDesktop
-            ? clamp((availableWidth - 4) * 0.32, 160, 240)
-            : 160.0;
-        final gridTileHeight = isDesktop
-            ? clamp((availableWidth - 4) * 0.24, 120, 200)
-            : 120.0;
+        final twoColTileHeight =
+            isDesktop ? clamp((availableWidth - 4) * 0.32, 160, 240) : 160.0;
+        final gridTileHeight =
+            isDesktop ? clamp((availableWidth - 4) * 0.24, 120, 200) : 120.0;
 
         if (images.length == 1) {
           return _SmartSingleImageTile(
@@ -337,7 +339,8 @@ class MediaGallery extends StatelessWidget {
           ? null // Disable tap during upload
           : () => _openFullscreenGallery(
                 context,
-                attachments: attachments.where((a) => a.type == 'image').toList(),
+                attachments:
+                    attachments.where((a) => a.type == 'image').toList(),
                 initialIndex: index,
               ),
       child: ClipRRect(
@@ -516,10 +519,7 @@ class MediaGallery extends StatelessWidget {
     return GestureDetector(
       onTap: isUploading
           ? null // Disable tap during upload
-          : () {
-              // TODO: Download file
-              debugPrint('File tapped: ${file.url}');
-            },
+          : () => _saveAttachmentToGallery(context, file),
       child: Container(
         padding: const EdgeInsets.all(12.0),
         color: tileBackgroundColor,
@@ -632,6 +632,50 @@ class MediaGallery extends StatelessWidget {
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 
+  Future<void> _saveAttachmentToGallery(
+    BuildContext context,
+    MessageAttachment attachment,
+  ) async {
+    final GalleryMediaType? mediaType = switch (attachment.type.toLowerCase()) {
+      'image' => GalleryMediaType.image,
+      'video' => GalleryMediaType.video,
+      _ => null,
+    };
+
+    if (mediaType == null) {
+      AppSnackBar.warning(
+        context: context,
+        message: context.l10n.unsupportedFileType,
+      );
+      return;
+    }
+
+    final SaveMediaToGalleryUseCase saveMediaToGallery =
+        GetIt.I<SaveMediaToGalleryUseCase>();
+    final result = await saveMediaToGallery(
+      SaveMediaToGalleryParams(
+        url: attachment.url,
+        mediaType: mediaType,
+        mediaId: attachment.id,
+      ),
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    result.fold(
+      (failure) => AppSnackBar.error(
+        context: context,
+        message: failure.userMessage,
+      ),
+      (_) => AppSnackBar.success(
+        context: context,
+        message: context.l10n.downloaded,
+      ),
+    );
+  }
+
   /// Open fullscreen gallery
   Future<void> _openFullscreenGallery(
     BuildContext context, {
@@ -650,10 +694,12 @@ class MediaGallery extends StatelessWidget {
       ),
     );
 
-    debugPrint('[MediaGallery] FullscreenGallery popped, result=$result, onEditedImageSend=${onEditedImageSend != null}');
+    debugPrint(
+        '[MediaGallery] FullscreenGallery popped, result=$result, onEditedImageSend=${onEditedImageSend != null}');
     // If user edited an image, callback to parent
     if (result != null && onEditedImageSend != null) {
-      debugPrint('[MediaGallery] calling onEditedImageSend with ${result.bytes.length} bytes');
+      debugPrint(
+          '[MediaGallery] calling onEditedImageSend with ${result.bytes.length} bytes');
       onEditedImageSend!(result.bytes, result.fileName);
     }
   }
@@ -757,8 +803,8 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
 
   @override
   Widget build(BuildContext context) {
-    final hasLocalPath = widget.image.localPath != null &&
-                         widget.image.localPath!.isNotEmpty;
+    final hasLocalPath =
+        widget.image.localPath != null && widget.image.localPath!.isNotEmpty;
     final hasUrl = widget.image.url.isNotEmpty;
     final isUploading = widget.image.isUploading;
     final uploadProgress = widget.image.uploadProgress ?? 0.0;
@@ -860,7 +906,8 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
                         child: Container(
                           color: Colors.black.withValues(alpha: 0.4),
                           child: Center(
-                            child: _buildUploadProgressIndicator(uploadProgress),
+                            child:
+                                _buildUploadProgressIndicator(uploadProgress),
                           ),
                         ),
                       ),
@@ -917,10 +964,10 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
 class FullscreenGallery extends StatefulWidget {
   final List<MessageAttachment> attachments;
   final int initialIndex;
-  
+
   /// Optional ChatMessage for reactions and forwarding
   final ChatMessage? message;
-  
+
   /// Chat ID for forwarding
   final String? chatId;
 
@@ -953,17 +1000,17 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
     _pageController.dispose();
     super.dispose();
   }
-  
+
   void _toggleUI() {
     setState(() {
       _showUI = !_showUI;
     });
   }
-  
+
   /// Group reactions by emoji code
   List<ReactionGroup> _groupReactions(List<MessageReaction> reactions) {
     final Map<String, ReactionGroup> groups = {};
-    
+
     for (final reaction in reactions) {
       if (!groups.containsKey(reaction.code)) {
         groups[reaction.code] = ReactionGroup(
@@ -977,10 +1024,10 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
       groups[reaction.code]!.reactorNameById[reaction.userId] =
           reaction.userName ?? reaction.userId;
     }
-    
+
     return groups.values.toList();
   }
-  
+
   /// Show reaction picker bottom sheet
   void _showReactionPicker(BuildContext context) {
     EmojiPickerBottomSheet.show(
@@ -988,20 +1035,20 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
       onEmojiSelected: (emoji) {
         if (widget.message != null) {
           context.read<MessageBloc>().add(
-            ToggleReaction(
-              messageId: widget.message!.id,
-              emojiCode: emoji,
-            ),
-          );
+                ToggleReaction(
+                  messageId: widget.message!.id,
+                  emojiCode: emoji,
+                ),
+              );
         }
       },
     );
   }
-  
+
   /// Handle forward action
   void _handleForward() {
     if (widget.message == null) return;
-    
+
     showForwardMessageSheet(
       context,
       messages: [widget.message!],
@@ -1014,12 +1061,14 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
     final currentAttachment = widget.attachments[_currentIndex];
     final imageEditorService = GetIt.I<ImageEditorService>();
 
-    debugPrint('[FullscreenGallery] _handleEdit called, url=${currentAttachment.url}');
+    debugPrint(
+        '[FullscreenGallery] _handleEdit called, url=${currentAttachment.url}');
     imageEditorService.editNetworkImage(
       context,
       imageUrl: currentAttachment.url,
       onComplete: (bytes) {
-        debugPrint('[FullscreenGallery] onComplete called, bytes=${bytes.length}, mounted=${context.mounted}');
+        debugPrint(
+            '[FullscreenGallery] onComplete called, bytes=${bytes.length}, mounted=${context.mounted}');
         if (!context.mounted) return;
         final fileName = 'edited_${DateTime.now().millisecondsSinceEpoch}.jpg';
         debugPrint('[FullscreenGallery] popping with EditedImageResult');
@@ -1031,49 +1080,80 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
     );
   }
 
+  Future<void> _handleDownload() async {
+    final MessageAttachment currentAttachment =
+        widget.attachments[_currentIndex];
+    final SaveMediaToGalleryUseCase saveMediaToGallery =
+        GetIt.I<SaveMediaToGalleryUseCase>();
+
+    final result = await saveMediaToGallery(
+      SaveMediaToGalleryParams(
+        url: currentAttachment.url,
+        mediaType: GalleryMediaType.image,
+        mediaId: currentAttachment.id,
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    result.fold(
+      (failure) => AppSnackBar.error(
+        context: context,
+        message: failure.userMessage,
+      ),
+      (_) => AppSnackBar.success(
+        context: context,
+        message: context.l10n.downloaded,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasMessage = widget.message != null;
-    final groupedReactions = hasMessage ? _groupReactions(widget.message!.reactions) : <ReactionGroup>[];
-    
+    final groupedReactions = hasMessage
+        ? _groupReactions(widget.message!.reactions)
+        : <ReactionGroup>[];
+
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: _showUI ? AppBar(
-        backgroundColor: Colors.black87,
-        foregroundColor: Colors.white,
-        title: Text(
-          '${_currentIndex + 1} / ${widget.attachments.length}',
-          style: const TextStyle(color: Colors.white),
-        ),
-        actions: [
-          AppIconButton(
-            icon: Icons.edit,
-            onPressed: () => _handleEdit(),
-            tooltip: context.l10n.edit,
-          ),
-          AppIconButton(
-            icon: Icons.download,
-            onPressed: () {
-              // TODO: Download current image
-              debugPrint('Download: ${widget.attachments[_currentIndex].url}');
-            },
-            tooltip: context.l10n.download,
-          ),
-          if (hasMessage)
-            AppPopupMenu<String>(
-              icon: Icons.more_vert,
-              items: [
-                PopupMenuItem(
-                  value: 'forward',
-                  child: Text(context.l10n.forward),
+      appBar: _showUI
+          ? AppBar(
+              backgroundColor: Colors.black87,
+              foregroundColor: Colors.white,
+              title: Text(
+                '${_currentIndex + 1} / ${widget.attachments.length}',
+                style: const TextStyle(color: Colors.white),
+              ),
+              actions: [
+                AppIconButton(
+                  icon: Icons.edit,
+                  onPressed: () => _handleEdit(),
+                  tooltip: context.l10n.edit,
                 ),
+                AppIconButton(
+                  icon: Icons.download,
+                  onPressed: _handleDownload,
+                  tooltip: context.l10n.download,
+                ),
+                if (hasMessage)
+                  AppPopupMenu<String>(
+                    icon: Icons.more_vert,
+                    items: [
+                      PopupMenuItem(
+                        value: 'forward',
+                        child: Text(context.l10n.forward),
+                      ),
+                    ],
+                    onSelected: (value) {
+                      if (value == 'forward') _handleForward();
+                    },
+                  ),
               ],
-              onSelected: (value) {
-                if (value == 'forward') _handleForward();
-              },
-            ),
-        ],
-      ) : null,
+            )
+          : null,
       body: GestureDetector(
         onTap: _toggleUI,
         behavior: HitTestBehavior.opaque,
@@ -1102,91 +1182,94 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
                 child: CircularProgressIndicator(
                   value: event == null
                       ? 0
-                      : event.cumulativeBytesLoaded / (event.expectedTotalBytes ?? 1),
+                      : event.cumulativeBytesLoaded /
+                          (event.expectedTotalBytes ?? 1),
                 ),
               ),
             ),
-            
+
             // Bottom overlay with forward/reaction bar
-            if (hasMessage && _showUI) Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                padding: EdgeInsets.only(
-                  left: 16.0,
-                  right: 16.0,
-                  top: 12.0,
-                  bottom: MediaQuery.of(context).padding.bottom + 12.0,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16.0)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Action buttons row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildActionButton(
-                          icon: Icons.forward,
-                          label: context.l10n.forward,
-                          onTap: _handleForward,
-                        ),
-                        const SizedBox(width: 24.0),
-                        _buildActionButton(
-                          icon: Icons.emoji_emotions_outlined,
-                          label: context.l10n.addReaction,
-                          onTap: () => _showReactionPicker(context),
+            if (hasMessage && _showUI)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: EdgeInsets.only(
+                    left: 16.0,
+                    right: 16.0,
+                    top: 12.0,
+                    bottom: MediaQuery.of(context).padding.bottom + 12.0,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(16.0)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Action buttons row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildActionButton(
+                            icon: Icons.forward,
+                            label: context.l10n.forward,
+                            onTap: _handleForward,
+                          ),
+                          const SizedBox(width: 24.0),
+                          _buildActionButton(
+                            icon: Icons.emoji_emotions_outlined,
+                            label: context.l10n.addReaction,
+                            onTap: () => _showReactionPicker(context),
+                          ),
+                        ],
+                      ),
+
+                      // Reaction bar (if any reactions exist)
+                      if (groupedReactions.isNotEmpty) ...[
+                        const SizedBox(height: 12.0),
+                        ReactionBar(
+                          groupedReactions: groupedReactions,
+                          showAddButton: true,
+                          onReactionTap: (
+                            emojiCode,
+                            reactorIds,
+                            reactorNameById,
+                            reactorAvatarById,
+                          ) {
+                            ReactionDetailModal.show(
+                              context,
+                              emojiCode: emojiCode,
+                              reactorIds: reactorIds,
+                              reactorNameById: reactorNameById,
+                              reactorAvatarById: reactorAvatarById,
+                            );
+                          },
+                          onReactionLongPress: (emojiCode, isCurrentlyReacted) {
+                            if (isCurrentlyReacted && widget.message != null) {
+                              context.read<MessageBloc>().add(
+                                    ToggleReaction(
+                                      messageId: widget.message!.id,
+                                      emojiCode: emojiCode,
+                                    ),
+                                  );
+                            }
+                          },
+                          onAddReaction: () => _showReactionPicker(context),
                         ),
                       ],
-                    ),
-                    
-                    // Reaction bar (if any reactions exist)
-                    if (groupedReactions.isNotEmpty) ...[
-                      const SizedBox(height: 12.0),
-                      ReactionBar(
-                        groupedReactions: groupedReactions,
-                        showAddButton: true,
-                        onReactionTap: (
-                          emojiCode,
-                          reactorIds,
-                          reactorNameById,
-                          reactorAvatarById,
-                        ) {
-                          ReactionDetailModal.show(
-                            context,
-                            emojiCode: emojiCode,
-                            reactorIds: reactorIds,
-                            reactorNameById: reactorNameById,
-                            reactorAvatarById: reactorAvatarById,
-                          );
-                        },
-                        onReactionLongPress: (emojiCode, isCurrentlyReacted) {
-                          if (isCurrentlyReacted && widget.message != null) {
-                            context.read<MessageBloc>().add(
-                              ToggleReaction(
-                                messageId: widget.message!.id,
-                                emojiCode: emojiCode,
-                              ),
-                            );
-                          }
-                        },
-                        onAddReaction: () => _showReactionPicker(context),
-                      ),
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
     );
   }
-  
+
   Widget _buildActionButton({
     required IconData icon,
     required String label,
@@ -1220,6 +1303,7 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
 enum MediaGalleryLayout {
   /// Grid layout (default)
   grid,
+
   /// List layout
   list,
 }

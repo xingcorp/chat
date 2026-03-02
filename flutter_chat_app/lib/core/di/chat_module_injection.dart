@@ -30,32 +30,38 @@ import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/network/auth/auth_delegate.dart';
 import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart'
-as token_module;
-import 'package:flutter_chat_app/core/network/graphql_client.dart' as core_graphql;
+    as token_module;
+import 'package:flutter_chat_app/core/network/graphql_client.dart'
+    as core_graphql;
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/network/http/dio_http_client.dart';
 import 'package:flutter_chat_app/core/network/http/http_client_interface.dart';
 import 'package:flutter_chat_app/core/network/connectivity/connectivity_service.dart'
-as net_connectivity;
+    as net_connectivity;
 import 'package:flutter_chat_app/core/network/realtime/connection_pool_manager.dart';
 import 'package:flutter_chat_app/core/network/realtime/enhanced_realtime_connection_service.dart';
 import 'package:flutter_chat_app/core/network/realtime/models/realtime_connection_config.dart'
-as realtime_models;
+    as realtime_models;
 import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart'
-as realtime;
-import 'package:flutter_chat_app/core/network/socket_manager.dart' as socket_mgr;
+    as realtime;
+import 'package:flutter_chat_app/core/network/socket_manager.dart'
+    as socket_mgr;
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
+import 'package:flutter_chat_app/data/services/gal_media_gallery_saver.dart';
 import 'package:flutter_chat_app/data/datasources/permissions_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/permissions/web_permissions_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart'
-as user_local_ds;
+    as user_local_ds;
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart'
-as user_remote_ds;
+    as user_remote_ds;
 import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.dart'
-as media_local_ds;
+    as media_local_ds;
+import 'package:flutter_chat_app/domain/repositories/i_media_repository.dart';
+import 'package:flutter_chat_app/domain/services/i_media_gallery_saver.dart';
+import 'package:flutter_chat_app/domain/usecases/media/save_media_to_gallery_usecase.dart';
 import 'package:flutter_chat_app/features/auth/data/datasources/auth/auth_remote_datasource.dart'
-as auth_ds;
+    as auth_ds;
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 
 import 'package:flutter_chat_app/core/cache/background_sync_helper.dart';
@@ -129,7 +135,7 @@ class ChatModuleInjection {
           await _getIt.unregister<PermissionsDataSource>();
         }
         _getIt.registerLazySingleton<PermissionsDataSource>(
-              () => WebPermissionsDataSource(),
+          () => WebPermissionsDataSource(),
         );
       }
       lap('Step4: Platform overrides');
@@ -177,8 +183,10 @@ class ChatModuleInjection {
       // Step 10: Persist config to SharedPreferences for background isolate
       final prefs = _getIt<SharedPreferences>();
       await prefs.setString(BackgroundSyncHelper.keyBaseUrl, config.baseUrl);
-      await prefs.setString(BackgroundSyncHelper.keyGraphqlUrl, config.graphqlUrl);
-      await prefs.setString(BackgroundSyncHelper.keyAccessToken, config.accessToken);
+      await prefs.setString(
+          BackgroundSyncHelper.keyGraphqlUrl, config.graphqlUrl);
+      await prefs.setString(
+          BackgroundSyncHelper.keyAccessToken, config.accessToken);
 
       // Step 11: Wire ChatConfig callbacks into ChatModuleEventBus
       if (_getIt.isRegistered<ChatModuleEventBus>()) {
@@ -230,14 +238,16 @@ class ChatModuleInjection {
         _getIt<ForegroundSyncService>().dispose();
       }
     } catch (e) {
-      _logger.d('[ChatModuleInjection] Failed to dispose ForegroundSyncService: $e');
+      _logger.d(
+          '[ChatModuleInjection] Failed to dispose ForegroundSyncService: $e');
     }
     try {
       if (_getIt.isRegistered<ChatModuleEventBus>()) {
         _getIt<ChatModuleEventBus>().dispose();
       }
     } catch (e) {
-      _logger.d('[ChatModuleInjection] Failed to dispose ChatModuleEventBus: $e');
+      _logger
+          .d('[ChatModuleInjection] Failed to dispose ChatModuleEventBus: $e');
     }
 
     // 1. Clear local database (Isar) - most important for data isolation
@@ -366,9 +376,9 @@ class ChatModuleInjection {
   /// Mirrors [_registerExternalDependencies] in injection.dart but reads
   /// from config instead of dotenv.
   static Future<void> _registerExternalDeps(
-      ChatConfig config,
-      Logger logger,
-      ) async {
+    ChatConfig config,
+    Logger logger,
+  ) async {
     // Logger
     if (!_getIt.isRegistered<Logger>()) {
       _getIt.registerSingleton<Logger>(_logger);
@@ -516,7 +526,7 @@ class ChatModuleInjection {
 
     if (!_getIt.isRegistered<ConnectionFactory>()) {
       _getIt.registerSingleton<ConnectionFactory>(
-            () async => _getIt<realtime.IRealtimeConnectionService>(),
+        () async => _getIt<realtime.IRealtimeConnectionService>(),
       );
     }
 
@@ -529,12 +539,12 @@ class ChatModuleInjection {
     if (!_getIt.isRegistered<Map<String, dynamic>>()) {
       final socketOptions = authToken.isNotEmpty
           ? <String, dynamic>{
-        'query': <String, dynamic>{'token': authToken},
-        'auth': <String, dynamic>{'token': 'Bearer $authToken'},
-        'extraHeaders': <String, String>{
-          'Authorization': 'Bearer $authToken',
-        },
-      }
+              'query': <String, dynamic>{'token': authToken},
+              'auth': <String, dynamic>{'token': 'Bearer $authToken'},
+              'extraHeaders': <String, String>{
+                'Authorization': 'Bearer $authToken',
+              },
+            }
           : <String, dynamic>{};
       _getIt.registerSingleton<Map<String, dynamic>>(socketOptions);
     }
@@ -577,25 +587,25 @@ class ChatModuleInjection {
   static void _registerInterfaceBindings() {
     if (!_getIt.isRegistered<auth_ds.AuthRemoteDataSource>()) {
       _getIt.registerLazySingleton<auth_ds.AuthRemoteDataSource>(
-            () => _getIt<auth_ds.AuthRemoteDataSourceImpl>(),
+        () => _getIt<auth_ds.AuthRemoteDataSourceImpl>(),
       );
     }
 
     if (!_getIt.isRegistered<user_local_ds.UserLocalDataSource>()) {
       _getIt.registerLazySingleton<user_local_ds.UserLocalDataSource>(
-            () => _getIt<user_local_ds.UserLocalDataSourceImpl>(),
+        () => _getIt<user_local_ds.UserLocalDataSourceImpl>(),
       );
     }
 
     if (!_getIt.isRegistered<user_remote_ds.UserRemoteDataSource>()) {
       _getIt.registerLazySingleton<user_remote_ds.UserRemoteDataSource>(
-            () => _getIt<user_remote_ds.UserRemoteDataSourceImpl>(),
+        () => _getIt<user_remote_ds.UserRemoteDataSourceImpl>(),
       );
     }
 
     if (!_getIt.isRegistered<media_local_ds.IMediaLocalDataSource>()) {
       _getIt.registerLazySingleton<media_local_ds.IMediaLocalDataSource>(
-            () => _getIt<media_local_ds.MediaLocalDataSourceImpl>(),
+        () => _getIt<media_local_ds.MediaLocalDataSourceImpl>(),
       );
     }
 
@@ -605,18 +615,34 @@ class ChatModuleInjection {
 
     if (!_getIt.isRegistered<net_connectivity.IConnectivityService>()) {
       _getIt.registerLazySingleton<net_connectivity.IConnectivityService>(
-            () => _getIt<net_connectivity.ConnectivityServiceImpl>(),
+        () => _getIt<net_connectivity.ConnectivityServiceImpl>(),
       );
     }
 
     if (!_getIt.isRegistered<realtime.IRealtimeConnectionService>()) {
       _getIt.registerLazySingleton<realtime.IRealtimeConnectionService>(
-            () => _getIt<EnhancedRealtimeConnectionService>(),
+        () => _getIt<EnhancedRealtimeConnectionService>(),
       );
     }
 
     if (!_getIt.isRegistered<INetworkInfo>()) {
       _getIt.registerLazySingleton<INetworkInfo>(() => _getIt<NetworkInfo>());
+    }
+
+    if (!_getIt.isRegistered<IMediaGallerySaver>()) {
+      _getIt.registerLazySingleton<IMediaGallerySaver>(
+        () => GalMediaGallerySaver(_getIt<AppLogger>()),
+      );
+    }
+
+    if (!_getIt.isRegistered<SaveMediaToGalleryUseCase>()) {
+      _getIt.registerLazySingleton<SaveMediaToGalleryUseCase>(
+        () => SaveMediaToGalleryUseCase(
+          mediaRepository: _getIt<IMediaRepository>(),
+          gallerySaver: _getIt<IMediaGallerySaver>(),
+          logger: _getIt<AppLogger>(),
+        ),
+      );
     }
   }
 
@@ -660,7 +686,7 @@ class ChatModuleInjection {
     }
 
     _getIt.registerLazySingleton<core_graphql.GraphQLClientWrapperImpl>(
-          () => core_graphql.GraphQLClientWrapperImpl(
+      () => core_graphql.GraphQLClientWrapperImpl(
         _getIt<GraphQLClient>(),
         _getIt<NetworkInfo>(),
         _getIt<TokenProvider>(),
@@ -670,12 +696,12 @@ class ChatModuleInjection {
     );
 
     _getIt.registerLazySingleton<core_graphql.GraphQLClientWrapper>(
-          () => _getIt<core_graphql.GraphQLClientWrapperImpl>(),
+      () => _getIt<core_graphql.GraphQLClientWrapperImpl>(),
     );
 
     // SocketManager — inject TokenProvider
     _getIt.registerFactory<socket_mgr.SocketManager>(
-          () => socket_mgr.SocketManager(
+      () => socket_mgr.SocketManager(
         serverUrl: _getIt<String>(instanceName: 'socketUrl'),
         options: _getIt<Map<String, dynamic>>(),
         logger: _getIt<AppLogger>(),

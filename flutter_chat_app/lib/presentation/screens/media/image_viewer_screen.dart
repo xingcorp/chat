@@ -4,13 +4,17 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
 import 'package:flutter_chat_app/core/services/image_editor_service.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart' as domain;
+import 'package:flutter_chat_app/domain/usecases/media/save_media_to_gallery_usecase.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart'
+    as domain;
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_gallery.dart' show EditedImageResult;
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_gallery.dart'
+    show EditedImageResult;
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
 import 'package:photo_view/photo_view.dart';
@@ -20,19 +24,19 @@ import 'package:photo_view/photo_view.dart';
 class ImageViewerScreen extends StatefulWidget {
   /// URL hình ảnh
   final String imageUrl;
-  
+
   /// Tag cho Hero animation
   final String heroTag;
-  
+
   /// Tiêu đề
   final String? title;
-  
+
   /// Optional ChatMessage for reaction/forward support
   final domain.ChatMessage? message;
-  
+
   /// Chat ID for forwarding
   final String? chatId;
-  
+
   /// Constructor
   const ImageViewerScreen({
     Key? key,
@@ -42,34 +46,35 @@ class ImageViewerScreen extends StatefulWidget {
     this.message,
     this.chatId,
   }) : super(key: key);
-  
+
   @override
   State<ImageViewerScreen> createState() => _ImageViewerScreenState();
 }
 
-class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProviderStateMixin {
+class _ImageViewerScreenState extends State<ImageViewerScreen>
+    with TickerProviderStateMixin {
   /// Lấy cấu hình animation
   final animationService = GetIt.I<AnimationService>();
-  
+
   /// Controller cho animation
   late AnimationController _animationController;
-  
+
   /// Animation cho background
   late Animation<Color?> _colorAnimation;
-  
+
   /// Animation cho AppBar
   late Animation<double> _appBarOpacityAnimation;
-  
+
   /// Animation cho bottom overlay
   late Animation<double> _bottomOverlayAnimation;
-  
+
   /// Có hiện UI không
   bool _showUI = true;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // Cài đặt SystemUI cho trải nghiệm đắm chìm
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -78,23 +83,23 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
         systemNavigationBarColor: Colors.black,
       ),
     );
-    
+
     // Thiết lập animation
     _animationController = AnimationController(
       vsync: this,
       duration: animationService.config.defaultDuration,
     );
-    
+
     _colorAnimation = ColorTween(
       begin: Colors.black,
       end: Colors.black.withValues(alpha: 0.5),
     ).animate(_animationController);
-    
+
     _appBarOpacityAnimation = Tween<double>(
       begin: 1.0,
       end: 0.0,
     ).animate(_animationController);
-    
+
     // Bottom overlay animation (slide up from bottom)
     _bottomOverlayAnimation = Tween<double>(
       begin: 1.0,
@@ -103,11 +108,11 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
-    
+
     // Khởi tạo hiển thị UI
     _animationController.value = 0.0;
   }
-  
+
   @override
   void dispose() {
     // Reset SystemUI
@@ -117,28 +122,28 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
         statusBarIconBrightness: Brightness.dark,
       ),
     );
-    
+
     _animationController.dispose();
     super.dispose();
   }
-  
+
   void _toggleUI() {
     setState(() {
       _showUI = !_showUI;
     });
-    
+
     if (_showUI) {
       _animationController.reverse();
     } else {
       _animationController.forward();
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasMessage = widget.message != null;
-    
+
     return Scaffold(
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
@@ -174,13 +179,15 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
                     if (event == null) {
                       return const SizedBox.shrink();
                     }
-                    
+
                     return Center(
                       child: CircularProgressIndicator(
                         value: event.expectedTotalBytes != null
-                            ? event.cumulativeBytesLoaded / event.expectedTotalBytes!
+                            ? event.cumulativeBytesLoaded /
+                                event.expectedTotalBytes!
                             : null,
-                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.primary),
                       ),
                     );
                   },
@@ -206,7 +213,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
                   },
                 ),
               ),
-              
+
               // Bottom overlay with forward/reaction bar (only if message provided)
               if (hasMessage) _buildBottomOverlay(context, theme),
             ],
@@ -215,7 +222,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
       ),
     );
   }
-  
+
   /// Tạo AppBar với animation và design system components
   PreferredSizeWidget _buildAppBar(ThemeData theme) {
     return PreferredSize(
@@ -302,12 +309,12 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
       ),
     );
   }
-  
+
   /// Build bottom overlay with forward button and reaction bar
   Widget _buildBottomOverlay(BuildContext context, ThemeData theme) {
     final message = widget.message!;
     final groupedReactions = _groupReactions(message.reactions);
-    
+
     return Positioned(
       left: 0,
       right: 0,
@@ -332,7 +339,8 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
           ),
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16.0)),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(16.0)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -354,7 +362,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
                   ),
                 ],
               ),
-              
+
               // Reaction bar (if any reactions exist)
               if (groupedReactions.isNotEmpty) ...[
                 const SizedBox(height: 12.0),
@@ -378,11 +386,11 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
                   onReactionLongPress: (emojiCode, isCurrentlyReacted) {
                     if (isCurrentlyReacted && widget.message != null) {
                       context.read<MessageBloc>().add(
-                        ToggleReaction(
-                          messageId: widget.message!.id,
-                          emojiCode: emojiCode,
-                        ),
-                      );
+                            ToggleReaction(
+                              messageId: widget.message!.id,
+                              emojiCode: emojiCode,
+                            ),
+                          );
                     }
                   },
                   onAddReaction: () => _showReactionPicker(context),
@@ -394,7 +402,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
       ),
     );
   }
-  
+
   /// Build action button for bottom overlay
   Widget _buildActionButton({
     required IconData icon,
@@ -423,11 +431,11 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
       ),
     );
   }
-  
+
   /// Group reactions by emoji code
   List<ReactionGroup> _groupReactions(List<domain.MessageReaction> reactions) {
     final Map<String, ReactionGroup> groups = {};
-    
+
     for (final reaction in reactions) {
       if (!groups.containsKey(reaction.code)) {
         groups[reaction.code] = ReactionGroup(
@@ -441,10 +449,10 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
       groups[reaction.code]!.reactorNameById[reaction.userId] =
           reaction.userName ?? reaction.userId;
     }
-    
+
     return groups.values.toList();
   }
-  
+
   /// Show reaction picker bottom sheet
   void _showReactionPicker(BuildContext context) {
     EmojiPickerBottomSheet.show(
@@ -452,26 +460,50 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
       onEmojiSelected: (emoji) {
         if (widget.message != null) {
           context.read<MessageBloc>().add(
-            ToggleReaction(
-              messageId: widget.message!.id,
-              emojiCode: emoji,
-            ),
-          );
+                ToggleReaction(
+                  messageId: widget.message!.id,
+                  emojiCode: emoji,
+                ),
+              );
         }
       },
     );
   }
-  
+
   /// Handle share action
   void _handleShare() {
     // TODO: Implement share functionality
   }
-  
+
   /// Handle download action
-  void _handleDownload() {
-    // TODO: Implement download functionality
+  Future<void> _handleDownload() async {
+    final SaveMediaToGalleryUseCase saveMediaToGallery =
+        GetIt.I<SaveMediaToGalleryUseCase>();
+
+    final result = await saveMediaToGallery(
+      SaveMediaToGalleryParams(
+        url: widget.imageUrl,
+        mediaType: GalleryMediaType.image,
+        mediaId: widget.message?.id,
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    result.fold(
+      (failure) => AppSnackBar.error(
+        context: context,
+        message: failure.userMessage,
+      ),
+      (_) => AppSnackBar.success(
+        context: context,
+        message: context.l10n.downloaded,
+      ),
+    );
   }
-  
+
   /// Handle menu option selection
   void _handleMenuOption(String value) {
     switch (value) {
@@ -511,11 +543,11 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
   /// Handle forward action
   void _handleForward() {
     if (widget.message == null) return;
-    
+
     showForwardMessageSheet(
       context,
       messages: [widget.message!],
       sourceChatId: widget.chatId,
     );
   }
-} 
+}

@@ -98,6 +98,7 @@ dependencies:
   url_launcher: ^6.2.5
   any_link_preview: ^3.0.2
   pro_image_editor: ^11.3.0
+  gal: ^2.3.2
 
   # Location Services
   geolocator: ^14.0.0
@@ -161,6 +162,7 @@ dev_dependencies:
   json_serializable: ^6.7.1
   freezed: ^2.4.7
   mockito: ^5.4.4
+  mocktail: ^1.0.4
   bloc_test: ^10.0.0
   
   # Testing
