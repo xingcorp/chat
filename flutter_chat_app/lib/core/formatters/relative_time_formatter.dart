@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter_chat_app/core/services/date_formatter_service.dart';
+import 'package:intl/intl.dart';
 
 /// Formats timestamps as relative time strings for chat interfaces.
 ///
@@ -59,14 +59,15 @@ class RelativeTimeFormatter {
       return context.l10n.daysAgo(difference.inDays);
     }
 
-    // For older messages, show absolute date using existing service
-    return _formatAbsoluteDate(dateTime);
+    // For older messages, show absolute date instead of time.
+    return _formatAbsoluteDate(dateTime, now);
   }
 
   /// Formats absolute date for messages older than 7 days.
-  ///
-  /// Uses existing DateFormatterService for consistency across the app.
-  static String _formatAbsoluteDate(DateTime dateTime) {
-    return DateFormatterService.formatTimeForMessage(dateTime);
+  static String _formatAbsoluteDate(DateTime dateTime, DateTime now) {
+    if (dateTime.year == now.year) {
+      return DateFormat('dd/MM').format(dateTime);
+    }
+    return DateFormat('dd/MM/yyyy').format(dateTime);
   }
 }
