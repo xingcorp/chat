@@ -205,7 +205,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
                                 thickness: 0.5,
                                 indent: 68,
                                 endIndent: 0,
-                                color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+                                color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
                               ),
                               itemBuilder: (context, chat, index) {
                                 return _buildChatListItem(context, chat);

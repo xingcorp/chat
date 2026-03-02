@@ -187,6 +187,11 @@ class AppCacheManager {
           await _updateAccessStats(key, true);
           final dynamic raw = cacheEntry.data;
 
+          // If already parsed to the correct type, return directly
+          if (raw is T) {
+            return raw;
+          }
+
           if (fromJson != null && raw is Map) {
             final result = fromJson(raw.map((k, v) => MapEntry(k.toString(), v)));
             _memoryCache[key] = _CacheEntry<T>(result, cacheEntry.expiry);
