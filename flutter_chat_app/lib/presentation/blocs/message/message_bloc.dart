@@ -415,10 +415,15 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     logger.i('JumpToMessage: loading messages from cursor ${event.createdAtMs} for message ${event.messageId}');
 
+    // Add 1ms to cursor so the target message is included in results.
+    // The API returns messages with createdAt < cursor (exclusive),
+    // so we need cursor = targetTimestamp + 1 to include the target.
+    final inclusiveCursor = event.createdAtMs + 1;
+
     final result = await _getMessages(
       conversationId: currentState.chatId,
       limit: 50,
-      cursor: event.createdAtMs.toString(),
+      cursor: inclusiveCursor.toString(),
     );
 
     result.fold(

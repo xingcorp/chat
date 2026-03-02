@@ -92,7 +92,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   String? _pendingScrollToMessageId;
   int? _pendingScrollCreatedAtMs;
   int _pendingScrollAttempts = 0;
-  static const int _maxPendingScrollAttempts = 20;
+  static const int _maxPendingScrollAttempts = 3;
 
   // ══════════════════════════════════════════
   // Reply / Edit state
@@ -576,16 +576,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => BlocProvider(
         create: (_) => getIt<MessageSearchBloc>(),
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          minChildSize: 0.4,
-          maxChildSize: 0.9,
-          builder: (context, scrollController) => MessageSearchPanel(
-            conversationId: widget.chatId,
-            onResultSelected: (result) {
-              _jumpToMessage(result.id, result.createdAt);
-            },
-          ),
+        child: MessageSearchPanel(
+          conversationId: widget.chatId,
+          onResultSelected: (result) {
+            _jumpToMessage(result.id, result.createdAt);
+          },
         ),
       ),
     );

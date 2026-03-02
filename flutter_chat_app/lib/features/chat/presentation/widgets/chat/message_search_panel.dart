@@ -106,33 +106,41 @@ class _MessageSearchPanelState extends BaseState<MessageSearchPanel> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return GestureDetector(
       onTap: _dismissKeyboard,
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.backgroundDarkMode
-              : AppColors.background,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(AppDimens.radiusLarge),
+      child: AnimatedPadding(
+        duration: const Duration(milliseconds: 150),
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildHandle(isDark),
-            _buildHeader(l10n, isDark),
-            _buildSearchInput(l10n, isDark),
-            const SizedBox(height: AppDimens.spaceSmall),
-            Expanded(
-              child: GestureDetector(
-                onTap: _dismissKeyboard,
-                child: _buildBody(l10n, isDark),
-              ),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.backgroundDarkMode
+                : AppColors.background,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppDimens.radiusLarge),
             ),
-          ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildHandle(isDark),
+              _buildHeader(l10n, isDark),
+              _buildSearchInput(l10n, isDark),
+              const SizedBox(height: AppDimens.spaceSmall),
+              Expanded(
+                child: GestureDetector(
+                  onTap: _dismissKeyboard,
+                  child: _buildBody(l10n, isDark),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
