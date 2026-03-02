@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
 import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/delete_conversation_usecase.dart';
+import 'package:flutter_chat_app/features/chat/domain/usecases/chat/persist_incoming_message_usecase.dart';
 import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -12,6 +13,7 @@ import 'package:injectable/injectable.dart';
 import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
 import 'package:flutter_chat_app/core/cache/media_cache_manager.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
+import 'package:flutter_chat_app/core/services/chat_module_event_bus.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
@@ -20,6 +22,7 @@ import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/core/pagination/page_request.dart';
 import 'package:flutter_chat_app/domain/usecases/message/mark_as_read_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversations_usecase.dart';
+import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_local_conversations_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/create_group_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/update_group_usecase.dart';
@@ -42,6 +45,7 @@ part 'chat_bloc.freezed.dart';
 class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   // UseCases (Domain Layer)
   final GetConversationsUseCase _getConversations;
+  final GetLocalConversationsUseCase _getLocalConversations;
   final GetConversationDetailUseCase _getConversationDetail;
   final CreateGroupUseCase _createGroup;
   final UpdateGroupUseCase _updateGroup;
@@ -56,6 +60,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   final RealtimeService _realtimeService;
   final MarkAsReadUseCase _markAsRead;
   final CurrentUserProvider _currentUserProvider;
+  final PersistIncomingMessageUseCase _persistIncomingMessage;
+  final ChatModuleEventBus _eventBus;
 
   // Subscriptions for real-time updates
   StreamSubscription<ChatMessage>? _messageSubscription;
@@ -72,6 +78,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   /// Constructor with UseCases injection
   ChatBloc(
     this._getConversations,
+    this._getLocalConversations,
     this._getConversationDetail,
     this._createGroup,
     this._updateGroup,
@@ -84,6 +91,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     this._realtimeService,
     this._markAsRead,
     this._currentUserProvider,
+    this._persistIncomingMessage,
+    this._eventBus,
   ) : super(const ChatState.initial()) {
     on<_LoadChats>(_onLoadChats);
     on<_LoadMoreChats>(_onLoadMoreChats);
@@ -100,14 +109,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     on<_ChangeConversationTypeFilter>(_onChangeConversationTypeFilter);
   }
 
-  /// **Load chats using GetConversationsUseCase - CLEAN ARCHITECTURE**
+  /// **Load chats with cache-first pattern**
+  ///
+  /// Flow: Show cached data instantly → fetch network in background → update UI
+  /// Like WhatsApp/Telegram: user never sees a spinner if cache exists.
   Future<void> _onLoadChats(
     _LoadChats event,
     Emitter<ChatState> emit,
   ) async {
     final current = state.whenOrNull(
       loaded: (chats, hasMore, isLoadingMore, page, pageSize, total,
-          activeFilter, cachedLists, filterPages, filterHasMore) => (
+          activeFilter, cachedLists, filterPages, filterHasMore, isSyncing) => (
         pageSize: pageSize,
         activeFilter: activeFilter,
         cachedLists: cachedLists,
@@ -136,10 +148,41 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       filterHasMore.remove(activeFilter);
     }
 
-    emit(const ChatState.loading());
+    logger.i('Loading conversations (filter: $activeFilter, forceRefresh: ${event.forceRefresh})');
 
-    logger.i('Loading conversations using UseCase (filter: $activeFilter)');
+    // === CACHE-FIRST: Show local data instantly ===
+    final localResult = await _getLocalConversations();
+    final localChats = localResult.fold(
+      (_) => <Chat>[],
+      (chats) => chats,
+    );
 
+    if (localChats.isNotEmpty && !event.forceRefresh) {
+      // Emit cached data immediately — user sees content in < 50ms
+      _prefetchAvatars(localChats);
+      _subscribeToRealTimeUpdates();
+
+      cachedLists[activeFilter] = localChats;
+
+      emit(ChatState.loaded(
+        chats: localChats,
+        hasMore: true,
+        isLoadingMore: false,
+        page: 0,
+        pageSize: pageSize,
+        total: localChats.length,
+        activeFilter: activeFilter,
+        cachedLists: cachedLists,
+        filterPages: filterPages,
+        filterHasMore: filterHasMore,
+        isSyncing: true, // Indicate background refresh in progress
+      ));
+    } else {
+      // No cache (first launch) — show loading shimmer
+      emit(const ChatState.loading());
+    }
+
+    // === NETWORK REFRESH: Fetch fresh data in background ===
     final shouldRefresh = event.forceRefresh || _cacheSyncStrategy.shouldRefreshChatList();
 
     final request = PageRequest.first(size: pageSize);
@@ -151,7 +194,25 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     result.fold(
       (failure) {
         logger.e('Failed to load conversations: ${failure.message}');
-        emit(ChatState.error(message: getUserErrorMessage(failure)));
+        if (localChats.isNotEmpty) {
+          // Network failed but we have cache — keep showing cached data, clear syncing
+          emit(ChatState.loaded(
+            chats: localChats,
+            hasMore: true,
+            isLoadingMore: false,
+            page: 0,
+            pageSize: pageSize,
+            total: localChats.length,
+            activeFilter: activeFilter,
+            cachedLists: cachedLists,
+            filterPages: filterPages,
+            filterHasMore: filterHasMore,
+            isSyncing: false,
+          ));
+        } else {
+          // No cache and network failed — show error
+          emit(ChatState.error(message: getUserErrorMessage(failure)));
+        }
       },
       (paged) {
         final chats = paged.items;
@@ -168,6 +229,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
         filterPages[activeFilter] = 0;
         filterHasMore[activeFilter] = effectiveHasMore;
 
+        // Update total unread count on event bus for host app badge
+        int totalUnread = 0;
+        for (final c in chats) {
+          totalUnread += c.unreadCount;
+        }
+        _eventBus.updateTotalUnreadCount(totalUnread);
+
         emit(ChatState.loaded(
           chats: chats,
           hasMore: effectiveHasMore,
@@ -179,6 +247,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
           cachedLists: cachedLists,
           filterPages: filterPages,
           filterHasMore: filterHasMore,
+          isSyncing: false, // Background refresh complete
         ));
       },
     );
@@ -190,7 +259,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   ) async {
     final current = state.whenOrNull(
       loaded: (chats, hasMore, isLoadingMore, page, pageSize, total,
-          activeFilter, cachedLists, filterPages, filterHasMore) => (
+          activeFilter, cachedLists, filterPages, filterHasMore, isSyncing) => (
         chats: chats,
         hasMore: hasMore,
         isLoadingMore: isLoadingMore,
@@ -488,7 +557,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       (chats) {
         // Search results don't filter by type — preserve activeFilter from current state
         final activeFilter = state.whenOrNull(
-              loaded: (_, __, ___, ____, _____, ______, activeFilter, _______, ________, _________) =>
+              loaded: (_, __, ___, ____, _____, ______, activeFilter, _______, ________, _________, __________) =>
                   activeFilter,
             ) ??
             ConversationTypeFilter.all;
@@ -527,7 +596,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     // Extract current loaded state fields (if loaded)
     final current = state.whenOrNull(
       loaded: (chats, hasMore, isLoadingMore, page, pageSize, total,
-          activeFilter, cachedLists, filterPages, filterHasMore) => (
+          activeFilter, cachedLists, filterPages, filterHasMore, isSyncing) => (
         chats: chats,
         hasMore: hasMore,
         page: page,
@@ -717,6 +786,22 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     });
 
     emit(_preserveLoaded(currentState, chats: updatedChats));
+
+    // Fire-and-forget: persist to local cache (Isar)
+    unawaited(
+      _persistIncomingMessage(PersistIncomingMessageParams(
+        message: message,
+        updatedChat: updatedChat,
+      )).then((_) {}, onError: (Object e) {
+        logger.w('Failed to persist incoming message: $e');
+      }),
+    );
+
+    // Notify event bus for host app
+    if (isIncoming) {
+      _eventBus.emitNewMessage(message);
+      _eventBus.incrementUnreadCount();
+    }
   }
 
   Future<void> _onMarkMessagesAsRead(
@@ -725,10 +810,21 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   ) async {
     if (state is _Loaded) {
       final currentState = state as _Loaded;
+      final chat = currentState.chats.firstWhere(
+        (c) => c.id == event.chatId,
+        orElse: () => currentState.chats.first,
+      );
+      final previousUnread = chat.id == event.chatId ? chat.unreadCount : 0;
+
       final updatedChats = currentState.chats
           .map((c) => c.id == event.chatId ? c.copyWith(unreadCount: 0) : c)
           .toList();
       emit(_preserveLoaded(currentState, chats: updatedChats));
+
+      // Update event bus for host app badge
+      if (previousUnread > 0) {
+        _eventBus.decrementUnreadCount(previousUnread);
+      }
     }
 
     final result = await _markAsRead(MarkAsReadParams(conversationId: event.chatId));
@@ -824,6 +920,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       cachedLists: current.cachedLists,
       filterPages: current.filterPages,
       filterHasMore: current.filterHasMore,
+      isSyncing: current.isSyncing,
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter_chat_app/core/localization/error_message_provider.dart';
 import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 /// Configuration for initializing the chat module as a package.
 ///
@@ -101,6 +102,14 @@ class ChatConfig {
   /// Defaults to false.
   final bool hideBottomNavBar;
 
+  /// Called when a new real-time message is received in any conversation.
+  /// Host app can use this for custom notifications, analytics, etc.
+  final void Function(ChatMessage message)? onNewMessageReceived;
+
+  /// Called when the total unread message count changes across all chats.
+  /// Host app can use this to update a badge on the chat tab.
+  final void Function(int totalUnreadCount)? onUnreadCountChanged;
+
   const ChatConfig({
     required this.baseUrl,
     required this.graphqlUrl,
@@ -124,6 +133,8 @@ class ChatConfig {
     this.analyticsService,
     this.errorMessageProvider,
     this.hideBottomNavBar = false,
+    this.onNewMessageReceived,
+    this.onUnreadCountChanged,
   });
 
   /// Creates a copy with the given fields replaced.
@@ -150,6 +161,8 @@ class ChatConfig {
     IAnalyticsService? analyticsService,
     ErrorMessageProvider? errorMessageProvider,
     bool? hideBottomNavBar,
+    void Function(ChatMessage)? onNewMessageReceived,
+    void Function(int)? onUnreadCountChanged,
   }) {
     return ChatConfig(
       baseUrl: baseUrl ?? this.baseUrl,
@@ -174,6 +187,8 @@ class ChatConfig {
       analyticsService: analyticsService ?? this.analyticsService,
       errorMessageProvider: errorMessageProvider ?? this.errorMessageProvider,
       hideBottomNavBar: hideBottomNavBar ?? this.hideBottomNavBar,
+      onNewMessageReceived: onNewMessageReceived ?? this.onNewMessageReceived,
+      onUnreadCountChanged: onUnreadCountChanged ?? this.onUnreadCountChanged,
     );
   }
 }

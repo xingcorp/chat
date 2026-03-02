@@ -30,34 +30,37 @@ import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/network/auth/auth_delegate.dart';
 import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart'
-    as token_module;
+as token_module;
 import 'package:flutter_chat_app/core/network/graphql_client.dart' as core_graphql;
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/network/http/dio_http_client.dart';
 import 'package:flutter_chat_app/core/network/http/http_client_interface.dart';
 import 'package:flutter_chat_app/core/network/connectivity/connectivity_service.dart'
-    as net_connectivity;
+as net_connectivity;
 import 'package:flutter_chat_app/core/network/realtime/connection_pool_manager.dart';
 import 'package:flutter_chat_app/core/network/realtime/enhanced_realtime_connection_service.dart';
 import 'package:flutter_chat_app/core/network/realtime/models/realtime_connection_config.dart'
-    as realtime_models;
+as realtime_models;
 import 'package:flutter_chat_app/core/network/realtime/realtime_connection_service.dart'
-    as realtime;
+as realtime;
 import 'package:flutter_chat_app/core/network/socket_manager.dart' as socket_mgr;
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
 import 'package:flutter_chat_app/data/datasources/permissions_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/permissions/web_permissions_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart'
-    as user_local_ds;
+as user_local_ds;
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart'
-    as user_remote_ds;
+as user_remote_ds;
 import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.dart'
-    as media_local_ds;
+as media_local_ds;
 import 'package:flutter_chat_app/features/auth/data/datasources/auth/auth_remote_datasource.dart'
-    as auth_ds;
+as auth_ds;
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 
+import 'package:flutter_chat_app/core/cache/background_sync_helper.dart';
+import 'package:flutter_chat_app/core/services/chat_module_event_bus.dart';
+import 'package:flutter_chat_app/core/services/foreground_sync_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_local_datasource.dart';
 import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
@@ -92,21 +95,33 @@ class ChatModuleInjection {
 
     _logger.i('ChatModule: Initializing DI from ChatConfig...');
     final stopwatch = Stopwatch()..start();
+    int lastCheckpoint = 0;
+
+    void lap(String label) {
+      final elapsed = stopwatch.elapsedMilliseconds;
+      final delta = elapsed - lastCheckpoint;
+      _logger.d('⏱️ ChatModule DI [$label]: ${delta}ms (total: ${elapsed}ms)');
+      lastCheckpoint = elapsed;
+    }
 
     try {
       // Step 1: Register external deps from ChatConfig
       await _registerExternalDeps(config, _logger);
+      lap('Step1: External deps');
 
       // Step 2: Register core module (manual registration)
       await registerCoreModule(_getIt);
+      lap('Step2: Core module');
 
       // Step 2.5: Pre-register monitoring services BEFORE auto-generated deps
       // These are needed by many auto-generated registrations but would normally
       // be provided by Firebase. In package mode, we use NoOp implementations.
       _registerMonitoringServices(config);
+      lap('Step2.5: Monitoring services');
 
       // Step 3: Initialize auto-generated deps
       _getIt.init(environment: 'package');
+      lap('Step3: Auto-generated deps (getIt.init)');
 
       // Step 4: Platform-specific overrides
       if (kIsWeb) {
@@ -114,15 +129,18 @@ class ChatModuleInjection {
           await _getIt.unregister<PermissionsDataSource>();
         }
         _getIt.registerLazySingleton<PermissionsDataSource>(
-          () => WebPermissionsDataSource(),
+              () => WebPermissionsDataSource(),
         );
       }
+      lap('Step4: Platform overrides');
 
       // Step 5: Interface registrations
       _registerInterfaceBindings();
+      lap('Step5: Interface bindings');
 
       // Step 6: Override GraphQL and Socket with config-aware implementations
       _registerConfigOverrides(config);
+      lap('Step6: Config overrides');
 
       // Step 7: Set AppConfig overrides for package mode
       AppConfig.setOverrides({
@@ -135,6 +153,7 @@ class ChatModuleInjection {
       if (config.errorMessageProvider != null) {
         ErrorMessages.setProvider(config.errorMessageProvider!);
       }
+      lap('Step7-8: AppConfig + ErrorMessages');
 
       // Step 9: Initialize CurrentUserProvider and seed with ChatConfig user.
       // This makes current user available to non-UI layers (BLoCs/services)
@@ -153,15 +172,39 @@ class ChatModuleInjection {
         );
         await currentUserProvider.setCurrentUser(currentUser);
       }
+      lap('Step9: CurrentUserProvider');
+
+      // Step 10: Persist config to SharedPreferences for background isolate
+      final prefs = _getIt<SharedPreferences>();
+      await prefs.setString(BackgroundSyncHelper.keyBaseUrl, config.baseUrl);
+      await prefs.setString(BackgroundSyncHelper.keyGraphqlUrl, config.graphqlUrl);
+      await prefs.setString(BackgroundSyncHelper.keyAccessToken, config.accessToken);
+
+      // Step 11: Wire ChatConfig callbacks into ChatModuleEventBus
+      if (_getIt.isRegistered<ChatModuleEventBus>()) {
+        final eventBus = _getIt<ChatModuleEventBus>();
+
+        if (config.onNewMessageReceived != null) {
+          eventBus.newMessageStream.listen(config.onNewMessageReceived!);
+        }
+        if (config.onUnreadCountChanged != null) {
+          eventBus.totalUnreadCountStream.listen(config.onUnreadCountChanged!);
+        }
+      }
+
+      // Step 12: Initialize ForegroundSyncService
+      if (_getIt.isRegistered<ForegroundSyncService>()) {
+        _getIt<ForegroundSyncService>().initialize();
+      }
 
       stopwatch.stop();
       _logger.i(
-        'ChatModule: DI initialized in ${stopwatch.elapsedMilliseconds}ms',
+        '✅ ChatModule: DI initialized in ${stopwatch.elapsedMilliseconds}ms',
       );
     } catch (e, stackTrace) {
       stopwatch.stop();
       _logger.e(
-        'ChatModule: DI initialization failed',
+        '❌ ChatModule: DI initialization failed after ${stopwatch.elapsedMilliseconds}ms',
         error: e,
         stackTrace: stackTrace,
       );
@@ -180,6 +223,22 @@ class ChatModuleInjection {
   /// the previous user's data.
   static Future<void> logout() async {
     _logger.d('[ChatModuleInjection] Logging out - clearing user data...');
+
+    // 0. Dispose ForegroundSyncService and EventBus
+    try {
+      if (_getIt.isRegistered<ForegroundSyncService>()) {
+        _getIt<ForegroundSyncService>().dispose();
+      }
+    } catch (e) {
+      _logger.d('[ChatModuleInjection] Failed to dispose ForegroundSyncService: $e');
+    }
+    try {
+      if (_getIt.isRegistered<ChatModuleEventBus>()) {
+        _getIt<ChatModuleEventBus>().dispose();
+      }
+    } catch (e) {
+      _logger.d('[ChatModuleInjection] Failed to dispose ChatModuleEventBus: $e');
+    }
 
     // 1. Clear local database (Isar) - most important for data isolation
     try {
@@ -307,9 +366,9 @@ class ChatModuleInjection {
   /// Mirrors [_registerExternalDependencies] in injection.dart but reads
   /// from config instead of dotenv.
   static Future<void> _registerExternalDeps(
-    ChatConfig config,
-    Logger logger,
-  ) async {
+      ChatConfig config,
+      Logger logger,
+      ) async {
     // Logger
     if (!_getIt.isRegistered<Logger>()) {
       _getIt.registerSingleton<Logger>(_logger);
@@ -457,7 +516,7 @@ class ChatModuleInjection {
 
     if (!_getIt.isRegistered<ConnectionFactory>()) {
       _getIt.registerSingleton<ConnectionFactory>(
-        () async => _getIt<realtime.IRealtimeConnectionService>(),
+            () async => _getIt<realtime.IRealtimeConnectionService>(),
       );
     }
 
@@ -470,12 +529,12 @@ class ChatModuleInjection {
     if (!_getIt.isRegistered<Map<String, dynamic>>()) {
       final socketOptions = authToken.isNotEmpty
           ? <String, dynamic>{
-              'query': <String, dynamic>{'token': authToken},
-              'auth': <String, dynamic>{'token': 'Bearer $authToken'},
-              'extraHeaders': <String, String>{
-                'Authorization': 'Bearer $authToken',
-              },
-            }
+        'query': <String, dynamic>{'token': authToken},
+        'auth': <String, dynamic>{'token': 'Bearer $authToken'},
+        'extraHeaders': <String, String>{
+          'Authorization': 'Bearer $authToken',
+        },
+      }
           : <String, dynamic>{};
       _getIt.registerSingleton<Map<String, dynamic>>(socketOptions);
     }
@@ -518,25 +577,25 @@ class ChatModuleInjection {
   static void _registerInterfaceBindings() {
     if (!_getIt.isRegistered<auth_ds.AuthRemoteDataSource>()) {
       _getIt.registerLazySingleton<auth_ds.AuthRemoteDataSource>(
-        () => _getIt<auth_ds.AuthRemoteDataSourceImpl>(),
+            () => _getIt<auth_ds.AuthRemoteDataSourceImpl>(),
       );
     }
 
     if (!_getIt.isRegistered<user_local_ds.UserLocalDataSource>()) {
       _getIt.registerLazySingleton<user_local_ds.UserLocalDataSource>(
-        () => _getIt<user_local_ds.UserLocalDataSourceImpl>(),
+            () => _getIt<user_local_ds.UserLocalDataSourceImpl>(),
       );
     }
 
     if (!_getIt.isRegistered<user_remote_ds.UserRemoteDataSource>()) {
       _getIt.registerLazySingleton<user_remote_ds.UserRemoteDataSource>(
-        () => _getIt<user_remote_ds.UserRemoteDataSourceImpl>(),
+            () => _getIt<user_remote_ds.UserRemoteDataSourceImpl>(),
       );
     }
 
     if (!_getIt.isRegistered<media_local_ds.IMediaLocalDataSource>()) {
       _getIt.registerLazySingleton<media_local_ds.IMediaLocalDataSource>(
-        () => _getIt<media_local_ds.MediaLocalDataSourceImpl>(),
+            () => _getIt<media_local_ds.MediaLocalDataSourceImpl>(),
       );
     }
 
@@ -546,13 +605,13 @@ class ChatModuleInjection {
 
     if (!_getIt.isRegistered<net_connectivity.IConnectivityService>()) {
       _getIt.registerLazySingleton<net_connectivity.IConnectivityService>(
-        () => _getIt<net_connectivity.ConnectivityServiceImpl>(),
+            () => _getIt<net_connectivity.ConnectivityServiceImpl>(),
       );
     }
 
     if (!_getIt.isRegistered<realtime.IRealtimeConnectionService>()) {
       _getIt.registerLazySingleton<realtime.IRealtimeConnectionService>(
-        () => _getIt<EnhancedRealtimeConnectionService>(),
+            () => _getIt<EnhancedRealtimeConnectionService>(),
       );
     }
 
@@ -601,7 +660,7 @@ class ChatModuleInjection {
     }
 
     _getIt.registerLazySingleton<core_graphql.GraphQLClientWrapperImpl>(
-      () => core_graphql.GraphQLClientWrapperImpl(
+          () => core_graphql.GraphQLClientWrapperImpl(
         _getIt<GraphQLClient>(),
         _getIt<NetworkInfo>(),
         _getIt<TokenProvider>(),
@@ -611,12 +670,12 @@ class ChatModuleInjection {
     );
 
     _getIt.registerLazySingleton<core_graphql.GraphQLClientWrapper>(
-      () => _getIt<core_graphql.GraphQLClientWrapperImpl>(),
+          () => _getIt<core_graphql.GraphQLClientWrapperImpl>(),
     );
 
     // SocketManager — inject TokenProvider
     _getIt.registerFactory<socket_mgr.SocketManager>(
-      () => socket_mgr.SocketManager(
+          () => socket_mgr.SocketManager(
         serverUrl: _getIt<String>(instanceName: 'socketUrl'),
         options: _getIt<Map<String, dynamic>>(),
         logger: _getIt<AppLogger>(),

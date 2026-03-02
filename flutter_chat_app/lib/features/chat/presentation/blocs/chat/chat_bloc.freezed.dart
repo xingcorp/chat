@@ -5792,7 +5792,8 @@ mixin _$ChatState {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -5822,7 +5823,8 @@ mixin _$ChatState {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -5852,7 +5854,8 @@ mixin _$ChatState {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -5984,7 +5987,8 @@ class _$InitialImpl implements _Initial {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -6017,7 +6021,8 @@ class _$InitialImpl implements _Initial {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -6050,7 +6055,8 @@ class _$InitialImpl implements _Initial {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -6185,7 +6191,8 @@ class _$LoadingImpl implements _Loading {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -6218,7 +6225,8 @@ class _$LoadingImpl implements _Loading {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -6251,7 +6259,8 @@ class _$LoadingImpl implements _Loading {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -6352,7 +6361,8 @@ abstract class _$$LoadedImplCopyWith<$Res> {
       ConversationTypeFilter activeFilter,
       Map<ConversationTypeFilter, List<Chat>> cachedLists,
       Map<ConversationTypeFilter, int> filterPages,
-      Map<ConversationTypeFilter, bool> filterHasMore});
+      Map<ConversationTypeFilter, bool> filterHasMore,
+      bool isSyncing});
 }
 
 /// @nodoc
@@ -6376,6 +6386,7 @@ class __$$LoadedImplCopyWithImpl<$Res>
     Object? cachedLists = null,
     Object? filterPages = null,
     Object? filterHasMore = null,
+    Object? isSyncing = null,
   }) {
     return _then(_$LoadedImpl(
       chats: null == chats
@@ -6418,6 +6429,10 @@ class __$$LoadedImplCopyWithImpl<$Res>
           ? _value._filterHasMore
           : filterHasMore // ignore: cast_nullable_to_non_nullable
               as Map<ConversationTypeFilter, bool>,
+      isSyncing: null == isSyncing
+          ? _value.isSyncing
+          : isSyncing // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -6438,7 +6453,8 @@ class _$LoadedImpl implements _Loaded {
       final Map<ConversationTypeFilter, int> filterPages =
           const <ConversationTypeFilter, int>{},
       final Map<ConversationTypeFilter, bool> filterHasMore =
-          const <ConversationTypeFilter, bool>{}})
+          const <ConversationTypeFilter, bool>{},
+      this.isSyncing = false})
       : _chats = chats,
         _cachedLists = cachedLists,
         _filterPages = filterPages,
@@ -6497,9 +6513,14 @@ class _$LoadedImpl implements _Loaded {
     return EqualUnmodifiableMapView(_filterHasMore);
   }
 
+  /// Whether a background network refresh is in progress (cache-first pattern)
+  @override
+  @JsonKey()
+  final bool isSyncing;
+
   @override
   String toString() {
-    return 'ChatState.loaded(chats: $chats, hasMore: $hasMore, isLoadingMore: $isLoadingMore, page: $page, pageSize: $pageSize, total: $total, activeFilter: $activeFilter, cachedLists: $cachedLists, filterPages: $filterPages, filterHasMore: $filterHasMore)';
+    return 'ChatState.loaded(chats: $chats, hasMore: $hasMore, isLoadingMore: $isLoadingMore, page: $page, pageSize: $pageSize, total: $total, activeFilter: $activeFilter, cachedLists: $cachedLists, filterPages: $filterPages, filterHasMore: $filterHasMore, isSyncing: $isSyncing)';
   }
 
   @override
@@ -6522,7 +6543,9 @@ class _$LoadedImpl implements _Loaded {
             const DeepCollectionEquality()
                 .equals(other._filterPages, _filterPages) &&
             const DeepCollectionEquality()
-                .equals(other._filterHasMore, _filterHasMore));
+                .equals(other._filterHasMore, _filterHasMore) &&
+            (identical(other.isSyncing, isSyncing) ||
+                other.isSyncing == isSyncing));
   }
 
   @override
@@ -6537,7 +6560,8 @@ class _$LoadedImpl implements _Loaded {
       activeFilter,
       const DeepCollectionEquality().hash(_cachedLists),
       const DeepCollectionEquality().hash(_filterPages),
-      const DeepCollectionEquality().hash(_filterHasMore));
+      const DeepCollectionEquality().hash(_filterHasMore),
+      isSyncing);
 
   @JsonKey(ignore: true)
   @override
@@ -6560,7 +6584,8 @@ class _$LoadedImpl implements _Loaded {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -6576,7 +6601,7 @@ class _$LoadedImpl implements _Loaded {
     required TResult Function(String message) error,
   }) {
     return loaded(chats, hasMore, isLoadingMore, page, pageSize, total,
-        activeFilter, cachedLists, filterPages, filterHasMore);
+        activeFilter, cachedLists, filterPages, filterHasMore, isSyncing);
   }
 
   @override
@@ -6594,7 +6619,8 @@ class _$LoadedImpl implements _Loaded {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -6610,7 +6636,7 @@ class _$LoadedImpl implements _Loaded {
     TResult? Function(String message)? error,
   }) {
     return loaded?.call(chats, hasMore, isLoadingMore, page, pageSize, total,
-        activeFilter, cachedLists, filterPages, filterHasMore);
+        activeFilter, cachedLists, filterPages, filterHasMore, isSyncing);
   }
 
   @override
@@ -6628,7 +6654,8 @@ class _$LoadedImpl implements _Loaded {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -6646,7 +6673,7 @@ class _$LoadedImpl implements _Loaded {
   }) {
     if (loaded != null) {
       return loaded(chats, hasMore, isLoadingMore, page, pageSize, total,
-          activeFilter, cachedLists, filterPages, filterHasMore);
+          activeFilter, cachedLists, filterPages, filterHasMore, isSyncing);
     }
     return orElse();
   }
@@ -6721,7 +6748,8 @@ abstract class _Loaded implements ChatState {
       final ConversationTypeFilter activeFilter,
       final Map<ConversationTypeFilter, List<Chat>> cachedLists,
       final Map<ConversationTypeFilter, int> filterPages,
-      final Map<ConversationTypeFilter, bool> filterHasMore}) = _$LoadedImpl;
+      final Map<ConversationTypeFilter, bool> filterHasMore,
+      final bool isSyncing}) = _$LoadedImpl;
 
   List<Chat> get chats;
   bool get hasMore;
@@ -6733,6 +6761,9 @@ abstract class _Loaded implements ChatState {
   Map<ConversationTypeFilter, List<Chat>> get cachedLists;
   Map<ConversationTypeFilter, int> get filterPages;
   Map<ConversationTypeFilter, bool> get filterHasMore;
+
+  /// Whether a background network refresh is in progress (cache-first pattern)
+  bool get isSyncing;
   @JsonKey(ignore: true)
   _$$LoadedImplCopyWith<_$LoadedImpl> get copyWith =>
       throw _privateConstructorUsedError;
@@ -6815,7 +6846,8 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -6848,7 +6880,8 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -6881,7 +6914,8 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -7057,7 +7091,8 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -7090,7 +7125,8 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -7123,7 +7159,8 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -7329,7 +7366,8 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -7362,7 +7400,8 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -7395,7 +7434,8 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -7575,7 +7615,8 @@ class _$MessageSendingImpl implements _MessageSending {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -7608,7 +7649,8 @@ class _$MessageSendingImpl implements _MessageSending {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -7641,7 +7683,8 @@ class _$MessageSendingImpl implements _MessageSending {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -7846,7 +7889,8 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -7879,7 +7923,8 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -7912,7 +7957,8 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -8059,7 +8105,8 @@ class _$SyncingImpl implements _Syncing {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -8092,7 +8139,8 @@ class _$SyncingImpl implements _Syncing {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -8125,7 +8173,8 @@ class _$SyncingImpl implements _Syncing {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -8260,7 +8309,8 @@ class _$OfflineImpl implements _Offline {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -8293,7 +8343,8 @@ class _$OfflineImpl implements _Offline {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -8326,7 +8377,8 @@ class _$OfflineImpl implements _Offline {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,
@@ -8487,7 +8539,8 @@ class _$ErrorImpl implements _Error {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
     required TResult Function(List<Chat>? chats) messagesLoading,
@@ -8520,7 +8573,8 @@ class _$ErrorImpl implements _Error {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
     TResult? Function(List<Chat>? chats)? messagesLoading,
@@ -8553,7 +8607,8 @@ class _$ErrorImpl implements _Error {
             ConversationTypeFilter activeFilter,
             Map<ConversationTypeFilter, List<Chat>> cachedLists,
             Map<ConversationTypeFilter, int> filterPages,
-            Map<ConversationTypeFilter, bool> filterHasMore)?
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
     TResult Function(List<Chat>? chats)? messagesLoading,

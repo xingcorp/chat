@@ -1,15 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/chat_config.dart';
 import 'package:flutter_chat_app/core/app/chat_app_shell.dart';
+import 'package:flutter_chat_app/core/cache/background_sync_helper.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/di/chat_module_injection.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
+import 'package:flutter_chat_app/core/services/chat_fcm_handler.dart';
+import 'package:flutter_chat_app/core/services/chat_module_event_bus.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/create_group_page.dart';
 import 'package:flutter_chat_app/features/contacts/presentation/pages/contacts_page.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Entry point for the chat module when used as a package.
 ///
@@ -113,6 +120,95 @@ class ChatModule {
     if (getIt.isRegistered<TokenRepository>()) {
       await getIt<TokenRepository>().saveAccessToken(newAccessToken);
     }
+    // Also persist to SharedPreferences for background isolate access
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(BackgroundSyncHelper.keyAccessToken, newAccessToken);
+  }
+
+  // ===========================================================
+  // Host App API — Events, Unread Count, Sync, FCM
+  // ===========================================================
+
+  /// Stream of total unread message count across all conversations.
+  ///
+  /// Host app can listen to this to update a badge on the chat tab.
+  /// ```dart
+  /// ChatModule.unreadCountStream.listen((count) {
+  ///   setState(() => _chatBadge = count);
+  /// });
+  /// ```
+  static Stream<int> get unreadCountStream {
+    _ensureInitialized();
+    return GetIt.instance<ChatModuleEventBus>().totalUnreadCountStream;
+  }
+
+  /// Current total unread count (synchronous).
+  static int get currentUnreadCount {
+    _ensureInitialized();
+    return GetIt.instance<ChatModuleEventBus>().currentTotalUnreadCount;
+  }
+
+  /// Stream of new messages from any conversation.
+  static Stream<ChatMessage> get newMessageStream {
+    _ensureInitialized();
+    return GetIt.instance<ChatModuleEventBus>().newMessageStream;
+  }
+
+  /// Convenience method to listen for new messages.
+  ///
+  /// Returns a [StreamSubscription] that the caller should cancel
+  /// when no longer needed.
+  static StreamSubscription<ChatMessage> onNewMessage(
+    void Function(ChatMessage message) callback,
+  ) {
+    _ensureInitialized();
+    return GetIt.instance<ChatModuleEventBus>().newMessageStream.listen(callback);
+  }
+
+  /// Forward an FCM data payload into the chat module for processing.
+  ///
+  /// Call this from the host app's FCM foreground message handler
+  /// so the chat module can update its cache and UI.
+  static void onFCMMessageReceived(Map<String, dynamic> data) {
+    _ensureInitialized();
+    GetIt.instance<ChatModuleEventBus>().emitFCMData(data);
+  }
+
+  /// Request a foreground sync of chat data from the server.
+  ///
+  /// Useful after receiving a silent push notification or when
+  /// the host app detects connectivity restored.
+  static void triggerSync() {
+    _ensureInitialized();
+    GetIt.instance<ChatModuleEventBus>().triggerSync();
+  }
+
+  /// Check if an FCM data payload is chat-related.
+  ///
+  /// ```dart
+  /// FirebaseMessaging.onMessage.listen((message) {
+  ///   if (ChatModule.isChatFCMMessage(message.data)) {
+  ///     ChatModule.onFCMMessageReceived(message.data);
+  ///   }
+  /// });
+  /// ```
+  static bool isChatFCMMessage(Map<String, dynamic> data) {
+    return ChatFCMHandler.isChatMessage(data);
+  }
+
+  /// Handle a background FCM data payload (no GetIt, no DI).
+  ///
+  /// Call from a top-level `@pragma('vm:entry-point')` function:
+  /// ```dart
+  /// @pragma('vm:entry-point')
+  /// Future<void> firebaseBackgroundHandler(RemoteMessage message) async {
+  ///   if (ChatModule.isChatFCMMessage(message.data)) {
+  ///     await ChatModule.handleBackgroundFCM(message.data);
+  ///   }
+  /// }
+  /// ```
+  static Future<void> handleBackgroundFCM(Map<String, dynamic> data) async {
+    await ChatFCMHandler.onBackgroundMessage(data);
   }
 
   // ===========================================================

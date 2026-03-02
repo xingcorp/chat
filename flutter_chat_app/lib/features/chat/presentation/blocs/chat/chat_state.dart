@@ -21,6 +21,8 @@ class ChatState with _$ChatState {
     @Default(<ConversationTypeFilter, List<Chat>>{}) Map<ConversationTypeFilter, List<Chat>> cachedLists,
     @Default(<ConversationTypeFilter, int>{}) Map<ConversationTypeFilter, int> filterPages,
     @Default(<ConversationTypeFilter, bool>{}) Map<ConversationTypeFilter, bool> filterHasMore,
+    /// Whether a background network refresh is in progress (cache-first pattern)
+    @Default(false) bool isSyncing,
   }) = _Loaded;
   
   /// Chat details loaded state

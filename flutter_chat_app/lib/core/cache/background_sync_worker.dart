@@ -2,12 +2,9 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:ui';
 
-
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-
-
-import 'package:flutter_chat_app/core/cache/cache_sync_strategy.dart';
+import 'package:flutter_chat_app/core/cache/background_sync_helper.dart';
 import 'package:flutter_chat_app/core/network/connectivity/connectivity_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
@@ -25,9 +22,8 @@ class BackgroundSyncWorker {
   
   /// Logger
   final Logger _logger = Logger();
-  
+
   /// Dependencies
-  final CacheSyncStrategy _cacheSyncStrategy = CacheSyncStrategy();
   final FlutterBackgroundService _backgroundService = FlutterBackgroundService();
   late final IConnectivityService _connectivityService;
   
@@ -163,125 +159,91 @@ class BackgroundSyncWorker {
   
   /// Perform enterprise-grade background sync
   static Future<void> _performEnterpriseBackgroundSync(
-    ServiceInstance service, 
+    ServiceInstance service,
     Logger logger
   ) async {
     final startTime = DateTime.now();
-    logger.i('🔄 Bắt đầu enterprise background sync');
-    
+    logger.i('Background sync started');
+
     try {
-      // Check connectivity
       final prefs = await SharedPreferences.getInstance();
       final syncEnabled = prefs.getBool('background_sync_enabled') ?? true;
-      
+
       if (!syncEnabled) {
-        logger.i('⏸️ Background sync bị tắt');
+        logger.i('Background sync disabled');
         return;
       }
-      
-      // Update notification
+
       if (service is AndroidServiceInstance) {
         service.setForegroundNotificationInfo(
           title: 'Chat Sync',
-          content: 'Đang đồng bộ tin nhắn...',
+          content: 'Syncing messages...',
         );
       }
-      
-      // Perform actual sync operations
-      await _syncChatMessages(logger);
-      await _syncUserData(logger);
-      await _syncMediaFiles(logger);
-      
-      // Update last sync time
+
+      // Use BackgroundSyncHelper for real sync via GraphQL + Isar
+      final helper = await BackgroundSyncHelper.initialize();
+      try {
+        await helper.syncChatList();
+      } finally {
+        await helper.dispose();
+      }
+
       await prefs.setString('last_sync_time', DateTime.now().toIso8601String());
-      
+
       final duration = DateTime.now().difference(startTime);
-      logger.i('✅ Enterprise background sync hoàn thành trong ${duration.inSeconds}s');
-      
-      // Update notification
+      logger.i('Background sync completed in ${duration.inSeconds}s');
+
       if (service is AndroidServiceInstance) {
         service.setForegroundNotificationInfo(
           title: 'Chat Sync',
-          content: 'Đồng bộ hoàn thành lúc ${DateTime.now().toString().substring(11, 16)}',
+          content: 'Sync completed at ${DateTime.now().toString().substring(11, 16)}',
         );
       }
-      
-      // Broadcast sync complete
+
       service.invoke('syncComplete', {
         'time': DateTime.now().toIso8601String(),
         'duration': duration.inMilliseconds,
       });
-      
+
     } catch (e) {
-      logger.e('❌ Enterprise background sync failed: $e');
-      
+      logger.e('Background sync failed: $e');
+
       if (service is AndroidServiceInstance) {
         service.setForegroundNotificationInfo(
           title: 'Chat Sync',
-          content: 'Đồng bộ thất bại - sẽ thử lại sau',
+          content: 'Sync failed - will retry later',
         );
       }
     }
   }
   
-  /// Sync chat messages
-  static Future<void> _syncChatMessages(Logger logger) async {
-    logger.i('💬 Đồng bộ tin nhắn chat');
-
-    try {
-      // Use cache sync strategy for efficient sync
-      final cacheSyncStrategy = CacheSyncStrategy();
-
-      // Sync chat messages by marking data as dirty for refresh
-      cacheSyncStrategy.markChatListDirty();
-      cacheSyncStrategy.markUserDataDirty();
-
-      logger.d('✅ Chat messages synced successfully using cache strategy');
-    } catch (e) {
-      logger.e('❌ Failed to sync chat messages: $e');
-      rethrow;
-    }
-    await Future.delayed(const Duration(seconds: 1)); // Simulate work
-  }
-  
-  /// Sync user data
-  static Future<void> _syncUserData(Logger logger) async {
-    logger.i('👤 Đồng bộ dữ liệu người dùng');
-    // Implementation for user data sync
-    await Future.delayed(const Duration(milliseconds: 500)); // Simulate work
-  }
-  
-  /// Sync media files
-  static Future<void> _syncMediaFiles(Logger logger) async {
-    logger.i('📁 Đồng bộ file media');
-    // Implementation for media file sync
-    await Future.delayed(const Duration(milliseconds: 800)); // Simulate work
-  }
-  
-  /// Perform manual sync using cache strategy
+  /// Perform manual sync using BackgroundSyncHelper
   Future<void> performManualSync() async {
     if (!_isInitialized) {
-      _logger.w('⚠️ Background sync worker chưa được khởi tạo');
+      _logger.w('Background sync worker not initialized');
       return;
     }
 
     try {
-      _logger.i('🔄 Bắt đầu manual sync với cache strategy');
+      _logger.i('Starting manual sync');
 
-      // Use cache sync strategy for efficient sync
-      _cacheSyncStrategy.markChatListDirty();
-      _cacheSyncStrategy.markUserDataDirty();
-
-      // Check connectivity before sync
       final isConnected = await _connectivityService.isConnected();
       if (!isConnected) {
-        _logger.w('⚠️ Không có kết nối mạng, bỏ qua sync');
+        _logger.w('No network connection, skipping sync');
         return;
       }
 
-      _logger.i('✅ Manual sync hoàn thành');
+      final helper = await BackgroundSyncHelper.initialize();
+      try {
+        await helper.syncChatList();
+      } finally {
+        await helper.dispose();
+      }
+
+      _logger.i('Manual sync completed');
     } catch (e) {
-      _logger.e('❌ Lỗi khi thực hiện manual sync: $e');
+      _logger.e('Manual sync failed: $e');
       rethrow;
     }
   }

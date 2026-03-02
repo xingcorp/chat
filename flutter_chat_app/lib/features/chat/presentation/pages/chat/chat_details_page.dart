@@ -1334,6 +1334,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   void _showMessageOptions(BuildContext context, ChatMessage message, bool isCurrentUser) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       builder: (ctx) => SafeArea(
         child: SingleChildScrollView(
           child: Column(

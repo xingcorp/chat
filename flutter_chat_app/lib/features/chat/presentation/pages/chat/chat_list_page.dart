@@ -17,6 +17,7 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_shimmer.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/lists/app_list_view.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
@@ -165,27 +166,9 @@ class _ChatListPageState extends BaseState<ChatListPage> {
           },
           builder: (context, state) {
             return state.when(
-              initial: () => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AppProgressIndicator.circular(label: context.l10n.loading),
-                    const SizedBox(height: AppDimens.spaceMedium),
-                    AppText(context.l10n.loadingConversations),
-                  ],
-                ),
-              ),
-              loading: () => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AppProgressIndicator.circular(label: context.l10n.loading),
-                    const SizedBox(height: AppDimens.spaceMedium),
-                    AppText(context.l10n.loadingConversations),
-                  ],
-                ),
-              ),
-              loaded: (chats, hasMore, isLoadingMore, page, pageSize, total, activeFilter, cachedLists, filterPages, filterHasMore) {
+              initial: () => _buildShimmerList(),
+              loading: () => _buildShimmerList(),
+              loaded: (chats, hasMore, isLoadingMore, page, pageSize, total, activeFilter, cachedLists, filterPages, filterHasMore, isSyncing) {
                 return Column(
                   children: [
                     ConversationTypeTabBar(
@@ -194,6 +177,14 @@ class _ChatListPageState extends BaseState<ChatListPage> {
                         _chatBloc.add(ChatEvent.changeConversationTypeFilter(filter: filter));
                       },
                     ),
+                    if (isSyncing)
+                      LinearProgressIndicator(
+                        minHeight: 2,
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
+                        ),
+                      ),
                     Expanded(
                       child: isLoadingMore && chats.isEmpty
                           ? Center(
@@ -403,6 +394,22 @@ class _ChatListPageState extends BaseState<ChatListPage> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Shimmer skeleton list for loading state (cache-first pattern)
+  Widget _buildShimmerList() {
+    return ListView.separated(
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 10,
+      separatorBuilder: (context, index) => Divider(
+        height: 1,
+        thickness: 0.5,
+        indent: 68,
+        endIndent: 0,
+        color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+      ),
+      itemBuilder: (context, index) => AppShimmer.listItem(),
     );
   }
 } 
