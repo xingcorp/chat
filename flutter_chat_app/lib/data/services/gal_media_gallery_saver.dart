@@ -2,14 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter_chat_app/domain/services/i_file_downloader.dart';
 import 'package:flutter_chat_app/domain/services/i_media_gallery_saver.dart';
 import 'package:gal/gal.dart';
 
 /// `gal`-based implementation for writing media into system gallery.
 class GalMediaGallerySaver implements IMediaGallerySaver {
-  GalMediaGallerySaver(this._logger);
+  GalMediaGallerySaver(this._logger, this._fileDownloader);
 
   final AppLogger _logger;
+  final IFileDownloader _fileDownloader;
 
   @override
   bool get isSupported {
@@ -25,6 +27,39 @@ class GalMediaGallerySaver implements IMediaGallerySaver {
       TargetPlatform.linux => false,
       TargetPlatform.windows => false,
     };
+  }
+
+  @override
+  Future<Either<Failure, void>> fallbackDownloadFromUrl(String? url) async {
+    if (url == null || url.isEmpty) {
+      return const Left(
+        ValidationFailure(
+          message: 'Missing media url for fallback download.',
+          code: 'invalid_input',
+        ),
+      );
+    }
+
+    try {
+      final Either<Failure, String> result =
+          await _fileDownloader.downloadFromUrl(url: url);
+      if (result.isLeft) {
+        return Left(result.left);
+      }
+      return const Right(null);
+    } catch (error, stackTrace) {
+      _logger.e(
+        'Fallback download failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return Left(
+        DownloadFailure(
+          message: 'Fallback download failed: $error',
+          code: 'download_failed',
+        ),
+      );
+    }
   }
 
   @override

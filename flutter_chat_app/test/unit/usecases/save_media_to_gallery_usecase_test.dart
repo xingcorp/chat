@@ -29,9 +29,13 @@ void main() {
     );
   });
 
-  test('returns unsupported failure when gallery save is not supported',
-      () async {
+  test('uses fallback download when gallery save is not supported', () async {
     when(() => gallerySaver.isSupported).thenReturn(false);
+    when(
+      () => gallerySaver.fallbackDownloadFromUrl(
+        'https://example.com/image.jpg',
+      ),
+    ).thenAnswer((_) async => const Right(null));
 
     final result = await useCase(
       const SaveMediaToGalleryParams(
@@ -40,9 +44,12 @@ void main() {
       ),
     );
 
-    expect(result.isLeft, true);
-    expect(result.left, isA<DownloadFailure>());
-    expect(result.left.code, 'unsupported_platform');
+    expect(result.isRight, true);
+    verify(
+      () => gallerySaver.fallbackDownloadFromUrl(
+        'https://example.com/image.jpg',
+      ),
+    ).called(1);
     verifyNever(() => gallerySaver.ensureAccess());
   });
 

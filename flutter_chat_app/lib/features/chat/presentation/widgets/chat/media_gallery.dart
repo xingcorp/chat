@@ -9,6 +9,7 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/services/image_editor_service.dart';
+import 'package:flutter_chat_app/domain/usecases/media/download_file_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/media/save_media_to_gallery_usecase.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
@@ -643,9 +644,28 @@ class MediaGallery extends StatelessWidget {
     };
 
     if (mediaType == null) {
-      AppSnackBar.warning(
-        context: context,
-        message: context.l10n.unsupportedFileType,
+      final DownloadFileUseCase downloadFileUseCase =
+          GetIt.I<DownloadFileUseCase>();
+      final result = await downloadFileUseCase(
+        DownloadFileParams(
+          url: attachment.url,
+          fileName: attachment.name.isNotEmpty ? attachment.name : null,
+        ),
+      );
+
+      if (!context.mounted) {
+        return;
+      }
+
+      result.fold(
+        (failure) => AppSnackBar.error(
+          context: context,
+          message: failure.userMessage,
+        ),
+        (_) => AppSnackBar.info(
+          context: context,
+          message: context.l10n.downloading,
+        ),
       );
       return;
     }

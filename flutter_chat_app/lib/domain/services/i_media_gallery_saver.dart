@@ -10,6 +10,11 @@ abstract class IMediaGallerySaver {
   /// Whether the current platform supports gallery save operations.
   bool get isSupported;
 
+  /// Fallback behavior when platform does not support native gallery writes.
+  ///
+  /// Typical implementation on web: open media URL in browser so user can save.
+  Future<Either<Failure, void>> fallbackDownloadFromUrl(String? url);
+
   /// Ensures the app has permission to write into the gallery/photo library.
   Future<Either<Failure, void>> ensureAccess();
 

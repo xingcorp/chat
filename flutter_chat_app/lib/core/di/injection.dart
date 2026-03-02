@@ -61,9 +61,12 @@ import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.d
     as media_local_ds;
 import 'package:flutter_chat_app/data/datasources/permissions_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/permissions/web_permissions_datasource.dart';
+import 'package:flutter_chat_app/data/services/file_downloader/file_downloader_factory.dart';
 import 'package:flutter_chat_app/data/services/gal_media_gallery_saver.dart';
 import 'package:flutter_chat_app/domain/repositories/i_media_repository.dart';
+import 'package:flutter_chat_app/domain/services/i_file_downloader.dart';
 import 'package:flutter_chat_app/domain/services/i_media_gallery_saver.dart';
+import 'package:flutter_chat_app/domain/usecases/media/download_file_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/media/save_media_to_gallery_usecase.dart';
 
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
@@ -249,9 +252,24 @@ Future<void> configureDependencies() async {
       getIt.registerLazySingleton<INetworkInfo>(() => getIt<NetworkInfo>());
     }
 
+    if (!getIt.isRegistered<IFileDownloader>()) {
+      getIt.registerLazySingleton<IFileDownloader>(
+        () => createFileDownloader(getIt<AppLogger>()),
+      );
+    }
+
     if (!getIt.isRegistered<IMediaGallerySaver>()) {
       getIt.registerLazySingleton<IMediaGallerySaver>(
-        () => GalMediaGallerySaver(getIt<AppLogger>()),
+        () => GalMediaGallerySaver(
+          getIt<AppLogger>(),
+          getIt<IFileDownloader>(),
+        ),
+      );
+    }
+
+    if (!getIt.isRegistered<DownloadFileUseCase>()) {
+      getIt.registerLazySingleton<DownloadFileUseCase>(
+        () => DownloadFileUseCase(getIt<IFileDownloader>()),
       );
     }
 

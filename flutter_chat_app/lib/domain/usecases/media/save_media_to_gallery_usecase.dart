@@ -65,12 +65,7 @@ class SaveMediaToGalleryUseCase {
 
   Future<Either<Failure, void>> call(SaveMediaToGalleryParams params) async {
     if (!_gallerySaver.isSupported) {
-      return const Left(
-        DownloadFailure(
-          message: 'Saving to gallery is not supported on this platform.',
-          code: 'unsupported_platform',
-        ),
-      );
+      return _gallerySaver.fallbackDownloadFromUrl(params.url);
     }
 
     final Either<Failure, void> accessResult =

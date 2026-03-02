@@ -10,6 +10,7 @@ import 'package:flutter_chat_app/core/config/environment_manager.dart';
 import 'package:flutter_chat_app/core/config/flavor_config.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
+import 'package:flutter_chat_app/core/initialization/download_plugin_initializer.dart';
 import 'package:flutter_chat_app/core/initialization/env_validator.dart';
 import 'package:flutter_chat_app/core/initialization/service_initializer.dart';
 import 'package:flutter_chat_app/app.dart';
@@ -21,6 +22,8 @@ Future<void> runMainApp() async {
   if (!FlavorConfig.isInitialized) {
     FlavorConfig.initializeFromEnvironment();
   }
+
+  await initializeDownloadPlugin();
 
   final envFileName = await EnvValidator.loadDotenvForFlavor();
   EnvValidator.validateDotenvConfiguration(envFileName);
@@ -69,7 +72,8 @@ Future<void> runMainApp() async {
       ),
     );
   }, (error, stackTrace) {
-    GetIt.I<Logger>().e('Unhandled error', error: error, stackTrace: stackTrace);
+    GetIt.I<Logger>()
+        .e('Unhandled error', error: error, stackTrace: stackTrace);
   });
 
   // Initialize non-critical services in background

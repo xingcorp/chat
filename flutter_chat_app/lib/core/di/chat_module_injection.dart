@@ -48,6 +48,7 @@ import 'package:flutter_chat_app/core/network/socket_manager.dart'
     as socket_mgr;
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
+import 'package:flutter_chat_app/data/services/file_downloader/file_downloader_factory.dart';
 import 'package:flutter_chat_app/data/services/gal_media_gallery_saver.dart';
 import 'package:flutter_chat_app/data/datasources/permissions_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/permissions/web_permissions_datasource.dart';
@@ -58,7 +59,9 @@ import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.da
 import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.dart'
     as media_local_ds;
 import 'package:flutter_chat_app/domain/repositories/i_media_repository.dart';
+import 'package:flutter_chat_app/domain/services/i_file_downloader.dart';
 import 'package:flutter_chat_app/domain/services/i_media_gallery_saver.dart';
+import 'package:flutter_chat_app/domain/usecases/media/download_file_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/media/save_media_to_gallery_usecase.dart';
 import 'package:flutter_chat_app/features/auth/data/datasources/auth/auth_remote_datasource.dart'
     as auth_ds;
@@ -629,9 +632,24 @@ class ChatModuleInjection {
       _getIt.registerLazySingleton<INetworkInfo>(() => _getIt<NetworkInfo>());
     }
 
+    if (!_getIt.isRegistered<IFileDownloader>()) {
+      _getIt.registerLazySingleton<IFileDownloader>(
+        () => createFileDownloader(_getIt<AppLogger>()),
+      );
+    }
+
     if (!_getIt.isRegistered<IMediaGallerySaver>()) {
       _getIt.registerLazySingleton<IMediaGallerySaver>(
-        () => GalMediaGallerySaver(_getIt<AppLogger>()),
+        () => GalMediaGallerySaver(
+          _getIt<AppLogger>(),
+          _getIt<IFileDownloader>(),
+        ),
+      );
+    }
+
+    if (!_getIt.isRegistered<DownloadFileUseCase>()) {
+      _getIt.registerLazySingleton<DownloadFileUseCase>(
+        () => DownloadFileUseCase(_getIt<IFileDownloader>()),
       );
     }
 
