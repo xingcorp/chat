@@ -333,17 +333,6 @@ class _ChatPackageWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Priority: ChatConfig.theme > chat module's default theme
-    // In both cases, ensure AppThemeExtensions is present
-    final configTheme = ChatModule.config?.theme;
-    final themeData = configTheme ?? AppTheme.lightTheme;
-    // Ensure AppThemeExtensions is always available
-    final effectiveTheme = themeData.extension<AppThemeExtensions>() != null
-        ? themeData
-        : themeData.copyWith(
-      extensions: [...themeData.extensions.values, AppThemeExtensions.light],
-    );
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= AppDimens.breakpointDesktop;
@@ -354,14 +343,31 @@ class _ChatPackageWrapper extends StatelessWidget {
               : const Size(375, 812),
           minTextAdapt: true,
           splitScreenMode: true,
-          builder: (context, _) => Theme(
-            data: effectiveTheme,
-            child: Portal(
-              child: ChatAppShell.package(
-                child: child,
+          builder: (context, _) {
+            // Resolve theme INSIDE ScreenUtilInit builder so .sp is available
+            // when AppTheme.lightTheme builds its text styles.
+            final configTheme = ChatModule.config?.theme;
+            final themeData = configTheme ?? AppTheme.lightTheme;
+            // Ensure AppThemeExtensions is always available
+            final effectiveTheme =
+            themeData.extension<AppThemeExtensions>() != null
+                ? themeData
+                : themeData.copyWith(
+              extensions: [
+                ...themeData.extensions.values,
+                AppThemeExtensions.light,
+              ],
+            );
+
+            return Theme(
+              data: effectiveTheme,
+              child: Portal(
+                child: ChatAppShell.package(
+                  child: child,
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
