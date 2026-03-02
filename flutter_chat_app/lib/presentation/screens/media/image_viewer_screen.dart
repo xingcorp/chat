@@ -10,8 +10,6 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_p
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_gallery.dart' show EditedImageResult;
-import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_popup_menu.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
@@ -227,65 +225,77 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> with TickerProvid
         builder: (context, child) {
           return Opacity(
             opacity: 1.0 - _appBarOpacityAnimation.value,
-            child: AppBar(
-              backgroundColor: Colors.black.withValues(alpha: 0.4),
-              elevation: 0,
-              leading: AppIconButton(
-                icon: Icons.arrow_back,
-                onPressed: () => Navigator.of(context).pop(),
-                tooltip: context.l10n.backOnline, // Using closest available key
+            child: Theme(
+              data: theme.copyWith(
+                iconTheme: const IconThemeData(color: Colors.white),
+                appBarTheme: const AppBarTheme(
+                  iconTheme: IconThemeData(color: Colors.white),
+                  actionsIconTheme: IconThemeData(color: Colors.white),
+                  foregroundColor: Colors.white,
+                ),
               ),
-              title: Text(
-                widget.title ?? context.l10n.imageMessage,
-                style: TextStyle(color: theme.colorScheme.onSurface),
-              ),
-              actions: [
-                AppIconButton(
-                  icon: Icons.edit,
-                  onPressed: _handleEdit,
-                  tooltip: context.l10n.edit,
+              child: AppBar(
+                backgroundColor: Colors.black.withValues(alpha: 0.4),
+                elevation: 0,
+                foregroundColor: Colors.white,
+                iconTheme: const IconThemeData(color: Colors.white),
+                actionsIconTheme: const IconThemeData(color: Colors.white),
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.of(context).pop(),
+                  tooltip: context.l10n.backOnline,
                 ),
-                AppIconButton(
-                  icon: Icons.share,
-                  onPressed: _handleShare,
-                  tooltip: context.l10n.share,
+                title: Text(
+                  widget.title ?? context.l10n.imageMessage,
+                  style: const TextStyle(color: Colors.white),
                 ),
-                AppIconButton(
-                  icon: Icons.download,
-                  onPressed: _handleDownload,
-                  tooltip: context.l10n.download,
-                ),
-                // Options menu (⋮) - for additional options
-                AppPopupMenu<String>(
-                  icon: Icons.more_vert,
-                  items: [
-                    PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.edit, size: 20),
-                          const SizedBox(width: 8),
-                          Text(context.l10n.edit),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'info',
-                      child: Text(context.l10n.imageMessage),
-                    ),
-                    PopupMenuItem(
-                      value: 'save',
-                      child: Text(context.l10n.download),
-                    ),
-                    if (widget.message != null)
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.white),
+                    onPressed: _handleEdit,
+                    tooltip: context.l10n.edit,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.share, color: Colors.white),
+                    onPressed: _handleShare,
+                    tooltip: context.l10n.share,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.download, color: Colors.white),
+                    onPressed: _handleDownload,
+                    tooltip: context.l10n.download,
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Colors.white),
+                    onSelected: _handleMenuOption,
+                    itemBuilder: (context) => [
                       PopupMenuItem(
-                        value: 'forward',
-                        child: Text(context.l10n.forward),
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.edit, size: 20),
+                            const SizedBox(width: 8),
+                            Text(context.l10n.edit),
+                          ],
+                        ),
                       ),
-                  ],
-                  onSelected: _handleMenuOption,
-                ),
-              ],
+                      PopupMenuItem(
+                        value: 'info',
+                        child: Text(context.l10n.imageMessage),
+                      ),
+                      PopupMenuItem(
+                        value: 'save',
+                        child: Text(context.l10n.download),
+                      ),
+                      if (widget.message != null)
+                        PopupMenuItem(
+                          value: 'forward',
+                          child: Text(context.l10n.forward),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           );
         },

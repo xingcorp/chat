@@ -30,6 +30,8 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/chat/read_re
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/expandable_rich_text.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
+import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
+import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 
 class MessageItem extends StatefulWidget {
   final MessageUIState uiState;
@@ -816,18 +818,23 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
           );
           break;
         case 'message':
-          // Navigate to direct message - same as profile for now,
-          // can be extended to create/open DM conversation
-          context.push(
-            '/users/$userId',
-            extra: {
-              'displayName': displayName,
-              'avatarUrl': avatarUrl,
-            },
-          );
+          _openDirectMessage(context, userId);
           break;
       }
     });
+  }
+
+  Future<void> _openDirectMessage(BuildContext context, String userId) async {
+    try {
+      final chatRemoteDataSource = GetIt.I<IChatRemoteDataSource>();
+      final chat = await chatRemoteDataSource.createDirectChat(receiverId: userId);
+      if (!context.mounted) return;
+      await ChatNavigationHelper.navigateToChatDetail(context, chatId: chat.id);
+    } catch (_) {
+      if (!context.mounted) return;
+      // Fallback: navigate using userId as chatId
+      await ChatNavigationHelper.navigateToChatDetail(context, chatId: userId);
+    }
   }
 
   Widget _buildReplyPreview(
