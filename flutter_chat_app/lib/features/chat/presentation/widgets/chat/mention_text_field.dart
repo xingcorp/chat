@@ -101,7 +101,8 @@ class MentionTextField extends StatefulWidget {
   State<MentionTextField> createState() => _MentionTextFieldState();
 }
 
-class _MentionTextFieldState extends State<MentionTextField> {
+class _MentionTextFieldState extends State<MentionTextField>
+    with WidgetsBindingObserver {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   static const double _kOverlayGap = 8;
@@ -121,6 +122,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     widget.controller.addListener(_onTextChanged);
     widget.focusNode?.addListener(_onFocusChanged);
   }
@@ -141,10 +143,19 @@ class _MentionTextFieldState extends State<MentionTextField> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.controller.removeListener(_onTextChanged);
     widget.focusNode?.removeListener(_onFocusChanged);
     _removeOverlay();
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    if (_showMentionList && _filteredMembers.isNotEmpty) {
+      _showOverlay();
+    }
   }
 
   void _onTextChanged() {
@@ -353,8 +364,9 @@ class _MentionTextFieldState extends State<MentionTextField> {
     final spaceAbove =
         (inputRect.top - safeTop - _kOverlayGap).clamp(0.0, double.infinity);
 
-    final showBelow =
-        spaceBelow >= _kOverlayMinUsableHeight || spaceBelow >= spaceAbove;
+    final forceAboveOnMobile = !kIsWeb && keyboardInset > 0;
+    final showBelow = !forceAboveOnMobile &&
+        (spaceBelow >= _kOverlayMinUsableHeight || spaceBelow >= spaceAbove);
     final maxAvailableHeight = showBelow ? spaceBelow : spaceAbove;
     final double overlayWidth = math.min(
       math.min(inputRect.width, _kOverlayMaxWidth),
