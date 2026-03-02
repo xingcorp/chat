@@ -112,6 +112,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
   // Mention state
   bool _showMentionList = false;
   int _mentionStartIndex = -1;
+  int _mentionEndIndex = -1;
   String _currentMentionQuery = '';
   List<ConversationMember> _filteredMembers = [];
   int _selectedMentionIndex = 0;
@@ -214,6 +215,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
         setState(() {
           _showMentionList = true;
           _mentionStartIndex = atIndex;
+          _mentionEndIndex = cursorPos;
           _currentMentionQuery = query;
           _filteredMembers = combinedMembers;
           _selectedMentionIndex = 0;
@@ -227,6 +229,8 @@ class _MentionTextFieldState extends State<MentionTextField> {
     if (_showMentionList) {
       setState(() {
         _showMentionList = false;
+        _mentionStartIndex = -1;
+        _mentionEndIndex = -1;
         _currentMentionQuery = '';
       });
       _removeOverlay();
@@ -236,10 +240,19 @@ class _MentionTextFieldState extends State<MentionTextField> {
   /// Insert selected mention into text
   void _insertMention(ConversationMember member) {
     final text = widget.controller.text;
-    final cursorPos = widget.controller.selection.baseOffset;
+    var cursorPos = widget.controller.selection.baseOffset;
+    if (cursorPos < 0 || cursorPos > text.length) {
+      cursorPos = _mentionEndIndex;
+    }
+
+    final mentionStart = _mentionStartIndex;
+    if (mentionStart < 0 || mentionStart > text.length) return;
+    if (cursorPos < mentionStart || cursorPos > text.length) {
+      cursorPos = text.length;
+    }
 
     // Replace from '@' to cursor with mention display format @FullName
-    final before = text.substring(0, _mentionStartIndex);
+    final before = text.substring(0, mentionStart);
     final after = text.substring(cursorPos);
 
     final name = (member.fullName ?? member.displayName ?? '').trim();
@@ -264,6 +277,8 @@ class _MentionTextFieldState extends State<MentionTextField> {
     // Hide overlay
     setState(() {
       _showMentionList = false;
+      _mentionStartIndex = -1;
+      _mentionEndIndex = -1;
       _currentMentionQuery = '';
     });
     _removeOverlay();
@@ -347,29 +362,45 @@ class _MentionTextFieldState extends State<MentionTextField> {
 
     if (maxAvailableHeight <= 0) return;
 
-    final overlayWidth = math.min(inputRect.width, _kOverlayMaxWidth);
+    final double overlayWidth = math.min(
+      math.min(inputRect.width, _kOverlayMaxWidth),
+      screenSize.width - 16,
+    );
     final hasAllMention = _filteredMembers.isNotEmpty &&
         _filteredMembers.first is _AllConversationMember;
-    final overlayHeight = math.min(
+    final double overlayHeight = math.min(
       overlayMaxHeight,
       _filteredMembers.length * _kTileHeight,
     );
+    final double left = inputRect.left
+        .clamp(
+          8.0,
+          math.max(8.0, screenSize.width - overlayWidth - 8.0),
+        )
+        .toDouble();
+    final rawTop = showBelow
+        ? inputRect.bottom + _kOverlayGap
+        : inputRect.top - overlayHeight - _kOverlayGap;
+    final double top = rawTop
+        .clamp(
+          safeTop + 4.0,
+          math.max(safeTop + 4.0,
+              screenSize.height - keyboardInset - overlayHeight - 4.0),
+        )
+        .toDouble();
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => CompositedTransformFollower(
-        link: _layerLink,
-        showWhenUnlinked: false,
-        targetAnchor: showBelow ? Alignment.bottomLeft : Alignment.topLeft,
-        followerAnchor: showBelow ? Alignment.topLeft : Alignment.bottomLeft,
-        offset: Offset(0, showBelow ? _kOverlayGap : -_kOverlayGap),
-        child: SizedBox(
-          width: overlayWidth,
-          height: overlayHeight,
-          child: Material(
-            elevation: 4.0,
-            borderRadius: BorderRadius.circular(8.0),
-            color: Theme.of(context).cardColor,
-            clipBehavior: Clip.antiAlias,
+      builder: (context) => Positioned(
+        left: left,
+        top: top,
+        width: overlayWidth,
+        height: overlayHeight,
+        child: Material(
+          elevation: 4.0,
+          borderRadius: BorderRadius.circular(8.0),
+          color: Theme.of(context).cardColor,
+          clipBehavior: Clip.antiAlias,
+          child: TextFieldTapRegion(
             child: ListView.builder(
               padding: EdgeInsets.zero,
               itemExtent: _kTileHeight,
