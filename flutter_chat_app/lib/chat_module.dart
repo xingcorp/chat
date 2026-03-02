@@ -5,6 +5,8 @@ import 'package:flutter_chat_app/chat_config.dart';
 import 'package:flutter_chat_app/core/app/chat_app_shell.dart';
 import 'package:flutter_chat_app/core/cache/background_sync_helper.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_theme.dart';
+import 'package:flutter_chat_app/core/theme/app_theme_extensions.dart';
 import 'package:flutter_chat_app/core/di/chat_module_injection.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
 import 'package:flutter_chat_app/core/services/chat_fcm_handler.dart';
@@ -14,6 +16,7 @@ import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_deta
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/create_group_page.dart';
 import 'package:flutter_chat_app/features/contacts/presentation/pages/contacts_page.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:flutter_portal/flutter_portal.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -159,8 +162,8 @@ class ChatModule {
   /// Returns a [StreamSubscription] that the caller should cancel
   /// when no longer needed.
   static StreamSubscription<ChatMessage> onNewMessage(
-    void Function(ChatMessage message) callback,
-  ) {
+      void Function(ChatMessage message) callback,
+      ) {
     _ensureInitialized();
     return GetIt.instance<ChatModuleEventBus>().newMessageStream.listen(callback);
   }
@@ -309,7 +312,7 @@ class ChatModule {
     if (!_initialized) {
       throw StateError(
         'ChatModule has not been initialized. '
-        'Call ChatModule.initialize(ChatConfig(...)) first.',
+            'Call ChatModule.initialize(ChatConfig(...)) first.',
       );
     }
   }
@@ -322,6 +325,7 @@ class ChatModule {
 /// - ChatBloc (from GetIt)
 /// - Localization delegates
 /// - ScreenUtil initialization
+/// - Theme override (from [ChatConfig.theme], host app context, or chat default)
 class _ChatPackageWrapper extends StatelessWidget {
   const _ChatPackageWrapper({required this.child});
 
@@ -329,6 +333,17 @@ class _ChatPackageWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Priority: ChatConfig.theme > chat module's default theme
+    // In both cases, ensure AppThemeExtensions is present
+    final configTheme = ChatModule.config?.theme;
+    final themeData = configTheme ?? AppTheme.lightTheme;
+    // Ensure AppThemeExtensions is always available
+    final effectiveTheme = themeData.extension<AppThemeExtensions>() != null
+        ? themeData
+        : themeData.copyWith(
+      extensions: [...themeData.extensions.values, AppThemeExtensions.light],
+    );
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= AppDimens.breakpointDesktop;
@@ -339,8 +354,13 @@ class _ChatPackageWrapper extends StatelessWidget {
               : const Size(375, 812),
           minTextAdapt: true,
           splitScreenMode: true,
-          builder: (context, _) => ChatAppShell.package(
-            child: child,
+          builder: (context, _) => Theme(
+            data: effectiveTheme,
+            child: Portal(
+              child: ChatAppShell.package(
+                child: child,
+              ),
+            ),
           ),
         );
       },
