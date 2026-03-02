@@ -395,9 +395,30 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     });
   }
 
+  List<MessageUIState> _getSelectedUiMessages(List<MessageUIState> uiMessages) {
+    if (_selectedMessageIds.isEmpty) return const [];
+    return uiMessages
+        .where((uiMessage) =>
+            uiMessage.itemType == MessageListItemType.message &&
+            uiMessage.message != null &&
+            _selectedMessageIds.contains(uiMessage.id))
+        .toList(growable: false);
+  }
+
+  List<ChatMessage> _getSelectedMessages(List<MessageUIState> uiMessages) {
+    return _getSelectedUiMessages(uiMessages)
+        .map((uiMessage) => uiMessage.message!)
+        .toList(growable: false);
+  }
+
+  bool _canDeleteSelectedMessages(List<MessageUIState> uiMessages) {
+    final selectedUiMessages = _getSelectedUiMessages(uiMessages);
+    if (selectedUiMessages.isEmpty) return false;
+    return selectedUiMessages.every((uiMessage) => uiMessage.isFromCurrentUser);
+  }
+
   void _copySelectedMessages(List<MessageUIState> uiMessages) {
-    final contents = uiMessages
-        .where((m) => _selectedMessageIds.contains(m.id))
+    final contents = _getSelectedUiMessages(uiMessages)
         .where((m) => m.contentType == ContentType.text)
         .map((m) => m.content)
         .where((c) => c.isNotEmpty)
@@ -420,7 +441,19 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   void _deleteSelectedMessages() {
-    final count = _selectedMessageIds.length;
+    final state = _messageBloc.state;
+    if (state is! MessagesLoaded) return;
+
+    final selectedUiMessages = _getSelectedUiMessages(state.uiMessages);
+    if (selectedUiMessages.isEmpty) return;
+
+    final canDelete = selectedUiMessages.every((m) => m.isFromCurrentUser);
+    if (!canDelete) return;
+
+    final selectedIds =
+        selectedUiMessages.map((uiMessage) => uiMessage.id).toList();
+    final count = selectedIds.length;
+
     AppAlertDialog.show<bool>(
       context: context,
       title: context.l10n.deleteMessage,
@@ -440,7 +473,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       ],
     ).then((confirmed) {
       if (confirmed != true) return;
-      for (final id in _selectedMessageIds) {
+      for (final id in selectedIds) {
         _messageBloc.add(DeleteMessage(id));
       }
       _exitSelectionMode();
@@ -448,8 +481,20 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   void _forwardSelectedMessages() {
-    showForwardMessageSheet(context);
-    _exitSelectionMode();
+    final state = _messageBloc.state;
+    if (state is! MessagesLoaded) return;
+
+    final selectedMessages = _getSelectedMessages(state.uiMessages);
+    if (selectedMessages.isEmpty) return;
+
+    showForwardMessageSheet(
+      context,
+      messages: selectedMessages,
+      sourceChatId: widget.chatId,
+    ).then((_) {
+      if (!mounted) return;
+      _exitSelectionMode();
+    });
   }
 
   void _scrollToMessage(
@@ -1288,6 +1333,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   PreferredSizeWidget _buildSelectionAppBar() {
+    final state = _messageBloc.state;
+    final uiMessages =
+        state is MessagesLoaded ? state.uiMessages : const <MessageUIState>[];
+    final selectedUiMessages = _getSelectedUiMessages(uiMessages);
+    final canDeleteSelected =
+        selectedUiMessages.isNotEmpty && _canDeleteSelectedMessages(uiMessages);
+
     return AppBar(
       leading: IconButton(
           icon: const Icon(Icons.close), onPressed: _exitSelectionMode),
@@ -1297,19 +1349,19 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         IconButton(
             icon: const Icon(Icons.copy),
             tooltip: context.l10n.copyMessage,
-            onPressed: () {
-              final state = _messageBloc.state;
-              if (state is MessagesLoaded)
-                _copySelectedMessages(state.uiMessages);
-            }),
+            onPressed: selectedUiMessages.isEmpty
+                ? null
+                : () => _copySelectedMessages(uiMessages)),
         IconButton(
             icon: const Icon(Icons.forward),
             tooltip: context.l10n.forwardMessage,
-            onPressed: _forwardSelectedMessages),
-        IconButton(
-            icon: const Icon(Icons.delete),
-            tooltip: context.l10n.deleteMessage,
-            onPressed: _deleteSelectedMessages),
+            onPressed:
+                selectedUiMessages.isEmpty ? null : _forwardSelectedMessages),
+        if (canDeleteSelected)
+          IconButton(
+              icon: const Icon(Icons.delete),
+              tooltip: context.l10n.deleteMessage,
+              onPressed: _deleteSelectedMessages),
       ],
     );
   }
@@ -1546,7 +1598,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               ],
               _buildActionTile(Icons.forward, ctx.l10n.forwardMessage, () {
                 Navigator.pop(ctx);
-                showForwardMessageSheet(this.context, messages: [message]);
+                showForwardMessageSheet(
+                  this.context,
+                  messages: [message],
+                  sourceChatId: widget.chatId,
+                );
               }),
               _buildActionTile(Icons.checklist, ctx.l10n.selectAll, () {
                 Navigator.pop(ctx);

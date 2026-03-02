@@ -882,15 +882,33 @@ class MediaGallery extends StatelessWidget {
     required List<MessageAttachment> attachments,
     required int initialIndex,
   }) async {
+    MessageBloc? messageBloc;
+    try {
+      messageBloc = context.read<MessageBloc>();
+    } catch (_) {
+      messageBloc = null;
+    }
+
     final result = await Navigator.push<EditedImageResult>(
       context,
       MaterialPageRoute(
-        builder: (_) => FullscreenGallery(
-          attachments: attachments,
-          initialIndex: initialIndex,
-          message: message,
-          chatId: chatId,
-        ),
+        builder: (_) {
+          final gallery = FullscreenGallery(
+            attachments: attachments,
+            initialIndex: initialIndex,
+            message: message,
+            chatId: chatId,
+          );
+
+          if (messageBloc != null) {
+            return BlocProvider<MessageBloc>.value(
+              value: messageBloc,
+              child: gallery,
+            );
+          }
+
+          return gallery;
+        },
       ),
     );
 
@@ -1233,15 +1251,28 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
     EmojiPickerBottomSheet.show(
       context,
       onEmojiSelected: (emoji) {
-        if (widget.message != null) {
-          context.read<MessageBloc>().add(
-                ToggleReaction(
-                  messageId: widget.message!.id,
-                  emojiCode: emoji,
-                ),
-              );
-        }
+        _toggleReaction(emoji);
       },
+    );
+  }
+
+  void _toggleReaction(String emojiCode) {
+    final message = widget.message;
+    if (message == null) return;
+
+    MessageBloc? messageBloc;
+    try {
+      messageBloc = context.read<MessageBloc>();
+    } catch (_) {
+      messageBloc = null;
+    }
+    if (messageBloc == null) return;
+
+    messageBloc.add(
+      ToggleReaction(
+        messageId: message.id,
+        emojiCode: emojiCode,
+      ),
     );
   }
 
@@ -1310,11 +1341,25 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final hasMessage = widget.message != null;
+  ChatMessage? _resolveMessageFromState(MessageState state) {
+    final initialMessage = widget.message;
+    if (initialMessage == null) return null;
+    if (state is! MessagesLoaded) return initialMessage;
+
+    for (final message in state.messages) {
+      if (message.id == initialMessage.id) return message;
+    }
+
+    return initialMessage;
+  }
+
+  Widget _buildFullscreenScaffold(
+    BuildContext context, {
+    required ChatMessage? displayMessage,
+  }) {
+    final hasMessage = displayMessage != null;
     final groupedReactions = hasMessage
-        ? _groupReactions(widget.message!.reactions)
+        ? _groupReactions(displayMessage.reactions)
         : <ReactionGroup>[];
 
     return Scaffold(
@@ -1448,13 +1493,8 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
                             );
                           },
                           onReactionLongPress: (emojiCode, isCurrentlyReacted) {
-                            if (isCurrentlyReacted && widget.message != null) {
-                              context.read<MessageBloc>().add(
-                                    ToggleReaction(
-                                      messageId: widget.message!.id,
-                                      emojiCode: emojiCode,
-                                    ),
-                                  );
+                            if (isCurrentlyReacted) {
+                              _toggleReaction(emojiCode);
                             }
                           },
                           onAddReaction: () => _showReactionPicker(context),
@@ -1467,6 +1507,31 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
           ],
         ),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    MessageBloc? messageBloc;
+    try {
+      messageBloc = context.read<MessageBloc>();
+    } catch (_) {
+      messageBloc = null;
+    }
+
+    if (messageBloc == null) {
+      return _buildFullscreenScaffold(context, displayMessage: widget.message);
+    }
+
+    return BlocBuilder<MessageBloc, MessageState>(
+      bloc: messageBloc,
+      builder: (context, state) {
+        final displayMessage = _resolveMessageFromState(state);
+        return _buildFullscreenScaffold(
+          context,
+          displayMessage: displayMessage,
+        );
+      },
     );
   }
 
