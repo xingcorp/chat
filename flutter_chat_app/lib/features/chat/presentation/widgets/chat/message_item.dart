@@ -1,39 +1,37 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/extensions/text_span_builder.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/design_system.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
-
+import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart'
-    as domain;
-import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
-import 'package:flutter_chat_app/presentation/widgets/message_status_indicator.dart';
-import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_preview.dart';
+import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/audio_player_widget.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/expandable_rich_text.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_preview.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/link_preview_card.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/location_message_card.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_gallery.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reply_preview.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_preview.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/audio_player_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/video_player_widget.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/link_preview_card.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
+import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/read_receipt_avatars.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/read_receipt_bottom_sheet.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/sticker_message.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/expandable_rich_text.dart';
-import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
-import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
-import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
-import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
+import 'package:flutter_chat_app/presentation/widgets/message_status_indicator.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart'
+    as domain;
+import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 
 class MessageItem extends StatefulWidget {
   final MessageUIState uiState;
@@ -499,6 +497,9 @@ class _MessageItemState extends State<MessageItem>
 
     final renderableAttachments = _getRenderableAttachments();
     final contentType = widget.uiState.contentType;
+    final parsedLocation = contentType == domain.ContentType.location
+        ? LocationMessageData.tryParse(widget.uiState.content)
+        : null;
 
     if (contentType == domain.ContentType.sticker) {
       return _buildStickerMessageBubble(
@@ -511,7 +512,8 @@ class _MessageItemState extends State<MessageItem>
 
     // For file-only messages (no text), use neutral bubble color
     // to avoid blue background leaking around file tiles
-    final hasTextContent = widget.uiState.content.isNotEmpty;
+    final hasTextContent =
+        widget.uiState.content.isNotEmpty && parsedLocation == null;
     final hasOnlyMedia = renderableAttachments.isNotEmpty &&
         renderableAttachments
             .every((a) => a.type == 'image' || a.type == 'video') &&
@@ -658,9 +660,19 @@ class _MessageItemState extends State<MessageItem>
                 ],
               ),
 
+            if (parsedLocation != null)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: LocationMessageCard(
+                  location: parsedLocation,
+                  isFromCurrentUser: isFromCurrentUser,
+                ),
+              ),
+
             // Message content
-            if (widget.uiState.content.isNotEmpty ||
-                renderableAttachments.isEmpty)
+            if ((widget.uiState.content.isNotEmpty ||
+                    renderableAttachments.isEmpty) &&
+                parsedLocation == null)
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12.0,
@@ -686,35 +698,17 @@ class _MessageItemState extends State<MessageItem>
                         isFromCurrentUser: isFromCurrentUser,
                       ),
 
-                    const SizedBox(height: 4.0),
-
-                    // Timestamp + edited indicator
-                    RepaintBoundary(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (widget.uiState.isEdited)
-                            Text(
-                              '${context.l10n.edited}  ',
-                              style: TextStyle(
-                                color: textColor.withOpacity(0.5),
-                                fontSize: 10.0,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          if (widget.uiState.showTimestamp)
-                            Text(
-                              widget.uiState.formattedTime,
-                              style: TextStyle(
-                                color: textColor.withOpacity(0.7),
-                                fontSize: 10.0,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+                    if (widget.uiState.showTimestamp || widget.uiState.isEdited)
+                      const SizedBox(height: 4.0),
+                    _buildMessageMetaRow(textColor),
                   ],
                 ),
+              ),
+
+            if (parsedLocation != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: _buildMessageMetaRow(textColor),
               ),
 
             // Reactions bar (phia duoi content)
@@ -769,6 +763,37 @@ class _MessageItemState extends State<MessageItem>
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMessageMetaRow(Color textColor) {
+    if (!widget.uiState.showTimestamp && !widget.uiState.isEdited) {
+      return const SizedBox.shrink();
+    }
+
+    return RepaintBoundary(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.uiState.isEdited)
+            Text(
+              '${context.l10n.edited}  ',
+              style: TextStyle(
+                color: textColor.withOpacity(0.5),
+                fontSize: 10.0,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          if (widget.uiState.showTimestamp)
+            Text(
+              widget.uiState.formattedTime,
+              style: TextStyle(
+                color: textColor.withOpacity(0.7),
+                fontSize: 10.0,
+              ),
+            ),
+        ],
       ),
     );
   }

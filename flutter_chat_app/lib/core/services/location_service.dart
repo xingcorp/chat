@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/services/permissions_service.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter_chat_app/shared/domain/entities/permission_entity.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:injectable/injectable.dart';
-// Note: geolocator package needs to be added to pubspec.yaml
-// For now, using placeholder implementation
 
 /// **Location Data**
 ///
@@ -53,7 +55,9 @@ class LocationData {
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
       name: json['name'] as String?,
-      accuracy: json['accuracy'] != null ? (json['accuracy'] as num).toDouble() : null,
+      accuracy: json['accuracy'] != null
+          ? (json['accuracy'] as num).toDouble()
+          : null,
       timestamp: json['timestamp'] != null
           ? DateTime.parse(json['timestamp'] as String)
           : DateTime.now(),
@@ -62,7 +66,8 @@ class LocationData {
 
   /// Create from string (parse JSON)
   factory LocationData.fromJsonString(String jsonString) {
-    return LocationData.fromJson(jsonDecode(jsonString) as Map<String, dynamic>);
+    return LocationData.fromJson(
+        jsonDecode(jsonString) as Map<String, dynamic>);
   }
 }
 
@@ -95,15 +100,10 @@ abstract class ILocationService {
 /// **Location Service Implementation**
 ///
 /// Production implementation using geolocator package.
-///
-/// **TODO**: Add geolocator package to pubspec.yaml:
-/// ```yaml
-/// dependencies:
-///   geolocator: ^11.0.0
-///   geocoding: ^3.0.0
-/// ```
 @LazySingleton(as: ILocationService)
 class LocationService implements ILocationService {
+  // Kept for backward compatibility with DI constructor signature.
+  // ignore: unused_field
   final PermissionsService _permissionsService;
   final AppLogger _logger;
 
@@ -117,7 +117,6 @@ class LocationService implements ILocationService {
     try {
       _logger.info('LocationService: Getting current location');
 
-      // Check if location services are enabled
       final serviceEnabled = await isLocationServiceEnabled();
       if (!serviceEnabled) {
         _logger.warn('Location services are disabled');
@@ -126,7 +125,6 @@ class LocationService implements ILocationService {
         );
       }
 
-      // Check/request permissions
       final hasPermission = await hasLocationPermission();
       if (!hasPermission) {
         final granted = await requestLocationPermission();
@@ -138,38 +136,24 @@ class LocationService implements ILocationService {
         }
       }
 
-      // TODO: Implement actual geolocator integration
-      // For now, return mock data
-      //
-      // Real implementation:
-      // import 'package:geolocator/geolocator.dart';
-      // final position = await Geolocator.getCurrentPosition(
-      //   desiredAccuracy: LocationAccuracy.high,
-      // );
-      //
-      // return Right(
-      //   LocationData(
-      //     latitude: position.latitude,
-      //     longitude: position.longitude,
-      //     accuracy: position.accuracy,
-      //     timestamp: position.timestamp ?? DateTime.now(),
-      //   ),
-      // );
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
 
-      _logger.warn('Using mock location data - geolocator not implemented yet');
       return Right(
         LocationData(
-          latitude: 10.7769, // Saigon
-          longitude: 106.7009,
-          name: 'Mock Location',
-          accuracy: 10.0,
-          timestamp: DateTime.now(),
+          latitude: position.latitude,
+          longitude: position.longitude,
+          accuracy: position.accuracy,
+          timestamp: position.timestamp,
         ),
       );
     } catch (e, stackTrace) {
       _logger.error('Failed to get current location', e, stackTrace);
       return Left(
-        UnexpectedFailure(message: 'Failed to get location: ${e.toString()}'),
+        UnexpectedFailure(message: 'Failed to get location: $e'),
       );
     }
   }
@@ -177,13 +161,7 @@ class LocationService implements ILocationService {
   @override
   Future<bool> isLocationServiceEnabled() async {
     try {
-      // TODO: Implement actual check
-      // Real implementation:
-      // import 'package:geolocator/geolocator.dart';
-      // return await Geolocator.isLocationServiceEnabled();
-
-      _logger.debug('Checking location service status (mock)');
-      return true; // Mock implementation
+      return Geolocator.isLocationServiceEnabled();
     } catch (e) {
       _logger.error('Failed to check location service status', e);
       return false;
@@ -195,16 +173,17 @@ class LocationService implements ILocationService {
     try {
       _logger.info('LocationService: Requesting location permission');
 
-      // TODO: Implement actual permission request
-      // Real implementation:
-      // import 'package:geolocator/geolocator.dart';
-      // final permission = await Geolocator.requestPermission();
-      // return permission == LocationPermission.always ||
-      //        permission == LocationPermission.whileInUse;
+      if (!kIsWeb) {
+        await _permissionsService.initialize();
+        final result = await _permissionsService.requestPermission(
+          PermissionType.location,
+          showRationale: true,
+        );
+        return result.isSuccess && (result.permission?.isGranted ?? false);
+      }
 
-      // For now, use PermissionsService if available
-      // This is a placeholder
-      return true;
+      final permission = await Geolocator.requestPermission();
+      return _hasGrantedPermission(permission);
     } catch (e) {
       _logger.error('Failed to request location permission', e);
       return false;
@@ -214,14 +193,15 @@ class LocationService implements ILocationService {
   @override
   Future<bool> hasLocationPermission() async {
     try {
-      // TODO: Implement actual permission check
-      // Real implementation:
-      // import 'package:geolocator/geolocator.dart';
-      // final permission = await Geolocator.checkPermission();
-      // return permission == LocationPermission.always ||
-      //        permission == LocationPermission.whileInUse;
+      if (!kIsWeb) {
+        await _permissionsService.initialize();
+        final permission =
+            await _permissionsService.checkPermission(PermissionType.location);
+        return permission.isGranted;
+      }
 
-      return true; // Mock implementation
+      final permission = await Geolocator.checkPermission();
+      return _hasGrantedPermission(permission);
     } catch (e) {
       _logger.error('Failed to check location permission', e);
       return false;
@@ -239,24 +219,42 @@ class LocationService implements ILocationService {
         'longitude': longitude,
       });
 
-      // TODO: Implement actual reverse geocoding
-      // Real implementation:
-      // import 'package:geocoding/geocoding.dart';
-      // final placemarks = await placemarkFromCoordinates(latitude, longitude);
-      // if (placemarks.isNotEmpty) {
-      //   final place = placemarks.first;
-      //   return Right(
-      //     '${place.street}, ${place.locality}, ${place.country}',
-      //   );
-      // }
+      final placemarks = await placemarkFromCoordinates(latitude, longitude);
+      if (placemarks.isEmpty) {
+        return const Left(
+          NetworkFailure(message: 'No address found for this location'),
+        );
+      }
 
-      // Mock address
-      return const Right('Mock Address, Ho Chi Minh City, Vietnam');
+      final place = placemarks.first;
+      final parts = <String?>[
+        _normalizeAddressPart(place.street),
+        _normalizeAddressPart(place.subLocality),
+        _normalizeAddressPart(place.locality),
+        _normalizeAddressPart(place.country),
+      ].whereType<String>().toList();
+
+      if (parts.isEmpty) {
+        return const Right('Unknown location');
+      }
+
+      return Right(parts.join(', '));
     } catch (e, stackTrace) {
       _logger.error('Failed to reverse geocode', e, stackTrace);
       return Left(
-        NetworkFailure(message: 'Failed to get address: ${e.toString()}'),
+        NetworkFailure(message: 'Failed to get address: $e'),
       );
     }
+  }
+
+  bool _hasGrantedPermission(LocationPermission permission) {
+    return permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+  }
+
+  String? _normalizeAddressPart(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 }
