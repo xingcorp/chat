@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
@@ -355,23 +356,22 @@ class _MentionTextFieldState extends State<MentionTextField> {
     final showBelow =
         spaceBelow >= _kOverlayMinUsableHeight || spaceBelow >= spaceAbove;
     final maxAvailableHeight = showBelow ? spaceBelow : spaceAbove;
-    final overlayMaxHeight = maxAvailableHeight.clamp(
-      _kOverlayMinUsableHeight,
-      _kOverlayMaxHeight,
-    );
-
-    if (maxAvailableHeight <= 0) return;
-
     final double overlayWidth = math.min(
       math.min(inputRect.width, _kOverlayMaxWidth),
       screenSize.width - 16,
     );
     final hasAllMention = _filteredMembers.isNotEmpty &&
         _filteredMembers.first is _AllConversationMember;
-    final double overlayHeight = math.min(
-      overlayMaxHeight,
+    final double preferredHeight = math.min(
+      _kOverlayMaxHeight,
       _filteredMembers.length * _kTileHeight,
     );
+    final double overlayHeight = maxAvailableHeight > 0
+        ? math.min(
+            math.max(maxAvailableHeight, _kTileHeight),
+            preferredHeight,
+          )
+        : preferredHeight;
     final double left = inputRect.left
         .clamp(
           8.0,
@@ -389,102 +389,120 @@ class _MentionTextFieldState extends State<MentionTextField> {
         )
         .toDouble();
 
-    _overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        left: left,
-        top: top,
-        width: overlayWidth,
-        height: overlayHeight,
-        child: Material(
-          elevation: 4.0,
-          borderRadius: BorderRadius.circular(8.0),
-          color: Theme.of(context).cardColor,
-          clipBehavior: Clip.antiAlias,
-          child: TextFieldTapRegion(
-            child: ListView.builder(
-              padding: EdgeInsets.zero,
-              itemExtent: _kTileHeight,
-              itemCount: _filteredMembers.length,
-              itemBuilder: (context, index) {
-                final member = _filteredMembers[index];
-                final isSelected = index == _selectedMentionIndex;
-                final isAllMention = member is _AllConversationMember;
-                final avatarUrl = member.avatarUrl?.trim();
-                final department = member.departmentName?.trim() ?? '';
-                final title = member.titleName?.trim() ?? '';
-                final subtitle = isAllMention
-                    ? 'Mention everyone'
-                    : [
-                        if (department.isNotEmpty) department,
-                        if (title.isNotEmpty) title,
-                      ].join(' - ');
-                final titleStyle =
-                    Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.normal,
-                        );
+    Widget buildSuggestionsPanel() {
+      return Material(
+        elevation: 4.0,
+        borderRadius: BorderRadius.circular(8.0),
+        color: Theme.of(context).cardColor,
+        clipBehavior: Clip.antiAlias,
+        child: TextFieldTapRegion(
+          child: ListView.builder(
+            padding: EdgeInsets.zero,
+            itemExtent: _kTileHeight,
+            itemCount: _filteredMembers.length,
+            itemBuilder: (context, index) {
+              final member = _filteredMembers[index];
+              final isSelected = index == _selectedMentionIndex;
+              final isAllMention = member is _AllConversationMember;
+              final avatarUrl = member.avatarUrl?.trim();
+              final department = member.departmentName?.trim() ?? '';
+              final title = member.titleName?.trim() ?? '';
+              final subtitle = isAllMention
+                  ? 'Mention everyone'
+                  : [
+                      if (department.isNotEmpty) department,
+                      if (title.isNotEmpty) title,
+                    ].join(' - ');
+              final titleStyle =
+                  Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.normal,
+                      );
 
-                return ListTile(
-                  dense: false,
-                  selected: isSelected,
-                  leading: isAllMention
-                      ? Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.people_outline,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        )
-                      : ((avatarUrl?.isNotEmpty ?? false)
-                          ? AppAvatar.network(
-                              imageUrl: avatarUrl!,
-                              size: AvatarSize.small,
-                            )
-                          : AppAvatar.initials(
-                              name: member.fullName ?? 'Unknown',
-                              size: AvatarSize.small,
-                            )),
-                  title: _buildHighlightedName(
-                    member.fullName ?? 'Unknown',
-                    _currentMentionQuery,
-                    titleStyle,
-                    Theme.of(context).colorScheme.primary,
-                  ),
-                  subtitle: subtitle.isNotEmpty
-                      ? Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.color
-                                        ?.withValues(alpha: 0.7),
-                                  ),
-                        )
-                      : null,
-                  trailing: Icon(
-                    hasAllMention && index == 0
-                        ? Icons.people_outline
-                        : Icons.alternate_email,
-                    size: 18,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  onTap: () => _insertMention(member),
-                );
-              },
-            ),
+              return ListTile(
+                dense: false,
+                selected: isSelected,
+                leading: isAllMention
+                    ? Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.people_outline,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      )
+                    : ((avatarUrl?.isNotEmpty ?? false)
+                        ? AppAvatar.network(
+                            imageUrl: avatarUrl!,
+                            size: AvatarSize.small,
+                          )
+                        : AppAvatar.initials(
+                            name: member.fullName ?? 'Unknown',
+                            size: AvatarSize.small,
+                          )),
+                title: _buildHighlightedName(
+                  member.fullName ?? 'Unknown',
+                  _currentMentionQuery,
+                  titleStyle,
+                  Theme.of(context).colorScheme.primary,
+                ),
+                subtitle: subtitle.isNotEmpty
+                    ? Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.color
+                                  ?.withValues(alpha: 0.7),
+                            ),
+                      )
+                    : null,
+                trailing: Icon(
+                  hasAllMention && index == 0
+                      ? Icons.people_outline
+                      : Icons.alternate_email,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                onTap: () => _insertMention(member),
+              );
+            },
           ),
         ),
-      ),
+      );
+    }
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => kIsWeb
+          ? Positioned(
+              left: left,
+              top: top,
+              width: overlayWidth,
+              height: overlayHeight,
+              child: buildSuggestionsPanel(),
+            )
+          : CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              targetAnchor:
+                  showBelow ? Alignment.bottomLeft : Alignment.topLeft,
+              followerAnchor:
+                  showBelow ? Alignment.topLeft : Alignment.bottomLeft,
+              offset: Offset(0, showBelow ? _kOverlayGap : -_kOverlayGap),
+              child: SizedBox(
+                width: overlayWidth,
+                height: overlayHeight,
+                child: buildSuggestionsPanel(),
+              ),
+            ),
     );
 
     Overlay.of(context).insert(_overlayEntry!);
