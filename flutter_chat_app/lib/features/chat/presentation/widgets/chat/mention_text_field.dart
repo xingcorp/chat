@@ -84,7 +84,7 @@ class MentionTextField extends StatefulWidget {
   final FocusNode? focusNode;
 
   const MentionTextField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.members,
     this.currentUserId,
@@ -94,7 +94,7 @@ class MentionTextField extends StatefulWidget {
     this.onSubmitted,
     this.onChanged,
     this.focusNode,
-  }) : super(key: key);
+  });
 
   @override
   State<MentionTextField> createState() => _MentionTextFieldState();
@@ -107,10 +107,12 @@ class _MentionTextFieldState extends State<MentionTextField> {
   static const double _kOverlayMaxHeight = 200;
   static const double _kOverlayMinUsableHeight = 80;
   static const double _kOverlayMaxWidth = 420;
+  static const double _kTileHeight = 62;
 
   // Mention state
   bool _showMentionList = false;
   int _mentionStartIndex = -1;
+  String _currentMentionQuery = '';
   List<ConversationMember> _filteredMembers = [];
   int _selectedMentionIndex = 0;
 
@@ -154,6 +156,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
       if (_showMentionList) {
         setState(() {
           _showMentionList = false;
+          _currentMentionQuery = '';
         });
       }
       _removeOverlay();
@@ -211,6 +214,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
         setState(() {
           _showMentionList = true;
           _mentionStartIndex = atIndex;
+          _currentMentionQuery = query;
           _filteredMembers = combinedMembers;
           _selectedMentionIndex = 0;
         });
@@ -223,6 +227,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
     if (_showMentionList) {
       setState(() {
         _showMentionList = false;
+        _currentMentionQuery = '';
       });
       _removeOverlay();
     }
@@ -259,6 +264,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
     // Hide overlay
     setState(() {
       _showMentionList = false;
+      _currentMentionQuery = '';
     });
     _removeOverlay();
 
@@ -344,6 +350,10 @@ class _MentionTextFieldState extends State<MentionTextField> {
     final overlayWidth = math.min(inputRect.width, _kOverlayMaxWidth);
     final hasAllMention = _filteredMembers.isNotEmpty &&
         _filteredMembers.first is _AllConversationMember;
+    final overlayHeight = math.min(
+      overlayMaxHeight,
+      _filteredMembers.length * _kTileHeight,
+    );
 
     _overlayEntry = OverlayEntry(
       builder: (context) => CompositedTransformFollower(
@@ -354,84 +364,92 @@ class _MentionTextFieldState extends State<MentionTextField> {
         offset: Offset(0, showBelow ? _kOverlayGap : -_kOverlayGap),
         child: SizedBox(
           width: overlayWidth,
+          height: overlayHeight,
           child: Material(
             elevation: 4.0,
             borderRadius: BorderRadius.circular(8.0),
             color: Theme.of(context).cardColor,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: overlayMaxHeight),
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemCount: _filteredMembers.length,
-                itemBuilder: (context, index) {
-                  final member = _filteredMembers[index];
-                  final isSelected = index == _selectedMentionIndex;
-                  final isAllMention = member is _AllConversationMember;
-                  final avatarUrl = member.avatarUrl?.trim();
-                  final subtitle = isAllMention
-                      ? 'Mention everyone'
-                      : ((member.departmentName?.trim().isNotEmpty ?? false)
-                          ? member.departmentName!.trim()
-                          : '@${member.userId}');
+            clipBehavior: Clip.antiAlias,
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              itemExtent: _kTileHeight,
+              itemCount: _filteredMembers.length,
+              itemBuilder: (context, index) {
+                final member = _filteredMembers[index];
+                final isSelected = index == _selectedMentionIndex;
+                final isAllMention = member is _AllConversationMember;
+                final avatarUrl = member.avatarUrl?.trim();
+                final department = member.departmentName?.trim() ?? '';
+                final title = member.titleName?.trim() ?? '';
+                final subtitle = isAllMention
+                    ? 'Mention everyone'
+                    : [
+                        if (department.isNotEmpty) department,
+                        if (title.isNotEmpty) title,
+                      ].join(' - ');
+                final titleStyle =
+                    Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.normal,
+                        );
 
-                  return ListTile(
-                    dense: false,
-                    selected: isSelected,
-                    leading: isAllMention
-                        ? Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.people_outline,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                          )
-                        : ((avatarUrl?.isNotEmpty ?? false)
-                            ? AppAvatar.network(
-                                imageUrl: avatarUrl!,
-                                size: AvatarSize.small,
-                              )
-                            : AppAvatar.initials(
-                                name: member.fullName ?? 'Unknown',
-                                size: AvatarSize.small,
-                              )),
-                    title: Text(
-                      member.fullName ?? 'Unknown',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.normal,
+                return ListTile(
+                  dense: false,
+                  selected: isSelected,
+                  leading: isAllMention
+                      ? Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            shape: BoxShape.circle,
                           ),
-                    ),
-                    subtitle: Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.color
-                                ?.withValues(alpha: 0.7),
+                          child: const Icon(
+                            Icons.people_outline,
+                            color: Colors.white,
+                            size: 18,
                           ),
-                    ),
-                    trailing: Icon(
-                      hasAllMention && index == 0
-                          ? Icons.people_outline
-                          : Icons.alternate_email,
-                      size: 18,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    onTap: () => _insertMention(member),
-                  );
-                },
-              ),
+                        )
+                      : ((avatarUrl?.isNotEmpty ?? false)
+                          ? AppAvatar.network(
+                              imageUrl: avatarUrl!,
+                              size: AvatarSize.small,
+                            )
+                          : AppAvatar.initials(
+                              name: member.fullName ?? 'Unknown',
+                              size: AvatarSize.small,
+                            )),
+                  title: _buildHighlightedName(
+                    member.fullName ?? 'Unknown',
+                    _currentMentionQuery,
+                    titleStyle,
+                    Theme.of(context).colorScheme.primary,
+                  ),
+                  subtitle: subtitle.isNotEmpty
+                      ? Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.color
+                                        ?.withValues(alpha: 0.7),
+                                  ),
+                        )
+                      : null,
+                  trailing: Icon(
+                    hasAllMention && index == 0
+                        ? Icons.people_outline
+                        : Icons.alternate_email,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  onTap: () => _insertMention(member),
+                );
+              },
             ),
           ),
         ),
@@ -444,6 +462,60 @@ class _MentionTextFieldState extends State<MentionTextField> {
   void _removeOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
+  }
+
+  Widget _buildHighlightedName(
+    String fullName,
+    String query,
+    TextStyle? baseStyle,
+    Color highlightColor,
+  ) {
+    final normalizedQuery = query.trim().toLowerCase();
+    if (normalizedQuery.isEmpty) {
+      return Text(
+        fullName,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: baseStyle,
+      );
+    }
+
+    final lowerName = fullName.toLowerCase();
+    final matchIndex = lowerName.indexOf(normalizedQuery);
+    if (matchIndex < 0) {
+      return Text(
+        fullName,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: baseStyle,
+      );
+    }
+
+    final before = fullName.substring(0, matchIndex);
+    final match = fullName.substring(
+      matchIndex,
+      matchIndex + normalizedQuery.length,
+    );
+    final after = fullName.substring(matchIndex + normalizedQuery.length);
+
+    return RichText(
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(
+        style: baseStyle,
+        children: [
+          TextSpan(text: before),
+          TextSpan(
+            text: match,
+            style: baseStyle?.copyWith(
+              color: highlightColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          TextSpan(text: after),
+        ],
+      ),
+    );
   }
 
   @override
