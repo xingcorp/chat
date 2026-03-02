@@ -1270,17 +1270,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
             tooltip: context.l10n.stickers,
           ),
           IconButton(
-            icon: const Icon(Icons.emoji_emotions_outlined),
-            iconSize: 28.0,
-            onPressed: () => EmojiPickerBottomSheet.show(
-              context,
-              onEmojiSelected: (emoji) =>
-                  EmojiTextEditingHelper.insertEmoji(_messageController, emoji),
-              textController: _messageController,
-            ),
-            tooltip: context.l10n.insertEmoji,
-          ),
-          IconButton(
             icon: Icon(
               _isEditMode ? Icons.check : Icons.send,
               color: Theme.of(context).colorScheme.primary,
