@@ -1,6 +1,18 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+
+/// Special member class for "@all" mention - mentions everyone in the group
+class _AllConversationMember extends ConversationMember {
+  _AllConversationMember()
+      : super(
+          id: 'all',
+          userId: 'all',
+          fullName: 'All',
+        );
+}
 
 class MentionTextEditingController extends TextEditingController {
   MentionTextEditingController({
@@ -91,11 +103,14 @@ class MentionTextField extends StatefulWidget {
 class _MentionTextFieldState extends State<MentionTextField> {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
+  static const double _kOverlayGap = 8;
+  static const double _kOverlayMaxHeight = 200;
+  static const double _kOverlayMinUsableHeight = 80;
+  static const double _kOverlayMaxWidth = 420;
 
   // Mention state
   bool _showMentionList = false;
   int _mentionStartIndex = -1;
-  String _currentMentionQuery = '';
   List<ConversationMember> _filteredMembers = [];
   int _selectedMentionIndex = 0;
 
@@ -103,11 +118,27 @@ class _MentionTextFieldState extends State<MentionTextField> {
   void initState() {
     super.initState();
     widget.controller.addListener(_onTextChanged);
+    widget.focusNode?.addListener(_onFocusChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant MentionTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onTextChanged);
+      widget.controller.addListener(_onTextChanged);
+    }
+
+    if (oldWidget.focusNode != widget.focusNode) {
+      oldWidget.focusNode?.removeListener(_onFocusChanged);
+      widget.focusNode?.addListener(_onFocusChanged);
+    }
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(_onTextChanged);
+    widget.focusNode?.removeListener(_onFocusChanged);
     _removeOverlay();
     super.dispose();
   }
@@ -115,6 +146,18 @@ class _MentionTextFieldState extends State<MentionTextField> {
   void _onTextChanged() {
     widget.onChanged?.call();
     _checkForMention();
+  }
+
+  void _onFocusChanged() {
+    final hasFocus = widget.focusNode?.hasFocus ?? false;
+    if (!hasFocus) {
+      if (_showMentionList) {
+        setState(() {
+          _showMentionList = false;
+        });
+      }
+      _removeOverlay();
+    }
   }
 
   /// Check if user is typing a mention (@username)
@@ -145,19 +188,30 @@ class _MentionTextFieldState extends State<MentionTextField> {
       // Extract query after '@'
       final query = text.substring(atIndex + 1, cursorPos).toLowerCase();
 
-      // Filter members by name
+      // Build member list with @all option (only for group chats)
+      List<ConversationMember> allMembers = [];
+
+      // Add @all option for group chats (3 or more members total)
+      if (widget.members.length >= 3 &&
+          (query.isEmpty || 'all'.startsWith(query))) {
+        allMembers.add(_createAllMember());
+      }
+
+      // Filter members with query (exclude current user)
       final filtered = widget.members
           .where((m) =>
               m.userId != widget.currentUserId && // Exclude self
-              (m.fullName ?? '').toLowerCase().contains(query))
+              _matchesMemberQuery(m, query))
           .toList();
 
-      if (filtered.isNotEmpty) {
+      // Combine @all + filtered members
+      final combinedMembers = [...allMembers, ...filtered];
+
+      if (combinedMembers.isNotEmpty) {
         setState(() {
           _showMentionList = true;
           _mentionStartIndex = atIndex;
-          _currentMentionQuery = query;
-          _filteredMembers = filtered;
+          _filteredMembers = combinedMembers;
           _selectedMentionIndex = 0;
         });
         _showOverlay();
@@ -214,33 +268,98 @@ class _MentionTextFieldState extends State<MentionTextField> {
       FocusScope.of(context).requestFocus(focusNode);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!focusNode.hasFocus) FocusScope.of(context).requestFocus(focusNode);
-        widget.controller.selection = TextSelection.collapsed(offset: caretOffset);
+        widget.controller.selection =
+            TextSelection.collapsed(offset: caretOffset);
       });
     }
   }
 
+  /// Create a special "all" member for mentioning everyone in the group
+  ConversationMember _createAllMember() {
+    return _AllConversationMember();
+  }
+
+  bool _matchesMemberQuery(ConversationMember member, String rawQuery) {
+    if (rawQuery.isEmpty) return true;
+    final query = rawQuery.trim().toLowerCase();
+    if (query.isEmpty) return true;
+
+    final fullName = (member.fullName ?? '').toLowerCase();
+    final userId = member.userId.toLowerCase();
+    final departmentName = (member.departmentName ?? '').toLowerCase();
+    final titleName = (member.titleName ?? '').toLowerCase();
+    final code = (member.code ?? '').toLowerCase();
+
+    return fullName.contains(query) ||
+        userId.contains(query) ||
+        departmentName.contains(query) ||
+        titleName.contains(query) ||
+        code.contains(query);
+  }
+
   void _showOverlay() {
+    if (!mounted || !_showMentionList || _filteredMembers.isEmpty) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_showMentionList || _filteredMembers.isEmpty) return;
+      final renderBox = context.findRenderObject() as RenderBox?;
+      if (renderBox == null || !renderBox.hasSize) return;
+      _showOverlayInternal(renderBox);
+    });
+  }
+
+  void _showOverlayInternal(RenderBox renderBox) {
     _removeOverlay();
 
+    final mediaQuery = MediaQuery.of(context);
+    final screenSize = mediaQuery.size;
+    final keyboardInset = mediaQuery.viewInsets.bottom;
+    final safeTop = mediaQuery.padding.top;
+
+    final inputSize = renderBox.size;
+    final inputTopLeft = renderBox.localToGlobal(Offset.zero);
+    final inputRect = Rect.fromLTWH(
+      inputTopLeft.dx,
+      inputTopLeft.dy,
+      inputSize.width,
+      inputSize.height,
+    );
+
+    final viewportBottom = screenSize.height - keyboardInset;
+    final spaceBelow = (viewportBottom - inputRect.bottom - _kOverlayGap)
+        .clamp(0.0, double.infinity);
+    final spaceAbove =
+        (inputRect.top - safeTop - _kOverlayGap).clamp(0.0, double.infinity);
+
+    final showBelow =
+        spaceBelow >= _kOverlayMinUsableHeight || spaceBelow >= spaceAbove;
+    final maxAvailableHeight = showBelow ? spaceBelow : spaceAbove;
+    final overlayMaxHeight = maxAvailableHeight.clamp(
+      _kOverlayMinUsableHeight,
+      _kOverlayMaxHeight,
+    );
+
+    if (maxAvailableHeight <= 0) return;
+
+    final overlayWidth = math.min(inputRect.width, _kOverlayMaxWidth);
+    final hasAllMention = _filteredMembers.isNotEmpty &&
+        _filteredMembers.first is _AllConversationMember;
+
     _overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        width: MediaQuery.of(context).size.width - 32,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          offset: const Offset(0, -200), // Show above input
+      builder: (context) => CompositedTransformFollower(
+        link: _layerLink,
+        showWhenUnlinked: false,
+        targetAnchor: showBelow ? Alignment.bottomLeft : Alignment.topLeft,
+        followerAnchor: showBelow ? Alignment.topLeft : Alignment.bottomLeft,
+        offset: Offset(0, showBelow ? _kOverlayGap : -_kOverlayGap),
+        child: SizedBox(
+          width: overlayWidth,
           child: Material(
             elevation: 4.0,
             borderRadius: BorderRadius.circular(8.0),
-            child: Container(
-              constraints: const BoxConstraints(maxHeight: 200),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(8.0),
-                border: Border.all(
-                  color: Theme.of(context).dividerColor,
-                ),
-              ),
+            color: Theme.of(context).cardColor,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: overlayMaxHeight),
               child: ListView.builder(
                 padding: EdgeInsets.zero,
                 shrinkWrap: true,
@@ -248,19 +367,66 @@ class _MentionTextFieldState extends State<MentionTextField> {
                 itemBuilder: (context, index) {
                   final member = _filteredMembers[index];
                   final isSelected = index == _selectedMentionIndex;
+                  final isAllMention = member is _AllConversationMember;
+                  final avatarUrl = member.avatarUrl?.trim();
+                  final subtitle = isAllMention
+                      ? 'Mention everyone'
+                      : ((member.departmentName?.trim().isNotEmpty ?? false)
+                          ? member.departmentName!.trim()
+                          : '@${member.userId}');
 
                   return ListTile(
-                    dense: true,
+                    dense: false,
                     selected: isSelected,
-                    leading: AppAvatar.initials(
-                      name: member.fullName ?? 'Unknown',
-                      size: AvatarSize.small,
-                    ),
+                    leading: isAllMention
+                        ? Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.people_outline,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          )
+                        : ((avatarUrl?.isNotEmpty ?? false)
+                            ? AppAvatar.network(
+                                imageUrl: avatarUrl!,
+                                size: AvatarSize.small,
+                              )
+                            : AppAvatar.initials(
+                                name: member.fullName ?? 'Unknown',
+                                size: AvatarSize.small,
+                              )),
                     title: Text(
                       member.fullName ?? 'Unknown',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      ),
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                    ),
+                    subtitle: Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.color
+                                ?.withValues(alpha: 0.7),
+                          ),
+                    ),
+                    trailing: Icon(
+                      hasAllMention && index == 0
+                          ? Icons.people_outline
+                          : Icons.alternate_email,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     onTap: () => _insertMention(member),
                   );

@@ -94,6 +94,12 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
         if (m.id.isNotEmpty && m.name.trim().isNotEmpty) m.id: m.name.trim(),
     };
 
+    // Special handling for @all mention - backend may not include it in mentionTo
+    // Add fallback if not present
+    if (!mentionNameById.containsKey('all') && widget.uiState.content.contains('[@all]')) {
+      mentionNameById['all'] = 'All';
+    }
+
     final raw = widget.uiState.content;
     final normalized = raw.formatChatMessage(mentionNameById: mentionNameById);
 
