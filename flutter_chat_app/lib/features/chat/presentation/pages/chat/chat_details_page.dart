@@ -90,6 +90,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   DateTime? _lastLoadMoreAt;
   String? _lastLoadMoreCursor;
   String? _pendingScrollToMessageId;
+  int? _pendingScrollCreatedAtMs;
   int _pendingScrollAttempts = 0;
   static const int _maxPendingScrollAttempts = 20;
 
@@ -582,7 +583,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           builder: (context, scrollController) => MessageSearchPanel(
             conversationId: widget.chatId,
             onResultSelected: (result) {
-              _jumpToMessage(result.id);
+              _jumpToMessage(result.id, result.createdAt);
             },
           ),
         ),
@@ -591,10 +592,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   /// Jump to a specific message by ID from search result
-  void _jumpToMessage(String messageId) {
+  void _jumpToMessage(String messageId, DateTime createdAt) {
     _pendingScrollToMessageId = messageId;
+    _pendingScrollCreatedAtMs = createdAt.millisecondsSinceEpoch;
     _pendingScrollAttempts = 0;
-    
+
     // Try to scroll immediately if message is already loaded
     _attemptJumpToMessage();
   }
@@ -624,6 +626,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     if (messageIndex != null) {
       // Message found — scroll to it and highlight
       _pendingScrollToMessageId = null;
+      _pendingScrollCreatedAtMs = null;
       _pendingScrollAttempts = 0;
 
       _itemScrollController.scrollTo(
@@ -637,13 +640,17 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         if (mounted) safeSetState(() => _highlightedMessageId = null);
       });
     } else {
-      // Message not found — trigger load-more.
-      // _handleBlocStateChanges will handle subsequent retries.
-      if (!state.hasReachedMax) {
-        _loadMore();
+      // Message not found — load messages from target timestamp
+      final createdAtMs = _pendingScrollCreatedAtMs;
+      if (createdAtMs != null) {
+        _messageBloc.add(JumpToMessage(
+          messageId: messageId,
+          createdAtMs: createdAtMs,
+        ));
       } else {
-        // All messages loaded but target not found
+        // Fallback: no timestamp available
         _pendingScrollToMessageId = null;
+        _pendingScrollCreatedAtMs = null;
         _pendingScrollAttempts = 0;
         if (mounted) {
           AppSnackBar.show(
@@ -993,6 +1000,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         final index = state.uiMessages.indexWhere((m) => m.id == pendingId);
         if (index != -1) {
           _pendingScrollToMessageId = null;
+          _pendingScrollCreatedAtMs = null;
           _pendingScrollAttempts = 0;
 
           // Use WidgetsBinding to ensure the list has rebuilt with new data
@@ -1009,14 +1017,31 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           Future.delayed(const Duration(seconds: 2), () {
             if (mounted) safeSetState(() => _highlightedMessageId = null);
           });
-        } else if (!state.hasReachedMax && _pendingScrollAttempts < _maxPendingScrollAttempts) {
+        } else if (_pendingScrollAttempts < _maxPendingScrollAttempts) {
           _pendingScrollAttempts++;
-          // Bypass _loadMore() throttle — directly request more messages
-          // so the pending scroll isn't blocked by the 700ms guard.
-          safeSetState(() => _isLoadingMore = true);
-          _messageBloc.add(const LoadMoreMessages(limit: _pageSize));
+          // Use JumpToMessage with timestamp cursor if available
+          final createdAtMs = _pendingScrollCreatedAtMs;
+          if (createdAtMs != null) {
+            _messageBloc.add(JumpToMessage(
+              messageId: pendingId,
+              createdAtMs: createdAtMs,
+            ));
+          } else if (!state.hasReachedMax) {
+            safeSetState(() => _isLoadingMore = true);
+            _messageBloc.add(const LoadMoreMessages(limit: _pageSize));
+          } else {
+            _pendingScrollToMessageId = null;
+            _pendingScrollCreatedAtMs = null;
+            _pendingScrollAttempts = 0;
+            AppSnackBar.show(
+              context: context,
+              message: context.l10n.messageNotFound,
+              type: FeedbackType.warning,
+            );
+          }
         } else {
           _pendingScrollToMessageId = null;
+          _pendingScrollCreatedAtMs = null;
           _pendingScrollAttempts = 0;
           AppSnackBar.show(
             context: context,

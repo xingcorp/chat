@@ -293,6 +293,23 @@ class FetchFrequentReactions extends MessageEvent {
   const FetchFrequentReactions();
 }
 
+/// Sự kiện nhảy tới tin nhắn cụ thể (từ kết quả tìm kiếm)
+///
+/// Load messages từ timestamp của tin nhắn đích (matching Angular frontend logic).
+/// Thay vì load more tuần tự, load trực tiếp từ cursor = createdAt của tin nhắn.
+class JumpToMessage extends MessageEvent {
+  final String messageId;
+  final int createdAtMs;
+
+  const JumpToMessage({
+    required this.messageId,
+    required this.createdAtMs,
+  });
+
+  @override
+  List<Object?> get props => [messageId, createdAtMs];
+}
+
 /// Sự kiện chuyển tiếp tin nhắn đến chat khác
 class ForwardMessage extends MessageEvent {
   /// Tin nhắn gốc cần chuyển tiếp (full object, không cần tìm trong state)

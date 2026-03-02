@@ -218,6 +218,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     on<UpdateConversationMembers>(_onUpdateConversationMembers);
     on<ForwardMessage>(_onForwardMessage);
     on<FetchFrequentReactions>(_onFetchFrequentReactions);
+    on<JumpToMessage>(_onJumpToMessage);
 
     // Subscribe to connection state changes for reconnection detection
     _connectionStateSubscription = _realtimeService.connectionState
@@ -402,7 +403,50 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       },
     );
   }
-  
+
+  /// **Jump to message — load messages from target timestamp (matching Angular frontend)**
+  ///
+  /// Instead of iteratively calling LoadMoreMessages, this loads a page of messages
+  /// using the target message's `createdAt` as cursor, then merges with existing messages.
+  Future<void> _onJumpToMessage(JumpToMessage event, Emitter<MessageState> emit) async {
+    if (state is! MessagesLoaded) return;
+
+    final currentState = state as MessagesLoaded;
+
+    logger.i('JumpToMessage: loading messages from cursor ${event.createdAtMs} for message ${event.messageId}');
+
+    final result = await _getMessages(
+      conversationId: currentState.chatId,
+      limit: 50,
+      cursor: event.createdAtMs.toString(),
+    );
+
+    result.fold(
+      (failure) {
+        logger.e('JumpToMessage: failed to load messages', error: failure);
+      },
+      (fetchedMessages) {
+        if (fetchedMessages.isEmpty) return;
+
+        // Merge fetched messages with existing ones
+        final byId = <String, ChatMessage>{
+          for (final m in currentState.messages) m.id: m,
+        };
+        for (final m in fetchedMessages) {
+          byId[m.id] = m;
+        }
+
+        final allMessages = byId.values.toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+        emit(currentState.copyWith(
+          messages: allMessages,
+          uiMessages: _transformMessages(allMessages),
+        ));
+      },
+    );
+  }
+
   /// **Send message using SendMessageUseCase - CLEAN ARCHITECTURE**
   ///
   /// Re-reads `state` after await to avoid stale-state race conditions
