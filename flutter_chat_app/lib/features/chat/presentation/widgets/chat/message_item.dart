@@ -744,18 +744,90 @@ class _MessageItemState extends State<MessageItem> with AutomaticKeepAliveClient
   Widget _buildAvatar(BuildContext context) {
     final avatarUrl = widget.uiState.senderAvatar;
     final senderName = widget.uiState.senderName.trim();
+    final senderId = widget.uiState.senderId;
 
-    return Padding(
-      padding: const EdgeInsets.only(right: 4.0),
-      child: HeroAvatar(
-        id: widget.uiState.senderId,
-        imageUrl: avatarUrl,
-        displayName: senderName,
-        size: 32,
-        hasBorder: false,
-        enableHero: false,
+    return GestureDetector(
+      onTap: () => _showAvatarMenu(context, senderId, senderName, avatarUrl),
+      child: Padding(
+        padding: const EdgeInsets.only(right: 4.0),
+        child: HeroAvatar(
+          id: senderId,
+          imageUrl: avatarUrl,
+          displayName: senderName,
+          size: 32,
+          hasBorder: false,
+          enableHero: false,
+        ),
       ),
     );
+  }
+
+  void _showAvatarMenu(BuildContext context, String userId, String displayName, String? avatarUrl) {
+    final l10n = context.l10n;
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    if (overlay == null) return;
+
+    final position = renderBox.localToGlobal(Offset.zero, ancestor: overlay);
+
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        position.dx + renderBox.size.width,
+        position.dy + renderBox.size.height,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      items: [
+        PopupMenuItem<String>(
+          value: 'profile',
+          child: Row(
+            children: [
+              const Icon(Icons.person_outline, size: 20),
+              const SizedBox(width: 12),
+              Text(l10n.viewProfile),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'message',
+          child: Row(
+            children: [
+              const Icon(Icons.chat_bubble_outline, size: 20),
+              const SizedBox(width: 12),
+              Text(l10n.sendDirectMessage),
+            ],
+          ),
+        ),
+      ],
+    ).then((value) {
+      if (value == null) return;
+      switch (value) {
+        case 'profile':
+          context.push(
+            '/users/$userId',
+            extra: {
+              'displayName': displayName,
+              'avatarUrl': avatarUrl,
+            },
+          );
+          break;
+        case 'message':
+          // Navigate to direct message - same as profile for now,
+          // can be extended to create/open DM conversation
+          context.push(
+            '/users/$userId',
+            extra: {
+              'displayName': displayName,
+              'avatarUrl': avatarUrl,
+            },
+          );
+          break;
+      }
+    });
   }
 
   Widget _buildReplyPreview(

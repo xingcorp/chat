@@ -1364,7 +1364,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String lastSeenAt(String time) {
-    return 'Hoạt động lúc $time';
+    return 'Lần cuối truy cập: $time';
   }
 
   @override
@@ -1720,4 +1720,22 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get deleteThisConversation => 'Xóa cuộc trò chuyện này';
+
+  @override
+  String get viewProfile => 'Xem hồ sơ';
+
+  @override
+  String get sendDirectMessage => 'Nhắn tin riêng';
+
+  @override
+  String get viewFullImage => 'Xem ảnh đầy đủ';
+
+  @override
+  String get memberInfo => 'Thông tin thành viên';
+
+  @override
+  String get usernameLabel => 'Tên đăng nhập';
+
+  @override
+  String get currentlyOnline => 'Đang trực tuyến';
 }
