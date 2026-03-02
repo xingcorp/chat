@@ -950,5 +950,19 @@
 
   "leaveThisGroup": "Rời khỏi nhóm này",
 
-  "deleteThisConversation": "Xóa cuộc trò chuyện này"
+  "deleteThisConversation": "Xóa cuộc trò chuyện này",
+
+  "viewProfile": "Xem hồ sơ",
+
+  "sendDirectMessage": "Nhắn tin riêng",
+
+  "viewFullImage": "Xem ảnh đầy đủ",
+
+  "memberInfo": "Thông tin thành viên",
+
+  "usernameLabel": "Tên đăng nhập",
+
+  "lastSeenAt": "Lần cuối truy cập: {time}",
+
+  "currentlyOnline": "Đang trực tuyến"
 }

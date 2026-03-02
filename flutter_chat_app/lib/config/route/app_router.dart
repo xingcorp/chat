@@ -148,9 +148,11 @@ class AppRouter {
             final userId = state.pathParameters['userId']!;
             final extra = state.extra;
             final displayName = extra is Map ? extra['displayName'] as String? : null;
+            final avatarUrl = extra is Map ? extra['avatarUrl'] as String? : null;
             return UserDetailsPage(
               userId: userId,
               displayName: displayName,
+              avatarUrl: avatarUrl,
             );
           },
         ),

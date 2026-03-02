@@ -1362,7 +1362,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String lastSeenAt(String time) {
-    return 'Last seen at $time';
+    return 'Last seen: $time';
   }
 
   @override
@@ -1718,4 +1718,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteThisConversation => 'Delete this conversation';
+
+  @override
+  String get viewProfile => 'View profile';
+
+  @override
+  String get sendDirectMessage => 'Send direct message';
+
+  @override
+  String get viewFullImage => 'View full image';
+
+  @override
+  String get memberInfo => 'Member info';
+
+  @override
+  String get usernameLabel => 'Username';
+
+  @override
+  String get currentlyOnline => 'Currently online';
 }

@@ -3037,5 +3037,45 @@
   "deleteThisConversation": "Delete this conversation",
   "@deleteThisConversation": {
     "description": "Subtitle for delete chat option"
+  },
+
+  "viewProfile": "View profile",
+  "@viewProfile": {
+    "description": "Menu option to view user profile"
+  },
+
+  "sendDirectMessage": "Send direct message",
+  "@sendDirectMessage": {
+    "description": "Menu option to send direct message"
+  },
+
+  "viewFullImage": "View full image",
+  "@viewFullImage": {
+    "description": "Menu option to view full size image"
+  },
+
+  "memberInfo": "Member info",
+  "@memberInfo": {
+    "description": "Title for member info section"
+  },
+
+  "usernameLabel": "Username",
+  "@usernameLabel": {
+    "description": "Label for username field in profile"
+  },
+
+  "lastSeenAt": "Last seen: {time}",
+  "@lastSeenAt": {
+    "description": "Last seen time label",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+
+  "currentlyOnline": "Currently online",
+  "@currentlyOnline": {
+    "description": "Status when user is online"
   }
 }

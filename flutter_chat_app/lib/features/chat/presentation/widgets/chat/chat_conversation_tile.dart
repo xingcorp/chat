@@ -39,9 +39,12 @@ class ChatConversationTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
+        padding: const EdgeInsets.only(
+          // horizontal: 12,
+          top: 10,
+          left: 6,
+          bottom: 10,
+          right: 12
         ),
         child: Row(
           children: [

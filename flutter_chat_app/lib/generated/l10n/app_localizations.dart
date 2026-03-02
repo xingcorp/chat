@@ -2546,10 +2546,10 @@ abstract class AppLocalizations {
   /// **'Last seen recently'**
   String get lastSeenRecently;
 
-  /// User last seen with time
+  /// Last seen time label
   ///
   /// In en, this message translates to:
-  /// **'Last seen at {time}'**
+  /// **'Last seen: {time}'**
   String lastSeenAt(String time);
 
   /// User last seen minutes ago
@@ -3151,6 +3151,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete this conversation'**
   String get deleteThisConversation;
+
+  /// Menu option to view user profile
+  ///
+  /// In en, this message translates to:
+  /// **'View profile'**
+  String get viewProfile;
+
+  /// Menu option to send direct message
+  ///
+  /// In en, this message translates to:
+  /// **'Send direct message'**
+  String get sendDirectMessage;
+
+  /// Menu option to view full size image
+  ///
+  /// In en, this message translates to:
+  /// **'View full image'**
+  String get viewFullImage;
+
+  /// Title for member info section
+  ///
+  /// In en, this message translates to:
+  /// **'Member info'**
+  String get memberInfo;
+
+  /// Label for username field in profile
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get usernameLabel;
+
+  /// Status when user is online
+  ///
+  /// In en, this message translates to:
+  /// **'Currently online'**
+  String get currentlyOnline;
 }
 
 class _AppLocalizationsDelegate
