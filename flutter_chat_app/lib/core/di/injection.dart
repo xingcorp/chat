@@ -61,9 +61,11 @@ import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.d
     as media_local_ds;
 import 'package:flutter_chat_app/data/datasources/permissions_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/permissions/web_permissions_datasource.dart';
+import 'package:flutter_chat_app/data/services/file_download_manager/file_download_manager_factory.dart';
 import 'package:flutter_chat_app/data/services/file_downloader/file_downloader_factory.dart';
 import 'package:flutter_chat_app/data/services/gal_media_gallery_saver.dart';
 import 'package:flutter_chat_app/domain/repositories/i_media_repository.dart';
+import 'package:flutter_chat_app/domain/services/i_file_download_manager.dart';
 import 'package:flutter_chat_app/domain/services/i_file_downloader.dart';
 import 'package:flutter_chat_app/domain/services/i_media_gallery_saver.dart';
 import 'package:flutter_chat_app/domain/usecases/media/download_file_usecase.dart';
@@ -255,6 +257,12 @@ Future<void> configureDependencies() async {
     if (!getIt.isRegistered<IFileDownloader>()) {
       getIt.registerLazySingleton<IFileDownloader>(
         () => createFileDownloader(getIt<AppLogger>()),
+      );
+    }
+
+    if (!getIt.isRegistered<IFileDownloadManager>()) {
+      getIt.registerLazySingleton<IFileDownloadManager>(
+        () => createFileDownloadManager(getIt<AppLogger>()),
       );
     }
 

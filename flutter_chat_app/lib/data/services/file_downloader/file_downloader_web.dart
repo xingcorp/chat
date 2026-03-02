@@ -29,8 +29,8 @@ class _WebFileDownloader implements IFileDownloader {
     }
 
     try {
-      final Uri? uri = Uri.tryParse(url);
-      if (uri == null) {
+      final Uri? parsedUri = Uri.tryParse(url.trim());
+      if (parsedUri == null) {
         return const Left(
           ValidationFailure(
             message: 'Invalid file URL.',
@@ -38,6 +38,9 @@ class _WebFileDownloader implements IFileDownloader {
           ),
         );
       }
+
+      final Uri uri =
+          parsedUri.hasScheme ? parsedUri : Uri.base.resolveUri(parsedUri);
 
       final bool launched = await launchUrl(
         uri,

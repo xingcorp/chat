@@ -9,7 +9,8 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/services/image_editor_service.dart';
-import 'package:flutter_chat_app/domain/usecases/media/download_file_usecase.dart';
+import 'package:flutter_chat_app/domain/services/file_download_state.dart';
+import 'package:flutter_chat_app/domain/services/i_file_download_manager.dart';
 import 'package:flutter_chat_app/domain/usecases/media/save_media_to_gallery_usecase.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
@@ -488,9 +489,45 @@ class MediaGallery extends StatelessWidget {
   /// Build single file tile
   /// Supports upload progress indicator like image tiles
   Widget _buildFileTile(BuildContext context, MessageAttachment file) {
+    final IFileDownloadManager downloadManager =
+        GetIt.I<IFileDownloadManager>();
+    final String downloadKey = _buildAttachmentDownloadKey(file);
+
+    return StreamBuilder<FileDownloadState>(
+      stream: downloadManager.watch(downloadKey),
+      initialData: downloadManager.stateOf(downloadKey),
+      builder: (context, snapshot) {
+        final FileDownloadState downloadState = snapshot.data ??
+            FileDownloadState.idle(
+              downloadKey,
+              sourceUrl: file.url,
+              fileName: file.name,
+            );
+
+        return _buildFileTileContent(
+          context: context,
+          file: file,
+          downloadState: downloadState,
+          downloadManager: downloadManager,
+          downloadKey: downloadKey,
+        );
+      },
+    );
+  }
+
+  Widget _buildFileTileContent({
+    required BuildContext context,
+    required MessageAttachment file,
+    required FileDownloadState downloadState,
+    required IFileDownloadManager downloadManager,
+    required String downloadKey,
+  }) {
     final theme = Theme.of(context);
     final isUploading = file.isUploading;
     final uploadProgress = file.uploadProgress ?? 0.0;
+    final isDownloading = downloadState.isInProgress;
+    final isDownloaded = downloadState.status == FileDownloadStatus.completed;
+    final isDownloadFailed = downloadState.status == FileDownloadStatus.failed;
 
     // Follow same pattern as ReplyPreview, LinkPreviewCard:
     // - on primary bubble -> use white/onPrimary colors
@@ -520,7 +557,13 @@ class MediaGallery extends StatelessWidget {
     return GestureDetector(
       onTap: isUploading
           ? null // Disable tap during upload
-          : () => _saveAttachmentToGallery(context, file),
+          : () => _handleFileTileTap(
+                context,
+                file,
+                downloadState: downloadState,
+                downloadManager: downloadManager,
+                downloadKey: downloadKey,
+              ),
       child: Container(
         padding: const EdgeInsets.all(12.0),
         color: tileBackgroundColor,
@@ -529,6 +572,23 @@ class MediaGallery extends StatelessWidget {
             // File icon or upload progress indicator
             if (isUploading)
               _buildFileUploadProgressIndicator(uploadProgress)
+            else if (isDownloading)
+              _buildFileDownloadProgressIndicator(
+                progress: downloadState.progress,
+                color: primaryIconColor,
+              )
+            else if (isDownloaded)
+              Icon(
+                Icons.check_circle,
+                color: theme.colorScheme.tertiary,
+                size: 28,
+              )
+            else if (isDownloadFailed)
+              Icon(
+                Icons.error_outline,
+                color: theme.colorScheme.error,
+                size: 28,
+              )
             else
               Icon(
                 _getFileIcon(file.type),
@@ -556,6 +616,27 @@ class MediaGallery extends StatelessWidget {
                         color: primaryIconColor,
                       ),
                     )
+                  else if (isDownloading)
+                    Text(
+                      '${context.l10n.downloading} ${downloadState.progress}%',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: primaryIconColor,
+                      ),
+                    )
+                  else if (isDownloaded)
+                    Text(
+                      context.l10n.downloaded,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: subTextColor,
+                      ),
+                    )
+                  else if (isDownloadFailed)
+                    Text(
+                      context.l10n.downloadFailed,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.error,
+                      ),
+                    )
                   else if (file.size > 0)
                     Text(
                       _formatFileSize(file.size),
@@ -568,7 +649,13 @@ class MediaGallery extends StatelessWidget {
             ),
             if (!isUploading)
               Icon(
-                Icons.download,
+                isDownloading
+                    ? Icons.close
+                    : isDownloaded
+                        ? Icons.open_in_new
+                        : isDownloadFailed
+                            ? Icons.refresh
+                            : Icons.download,
                 color: downloadIconColor,
                 size: 20,
               ),
@@ -606,6 +693,36 @@ class MediaGallery extends StatelessWidget {
     );
   }
 
+  Widget _buildFileDownloadProgressIndicator({
+    required int progress,
+    required Color color,
+  }) {
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircularProgressIndicator(
+            value: progress > 0 ? progress / 100 : null,
+            strokeWidth: 2.5,
+            backgroundColor: Colors.grey.withValues(alpha: 0.3),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+          if (progress > 0)
+            Text(
+              '$progress%',
+              style: TextStyle(
+                fontSize: 8,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   /// Get icon cho file type
   IconData _getFileIcon(String type) {
     switch (type.toLowerCase()) {
@@ -633,43 +750,106 @@ class MediaGallery extends StatelessWidget {
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 
-  Future<void> _saveAttachmentToGallery(
+  String _buildAttachmentDownloadKey(MessageAttachment attachment) {
+    final String attachmentId = attachment.id.trim();
+    if (attachmentId.isNotEmpty) {
+      return 'attachment_$attachmentId';
+    }
+
+    final String url = attachment.url.trim();
+    if (url.isNotEmpty) {
+      return 'url_${url.hashCode}';
+    }
+
+    final int fallbackHash = Object.hash(
+      attachment.name,
+      attachment.type,
+      attachment.size,
+    );
+    return 'attachment_fallback_$fallbackHash';
+  }
+
+  Future<void> _handleFileTileTap(
     BuildContext context,
-    MessageAttachment attachment,
-  ) async {
+    MessageAttachment attachment, {
+    required FileDownloadState downloadState,
+    required IFileDownloadManager downloadManager,
+    required String downloadKey,
+  }) async {
     final GalleryMediaType? mediaType = switch (attachment.type.toLowerCase()) {
       'image' => GalleryMediaType.image,
       'video' => GalleryMediaType.video,
       _ => null,
     };
 
-    if (mediaType == null) {
-      final DownloadFileUseCase downloadFileUseCase =
-          GetIt.I<DownloadFileUseCase>();
-      final result = await downloadFileUseCase(
-        DownloadFileParams(
-          url: attachment.url,
-          fileName: attachment.name.isNotEmpty ? attachment.name : null,
-        ),
-      );
-
-      if (!context.mounted) {
-        return;
-      }
-
-      result.fold(
-        (failure) => AppSnackBar.error(
-          context: context,
-          message: failure.userMessage,
-        ),
-        (_) => AppSnackBar.info(
-          context: context,
-          message: context.l10n.downloading,
-        ),
+    if (mediaType != null) {
+      await _saveAttachmentToGallery(
+        context,
+        attachment,
+        mediaType: mediaType,
       );
       return;
     }
 
+    if (downloadState.isInProgress) {
+      final cancelResult = await downloadManager.cancelDownload(downloadKey);
+      if (!context.mounted) {
+        return;
+      }
+
+      cancelResult.fold(
+        (failure) => AppSnackBar.error(
+          context: context,
+          message: failure.userMessage,
+        ),
+        (_) {},
+      );
+      return;
+    }
+
+    if (downloadState.canOpen) {
+      final openResult = await downloadManager.openDownloadedFile(downloadKey);
+      if (!context.mounted) {
+        return;
+      }
+
+      openResult.fold(
+        (failure) => AppSnackBar.error(
+          context: context,
+          message: failure.userMessage,
+        ),
+        (_) {},
+      );
+      return;
+    }
+
+    final result = await downloadManager.startDownload(
+      key: downloadKey,
+      url: attachment.url,
+      fileName: attachment.name.isNotEmpty ? attachment.name : null,
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    result.fold(
+      (failure) => AppSnackBar.error(
+        context: context,
+        message: failure.userMessage,
+      ),
+      (_) => AppSnackBar.info(
+        context: context,
+        message: context.l10n.downloading,
+      ),
+    );
+  }
+
+  Future<void> _saveAttachmentToGallery(
+    BuildContext context,
+    MessageAttachment attachment, {
+    required GalleryMediaType mediaType,
+  }) async {
     final SaveMediaToGalleryUseCase saveMediaToGallery =
         GetIt.I<SaveMediaToGalleryUseCase>();
     final result = await saveMediaToGallery(

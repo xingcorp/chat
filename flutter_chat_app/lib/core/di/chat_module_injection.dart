@@ -48,6 +48,7 @@ import 'package:flutter_chat_app/core/network/socket_manager.dart'
     as socket_mgr;
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/storage/secure_storage.dart';
+import 'package:flutter_chat_app/data/services/file_download_manager/file_download_manager_factory.dart';
 import 'package:flutter_chat_app/data/services/file_downloader/file_downloader_factory.dart';
 import 'package:flutter_chat_app/data/services/gal_media_gallery_saver.dart';
 import 'package:flutter_chat_app/data/datasources/permissions_datasource.dart';
@@ -59,6 +60,7 @@ import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.da
 import 'package:flutter_chat_app/data/datasources/media/media_local_datasource.dart'
     as media_local_ds;
 import 'package:flutter_chat_app/domain/repositories/i_media_repository.dart';
+import 'package:flutter_chat_app/domain/services/i_file_download_manager.dart';
 import 'package:flutter_chat_app/domain/services/i_file_downloader.dart';
 import 'package:flutter_chat_app/domain/services/i_media_gallery_saver.dart';
 import 'package:flutter_chat_app/domain/usecases/media/download_file_usecase.dart';
@@ -635,6 +637,12 @@ class ChatModuleInjection {
     if (!_getIt.isRegistered<IFileDownloader>()) {
       _getIt.registerLazySingleton<IFileDownloader>(
         () => createFileDownloader(_getIt<AppLogger>()),
+      );
+    }
+
+    if (!_getIt.isRegistered<IFileDownloadManager>()) {
+      _getIt.registerLazySingleton<IFileDownloadManager>(
+        () => createFileDownloadManager(_getIt<AppLogger>()),
       );
     }
 
