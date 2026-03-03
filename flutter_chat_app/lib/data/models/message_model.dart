@@ -769,19 +769,53 @@ class MessageModel {
       );
     }).toList();
 
-    // Create attachments if this is a media message
+    // Create attachments for all media URLs (not just the first URL).
     final attachments = <MessageAttachment>[];
-    if (isMultimedia && (mediaPath != null || urls.isNotEmpty)) {
-      final url = urls.isNotEmpty ? urls.first : (mediaPath ?? '');
-      attachments.add(MessageAttachment(
-        id: '$localId-attachment',
-        type: rawType == 'voice_note'
-            ? 'voice_note'
-            : _getAttachmentTypeString(type),
-        url: url,
-        name: fileName ?? 'attachment',
-        size: fileSize ?? 0,
-      ));
+    if (isMultimedia) {
+      final normalizedUrls = urls
+          .map((url) => url.trim())
+          .where((url) => url.isNotEmpty)
+          .toList(growable: false);
+      final attachmentType = rawType == 'voice_note'
+          ? 'voice_note'
+          : _getAttachmentTypeString(type);
+
+      if (normalizedUrls.isNotEmpty) {
+        for (final entry in normalizedUrls.asMap().entries) {
+          final index = entry.key;
+          final url = entry.value;
+          final inferredName = _extractFileNameFromUrl(url);
+          final preferredName =
+              index == 0 && fileName != null && fileName!.trim().isNotEmpty
+                  ? fileName!.trim()
+                  : inferredName;
+          final attachmentSize =
+              index == 0 ? (fileSize ?? 0) : 0; // Backend has no per-file size
+
+          attachments.add(
+            MessageAttachment(
+              id: '$localId-attachment-$index',
+              type: attachmentType,
+              url: url,
+              name: preferredName.isNotEmpty ? preferredName : 'attachment',
+              size: attachmentSize,
+            ),
+          );
+        }
+      } else if (mediaPath != null && mediaPath!.trim().isNotEmpty) {
+        final normalizedPath = mediaPath!.trim();
+        attachments.add(
+          MessageAttachment(
+            id: '$localId-attachment-0',
+            type: attachmentType,
+            url: normalizedPath,
+            name: fileName?.trim().isNotEmpty == true
+                ? fileName!.trim()
+                : _extractFileNameFromUrl(normalizedPath),
+            size: fileSize ?? 0,
+          ),
+        );
+      }
     }
 
     // Parse reply message from metadata (khớp Angular: replyMessage/replyMessageId)
@@ -951,5 +985,28 @@ class MessageModel {
       default:
         return 'document';
     }
+  }
+
+  String _extractFileNameFromUrl(String value) {
+    final input = value.trim();
+    if (input.isEmpty) return 'attachment';
+
+    try {
+      final uri = Uri.parse(input);
+      final segments = uri.pathSegments;
+      if (segments.isNotEmpty) {
+        final last = segments.last.trim();
+        if (last.isNotEmpty) return last;
+      }
+    } catch (_) {}
+
+    final normalized = input.split('?').first.split('#').first;
+    final parts = normalized.split(RegExp(r'[\\/]'));
+    if (parts.isNotEmpty) {
+      final last = parts.last.trim();
+      if (last.isNotEmpty) return last;
+    }
+
+    return 'attachment';
   }
 }

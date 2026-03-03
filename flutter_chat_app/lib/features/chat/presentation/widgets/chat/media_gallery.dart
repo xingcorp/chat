@@ -132,10 +132,12 @@ class MediaGallery extends StatelessWidget {
           return v;
         }
 
-        final twoColTileHeight =
-            isDesktop ? clamp((availableWidth - 4) * 0.32, 160, 240) : 160.0;
-        final gridTileHeight =
-            isDesktop ? clamp((availableWidth - 4) * 0.24, 120, 200) : 120.0;
+        final twoColTileHeight = isDesktop
+            ? clamp((availableWidth - 4) * 0.44, 170, 280)
+            : clamp((availableWidth - 4) * 0.36, 150, 220);
+        final gridTileHeight = isDesktop
+            ? clamp((availableWidth - 4) * 0.3, 130, 220)
+            : clamp((availableWidth - 4) * 0.28, 120, 180);
 
         if (images.length == 1) {
           return _SmartSingleImageTile(
@@ -276,6 +278,8 @@ class MediaGallery extends StatelessWidget {
     BoxFit fit = BoxFit.cover,
   }) {
     final hasLocalPath = image.localPath != null && image.localPath!.isNotEmpty;
+    final hasLocalBytes =
+        kIsWeb && image.localBytes != null && image.localBytes!.isNotEmpty;
     final hasUrl = image.url.isNotEmpty;
     final isUploading = image.isUploading;
     final uploadProgress = image.uploadProgress ?? 0.0;
@@ -286,6 +290,19 @@ class MediaGallery extends StatelessWidget {
       // Use local file (during upload or cached)
       imageWidget = Image.file(
         File(image.localPath!),
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (_, __, ___) => Container(
+          width: width,
+          height: height ?? maxHeight ?? 150,
+          color: Colors.grey[300],
+          child: const Icon(Icons.broken_image, color: Colors.grey),
+        ),
+      );
+    } else if (hasLocalBytes) {
+      imageWidget = Image.memory(
+        image.localBytes!,
         width: width,
         height: height,
         fit: fit,
@@ -1010,6 +1027,9 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
   Widget build(BuildContext context) {
     final hasLocalPath =
         widget.image.localPath != null && widget.image.localPath!.isNotEmpty;
+    final hasLocalBytes = kIsWeb &&
+        widget.image.localBytes != null &&
+        widget.image.localBytes!.isNotEmpty;
     final hasUrl = widget.image.url.isNotEmpty;
     final isUploading = widget.image.isUploading;
     final uploadProgress = widget.image.uploadProgress ?? 0.0;
@@ -1020,25 +1040,23 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
             ? constraints.maxWidth
             : MediaQuery.of(context).size.width;
 
-        final ar = _aspectRatio ?? 1.0;
-
-        final double maxWidth = ar < 0.85
-            ? availableWidth * 0.62
-            : (ar < 1.2 ? availableWidth * 0.85 : availableWidth);
-
-        final double maxHeight = ar < 0.85 ? 420 : 360;
+        final isDesktop = availableWidth >= AppDimens.breakpointDesktop;
+        final ar = (_aspectRatio ?? 1.0).clamp(0.72, 1.35);
+        final maxHeight = isDesktop ? 440.0 : 360.0;
+        final maxWidth = availableWidth;
+        final minWidth = isDesktop ? 220.0 : 150.0;
 
         // Build image widget based on source
         Widget imageContent;
         if (hasLocalPath) {
           // Cross-platform: use Image.memory on web, Image.file on mobile
-          if (kIsWeb && widget.image.localBytes != null) {
+          if (kIsWeb && hasLocalBytes) {
             // Web: use Image.memory with bytes
             imageContent = Image.memory(
               widget.image.localBytes!,
               width: double.infinity,
               height: double.infinity,
-              fit: BoxFit.contain,
+              fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 color: Colors.grey[300],
                 child: const Icon(Icons.broken_image, color: Colors.grey),
@@ -1050,7 +1068,7 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
               File(widget.image.localPath!),
               width: double.infinity,
               height: double.infinity,
-              fit: BoxFit.contain,
+              fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 color: Colors.grey[300],
                 child: const Icon(Icons.broken_image, color: Colors.grey),
@@ -1065,12 +1083,23 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
               ),
             );
           }
+        } else if (hasLocalBytes) {
+          imageContent = Image.memory(
+            widget.image.localBytes!,
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              color: Colors.grey[300],
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            ),
+          );
         } else if (hasUrl) {
           imageContent = CachedNetworkImage(
             imageUrl: widget.image.url,
             width: double.infinity,
             height: double.infinity,
-            fit: BoxFit.contain,
+            fit: BoxFit.cover,
             placeholder: (_, __) => Container(
               color: Colors.grey[300],
               child: const Center(
@@ -1097,6 +1126,7 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
             borderRadius: widget.borderRadius,
             child: ConstrainedBox(
               constraints: BoxConstraints(
+                minWidth: minWidth < maxWidth ? minWidth : maxWidth,
                 maxWidth: maxWidth,
                 maxHeight: maxHeight,
               ),
