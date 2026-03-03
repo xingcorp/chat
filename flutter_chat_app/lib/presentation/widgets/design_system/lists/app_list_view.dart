@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
-import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
@@ -174,6 +173,15 @@ class AppListViewState<T> extends BaseState<AppListView<T>> {
   late ScrollController _scrollController;
   bool _isLoadingMore = false;
 
+  static const Set<PointerDeviceKind> _refreshDragDevices = <PointerDeviceKind>{
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.invertedStylus,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.unknown,
+  };
+
   @override
   void initState() {
     super.initState();
@@ -192,7 +200,10 @@ class AppListViewState<T> extends BaseState<AppListView<T>> {
   }
 
   void _onScroll() {
-    if (_isNearBottom() && !_isLoadingMore && widget.hasMore && !widget.isLoading) {
+    if (_isNearBottom() &&
+        !_isLoadingMore &&
+        widget.hasMore &&
+        !widget.isLoading) {
       _loadMore();
     }
   }
@@ -246,9 +257,14 @@ class AppListViewState<T> extends BaseState<AppListView<T>> {
   }
 
   Widget _buildList(BuildContext context) {
+    final ScrollPhysics effectivePhysics = widget.physics ??
+        (widget.onRefresh != null
+            ? const AlwaysScrollableScrollPhysics()
+            : const ClampingScrollPhysics());
+
     final listView = ListView.separated(
       controller: _scrollController,
-      physics: widget.physics,
+      physics: effectivePhysics,
       padding: widget.padding ?? const EdgeInsets.all(AppDimens.paddingMedium),
       shrinkWrap: widget.shrinkWrap,
       primary: widget.primary,
@@ -283,9 +299,13 @@ class AppListViewState<T> extends BaseState<AppListView<T>> {
 
     // Wrap with RefreshIndicator if onRefresh is provided
     if (widget.onRefresh != null) {
-      return RefreshIndicator(
-        onRefresh: widget.onRefresh!,
-        child: listView,
+      return ScrollConfiguration(
+        behavior: const MaterialScrollBehavior()
+            .copyWith(dragDevices: _refreshDragDevices),
+        child: RefreshIndicator(
+          onRefresh: widget.onRefresh!,
+          child: listView,
+        ),
       );
     }
 

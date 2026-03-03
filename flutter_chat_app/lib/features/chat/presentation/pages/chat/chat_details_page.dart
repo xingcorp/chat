@@ -970,6 +970,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       context,
       onImageFromCamera: _handleImageFromCamera,
       onImageFromGallery: _handleImageFromGallery,
+      onVideoFromGallery: _handleVideoFromGallery,
       onImagesFromGallery: _handleImagesFromGallery,
       onFileSelected: _handleFileSelected,
       onLocationShare: _handleLocationShare,
@@ -983,6 +984,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   void _handleImageFromGallery(File imageFile,
           {Uint8List? bytes, String? name, int? size}) =>
       _processAndSendImage(imageFile, bytes: bytes, name: name, size: size);
+
+  void _handleVideoFromGallery(File videoFile,
+          {Uint8List? bytes, String? name, int? size}) =>
+      _handleFileSelected(videoFile, bytes: bytes, name: name, size: size);
 
   void _handleImagesFromGallery(List<GalleryImageSelection> images) {
     unawaited(_handleImagesFromGalleryAsync(images));

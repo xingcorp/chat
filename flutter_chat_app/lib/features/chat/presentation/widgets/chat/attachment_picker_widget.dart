@@ -26,7 +26,8 @@ class GalleryImageSelection {
 ///
 /// Features:
 /// - Camera (take photo)
-/// - Gallery (choose from photos/videos)
+/// - Gallery (choose from photos)
+/// - Video from gallery
 /// - File (choose document/file)
 /// - Location (share location) - placeholder for future implementation
 /// - i18n support for all options
@@ -41,10 +42,14 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
       {Uint8List? bytes, String? name, int? size})? onImageFromCamera;
 
   /// Callback when image is selected from gallery
-  /// Note: videos selected from gallery are routed via [onFileSelected]
   /// On web: bytes and name are provided
   final void Function(File imageFile,
       {Uint8List? bytes, String? name, int? size})? onImageFromGallery;
+
+  /// Callback when video is selected from gallery
+  /// On web: bytes and name are provided
+  final void Function(File videoFile,
+      {Uint8List? bytes, String? name, int? size})? onVideoFromGallery;
 
   /// Callback when multiple images are selected from gallery
   final void Function(List<GalleryImageSelection> images)? onImagesFromGallery;
@@ -60,6 +65,7 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
     super.key,
     this.onImageFromCamera,
     this.onImageFromGallery,
+    this.onVideoFromGallery,
     this.onImagesFromGallery,
     this.onFileSelected,
     this.onLocationShare,
@@ -145,6 +151,19 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
                     onTap: () async {
                       Navigator.pop(context);
                       await _pickFromGallery(context);
+                    },
+                  ),
+
+                // Video from gallery option
+                if (onVideoFromGallery != null || onFileSelected != null)
+                  _buildOption(
+                    context: context,
+                    icon: Icons.videocam_outlined,
+                    iconColor: Colors.redAccent,
+                    title: '${l10n.attachmentVideo} (${l10n.gallery})',
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await _pickVideoFromGallery(context);
                     },
                   ),
 
@@ -248,48 +267,65 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
   Future<void> _pickFromGallery(BuildContext context) async {
     try {
       final picker = ImagePicker();
+
+      // Use image-only APIs so "Choose from gallery" opens photo library
+      // instead of Android Documents picker.
       try {
-        final mediaFiles = await picker.pickMultipleMedia(
+        final imageFiles = await picker.pickMultiImage(
           maxWidth: 1920,
           maxHeight: 1920,
           imageQuality: 85,
           limit: _maxGallerySelection,
         );
-        if (mediaFiles.isNotEmpty) {
-          await _dispatchPickedGalleryMediaItems(mediaFiles);
+        if (imageFiles.isNotEmpty) {
+          await _dispatchPickedGalleryMediaItems(imageFiles);
           return;
         }
       } catch (_) {
-        // Some platform combinations may not support pickMultipleMedia.
+        // Some platforms may not support multi-image picker consistently.
       }
 
-      // Fallback for unsupported multi-media picker: use single-media picker.
-      try {
-        final mediaFile = await picker.pickMedia(
-          maxWidth: 1920,
-          maxHeight: 1920,
-          imageQuality: 85,
-        );
-        if (mediaFile != null) {
-          await _dispatchPickedGalleryMediaItems([mediaFile]);
-          return;
-        }
-      } catch (_) {
-        // Continue to file_picker fallback.
-      }
-
-      // Final fallback for unsupported pickMedia APIs.
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.media,
-        allowMultiple: true,
-        withData: kIsWeb,
+      final imageFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 85,
       );
-      if (result == null || result.files.isEmpty) return;
-      await _dispatchPickedFilePickerMedia(result.files);
+      if (imageFile != null) {
+        await _dispatchPickedGalleryMediaItems([imageFile]);
+      }
     } catch (e) {
       debugPrint('Error picking from gallery: $e');
       if (context.mounted) {
         _showError(context, 'Failed to choose media');
+      }
+    }
+  }
+
+  Future<void> _pickVideoFromGallery(BuildContext context) async {
+    try {
+      final picker = ImagePicker();
+      final XFile? video = await picker.pickVideo(
+        source: ImageSource.gallery,
+      );
+      if (video == null) return;
+
+      Uint8List? bytes;
+      if (kIsWeb) {
+        bytes = await video.readAsBytes();
+      }
+
+      final callback = onVideoFromGallery ?? onFileSelected;
+      callback?.call(
+        File(video.path),
+        bytes: bytes,
+        name: video.name,
+        size: await video.length(),
+      );
+    } catch (e) {
+      debugPrint('Error picking video from gallery: $e');
+      if (context.mounted) {
+        _showError(context, 'Failed to choose video');
       }
     }
   }
@@ -314,35 +350,6 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
             mimeType: mediaFile.mimeType,
             fileName: mediaFile.name,
             filePath: mediaFile.path,
-          ),
-        ),
-      );
-    }
-
-    _dispatchPickedMediaItems(pickedItems);
-  }
-
-  Future<void> _dispatchPickedFilePickerMedia(List<PlatformFile> files) async {
-    final pickedItems = <_PickedMediaItem>[];
-
-    for (final file in files) {
-      final fileName = file.name;
-      final mediaFilePath = file.path ?? '';
-      final bytes = kIsWeb ? file.bytes : null;
-      if (mediaFilePath.isEmpty && bytes == null) {
-        continue;
-      }
-
-      pickedItems.add(
-        _PickedMediaItem(
-          file: File(mediaFilePath),
-          bytes: bytes,
-          name: fileName,
-          size: file.size,
-          isVideo: _isVideoMedia(
-            mimeType: null,
-            fileName: fileName,
-            filePath: mediaFilePath,
           ),
         ),
       );
@@ -480,6 +487,8 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
         onImageFromCamera,
     void Function(File imageFile, {Uint8List? bytes, String? name, int? size})?
         onImageFromGallery,
+    void Function(File videoFile, {Uint8List? bytes, String? name, int? size})?
+        onVideoFromGallery,
     void Function(List<GalleryImageSelection> images)? onImagesFromGallery,
     void Function(File file, {Uint8List? bytes, String? name, int? size})?
         onFileSelected,
@@ -492,6 +501,7 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
       builder: (_) => AttachmentPickerBottomSheet(
         onImageFromCamera: onImageFromCamera,
         onImageFromGallery: onImageFromGallery,
+        onVideoFromGallery: onVideoFromGallery,
         onImagesFromGallery: onImagesFromGallery,
         onFileSelected: onFileSelected,
         onLocationShare: onLocationShare,
