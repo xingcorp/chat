@@ -1714,6 +1714,31 @@
     "description": "Hint text to send voice recording"
   },
 
+  "microphonePermissionTitle": "Microphone permission required",
+  "@microphonePermissionTitle": {
+    "description": "Dialog title for microphone permission"
+  },
+
+  "microphonePermissionMessage": "Allow microphone access to record and send voice notes.",
+  "@microphonePermissionMessage": {
+    "description": "Dialog body when microphone permission is denied"
+  },
+
+  "microphonePermissionPermanentlyDeniedMessage": "Microphone permission is permanently denied. Open settings to enable it.",
+  "@microphonePermissionPermanentlyDeniedMessage": {
+    "description": "Dialog body when microphone permission is permanently denied"
+  },
+
+  "openSettings": "Open Settings",
+  "@openSettings": {
+    "description": "Button label to open OS settings"
+  },
+
+  "recordingLimitReached": "Maximum recording duration reached",
+  "@recordingLimitReached": {
+    "description": "Notification shown when voice recording reaches max duration"
+  },
+
   "messageOptions": "Message options",
   "@messageOptions": {
     "description": "Accessibility label for message options menu"

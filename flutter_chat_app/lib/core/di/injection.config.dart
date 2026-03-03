@@ -643,6 +643,11 @@ extension GetItInjectableX on _i174.GetIt {
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
+    gh.lazySingleton<_i219.PresenceService>(() => _i219.PresenceService(
+          repository: gh<_i492.IPresenceRepository>(),
+          realtimeService: gh<_i301.RealtimeService>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
     gh.lazySingletonAsync<_i556.MessageQueueService>(
         () async => _i556.MessageQueueService(
               gh<_i572.IMessageRepository>(),
@@ -695,11 +700,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i976.SocketIOEventMapper>(),
               gh<_i572.IMessageRepository>(),
             ));
-    gh.lazySingleton<_i219.PresenceService>(() => _i219.PresenceService(
-          repository: gh<_i492.IPresenceRepository>(),
-          realtimeService: gh<_i301.RealtimeService>(),
-          logger: gh<_i221.AppLogger>(),
-        ));
     gh.factory<_i53.RealtimeConnectionBloc>(() => _i53.RealtimeConnectionBloc(
           realtimeService: gh<_i301.RealtimeService>(),
           connectivityService: gh<_i47.ConnectivityService>(),

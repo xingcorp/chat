@@ -26,6 +26,7 @@ import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/read_receipt_avatars.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/read_receipt_bottom_sheet.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/sticker_message.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/chat/voice_note_player.dart';
 import 'package:flutter_chat_app/presentation/widgets/message_status_indicator.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart'
     as domain;
@@ -590,6 +591,27 @@ class _MessageItemState extends State<MessageItem>
     return path.substring(dotIndex + 1);
   }
 
+  bool _isVoiceNoteAttachment(domain.MessageAttachment attachment) {
+    return attachment.type.toLowerCase() == 'voice_note';
+  }
+
+  bool _isVoiceNoteFileName(String? fileName) {
+    if (fileName == null) return false;
+    final normalized = fileName.trim().toLowerCase();
+    return normalized.startsWith('voice_note_') && normalized.endsWith('.m4a');
+  }
+
+  String _resolveVoiceNoteSourceUrl(domain.MessageAttachment attachment) {
+    if (attachment.url.trim().isNotEmpty) {
+      return attachment.url.trim();
+    }
+    final localPath = attachment.localPath?.trim();
+    if (localPath != null && localPath.isNotEmpty) {
+      return localPath;
+    }
+    return '';
+  }
+
   Widget _buildMessageBubble(BuildContext context, bool isFromCurrentUser) {
     final ThemeData theme = Theme.of(context);
     final messageAlignment =
@@ -690,6 +712,10 @@ class _MessageItemState extends State<MessageItem>
     // Determine if we should use audio/video player instead of media gallery
     final isAudioMessage = contentType == domain.ContentType.audio;
     final isVideoMessage = contentType == domain.ContentType.video;
+    final isVoiceNoteMessage = isAudioMessage &&
+        renderableAttachments.length == 1 &&
+        (_isVoiceNoteAttachment(renderableAttachments.first) ||
+            _isVoiceNoteFileName(widget.uiState.fileName));
     final videoThumbnailUrl = _extractVideoThumbnailUrl(renderableAttachments);
     final hasUploadingAttachment =
         renderableAttachments.any((attachment) => attachment.isUploading);
@@ -733,10 +759,27 @@ class _MessageItemState extends State<MessageItem>
             if (useSpecialPlayer && isAudioMessage)
               Padding(
                 padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
-                child: AudioPlayerWidget(
-                  url: renderableAttachments.first.url,
-                  isFromCurrentUser: isFromCurrentUser,
-                ),
+                child: isVoiceNoteMessage
+                    ? VoiceNotePlayerWidget(
+                        messageId: widget.uiState.id,
+                        audioUrl: _resolveVoiceNoteSourceUrl(
+                            renderableAttachments.first),
+                        isCurrentUser: isFromCurrentUser,
+                        isFailed: widget.uiState.isFailed && isFromCurrentUser,
+                        onRetry: widget.uiState.isFailed && isFromCurrentUser
+                            ? () {
+                                context.read<MessageBloc>().add(
+                                      RetryVoiceNote(
+                                        draftMessageId: widget.uiState.id,
+                                      ),
+                                    );
+                              }
+                            : null,
+                      )
+                    : AudioPlayerWidget(
+                        url: renderableAttachments.first.url,
+                        isFromCurrentUser: isFromCurrentUser,
+                      ),
               ),
 
             // Video player for video messages

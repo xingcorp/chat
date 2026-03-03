@@ -1,10 +1,10 @@
 /// Core Module - Manual DI Registration
-/// 
+///
 /// Registers core infrastructure services that require:
 /// - Async initialization (@preResolve)
 /// - Complex setup logic
 /// - External dependencies
-/// 
+///
 /// These services are registered manually to avoid overwhelming
 /// the Injectable generator and to have fine-grained control.
 
@@ -17,10 +17,13 @@ import 'package:flutter_chat_app/core/services/image_editor_service.dart';
 import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
 import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter_chat_app/core/services/voice_note_playback_manager.dart';
+import 'package:flutter_chat_app/core/services/voice_recorder_service.dart';
 import 'package:flutter_chat_app/core/network/cache/api_cache_manager.dart';
 import 'package:flutter_chat_app/core/network/auth/auth_delegate.dart';
 import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
-import 'package:flutter_chat_app/core/network/graphql_client.dart' as core_graphql;
+import 'package:flutter_chat_app/core/network/graphql_client.dart'
+    as core_graphql;
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
@@ -40,17 +43,33 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 
 /// Register core infrastructure services
-/// 
+///
 /// **Order matters**: Services are registered in dependency order.
 /// Services registered first can be used by services registered later.
 Future<void> registerCoreModule(GetIt getIt) async {
   // 1. Logger - Required by almost all services
   // Already registered in injection.dart
-  
+
   // 2. AppLogger - Wrapper around Logger
   if (!getIt.isRegistered<AppLogger>()) {
     getIt.registerSingleton<AppLogger>(
       AppLogger(),
+    );
+  }
+
+  if (!getIt.isRegistered<VoiceRecorderService>()) {
+    getIt.registerLazySingleton<VoiceRecorderService>(
+      () => VoiceRecorderService(
+        logger: getIt<AppLogger>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<VoiceNotePlaybackManager>()) {
+    getIt.registerLazySingleton<VoiceNotePlaybackManager>(
+      () => VoiceNotePlaybackManager(
+        logger: getIt<AppLogger>(),
+      ),
     );
   }
 
@@ -170,10 +189,10 @@ Future<void> registerCoreModule(GetIt getIt) async {
       SocketRateLimiter(logger: getIt<Logger>()),
     );
   }
-  
+
   // 4. Connectivity - Network monitoring
   // Already registered in injection.dart
-  
+
   // 5. NetworkInfo - Network status checker
   if (!getIt.isRegistered<NetworkInfo>()) {
     getIt.registerLazySingleton<NetworkInfo>(
@@ -187,7 +206,7 @@ Future<void> registerCoreModule(GetIt getIt) async {
   if (!getIt.isRegistered<INetworkInfo>()) {
     getIt.registerLazySingleton<INetworkInfo>(() => getIt<NetworkInfo>());
   }
-  
+
   // 6. DatabaseService - Async initialization with @preResolve
   if (!getIt.isRegistered<DatabaseService>()) {
     final databaseService = await DatabaseService.create();
@@ -196,14 +215,14 @@ Future<void> registerCoreModule(GetIt getIt) async {
       getIt.registerSingleton<Isar>(databaseService.isar);
     }
   }
-  
+
   // 7. EnvironmentManager - Environment configuration
   if (!getIt.isRegistered<EnvironmentManager>()) {
     getIt.registerSingleton<EnvironmentManager>(
       EnvironmentManager(getIt<Logger>()),
     );
   }
-  
+
   // 8. FirebaseServiceManager - Firebase services
   if (!getIt.isRegistered<FirebaseServiceManager>()) {
     getIt.registerSingleton<FirebaseServiceManager>(

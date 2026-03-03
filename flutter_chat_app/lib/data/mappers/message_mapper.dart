@@ -31,13 +31,13 @@ class MessageMapper {
     // Parse content type
     final typeStr = dto.type.toLowerCase();
     final contentType = _parseContentType(typeStr);
-    
+
     // Convert timestamps
     final createdAt = DateTime.fromMillisecondsSinceEpoch(dto.createdAt);
     final updatedAt = dto.editAt != null
         ? DateTime.fromMillisecondsSinceEpoch(dto.editAt!)
         : createdAt;
-    
+
     // Create sender
     final sender = MessageSender(
       id: dto.senderId,
@@ -46,13 +46,14 @@ class MessageMapper {
           ? dto.sender!.imageUrls.first
           : null,
     );
-    
+
     // Parse attachments from URLs
+    final isVoiceNote = dto.type.toLowerCase() == 'voice_note';
     final attachments = dto.urls.map((url) {
       return MessageAttachment(
         id: _uuid.v4(),
         url: url,
-        type: _getAttachmentType(url),
+        type: isVoiceNote ? 'voice_note' : _getAttachmentType(url),
         name: dto.fileName ?? _getFileNameFromUrl(url),
         size: 0, // Not provided by backend
       );
@@ -86,7 +87,7 @@ class MessageMapper {
         );
       }
     }
-    
+
     // Convert nested reply message (if backend provides it)
     ChatMessage? replyMessage;
     if (dto.replyMessage != null) {
@@ -154,7 +155,8 @@ class MessageMapper {
       actorSender = MessageSender(
         id: dto.actor!.id,
         name: dto.actor!.fullName,
-        avatar: dto.actor!.imageUrls.isNotEmpty ? dto.actor!.imageUrls.first : null,
+        avatar:
+            dto.actor!.imageUrls.isNotEmpty ? dto.actor!.imageUrls.first : null,
       );
     } else if (dto.actorId != null) {
       actorSender = MessageSender(id: dto.actorId!, name: 'Unknown');
@@ -269,7 +271,7 @@ class MessageMapper {
   static MessageModel toModel(MessageDto dto) {
     // Generate local ID from server ID or create new
     final localId = dto.id.isNotEmpty ? dto.id : _uuid.v4();
-    
+
     // Parse type
     final typeStr = dto.type.toLowerCase();
     final MessageType type;
@@ -308,16 +310,16 @@ class MessageMapper {
         type = MessageType.text;
         break;
     }
-    
+
     // Convert timestamps
     final createdAt = DateTime.fromMillisecondsSinceEpoch(dto.createdAt);
     final updatedAt = dto.editAt != null
         ? DateTime.fromMillisecondsSinceEpoch(dto.editAt!)
         : null;
-    
+
     // Check if deleted
     final isDeleted = dto.deletedAt != null;
-    
+
     // Build metadata with backend-specific fields
     final metadata = jsonEncode({
       'urls': dto.urls,
@@ -336,6 +338,7 @@ class MessageMapper {
       'actorId': dto.actorId,
       'targetUsers': dto.targetUsers.map((u) => u.toJson()).toList(),
       'targetUserIds': dto.targetUserIds,
+      'rawType': typeStr,
     });
 
     final mentionToJson = dto.mentionTo
@@ -346,7 +349,7 @@ class MessageMapper {
           },
         )
         .toList();
-    
+
     return MessageModel(
       serverId: dto.id,
       localId: localId,
@@ -384,20 +387,22 @@ class MessageMapper {
   static MessageDto toDto(MessageModel model, {String? receiverId}) {
     // Parse metadata
     final metadataMap = model.metadataMap ?? {};
-    
+
     // Convert type to uppercase
     final type = model.type.name.toUpperCase();
-    
+
     // Convert timestamps
     final createdAt = model.createdAt.millisecondsSinceEpoch;
     final editAt = model.updatedAt?.millisecondsSinceEpoch;
-    final deletedAt = model.isDeleted ? DateTime.now().millisecondsSinceEpoch : null;
-    
+    final deletedAt =
+        model.isDeleted ? DateTime.now().millisecondsSinceEpoch : null;
+
     // Extract fields from metadata
     final urls = (metadataMap['urls'] as List?)?.cast<String>() ?? <String>[];
     final fileName = metadataMap['fileName'] as String?;
-    final forwardedFromMessageId = metadataMap['forwardedFromMessageId'] as String?;
-    
+    final forwardedFromMessageId =
+        metadataMap['forwardedFromMessageId'] as String?;
+
     // Parse forwarded message from metadata
     MessageDto? forwardedFromMessage;
     if (metadataMap['forwardedFromMessage'] != null) {
@@ -405,16 +410,17 @@ class MessageMapper {
         metadataMap['forwardedFromMessage'] as Map<String, dynamic>,
       );
     }
-    
+
     // Parse reactions from metadata
     final reactions = <ReactionDto>[];
     if (metadataMap['reactions'] != null) {
       final reactionsList = metadataMap['reactions'] as List;
       reactions.addAll(
-        reactionsList.map((r) => ReactionDto.fromJson(r as Map<String, dynamic>)),
+        reactionsList
+            .map((r) => ReactionDto.fromJson(r as Map<String, dynamic>)),
       );
     }
-    
+
     // Parse mentions from metadata
     final mentions = <MentionDto>[];
     if (metadataMap['mentionTo'] != null) {
@@ -423,7 +429,7 @@ class MessageMapper {
         mentionsList.map((m) => MentionDto.fromJson(m as Map<String, dynamic>)),
       );
     }
-    
+
     // Parse reply message from metadata
     ReplyMessageDto? replyMessage;
     if (metadataMap['replyMessage'] != null) {
@@ -431,7 +437,7 @@ class MessageMapper {
         metadataMap['replyMessage'] as Map<String, dynamic>,
       );
     }
-    
+
     // Parse sender from metadata
     SenderDto? sender;
     if (metadataMap['sender'] != null) {
@@ -439,7 +445,7 @@ class MessageMapper {
         metadataMap['sender'] as Map<String, dynamic>,
       );
     }
-    
+
     return MessageDto(
       id: model.serverId ?? model.localId,
       content: model.content, // Model uses content, DTO maps to 'message'
@@ -525,13 +531,15 @@ class MessageMapper {
           reactorNames[r.userId] = r.userName!;
         }
       }
-      metadataMap['reactions'] = reactionsByCode.entries.map((e) => {
-        'code': e.key,
-        'reactorIds': e.value,
-        'reactors': e.value
-            .map((id) => {'id': id, 'fullname': reactorNames[id] ?? id})
-            .toList(),
-      }).toList();
+      metadataMap['reactions'] = reactionsByCode.entries
+          .map((e) => {
+                'code': e.key,
+                'reactorIds': e.value,
+                'reactors': e.value
+                    .map((id) => {'id': id, 'fullname': reactorNames[id] ?? id})
+                    .toList(),
+              })
+          .toList();
     }
 
     // Reconstruct reply message metadata
@@ -543,8 +551,7 @@ class MessageMapper {
         'type': reply.contentType.name.toUpperCase(),
         'urls': reply.urls,
         'fileName': reply.fileName,
-        if (reply.sender.id.isNotEmpty)
-          'sender': reply.sender.toJson(),
+        if (reply.sender.id.isNotEmpty) 'sender': reply.sender.toJson(),
         'mentionTo': reply.mentionTo
             .map((m) => {'id': m.id, 'fullname': m.name})
             .toList(),
@@ -554,9 +561,7 @@ class MessageMapper {
     // Reconstruct mentionTo JSON
     final mentionToJson = entity.mentionTo.isNotEmpty
         ? jsonEncode(
-            entity.mentionTo
-                .map((m) => {'id': m.id, 'name': m.name})
-                .toList(),
+            entity.mentionTo.map((m) => {'id': m.id, 'name': m.name}).toList(),
           )
         : null;
 

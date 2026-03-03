@@ -207,6 +207,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     on<ClearMessages>(_onClearMessages);
     on<ToggleReaction>(_onToggleReaction);
     on<SendMessageWithAttachments>(_onSendMessageWithAttachments);
+    on<SendVoiceNote>(_onSendVoiceNote);
+    on<RetryVoiceNote>(_onRetryVoiceNote);
     on<SendLocationMessage>(_onSendLocationMessage);
 
     // Phase 2 + 3 event handlers
@@ -1907,6 +1909,280 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       logger.e('Error sending message with attachments',
           error: e, stackTrace: stackTrace);
       _markMessageAsFailed(emit, clientId);
+    }
+  }
+
+  Future<void> _onSendVoiceNote(
+    SendVoiceNote event,
+    Emitter<MessageState> emit,
+  ) async {
+    if (state is! MessagesLoaded) {
+      logger.w('Cannot send voice note - messages not loaded');
+      return;
+    }
+
+    final currentState = state as MessagesLoaded;
+    final file = File(event.filePath);
+    final fileExists = await file.exists();
+    if (!fileExists) {
+      logger.w('Voice note file not found: ${event.filePath}');
+      return;
+    }
+
+    final isRetry = event.retryDraftMessageId != null;
+    ChatMessage? retryDraft;
+    if (isRetry) {
+      final draftCandidates = currentState.messages
+          .where((m) => m.id == event.retryDraftMessageId)
+          .toList();
+      if (draftCandidates.isNotEmpty) {
+        retryDraft = draftCandidates.first;
+      }
+    }
+
+    const uuid = Uuid();
+    final clientId = retryDraft?.clientId ?? uuid.v4();
+    final draftId = retryDraft?.id ?? 'draft_$clientId';
+    final voiceNoteFileName =
+        event.fileName ?? retryDraft?.fileName ?? _buildVoiceNoteFileName();
+
+    ChatMessage? replyMessage;
+    if (event.replyMessageId != null && event.replyMessageId!.isNotEmpty) {
+      final replyCandidates = currentState.messages
+          .where((m) => m.id == event.replyMessageId)
+          .toList();
+      if (replyCandidates.isNotEmpty) {
+        replyMessage = replyCandidates.first;
+      }
+    }
+
+    int fileSize = 0;
+    try {
+      fileSize = await file.length();
+    } catch (_) {}
+
+    final voiceAttachment = MessageAttachment(
+      id: 'local_$clientId',
+      url: '',
+      type: 'voice_note',
+      size: fileSize,
+      name: voiceNoteFileName,
+      localPath: event.filePath,
+      uploadProgress: 0.0,
+    );
+
+    List<ChatMessage> updatedMessages;
+    if (retryDraft != null) {
+      final retryDraftId = retryDraft.id;
+      updatedMessages = currentState.messages.map((message) {
+        if (message.id != retryDraftId) return message;
+        return message.copyWith(
+          localStatus: MessageStatus.sending,
+          fileName: voiceNoteFileName,
+          attachments: [voiceAttachment],
+          urls: [event.filePath],
+        );
+      }).toList();
+    } else {
+      final optimisticMessage = ChatMessage(
+        id: draftId,
+        clientId: clientId,
+        chatId: currentState.chatId,
+        content: '',
+        contentType: ContentType.audio,
+        sender: MessageSender(
+          id: event.senderId,
+          name: '',
+          avatar: null,
+        ),
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        urls: [event.filePath],
+        fileName: voiceNoteFileName,
+        replyMessageId: event.replyMessageId,
+        replyMessage: replyMessage,
+        readBy: const <String>[],
+        deliveredTo: const <String>[],
+        attachments: [voiceAttachment],
+        reactions: const <MessageReaction>[],
+        mentionTo: const <MessageSender>[],
+        localStatus: MessageStatus.sending,
+      );
+
+      updatedMessages = <ChatMessage>[
+        optimisticMessage,
+        ...currentState.messages,
+      ];
+    }
+
+    emit(currentState.copyWith(
+      messages: updatedMessages,
+      uiMessages: _transformMessages(updatedMessages),
+    ));
+
+    try {
+      final uploadResult = await _attachmentRepository.uploadAttachment(
+        messageId: draftId,
+        chatId: currentState.chatId,
+        file: file,
+        fileName: voiceNoteFileName,
+        onProgress: (progress) {
+          _updateAttachmentProgress(
+            emit: emit,
+            clientId: clientId,
+            attachmentIndex: 0,
+            progress: progress,
+          );
+        },
+      );
+
+      final uploadedUrl = uploadResult.fold(
+        (failure) {
+          throw Exception(failure.message);
+        },
+        (result) => result.url,
+      );
+
+      final sendResult = await _sendMessage(
+        conversationId: currentState.chatId,
+        content: '',
+        senderId: event.senderId,
+        type: 'voice_note',
+        urls: [uploadedUrl],
+        replyMessageId: event.replyMessageId,
+        fileName: voiceNoteFileName,
+      );
+
+      await sendResult.fold(
+        (failure) async {
+          logger.e('Failed to send voice note message', error: failure);
+          _markMessageAsFailed(emit, clientId);
+        },
+        (serverMessage) async {
+          final normalizedMessage = _normalizeVoiceNoteMessage(
+            serverMessage,
+            fileName: voiceNoteFileName,
+            fallbackSize: fileSize,
+          );
+          _replaceDraftWithServerMessage(emit, clientId, normalizedMessage);
+          _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
+          _cacheSyncStrategy.markChatListDirty();
+          await _deleteLocalFile(event.filePath);
+        },
+      );
+    } catch (error, stackTrace) {
+      logger.e(
+        'Error sending voice note',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _markMessageAsFailed(emit, clientId);
+    }
+  }
+
+  Future<void> _onRetryVoiceNote(
+    RetryVoiceNote event,
+    Emitter<MessageState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! MessagesLoaded) return;
+
+    final failedCandidates = currentState.messages
+        .where((m) => m.id == event.draftMessageId)
+        .toList();
+    final failedMessage =
+        failedCandidates.isNotEmpty ? failedCandidates.first : null;
+
+    if (failedMessage == null || failedMessage.status != MessageStatus.failed) {
+      return;
+    }
+
+    var localPath = failedMessage.attachments
+        .map((attachment) => attachment.localPath)
+        .whereType<String>()
+        .firstWhere(
+          (path) => path.trim().isNotEmpty,
+          orElse: () => '',
+        )
+        .trim();
+    if (localPath.isEmpty && failedMessage.urls.isNotEmpty) {
+      localPath = failedMessage.urls.first;
+    }
+
+    if (localPath.isEmpty) {
+      logger.w(
+        'Retry voice note failed: no local path for draft ${event.draftMessageId}',
+      );
+      return;
+    }
+
+    add(
+      SendVoiceNote(
+        filePath: localPath,
+        senderId: failedMessage.sender.id.isNotEmpty
+            ? failedMessage.sender.id
+            : _currentUserId,
+        durationSeconds: 0,
+        replyMessageId: failedMessage.replyMessageId,
+        retryDraftMessageId: failedMessage.id,
+        fileName: failedMessage.fileName,
+      ),
+    );
+  }
+
+  ChatMessage _normalizeVoiceNoteMessage(
+    ChatMessage message, {
+    required String fileName,
+    required int fallbackSize,
+  }) {
+    final attachments = message.attachments.isNotEmpty
+        ? message.attachments
+        : message.urls
+            .map(
+              (url) => MessageAttachment(
+                id: '${message.id}_voice_note',
+                url: url,
+                type: 'voice_note',
+                size: fallbackSize,
+                name: fileName,
+              ),
+            )
+            .toList();
+
+    final normalizedAttachments = attachments
+        .map(
+          (attachment) => attachment.copyWith(
+            type: 'voice_note',
+            name: attachment.name.isNotEmpty ? attachment.name : fileName,
+            size: attachment.size > 0 ? attachment.size : fallbackSize,
+            uploadProgress: 1.0,
+          ),
+        )
+        .toList();
+
+    return message.copyWith(
+      contentType: ContentType.audio,
+      fileName: message.fileName ?? fileName,
+      attachments: normalizedAttachments,
+    );
+  }
+
+  String _buildVoiceNoteFileName() {
+    return 'voice_note_${DateTime.now().millisecondsSinceEpoch}.m4a';
+  }
+
+  Future<void> _deleteLocalFile(String path) async {
+    try {
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (error, stackTrace) {
+      logger.w(
+        'Failed to delete local voice note file $path',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 

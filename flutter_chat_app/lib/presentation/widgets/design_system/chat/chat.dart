@@ -41,6 +41,7 @@ export 'read_receipt_avatars.dart';
 export 'read_receipt_bottom_sheet.dart';
 export 'sticker_message.dart';
 export 'sticker_picker.dart';
+export 'voice_note_player.dart';
 
 // Enums
 export 'chat_enums.dart';

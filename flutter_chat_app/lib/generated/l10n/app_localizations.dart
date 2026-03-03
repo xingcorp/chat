@@ -1970,6 +1970,36 @@ abstract class AppLocalizations {
   /// **'Release to send'**
   String get releaseToSend;
 
+  /// Dialog title for microphone permission
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone permission required'**
+  String get microphonePermissionTitle;
+
+  /// Dialog body when microphone permission is denied
+  ///
+  /// In en, this message translates to:
+  /// **'Allow microphone access to record and send voice notes.'**
+  String get microphonePermissionMessage;
+
+  /// Dialog body when microphone permission is permanently denied
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone permission is permanently denied. Open settings to enable it.'**
+  String get microphonePermissionPermanentlyDeniedMessage;
+
+  /// Button label to open OS settings
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get openSettings;
+
+  /// Notification shown when voice recording reaches max duration
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum recording duration reached'**
+  String get recordingLimitReached;
+
   /// Accessibility label for message options menu
   ///
   /// In en, this message translates to:

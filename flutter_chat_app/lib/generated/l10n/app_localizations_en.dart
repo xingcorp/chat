@@ -1010,6 +1010,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get releaseToSend => 'Release to send';
 
   @override
+  String get microphonePermissionTitle => 'Microphone permission required';
+
+  @override
+  String get microphonePermissionMessage =>
+      'Allow microphone access to record and send voice notes.';
+
+  @override
+  String get microphonePermissionPermanentlyDeniedMessage =>
+      'Microphone permission is permanently denied. Open settings to enable it.';
+
+  @override
+  String get openSettings => 'Open Settings';
+
+  @override
+  String get recordingLimitReached => 'Maximum recording duration reached';
+
+  @override
   String get messageOptions => 'Message options';
 
   @override

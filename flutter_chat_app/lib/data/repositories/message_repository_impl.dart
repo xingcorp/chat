@@ -31,7 +31,8 @@ import 'package:uuid/uuid.dart';
 ///
 /// **Architecture:** Clean Architecture + SOLID principles + BaseRepository pattern
 @LazySingleton(as: IMessageRepository)
-class MessageRepositoryImpl extends BaseRepository implements IMessageRepository {
+class MessageRepositoryImpl extends BaseRepository
+    implements IMessageRepository {
   final MessageLocalDataSource _localDataSource;
   final IMessageRemoteDataSource _remoteDataSource;
   final AppCacheManager _cacheManager;
@@ -48,11 +49,11 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     required super.networkInfo,
     required super.logger,
     required super.performanceMonitor,
-  }) : _localDataSource = localDataSource,
-       _remoteDataSource = remoteDataSource,
-       _cacheManager = cacheManager,
-       _cacheSyncStrategy = cacheSyncStrategy,
-       _mediaCacheManager = mediaCacheManager;
+  })  : _localDataSource = localDataSource,
+        _remoteDataSource = remoteDataSource,
+        _cacheManager = cacheManager,
+        _cacheSyncStrategy = cacheSyncStrategy,
+        _mediaCacheManager = mediaCacheManager;
 
   /// **GET MESSAGE BY ID - OFFLINE-FIRST STRATEGY**
   ///
@@ -63,7 +64,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     return executeOfflineFirst<ChatMessage?>(
       remoteDataSource: () async {
         // Remote fallback not implemented for single message
-        throw ServerException(message: 'Remote single message fetch not supported');
+        throw ServerException(
+            message: 'Remote single message fetch not supported');
       },
       localDataSource: () async {
         // Check cache first
@@ -72,7 +74,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
           cacheKey,
           fromJson: MessageModel.fromMap,
         );
-        
+
         if (cachedMessage != null) {
           logger.d('Retrieved message from cache: $messageId');
           return cachedMessage.toDomain();
@@ -80,15 +82,15 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
 
         // Check local database
         final messages = await _localDataSource.getMessagesForChat('all');
-        
+
         final message = messages.firstWhere(
           (m) => m.localId == messageId || m.serverId == messageId,
           orElse: () => throw NotFoundException(message: 'Message not found'),
         );
-        
+
         // Cache for next time
         await _cacheManager.cacheApiResponse(cacheKey, message.toMap());
-        
+
         return message.toDomain();
       },
       operationName: 'getMessageById',
@@ -100,7 +102,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   /// **Performance**: <100ms for recent messages
   /// **Strategy**: Local immediate → Background sync
   @override
-  Future<Either<Failure, List<ChatMessage>>> getRecentMessages(String chatId, int limit) async {
+  Future<Either<Failure, List<ChatMessage>>> getRecentMessages(
+      String chatId, int limit) async {
     return getMessages(chatId, limit: limit);
   }
 
@@ -113,9 +116,11 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   ///   - Load-more (cursor != null): Offline-first (local/cache → background remote sync).
   ///     Historical messages are unlikely to change, so stale-while-revalidate is fine.
   @override
-  Future<Either<Failure, List<ChatMessage>>> getMessages(String chatId, {int limit = 20, String? cursor}) async {
+  Future<Either<Failure, List<ChatMessage>>> getMessages(String chatId,
+      {int limit = 20, String? cursor}) async {
     const cacheVersion = 'v2';
-    final cacheKey = 'chat_messages_${chatId}_${limit}_${cursor ?? "initial"}_$cacheVersion';
+    final cacheKey =
+        'chat_messages_${chatId}_${limit}_${cursor ?? "initial"}_$cacheVersion';
 
     // ── Initial load: remote-first ──────────────────────────────────────
     if (cursor == null) {
@@ -123,7 +128,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     }
 
     // ── Load-more: offline-first ────────────────────────────────────────
-    return _getMessagesOfflineFirst(chatId, limit: limit, cursor: cursor, cacheKey: cacheKey);
+    return _getMessagesOfflineFirst(chatId,
+        limit: limit, cursor: cursor, cacheKey: cacheKey);
   }
 
   /// Remote-first strategy for initial message load.
@@ -136,16 +142,19 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     // If online, try remote first
     if (await networkInfo.isConnected) {
       try {
-        final messages = await _fetchAndCacheFromRemote(chatId, limit: limit, cursor: null, cacheKey: cacheKey);
+        final messages = await _fetchAndCacheFromRemote(chatId,
+            limit: limit, cursor: null, cacheKey: cacheKey);
         return Right(messages);
       } catch (e) {
         // Remote failed — fall through to local fallback
-        logger.w('Remote fetch failed for initial load of chat $chatId, falling back to local: $e');
+        logger.w(
+            'Remote fetch failed for initial load of chat $chatId, falling back to local: $e');
       }
     }
 
     // Offline or remote failed — serve from local
-    return _getMessagesFromLocal(chatId, limit: limit, cursor: null, cacheKey: cacheKey);
+    return _getMessagesFromLocal(chatId,
+        limit: limit, cursor: null, cacheKey: cacheKey);
   }
 
   /// Offline-first strategy for load-more (pagination).
@@ -159,14 +168,17 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     final forceRefresh = _cacheSyncStrategy.shouldRefreshChatMessages(chatId);
 
     return executeOfflineFirst<List<ChatMessage>>(
-      remoteDataSource: () => _fetchAndCacheFromRemote(chatId, limit: limit, cursor: cursor, cacheKey: cacheKey),
+      remoteDataSource: () => _fetchAndCacheFromRemote(chatId,
+          limit: limit, cursor: cursor, cacheKey: cacheKey),
       localDataSource: () async {
         // Check cache first if not forcing refresh
         if (!forceRefresh) {
-          final cachedMessages = await _cacheManager.getApiResponse<List<MessageModel>>(
+          final cachedMessages =
+              await _cacheManager.getApiResponse<List<MessageModel>>(
             cacheKey,
             fromJsonList: (json) => json
-                .map((item) => MessageModel.fromMap(item as Map<String, dynamic>))
+                .map((item) =>
+                    MessageModel.fromMap(item as Map<String, dynamic>))
                 .toList(),
           );
 
@@ -178,12 +190,15 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
 
         // Get from local database
         final localMessages = await _localDataSource.getMessagesForChat(chatId);
-        final paginatedMessages = _applyPagination(localMessages, limit, cursor);
+        final paginatedMessages =
+            _applyPagination(localMessages, limit, cursor);
 
         // If local is empty but we're online, fetch synchronously
         if (paginatedMessages.isEmpty && await networkInfo.isConnected) {
-          logger.d('Local messages empty for load-more in chat $chatId; fetching from server');
-          return _fetchAndCacheFromRemote(chatId, limit: limit, cursor: cursor, cacheKey: cacheKey);
+          logger.d(
+              'Local messages empty for load-more in chat $chatId; fetching from server');
+          return _fetchAndCacheFromRemote(chatId,
+              limit: limit, cursor: cursor, cacheKey: cacheKey);
         }
 
         // Cache the result
@@ -243,7 +258,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   }) async {
     try {
       // Try cache
-      final cachedMessages = await _cacheManager.getApiResponse<List<MessageModel>>(
+      final cachedMessages =
+          await _cacheManager.getApiResponse<List<MessageModel>>(
         cacheKey,
         fromJsonList: (json) => json
             .map((item) => MessageModel.fromMap(item as Map<String, dynamic>))
@@ -261,7 +277,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
       return Right(paginatedMessages.map((model) => model.toDomain()).toList());
     } catch (e) {
       logger.e('Local fallback failed for chat $chatId: $e');
-      return Left(CacheFailure(message: 'Failed to load messages from local storage'));
+      return Left(
+          CacheFailure(message: 'Failed to load messages from local storage'));
     }
   }
 
@@ -283,7 +300,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     // Create local message with sending status
     final localId = _uuid.v4();
     final messageType = _parseMessageType(contentType);
-    
+
     final localMessage = MessageModel(
       localId: localId,
       chatId: chatId,
@@ -296,14 +313,15 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     );
 
     if (kDebugMode) {
-      logger.i('[sendMessage][local] localId=$localId chatId=$chatId senderId=$senderId '
+      logger.i(
+          '[sendMessage][local] localId=$localId chatId=$chatId senderId=$senderId '
           'type=${messageType.name} replyMessageId=$replyMessageId '
           'attachments=${attachmentIds.length} content="${content.replaceAll("\n", "\\n")}"');
     }
-    
+
     // Save to local storage immediately for instant UI feedback
     await _localDataSource.saveMessage(localMessage);
-    
+
     // Mark cache as dirty
     _cacheSyncStrategy.markChatMessagesDirty(chatId);
     _cacheSyncStrategy.markChatListDirty();
@@ -311,7 +329,10 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     return executeOnlineFirst<ChatMessage>(
       remoteDataSource: () async {
         // Send to server using DTO
-        final serverType = _toServerMessageType(messageType);
+        final serverType = _resolveServerMessageType(
+          contentType: contentType,
+          parsedType: messageType,
+        );
         if (kDebugMode) {
           logger.i('[sendMessage][remote] chatId=$chatId type=$serverType '
               'replyMessageId=$replyMessageId urls=${attachmentIds.length}');
@@ -326,27 +347,28 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
           forwardedFromMessageId: forwardedFromMessageId,
           createdAt: DateTime.now().millisecondsSinceEpoch,
         );
-        
+
         // Convert DTO to Model using mapper
         final sentMessage = MessageMapper.toModel(dto);
-        
+
         // Update local copy with server ID and success status
         final updatedMessage = sentMessage.copyWith(
           localId: localId, // Retain local ID for reference
           status: MessageStatus.sent,
         );
-        
+
         // Save updated message
         await _localDataSource.saveMessage(updatedMessage);
-        
+
         // Cache individual message
         await _cacheManager.cacheApiResponse(
           'message_${sentMessage.serverId}',
           updatedMessage.toMap(),
         );
-        
-        logger.i('Message sent successfully: $localId -> ${sentMessage.serverId}');
-        
+
+        logger.i(
+            'Message sent successfully: $localId -> ${sentMessage.serverId}');
+
         return updatedMessage.toDomain();
       },
       localDataSource: () async {
@@ -354,11 +376,11 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
         final pendingMessage = localMessage.copyWith(
           status: MessageStatus.pending,
         );
-        
+
         await _localDataSource.saveMessage(pendingMessage);
-        
+
         logger.i('Message queued for offline sending: $localId');
-        
+
         return pendingMessage.toDomain();
       },
       cacheData: (message) async {
@@ -401,7 +423,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
           conversationId: chatId,
           readCount: 1000000,
         );
-        
+
         // logger.i('Marked chat as read: $chatId');
       },
       localDataSource: () async {
@@ -490,7 +512,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   /// Server rejection (e.g., ChatMessageNotFound) should not silently succeed locally.
   /// **chatId**: Required for O(1) local cache deletion.
   @override
-  Future<Either<Failure, bool>> deleteMessage(String chatId, String messageId) async {
+  Future<Either<Failure, bool>> deleteMessage(
+      String chatId, String messageId) async {
     return executeRemoteOnly<bool>(
       remoteDataSource: () async {
         // Delete message on server (hard-delete: removes from database)
@@ -511,7 +534,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   ///
   /// **Performance**: <100ms for message edits
   @override
-  Future<Either<Failure, bool>> updateMessage(String messageId, String newContent) async {
+  Future<Either<Failure, bool>> updateMessage(
+      String messageId, String newContent) async {
     return executeOnlineFirst<bool>(
       remoteDataSource: () async {
         // Edit message on server
@@ -536,7 +560,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   ///
   /// **Performance**: <200ms for conflict resolution
   @override
-  Future<Either<Failure, bool>> checkMessageConflict(String localId, String serverId) async {
+  Future<Either<Failure, bool>> checkMessageConflict(
+      String localId, String serverId) async {
     return executeRemoteOnly<bool>(
       remoteDataSource: () async {
         // TODO: Implement conflict resolution logic
@@ -550,7 +575,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   ///
   /// **Performance**: Background process, non-blocking UI
   @override
-  Future<Either<Failure, void>> syncMessages(String chatId, {int limit = 50}) async {
+  Future<Either<Failure, void>> syncMessages(String chatId,
+      {int limit = 50}) async {
     return executeSyncStrategy(
       syncOperation: () async {
         if (!(await networkInfo.isConnected)) {
@@ -565,18 +591,21 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
             size: limit,
           );
           final dtos = response.messages;
-          
+
           // Convert DTOs to Models using mapper
           final remoteMessages = MessageMapper.toModelList(dtos);
 
           // Get local messages
-          final localMessages = await _localDataSource.getMessagesForChat(chatId);
+          final localMessages =
+              await _localDataSource.getMessagesForChat(chatId);
 
           // Find messages to add (in remote but not local)
           final localIds = localMessages.map((m) => m.serverId).toSet();
-          final messagesToAdd = remoteMessages.where(
-            (m) => m.serverId != null && !localIds.contains(m.serverId),
-          ).toList();
+          final messagesToAdd = remoteMessages
+              .where(
+                (m) => m.serverId != null && !localIds.contains(m.serverId),
+              )
+              .toList();
 
           // Save new messages
           if (messagesToAdd.isNotEmpty) {
@@ -584,9 +613,11 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
           }
 
           // Find pending messages that need to be sent
-          final pendingMessages = localMessages.where(
-            (m) => m.status == MessageStatus.pending,
-          ).toList();
+          final pendingMessages = localMessages
+              .where(
+                (m) => m.status == MessageStatus.pending,
+              )
+              .toList();
 
           // Try to send pending messages
           for (final pendingMessage in pendingMessages) {
@@ -597,30 +628,32 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
                 message: pendingMessage.content,
                 createdAt: pendingMessage.createdAt.millisecondsSinceEpoch,
               );
-              
+
               // Convert DTO to Model
               final sentMessage = MessageMapper.toModel(dto);
-              
+
               // Update local message with server ID
               final updatedMessage = sentMessage.copyWith(
                 localId: pendingMessage.localId,
                 status: MessageStatus.sent,
               );
-              
+
               await _localDataSource.saveMessage(updatedMessage);
-              
-              logger.i('Synced pending message: ${pendingMessage.localId} -> ${sentMessage.serverId}');
+
+              logger.i(
+                  'Synced pending message: ${pendingMessage.localId} -> ${sentMessage.serverId}');
             } catch (e) {
-              logger.e('Failed to sync pending message ${pendingMessage.localId}: $e');
+              logger.e(
+                  'Failed to sync pending message ${pendingMessage.localId}: $e');
             }
           }
-          
+
           // Mark cache as refreshed
           _cacheSyncStrategy.resetChatMessagesDirtyFlag(chatId);
-          
+
           // Invalidate message list cache to ensure fresh data
           await _cacheManager.invalidateCache('chat_messages_$chatId');
-          
+
           logger.i('Completed message sync for chat $chatId');
         } catch (e) {
           logger.e('Error syncing messages: $e');
@@ -643,6 +676,7 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
       case 'video':
         return MessageType.video;
       case 'audio':
+      case 'voice_note':
         return MessageType.audio;
       case 'file':
       case 'doc': // Handle DOC type from server/bloc
@@ -654,6 +688,16 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
       default:
         return MessageType.text;
     }
+  }
+
+  String _resolveServerMessageType({
+    required String contentType,
+    required MessageType parsedType,
+  }) {
+    if (contentType.toLowerCase() == 'voice_note') {
+      return 'VOICE_NOTE';
+    }
+    return _toServerMessageType(parsedType);
   }
 
   /// Convert MessageType enum to server API type string
@@ -680,31 +724,31 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
   }
 
   /// Apply pagination to message list
-  List<MessageModel> _applyPagination(List<MessageModel> messages, int limit, String? cursor) {
+  List<MessageModel> _applyPagination(
+      List<MessageModel> messages, int limit, String? cursor) {
     // Sort by timestamp descending
     messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    
+
     if (cursor != null) {
       // Cursor is a timestamp (millisecondsSinceEpoch) — find messages OLDER
       // than this timestamp for the next page.
       final cursorTs = int.tryParse(cursor);
       if (cursorTs != null) {
         final cursorDate = DateTime.fromMillisecondsSinceEpoch(cursorTs);
-        final olderMessages = messages
-            .where((m) => m.createdAt.isBefore(cursorDate))
-            .toList();
+        final olderMessages =
+            messages.where((m) => m.createdAt.isBefore(cursorDate)).toList();
         return olderMessages.take(limit).toList();
       }
 
       // Fallback: try matching by message ID
-      final cursorIndex = messages.indexWhere(
-          (m) => m.serverId == cursor || m.localId == cursor);
+      final cursorIndex = messages
+          .indexWhere((m) => m.serverId == cursor || m.localId == cursor);
       if (cursorIndex >= 0) {
         final startIndex = cursorIndex + 1;
         return messages.skip(startIndex).take(limit).toList();
       }
     }
-    
+
     return messages.take(limit).toList();
   }
 
@@ -722,19 +766,26 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     try {
       final localMessages = await _localDataSource.getMessagesForChat(chatId);
       if (localMessages.isEmpty) {
-        logger.i('[TwoPhase][Repo] getMessagesFromLocal chatId=$chatId: Isar returned 0 messages');
+        logger.i(
+            '[TwoPhase][Repo] getMessagesFromLocal chatId=$chatId: Isar returned 0 messages');
         return const Right([]);
       }
 
       // Sort descending and take limit
       final sorted = _applyPagination(localMessages, limit, null);
       final domainMessages = sorted.map((model) => model.toDomain()).toList();
-      final newestTs = domainMessages.isNotEmpty ? domainMessages.first.createdAt.toIso8601String() : 'N/A';
-      final oldestTs = domainMessages.isNotEmpty ? domainMessages.last.createdAt.toIso8601String() : 'N/A';
-      logger.i('[TwoPhase][Repo] getMessagesFromLocal chatId=$chatId: isarTotal=${localMessages.length} returned=${domainMessages.length} newest=$newestTs oldest=$oldestTs');
+      final newestTs = domainMessages.isNotEmpty
+          ? domainMessages.first.createdAt.toIso8601String()
+          : 'N/A';
+      final oldestTs = domainMessages.isNotEmpty
+          ? domainMessages.last.createdAt.toIso8601String()
+          : 'N/A';
+      logger.i(
+          '[TwoPhase][Repo] getMessagesFromLocal chatId=$chatId: isarTotal=${localMessages.length} returned=${domainMessages.length} newest=$newestTs oldest=$oldestTs');
       return Right(domainMessages);
     } catch (e) {
-      logger.w('[TwoPhase][Repo] getMessagesFromLocal FAILED for chat $chatId, returning empty: $e');
+      logger.w(
+          '[TwoPhase][Repo] getMessagesFromLocal FAILED for chat $chatId, returning empty: $e');
       return const Right([]);
     }
   }
@@ -753,7 +804,8 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
     int limit = 20,
   }) async {
     try {
-      logger.i('[TwoPhase][Repo] getMessagesDelta chatId=$chatId from=${DateTime.fromMillisecondsSinceEpoch(fromTimestamp).toIso8601String()} limit=$limit');
+      logger.i(
+          '[TwoPhase][Repo] getMessagesDelta chatId=$chatId from=${DateTime.fromMillisecondsSinceEpoch(fromTimestamp).toIso8601String()} limit=$limit');
 
       // Fetch delta from server using `from` parameter
       final response = await _remoteDataSource.getMessageList(
@@ -765,8 +817,11 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
       final serverModels = MessageMapper.toModelList(dtos);
       final serverMessages = serverModels.map((m) => m.toDomain()).toList();
 
-      final serverNewest = serverMessages.isNotEmpty ? serverMessages.first.createdAt.toIso8601String() : 'N/A';
-      logger.i('[TwoPhase][Repo] Delta server response: dtoCount=${dtos.length} domainCount=${serverMessages.length} newest=$serverNewest');
+      final serverNewest = serverMessages.isNotEmpty
+          ? serverMessages.first.createdAt.toIso8601String()
+          : 'N/A';
+      logger.i(
+          '[TwoPhase][Repo] Delta server response: dtoCount=${dtos.length} domainCount=${serverMessages.length} newest=$serverNewest');
 
       // Save delta messages to local cache (additive — saveMessages does upsert)
       if (serverModels.isNotEmpty) {
@@ -780,10 +835,12 @@ class MessageRepositoryImpl extends BaseRepository implements IMessageRepository
       // Return ONLY delta messages — BLoC layer will merge with local state
       return Right(serverMessages);
     } on ServerException catch (e) {
-      logger.e('[TwoPhase][Repo] Delta sync ServerException for chat $chatId: ${e.message}');
+      logger.e(
+          '[TwoPhase][Repo] Delta sync ServerException for chat $chatId: ${e.message}');
       return Left(ServerFailure(message: e.message));
     } catch (e) {
-      logger.e('[TwoPhase][Repo] Delta sync UNEXPECTED error for chat $chatId: $e');
+      logger.e(
+          '[TwoPhase][Repo] Delta sync UNEXPECTED error for chat $chatId: $e');
       return Left(UnexpectedFailure(message: 'Delta sync failed: $e'));
     }
   }

@@ -118,6 +118,47 @@ class SendMessageWithAttachments extends MessageEvent {
       ];
 }
 
+/// Sự kiện gửi voice note (ghi âm)
+class SendVoiceNote extends MessageEvent {
+  final String filePath;
+  final String senderId;
+  final int durationSeconds;
+  final String? replyMessageId;
+
+  /// Dùng khi retry để cập nhật lại draft message cũ
+  final String? retryDraftMessageId;
+  final String? fileName;
+
+  const SendVoiceNote({
+    required this.filePath,
+    required this.senderId,
+    required this.durationSeconds,
+    this.replyMessageId,
+    this.retryDraftMessageId,
+    this.fileName,
+  });
+
+  @override
+  List<Object?> get props => [
+        filePath,
+        senderId,
+        durationSeconds,
+        replyMessageId,
+        retryDraftMessageId,
+        fileName,
+      ];
+}
+
+/// Sự kiện retry gửi voice note thất bại
+class RetryVoiceNote extends MessageEvent {
+  final String draftMessageId;
+
+  const RetryVoiceNote({required this.draftMessageId});
+
+  @override
+  List<Object?> get props => [draftMessageId];
+}
+
 /// Sự kiện gửi vị trí
 class SendLocationMessage extends MessageEvent {
   final String senderId;

@@ -1012,6 +1012,23 @@ class AppLocalizationsVi extends AppLocalizations {
   String get releaseToSend => 'Thả để gửi';
 
   @override
+  String get microphonePermissionTitle => 'Cần quyền micro';
+
+  @override
+  String get microphonePermissionMessage =>
+      'Hãy cho phép micro để ghi và gửi tin nhắn thoại.';
+
+  @override
+  String get microphonePermissionPermanentlyDeniedMessage =>
+      'Quyền micro đã bị từ chối vĩnh viễn. Vui lòng mở Cài đặt để cấp lại quyền.';
+
+  @override
+  String get openSettings => 'Mở Cài đặt';
+
+  @override
+  String get recordingLimitReached => 'Đã đạt thời lượng ghi âm tối đa';
+
+  @override
   String get messageOptions => 'Tùy chọn tin nhắn';
 
   @override

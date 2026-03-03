@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -16,6 +17,7 @@ import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
+import 'package:flutter_chat_app/core/services/voice_recorder_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
@@ -56,6 +58,7 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/typography/a
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_panel.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 // Service locator instance
 final getIt = GetIt.instance;
@@ -139,6 +142,20 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   // ══════════════════════════════════════════
   bool _hasMarkedAsReadOnOpen = false;
 
+  // ══════════════════════════════════════════
+  // Voice recording state
+  // ══════════════════════════════════════════
+  late final VoiceRecorderService _voiceRecorderService;
+  StreamSubscription<double>? _recordingAmplitudeSubscription;
+  StreamSubscription<String>? _recordingLimitReachedSubscription;
+  Timer? _recordingTimer;
+  DateTime? _recordingStartedAt;
+  bool _isRecordingVoice = false;
+  bool _isSlidingToCancel = false;
+  double _recordingAmplitude = 0.0;
+  Duration _recordingDuration = Duration.zero;
+  double? _recordingDragStartDx;
+
   @override
   void initState() {
     super.initState();
@@ -147,7 +164,20 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     // ensuring clean state and correct bloc scope.
     _messageBloc = getIt<MessageBloc>();
     _convDetailBloc = getIt<ConversationDetailBloc>();
+    _voiceRecorderService = getIt<VoiceRecorderService>();
     _messageBloc.add(const FetchFrequentReactions());
+
+    _recordingAmplitudeSubscription =
+        _voiceRecorderService.amplitudeStream.listen((amplitude) {
+      if (!mounted) return;
+      safeSetState(() {
+        _recordingAmplitude = amplitude.clamp(0.0, 1.0);
+      });
+    });
+    _recordingLimitReachedSubscription =
+        _voiceRecorderService.recordingLimitReachedStream.listen((filePath) {
+      _handleVoiceRecordingLimitReached(filePath);
+    });
 
     _itemPositionsListener.itemPositions.addListener(_onPositionsChanged);
 
@@ -302,6 +332,12 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _convDetailBloc.close();
     _typingSubscription?.cancel();
     _typingDebounceTimer?.cancel();
+    _recordingAmplitudeSubscription?.cancel();
+    _recordingLimitReachedSubscription?.cancel();
+    _recordingTimer?.cancel();
+    if (_isRecordingVoice) {
+      unawaited(_voiceRecorderService.cancelRecording());
+    }
     super.dispose();
   }
 
@@ -531,6 +567,169 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       _showScrollToBottom = false;
       _newMessageCount = 0;
     });
+  }
+
+  Future<void> _onVoiceRecordingLongPressStart(
+    LongPressStartDetails details,
+  ) async {
+    if (_isRecordingVoice) return;
+
+    final permissionResult = await _voiceRecorderService.ensurePermission();
+    if (!mounted) return;
+
+    if (permissionResult != VoiceRecorderPermissionResult.granted) {
+      await _showMicrophonePermissionDialog(
+        isPermanentlyDenied:
+            permissionResult == VoiceRecorderPermissionResult.permanentlyDenied,
+      );
+      return;
+    }
+
+    final started = await _voiceRecorderService.startRecording();
+    if (!mounted) return;
+
+    if (!started) {
+      AppSnackBar.show(
+        context: context,
+        message: context.l10n.errorOccurred,
+        type: FeedbackType.error,
+      );
+      return;
+    }
+
+    _recordingTimer?.cancel();
+    safeSetState(() {
+      _isRecordingVoice = true;
+      _isSlidingToCancel = false;
+      _recordingStartedAt = DateTime.now();
+      _recordingDuration = Duration.zero;
+      _recordingAmplitude = 0.0;
+      _recordingDragStartDx = details.globalPosition.dx;
+    });
+
+    _recordingTimer = Timer.periodic(
+      const Duration(milliseconds: 200),
+      (_) {
+        final startedAt = _recordingStartedAt;
+        if (startedAt == null || !mounted) return;
+        safeSetState(() {
+          _recordingDuration = DateTime.now().difference(startedAt);
+        });
+      },
+    );
+  }
+
+  void _onVoiceRecordingLongPressMoveUpdate(
+    LongPressMoveUpdateDetails details,
+  ) {
+    if (!_isRecordingVoice || _recordingDragStartDx == null) return;
+    final dragDistance = _recordingDragStartDx! - details.globalPosition.dx;
+    final shouldCancel = dragDistance > AppDimens.spaceXLarge;
+    if (shouldCancel == _isSlidingToCancel) return;
+    safeSetState(() {
+      _isSlidingToCancel = shouldCancel;
+    });
+  }
+
+  Future<void> _onVoiceRecordingLongPressEnd(
+    LongPressEndDetails details,
+  ) async {
+    if (!_isRecordingVoice) return;
+    await _finishVoiceRecording(cancelled: _isSlidingToCancel);
+  }
+
+  Future<void> _finishVoiceRecording({
+    required bool cancelled,
+  }) async {
+    final secondsToSend = _resolveRecordingSeconds();
+    String? filePath;
+
+    if (cancelled) {
+      await _voiceRecorderService.cancelRecording();
+    } else {
+      filePath = await _voiceRecorderService.stopRecording();
+    }
+
+    _resetRecordingUiState();
+
+    if (cancelled || filePath == null || filePath.trim().isEmpty) {
+      return;
+    }
+
+    _messageBloc.add(
+      SendVoiceNote(
+        filePath: filePath,
+        senderId: _currentUserId,
+        durationSeconds: secondsToSend,
+        replyMessageId: _replyingToMessage?.id,
+      ),
+    );
+    _cancelReply();
+  }
+
+  void _handleVoiceRecordingLimitReached(String filePath) {
+    if (!_isRecordingVoice || !mounted) return;
+
+    final secondsToSend = _resolveRecordingSeconds(fallback: 300);
+    _resetRecordingUiState();
+    _messageBloc.add(
+      SendVoiceNote(
+        filePath: filePath,
+        senderId: _currentUserId,
+        durationSeconds: secondsToSend,
+        replyMessageId: _replyingToMessage?.id,
+      ),
+    );
+    _cancelReply();
+    AppSnackBar.show(
+      context: context,
+      message: context.l10n.recordingLimitReached,
+      type: FeedbackType.info,
+    );
+  }
+
+  int _resolveRecordingSeconds({int fallback = 1}) {
+    final seconds = _recordingDuration.inSeconds;
+    if (seconds <= 0) return fallback;
+    if (seconds > 300) return 300;
+    return seconds;
+  }
+
+  void _resetRecordingUiState() {
+    _recordingTimer?.cancel();
+    safeSetState(() {
+      _isRecordingVoice = false;
+      _isSlidingToCancel = false;
+      _recordingStartedAt = null;
+      _recordingDuration = Duration.zero;
+      _recordingAmplitude = 0.0;
+      _recordingDragStartDx = null;
+    });
+  }
+
+  Future<void> _showMicrophonePermissionDialog({
+    required bool isPermanentlyDenied,
+  }) async {
+    await AppAlertDialog.show<void>(
+      context: context,
+      title: context.l10n.microphonePermissionTitle,
+      content: isPermanentlyDenied
+          ? context.l10n.microphonePermissionPermanentlyDeniedMessage
+          : context.l10n.microphonePermissionMessage,
+      actions: [
+        AppButton.text(
+          text: context.l10n.cancel,
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+        ),
+        AppButton.primary(
+          text: context.l10n.openSettings,
+          onPressed: () async {
+            Navigator.of(context, rootNavigator: true).pop();
+            await openAppSettings();
+          },
+        ),
+      ],
+    );
   }
 
   void _showChatInfo() {
@@ -1297,6 +1496,12 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   Widget _buildMessageInputArea() {
+    if (_isRecordingVoice) {
+      return _buildVoiceRecordingInputArea();
+    }
+
+    final canSendText = _messageController.text.trim().isNotEmpty;
+
     return AppCard.outlined(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(AppDimens.paddingSmall),
@@ -1332,19 +1537,135 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
             onPressed: _showStickerPicker,
             tooltip: context.l10n.stickers,
           ),
-          IconButton(
-            icon: Icon(
-              _isEditMode ? Icons.check : Icons.send,
-              color: Theme.of(context).colorScheme.primary,
+          if (canSendText)
+            AppIconButton(
+              icon: _isEditMode ? Icons.check : Icons.send,
+              onPressed: _sendMessage,
+              tooltip: _isEditMode ? context.l10n.save : context.l10n.send,
+            )
+          else if (_isEditMode)
+            AppIconButton(
+              icon: Icons.check,
+              onPressed: null,
+              tooltip: context.l10n.save,
+            )
+          else
+            GestureDetector(
+              onLongPressStart: _onVoiceRecordingLongPressStart,
+              onLongPressMoveUpdate: _onVoiceRecordingLongPressMoveUpdate,
+              onLongPressEnd: _onVoiceRecordingLongPressEnd,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: AppDimens.iconButtonSize,
+                height: AppDimens.iconButtonSize,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.mic_rounded,
+                  color: AppColors.textButton,
+                  size: AppDimens.iconMedium,
+                ),
+              ),
             ),
-            iconSize: 28.0,
-            onPressed:
-                _messageController.text.trim().isNotEmpty ? _sendMessage : null,
-            tooltip: _isEditMode ? context.l10n.save : context.l10n.send,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVoiceRecordingInputArea() {
+    final isCancelling = _isSlidingToCancel;
+    final hintText = isCancelling
+        ? context.l10n.cancelRecording
+        : context.l10n.slideToCancel;
+    final statusColor = isCancelling ? AppColors.error : AppColors.primary;
+
+    return AppCard.outlined(
+      margin: EdgeInsets.zero,
+      padding: const EdgeInsets.all(AppDimens.paddingSmall),
+      child: Row(
+        children: [
+          Icon(
+            isCancelling ? Icons.delete_outline_rounded : Icons.mic_rounded,
+            color: statusColor,
+            size: AppDimens.iconMedium,
+          ),
+          const SizedBox(width: AppDimens.spaceSmall),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppText(
+                  '${context.l10n.recording} ${_formatVoiceRecordingDuration()}',
+                  style: AppTextStyles.bodySmall.copyWith(color: statusColor),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppDimens.spaceXSmall),
+                _buildRecordingAmplitudeBars(statusColor),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppDimens.spaceSmall),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 88),
+            child: AppText(
+              isCancelling
+                  ? context.l10n.cancelRecording
+                  : context.l10n.releaseToSend,
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              semanticsLabel: hintText,
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildRecordingAmplitudeBars(Color color) {
+    final normalizedAmplitude = _recordingAmplitude.clamp(0.0, 1.0);
+
+    return SizedBox(
+      height: AppDimens.spaceLarge,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: List<Widget>.generate(16, (index) {
+          final baseCurve = (sin((index / 16) * pi) + 1) / 2;
+          final effectiveLevel =
+              (0.2 + (normalizedAmplitude * baseCurve)).clamp(0.15, 1.0);
+          final barHeight =
+              AppDimens.spaceXSmall + (AppDimens.spaceMedium * effectiveLevel);
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 1.5),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              width: 3,
+              height: barHeight,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  String _formatVoiceRecordingDuration() {
+    final totalSeconds =
+        _recordingDuration.inSeconds > 300 ? 300 : _recordingDuration.inSeconds;
+    final minutes = (totalSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 
   PreferredSizeWidget _buildNormalAppBar(String chatTitle) {

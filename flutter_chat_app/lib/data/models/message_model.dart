@@ -10,25 +10,25 @@ part 'message_model.g.dart';
 enum MessageType {
   /// Plain text message
   text,
-  
+
   /// Image message
   image,
-  
+
   /// Video message
   video,
-  
+
   /// Audio message
   audio,
-  
+
   /// File message
   file,
-  
+
   /// Location message
   location,
-  
+
   /// Contact message
   contact,
-  
+
   /// System message
   system,
 
@@ -257,7 +257,8 @@ class MessageModel {
       deletedAt: deletedAt ?? this.deletedAt,
       urls: urls ?? this.urls,
       fileName: fileName ?? this.fileName,
-      forwardedFromMessageId: forwardedFromMessageId ?? this.forwardedFromMessageId,
+      forwardedFromMessageId:
+          forwardedFromMessageId ?? this.forwardedFromMessageId,
       mentionToJson: mentionToJson ?? this.mentionToJson,
       replyToMessageId: replyToMessageId ?? this.replyToMessageId,
       metadata: metadata ?? this.metadata,
@@ -292,10 +293,10 @@ class MessageModel {
   /// Mark the message as read by a user
   MessageModel markReadBy(String userId) {
     if (readBy.contains(userId)) return this;
-    
+
     final newReadBy = List<String>.from(readBy);
     newReadBy.add(userId);
-    
+
     return copyWith(
       readBy: newReadBy,
       status: MessageStatus.read,
@@ -322,7 +323,7 @@ class MessageModel {
   static MessageModel createTextMessage({
     required int id,
     required String localId,
-    required String chatId, 
+    required String chatId,
     required String senderId,
     required String content,
     String? replyToMessageId,
@@ -344,15 +345,14 @@ class MessageModel {
   static MessageModel createImageMessage({
     required int id,
     required String localId,
-    required String chatId, 
+    required String chatId,
     required String senderId,
     required String imagePath,
     Map<String, dynamic>? imageMetadata,
     String? caption,
   }) {
-    final metadata = imageMetadata != null ? 
-      jsonEncode(imageMetadata) : null;
-    
+    final metadata = imageMetadata != null ? jsonEncode(imageMetadata) : null;
+
     return MessageModel(
       id: id,
       localId: localId,
@@ -370,7 +370,7 @@ class MessageModel {
   static MessageModel createFileMessage({
     required int id,
     required String localId,
-    required String chatId, 
+    required String chatId,
     required String senderId,
     required String filePath,
     required String fileName,
@@ -383,7 +383,7 @@ class MessageModel {
       'size': fileSize,
       'mimeType': mimeType,
     };
-    
+
     return MessageModel(
       id: id,
       localId: localId,
@@ -401,7 +401,7 @@ class MessageModel {
   static MessageModel createVideoMessage({
     required int id,
     required String localId,
-    required String chatId, 
+    required String chatId,
     required String senderId,
     required String videoPath,
     required String thumbnailPath,
@@ -413,7 +413,7 @@ class MessageModel {
       'thumbnail': thumbnailPath,
       'duration': duration,
     };
-    
+
     return MessageModel(
       id: id,
       localId: localId,
@@ -431,7 +431,7 @@ class MessageModel {
   static MessageModel createAudioMessage({
     required int id,
     required String localId,
-    required String chatId, 
+    required String chatId,
     required String senderId,
     required String audioPath,
     required int duration,
@@ -440,7 +440,7 @@ class MessageModel {
       'path': audioPath,
       'duration': duration,
     };
-    
+
     return MessageModel(
       id: id,
       localId: localId,
@@ -458,7 +458,7 @@ class MessageModel {
   static MessageModel createLocationMessage({
     required int id,
     required String localId,
-    required String chatId, 
+    required String chatId,
     required String senderId,
     required double latitude,
     required double longitude,
@@ -469,7 +469,7 @@ class MessageModel {
       'longitude': longitude,
       'address': address,
     };
-    
+
     return MessageModel(
       id: id,
       localId: localId,
@@ -487,7 +487,7 @@ class MessageModel {
   static MessageModel createSystemMessage({
     required int id,
     required String localId,
-    required String chatId, 
+    required String chatId,
     required String content,
   }) {
     return MessageModel(
@@ -514,22 +514,21 @@ class MessageModel {
   }
 
   /// Check if the message is a multimedia message
-  bool get isMultimedia => 
-    type == MessageType.image || 
-    type == MessageType.video || 
-    type == MessageType.audio || 
-    type == MessageType.file;
+  bool get isMultimedia =>
+      type == MessageType.image ||
+      type == MessageType.video ||
+      type == MessageType.audio ||
+      type == MessageType.file;
 
   /// Check if the message is a media that can be displayed inline
-  bool get isDisplayableMedia => 
-    type == MessageType.image || 
-    type == MessageType.video;
+  bool get isDisplayableMedia =>
+      type == MessageType.image || type == MessageType.video;
 
   /// Check if the message is editable
-  bool get isEditable => 
-    !isDeleted && 
-    type == MessageType.text && 
-    DateTime.now().difference(createdAt).inDays < 2; // Editable for 2 days
+  bool get isEditable =>
+      !isDeleted &&
+      type == MessageType.text &&
+      DateTime.now().difference(createdAt).inDays < 2; // Editable for 2 days
 
   /// Get the duration for audio or video messages
   int? get mediaDuration {
@@ -585,6 +584,7 @@ class MessageModel {
         }
       } catch (_) {}
     }
+    final rawType = (metadataMap['rawType'] as String?)?.toLowerCase();
 
     final reactions = <MessageReaction>[];
     final reactionsMeta = metadataMap['reactions'];
@@ -630,7 +630,9 @@ class MessageModel {
     String? senderAvatar;
     final senderMeta = metadataMap['sender'];
     if (senderMeta is Map<String, dynamic>) {
-      final fullName = senderMeta['fullname'] ?? senderMeta['fullName'] ?? senderMeta['name'];
+      final fullName = senderMeta['fullname'] ??
+          senderMeta['fullName'] ??
+          senderMeta['name'];
       if (fullName is String && fullName.trim().isNotEmpty) {
         senderName = fullName.trim();
       }
@@ -684,8 +686,11 @@ class MessageModel {
     final actorMeta = metadataMap['actor'];
     if (actorMeta is Map<String, dynamic>) {
       final id = (actorMeta['id'] as String?) ?? '';
-      final fullName = actorMeta['fullname'] ?? actorMeta['fullName'] ?? actorMeta['name'];
-      final name = (fullName is String && fullName.trim().isNotEmpty) ? fullName.trim() : id;
+      final fullName =
+          actorMeta['fullname'] ?? actorMeta['fullName'] ?? actorMeta['name'];
+      final name = (fullName is String && fullName.trim().isNotEmpty)
+          ? fullName.trim()
+          : id;
 
       String? avatar;
       final imageUrls = actorMeta['imageUrls'];
@@ -713,7 +718,9 @@ class MessageModel {
         if (u is! Map<String, dynamic>) continue;
         final id = (u['id'] as String?) ?? '';
         final fullName = u['fullname'] ?? u['fullName'] ?? u['name'];
-        final name = (fullName is String && fullName.trim().isNotEmpty) ? fullName.trim() : id;
+        final name = (fullName is String && fullName.trim().isNotEmpty)
+            ? fullName.trim()
+            : id;
 
         String? avatar;
         final imageUrls = u['imageUrls'];
@@ -749,9 +756,8 @@ class MessageModel {
     // Create MessageSender from senderId (prefer metadata sender for name/avatar)
     final sender = MessageSender(
       id: senderId,
-      name: (senderName != null && senderName.isNotEmpty)
-          ? senderName
-          : senderId,
+      name:
+          (senderName != null && senderName.isNotEmpty) ? senderName : senderId,
       avatar: senderAvatar,
     );
 
@@ -770,7 +776,9 @@ class MessageModel {
       final url = urls.isNotEmpty ? urls.first : (mediaPath ?? '');
       attachments.add(MessageAttachment(
         id: '$localId-attachment',
-        type: _getAttachmentTypeString(type),
+        type: rawType == 'voice_note'
+            ? 'voice_note'
+            : _getAttachmentTypeString(type),
         url: url,
         name: fileName ?? 'attachment',
         size: fileSize ?? 0,
@@ -789,9 +797,10 @@ class MessageModel {
         final replyFullName = replySenderMeta['fullname'] ??
             replySenderMeta['fullName'] ??
             replySenderMeta['name'];
-        final replyName = (replyFullName is String && replyFullName.trim().isNotEmpty)
-            ? replyFullName.trim()
-            : 'Unknown';
+        final replyName =
+            (replyFullName is String && replyFullName.trim().isNotEmpty)
+                ? replyFullName.trim()
+                : 'Unknown';
 
         String? replyAvatar;
         final replyImageUrls = replySenderMeta['imageUrls'];
@@ -811,7 +820,8 @@ class MessageModel {
       }
 
       // Extract reply content
-      final replyContent = (replyMeta['message'] ?? replyMeta['content']) as String?;
+      final replyContent =
+          (replyMeta['message'] ?? replyMeta['content']) as String?;
 
       // Extract reply type/urls/fileName if backend provides (optional)
       final replyTypeStr = (replyMeta['type'] as String?)?.toLowerCase();
@@ -846,7 +856,8 @@ class MessageModel {
           break;
       }
 
-      final replyUrls = (replyMeta['urls'] as List?)?.cast<String>() ?? const <String>[];
+      final replyUrls =
+          (replyMeta['urls'] as List?)?.cast<String>() ?? const <String>[];
       final replyFileName = replyMeta['fileName'] as String?;
 
       final replyMentions = <MessageSender>[];
@@ -855,7 +866,8 @@ class MessageModel {
         for (final m in mentionToMeta) {
           if (m is Map<String, dynamic>) {
             final id = (m['id'] as String?) ?? '';
-            final fullName = (m['fullname'] ?? m['fullName'] ?? m['name']) as String?;
+            final fullName =
+                (m['fullname'] ?? m['fullName'] ?? m['name']) as String?;
             final name = (fullName != null && fullName.trim().isNotEmpty)
                 ? fullName.trim()
                 : id;
@@ -867,14 +879,17 @@ class MessageModel {
       }
 
       final replyId = (replyMeta['id'] as String?) ?? '';
-      final hasRenderableReply =
-          (replyContent?.trim().isNotEmpty ?? false) || replyUrls.isNotEmpty || (replyFileName?.trim().isNotEmpty ?? false);
+      final hasRenderableReply = (replyContent?.trim().isNotEmpty ?? false) ||
+          replyUrls.isNotEmpty ||
+          (replyFileName?.trim().isNotEmpty ?? false);
 
       if (replyId.isNotEmpty && hasRenderableReply) {
         replyMessage = ChatMessage(
           id: replyId,
           chatId: chatId,
-          content: (replyContent?.trim().isNotEmpty ?? false) ? replyContent!.trim() : '',
+          content: (replyContent?.trim().isNotEmpty ?? false)
+              ? replyContent!.trim()
+              : '',
           contentType: replyContentType,
           sender: replySender,
           createdAt: createdAt,
@@ -908,9 +923,10 @@ class MessageModel {
       oldValue: oldValue,
       mentionTo: mentionedUsers,
       readBy: readBy,
-      deliveredTo: status == MessageStatus.delivered || status == MessageStatus.read
-          ? [senderId]
-          : [],
+      deliveredTo:
+          status == MessageStatus.delivered || status == MessageStatus.read
+              ? [senderId]
+              : [],
       attachments: attachments,
       reactions: reactions,
     );
