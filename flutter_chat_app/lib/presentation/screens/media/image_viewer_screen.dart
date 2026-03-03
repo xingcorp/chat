@@ -13,6 +13,7 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_gallery.dart'
     show EditedImageResult;
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -225,6 +226,16 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
 
   /// Tạo AppBar với animation và design system components
   PreferredSizeWidget _buildAppBar(ThemeData theme) {
+    final topButtonStyle = IconButton.styleFrom(
+      foregroundColor: Colors.white,
+      backgroundColor: Colors.black.withValues(alpha: 0.45),
+      minimumSize: const Size(40, 40),
+      padding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+    );
+
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
       child: AnimatedBuilder(
@@ -242,7 +253,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                 ),
               ),
               child: AppBar(
-                backgroundColor: Colors.black.withValues(alpha: 0.4),
+                backgroundColor: Colors.black.withValues(alpha: 0.65),
                 elevation: 0,
                 foregroundColor: Colors.white,
                 iconTheme: const IconThemeData(color: Colors.white),
@@ -251,6 +262,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => Navigator.of(context).pop(),
                   tooltip: context.l10n.backOnline,
+                  style: topButtonStyle,
                 ),
                 title: Text(
                   widget.title ?? context.l10n.imageMessage,
@@ -261,19 +273,31 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                     icon: const Icon(Icons.edit, color: Colors.white),
                     onPressed: _handleEdit,
                     tooltip: context.l10n.edit,
+                    style: topButtonStyle,
                   ),
                   IconButton(
                     icon: const Icon(Icons.share, color: Colors.white),
                     onPressed: _handleShare,
                     tooltip: context.l10n.share,
+                    style: topButtonStyle,
                   ),
                   IconButton(
                     icon: const Icon(Icons.download, color: Colors.white),
                     onPressed: _handleDownload,
                     tooltip: context.l10n.download,
+                    style: topButtonStyle,
                   ),
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, color: Colors.white),
+                    padding: EdgeInsets.zero,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: const Icon(Icons.more_vert, color: Colors.white),
+                    ),
                     onSelected: _handleMenuOption,
                     itemBuilder: (context) => [
                       PopupMenuItem(
@@ -313,7 +337,10 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
   /// Build bottom overlay with forward button and reaction bar
   Widget _buildBottomOverlay(BuildContext context, ThemeData theme) {
     final message = widget.message!;
-    final groupedReactions = _groupReactions(message.reactions);
+    final groupedReactions = _groupReactions(
+      message.reactions,
+      unknownUserLabel: context.l10n.unknownUser,
+    );
 
     return Positioned(
       left: 0,
@@ -433,24 +460,95 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
   }
 
   /// Group reactions by emoji code
-  List<ReactionGroup> _groupReactions(List<domain.MessageReaction> reactions) {
-    final Map<String, ReactionGroup> groups = {};
+  List<ReactionGroup> _groupReactions(
+    List<domain.MessageReaction> reactions, {
+    required String unknownUserLabel,
+  }) {
+    if (reactions.isEmpty) return const [];
+
+    final currentUserInfo = _resolveCurrentUserInfo();
+    final currentUserId = currentUserInfo.$1;
+    final currentUserName = currentUserInfo.$2;
+    final messageSender = widget.message?.sender;
+    final messageSenderId = messageSender?.id.trim() ?? '';
+    final messageSenderName = messageSender?.name.trim() ?? '';
+    final groupedByCode = <String, List<String>>{};
+    final nameByIdByCode = <String, Map<String, String>>{};
 
     for (final reaction in reactions) {
-      if (!groups.containsKey(reaction.code)) {
-        groups[reaction.code] = ReactionGroup(
-          code: reaction.code,
-          reactorIds: [],
-          reactorNameById: {},
-          reactorAvatarById: {},
-        );
+      final userId = reaction.userId.trim();
+      if (userId.isEmpty) {
+        continue;
       }
-      groups[reaction.code]!.reactorIds.add(reaction.userId);
-      groups[reaction.code]!.reactorNameById[reaction.userId] =
-          reaction.userName ?? reaction.userId;
+
+      groupedByCode.putIfAbsent(reaction.code, () => []).add(userId);
+      nameByIdByCode.putIfAbsent(reaction.code, () => {})[userId] =
+          _resolveReactorDisplayName(
+        userId: userId,
+        reactionName: reaction.userName,
+        messageSenderId: messageSenderId,
+        messageSenderName: messageSenderName,
+        currentUserId: currentUserId,
+        currentUserName: currentUserName,
+        unknownUserLabel: unknownUserLabel,
+      );
     }
 
-    return groups.values.toList();
+    return groupedByCode.entries.map((entry) {
+      return ReactionGroup(
+        code: entry.key,
+        reactorIds: entry.value,
+        reactorNameById: nameByIdByCode[entry.key] ?? const {},
+        reactorAvatarById: const {},
+        isReactedByCurrentUser:
+            currentUserId.isNotEmpty && entry.value.contains(currentUserId),
+      );
+    }).toList()
+      ..sort((a, b) {
+        if (a.isReactedByCurrentUser && !b.isReactedByCurrentUser) return -1;
+        if (!a.isReactedByCurrentUser && b.isReactedByCurrentUser) return 1;
+        return b.count.compareTo(a.count);
+      });
+  }
+
+  (String, String?) _resolveCurrentUserInfo() {
+    try {
+      final provider = GetIt.I<CurrentUserProvider>();
+      return (
+        provider.currentUserId.trim(),
+        provider.currentUser?.fullName?.trim(),
+      );
+    } catch (_) {
+      return ('', null);
+    }
+  }
+
+  String _resolveReactorDisplayName({
+    required String userId,
+    String? reactionName,
+    required String messageSenderId,
+    required String messageSenderName,
+    required String currentUserId,
+    String? currentUserName,
+    required String unknownUserLabel,
+  }) {
+    final normalizedReactionName = reactionName?.trim();
+    final normalizedCurrentUserName = currentUserName?.trim();
+
+    if (normalizedReactionName != null &&
+        normalizedReactionName.isNotEmpty &&
+        normalizedReactionName != userId) {
+      return normalizedReactionName;
+    }
+    if (userId == currentUserId &&
+        normalizedCurrentUserName != null &&
+        normalizedCurrentUserName.isNotEmpty) {
+      return normalizedCurrentUserName;
+    }
+    if (userId == messageSenderId && messageSenderName.isNotEmpty) {
+      return messageSenderName;
+    }
+    return unknownUserLabel;
   }
 
   /// Show reaction picker bottom sheet

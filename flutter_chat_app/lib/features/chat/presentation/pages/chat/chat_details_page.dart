@@ -13,6 +13,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -942,6 +943,65 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   // UI Building
   // ══════════════════════════════════════════
 
+  String _buildReplyInputPreviewText(
+    ChatMessage message,
+    BuildContext context,
+  ) {
+    final l10n = context.l10n;
+    switch (message.contentType) {
+      case ContentType.image:
+        return l10n.replyPreviewImage;
+      case ContentType.video:
+        return l10n.replyPreviewVideo;
+      case ContentType.audio:
+        return l10n.replyPreviewAudio;
+      case ContentType.file:
+        return l10n.replyPreviewFile(message.fileName ?? '');
+      case ContentType.location:
+        return l10n.replyPreviewLocation;
+      case ContentType.sticker:
+        return l10n.replyPreviewSticker;
+      case ContentType.link:
+        if (message.content.trim().isEmpty) {
+          return l10n.replyPreviewLink;
+        }
+        return message.content.formatChatMessage(
+          mentionNameById: _buildMentionNameById(message),
+        );
+      case ContentType.event:
+        return l10n.replyPreviewSystemEvent;
+      case ContentType.text:
+        final normalized = message.content.formatChatMessage(
+          mentionNameById: _buildMentionNameById(message),
+        );
+        return normalized.trim().isEmpty ? l10n.noMessages : normalized;
+    }
+  }
+
+  Map<String, String> _buildMentionNameById(ChatMessage message) {
+    final mentionNameById = <String, String>{
+      for (final mention in message.mentionTo)
+        if (mention.id.trim().isNotEmpty && mention.name.trim().isNotEmpty)
+          mention.id.trim(): mention.name.trim(),
+    };
+
+    final members = _chat?.members ?? const <ConversationMember>[];
+    for (final member in members) {
+      final userId = member.userId.trim();
+      final fullName = member.fullName?.trim();
+      if (userId.isNotEmpty && fullName != null && fullName.isNotEmpty) {
+        mentionNameById.putIfAbsent(userId, () => fullName);
+      }
+    }
+
+    if (!mentionNameById.containsKey('all') &&
+        message.content.contains('[@all]')) {
+      mentionNameById['all'] = 'All';
+    }
+
+    return mentionNameById;
+  }
+
   @override
   Widget build(BuildContext context) {
     final chatTitle = (_chat?.name?.trim().isNotEmpty ?? false)
@@ -999,7 +1059,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                       id: _replyingToMessage!.id,
                       senderName: _replyingToMessage!.sender.name,
                       contentType: _replyingToMessage!.contentType,
-                      previewText: _replyingToMessage!.content,
+                      previewText: _buildReplyInputPreviewText(
+                        _replyingToMessage!,
+                        context,
+                      ),
                     ),
                     onCancel: _cancelReply,
                   ),

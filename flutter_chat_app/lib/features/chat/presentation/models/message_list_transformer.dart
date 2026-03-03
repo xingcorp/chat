@@ -134,19 +134,18 @@ class MessageListTransformer {
       );
 
       // ── Reply preview ──
-      final replyPreview = _buildReplyPreview(current, messageById);
+      final replyPreview = _buildReplyPreview(current, messageById, members);
 
       // ── Forward info ──
-      final forwardInfo = _buildForwardInfo(current);
+      final forwardInfo = _buildForwardInfo(current, members);
 
       // ── Content analysis ──
       final contentText = current.content;
       final hasLink = _urlRegex.hasMatch(contentText);
-      final hasMention = current.mentionTo.isNotEmpty ||
-          _mentionRegex.hasMatch(contentText);
-      final previewLink = hasLink
-          ? _urlRegex.allMatches(contentText).last.group(0)
-          : null;
+      final hasMention =
+          current.mentionTo.isNotEmpty || _mentionRegex.hasMatch(contentText);
+      final previewLink =
+          hasLink ? _urlRegex.allMatches(contentText).last.group(0) : null;
 
       // ── Message status ──
       final isSending = current.id.startsWith('draft_') ||
@@ -178,8 +177,7 @@ class MessageListTransformer {
         isLastRead: current.id == lastReadMessageId,
         isHighlighted: current.id == highlightedMessageId,
         isFromCurrentUser: isCurrentUser,
-        readReceiptReaders:
-            readReceiptPositions[current.id] ?? const [],
+        readReceiptReaders: readReceiptPositions[current.id] ?? const [],
       ));
     }
 
@@ -376,6 +374,7 @@ class MessageListTransformer {
   static ReplyMessagePreview? _buildReplyPreview(
     ChatMessage message,
     Map<String, ChatMessage> messageById,
+    List<ConversationMember> members,
   ) {
     // Prefer lookup by replyMessageId (frontend uses replyMessageId, nested replyMessage may be partial)
     final lookupId = message.replyMessageId;
@@ -415,7 +414,7 @@ class MessageListTransformer {
     // }
 
     // Preview text theo content type
-    final previewText = _getReplyPreviewText(reply);
+    final previewText = _getReplyPreviewText(reply, members);
 
     // Preview URL (cho IMAGE/VIDEO)
     String? previewUrl;
@@ -445,7 +444,10 @@ class MessageListTransformer {
   /// Tạo preview text cho reply message theo content type
   ///
   /// Khớp Angular: renderReplyMessage() switch case
-  static String _getReplyPreviewText(ChatMessage reply) {
+  static String _getReplyPreviewText(
+    ChatMessage reply,
+    List<ConversationMember> members,
+  ) {
     final l10n = L10nHelper.current;
     switch (reply.contentType) {
       case ContentType.image:
@@ -461,15 +463,14 @@ class MessageListTransformer {
       case ContentType.sticker:
         return l10n.replyPreviewSticker;
       case ContentType.link:
-        return reply.content.isNotEmpty ? reply.content : l10n.replyPreviewLink;
+        if (reply.content.isEmpty) {
+          return l10n.replyPreviewLink;
+        }
+        return _formatMentionAwareContent(reply, members);
       case ContentType.event:
         return l10n.replyPreviewSystemEvent;
       case ContentType.text:
-        final mentionNameById = <String, String>{
-          for (final m in reply.mentionTo)
-            if (m.id.isNotEmpty && m.name.trim().isNotEmpty) m.id: m.name.trim(),
-        };
-        return reply.content.formatChatMessage(mentionNameById: mentionNameById);
+        return _formatMentionAwareContent(reply, members);
     }
   }
 
@@ -480,7 +481,10 @@ class MessageListTransformer {
   /// Build forward info từ domain entity
   ///
   /// Khớp Angular: forwardedFromMessage { sender.fullname, type, message, urls, fileName }
-  static ForwardMessageInfo? _buildForwardInfo(ChatMessage message) {
+  static ForwardMessageInfo? _buildForwardInfo(
+    ChatMessage message,
+    List<ConversationMember> members,
+  ) {
     final forwardId = message.forwardedFromMessageId;
     final forwardMsg = message.forwardedFromMessage;
 
@@ -489,7 +493,7 @@ class MessageListTransformer {
 
     // Có forward object - lấy data từ đó
     if (forwardMsg != null) {
-      final previewText = _getForwardPreviewText(forwardMsg);
+      final previewText = _getForwardPreviewText(forwardMsg, members);
       String? previewUrl;
       if (forwardMsg.urls.isNotEmpty &&
           (forwardMsg.contentType == ContentType.image ||
@@ -518,7 +522,10 @@ class MessageListTransformer {
   }
 
   /// Tạo preview text cho forward message theo content type
-  static String _getForwardPreviewText(ChatMessage msg) {
+  static String _getForwardPreviewText(
+    ChatMessage msg,
+    List<ConversationMember> members,
+  ) {
     final l10n = L10nHelper.current;
     switch (msg.contentType) {
       case ContentType.image:
@@ -534,17 +541,52 @@ class MessageListTransformer {
       case ContentType.sticker:
         return l10n.replyPreviewSticker;
       case ContentType.link:
-        return msg.content.isNotEmpty ? msg.content : l10n.replyPreviewLink;
+        if (msg.content.isEmpty) {
+          return l10n.replyPreviewLink;
+        }
+        return _formatMentionAwareContent(msg, members);
       case ContentType.event:
         return l10n.replyPreviewSystemEvent;
       case ContentType.text:
-      default:
-        final mentionNameById = <String, String>{
-          for (final m in msg.mentionTo)
-            if (m.id.isNotEmpty && m.name.trim().isNotEmpty) m.id: m.name.trim(),
-        };
-        return msg.content.formatChatMessage(mentionNameById: mentionNameById);
+        return _formatMentionAwareContent(msg, members);
     }
+  }
+
+  static String _formatMentionAwareContent(
+    ChatMessage message,
+    List<ConversationMember> members,
+  ) {
+    final mentionNameById = _buildMentionNameById(message, members);
+    return message.content.formatChatMessage(mentionNameById: mentionNameById);
+  }
+
+  static Map<String, String> _buildMentionNameById(
+    ChatMessage message,
+    List<ConversationMember> members,
+  ) {
+    final map = <String, String>{};
+
+    for (final mention in message.mentionTo) {
+      final id = mention.id.trim();
+      final name = mention.name.trim();
+      if (id.isNotEmpty && name.isNotEmpty) {
+        map[id] = name;
+      }
+    }
+
+    for (final member in members) {
+      final userId = member.userId.trim();
+      final fullName = member.fullName?.trim();
+      if (userId.isNotEmpty && fullName != null && fullName.isNotEmpty) {
+        map.putIfAbsent(userId, () => fullName);
+      }
+    }
+
+    if (!map.containsKey('all') && message.content.contains('[@all]')) {
+      map['all'] = 'All';
+    }
+
+    return map;
   }
 
   // ══════════════════════════════════════════
@@ -630,7 +672,8 @@ class MessageListTransformer {
   }) {
     final l10n = L10nHelper.current;
     final actor = actorName ?? l10n.eventSomeone;
-    final targets = targetUserNames.where((n) => n.trim().isNotEmpty).join(', ');
+    final targets =
+        targetUserNames.where((n) => n.trim().isNotEmpty).join(', ');
 
     switch (actionType.toUpperCase()) {
       case 'ADD_MEMBER':

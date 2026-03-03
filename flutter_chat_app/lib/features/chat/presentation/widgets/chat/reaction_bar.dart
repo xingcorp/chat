@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 
@@ -78,7 +77,8 @@ class ReactionBar extends StatelessWidget {
                   scale: clamped,
                   child: Opacity(
                     opacity: clamped,
-                    child: _buildReactionChip(context, theme, groupedReactions[i]),
+                    child:
+                        _buildReactionChip(context, theme, groupedReactions[i]),
                   ),
                 );
               },
@@ -87,7 +87,8 @@ class ReactionBar extends StatelessWidget {
           // Nút "+" để thêm reaction
           if (showAddButton && onAddReaction != null)
             TweenAnimationBuilder<double>(
-              duration: Duration(milliseconds: 200 + (groupedReactions.length * 50)),
+              duration:
+                  Duration(milliseconds: 200 + (groupedReactions.length * 50)),
               curve: Curves.elasticOut,
               tween: Tween(begin: 0.0, end: 1.0),
               builder: (context, value, child) {
@@ -287,7 +288,8 @@ class _AnimatedReactionChipState extends State<_AnimatedReactionChip>
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeInOut,
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
             decoration: BoxDecoration(
               color: widget.backgroundColor,
               border: Border.all(
@@ -465,7 +467,8 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                             Container(
                               padding: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceContainerHighest,
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(12.0),
                               ),
                               child: Text(
@@ -497,7 +500,8 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                               icon: const Icon(Icons.close_rounded),
                               onPressed: _handleClose,
                               style: IconButton.styleFrom(
-                                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                                backgroundColor:
+                                    theme.colorScheme.surfaceContainerHighest,
                               ),
                             ),
                           ],
@@ -522,7 +526,8 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                                     const SizedBox(height: 16),
                                     Text(
                                       l10n.noUsers,
-                                      style: theme.textTheme.bodyLarge?.copyWith(
+                                      style:
+                                          theme.textTheme.bodyLarge?.copyWith(
                                         color: theme.textTheme.bodySmall?.color,
                                       ),
                                     ),
@@ -535,8 +540,12 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                                 itemCount: widget.reactorIds.length,
                                 itemBuilder: (context, index) {
                                   final userId = widget.reactorIds[index];
-                                  final name = widget.reactorNameById[userId] ?? userId;
-                                  final avatarUrl = widget.reactorAvatarById[userId];
+                                  final name = _resolveDisplayName(
+                                    userId,
+                                    l10n.unknownUser,
+                                  );
+                                  final avatarUrl =
+                                      widget.reactorAvatarById[userId];
                                   return TweenAnimationBuilder<double>(
                                     duration: Duration(
                                       milliseconds: 300 + (index * 50),
@@ -553,21 +562,26 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                                       );
                                     },
                                     child: ListTile(
-                                      contentPadding: const EdgeInsets.symmetric(
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
                                         horizontal: 20.0,
                                         vertical: 4.0,
                                       ),
                                       leading: Hero(
                                         tag: 'reactor_avatar_$userId',
-                                        child: (avatarUrl != null && avatarUrl.trim().isNotEmpty)
+                                        child: (avatarUrl != null &&
+                                                avatarUrl.trim().isNotEmpty)
                                             ? AppAvatar.network(
                                                 imageUrl: avatarUrl.trim(),
                                                 size: AvatarSize.medium,
                                               )
                                             : AppAvatar.initials(
-                                                name: name.isNotEmpty ? name : '?',
+                                                name: name.isNotEmpty
+                                                    ? name
+                                                    : '?',
                                                 size: AvatarSize.medium,
-                                                backgroundColor: _getAvatarColor(
+                                                backgroundColor:
+                                                    _getAvatarColor(
                                                   theme,
                                                   index,
                                                 ),
@@ -576,7 +590,8 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                                       ),
                                       title: Text(
                                         name,
-                                        style: theme.textTheme.bodyLarge?.copyWith(
+                                        style:
+                                            theme.textTheme.bodyLarge?.copyWith(
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -586,12 +601,15 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                                           vertical: 6.0,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: theme.colorScheme.surfaceContainerHighest,
-                                          borderRadius: BorderRadius.circular(12.0),
+                                          color: theme.colorScheme
+                                              .surfaceContainerHighest,
+                                          borderRadius:
+                                              BorderRadius.circular(12.0),
                                         ),
                                         child: Text(
                                           widget.emojiCode,
-                                          style: const TextStyle(fontSize: 16.0),
+                                          style:
+                                              const TextStyle(fontSize: 16.0),
                                         ),
                                       ),
                                     ),
@@ -622,5 +640,28 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
       Colors.teal,
     ];
     return colors[index % colors.length];
+  }
+
+  String _resolveDisplayName(String userId, String unknownUserLabel) {
+    final mappedName = widget.reactorNameById[userId]?.trim();
+    if (mappedName != null && mappedName.isNotEmpty && mappedName != userId) {
+      return mappedName;
+    }
+
+    if (!_looksLikeOpaqueUserId(userId)) {
+      return userId;
+    }
+    return unknownUserLabel;
+  }
+
+  bool _looksLikeOpaqueUserId(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return true;
+
+    final uuidRegex = RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}'
+      r'-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+    );
+    return uuidRegex.hasMatch(trimmed);
   }
 }

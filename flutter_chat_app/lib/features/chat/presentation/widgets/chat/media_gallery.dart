@@ -12,14 +12,14 @@ import 'package:flutter_chat_app/core/services/image_editor_service.dart';
 import 'package:flutter_chat_app/domain/services/file_download_state.dart';
 import 'package:flutter_chat_app/domain/services/i_file_download_manager.dart';
 import 'package:flutter_chat_app/domain/usecases/media/save_media_to_gallery_usecase.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_popup_menu.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
@@ -1225,25 +1225,104 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
     });
   }
 
-  /// Group reactions by emoji code
-  List<ReactionGroup> _groupReactions(List<MessageReaction> reactions) {
-    final Map<String, ReactionGroup> groups = {};
+  String _resolveCurrentUserId() {
+    try {
+      return GetIt.I<CurrentUserProvider>().currentUserId.trim();
+    } catch (_) {
+      return '';
+    }
+  }
 
-    for (final reaction in reactions) {
-      if (!groups.containsKey(reaction.code)) {
-        groups[reaction.code] = ReactionGroup(
-          code: reaction.code,
-          reactorIds: [],
-          reactorNameById: {},
-          reactorAvatarById: {},
-        );
+  /// Group reactions by emoji code
+  List<ReactionGroup> _groupReactions(
+    List<MessageReaction> reactions, {
+    List<ConversationMember> members = const [],
+    List<ChatMessage> allMessages = const [],
+    String currentUserId = '',
+    required String unknownUserLabel,
+  }) {
+    if (reactions.isEmpty) return const [];
+
+    final groupMap = <String, List<String>>{};
+    final nameByIdMap = <String, Map<String, String>>{};
+    final avatarByIdMap = <String, Map<String, String?>>{};
+
+    final memberByUserId = <String, ConversationMember>{
+      for (final member in members)
+        if (member.userId.trim().isNotEmpty) member.userId.trim(): member,
+    };
+
+    final senderNameByUserId = <String, String>{};
+    for (final message in allMessages) {
+      final senderId = message.sender.id.trim();
+      final senderName = message.sender.name.trim();
+      if (senderId.isEmpty || senderName.isEmpty) {
+        continue;
       }
-      groups[reaction.code]!.reactorIds.add(reaction.userId);
-      groups[reaction.code]!.reactorNameById[reaction.userId] =
-          reaction.userName ?? reaction.userId;
+      senderNameByUserId.putIfAbsent(senderId, () => senderName);
     }
 
-    return groups.values.toList();
+    for (final reaction in reactions) {
+      final userId = reaction.userId.trim();
+      if (userId.isEmpty) {
+        continue;
+      }
+
+      groupMap.putIfAbsent(reaction.code, () => []).add(userId);
+
+      final member = memberByUserId[userId];
+      final resolvedName = _resolveReactorDisplayName(
+        userId: userId,
+        memberName: member?.fullName,
+        reactionName: reaction.userName,
+        senderName: senderNameByUserId[userId],
+        unknownUserLabel: unknownUserLabel,
+      );
+      nameByIdMap.putIfAbsent(reaction.code, () => {})[userId] = resolvedName;
+      avatarByIdMap.putIfAbsent(reaction.code, () => {})[userId] =
+          member?.avatarUrl;
+    }
+
+    return groupMap.entries.map((entry) {
+      return ReactionGroup(
+        code: entry.key,
+        reactorIds: entry.value,
+        reactorNameById: nameByIdMap[entry.key] ?? const {},
+        reactorAvatarById: avatarByIdMap[entry.key] ?? const {},
+        isReactedByCurrentUser:
+            currentUserId.isNotEmpty && entry.value.contains(currentUserId),
+      );
+    }).toList()
+      ..sort((a, b) {
+        if (a.isReactedByCurrentUser && !b.isReactedByCurrentUser) return -1;
+        if (!a.isReactedByCurrentUser && b.isReactedByCurrentUser) return 1;
+        return b.count.compareTo(a.count);
+      });
+  }
+
+  String _resolveReactorDisplayName({
+    required String userId,
+    String? memberName,
+    String? reactionName,
+    String? senderName,
+    required String unknownUserLabel,
+  }) {
+    final normalizedMemberName = memberName?.trim();
+    final normalizedReactionName = reactionName?.trim();
+    final normalizedSenderName = senderName?.trim();
+
+    if (normalizedMemberName != null && normalizedMemberName.isNotEmpty) {
+      return normalizedMemberName;
+    }
+    if (normalizedReactionName != null &&
+        normalizedReactionName.isNotEmpty &&
+        normalizedReactionName != userId) {
+      return normalizedReactionName;
+    }
+    if (normalizedSenderName != null && normalizedSenderName.isNotEmpty) {
+      return normalizedSenderName;
+    }
+    return unknownUserLabel;
   }
 
   /// Show reaction picker bottom sheet
@@ -1356,37 +1435,72 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
   Widget _buildFullscreenScaffold(
     BuildContext context, {
     required ChatMessage? displayMessage,
+    List<ConversationMember> conversationMembers = const [],
+    List<ChatMessage> allMessages = const [],
+    String currentUserId = '',
   }) {
     final hasMessage = displayMessage != null;
+    final topButtonStyle = IconButton.styleFrom(
+      foregroundColor: Colors.white,
+      backgroundColor: Colors.black.withValues(alpha: 0.45),
+      minimumSize: const Size(40, 40),
+      padding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+    );
     final groupedReactions = hasMessage
-        ? _groupReactions(displayMessage.reactions)
+        ? _groupReactions(
+            displayMessage.reactions,
+            members: conversationMembers,
+            allMessages: allMessages,
+            currentUserId: currentUserId,
+            unknownUserLabel: context.l10n.unknownUser,
+          )
         : <ReactionGroup>[];
 
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: _showUI
           ? AppBar(
-              backgroundColor: Colors.black87,
+              backgroundColor: Colors.black.withValues(alpha: 0.65),
               foregroundColor: Colors.white,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.of(context).pop(),
+                tooltip: context.l10n.backOnline,
+                style: topButtonStyle,
+              ),
               title: Text(
                 '${_currentIndex + 1} / ${widget.attachments.length}',
                 style: const TextStyle(color: Colors.white),
               ),
               actions: [
-                AppIconButton(
-                  icon: Icons.edit,
-                  onPressed: () => _handleEdit(),
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.white),
+                  onPressed: _handleEdit,
                   tooltip: context.l10n.edit,
+                  style: topButtonStyle,
                 ),
-                AppIconButton(
-                  icon: Icons.download,
+                IconButton(
+                  icon: const Icon(Icons.download, color: Colors.white),
                   onPressed: _handleDownload,
                   tooltip: context.l10n.download,
+                  style: topButtonStyle,
                 ),
                 if (hasMessage)
-                  AppPopupMenu<String>(
-                    icon: Icons.more_vert,
-                    items: [
+                  PopupMenuButton<String>(
+                    padding: EdgeInsets.zero,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: const Icon(Icons.more_vert, color: Colors.white),
+                    ),
+                    itemBuilder: (context) => [
                       PopupMenuItem(
                         value: 'forward',
                         child: Text(context.l10n.forward),
@@ -1520,16 +1634,30 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
     }
 
     if (messageBloc == null) {
-      return _buildFullscreenScaffold(context, displayMessage: widget.message);
+      return _buildFullscreenScaffold(
+        context,
+        displayMessage: widget.message,
+        allMessages:
+            widget.message != null ? <ChatMessage>[widget.message!] : const [],
+        currentUserId: _resolveCurrentUserId(),
+      );
     }
 
     return BlocBuilder<MessageBloc, MessageState>(
       bloc: messageBloc,
       builder: (context, state) {
         final displayMessage = _resolveMessageFromState(state);
+        final conversationMembers = state is MessagesLoaded
+            ? state.conversationMembers
+            : const <ConversationMember>[];
+        final allMessages =
+            state is MessagesLoaded ? state.messages : const <ChatMessage>[];
         return _buildFullscreenScaffold(
           context,
           displayMessage: displayMessage,
+          conversationMembers: conversationMembers,
+          allMessages: allMessages,
+          currentUserId: _resolveCurrentUserId(),
         );
       },
     );
