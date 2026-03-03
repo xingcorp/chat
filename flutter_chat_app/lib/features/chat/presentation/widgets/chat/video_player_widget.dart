@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
-import 'package:chewie/chewie.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/screens/media/video_viewer_screen.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_image.dart';
+import 'package:video_player/video_player.dart';
 
-/// Lazy-init inline video player for chat messages.
+/// Video preview card for chat.
 ///
-/// Shows thumbnail + play overlay initially.
-/// On tap play: initializes VideoPlayerController + ChewieController.
+/// Pattern: show thumbnail + play button in message bubble.
+/// On tap: open fullscreen video viewer.
 class VideoPlayerWidget extends StatefulWidget {
   final String url;
   final String? thumbnailUrl;
@@ -20,7 +24,7 @@ class VideoPlayerWidget extends StatefulWidget {
     this.thumbnailUrl,
     this.isFromCurrentUser = false,
     this.maxHeight = 260.0,
-    this.borderRadius = 8.0,
+    this.borderRadius = AppDimens.radiusSmall,
   }) : super(key: key);
 
   @override
@@ -28,18 +32,15 @@ class VideoPlayerWidget extends StatefulWidget {
 }
 
 class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
-  VideoPlayerController? _videoController;
-  ChewieController? _chewieController;
-  bool _isPlaying = false;
-  bool _isLoading = false;
-  bool _isLoadingPreview = false;
-  bool _hasError = false;
+  VideoPlayerController? _previewController;
+  bool _isPreparingPreview = false;
+  bool _isOpeningViewer = false;
   double _aspectRatio = 16 / 9;
 
   String? get _thumbnailUrl {
-    final raw = widget.thumbnailUrl?.trim();
-    if (raw == null || raw.isEmpty) return null;
-    return raw;
+    final value = widget.thumbnailUrl?.trim();
+    if (value == null || value.isEmpty) return null;
+    return value;
   }
 
   bool get _hasThumbnail => _thumbnailUrl != null;
@@ -47,7 +48,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   void initState() {
     super.initState();
-    _preparePreview();
+    _preparePreviewFrame();
   }
 
   @override
@@ -58,19 +59,19 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       return;
     }
 
-    _disposeControllers();
-    _isPlaying = false;
-    _isLoading = false;
-    _isLoadingPreview = false;
-    _hasError = false;
+    _disposePreviewController();
+    _isPreparingPreview = false;
+    _isOpeningViewer = false;
     _aspectRatio = 16 / 9;
-    _preparePreview();
+    _preparePreviewFrame();
   }
 
-  Future<void> _preparePreview() async {
-    if (_hasThumbnail || _videoController != null || _isLoadingPreview) return;
+  Future<void> _preparePreviewFrame() async {
+    if (_hasThumbnail || _previewController != null || _isPreparingPreview) {
+      return;
+    }
 
-    setState(() => _isLoadingPreview = true);
+    setState(() => _isPreparingPreview = true);
 
     try {
       final controller =
@@ -82,54 +83,15 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         return;
       }
 
+      _previewController = controller;
+
       setState(() {
-        _videoController = controller;
         _aspectRatio = _safeAspectRatio(controller.value.aspectRatio);
-        _isLoadingPreview = false;
+        _isPreparingPreview = false;
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _isLoadingPreview = false);
-    }
-  }
-
-  Future<void> _initVideo() async {
-    if (_isLoading) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      _videoController ??=
-          VideoPlayerController.networkUrl(Uri.parse(widget.url));
-      if (!_videoController!.value.isInitialized) {
-        await _videoController!.initialize();
-      }
-
-      _aspectRatio = _safeAspectRatio(_videoController!.value.aspectRatio);
-
-      _chewieController?.dispose();
-
-      _chewieController = ChewieController(
-        videoPlayerController: _videoController!,
-        autoPlay: true,
-        looping: false,
-        showControls: true,
-        aspectRatio: _aspectRatio,
-      );
-
-      if (mounted) {
-        setState(() {
-          _isPlaying = true;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _hasError = true;
-          _isLoading = false;
-        });
-      }
+      setState(() => _isPreparingPreview = false);
     }
   }
 
@@ -138,59 +100,34 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     return value;
   }
 
-  void _disposeControllers() {
-    _chewieController?.dispose();
-    _chewieController = null;
-    _videoController?.dispose();
-    _videoController = null;
+  void _disposePreviewController() {
+    _previewController?.dispose();
+    _previewController = null;
+  }
+
+  Future<void> _openViewer() async {
+    if (_isOpeningViewer) return;
+
+    _isOpeningViewer = true;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => VideoViewerScreen(
+          videoUrl: widget.url,
+          title: context.l10n.videoMessage,
+          autoPlay: true,
+        ),
+      ),
+    );
+    _isOpeningViewer = false;
   }
 
   @override
   void dispose() {
-    _disposeControllers();
+    _disposePreviewController();
     super.dispose();
   }
 
-  Widget _buildErrorState(ThemeData theme) {
-    return AspectRatio(
-      aspectRatio: _aspectRatio,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[850],
-          borderRadius: BorderRadius.circular(widget.borderRadius),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, color: Colors.white60, size: 30),
-              const SizedBox(height: 8),
-              const Text(
-                'Cannot load video',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _hasError = false;
-                    _isPlaying = false;
-                  });
-                  _preparePreview();
-                },
-                child: Text(
-                  'Retry',
-                  style: TextStyle(color: theme.colorScheme.primary),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPreviewBackground() {
+  Widget _buildPreviewContent() {
     if (_hasThumbnail) {
       return AppImage.network(
         imageUrl: _thumbnailUrl!,
@@ -200,8 +137,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       );
     }
 
-    if (_videoController != null && _videoController!.value.isInitialized) {
-      final size = _videoController!.value.size;
+    final controller = _previewController;
+    if (controller != null && controller.value.isInitialized) {
+      final size = controller.value.size;
       if (size.width > 0 && size.height > 0) {
         return SizedBox.expand(
           child: FittedBox(
@@ -209,23 +147,31 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             child: SizedBox(
               width: size.width,
               height: size.height,
-              child: VideoPlayer(_videoController!),
+              child: VideoPlayer(controller),
             ),
           ),
         );
       }
 
-      return SizedBox.expand(
-        child: VideoPlayer(_videoController!),
-      );
+      return SizedBox.expand(child: VideoPlayer(controller));
     }
 
-    return Container(
-      decoration: const BoxDecoration(
+    return DecoratedBox(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF545454), Color(0xFF2D2D2D)],
+          colors: [
+            AppColors.greyDark,
+            AppColors.backgroundDarkMode,
+          ],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.videocam,
+          size: AppDimens.iconSizeLarge,
+          color: AppColors.iconDarkMode.withValues(alpha: 0.75),
         ),
       ),
     );
@@ -233,27 +179,10 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_hasError) {
-      return _buildErrorState(Theme.of(context));
-    }
-
-    if (_isPlaying && _chewieController != null) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(widget.borderRadius),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: widget.maxHeight),
-          child: AspectRatio(
-            aspectRatio: _aspectRatio,
-            child: Chewie(controller: _chewieController!),
-          ),
-        ),
-      );
-    }
-
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: widget.maxHeight),
       child: GestureDetector(
-        onTap: _isLoading ? null : _initVideo,
+        onTap: _openViewer,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(widget.borderRadius),
           child: AspectRatio(
@@ -261,29 +190,34 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                _buildPreviewBackground(),
+                _buildPreviewContent(),
                 const DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.transparent, Color(0x33000000)],
+                      colors: [Colors.transparent, Color(0x44000000)],
                     ),
                   ),
                 ),
                 Center(
-                  child: (_isLoading || _isLoadingPreview)
-                      ? const CircularProgressIndicator(color: Colors.white70)
+                  child: _isPreparingPreview
+                      ? const AppProgressIndicator.circular(
+                          size: ProgressSize.small,
+                        )
                       : Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
+                          width: AppDimens.iconSizeXXLarge,
+                          height: AppDimens.iconSizeXXLarge,
+                          decoration: BoxDecoration(
+                            color: AppColors.backgroundDarkMode
+                                .withValues(alpha: 0.55),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          alignment: Alignment.center,
+                          child: Icon(
                             Icons.play_arrow,
-                            color: Colors.white,
-                            size: 32,
+                            color: AppColors.textPrimaryDarkMode,
+                            size: AppDimens.iconSizeLarge,
                           ),
                         ),
                 ),

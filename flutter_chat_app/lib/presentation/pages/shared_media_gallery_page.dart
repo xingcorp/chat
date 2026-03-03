@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
@@ -10,8 +9,8 @@ import 'package:flutter_chat_app/domain/services/file_download_state.dart';
 import 'package:flutter_chat_app/domain/services/i_file_download_manager.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/screens/media/image_viewer_screen.dart';
+import 'package:flutter_chat_app/presentation/screens/media/video_viewer_screen.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
-import 'package:flutter_chat_app/presentation/widgets/media_viewer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Full gallery page for shared media with tabs
@@ -984,47 +983,11 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
         ),
       );
     } else if (type == SharedMediaType.video) {
-      // On web platform, video_player is not supported, use url_launcher instead
-      if (kIsWeb) {
-        _openVideoInBrowser(media);
-      } else {
-        // Use MediaViewer for videos on mobile (supports Chewie player)
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => Scaffold(
-              backgroundColor: Colors.black,
-              appBar: AppBar(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                title: AppText(
-                  media.fileName ?? 'Video',
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-              body: MediaViewer(
-                mediaUrl: media.url,
-                mediaType: MediaType.video,
-              ),
-            ),
-          ),
-        );
-      }
-    }
-  }
-
-  /// Open video in browser (for web platform)
-  Future<void> _openVideoInBrowser(SharedMedia media) async {
-    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-    final l10n = context.l10n;
-    final uri = Uri.parse(media.url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: AppText(l10n.errorOpeningFile),
-        ),
+      VideoViewerScreen.show(
+        context,
+        videoUrl: media.url,
+        title: media.fileName ?? context.l10n.videoMessage,
+        autoPlay: true,
       );
     }
   }

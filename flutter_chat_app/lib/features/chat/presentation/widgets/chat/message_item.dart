@@ -398,9 +398,13 @@ class _MessageItemState extends State<MessageItem>
 
     // Wrap with Dismissible for swipe-to-reply (only when not in selection mode)
     if (widget.onSwipeReply != null && !widget.isSelectionMode) {
+      final swipeDirection = isCurrentUser
+          ? DismissDirection.endToStart
+          : DismissDirection.startToEnd;
+
       messageContent = Dismissible(
         key: ValueKey('swipe_${widget.uiState.id}'),
-        direction: DismissDirection.startToEnd,
+        direction: swipeDirection,
         confirmDismiss: (_) async {
           widget.onSwipeReply!();
           return false; // Don't actually dismiss
@@ -408,6 +412,14 @@ class _MessageItemState extends State<MessageItem>
         background: Container(
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.only(left: 24.0),
+          child: Icon(
+            Icons.reply,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        secondaryBackground: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 24.0),
           child: Icon(
             Icons.reply,
             color: theme.colorScheme.primary,
