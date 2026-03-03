@@ -422,10 +422,27 @@ class _MessageItemState extends State<MessageItem>
 
   List<domain.MessageAttachment> _getRenderableAttachments() {
     final existing = widget.uiState.attachments;
-    if (existing.isNotEmpty) return existing;
+    if (existing.isNotEmpty) {
+      if (widget.uiState.contentType != domain.ContentType.video) {
+        return existing;
+      }
+
+      final videoAttachments = existing
+          .where((attachment) => _isLikelyVideoUrl(attachment.url))
+          .toList(growable: false);
+
+      if (videoAttachments.isNotEmpty) {
+        return videoAttachments;
+      }
+
+      return <domain.MessageAttachment>[existing.first];
+    }
 
     final urls = widget.uiState.urls;
     if (urls.isEmpty) return const [];
+
+    final renderableUrls = _selectRenderableUrls(urls);
+    if (renderableUrls.isEmpty) return const [];
 
     final typeName =
         widget.uiState.contentType.toString().split('.').last.toLowerCase();
@@ -437,8 +454,7 @@ class _MessageItemState extends State<MessageItem>
       _ => 'file',
     };
 
-    return urls
-        .where((u) => u.trim().isNotEmpty)
+    return renderableUrls
         .map<domain.MessageAttachment>(
           (u) => domain.MessageAttachment(
             id: '${widget.uiState.id}-$u',
@@ -449,6 +465,117 @@ class _MessageItemState extends State<MessageItem>
           ),
         )
         .toList(growable: false);
+  }
+
+  List<String> _selectRenderableUrls(List<String> urls) {
+    final normalizedUrls = urls
+        .map((url) => url.trim())
+        .where((url) => url.isNotEmpty)
+        .toList(growable: false);
+    if (normalizedUrls.isEmpty) return const [];
+
+    if (widget.uiState.contentType != domain.ContentType.video) {
+      return normalizedUrls;
+    }
+
+    final videoUrls =
+        normalizedUrls.where(_isLikelyVideoUrl).toList(growable: false);
+    if (videoUrls.isNotEmpty) {
+      return videoUrls;
+    }
+
+    final unknownUrls = normalizedUrls
+        .where((url) => !_isLikelyImageUrl(url))
+        .toList(growable: false);
+    if (unknownUrls.isNotEmpty) {
+      return unknownUrls;
+    }
+
+    return <String>[normalizedUrls.first];
+  }
+
+  String? _extractVideoThumbnailUrl(
+    List<domain.MessageAttachment> renderableAttachments,
+  ) {
+    if (widget.uiState.contentType != domain.ContentType.video) return null;
+
+    final allUrls = widget.uiState.urls
+        .map((url) => url.trim())
+        .where((url) => url.isNotEmpty)
+        .toList(growable: false);
+    if (allUrls.isEmpty) return null;
+
+    final renderableUrlSet = renderableAttachments
+        .map((attachment) => attachment.url.trim())
+        .where((url) => url.isNotEmpty)
+        .toSet();
+
+    for (final url in allUrls) {
+      if (renderableUrlSet.contains(url)) continue;
+      if (_isLikelyImageUrl(url)) return url;
+    }
+
+    return null;
+  }
+
+  static const Set<String> _videoExtensions = {
+    '3gp',
+    'avi',
+    'flv',
+    'm3u8',
+    'm4v',
+    'mkv',
+    'mov',
+    'mp4',
+    'mpeg',
+    'mpg',
+    'webm',
+    'wmv',
+  };
+
+  static const Set<String> _imageExtensions = {
+    'avif',
+    'bmp',
+    'gif',
+    'heic',
+    'heif',
+    'jpeg',
+    'jpg',
+    'png',
+    'svg',
+    'webp',
+  };
+
+  bool _isLikelyVideoUrl(String url) {
+    final extension = _extractUrlExtension(url);
+    if (extension.isNotEmpty) {
+      return _videoExtensions.contains(extension);
+    }
+
+    final lower = url.toLowerCase();
+    return lower.contains('/video/') ||
+        lower.contains('type=video') ||
+        lower.contains('content-type=video');
+  }
+
+  bool _isLikelyImageUrl(String url) {
+    final extension = _extractUrlExtension(url);
+    if (extension.isNotEmpty) {
+      return _imageExtensions.contains(extension);
+    }
+
+    final lower = url.toLowerCase();
+    return lower.contains('/image/') ||
+        lower.contains('type=image') ||
+        lower.contains('content-type=image');
+  }
+
+  String _extractUrlExtension(String url) {
+    final parsed = Uri.tryParse(url);
+    final path = (parsed?.path ?? url).toLowerCase();
+    final dotIndex = path.lastIndexOf('.');
+    if (dotIndex < 0 || dotIndex >= path.length - 1) return '';
+    return path.substring(dotIndex + 1);
   }
 
   Widget _buildMessageBubble(BuildContext context, bool isFromCurrentUser) {
@@ -551,6 +678,7 @@ class _MessageItemState extends State<MessageItem>
     // Determine if we should use audio/video player instead of media gallery
     final isAudioMessage = contentType == domain.ContentType.audio;
     final isVideoMessage = contentType == domain.ContentType.video;
+    final videoThumbnailUrl = _extractVideoThumbnailUrl(renderableAttachments);
     final hasUploadingAttachment =
         renderableAttachments.any((attachment) => attachment.isUploading);
     final useSpecialPlayer = (isAudioMessage || isVideoMessage) &&
@@ -605,6 +733,7 @@ class _MessageItemState extends State<MessageItem>
                 padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
                 child: VideoPlayerWidget(
                   url: renderableAttachments.first.url,
+                  thumbnailUrl: videoThumbnailUrl,
                   isFromCurrentUser: isFromCurrentUser,
                 ),
               ),

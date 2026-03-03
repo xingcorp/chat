@@ -17,6 +17,7 @@ import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/video_player_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
@@ -423,70 +424,41 @@ class MediaGallery extends StatelessWidget {
     final isUploading = video.isUploading;
     final uploadProgress = video.uploadProgress ?? 0.0;
 
-    return GestureDetector(
-      onTap: isUploading
-          ? null
-          : () {
-              // TODO: Open video player
-              debugPrint('Video tapped: ${video.url}');
-            },
-      child: Container(
-        height: 180,
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: Stack(
-          children: [
-            // Video thumbnail (nếu có)
-            if (video.url.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: CachedNetworkImage(
-                  imageUrl: video.url,
-                  width: double.infinity,
-                  height: 180,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
-                    color: Colors.grey[800],
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    color: Colors.grey[800],
-                    child: const Icon(
-                      Icons.videocam,
-                      color: Colors.white54,
-                      size: 48,
-                    ),
-                  ),
-                ),
+    if (!isUploading) {
+      return VideoPlayerWidget(
+        url: video.url,
+        isFromCurrentUser: isFromCurrentUser,
+      );
+    }
+
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              color: Colors.grey[850],
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.videocam,
+                color: Colors.white54,
+                size: 48,
               ),
-            if (isUploading)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  child: Center(
-                    child: _buildUploadProgressIndicator(uploadProgress),
-                  ),
-                ),
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.4),
+              child: Center(
+                child: _buildUploadProgressIndicator(uploadProgress),
               ),
-            // Play icon overlay
-            if (!isUploading)
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.play_arrow,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                ),
-              ),
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
