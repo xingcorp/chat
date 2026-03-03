@@ -1317,14 +1317,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                     hint: context.l10n.typeMessage,
                     minLines: 1,
                     maxLines: 5,
-                    onSubmitted: (_) => _sendMessage(),
                   )
                 : AppTextField(
                     controller: _messageController,
                     minLines: 1,
                     maxLines: 5,
                     hint: context.l10n.typeMessage,
-                    onSubmitted: (_) => _sendMessage(),
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
                   ),
           ),
           AppIconButton(

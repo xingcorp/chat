@@ -268,6 +268,10 @@ class _MessageItemState extends State<MessageItem>
     final position = widget.uiState.position;
     final isLast = position == BubblePosition.last ||
         position == BubblePosition.standalone;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final messageAvatarSize = AppDimens.getChatMessageAvatarSize(screenWidth);
+    final messageAvatarSlotWidth =
+        AppDimens.getChatMessageAvatarSlotWidth(screenWidth);
 
     final messageBubble = RepaintBoundary(
       child: _buildMessageBubble(context, isCurrentUser),
@@ -317,10 +321,13 @@ class _MessageItemState extends State<MessageItem>
                 // Avatar for messages from others
                 if (!isCurrentUser && widget.uiState.showAvatar)
                   RepaintBoundary(
-                    child: _buildAvatar(context),
+                    child: _buildAvatar(
+                      context,
+                      size: messageAvatarSize,
+                    ),
                   )
                 else if (!isCurrentUser && !widget.isSelectionMode)
-                  const SizedBox(width: 36.0),
+                  SizedBox(width: messageAvatarSlotWidth),
 
                 // Sender name + message bubble aligned to the same start as bubble
                 Flexible(
@@ -801,7 +808,10 @@ class _MessageItemState extends State<MessageItem>
     );
   }
 
-  Widget _buildAvatar(BuildContext context) {
+  Widget _buildAvatar(
+    BuildContext context, {
+    required double size,
+  }) {
     final avatarUrl = widget.uiState.senderAvatar;
     final senderName = widget.uiState.senderName.trim();
     final senderId = widget.uiState.senderId;
@@ -809,12 +819,12 @@ class _MessageItemState extends State<MessageItem>
     return GestureDetector(
       onTap: () => _showAvatarMenu(context, senderId, senderName, avatarUrl),
       child: Padding(
-        padding: const EdgeInsets.only(right: 4.0),
+        padding: const EdgeInsets.only(right: AppDimens.chatMessageAvatarGap),
         child: HeroAvatar(
           id: senderId,
           imageUrl: avatarUrl,
           displayName: senderName,
-          size: 32,
+          size: size,
           hasBorder: false,
           enableHero: false,
         ),

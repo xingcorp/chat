@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
 import 'package:flutter_chat_app/core/services/image_editor_service.dart';
 import 'package:flutter_chat_app/domain/usecases/media/save_media_to_gallery_usecase.dart';
@@ -140,6 +142,26 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
     }
   }
 
+  /// Resolve viewer filter quality with a floor to avoid blurry rendering.
+  ///
+  /// - Web/Desktop: force high quality for text-heavy screenshots.
+  /// - Mobile: respect adaptive config but never go below medium.
+  FilterQuality _resolveViewerFilterQuality(BuildContext context) {
+    final configured = animationService.config.imageFilterQuality;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= AppDimens.breakpointDesktop;
+
+    if (kIsWeb || isDesktop) {
+      return FilterQuality.high;
+    }
+
+    if (configured == FilterQuality.low || configured == FilterQuality.none) {
+      return FilterQuality.medium;
+    }
+
+    return configured;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -171,7 +193,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                   initialScale: PhotoViewComputedScale.contained,
                   minScale: PhotoViewComputedScale.contained * 0.8,
                   maxScale: PhotoViewComputedScale.covered * 2.0,
-                  filterQuality: animationService.config.imageFilterQuality,
+                  filterQuality: _resolveViewerFilterQuality(context),
                   backgroundDecoration: const BoxDecoration(
                     color: Colors.transparent,
                   ),

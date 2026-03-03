@@ -480,6 +480,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
         focusNode: widget.focusNode,
         minLines: widget.minLines,
         maxLines: widget.maxLines,
+        keyboardType: TextInputType.multiline,
         decoration: InputDecoration(
           hintText: widget.hint,
           border: InputBorder.none,
@@ -489,7 +490,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
           ),
         ),
         onSubmitted: widget.onSubmitted,
-        textInputAction: TextInputAction.send,
+        textInputAction: TextInputAction.newline,
       ),
     );
   }
