@@ -544,8 +544,11 @@ class _MessageItemState extends State<MessageItem>
     // Determine if we should use audio/video player instead of media gallery
     final isAudioMessage = contentType == domain.ContentType.audio;
     final isVideoMessage = contentType == domain.ContentType.video;
-    final useSpecialPlayer =
-        (isAudioMessage || isVideoMessage) && renderableAttachments.length == 1;
+    final hasUploadingAttachment =
+        renderableAttachments.any((attachment) => attachment.isUploading);
+    final useSpecialPlayer = (isAudioMessage || isVideoMessage) &&
+        renderableAttachments.length == 1 &&
+        !hasUploadingAttachment;
 
     return Container(
       constraints: BoxConstraints(

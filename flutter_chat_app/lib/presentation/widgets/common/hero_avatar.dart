@@ -64,12 +64,14 @@ class HeroAvatar extends StatelessWidget {
   }
 
   AvatarSize _mapSizeToAvatarSize(double size) {
-    if (size <= 28) return AvatarSize.small;
-    if (size <= 44) return AvatarSize.medium;
-    if (size <= 72) return AvatarSize.large;
+    // Map requested pixel size to the nearest avatar bucket so callers can
+    // pass concrete values (e.g. 32, 40, 56) without unexpected jumps.
+    if (size <= 36) return AvatarSize.small;
+    if (size <= 48) return AvatarSize.medium;
+    if (size <= 68) return AvatarSize.large;
     return AvatarSize.xlarge;
   }
-} 
+}
 
 class AppHeroAvatar extends StatelessWidget {
   final String id;

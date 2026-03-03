@@ -420,11 +420,16 @@ class MediaGallery extends StatelessWidget {
 
   /// Build single video tile
   Widget _buildVideoTile(BuildContext context, MessageAttachment video) {
+    final isUploading = video.isUploading;
+    final uploadProgress = video.uploadProgress ?? 0.0;
+
     return GestureDetector(
-      onTap: () {
-        // TODO: Open video player
-        debugPrint('Video tapped: ${video.url}');
-      },
+      onTap: isUploading
+          ? null
+          : () {
+              // TODO: Open video player
+              debugPrint('Video tapped: ${video.url}');
+            },
       child: Container(
         height: 180,
         decoration: BoxDecoration(
@@ -455,21 +460,31 @@ class MediaGallery extends StatelessWidget {
                   ),
                 ),
               ),
-            // Play icon overlay
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(12.0),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.play_arrow,
-                  color: Colors.white,
-                  size: 32,
+            if (isUploading)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  child: Center(
+                    child: _buildUploadProgressIndicator(uploadProgress),
+                  ),
                 ),
               ),
-            ),
+            // Play icon overlay
+            if (!isUploading)
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.play_arrow,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
