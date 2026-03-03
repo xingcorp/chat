@@ -108,8 +108,6 @@ class AppCacheManager {
       ),
     );
     
-    await _cleanupCacheIfNeeded();
-    
     _isInitialized = true;
     _logger.i('AppCacheManager đã được khởi tạo');
   }
@@ -364,6 +362,12 @@ class AppCacheManager {
     await _thumbnailCacheManager.emptyCache();
   }
   
+  /// Runs cache cleanup in the background (called after first frame).
+  Future<void> deferredCleanup() async {
+    if (!_isInitialized) return;
+    await _cleanupCacheIfNeeded();
+  }
+
   /// Kiểm tra và dọn dẹp cache nếu vượt quá kích thước cho phép
   Future<void> _cleanupCacheIfNeeded() async {
     final cacheSize = await _calculateTotalCacheSize();

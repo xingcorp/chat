@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,29 +18,37 @@ import 'package:flutter_chat_app/app.dart';
 
 /// Bootstraps the application: binding, env, DI, system chrome, then [runApp].
 Future<void> runMainApp() async {
+  final startupWatch = Stopwatch()..start();
+
   WidgetsFlutterBinding.ensureInitialized();
+  _logStartupCheckpoint(startupWatch, 'WidgetsBinding');
 
   if (!FlavorConfig.isInitialized) {
     FlavorConfig.initializeFromEnvironment();
   }
+  _logStartupCheckpoint(startupWatch, 'FlavorConfig');
 
   await initializeDownloadPlugin();
+  _logStartupCheckpoint(startupWatch, 'DownloadPlugin');
 
   final envFileName = await EnvValidator.loadDotenvForFlavor();
   EnvValidator.validateDotenvConfiguration(envFileName);
+  _logStartupCheckpoint(startupWatch, 'EnvValidator');
 
   await configureDependencies();
+  _logStartupCheckpoint(startupWatch, 'DI (configureDependencies)');
 
   // Initialize environment manager
   final environmentManager = GetIt.I<EnvironmentManager>();
   await environmentManager.initialize();
-  environmentManager.printEnvironmentInfo();
+  _logStartupCheckpoint(startupWatch, 'EnvironmentManager');
 
   // Screen orientation
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  _logStartupCheckpoint(startupWatch, 'SystemChrome');
 
   // Flavor-specific system UI
   final flavorColors = FlavorUtils.getFlavorColors();
@@ -76,8 +85,18 @@ Future<void> runMainApp() async {
         .e('Unhandled error', error: error, stackTrace: stackTrace);
   });
 
+  _logStartupCheckpoint(startupWatch, 'runApp');
+
   // Initialize non-critical services in background
   WidgetsBinding.instance.addPostFrameCallback((_) {
+    _logStartupCheckpoint(startupWatch, 'First frame rendered');
     ServiceInitializer.initializeNonCriticalServices();
   });
+}
+
+void _logStartupCheckpoint(Stopwatch watch, String label) {
+  if (kDebugMode) {
+    debugPrint(
+        '⏱️ [Startup] $label: ${watch.elapsedMilliseconds}ms (total)');
+  }
 }

@@ -170,16 +170,27 @@ class TokenRepositoryImpl implements TokenRepository {
   }
 
   Future<void> _migrateLegacyKeys() async {
-    final legacySecureAccessToken = (await _tokenStorage.readString('auth_token'));
+    // Read all sources in parallel to minimise native bridge round-trips
+    final results = await Future.wait([
+      _tokenStorage.readString('auth_token'),   // [0] legacySecureAccessToken
+      _tokenStorage.readAccessToken(),           // [1] currentSecureAccess
+      _tokenStorage.readRefreshToken(),          // [2] currentSecureRefresh
+    ]);
 
-    final currentSecureAccess = await _tokenStorage.readAccessToken();
+    final legacySecureAccessToken = results[0];
+    var currentSecureAccess = results[1];
+    final currentSecureRefresh = results[2];
+
+    // Migrate legacy secure 'auth_token' → standard access token key
     if ((currentSecureAccess == null || currentSecureAccess.isEmpty) &&
         legacySecureAccessToken != null &&
         legacySecureAccessToken.isNotEmpty) {
       await _tokenStorage.writeAccessToken(legacySecureAccessToken);
       await _tokenStorage.removeKey('auth_token');
+      currentSecureAccess = legacySecureAccessToken;
     }
 
+    // Migrate legacy SharedPreferences keys → secure storage
     final legacySpAccess = _prefs.getString('auth_access_token') ??
         _prefs.getString('auth_token') ??
         _prefs.getString(StorageKeys.accessToken);
@@ -187,32 +198,30 @@ class TokenRepositoryImpl implements TokenRepository {
     final legacySpRefresh = _prefs.getString('auth_refresh_token') ??
         _prefs.getString(StorageKeys.refreshToken);
 
-    final secureAccess = await _tokenStorage.readAccessToken();
-    if ((secureAccess == null || secureAccess.isEmpty) &&
+    if ((currentSecureAccess == null || currentSecureAccess.isEmpty) &&
         legacySpAccess != null &&
         legacySpAccess.isNotEmpty) {
       await _tokenStorage.writeAccessToken(legacySpAccess);
+      currentSecureAccess = legacySpAccess;
     }
 
-    final secureRefresh = await _tokenStorage.readRefreshToken();
-    if ((secureRefresh == null || secureRefresh.isEmpty) &&
+    if ((currentSecureRefresh == null || currentSecureRefresh.isEmpty) &&
         legacySpRefresh != null &&
         legacySpRefresh.isNotEmpty) {
       await _tokenStorage.writeRefreshToken(legacySpRefresh);
     }
 
-    final effectiveAccess = await _tokenStorage.readAccessToken();
-    final effectiveRefresh = await _tokenStorage.readRefreshToken();
-
-    if (effectiveAccess != null && effectiveAccess.isNotEmpty) {
-      await _prefs.setString(StorageKeys.accessToken, effectiveAccess);
-    }
-
-    if (effectiveRefresh != null && effectiveRefresh.isNotEmpty) {
-      await _prefs.setString(StorageKeys.refreshToken, effectiveRefresh);
-    }
+    // Sync effective tokens back to SharedPreferences + cleanup in parallel
+    final effectiveAccess = currentSecureAccess;
+    final effectiveRefresh = (currentSecureRefresh != null && currentSecureRefresh.isNotEmpty)
+        ? currentSecureRefresh
+        : legacySpRefresh;
 
     await Future.wait([
+      if (effectiveAccess != null && effectiveAccess.isNotEmpty)
+        _prefs.setString(StorageKeys.accessToken, effectiveAccess),
+      if (effectiveRefresh != null && effectiveRefresh.isNotEmpty)
+        _prefs.setString(StorageKeys.refreshToken, effectiveRefresh),
       _prefs.remove('auth_access_token'),
       _prefs.remove('auth_refresh_token'),
       _prefs.remove('auth_token'),

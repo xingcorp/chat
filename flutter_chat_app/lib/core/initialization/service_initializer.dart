@@ -4,10 +4,12 @@ import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 
+import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_manager.dart';
 import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
 import 'package:flutter_chat_app/core/services/chat_message_service.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
 import 'package:flutter_chat_app/core/services/performance_service.dart';
@@ -23,6 +25,33 @@ class ServiceInitializer {
   /// rest of the app keeps running.
   static Future<void> initializeNonCriticalServices() async {
     final logger = GetIt.I<Logger>();
+
+    try {
+      // Deferred cache cleanup (moved out of critical startup path)
+      AppCacheManager().deferredCleanup();
+    } catch (e) {
+      logger.e('Cache cleanup failed', error: e);
+    }
+
+    try {
+      // Deferred CurrentUserProvider init (moved out of configureDependencies)
+      if (GetIt.I.isRegistered<CurrentUserProvider>()) {
+        await GetIt.I<CurrentUserProvider>().initialize();
+
+        final currentUserId = GetIt.I<CurrentUserProvider>().currentUserId;
+        if (currentUserId.isNotEmpty) {
+          if (GetIt.I.isRegistered<String>(instanceName: 'currentUserId')) {
+            await GetIt.I.unregister<String>(instanceName: 'currentUserId');
+          }
+          GetIt.I.registerSingleton<String>(
+            currentUserId,
+            instanceName: 'currentUserId',
+          );
+        }
+      }
+    } catch (e) {
+      logger.e('CurrentUserProvider initialization failed', error: e);
+    }
 
     try {
       final firebaseServiceManager = FirebaseServiceManager(logger);

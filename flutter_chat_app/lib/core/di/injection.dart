@@ -41,7 +41,7 @@ import 'package:flutter_chat_app/core/network/graphql_client.dart'
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/network/http/dio_http_client.dart';
 import 'package:flutter_chat_app/core/network/http/http_client_interface.dart';
-import 'package:flutter_chat_app/core/services/current_user_provider.dart';
+
 import 'package:flutter_chat_app/core/network/socket_manager.dart'
     as socket_mgr;
 import 'package:flutter_chat_app/core/network/realtime/connection_pool_manager.dart';
@@ -233,21 +233,11 @@ Future<void> configureDependencies() async {
           () => getIt<EnhancedRealtimeConnectionService>());
     }
 
-    // Initialize current user provider so non-UI layers can access
-    // current user id and user stream consistently.
-    if (getIt.isRegistered<CurrentUserProvider>()) {
-      await getIt<CurrentUserProvider>().initialize();
-
-      // Backward compatibility: provide named currentUserId sourced from CurrentUserProvider
-      // so callers can migrate away from SharedPreferences('userId').
-      final currentUserId = getIt<CurrentUserProvider>().currentUserId;
-      if (getIt.isRegistered<String>(instanceName: 'currentUserId')) {
-        await getIt.unregister<String>(instanceName: 'currentUserId');
-      }
-      getIt.registerSingleton<String>(
-        currentUserId,
-        instanceName: 'currentUserId',
-      );
+    // CurrentUserProvider initialization is deferred to postFrameCallback
+    // (see ServiceInitializer.initializeNonCriticalServices) to speed up startup.
+    // Register an empty currentUserId placeholder so dependents don't crash.
+    if (!getIt.isRegistered<String>(instanceName: 'currentUserId')) {
+      getIt.registerSingleton<String>('', instanceName: 'currentUserId');
     }
 
     if (!getIt.isRegistered<INetworkInfo>()) {
@@ -320,9 +310,25 @@ Future<void> _registerExternalDependencies(Logger logger) async {
     getIt.registerSingleton<Logger>(logger);
   }
 
-  // SharedPreferences - required for local storage
+  // SharedPreferences + Firebase init are independent – run in parallel
+  late final SharedPreferences prefs;
+  if (!getIt.isRegistered<SharedPreferences>() || !FirebaseConfigManager.isInitialized) {
+    final results = await Future.wait([
+      if (!getIt.isRegistered<SharedPreferences>())
+        SharedPreferences.getInstance()
+      else
+        Future.value(getIt<SharedPreferences>()),
+      if (!FirebaseConfigManager.isInitialized)
+        FirebaseConfigManager.initialize()
+      else
+        Future.value(null),
+    ]);
+    prefs = results[0] as SharedPreferences;
+  } else {
+    prefs = getIt<SharedPreferences>();
+  }
+
   if (!getIt.isRegistered<SharedPreferences>()) {
-    final prefs = await SharedPreferences.getInstance();
     getIt.registerSingleton<SharedPreferences>(prefs);
   }
 
@@ -445,10 +451,7 @@ Future<void> _registerExternalDependencies(Logger logger) async {
         app_retry.RetryConfig.realtime);
   }
 
-  // Initialize Firebase for all platforms
-  if (!FirebaseConfigManager.isInitialized) {
-    await FirebaseConfigManager.initialize();
-  }
+  // Firebase already initialized in parallel block above
 
   if (!getIt.isRegistered<FirebasePerformance>()) {
     getIt.registerLazySingleton<FirebasePerformance>(

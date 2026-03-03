@@ -89,10 +89,15 @@ class InMemorySecureStorage implements SecureStorage {
   }
 }
 
-/// Implementation of the SecureStorage interface
+/// Implementation of the SecureStorage interface with write-through in-memory cache.
+///
+/// Every read checks the in-memory map first, avoiding expensive native bridge
+/// calls (EncryptedSharedPreferences / Keychain) on repeated access.
 class SecureStorageImpl implements SecureStorage {
   final FlutterSecureStorage _storage;
-  
+  final Map<String, String?> _cache = {};
+  bool _allLoaded = false;
+
   /// Constructor
   SecureStorageImpl({FlutterSecureStorage? storage})
       : _storage = storage ??
@@ -103,58 +108,89 @@ class SecureStorageImpl implements SecureStorage {
                       encryptedSharedPreferences: true,
                     ),
                   ));
-  
+
   @override
   Future<void> setString(String key, String value) async {
+    _cache[key] = value;
     await _storage.write(key: key, value: value);
   }
-  
+
   @override
   Future<String?> getString(String key) async {
-    return await _storage.read(key: key);
+    if (_cache.containsKey(key)) {
+      return _cache[key];
+    }
+    final value = await _storage.read(key: key);
+    _cache[key] = value;
+    return value;
   }
-  
+
   @override
   Future<void> setObject(String key, Map<String, dynamic> value) async {
     final String jsonString = json.encode(value);
+    _cache[key] = jsonString;
     await _storage.write(key: key, value: jsonString);
   }
-  
+
   @override
   Future<Map<String, dynamic>?> getObject(String key) async {
-    final String? jsonString = await _storage.read(key: key);
+    final String? jsonString = await getString(key);
     if (jsonString == null) return null;
-    
+
     try {
       return json.decode(jsonString) as Map<String, dynamic>;
     } catch (_) {
       return null;
     }
   }
-  
+
   @override
   Future<bool> containsKey(String key) async {
+    if (_cache.containsKey(key)) {
+      return _cache[key] != null;
+    }
     return await _storage.containsKey(key: key);
   }
-  
+
   @override
   Future<void> remove(String key) async {
+    _cache[key] = null;
     await _storage.delete(key: key);
   }
-  
+
   @override
   Future<void> clear() async {
+    _cache.clear();
+    _allLoaded = false;
     await _storage.deleteAll();
   }
-  
+
   @override
   Future<List<String>> getKeys() async {
+    if (_allLoaded) {
+      return _cache.entries
+          .where((e) => e.value != null)
+          .map((e) => e.key)
+          .toList();
+    }
     final Map<String, String> allValues = await _storage.readAll();
+    _cache.addAll(allValues);
+    _allLoaded = true;
     return allValues.keys.toList();
   }
-  
+
   @override
   Future<Map<String, String>> getAll() async {
-    return await _storage.readAll();
+    if (_allLoaded) {
+      return Map<String, String>.fromEntries(
+        _cache.entries
+            .where((e) => e.value != null)
+            .map((e) => MapEntry(e.key, e.value!)),
+      );
+    }
+    final allValues = await _storage.readAll();
+    _cache.addAll(allValues);
+    _allLoaded = true;
+    return allValues;
   }
 } 
