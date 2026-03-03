@@ -584,19 +584,16 @@ class _ChatInputState extends BaseState<ChatInput> {
                       unawaited(_startRecording());
                     },
                     onLongPressEnd: _stopRecording,
-                    child: Tooltip(
-                      message: context.l10n.longPressToRecord,
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.mic,
-                          color: Colors.white,
-                        ),
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.mic,
+                        color: Colors.white,
                       ),
                     ),
                   )

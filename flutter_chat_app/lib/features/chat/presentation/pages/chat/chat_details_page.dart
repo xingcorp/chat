@@ -1575,20 +1575,17 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               onLongPressMoveUpdate: _onVoiceRecordingLongPressMoveUpdate,
               onLongPressEnd: _onVoiceRecordingLongPressEnd,
               behavior: HitTestBehavior.opaque,
-              child: Tooltip(
-                message: context.l10n.longPressToRecord,
-                child: Container(
-                  width: AppDimens.iconButtonSize,
-                  height: AppDimens.iconButtonSize,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.mic_rounded,
-                    color: AppColors.textButton,
-                    size: AppDimens.iconMedium,
-                  ),
+              child: Container(
+                width: AppDimens.iconButtonSize,
+                height: AppDimens.iconButtonSize,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.mic_rounded,
+                  color: AppColors.textButton,
+                  size: AppDimens.iconMedium,
                 ),
               ),
             ),
