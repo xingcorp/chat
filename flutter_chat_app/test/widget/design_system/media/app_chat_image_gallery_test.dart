@@ -142,6 +142,32 @@ void main() {
     expect(tappedIndex, 1);
   });
 
+  testWidgets('tapping +N tile opens the first hidden image index',
+      (tester) async {
+    int? tappedIndex;
+    final items = List<AppChatImageGalleryItem>.generate(
+      8,
+      (index) => AppChatImageGalleryItem(
+        id: 'img_$index',
+        url: '',
+        localBytes: _kTestPngBytes,
+      ),
+    );
+
+    await tester.pumpWidget(
+      _buildGallery(
+        items: items,
+        onTap: (index) => tappedIndex = index,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('chat_image_tile_3')));
+    await tester.pump();
+
+    expect(tappedIndex, 4);
+  });
+
   testWidgets('shows upload progress overlay when item is uploading',
       (tester) async {
     final items = <AppChatImageGalleryItem>[

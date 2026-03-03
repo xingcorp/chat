@@ -2,13 +2,18 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show immutable, kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 
 final Map<String, double> _chatImageAspectRatioCache = {};
 
 /// Image source model for chat attachment gallery.
+@immutable
 class AppChatImageGalleryItem {
   final String id;
   final String url;
@@ -38,13 +43,14 @@ class AppChatImageGalleryItem {
 /// - 2 images: two columns.
 /// - 3 images: one large tile + two stacked tiles.
 /// - 4+ images: 2x2 with +N overlay.
-class AppChatImageGallery extends StatelessWidget {
+class AppChatImageGallery extends BaseStatelessWidget {
   const AppChatImageGallery({
     super.key,
     required this.images,
     required this.onImageTap,
-    this.spacing = 4.0,
-    this.borderRadius = const BorderRadius.all(Radius.circular(8.0)),
+    this.spacing = AppDimens.spaceXSmall,
+    this.borderRadius =
+        const BorderRadius.all(Radius.circular(AppDimens.radiusSmall)),
   });
 
   final List<AppChatImageGalleryItem> images;
@@ -53,7 +59,7 @@ class AppChatImageGallery extends StatelessWidget {
   final BorderRadius borderRadius;
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildContent(BuildContext context) {
     if (images.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -232,15 +238,19 @@ class AppChatImageGallery extends StatelessWidget {
                       ),
                       overlay: remainingCount > 0
                           ? Container(
-                              color: Colors.black54,
+                              color: AppColors.backgroundDarkMode
+                                  .withValues(alpha: 0.54),
                               alignment: Alignment.center,
-                              child: Text(
+                              child: AppText(
                                 '+$remainingCount',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      color: AppColors.textPrimaryDarkMode,
+                                      fontWeight: FontWeight.w700,
+                                    ) ??
+                                    const TextStyle(
+                                      color: AppColors.textPrimaryDarkMode,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                               ),
                             )
                           : null,
@@ -337,7 +347,7 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
       return;
     }
 
-    final stream = provider.resolve(const ImageConfiguration());
+    final stream = provider.resolve(ImageConfiguration.empty);
     late final ImageStreamListener listener;
     listener = ImageStreamListener(
       (info, _) {
@@ -471,17 +481,22 @@ class _GalleryImageContent extends StatelessWidget {
 
   Widget _buildLoadingPlaceholder() {
     return Container(
-      color: Colors.grey[300],
+      color: AppColors.surfaceVariant,
       child: const Center(
-        child: CircularProgressIndicator(strokeWidth: 2.0),
+        child: AppProgressIndicator.circular(
+          size: ProgressSize.small,
+        ),
       ),
     );
   }
 
   Widget _buildErrorPlaceholder() {
     return Container(
-      color: Colors.grey[300],
-      child: const Icon(Icons.broken_image, color: Colors.grey),
+      color: AppColors.surfaceVariant,
+      child: const Icon(
+        Icons.broken_image,
+        color: AppColors.icon,
+      ),
     );
   }
 }
@@ -498,36 +513,41 @@ class _UploadingOverlay extends StatelessWidget {
     final percentage = (progress * 100).toInt();
 
     return Container(
-      color: Colors.black.withValues(alpha: 0.4),
+      color: AppColors.backgroundDarkMode.withValues(alpha: 0.4),
       child: Center(
         child: Container(
-          width: 48,
-          height: 48,
+          width: AppDimens.touchTargetMin,
+          height: AppDimens.touchTargetMin,
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.5),
+            color: AppColors.backgroundDarkMode.withValues(alpha: 0.5),
             shape: BoxShape.circle,
           ),
           child: Stack(
             alignment: Alignment.center,
             children: [
               SizedBox(
-                width: 40,
-                height: 40,
-                child: CircularProgressIndicator(
+                width: AppDimens.avatarMedium,
+                height: AppDimens.avatarMedium,
+                child: AppProgressIndicator.circular(
                   value: progress > 0 ? progress : null,
-                  strokeWidth: 3.0,
-                  backgroundColor: Colors.white.withValues(alpha: 0.3),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                  size: ProgressSize.medium,
+                  color: AppColors.textPrimaryDarkMode,
+                  backgroundColor:
+                      AppColors.textPrimaryDarkMode.withValues(alpha: 0.3),
+                  strokeWidth: AppDimens.spaceXSmall,
                 ),
               ),
               if (progress > 0)
-                Text(
+                AppText(
                   '$percentage%',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textPrimaryDarkMode,
+                        fontWeight: FontWeight.w600,
+                      ) ??
+                      const TextStyle(
+                        color: AppColors.textPrimaryDarkMode,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
             ],
           ),

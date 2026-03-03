@@ -125,6 +125,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
   late Animation<double> _bottomOverlayAnimation;
 
   late PageController _pageController;
+  late ScrollController _thumbnailScrollController;
   late int _currentIndex;
 
   /// Có hiện UI không
@@ -132,6 +133,9 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
 
   List<ImageViewerItem> get _images => widget.effectiveImages;
   ImageViewerItem get _currentImage => _images[_currentIndex];
+
+  static const double _thumbnailSize = 56.0;
+  static const double _thumbnailSpacing = 8.0;
 
   @override
   void initState() {
@@ -176,6 +180,10 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
 
     _currentIndex = widget.safeInitialIndex;
     _pageController = PageController(initialPage: _currentIndex);
+    _thumbnailScrollController = ScrollController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollThumbnailToCurrent(animate: false);
+    });
   }
 
   @override
@@ -188,6 +196,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
       ),
     );
 
+    _thumbnailScrollController.dispose();
     _pageController.dispose();
     _animationController.dispose();
     super.dispose();
@@ -274,6 +283,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                   setState(() {
                     _currentIndex = index;
                   });
+                  _scrollThumbnailToCurrent();
                 },
                 scrollPhysics: const BouncingScrollPhysics(),
                 backgroundDecoration: const BoxDecoration(
@@ -296,6 +306,9 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                   );
                 },
               ),
+
+              if (!hasMessage && _images.length > 1)
+                _buildStandaloneThumbnailStrip(context),
 
               // Bottom overlay with forward/reaction bar (only if message provided)
               if (hasMessage) _buildBottomOverlay(context, theme),
@@ -458,6 +471,11 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (_images.length > 1) ...[
+                _buildThumbnailStrip(context),
+                const SizedBox(height: 12.0),
+              ],
+
               // Forward button row
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -514,6 +532,127 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
         ),
       ),
     );
+  }
+
+  Widget _buildStandaloneThumbnailStrip(BuildContext context) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: AnimatedBuilder(
+        animation: _bottomOverlayAnimation,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, 100 * (1.0 - _bottomOverlayAnimation.value)),
+            child: Opacity(
+              opacity: _bottomOverlayAnimation.value,
+              child: child,
+            ),
+          );
+        },
+        child: Container(
+          padding: EdgeInsets.only(
+            left: 12.0,
+            right: 12.0,
+            top: 10.0,
+            bottom: MediaQuery.of(context).padding.bottom + 10.0,
+          ),
+          color: Colors.black.withValues(alpha: 0.45),
+          child: _buildThumbnailStrip(context),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThumbnailStrip(BuildContext context) {
+    return SizedBox(
+      height: _thumbnailSize,
+      child: ListView.separated(
+        controller: _thumbnailScrollController,
+        scrollDirection: Axis.horizontal,
+        itemCount: _images.length,
+        separatorBuilder: (_, __) => const SizedBox(width: _thumbnailSpacing),
+        itemBuilder: (context, index) {
+          final image = _images[index];
+          final isSelected = index == _currentIndex;
+
+          return GestureDetector(
+            onTap: () => _jumpToImage(index),
+            child: AnimatedContainer(
+              duration: animationService.config.fastDuration,
+              width: _thumbnailSize,
+              height: _thumbnailSize,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8.0),
+                border: Border.all(
+                  color: isSelected
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.4),
+                  width: isSelected ? 2.0 : 1.0,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(7.0),
+                child: CachedNetworkImage(
+                  imageUrl: image.imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: Colors.black26,
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.black26,
+                    child: const Icon(
+                      Icons.broken_image_outlined,
+                      color: Colors.white70,
+                      size: 18.0,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _jumpToImage(int index) async {
+    if (index < 0 || index >= _images.length || index == _currentIndex) {
+      return;
+    }
+
+    await _pageController.animateToPage(
+      index,
+      duration: animationService.config.fastDuration,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _scrollThumbnailToCurrent({bool animate = true}) {
+    if (!_thumbnailScrollController.hasClients || _images.length <= 1) {
+      return;
+    }
+
+    final targetOffset =
+        (_currentIndex * (_thumbnailSize + _thumbnailSpacing)) -
+            ((_thumbnailScrollController.position.viewportDimension -
+                    _thumbnailSize) /
+                2);
+
+    final clampedOffset = targetOffset.clamp(
+      0.0,
+      _thumbnailScrollController.position.maxScrollExtent,
+    );
+
+    if (animate) {
+      _thumbnailScrollController.animateTo(
+        clampedOffset,
+        duration: animationService.config.fastDuration,
+        curve: Curves.easeOutCubic,
+      );
+    } else {
+      _thumbnailScrollController.jumpTo(clampedOffset);
+    }
   }
 
   /// Build action button for bottom overlay
