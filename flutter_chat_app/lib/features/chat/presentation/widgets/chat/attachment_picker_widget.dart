@@ -11,7 +11,7 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 ///
 /// Features:
 /// - Camera (take photo)
-/// - Gallery (choose from photos)
+/// - Gallery (choose from photos/videos)
 /// - File (choose document/file)
 /// - Location (share location) - placeholder for future implementation
 /// - i18n support for all options
@@ -20,14 +20,18 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 class AttachmentPickerBottomSheet extends StatelessWidget {
   /// Callback when image is selected from camera
   /// On web: bytes and name are provided
-  final void Function(File imageFile, {Uint8List? bytes, String? name, int? size})? onImageFromCamera;
+  final void Function(File imageFile,
+      {Uint8List? bytes, String? name, int? size})? onImageFromCamera;
 
   /// Callback when image is selected from gallery
+  /// Note: videos selected from gallery are routed via [onFileSelected]
   /// On web: bytes and name are provided
-  final void Function(File imageFile, {Uint8List? bytes, String? name, int? size})? onImageFromGallery;
+  final void Function(File imageFile,
+      {Uint8List? bytes, String? name, int? size})? onImageFromGallery;
 
   /// Callback when file is selected (mobile: File, web: bytes + name + size)
-  final void Function(File file, {Uint8List? bytes, String? name, int? size})? onFileSelected;
+  final void Function(File file, {Uint8List? bytes, String? name, int? size})?
+      onFileSelected;
 
   /// Callback when location share is requested
   final VoidCallback? onLocationShare;
@@ -223,32 +227,120 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
   Future<void> _pickFromGallery(BuildContext context) async {
     try {
       final picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        imageQuality: 85,
+      XFile? mediaFile;
+      try {
+        mediaFile = await picker.pickMedia(
+          maxWidth: 1920,
+          maxHeight: 1920,
+          imageQuality: 85,
+        );
+      } catch (_) {
+        // Some old platform combinations may not support pickMedia.
+        mediaFile = null;
+      }
+
+      if (mediaFile != null) {
+        await _dispatchPickedGalleryMedia(mediaFile);
+        return;
+      }
+
+      // Fallback for unsupported pickMedia: use file_picker media type.
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.media,
+        allowMultiple: false,
+        withData: kIsWeb,
+      );
+      if (result == null || result.files.isEmpty) return;
+
+      final picked = result.files.first;
+      final fileName = picked.name;
+      final mediaFilePath = picked.path ?? '';
+      final bytes = kIsWeb ? picked.bytes : null;
+      final fileSize = picked.size;
+      if (mediaFilePath.isEmpty && bytes == null) {
+        if (context.mounted) {
+          _showError(context, 'Failed to read selected media');
+        }
+        return;
+      }
+      final isVideo = _isVideoMedia(
+        mimeType: null,
+        fileName: fileName,
+        filePath: mediaFilePath,
       );
 
-      if (image != null) {
-        // On web, read bytes; on mobile, just use path
-        Uint8List? bytes;
-        if (kIsWeb) {
-          bytes = await image.readAsBytes();
-        }
-        onImageFromGallery?.call(
-          File(image.path),
+      if (isVideo) {
+        onFileSelected?.call(
+          File(mediaFilePath),
           bytes: bytes,
-          name: image.name,
-          size: await image.length(),
+          name: fileName,
+          size: fileSize,
+        );
+      } else {
+        onImageFromGallery?.call(
+          File(mediaFilePath),
+          bytes: bytes,
+          name: fileName,
+          size: fileSize,
         );
       }
     } catch (e) {
       debugPrint('Error picking from gallery: $e');
       if (context.mounted) {
-        _showError(context, 'Failed to choose photo');
+        _showError(context, 'Failed to choose media');
       }
     }
+  }
+
+  Future<void> _dispatchPickedGalleryMedia(XFile mediaFile) async {
+    // On web, read bytes; on mobile, use local path for upload.
+    Uint8List? bytes;
+    if (kIsWeb) {
+      bytes = await mediaFile.readAsBytes();
+    }
+
+    final size = await mediaFile.length();
+    final isVideo = _isVideoMedia(
+      mimeType: mediaFile.mimeType,
+      fileName: mediaFile.name,
+      filePath: mediaFile.path,
+    );
+
+    if (isVideo) {
+      onFileSelected?.call(
+        File(mediaFile.path),
+        bytes: bytes,
+        name: mediaFile.name,
+        size: size,
+      );
+      return;
+    }
+
+    onImageFromGallery?.call(
+      File(mediaFile.path),
+      bytes: bytes,
+      name: mediaFile.name,
+      size: size,
+    );
+  }
+
+  bool _isVideoMedia({
+    String? mimeType,
+    required String fileName,
+    required String filePath,
+  }) {
+    final normalizedMime = mimeType?.toLowerCase().trim();
+    if (normalizedMime != null && normalizedMime.startsWith('video/')) {
+      return true;
+    }
+
+    final candidate = (fileName.isNotEmpty ? fileName : filePath).toLowerCase();
+    return candidate.endsWith('.mp4') ||
+        candidate.endsWith('.mov') ||
+        candidate.endsWith('.avi') ||
+        candidate.endsWith('.mkv') ||
+        candidate.endsWith('.webm') ||
+        candidate.endsWith('.m4v');
   }
 
   Future<void> _pickFile(BuildContext context) async {
@@ -304,9 +396,12 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
   /// Static method to show the bottom sheet
   static Future<void> show(
     BuildContext context, {
-    void Function(File imageFile, {Uint8List? bytes, String? name, int? size})? onImageFromCamera,
-    void Function(File imageFile, {Uint8List? bytes, String? name, int? size})? onImageFromGallery,
-    void Function(File file, {Uint8List? bytes, String? name, int? size})? onFileSelected,
+    void Function(File imageFile, {Uint8List? bytes, String? name, int? size})?
+        onImageFromCamera,
+    void Function(File imageFile, {Uint8List? bytes, String? name, int? size})?
+        onImageFromGallery,
+    void Function(File file, {Uint8List? bytes, String? name, int? size})?
+        onFileSelected,
     VoidCallback? onLocationShare,
   }) {
     return showModalBottomSheet(

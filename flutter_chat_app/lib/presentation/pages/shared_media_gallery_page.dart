@@ -503,8 +503,9 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
   /// Build individual media item
   Widget _buildMediaItem(SharedMedia media, SharedMediaType type, bool isDark) {
     final isVideo = type == SharedMediaType.video;
+    final thumbnailUrl = media.thumbnailUrl?.trim() ?? '';
     final hasThumbnail =
-        media.thumbnailUrl != null && media.thumbnailUrl!.isNotEmpty;
+        thumbnailUrl.isNotEmpty && !_isLikelyVideoUrl(thumbnailUrl);
 
     return GestureDetector(
       onTap: () => _openMediaPreview(media, type),
@@ -516,7 +517,7 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
             // Thumbnail or placeholder
             if (hasThumbnail)
               CachedNetworkImage(
-                imageUrl: media.thumbnailUrl!,
+                imageUrl: thumbnailUrl,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
                   color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
@@ -606,6 +607,24 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
         ),
       ),
     );
+  }
+
+  bool _isLikelyVideoUrl(String url) {
+    final lower = _safeUrlPath(url);
+    return lower.endsWith('.mp4') ||
+        lower.endsWith('.mov') ||
+        lower.endsWith('.webm') ||
+        lower.endsWith('.avi') ||
+        lower.endsWith('.mkv') ||
+        lower.endsWith('.m4v');
+  }
+
+  String _safeUrlPath(String url) {
+    try {
+      return Uri.parse(url).path.toLowerCase();
+    } catch (_) {
+      return url.toLowerCase();
+    }
   }
 
   /// Build files list with timeline grouping

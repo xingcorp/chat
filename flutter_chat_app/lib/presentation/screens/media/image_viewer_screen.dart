@@ -242,7 +242,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
         animation: _appBarOpacityAnimation,
         builder: (context, child) {
           return Opacity(
-            opacity: 1.0 - _appBarOpacityAnimation.value,
+            opacity: _appBarOpacityAnimation.value,
             child: Theme(
               data: theme.copyWith(
                 iconTheme: const IconThemeData(color: Colors.white),
@@ -350,9 +350,9 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
         animation: _bottomOverlayAnimation,
         builder: (context, child) {
           return Transform.translate(
-            offset: Offset(0, 100 * _bottomOverlayAnimation.value),
+            offset: Offset(0, 100 * (1.0 - _bottomOverlayAnimation.value)),
             child: Opacity(
-              opacity: 1.0 - _bottomOverlayAnimation.value,
+              opacity: _bottomOverlayAnimation.value,
               child: child,
             ),
           );
