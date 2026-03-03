@@ -1,11 +1,26 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show immutable, kIsWeb;
+import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:image_picker/image_picker.dart';
+
+@immutable
+class GalleryImageSelection {
+  final File file;
+  final Uint8List? bytes;
+  final String name;
+  final int size;
+
+  const GalleryImageSelection({
+    required this.file,
+    this.bytes,
+    required this.name,
+    required this.size,
+  });
+}
 
 /// Bottom sheet for selecting attachment type
 ///
@@ -18,6 +33,8 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 /// - Theme-aware styling
 /// - Cross-platform: passes bytes on web, File on mobile
 class AttachmentPickerBottomSheet extends StatelessWidget {
+  static const int _maxGallerySelection = 20;
+
   /// Callback when image is selected from camera
   /// On web: bytes and name are provided
   final void Function(File imageFile,
@@ -29,6 +46,9 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
   final void Function(File imageFile,
       {Uint8List? bytes, String? name, int? size})? onImageFromGallery;
 
+  /// Callback when multiple images are selected from gallery
+  final void Function(List<GalleryImageSelection> images)? onImagesFromGallery;
+
   /// Callback when file is selected (mobile: File, web: bytes + name + size)
   final void Function(File file, {Uint8List? bytes, String? name, int? size})?
       onFileSelected;
@@ -37,12 +57,13 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
   final VoidCallback? onLocationShare;
 
   const AttachmentPickerBottomSheet({
-    Key? key,
+    super.key,
     this.onImageFromCamera,
     this.onImageFromGallery,
+    this.onImagesFromGallery,
     this.onFileSelected,
     this.onLocationShare,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +136,7 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
                   ),
 
                 // Gallery option
-                if (onImageFromGallery != null)
+                if (onImageFromGallery != null || onImagesFromGallery != null)
                   _buildOption(
                     context: context,
                     icon: Icons.photo_library_outlined,
@@ -227,63 +248,44 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
   Future<void> _pickFromGallery(BuildContext context) async {
     try {
       final picker = ImagePicker();
-      XFile? mediaFile;
       try {
-        mediaFile = await picker.pickMedia(
+        final mediaFiles = await picker.pickMultipleMedia(
+          maxWidth: 1920,
+          maxHeight: 1920,
+          imageQuality: 85,
+          limit: _maxGallerySelection,
+        );
+        if (mediaFiles.isNotEmpty) {
+          await _dispatchPickedGalleryMediaItems(mediaFiles);
+          return;
+        }
+      } catch (_) {
+        // Some platform combinations may not support pickMultipleMedia.
+      }
+
+      // Fallback for unsupported multi-media picker: use single-media picker.
+      try {
+        final mediaFile = await picker.pickMedia(
           maxWidth: 1920,
           maxHeight: 1920,
           imageQuality: 85,
         );
+        if (mediaFile != null) {
+          await _dispatchPickedGalleryMediaItems([mediaFile]);
+          return;
+        }
       } catch (_) {
-        // Some old platform combinations may not support pickMedia.
-        mediaFile = null;
+        // Continue to file_picker fallback.
       }
 
-      if (mediaFile != null) {
-        await _dispatchPickedGalleryMedia(mediaFile);
-        return;
-      }
-
-      // Fallback for unsupported pickMedia: use file_picker media type.
+      // Final fallback for unsupported pickMedia APIs.
       final result = await FilePicker.platform.pickFiles(
         type: FileType.media,
-        allowMultiple: false,
+        allowMultiple: true,
         withData: kIsWeb,
       );
       if (result == null || result.files.isEmpty) return;
-
-      final picked = result.files.first;
-      final fileName = picked.name;
-      final mediaFilePath = picked.path ?? '';
-      final bytes = kIsWeb ? picked.bytes : null;
-      final fileSize = picked.size;
-      if (mediaFilePath.isEmpty && bytes == null) {
-        if (context.mounted) {
-          _showError(context, 'Failed to read selected media');
-        }
-        return;
-      }
-      final isVideo = _isVideoMedia(
-        mimeType: null,
-        fileName: fileName,
-        filePath: mediaFilePath,
-      );
-
-      if (isVideo) {
-        onFileSelected?.call(
-          File(mediaFilePath),
-          bytes: bytes,
-          name: fileName,
-          size: fileSize,
-        );
-      } else {
-        onImageFromGallery?.call(
-          File(mediaFilePath),
-          bytes: bytes,
-          name: fileName,
-          size: fileSize,
-        );
-      }
+      await _dispatchPickedFilePickerMedia(result.files);
     } catch (e) {
       debugPrint('Error picking from gallery: $e');
       if (context.mounted) {
@@ -292,36 +294,114 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
     }
   }
 
-  Future<void> _dispatchPickedGalleryMedia(XFile mediaFile) async {
-    // On web, read bytes; on mobile, use local path for upload.
-    Uint8List? bytes;
-    if (kIsWeb) {
-      bytes = await mediaFile.readAsBytes();
-    }
+  Future<void> _dispatchPickedGalleryMediaItems(List<XFile> mediaFiles) async {
+    final pickedItems = <_PickedMediaItem>[];
 
-    final size = await mediaFile.length();
-    final isVideo = _isVideoMedia(
-      mimeType: mediaFile.mimeType,
-      fileName: mediaFile.name,
-      filePath: mediaFile.path,
-    );
+    for (final mediaFile in mediaFiles) {
+      Uint8List? bytes;
+      if (kIsWeb) {
+        bytes = await mediaFile.readAsBytes();
+      }
 
-    if (isVideo) {
-      onFileSelected?.call(
-        File(mediaFile.path),
-        bytes: bytes,
-        name: mediaFile.name,
-        size: size,
+      final size = await mediaFile.length();
+      pickedItems.add(
+        _PickedMediaItem(
+          file: File(mediaFile.path),
+          bytes: bytes,
+          name: mediaFile.name,
+          size: size,
+          isVideo: _isVideoMedia(
+            mimeType: mediaFile.mimeType,
+            fileName: mediaFile.name,
+            filePath: mediaFile.path,
+          ),
+        ),
       );
-      return;
     }
 
-    onImageFromGallery?.call(
-      File(mediaFile.path),
-      bytes: bytes,
-      name: mediaFile.name,
-      size: size,
-    );
+    _dispatchPickedMediaItems(pickedItems);
+  }
+
+  Future<void> _dispatchPickedFilePickerMedia(List<PlatformFile> files) async {
+    final pickedItems = <_PickedMediaItem>[];
+
+    for (final file in files) {
+      final fileName = file.name;
+      final mediaFilePath = file.path ?? '';
+      final bytes = kIsWeb ? file.bytes : null;
+      if (mediaFilePath.isEmpty && bytes == null) {
+        continue;
+      }
+
+      pickedItems.add(
+        _PickedMediaItem(
+          file: File(mediaFilePath),
+          bytes: bytes,
+          name: fileName,
+          size: file.size,
+          isVideo: _isVideoMedia(
+            mimeType: null,
+            fileName: fileName,
+            filePath: mediaFilePath,
+          ),
+        ),
+      );
+    }
+
+    _dispatchPickedMediaItems(pickedItems);
+  }
+
+  void _dispatchPickedMediaItems(List<_PickedMediaItem> pickedItems) {
+    if (pickedItems.isEmpty) return;
+
+    final imageItems = pickedItems.where((item) => !item.isVideo).toList();
+    final videoItems = pickedItems.where((item) => item.isVideo).toList();
+
+    if (imageItems.length > 1 && onImagesFromGallery != null) {
+      onImagesFromGallery!(
+        imageItems
+            .map(
+              (item) => GalleryImageSelection(
+                file: item.file,
+                bytes: item.bytes,
+                name: item.name,
+                size: item.size,
+              ),
+            )
+            .toList(growable: false),
+      );
+    } else if (onImageFromGallery != null) {
+      for (final image in imageItems) {
+        onImageFromGallery?.call(
+          image.file,
+          bytes: image.bytes,
+          name: image.name,
+          size: image.size,
+        );
+      }
+    } else if (imageItems.isNotEmpty && onImagesFromGallery != null) {
+      onImagesFromGallery!(
+        imageItems
+            .map(
+              (item) => GalleryImageSelection(
+                file: item.file,
+                bytes: item.bytes,
+                name: item.name,
+                size: item.size,
+              ),
+            )
+            .toList(growable: false),
+      );
+    }
+
+    for (final video in videoItems) {
+      onFileSelected?.call(
+        video.file,
+        bytes: video.bytes,
+        name: video.name,
+        size: video.size,
+      );
+    }
   }
 
   bool _isVideoMedia({
@@ -400,6 +480,7 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
         onImageFromCamera,
     void Function(File imageFile, {Uint8List? bytes, String? name, int? size})?
         onImageFromGallery,
+    void Function(List<GalleryImageSelection> images)? onImagesFromGallery,
     void Function(File file, {Uint8List? bytes, String? name, int? size})?
         onFileSelected,
     VoidCallback? onLocationShare,
@@ -411,9 +492,27 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
       builder: (_) => AttachmentPickerBottomSheet(
         onImageFromCamera: onImageFromCamera,
         onImageFromGallery: onImageFromGallery,
+        onImagesFromGallery: onImagesFromGallery,
         onFileSelected: onFileSelected,
         onLocationShare: onLocationShare,
       ),
     );
   }
+}
+
+@immutable
+class _PickedMediaItem {
+  final File file;
+  final Uint8List? bytes;
+  final String name;
+  final int size;
+  final bool isVideo;
+
+  const _PickedMediaItem({
+    required this.file,
+    this.bytes,
+    required this.name,
+    required this.size,
+    required this.isVideo,
+  });
 }

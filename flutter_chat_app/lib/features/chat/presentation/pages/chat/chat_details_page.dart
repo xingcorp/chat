@@ -970,6 +970,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       context,
       onImageFromCamera: _handleImageFromCamera,
       onImageFromGallery: _handleImageFromGallery,
+      onImagesFromGallery: _handleImagesFromGallery,
       onFileSelected: _handleFileSelected,
       onLocationShare: _handleLocationShare,
     );
@@ -982,6 +983,117 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   void _handleImageFromGallery(File imageFile,
           {Uint8List? bytes, String? name, int? size}) =>
       _processAndSendImage(imageFile, bytes: bytes, name: name, size: size);
+
+  void _handleImagesFromGallery(List<GalleryImageSelection> images) {
+    unawaited(_handleImagesFromGalleryAsync(images));
+  }
+
+  Future<void> _handleImagesFromGalleryAsync(
+      List<GalleryImageSelection> images) async {
+    if (images.isEmpty) return;
+
+    if (images.length == 1) {
+      final image = images.first;
+      _processAndSendImage(
+        image.file,
+        bytes: image.bytes,
+        name: image.name,
+        size: image.size,
+      );
+      return;
+    }
+
+    final l10n = context.l10n;
+
+    try {
+      if (kIsWeb) {
+        final fileBytes = <List<int>>[];
+        final fileNames = <String>[];
+        final fileSizes = <int>[];
+
+        for (final image in images) {
+          if (image.bytes == null) continue;
+          fileBytes.add(image.bytes!);
+          fileNames.add(image.name);
+          fileSizes.add(image.size > 0 ? image.size : image.bytes!.length);
+        }
+
+        if (fileBytes.isEmpty) {
+          if (!mounted) return;
+          AppSnackBar.show(
+            context: context,
+            message: l10n.errorOccurred,
+            type: FeedbackType.error,
+          );
+          return;
+        }
+
+        _messageBloc.add(
+          SendMessageWithAttachments(
+            content: '',
+            senderId: _currentUserId,
+            localFilePaths: const [],
+            fileBytes: fileBytes,
+            fileNames: fileNames,
+            fileSizes: fileSizes,
+          ),
+        );
+        return;
+      }
+
+      final localFilePaths = <String>[];
+      final fileNames = <String>[];
+      final fileSizes = <int>[];
+
+      for (final image in images) {
+        final compressedImage =
+            await ImageCompressionHelper.compressImage(image.file);
+        if (!mounted) return;
+
+        final uploadFile = compressedImage ?? image.file;
+        if (!uploadFile.existsSync()) continue;
+
+        final filePath = uploadFile.path;
+        if (filePath.isEmpty) continue;
+
+        final fileSize = uploadFile.lengthSync();
+        final normalizedName = image.name.isNotEmpty
+            ? image.name
+            : filePath.split(RegExp(r'[\\/]')).last;
+
+        localFilePaths.add(filePath);
+        fileNames.add(normalizedName);
+        fileSizes.add(fileSize);
+      }
+
+      if (localFilePaths.isEmpty) {
+        if (!mounted) return;
+        AppSnackBar.show(
+          context: context,
+          message: l10n.imageCompressionFailed,
+          type: FeedbackType.error,
+        );
+        return;
+      }
+
+      _messageBloc.add(
+        SendMessageWithAttachments(
+          content: '',
+          senderId: _currentUserId,
+          localFilePaths: localFilePaths,
+          fileNames: fileNames,
+          fileSizes: fileSizes,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackBar.show(
+        context: context,
+        message: l10n.errorOccurred,
+        type: FeedbackType.error,
+      );
+    }
+  }
 
   void _handleFileSelected(File file,
       {Uint8List? bytes, String? name, int? size}) {
