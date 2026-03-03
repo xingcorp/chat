@@ -6,9 +6,8 @@ import 'package:flutter_chat_app/core/network/enhanced_socket_manager.dart';
 import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/data/dtos/message_dto.dart';
-import 'package:flutter_chat_app/data/mappers/message_mapper.dart';
+import 'package:flutter_chat_app/domain/entities/user_presence.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
-import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:rxdart/rxdart.dart';
@@ -28,7 +27,7 @@ import 'package:rxdart/rxdart.dart';
 @singleton
 class RealtimeService {
   final EnhancedSocketManager _socketManager;
-  
+
   /// Custom printer for web that safely handles null values in stackTrace
   static LogPrinter _createPrinter() {
     if (kIsWeb) {
@@ -51,24 +50,34 @@ class RealtimeService {
       dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
     );
   }
-  
+
   final Logger _logger = Logger(printer: _createPrinter());
 
   // Stream controllers for real-time events
-  final BehaviorSubject<SocketConnectionState> _connectionStateController = 
-      BehaviorSubject<SocketConnectionState>.seeded(SocketConnectionState.disconnected);
-  
-  final BehaviorSubject<ChatMessage> _messageController = BehaviorSubject<ChatMessage>();
-  final BehaviorSubject<ChatMessage> _messageEditedController = BehaviorSubject<ChatMessage>();
-  final BehaviorSubject<ChatMessage> _messageDeletedController = BehaviorSubject<ChatMessage>();
-  final BehaviorSubject<MessageReaction> _messageReactionController = BehaviorSubject<MessageReaction>();
-  final BehaviorSubject<TypingIndicator> _typingController = BehaviorSubject<TypingIndicator>();
-  final BehaviorSubject<UserStatus> _userStatusController = BehaviorSubject<UserStatus>();
-  final BehaviorSubject<MessageReadReceipt> _readReceiptController = BehaviorSubject<MessageReadReceipt>();
+  final BehaviorSubject<SocketConnectionState> _connectionStateController =
+      BehaviorSubject<SocketConnectionState>.seeded(
+          SocketConnectionState.disconnected);
+
+  final BehaviorSubject<ChatMessage> _messageController =
+      BehaviorSubject<ChatMessage>();
+  final BehaviorSubject<ChatMessage> _messageEditedController =
+      BehaviorSubject<ChatMessage>();
+  final BehaviorSubject<ChatMessage> _messageDeletedController =
+      BehaviorSubject<ChatMessage>();
+  final BehaviorSubject<MessageReaction> _messageReactionController =
+      BehaviorSubject<MessageReaction>();
+  final BehaviorSubject<TypingIndicator> _typingController =
+      BehaviorSubject<TypingIndicator>();
+  final BehaviorSubject<UserStatus> _userStatusController =
+      BehaviorSubject<UserStatus>();
+  final BehaviorSubject<UserPresence> _presenceController =
+      BehaviorSubject<UserPresence>();
+  final BehaviorSubject<MessageReadReceipt> _readReceiptController =
+      BehaviorSubject<MessageReadReceipt>();
 
   // Active subscriptions for cleanup
   final List<StreamSubscription> _subscriptions = [];
-  
+
   // Currently joined chat rooms
   final Set<String> _joinedChats = <String>{};
 
@@ -80,19 +89,23 @@ class RealtimeService {
   }
 
   /// **Connection state stream**
-  Stream<SocketConnectionState> get connectionState => _connectionStateController.stream;
+  Stream<SocketConnectionState> get connectionState =>
+      _connectionStateController.stream;
 
   /// **New message stream**
   Stream<ChatMessage> get messageStream => _messageController.stream;
 
   /// **Message edited stream**
-  Stream<ChatMessage> get messageEditedStream => _messageEditedController.stream;
+  Stream<ChatMessage> get messageEditedStream =>
+      _messageEditedController.stream;
 
   /// **Message deleted stream** (emits full ChatMessage for tombstone support)
-  Stream<ChatMessage> get messageDeletedStream => _messageDeletedController.stream;
+  Stream<ChatMessage> get messageDeletedStream =>
+      _messageDeletedController.stream;
 
   /// **Message reaction stream**
-  Stream<MessageReaction> get messageReactionStream => _messageReactionController.stream;
+  Stream<MessageReaction> get messageReactionStream =>
+      _messageReactionController.stream;
 
   /// **Typing indicator stream**
   Stream<TypingIndicator> get typingStream => _typingController.stream;
@@ -100,14 +113,20 @@ class RealtimeService {
   /// **User status stream**
   Stream<UserStatus> get userStatusStream => _userStatusController.stream;
 
+  /// **User presence stream**
+  Stream<UserPresence> get presenceStream => _presenceController.stream;
+
   /// **Message read receipt stream**
-  Stream<MessageReadReceipt> get readReceiptStream => _readReceiptController.stream;
+  Stream<MessageReadReceipt> get readReceiptStream =>
+      _readReceiptController.stream;
 
   /// **Current connection state**
-  SocketConnectionState get currentConnectionState => _connectionStateController.value;
+  SocketConnectionState get currentConnectionState =>
+      _connectionStateController.value;
 
   /// **Is connected**
-  bool get isConnected => currentConnectionState == SocketConnectionState.connected;
+  bool get isConnected =>
+      currentConnectionState == SocketConnectionState.connected;
 
   /// **Connect to real-time server - ENTERPRISE CONNECTION MANAGEMENT**
   ///
@@ -116,22 +135,24 @@ class RealtimeService {
   Future<Either<Failure, bool>> connect() async {
     try {
       _logger.i('Connecting to real-time server');
-      
+
       await _socketManager.connect();
-      
+
       // Wait for connection to be established
       await _connectionStateController.stream
-          .where((state) => state == SocketConnectionState.connected || 
-                           state == SocketConnectionState.error)
+          .where((state) =>
+              state == SocketConnectionState.connected ||
+              state == SocketConnectionState.error)
           .first
           .timeout(const Duration(seconds: 10));
-      
+
       if (currentConnectionState == SocketConnectionState.connected) {
         _logger.i('Real-time connection established successfully');
         return const Right(true);
       } else {
         _logger.e('Failed to establish real-time connection');
-        return Left(ConnectionFailure(message: 'Không thể kết nối đến server real-time'));
+        return Left(ConnectionFailure(
+            message: 'Không thể kết nối đến server real-time'));
       }
     } catch (e) {
       _logger.e('Error connecting to real-time server: $e');
@@ -146,14 +167,14 @@ class RealtimeService {
   Future<Either<Failure, bool>> disconnect() async {
     try {
       _logger.i('Disconnecting from real-time server');
-      
+
       // Leave all joined chats
       for (final chatId in _joinedChats.toList()) {
         await _leaveChatRoom(chatId);
       }
-      
+
       await _socketManager.disconnect();
-      
+
       _logger.i('Real-time disconnection completed');
       return const Right(true);
     } catch (e) {
@@ -178,10 +199,10 @@ class RealtimeService {
       }
 
       _logger.i('Joining chat room: $chatId');
-      
+
       _socketManager.emit('conversation:joined', {'conversationId': chatId});
       _joinedChats.add(chatId);
-      
+
       _logger.i('Successfully joined chat room: $chatId');
       return const Right(true);
     } catch (e) {
@@ -212,12 +233,12 @@ class RealtimeService {
       }
 
       _logger.t('Sending typing indicator: $chatId, isTyping: $isTyping');
-      
+
       _socketManager.emit('message:typing', {
         'conversationId': chatId,
         'isTyping': isTyping,
       });
-      
+
       return const Right(true);
     } catch (e) {
       _logger.e('Error sending typing indicator: $e');
@@ -239,12 +260,12 @@ class RealtimeService {
       }
 
       _logger.t('Sending read receipt: $messageId in chat $chatId');
-      
+
       _socketManager.emit('message:read', {
         'conversationId': chatId,
         'messageId': messageId,
       });
-      
+
       return const Right(true);
     } catch (e) {
       _logger.e('Error sending read receipt: $e');
@@ -260,18 +281,19 @@ class RealtimeService {
     try {
       final healthData = await _socketManager.checkConnectionHealth();
       final latency = await _socketManager.checkLatency();
-      
+
       final health = ConnectionHealth(
         isConnected: isConnected,
         latency: latency,
         connectionState: currentConnectionState,
         healthData: healthData,
       );
-      
+
       return Right(health);
     } catch (e) {
       _logger.e('Error checking connection health: $e');
-      return Left(ServerFailure(message: 'Không thể kiểm tra connection health: $e'));
+      return Left(
+          ServerFailure(message: 'Không thể kiểm tra connection health: $e'));
     }
   }
 
@@ -289,37 +311,58 @@ class RealtimeService {
 
     // New message events
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('message:sent').listen(_handleNewMessage),
+      _socketManager
+          .on<Map<String, dynamic>>('message:sent')
+          .listen(_handleNewMessage),
     );
 
     // Message edit events
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('message:edit').listen(_handleMessageEdit),
+      _socketManager
+          .on<Map<String, dynamic>>('message:edit')
+          .listen(_handleMessageEdit),
     );
 
     // Message delete events
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('message:delete').listen(_handleMessageDelete),
+      _socketManager
+          .on<Map<String, dynamic>>('message:delete')
+          .listen(_handleMessageDelete),
     );
 
     // Message reaction events
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('message:reaction').listen(_handleMessageReaction),
+      _socketManager
+          .on<Map<String, dynamic>>('message:reaction')
+          .listen(_handleMessageReaction),
     );
 
     // Typing indicator events
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('message:typing').listen(_handleTypingIndicator),
+      _socketManager
+          .on<Map<String, dynamic>>('message:typing')
+          .listen(_handleTypingIndicator),
     );
 
     // Message read events
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('message:read').listen(_handleReadReceipt),
+      _socketManager
+          .on<Map<String, dynamic>>('message:read')
+          .listen(_handleReadReceipt),
     );
 
-    // User status events (if available)
+    // User presence events (new contract)
     _subscriptions.add(
-      _socketManager.on<Map<String, dynamic>>('user:status').listen(_handleUserStatus),
+      _socketManager
+          .on<Map<String, dynamic>>('user:presence')
+          .listen(_handleUserPresence),
+    );
+
+    // User status events (legacy contract)
+    _subscriptions.add(
+      _socketManager
+          .on<Map<String, dynamic>>('user:status')
+          .listen(_handleUserStatus),
     );
 
     _logger.i('Real-time socket listeners initialized');
@@ -332,14 +375,14 @@ class RealtimeService {
   void _handleNewMessage(Map<String, dynamic> data) {
     try {
       _logger.d('Received new message event');
-      
+
       // Parse message from server data
       final messageData = data['message'] as Map<String, dynamic>?;
       if (messageData == null) {
         _logger.w('No message data in event');
         return;
       }
-      
+
       // Parse using MessageDto
       final messageDto = MessageDto.fromJson(messageData);
 
@@ -348,10 +391,11 @@ class RealtimeService {
 
       // Emit to stream
       _messageController.add(chatMessage);
-      
+
       _logger.d('New message processed and emitted: ${chatMessage.id}');
     } catch (e, stackTrace) {
-      _logger.e('Error handling new message: $e', error: e, stackTrace: stackTrace);
+      _logger.e('Error handling new message: $e',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -362,13 +406,13 @@ class RealtimeService {
   void _handleMessageEdit(Map<String, dynamic> data) {
     try {
       _logger.d('Received message edit event');
-      
+
       final messageData = data['message'] as Map<String, dynamic>?;
       if (messageData == null) {
         _logger.w('No message data in edit event');
         return;
       }
-      
+
       // Parse using MessageDto
       final messageDto = MessageDto.fromJson(messageData);
 
@@ -377,10 +421,11 @@ class RealtimeService {
 
       // Emit to edited stream
       _messageEditedController.add(chatMessage);
-      
+
       _logger.d('Message edit processed and emitted: ${chatMessage.id}');
     } catch (e, stackTrace) {
-      _logger.e('Error handling message edit: $e', error: e, stackTrace: stackTrace);
+      _logger.e('Error handling message edit: $e',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -391,22 +436,23 @@ class RealtimeService {
   void _handleMessageDelete(Map<String, dynamic> data) {
     try {
       _logger.d('Received message delete event');
-      
+
       final messageData = data['message'] as Map<String, dynamic>?;
       if (messageData == null) {
         _logger.w('No message data in delete event');
         return;
       }
-      
+
       // Parse full message for tombstone support
       final chatMessage = ChatMessage.fromJson(messageData);
-      
+
       // Emit full ChatMessage to deleted stream
       _messageDeletedController.add(chatMessage);
-      
+
       _logger.d('Message delete processed and emitted: ${chatMessage.id}');
     } catch (e, stackTrace) {
-      _logger.e('Error handling message delete: $e', error: e, stackTrace: stackTrace);
+      _logger.e('Error handling message delete: $e',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -417,30 +463,31 @@ class RealtimeService {
   void _handleMessageReaction(Map<String, dynamic> data) {
     try {
       _logger.d('Received message reaction event');
-      
+
       final reactionData = data['data'] as Map<String, dynamic>?;
       if (reactionData == null) {
         _logger.w('No reaction data in event');
         return;
       }
-      
+
       final messageIdRaw = reactionData['messageId'];
       final codeRaw = reactionData['code'];
-      final actRaw = reactionData['act']; // may be String/num depending on backend
+      final actRaw =
+          reactionData['act']; // may be String/num depending on backend
 
       final messageId = messageIdRaw?.toString();
       final code = codeRaw?.toString();
       final act = actRaw?.toString();
-      
+
       if (messageId == null || code == null || act == null) {
         _logger.w('Incomplete reaction data');
         return;
       }
-      
+
       final reactor = data['reactor'] as Map<String, dynamic>?;
       final userId = reactor?['id']?.toString() ?? '';
       final userName = reactor?['fullname']?.toString() ?? 'Unknown';
-      
+
       // Backend sends act as 'ADD'/'REVOKE' (GraphQL) or numeric '1'/'0' (socket).
       // Normalize both formats to ensure correct parsing.
       final normalizedAct = act.toUpperCase();
@@ -453,13 +500,14 @@ class RealtimeService {
         userName: userName,
         action: isAdd ? ReactionAction.add : ReactionAction.remove,
       );
-      
+
       // Emit to reaction stream
       _messageReactionController.add(reaction);
-      
+
       _logger.d('Message reaction processed: $messageId - $code ($act)');
     } catch (e, stackTrace) {
-      _logger.e('Error handling message reaction: $e', error: e, stackTrace: stackTrace);
+      _logger.e('Error handling message reaction: $e',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -473,7 +521,10 @@ class RealtimeService {
       final chatId = chatIdRaw?.toString();
       final userId = userIdRaw?.toString();
 
-      if (chatId == null || chatId.isEmpty || userId == null || userId.isEmpty) {
+      if (chatId == null ||
+          chatId.isEmpty ||
+          userId == null ||
+          userId.isEmpty) {
         _logger.w('Typing indicator event missing conversationId/userId');
         return;
       }
@@ -491,11 +542,13 @@ class RealtimeService {
         userName: data['fullName']?.toString() ?? 'Unknown',
         isTyping: isTyping,
       );
-      
+
       _typingController.add(typingIndicator);
-      _logger.t('Typing indicator processed: ${typingIndicator.userId} - ${typingIndicator.isTyping}');
+      _logger.t(
+          'Typing indicator processed: ${typingIndicator.userId} - ${typingIndicator.isTyping}');
     } catch (e, stackTrace) {
-      _logger.e('Error handling typing indicator: $e', error: e, stackTrace: stackTrace);
+      _logger.e('Error handling typing indicator: $e',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -509,38 +562,135 @@ class RealtimeService {
       final reader = data['reader'] as Map<String, dynamic>?;
 
       final readReceipt = MessageReadReceipt(
-        chatId: data['conversationId'] as String?
-            ?? message?['conversationId'] as String?
-            ?? '',
+        chatId: data['conversationId'] as String? ??
+            message?['conversationId'] as String? ??
+            '',
         messageId: message?['id'] as String? ?? '',
         readerId: reader?['id'] as String? ?? '',
         readerName: reader?['fullname'] as String? ?? 'Unknown',
         readAt: DateTime.now(),
       );
-      
+
       _readReceiptController.add(readReceipt);
       _logger.t('Read receipt processed: ${readReceipt.messageId}');
     } catch (e, stackTrace) {
-      _logger.e('Error handling read receipt: $e', error: e, stackTrace: stackTrace);
+      _logger.e('Error handling read receipt: $e',
+          error: e, stackTrace: stackTrace);
     }
   }
 
   /// **Handle user status event**
   void _handleUserStatus(Map<String, dynamic> data) {
     try {
+      final userId = data['userId']?.toString() ?? '';
+      if (userId.isEmpty) {
+        _logger.w('User status event missing userId');
+        return;
+      }
+
+      final status = data['status']?.toString() ?? 'offline';
+      final lastSeen = _parseDateTime(data['lastSeen'] ?? data['offlineAt']);
+      final isOnline = _parseOnlineStatus(data['isOnline'] ?? status);
+
       final userStatus = UserStatus(
-        userId: data['userId'] as String,
-        status: data['status'] as String,
-        lastSeen: data['lastSeen'] != null 
-            ? DateTime.fromMillisecondsSinceEpoch(data['lastSeen'] as int)
-            : null,
+        userId: userId,
+        status: status,
+        lastSeen: lastSeen,
       );
-      
+
       _userStatusController.add(userStatus);
-      _logger.t('User status processed: ${userStatus.userId} - ${userStatus.status}');
+      _presenceController.add(
+        UserPresence(
+          userId: userId,
+          isOnline: isOnline,
+          lastSeen: lastSeen,
+        ),
+      );
+      _logger.t(
+          'User status processed: ${userStatus.userId} - ${userStatus.status}');
     } catch (e, stackTrace) {
-      _logger.e('Error handling user status: $e', error: e, stackTrace: stackTrace);
+      _logger.e('Error handling user status: $e',
+          error: e, stackTrace: stackTrace);
     }
+  }
+
+  /// **Handle user presence event**
+  void _handleUserPresence(Map<String, dynamic> data) {
+    try {
+      final userId = data['userId']?.toString() ?? '';
+      if (userId.isEmpty) {
+        _logger.w('User presence event missing userId');
+        return;
+      }
+
+      final lastSeen = _parseDateTime(data['lastSeen'] ?? data['offlineAt']);
+      final isOnline = _parseOnlineStatus(data['isOnline'] ?? data['status']);
+
+      _presenceController.add(
+        UserPresence(
+          userId: userId,
+          isOnline: isOnline,
+          lastSeen: lastSeen,
+        ),
+      );
+      _logger.t(
+          'User presence processed: $userId - ${isOnline ? 'online' : 'offline'}');
+    } catch (e, stackTrace) {
+      _logger.e('Error handling user presence: $e',
+          error: e, stackTrace: stackTrace);
+    }
+  }
+
+  DateTime? _parseDateTime(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is DateTime) {
+      return value;
+    }
+
+    if (value is num) {
+      final raw = value.toInt();
+      final milliseconds = raw < 1000000000000 ? raw * 1000 : raw;
+      return DateTime.fromMillisecondsSinceEpoch(milliseconds);
+    }
+
+    if (value is String) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) {
+        return null;
+      }
+
+      final asInt = int.tryParse(trimmed);
+      if (asInt != null) {
+        final milliseconds = asInt < 1000000000000 ? asInt * 1000 : asInt;
+        return DateTime.fromMillisecondsSinceEpoch(milliseconds);
+      }
+
+      return DateTime.tryParse(trimmed);
+    }
+
+    return null;
+  }
+
+  bool _parseOnlineStatus(dynamic value) {
+    if (value is bool) {
+      return value;
+    }
+
+    if (value is num) {
+      return value != 0;
+    }
+
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == 'online' ||
+          normalized == 'true' ||
+          normalized == '1';
+    }
+
+    return false;
   }
 
   /// **Internal method to leave chat room**
@@ -552,13 +702,13 @@ class RealtimeService {
       }
 
       _logger.i('Leaving chat room: $chatId');
-      
+
       if (isConnected) {
         _socketManager.emit('conversation:leaved', {'conversationId': chatId});
       }
-      
+
       _joinedChats.remove(chatId);
-      
+
       _logger.i('Successfully left chat room: $chatId');
       return const Right(true);
     } catch (e) {
@@ -570,13 +720,13 @@ class RealtimeService {
   /// **Dispose resources - ENTERPRISE CLEANUP**
   void dispose() {
     _logger.i('Disposing RealtimeService');
-    
+
     // Cancel all subscriptions
     for (final subscription in _subscriptions) {
       subscription.cancel();
     }
     _subscriptions.clear();
-    
+
     // Close stream controllers
     _connectionStateController.close();
     _messageController.close();
@@ -585,11 +735,12 @@ class RealtimeService {
     _messageReactionController.close();
     _typingController.close();
     _userStatusController.close();
+    _presenceController.close();
     _readReceiptController.close();
-    
+
     // Clear joined chats
     _joinedChats.clear();
-    
+
     _logger.i('RealtimeService disposed');
   }
 }

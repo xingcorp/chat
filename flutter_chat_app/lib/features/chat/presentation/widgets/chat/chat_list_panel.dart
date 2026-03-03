@@ -6,6 +6,8 @@ import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
+import 'package:flutter_chat_app/core/services/presence_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
@@ -34,15 +36,16 @@ class ChatListPanel extends BaseStatefulWidget {
 
 class _ChatListPanelState extends BaseState<ChatListPanel> {
   late final ChatBloc _chatBloc;
+  late final PresenceService _presenceService;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
-  bool _isLoadingMore = false;
   bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
     _chatBloc = getIt<ChatBloc>();
+    _presenceService = getIt<PresenceService>();
     _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
   }
 
@@ -76,9 +79,6 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
   }
 
   Future<void> _onRefresh() async {
-    safeSetState(() {
-      _isLoadingMore = false;
-    });
     if (_isSearching && _searchController.text.trim().isNotEmpty) {
       _chatBloc.add(ChatEvent.searchChats(keyword: _searchController.text));
     } else {
@@ -98,7 +98,8 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
             SizedBox(
               height: kToolbarHeight,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingSmall),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.paddingSmall),
                 child: Row(
                   children: [
                     Expanded(
@@ -154,15 +155,20 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
               child: BlocConsumer<ChatBloc, ChatState>(
                 listener: (context, state) {
                   state.whenOrNull(
-                    loaded: (chats, hasMore, isLoadingMore, page, pageSize, total, activeFilter, cachedLists, filterPages, filterHasMore, isSyncing) {
-                      safeSetState(() {
-                        _isLoadingMore = false;
-                      });
+                    loaded: (chats,
+                        hasMore,
+                        isLoadingMore,
+                        page,
+                        pageSize,
+                        total,
+                        activeFilter,
+                        cachedLists,
+                        filterPages,
+                        filterHasMore,
+                        isSyncing) {
+                      _prefetchPresenceForChats(chats);
                     },
                     error: (message) {
-                      safeSetState(() {
-                        _isLoadingMore = false;
-                      });
                       AppSnackBar.show(
                         context: context,
                         message: message,
@@ -170,7 +176,8 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                         action: SnackBarAction(
                           label: context.l10n.retryOperation,
                           onPressed: () {
-                            _chatBloc.add(const ChatEvent.loadChats(forceRefresh: true));
+                            _chatBloc.add(
+                                const ChatEvent.loadChats(forceRefresh: true));
                           },
                         ),
                       );
@@ -181,19 +188,32 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                   return state.when(
                     initial: () => _buildLoading(context),
                     loading: () => _buildLoading(context),
-                    loaded: (chats, hasMore, isLoadingMore, page, pageSize, total, activeFilter, cachedLists, filterPages, filterHasMore, isSyncing) {
+                    loaded: (chats,
+                        hasMore,
+                        isLoadingMore,
+                        page,
+                        pageSize,
+                        total,
+                        activeFilter,
+                        cachedLists,
+                        filterPages,
+                        filterHasMore,
+                        isSyncing) {
                       return Column(
                         children: [
                           ConversationTypeTabBar(
                             activeFilter: activeFilter,
                             onFilterChanged: (filter) {
-                              _chatBloc.add(ChatEvent.changeConversationTypeFilter(filter: filter));
+                              _chatBloc.add(
+                                  ChatEvent.changeConversationTypeFilter(
+                                      filter: filter));
                             },
                           ),
                           Expanded(
                             child: isLoadingMore && chats.isEmpty
                                 ? Center(
-                                    child: AppProgressIndicator.circular(label: context.l10n.loading),
+                                    child: AppProgressIndicator.circular(
+                                        label: context.l10n.loading),
                                   )
                                 : AppListView<Chat>(
                                     items: chats,
@@ -202,10 +222,13 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                                     onRefresh: _onRefresh,
                                     onLoadMore: () async {
                                       if (isLoadingMore) return;
-                                      _chatBloc.add(const ChatEvent.loadMoreChats());
+                                      _chatBloc
+                                          .add(const ChatEvent.loadMoreChats());
                                     },
-                                    emptyWidget: _buildEmptyState(context, activeFilter: activeFilter),
-                                    separatorBuilder: (context, index) => const Divider(
+                                    emptyWidget: _buildEmptyState(context,
+                                        activeFilter: activeFilter),
+                                    separatorBuilder: (context, index) =>
+                                        const Divider(
                                       height: 1,
                                       indent: AppDimens.spaceHuge,
                                     ),
@@ -222,7 +245,8 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                         context,
                         message,
                         () {
-                          _chatBloc.add(const ChatEvent.loadChats(forceRefresh: true));
+                          _chatBloc.add(
+                              const ChatEvent.loadChats(forceRefresh: true));
                         },
                       );
                     },
@@ -230,7 +254,8 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                     messagesLoading: (_) => const SizedBox.shrink(),
                     messagesLoaded: (_, __, ___) => const SizedBox.shrink(),
                     messageSending: (_, __) => const SizedBox.shrink(),
-                    messageStatusChanged: (_, __, ___, ____) => const SizedBox.shrink(),
+                    messageStatusChanged: (_, __, ___, ____) =>
+                        const SizedBox.shrink(),
                     syncing: () => _buildLoading(context),
                     offline: () => _buildOfflineState(context),
                   );
@@ -257,7 +282,8 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
   }
 
   Widget _buildChatListItem(BuildContext context, Chat chat) {
-    final previewText = (chat.lastMessagePreview ?? context.l10n.noMessages).formatChatMessage(
+    final previewText =
+        (chat.lastMessagePreview ?? context.l10n.noMessages).formatChatMessage(
       mentionNameById: {
         for (final m in chat.members)
           if ((m.userId).isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
@@ -292,7 +318,40 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, {ConversationTypeFilter activeFilter = ConversationTypeFilter.all}) {
+  void _prefetchPresenceForChats(List<Chat> chats) {
+    final currentUserId = getIt<CurrentUserProvider>().currentUserId;
+    final userIds = <String>{};
+
+    for (final chat in chats) {
+      if (chat.type != ChatType.direct || chat.members.isEmpty) {
+        continue;
+      }
+
+      final otherMember = chat.members.firstWhere(
+        (member) => member.userId != currentUserId,
+        orElse: () => chat.members.first,
+      );
+      final candidateId = otherMember.userId.trim().isNotEmpty
+          ? otherMember.userId.trim()
+          : otherMember.id.trim();
+      if (candidateId.isNotEmpty) {
+        userIds.add(candidateId);
+      }
+    }
+
+    if (userIds.isEmpty) {
+      return;
+    }
+
+    unawaited(
+      _presenceService.fetchPresenceForUsers(
+        userIds.toList(growable: false),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context,
+      {ConversationTypeFilter activeFilter = ConversationTypeFilter.all}) {
     final message = switch (activeFilter) {
       ConversationTypeFilter.direct => context.l10n.noDirectConversations,
       ConversationTypeFilter.group => context.l10n.noGroupConversations,
@@ -317,7 +376,8 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
     );
   }
 
-  Widget _buildErrorState(BuildContext context, String message, VoidCallback? retryAction) {
+  Widget _buildErrorState(
+      BuildContext context, String message, VoidCallback? retryAction) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.paddingLarge),

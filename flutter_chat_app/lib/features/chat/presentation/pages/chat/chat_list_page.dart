@@ -7,6 +7,8 @@ import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
+import 'package:flutter_chat_app/core/services/presence_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
@@ -44,6 +46,7 @@ class ChatListPage extends BaseStatefulWidget {
 
 class _ChatListPageState extends BaseState<ChatListPage> {
   late final ChatBloc _chatBloc;
+  late final PresenceService _presenceService;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
   bool _isSearching = false;
@@ -52,6 +55,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
   void initState() {
     super.initState();
     _chatBloc = getIt<ChatBloc>();
+    _presenceService = getIt<PresenceService>();
     _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
   }
 
@@ -147,6 +151,19 @@ class _ChatListPageState extends BaseState<ChatListPage> {
         body: BlocConsumer<ChatBloc, ChatState>(
           listener: (context, state) {
             state.whenOrNull(
+              loaded: (chats,
+                  hasMore,
+                  isLoadingMore,
+                  page,
+                  pageSize,
+                  total,
+                  activeFilter,
+                  cachedLists,
+                  filterPages,
+                  filterHasMore,
+                  isSyncing) {
+                _prefetchPresenceForChats(chats);
+              },
               error: (message) {
                 AppSnackBar.show(
                   context: context,
@@ -168,27 +185,44 @@ class _ChatListPageState extends BaseState<ChatListPage> {
             return state.when(
               initial: () => _buildShimmerList(),
               loading: () => _buildShimmerList(),
-              loaded: (chats, hasMore, isLoadingMore, page, pageSize, total, activeFilter, cachedLists, filterPages, filterHasMore, isSyncing) {
+              loaded: (chats,
+                  hasMore,
+                  isLoadingMore,
+                  page,
+                  pageSize,
+                  total,
+                  activeFilter,
+                  cachedLists,
+                  filterPages,
+                  filterHasMore,
+                  isSyncing) {
                 return Column(
                   children: [
                     ConversationTypeTabBar(
                       activeFilter: activeFilter,
                       onFilterChanged: (filter) {
-                        _chatBloc.add(ChatEvent.changeConversationTypeFilter(filter: filter));
+                        _chatBloc.add(ChatEvent.changeConversationTypeFilter(
+                            filter: filter));
                       },
                     ),
                     if (isSyncing)
                       LinearProgressIndicator(
                         minHeight: 2,
-                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
+                          Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.6),
                         ),
                       ),
                     Expanded(
                       child: isLoadingMore && chats.isEmpty
                           ? Center(
-                              child: AppProgressIndicator.circular(label: context.l10n.loading),
+                              child: AppProgressIndicator.circular(
+                                  label: context.l10n.loading),
                             )
                           : AppListView<Chat>(
                               items: chats,
@@ -199,13 +233,16 @@ class _ChatListPageState extends BaseState<ChatListPage> {
                                 if (isLoadingMore) return;
                                 _chatBloc.add(const ChatEvent.loadMoreChats());
                               },
-                              emptyWidget: _buildEmptyState(context, activeFilter: activeFilter),
+                              emptyWidget: _buildEmptyState(context,
+                                  activeFilter: activeFilter),
                               separatorBuilder: (context, index) => Divider(
                                 height: 1,
                                 thickness: 0.5,
                                 indent: 68,
                                 endIndent: 0,
-                                color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+                                color: Theme.of(context)
+                                    .dividerColor
+                                    .withValues(alpha: 0.2),
                               ),
                               itemBuilder: (context, chat, index) {
                                 return _buildChatListItem(context, chat);
@@ -252,7 +289,8 @@ class _ChatListPageState extends BaseState<ChatListPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      AppProgressIndicator.circular(label: context.l10n.syncing),
+                      AppProgressIndicator.circular(
+                          label: context.l10n.syncing),
                       const SizedBox(height: AppDimens.spaceMedium),
                       AppText(context.l10n.syncing),
                     ],
@@ -279,34 +317,36 @@ class _ChatListPageState extends BaseState<ChatListPage> {
             );
           },
         ),
-        bottomNavigationBar: (!widget.showBottomNavBar || (ChatModule.config?.hideBottomNavBar ?? false))
+        bottomNavigationBar: (!widget.showBottomNavBar ||
+                (ChatModule.config?.hideBottomNavBar ?? false))
             ? null
             : BottomNavigationBar(
-          currentIndex: 0,
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.chat),
-              label: context.l10n.chats,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.contacts),
-              label: context.l10n.contacts,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.settings),
-              label: context.l10n.settingsTitle,
-            ),
-          ],
-          onTap: (index) {
-            // TODO: Handle navigation
-          },
-        ),
+                currentIndex: 0,
+                items: [
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.chat),
+                    label: context.l10n.chats,
+                  ),
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.contacts),
+                    label: context.l10n.contacts,
+                  ),
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.settings),
+                    label: context.l10n.settingsTitle,
+                  ),
+                ],
+                onTap: (index) {
+                  // TODO: Handle navigation
+                },
+              ),
       ),
     );
   }
 
   Widget _buildChatListItem(BuildContext context, Chat chat) {
-    final previewText = (chat.lastMessagePreview ?? context.l10n.noMessages).formatChatMessage(
+    final previewText =
+        (chat.lastMessagePreview ?? context.l10n.noMessages).formatChatMessage(
       mentionNameById: {
         for (final m in chat.members)
           if ((m.userId).isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
@@ -335,7 +375,40 @@ class _ChatListPageState extends BaseState<ChatListPage> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, {ConversationTypeFilter activeFilter = ConversationTypeFilter.all}) {
+  void _prefetchPresenceForChats(List<Chat> chats) {
+    final currentUserId = getIt<CurrentUserProvider>().currentUserId;
+    final userIds = <String>{};
+
+    for (final chat in chats) {
+      if (chat.type != ChatType.direct || chat.members.isEmpty) {
+        continue;
+      }
+
+      final otherMember = chat.members.firstWhere(
+        (member) => member.userId != currentUserId,
+        orElse: () => chat.members.first,
+      );
+      final candidateId = otherMember.userId.trim().isNotEmpty
+          ? otherMember.userId.trim()
+          : otherMember.id.trim();
+      if (candidateId.isNotEmpty) {
+        userIds.add(candidateId);
+      }
+    }
+
+    if (userIds.isEmpty) {
+      return;
+    }
+
+    unawaited(
+      _presenceService.fetchPresenceForUsers(
+        userIds.toList(growable: false),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context,
+      {ConversationTypeFilter activeFilter = ConversationTypeFilter.all}) {
     final message = switch (activeFilter) {
       ConversationTypeFilter.direct => context.l10n.noDirectConversations,
       ConversationTypeFilter.group => context.l10n.noGroupConversations,
@@ -363,7 +436,8 @@ class _ChatListPageState extends BaseState<ChatListPage> {
     );
   }
 
-  Widget _buildErrorState(BuildContext context, String message, VoidCallback? retryAction) {
+  Widget _buildErrorState(
+      BuildContext context, String message, VoidCallback? retryAction) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.paddingLarge),
@@ -412,4 +486,4 @@ class _ChatListPageState extends BaseState<ChatListPage> {
       itemBuilder: (context, index) => AppShimmer.listItem(),
     );
   }
-} 
+}

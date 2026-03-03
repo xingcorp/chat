@@ -28,6 +28,8 @@ import '../../data/datasources/message/message_remote_datasource.dart' as _i102;
 import '../../data/datasources/notification/push_notification_remote_datasource.dart'
     as _i1071;
 import '../../data/datasources/permissions_datasource.dart' as _i656;
+import '../../data/datasources/presence/presence_remote_datasource.dart'
+    as _i428;
 import '../../data/datasources/sticker/sticker_local_datasource.dart' as _i99;
 import '../../data/datasources/user/user_local_datasource.dart' as _i439;
 import '../../data/datasources/user/user_remote_datasource.dart' as _i404;
@@ -39,6 +41,7 @@ import '../../data/repositories/media_repository_impl.dart' as _i872;
 import '../../data/repositories/message_repository_impl.dart' as _i564;
 import '../../data/repositories/offline_first_repository.dart' as _i264;
 import '../../data/repositories/permissions_repository_impl.dart' as _i760;
+import '../../data/repositories/presence_repository_impl.dart' as _i759;
 import '../../data/repositories/push_notification_repository_impl.dart'
     as _i602;
 import '../../data/repositories/sticker_repository_impl.dart' as _i854;
@@ -47,6 +50,7 @@ import '../../domain/repositories/i_attachment_repository.dart' as _i817;
 import '../../domain/repositories/i_chat_info_repository.dart' as _i282;
 import '../../domain/repositories/i_media_repository.dart' as _i394;
 import '../../domain/repositories/i_message_repository.dart' as _i572;
+import '../../domain/repositories/i_presence_repository.dart' as _i492;
 import '../../domain/repositories/i_push_notification_repository.dart' as _i395;
 import '../../domain/repositories/i_sticker_repository.dart' as _i211;
 import '../../domain/repositories/permissions_repository.dart' as _i473;
@@ -190,6 +194,7 @@ import '../services/offline_operation_processor.dart' as _i985;
 import '../services/offline_queue_service.dart' as _i520;
 import '../services/performance_service.dart' as _i910;
 import '../services/permissions_service.dart' as _i179;
+import '../services/presence_service.dart' as _i219;
 import '../services/realtime_connection_service.dart' as _i357;
 import '../services/realtime_messaging_service.dart' as _i706;
 import '../services/realtime_service.dart' as _i301;
@@ -274,6 +279,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1071.PushNotificationRemoteDataSource>(() =>
         _i1071.PushNotificationRemoteDataSource(
             gh<_i788.GraphQLClientWrapper>()));
+    gh.lazySingleton<_i428.PresenceRemoteDataSource>(
+        () => _i428.PresenceRemoteDataSource(gh<_i788.GraphQLClientWrapper>()));
     gh.lazySingleton<_i329.LocalStorage>(
         () => _i329.LocalStorageImpl(gh<_i460.SharedPreferences>()));
     gh.lazySingleton<_i349.SsoAuthService>(
@@ -409,6 +416,11 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i128.LocaleCubit(gh<_i329.LocalStorage>()));
     gh.factory<_i473.ThemeCubit>(
         () => _i473.ThemeCubit(gh<_i329.LocalStorage>()));
+    gh.lazySingleton<_i492.IPresenceRepository>(
+        () => _i759.PresenceRepositoryImpl(
+              gh<_i428.PresenceRemoteDataSource>(),
+              gh<_i221.AppLogger>(),
+            ));
     gh.singleton<_i777.WebSocketClient>(() => _i777.WebSocketClient(
           serverUrl: gh<String>(instanceName: 'socketUrl'),
           options: gh<Map<String, dynamic>>(),
@@ -629,6 +641,11 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i848.MarkAsReadUseCase>(() => _i848.MarkAsReadUseCase(
           repository: gh<_i572.IMessageRepository>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
+    gh.lazySingleton<_i219.PresenceService>(() => _i219.PresenceService(
+          repository: gh<_i492.IPresenceRepository>(),
+          realtimeService: gh<_i301.RealtimeService>(),
           logger: gh<_i221.AppLogger>(),
         ));
     gh.lazySingletonAsync<_i556.MessageQueueService>(

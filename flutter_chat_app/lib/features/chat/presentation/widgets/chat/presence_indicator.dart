@@ -1,82 +1,71 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/services/presence_service.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+import 'package:flutter_chat_app/domain/entities/user_presence.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
+import 'package:get_it/get_it.dart';
 
-/// User presence/online status indicator
-///
-/// Features:
-/// - Online: green dot + "Online" text
-/// - Offline: grey dot + "Last seen X ago" text
-/// - Theme-aware design
-/// - i18n support for all status text
-/// - Flexible layout (compact or full)
+/// User presence/online status indicator.
 class PresenceIndicator extends StatelessWidget {
-  /// Is user currently online
   final bool isOnline;
-
-  /// Last seen timestamp (for offline users)
   final DateTime? lastSeen;
-
-  /// Show text label (Online/Last seen)
   final bool showLabel;
-
-  /// Dot size
+  final bool isLoading;
   final double dotSize;
-
-  /// Text style
   final TextStyle? textStyle;
 
   const PresenceIndicator({
-    Key? key,
+    super.key,
     required this.isOnline,
     this.lastSeen,
     this.showLabel = true,
-    this.dotSize = 8.0,
+    this.isLoading = false,
+    this.dotSize = AppDimens.spaceSmall,
     this.textStyle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-
-    final statusColor = isOnline ? Colors.green : Colors.grey;
-
-    if (!showLabel) {
-      // Compact mode - dot only
-      return Container(
-        width: dotSize,
-        height: dotSize,
-        decoration: BoxDecoration(
-          color: statusColor,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: theme.scaffoldBackgroundColor,
-            width: 2.0,
+    if (isLoading && showLabel) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const AppProgressIndicator.circular(size: ProgressSize.small),
+          const SizedBox(width: AppDimens.spaceXSmall),
+          AppText(
+            context.l10n.loading,
+            style: _resolveTextStyle(context),
           ),
-        ),
+        ],
       );
     }
 
-    // Full mode - dot + text
+    final statusColor = isOnline ? AppColors.success : AppColors.greyDark;
+    if (!showLabel) {
+      return _PresenceDot(
+        color: statusColor,
+        dotSize: dotSize,
+        showBorder: true,
+      );
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: dotSize,
-          height: dotSize,
-          decoration: BoxDecoration(
-            color: statusColor,
-            shape: BoxShape.circle,
-          ),
+      children: <Widget>[
+        _PresenceDot(
+          color: statusColor,
+          dotSize: dotSize,
+          showBorder: false,
         ),
-        const SizedBox(width: 6.0),
-        Text(
-          _getStatusText(l10n),
-          style: textStyle ??
-              theme.textTheme.bodySmall?.copyWith(
-                color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
-              ),
+        const SizedBox(width: AppDimens.spaceXSmall),
+        AppText(
+          _getStatusText(context.l10n),
+          style: _resolveTextStyle(context),
         ),
       ],
     );
@@ -91,122 +80,156 @@ class PresenceIndicator extends StatelessWidget {
       return l10n.offline;
     }
 
-    final now = DateTime.now();
-    final difference = now.difference(lastSeen!);
-
+    final difference = DateTime.now().difference(lastSeen!);
     if (difference.inMinutes < 1) {
       return l10n.lastSeenRecently;
-    } else if (difference.inMinutes < 60) {
-      return l10n.lastSeenMinutesAgo(difference.inMinutes);
-    } else if (difference.inHours < 24) {
-      return l10n.lastSeenHoursAgo(difference.inHours);
-    } else {
-      return l10n.lastSeenDaysAgo(difference.inDays);
     }
+    if (difference.inMinutes < 60) {
+      return l10n.lastSeenMinutesAgo(difference.inMinutes);
+    }
+    if (difference.inHours < 24) {
+      return l10n.lastSeenHoursAgo(difference.inHours);
+    }
+    return l10n.lastSeenDaysAgo(difference.inDays);
+  }
+
+  TextStyle _resolveTextStyle(BuildContext context) {
+    return textStyle ??
+        AppTextStyles.bodySmall.copyWith(
+          color: AppColors.textSecondary,
+        );
   }
 }
 
-/// Presence indicator specifically for avatar overlay
-///
-/// Shows a small colored dot at bottom-right of avatar
+class _PresenceDot extends StatelessWidget {
+  const _PresenceDot({
+    required this.color,
+    required this.dotSize,
+    required this.showBorder,
+  });
+
+  final Color color;
+  final double dotSize;
+  final bool showBorder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: dotSize,
+      height: dotSize,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: showBorder
+            ? Border.all(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                width: 2.0,
+              )
+            : null,
+      ),
+    );
+  }
+}
+
+/// Presence indicator for avatar overlay.
 class AvatarPresenceIndicator extends StatelessWidget {
-  /// Is user online
   final bool isOnline;
-
-  /// Size of the presence dot
   final double size;
-
-  /// Position offset from bottom-right
   final double offset;
 
   const AvatarPresenceIndicator({
-    Key? key,
+    super.key,
     required this.isOnline,
     this.size = 12.0,
     this.offset = 0.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Positioned(
       bottom: offset,
       right: offset,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: isOnline ? Colors.green : Colors.grey,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            width: 2.0,
-          ),
-        ),
+      child: _PresenceDot(
+        color: isOnline ? AppColors.success : AppColors.greyDark,
+        dotSize: size,
+        showBorder: true,
       ),
     );
   }
 }
 
-/// Presence indicator with real-time updates
-///
-/// Connects to WebSocket for real-time presence updates
+/// Presence indicator connected to real-time `PresenceService`.
 class LivePresenceIndicator extends StatelessWidget {
-  /// User ID to track
   final String userId;
-
-  /// Show text label
   final bool showLabel;
-
-  /// Dot size
   final double dotSize;
-
-  /// Text style
   final TextStyle? textStyle;
+  final UserPresence? fallbackPresence;
+  final Stream<UserPresence>? presenceStream;
+  final PresenceService? presenceService;
 
-  /// TODO: Connect to WebSocket presence stream
-  /// For now, just shows static presence based on user data
   const LivePresenceIndicator({
-    Key? key,
+    super.key,
     required this.userId,
     this.showLabel = true,
-    this.dotSize = 8.0,
+    this.dotSize = AppDimens.spaceSmall,
     this.textStyle,
-  }) : super(key: key);
+    this.fallbackPresence,
+    this.presenceStream,
+    this.presenceService,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // TODO: StreamBuilder connecting to presence service
-    // For now, show offline status
-    return PresenceIndicator(
-      isOnline: false,
-      lastSeen: DateTime.now().subtract(const Duration(minutes: 5)),
-      showLabel: showLabel,
-      dotSize: dotSize,
-      textStyle: textStyle,
-    );
+    final stream = _resolvePresenceStream();
+    if (stream == null) {
+      final fallback = fallbackPresence ?? UserPresence.offlineFor(userId);
+      return PresenceIndicator(
+        isOnline: fallback.isOnline,
+        lastSeen: fallback.lastSeen,
+        showLabel: showLabel,
+        dotSize: dotSize,
+        textStyle: textStyle,
+      );
+    }
 
-    // Future implementation:
-    // return StreamBuilder<UserPresence>(
-    //   stream: presenceService.getUserPresenceStream(userId),
-    //   builder: (context, snapshot) {
-    //     if (!snapshot.hasData) {
-    //       return PresenceIndicator(
-    //         isOnline: false,
-    //         showLabel: showLabel,
-    //         dotSize: dotSize,
-    //         textStyle: textStyle,
-    //       );
-    //     }
-    //
-    //     final presence = snapshot.data!;
-    //     return PresenceIndicator(
-    //       isOnline: presence.isOnline,
-    //       lastSeen: presence.lastSeen,
-    //       showLabel: showLabel,
-    //       dotSize: dotSize,
-    //       textStyle: textStyle,
-    //     );
-    //   },
-    // );
+    return StreamBuilder<UserPresence>(
+      stream: stream,
+      builder: (context, snapshot) {
+        final loading = snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData &&
+            fallbackPresence == null;
+
+        final presence = snapshot.hasError
+            ? (fallbackPresence ?? UserPresence.offlineFor(userId))
+            : (snapshot.data ?? fallbackPresence);
+
+        return PresenceIndicator(
+          isOnline: presence?.isOnline ?? false,
+          lastSeen: presence?.lastSeen,
+          showLabel: showLabel,
+          dotSize: dotSize,
+          textStyle: textStyle,
+          isLoading: loading,
+        );
+      },
+    );
+  }
+
+  Stream<UserPresence>? _resolvePresenceStream() {
+    if (presenceStream != null) {
+      return presenceStream;
+    }
+
+    if (presenceService != null) {
+      return presenceService!.getUserPresenceStream(userId);
+    }
+
+    final getIt = GetIt.instance;
+    if (!getIt.isRegistered<PresenceService>()) {
+      return null;
+    }
+
+    return getIt<PresenceService>().getUserPresenceStream(userId);
   }
 }
