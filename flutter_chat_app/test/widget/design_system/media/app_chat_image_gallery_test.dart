@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_chat_image_gallery.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final Uint8List _kTestPngBytes = Uint8List.fromList(<int>[
@@ -79,14 +80,19 @@ Widget _buildGallery({
   required List<AppChatImageGalleryItem> items,
   required ValueChanged<int> onTap,
 }) {
-  return MaterialApp(
-    home: Scaffold(
-      body: Center(
-        child: SizedBox(
-          width: 320,
-          child: AppChatImageGallery(
-            images: items,
-            onImageTap: onTap,
+  return ScreenUtilInit(
+    designSize: const Size(375, 812),
+    minTextAdapt: true,
+    splitScreenMode: true,
+    builder: (_, __) => MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: 320,
+            child: AppChatImageGallery(
+              images: items,
+              onImageTap: onTap,
+            ),
           ),
         ),
       ),

@@ -243,10 +243,13 @@ class AppChatImageGallery extends BaseStatelessWidget {
                               alignment: Alignment.center,
                               child: AppText(
                                 '+$remainingCount',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      color: AppColors.textPrimaryDarkMode,
-                                      fontWeight: FontWeight.w700,
-                                    ) ??
+                                style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
+                                          color: AppColors.textPrimaryDarkMode,
+                                          fontWeight: FontWeight.w700,
+                                        ) ??
                                     const TextStyle(
                                       color: AppColors.textPrimaryDarkMode,
                                       fontWeight: FontWeight.w700,
@@ -541,9 +544,9 @@ class _UploadingOverlay extends StatelessWidget {
                 AppText(
                   '$percentage%',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textPrimaryDarkMode,
-                        fontWeight: FontWeight.w600,
-                      ) ??
+                            color: AppColors.textPrimaryDarkMode,
+                            fontWeight: FontWeight.w600,
+                          ) ??
                       const TextStyle(
                         color: AppColors.textPrimaryDarkMode,
                         fontWeight: FontWeight.w600,
