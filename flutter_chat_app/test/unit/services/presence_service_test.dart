@@ -43,10 +43,13 @@ void main() {
       () => realtimeService.presenceStream,
     ).thenAnswer((_) => realtimeController.stream);
 
-    service = PresenceService(
+    service = PresenceService.test(
       repository: repository,
       realtimeService: realtimeService,
       logger: AppLogger(),
+      cacheTtl: const Duration(seconds: 30),
+      now: DateTime.now,
+      enableBackendQuery: true,
     );
   });
 
@@ -75,6 +78,35 @@ void main() {
 
     await service.fetchPresenceForUsers(<String>['user_1']);
     expect(repository.requestedBatches.length, 1);
+  });
+
+  test(
+      'backend query is disabled by default and uses seeded conversation fields',
+      () async {
+    final lastSeen = DateTime(2026, 2, 25, 10, 15);
+    service.dispose();
+    service = PresenceService(
+      repository: repository,
+      realtimeService: realtimeService,
+      logger: AppLogger(),
+    );
+
+    await service.fetchPresenceForUsers(
+      const <String>['user_seeded'],
+      seededPresenceByUserId: <String, UserPresence>{
+        'user_seeded': UserPresence(
+          userId: 'user_seeded',
+          isOnline: true,
+          lastSeen: lastSeen,
+        ),
+      },
+    );
+
+    final presence = await service.getUserPresenceStream('user_seeded').first;
+    expect(presence.userId, 'user_seeded');
+    expect(presence.isOnline, isTrue);
+    expect(presence.lastSeen, lastSeen);
+    expect(repository.requestedBatches, isEmpty);
   });
 
   test('cache miss fetches repository and emits value', () async {
@@ -140,6 +172,7 @@ void main() {
       logger: AppLogger(),
       cacheTtl: const Duration(seconds: 30),
       now: () => fakeNow,
+      enableBackendQuery: true,
     );
 
     repository.onRequest = (userIds) {

@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/domain/entities/user_presence.dart';
 import 'package:flutter_chat_app/domain/repositories/i_presence_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -19,6 +19,7 @@ class PresenceService {
         _realtimeService = realtimeService,
         _logger = logger,
         _cacheTtl = const Duration(seconds: 30),
+        _enableBackendQuery = false,
         _now = DateTime.now {
     _subscribeSocketEvents();
   }
@@ -29,10 +30,12 @@ class PresenceService {
     required AppLogger logger,
     Duration cacheTtl = const Duration(seconds: 30),
     NowProvider? now,
+    bool enableBackendQuery = false,
   })  : _repository = repository,
         _realtimeService = realtimeService,
         _logger = logger,
         _cacheTtl = cacheTtl,
+        _enableBackendQuery = enableBackendQuery,
         _now = now ?? DateTime.now {
     _subscribeSocketEvents();
   }
@@ -41,6 +44,7 @@ class PresenceService {
   final RealtimeService _realtimeService;
   final AppLogger _logger;
   final Duration _cacheTtl;
+  final bool _enableBackendQuery;
   final NowProvider _now;
 
   final Map<String, _CachedPresence> _cache = <String, _CachedPresence>{};
@@ -63,22 +67,29 @@ class PresenceService {
     return subject.stream;
   }
 
-  Future<void> fetchPresenceForUsers(List<String> userIds) async {
+  Future<void> fetchPresenceForUsers(
+    List<String> userIds, {
+    Map<String, UserPresence> seededPresenceByUserId =
+        const <String, UserPresence>{},
+  }) async {
     final normalizedIds = userIds
         .map(_normalizeUserId)
         .where((String id) => id.isNotEmpty)
         .toSet()
         .toList(growable: false);
 
-    if (normalizedIds.isEmpty) {
+    if (normalizedIds.isEmpty && seededPresenceByUserId.isEmpty) {
       return;
     }
 
     _trackedUserIds.addAll(normalizedIds);
+    _seedPresenceFromSupportedFields(seededPresenceByUserId);
 
-    final staleIds = normalizedIds
-        .where((String userId) => _isCacheStale(userId))
-        .toList(growable: false);
+    if (!_enableBackendQuery || normalizedIds.isEmpty) {
+      return;
+    }
+
+    final staleIds = normalizedIds.where(_isCacheStale).toList(growable: false);
     if (staleIds.isEmpty) {
       return;
     }
@@ -133,6 +144,39 @@ class PresenceService {
         }
       },
     );
+  }
+
+  void _seedPresenceFromSupportedFields(
+    Map<String, UserPresence> seededPresenceByUserId,
+  ) {
+    if (seededPresenceByUserId.isEmpty) {
+      return;
+    }
+
+    final seededAt = _now();
+    for (final entry in seededPresenceByUserId.entries) {
+      final normalizedUserId = _normalizeUserId(entry.key);
+      if (normalizedUserId.isEmpty) {
+        continue;
+      }
+      _trackedUserIds.add(normalizedUserId);
+
+      // Do not override fresh real-time state with stale chat snapshot data.
+      if (_cache.containsKey(normalizedUserId) &&
+          !_isCacheStale(normalizedUserId)) {
+        continue;
+      }
+
+      _updateCache(
+        UserPresence(
+          userId: normalizedUserId,
+          isOnline: entry.value.isOnline,
+          lastSeen: entry.value.lastSeen,
+        ),
+        sourceFetchedAt: seededAt,
+        allowOlderUpdate: false,
+      );
+    }
   }
 
   void dispose() {
@@ -207,7 +251,7 @@ class PresenceService {
   }
 
   BehaviorSubject<UserPresence> _ensureSubject(String userId) {
-    return _subjects.putIfAbsent(userId, () => BehaviorSubject<UserPresence>());
+    return _subjects.putIfAbsent(userId, BehaviorSubject<UserPresence>.new);
   }
 
   // Guard against race condition: a socket update may arrive after API request starts.

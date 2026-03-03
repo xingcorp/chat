@@ -81,6 +81,8 @@ class ChatQueries {
               id
               fullname
               imageUrls
+              statusActive
+              offlineAt
             }
           }
         }
@@ -143,6 +145,8 @@ class ChatQueries {
             departmentName
             titleName
             code
+            statusActive
+            offlineAt
           }
         }
       }
@@ -182,6 +186,8 @@ class ChatQueries {
             fullname
             email
             imageUrls
+            statusActive
+            offlineAt
             departments {
               department {
                 id

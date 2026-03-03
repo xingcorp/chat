@@ -23,6 +23,32 @@ LastMessageDto? _lastMessageFromJson(dynamic value) {
   return null;
 }
 
+bool? _statusActiveToOnline(String? statusActive) {
+  if (statusActive == null) {
+    return null;
+  }
+  final normalized = statusActive.trim().toLowerCase();
+  if (normalized.isEmpty) {
+    return null;
+  }
+  if (normalized == 'online') {
+    return true;
+  }
+  if (normalized == 'offline') {
+    return false;
+  }
+  return null;
+}
+
+DateTime? _dateTimeFromEpoch(num? value) {
+  if (value == null) {
+    return null;
+  }
+  final raw = value.toInt();
+  final milliseconds = raw < 1000000000000 ? raw * 1000 : raw;
+  return DateTime.fromMillisecondsSinceEpoch(milliseconds);
+}
+
 UserBriefDto? _userBriefFromJson(dynamic value) {
   if (value == null) return null;
   if (value is Map<String, dynamic>) return UserBriefDto.fromJson(value);
@@ -189,6 +215,8 @@ class UserDto with _$UserDto {
     @JsonKey(name: 'fullname') String? fullName,
     @JsonKey(fromJson: _stringListFromJson) @Default([]) List<String> imageUrls,
     String? email,
+    String? statusActive,
+    num? offlineAt,
     @Default([]) List<UserDepartmentDto> departments,
   }) = _UserDto;
 
@@ -275,13 +303,15 @@ extension ChatDtoMapper on ChatDto {
                 ? m.user!.departments.first.title?.name
                 : null,
             isAdmin: m.admin,
-            isConnected: m.connected,
+            isConnected:
+                _statusActiveToOnline(m.user?.statusActive) ?? m.connected,
             isHidden: m.hide,
             unreadCount: m.unreadCount,
             lastMessageReadId: m.lastMessageReadId,
-            viewMessagesFrom: m.viewMessagesFrom != null
-                ? DateTime.fromMillisecondsSinceEpoch(m.viewMessagesFrom!)
-                : null,
+            viewMessagesFrom: _dateTimeFromEpoch(m.user?.offlineAt) ??
+                (m.viewMessagesFrom != null
+                    ? DateTime.fromMillisecondsSinceEpoch(m.viewMessagesFrom!)
+                    : null),
           ),
         )
         .toList();

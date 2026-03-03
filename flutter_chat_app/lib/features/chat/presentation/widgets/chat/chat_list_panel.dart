@@ -11,6 +11,7 @@ import 'package:flutter_chat_app/core/services/presence_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
+import 'package:flutter_chat_app/domain/entities/user_presence.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_conversation_tile.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/conversation_type_tab_bar.dart';
@@ -321,6 +322,7 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
   void _prefetchPresenceForChats(List<Chat> chats) {
     final currentUserId = getIt<CurrentUserProvider>().currentUserId;
     final userIds = <String>{};
+    final seededPresenceByUserId = <String, UserPresence>{};
 
     for (final chat in chats) {
       if (chat.type != ChatType.direct || chat.members.isEmpty) {
@@ -336,16 +338,22 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
           : otherMember.id.trim();
       if (candidateId.isNotEmpty) {
         userIds.add(candidateId);
+        seededPresenceByUserId[candidateId] = UserPresence(
+          userId: candidateId,
+          isOnline: otherMember.isConnected,
+          lastSeen: otherMember.viewMessagesFrom,
+        );
       }
     }
 
-    if (userIds.isEmpty) {
+    if (userIds.isEmpty && seededPresenceByUserId.isEmpty) {
       return;
     }
 
     unawaited(
       _presenceService.fetchPresenceForUsers(
         userIds.toList(growable: false),
+        seededPresenceByUserId: seededPresenceByUserId,
       ),
     );
   }

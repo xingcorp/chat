@@ -157,6 +157,8 @@ _$UserDtoImpl _$$UserDtoImplFromJson(Map<String, dynamic> json) =>
           ? const []
           : _stringListFromJson(json['imageUrls']),
       email: json['email'] as String?,
+      statusActive: json['statusActive'] as String?,
+      offlineAt: json['offlineAt'] as num?,
       departments: (json['departments'] as List<dynamic>?)
               ?.map(
                   (e) => UserDepartmentDto.fromJson(e as Map<String, dynamic>))
@@ -170,6 +172,8 @@ Map<String, dynamic> _$$UserDtoImplToJson(_$UserDtoImpl instance) =>
       'fullname': instance.fullName,
       'imageUrls': instance.imageUrls,
       'email': instance.email,
+      'statusActive': instance.statusActive,
+      'offlineAt': instance.offlineAt,
       'departments': instance.departments,
     };
 

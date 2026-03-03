@@ -12,14 +12,15 @@ import 'package:flutter_chat_app/core/services/presence_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
+import 'package:flutter_chat_app/domain/entities/user_presence.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_conversation_tile.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/conversation_type_tab_bar.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_shimmer.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/lists/app_list_view.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
@@ -378,6 +379,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
   void _prefetchPresenceForChats(List<Chat> chats) {
     final currentUserId = getIt<CurrentUserProvider>().currentUserId;
     final userIds = <String>{};
+    final seededPresenceByUserId = <String, UserPresence>{};
 
     for (final chat in chats) {
       if (chat.type != ChatType.direct || chat.members.isEmpty) {
@@ -393,16 +395,22 @@ class _ChatListPageState extends BaseState<ChatListPage> {
           : otherMember.id.trim();
       if (candidateId.isNotEmpty) {
         userIds.add(candidateId);
+        seededPresenceByUserId[candidateId] = UserPresence(
+          userId: candidateId,
+          isOnline: otherMember.isConnected,
+          lastSeen: otherMember.viewMessagesFrom,
+        );
       }
     }
 
-    if (userIds.isEmpty) {
+    if (userIds.isEmpty && seededPresenceByUserId.isEmpty) {
       return;
     }
 
     unawaited(
       _presenceService.fetchPresenceForUsers(
         userIds.toList(growable: false),
+        seededPresenceByUserId: seededPresenceByUserId,
       ),
     );
   }

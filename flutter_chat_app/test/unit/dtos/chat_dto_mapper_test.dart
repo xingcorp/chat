@@ -21,4 +21,38 @@ void main() {
 
     expect(chat.lastMessagePreview, '🎯 Sticker');
   });
+
+  test('prioritizes user statusActive/offlineAt for member presence mapping',
+      () {
+    final dto = ChatDto.fromJson(<String, dynamic>{
+      'id': 'chat_2',
+      'name': 'Direct',
+      'type': 'direct',
+      'createdAt': 1700000000000,
+      'members': <dynamic>[
+        <String, dynamic>{
+          'id': 'mem_1',
+          'userId': 'user_1',
+          'connected': false,
+          'viewMessagesFrom': 1700000000000,
+          'user': <String, dynamic>{
+            'id': 'user_1',
+            'fullname': 'User One',
+            'statusActive': 'online',
+            'offlineAt': 1705000000000,
+            'imageUrls': <String>[],
+          },
+        },
+      ],
+    });
+
+    final chat = dto.toDomain();
+    final member = chat.members.first;
+
+    expect(member.isConnected, isTrue);
+    expect(
+      member.viewMessagesFrom,
+      DateTime.fromMillisecondsSinceEpoch(1705000000000),
+    );
+  });
 }

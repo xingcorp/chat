@@ -134,6 +134,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
       return LivePresenceIndicator(
         userId: directPresence.userId,
         showLabel: true,
+        showDot: false,
         textStyle: AppTextStyles.bodySmall.copyWith(color: secondaryColor),
         fallbackPresence: directPresence.fallbackPresence,
       );

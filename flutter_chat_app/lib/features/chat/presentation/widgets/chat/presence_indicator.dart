@@ -15,6 +15,7 @@ class PresenceIndicator extends StatelessWidget {
   final bool isOnline;
   final DateTime? lastSeen;
   final bool showLabel;
+  final bool showDot;
   final bool isLoading;
   final double dotSize;
   final TextStyle? textStyle;
@@ -24,6 +25,7 @@ class PresenceIndicator extends StatelessWidget {
     required this.isOnline,
     this.lastSeen,
     this.showLabel = true,
+    this.showDot = true,
     this.isLoading = false,
     this.dotSize = AppDimens.spaceSmall,
     this.textStyle,
@@ -47,6 +49,9 @@ class PresenceIndicator extends StatelessWidget {
 
     final statusColor = isOnline ? AppColors.success : AppColors.greyDark;
     if (!showLabel) {
+      if (!showDot) {
+        return const SizedBox.shrink();
+      }
       return _PresenceDot(
         color: statusColor,
         dotSize: dotSize,
@@ -57,12 +62,13 @@ class PresenceIndicator extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        _PresenceDot(
-          color: statusColor,
-          dotSize: dotSize,
-          showBorder: false,
-        ),
-        const SizedBox(width: AppDimens.spaceXSmall),
+        if (showDot)
+          _PresenceDot(
+            color: statusColor,
+            dotSize: dotSize,
+            showBorder: false,
+          ),
+        if (showDot) const SizedBox(width: AppDimens.spaceXSmall),
         AppText(
           _getStatusText(context.l10n),
           style: _resolveTextStyle(context),
@@ -164,6 +170,7 @@ class LivePresenceIndicator extends StatelessWidget {
   final bool showLabel;
   final double dotSize;
   final TextStyle? textStyle;
+  final bool showDot;
   final UserPresence? fallbackPresence;
   final Stream<UserPresence>? presenceStream;
   final PresenceService? presenceService;
@@ -174,6 +181,7 @@ class LivePresenceIndicator extends StatelessWidget {
     this.showLabel = true,
     this.dotSize = AppDimens.spaceSmall,
     this.textStyle,
+    this.showDot = true,
     this.fallbackPresence,
     this.presenceStream,
     this.presenceService,
@@ -188,6 +196,7 @@ class LivePresenceIndicator extends StatelessWidget {
         isOnline: fallback.isOnline,
         lastSeen: fallback.lastSeen,
         showLabel: showLabel,
+        showDot: showDot,
         dotSize: dotSize,
         textStyle: textStyle,
       );
@@ -208,6 +217,7 @@ class LivePresenceIndicator extends StatelessWidget {
           isOnline: presence?.isOnline ?? false,
           lastSeen: presence?.lastSeen,
           showLabel: showLabel,
+          showDot: showDot,
           dotSize: dotSize,
           textStyle: textStyle,
           isLoading: loading,

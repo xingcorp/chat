@@ -1783,6 +1783,8 @@ mixin _$UserDto {
   @JsonKey(fromJson: _stringListFromJson)
   List<String> get imageUrls => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
+  String? get statusActive => throw _privateConstructorUsedError;
+  num? get offlineAt => throw _privateConstructorUsedError;
   List<UserDepartmentDto> get departments => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1800,6 +1802,8 @@ abstract class $UserDtoCopyWith<$Res> {
       @JsonKey(name: 'fullname') String? fullName,
       @JsonKey(fromJson: _stringListFromJson) List<String> imageUrls,
       String? email,
+      String? statusActive,
+      num? offlineAt,
       List<UserDepartmentDto> departments});
 }
 
@@ -1820,6 +1824,8 @@ class _$UserDtoCopyWithImpl<$Res, $Val extends UserDto>
     Object? fullName = freezed,
     Object? imageUrls = null,
     Object? email = freezed,
+    Object? statusActive = freezed,
+    Object? offlineAt = freezed,
     Object? departments = null,
   }) {
     return _then(_value.copyWith(
@@ -1839,6 +1845,14 @@ class _$UserDtoCopyWithImpl<$Res, $Val extends UserDto>
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
               as String?,
+      statusActive: freezed == statusActive
+          ? _value.statusActive
+          : statusActive // ignore: cast_nullable_to_non_nullable
+              as String?,
+      offlineAt: freezed == offlineAt
+          ? _value.offlineAt
+          : offlineAt // ignore: cast_nullable_to_non_nullable
+              as num?,
       departments: null == departments
           ? _value.departments
           : departments // ignore: cast_nullable_to_non_nullable
@@ -1859,6 +1873,8 @@ abstract class _$$UserDtoImplCopyWith<$Res> implements $UserDtoCopyWith<$Res> {
       @JsonKey(name: 'fullname') String? fullName,
       @JsonKey(fromJson: _stringListFromJson) List<String> imageUrls,
       String? email,
+      String? statusActive,
+      num? offlineAt,
       List<UserDepartmentDto> departments});
 }
 
@@ -1877,6 +1893,8 @@ class __$$UserDtoImplCopyWithImpl<$Res>
     Object? fullName = freezed,
     Object? imageUrls = null,
     Object? email = freezed,
+    Object? statusActive = freezed,
+    Object? offlineAt = freezed,
     Object? departments = null,
   }) {
     return _then(_$UserDtoImpl(
@@ -1896,6 +1914,14 @@ class __$$UserDtoImplCopyWithImpl<$Res>
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
               as String?,
+      statusActive: freezed == statusActive
+          ? _value.statusActive
+          : statusActive // ignore: cast_nullable_to_non_nullable
+              as String?,
+      offlineAt: freezed == offlineAt
+          ? _value.offlineAt
+          : offlineAt // ignore: cast_nullable_to_non_nullable
+              as num?,
       departments: null == departments
           ? _value._departments
           : departments // ignore: cast_nullable_to_non_nullable
@@ -1913,6 +1939,8 @@ class _$UserDtoImpl implements _UserDto {
       @JsonKey(fromJson: _stringListFromJson)
       final List<String> imageUrls = const [],
       this.email,
+      this.statusActive,
+      this.offlineAt,
       final List<UserDepartmentDto> departments = const []})
       : _imageUrls = imageUrls,
         _departments = departments;
@@ -1936,6 +1964,10 @@ class _$UserDtoImpl implements _UserDto {
 
   @override
   final String? email;
+  @override
+  final String? statusActive;
+  @override
+  final num? offlineAt;
   final List<UserDepartmentDto> _departments;
   @override
   @JsonKey()
@@ -1947,7 +1979,7 @@ class _$UserDtoImpl implements _UserDto {
 
   @override
   String toString() {
-    return 'UserDto(id: $id, fullName: $fullName, imageUrls: $imageUrls, email: $email, departments: $departments)';
+    return 'UserDto(id: $id, fullName: $fullName, imageUrls: $imageUrls, email: $email, statusActive: $statusActive, offlineAt: $offlineAt, departments: $departments)';
   }
 
   @override
@@ -1961,6 +1993,10 @@ class _$UserDtoImpl implements _UserDto {
             const DeepCollectionEquality()
                 .equals(other._imageUrls, _imageUrls) &&
             (identical(other.email, email) || other.email == email) &&
+            (identical(other.statusActive, statusActive) ||
+                other.statusActive == statusActive) &&
+            (identical(other.offlineAt, offlineAt) ||
+                other.offlineAt == offlineAt) &&
             const DeepCollectionEquality()
                 .equals(other._departments, _departments));
   }
@@ -1973,6 +2009,8 @@ class _$UserDtoImpl implements _UserDto {
       fullName,
       const DeepCollectionEquality().hash(_imageUrls),
       email,
+      statusActive,
+      offlineAt,
       const DeepCollectionEquality().hash(_departments));
 
   @JsonKey(ignore: true)
@@ -1995,6 +2033,8 @@ abstract class _UserDto implements UserDto {
       @JsonKey(name: 'fullname') final String? fullName,
       @JsonKey(fromJson: _stringListFromJson) final List<String> imageUrls,
       final String? email,
+      final String? statusActive,
+      final num? offlineAt,
       final List<UserDepartmentDto> departments}) = _$UserDtoImpl;
 
   factory _UserDto.fromJson(Map<String, dynamic> json) = _$UserDtoImpl.fromJson;
@@ -2009,6 +2049,10 @@ abstract class _UserDto implements UserDto {
   List<String> get imageUrls;
   @override
   String? get email;
+  @override
+  String? get statusActive;
+  @override
+  num? get offlineAt;
   @override
   List<UserDepartmentDto> get departments;
   @override

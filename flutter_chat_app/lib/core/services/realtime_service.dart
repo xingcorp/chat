@@ -588,9 +588,12 @@ class RealtimeService {
         return;
       }
 
-      final status = data['status']?.toString() ?? 'offline';
+      final status = data['status']?.toString() ??
+          data['statusActive']?.toString() ??
+          'offline';
       final lastSeen = _parseDateTime(data['lastSeen'] ?? data['offlineAt']);
-      final isOnline = _parseOnlineStatus(data['isOnline'] ?? status);
+      final isOnline = _parseOnlineStatus(
+          data['isOnline'] ?? data['statusActive'] ?? status);
 
       final userStatus = UserStatus(
         userId: userId,
@@ -624,7 +627,9 @@ class RealtimeService {
       }
 
       final lastSeen = _parseDateTime(data['lastSeen'] ?? data['offlineAt']);
-      final isOnline = _parseOnlineStatus(data['isOnline'] ?? data['status']);
+      final isOnline = _parseOnlineStatus(
+        data['isOnline'] ?? data['statusActive'] ?? data['status'],
+      );
 
       _presenceController.add(
         UserPresence(
