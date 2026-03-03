@@ -47,6 +47,7 @@ import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversa
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_bloc.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/button_enums.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/sticker_picker.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_alert_dialog.dart';
@@ -660,6 +661,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   Future<void> _finishVoiceRecording({
     required bool cancelled,
   }) async {
+    if (!_isRecordingVoice) return;
+
     final secondsToSend = _resolveRecordingSeconds();
     String? filePath;
 
@@ -684,6 +687,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       ),
     );
     _cancelReply();
+  }
+
+  Future<void> _sendVoiceRecordingFromPanel() async {
+    await _finishVoiceRecording(cancelled: false);
+  }
+
+  Future<void> _cancelVoiceRecordingFromPanel() async {
+    await _finishVoiceRecording(cancelled: true);
   }
 
   void _handleVoiceRecordingLimitReached(String filePath) {
@@ -1627,28 +1638,44 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           ),
           const SizedBox(width: AppDimens.spaceSmall),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 132),
+            constraints: const BoxConstraints(maxWidth: 168),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
               children: [
-                AppText(
-                  isCancelling
-                      ? context.l10n.cancelRecording
-                      : context.l10n.releaseToSend,
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  textAlign: TextAlign.right,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppIconButton(
+                      icon: Icons.close_rounded,
+                      onPressed: _cancelVoiceRecordingFromPanel,
+                      size: ButtonSize.small,
+                      tooltip: context.l10n.cancelRecording,
+                    ),
+                    AppIconButton(
+                      icon: Icons.send_rounded,
+                      onPressed: _sendVoiceRecordingFromPanel,
+                      size: ButtonSize.small,
+                      tooltip: context.l10n.send,
+                    ),
+                  ],
                 ),
                 if (!isCancelling) ...[
                   const SizedBox(height: AppDimens.spaceXSmall),
                   AppText(
-                    context.l10n.slideToCancel,
+                    '${context.l10n.releaseToSend}\n${context.l10n.slideToCancel}',
                     style: AppTextStyles.labelSmall.copyWith(
                       color: AppColors.textSecondary.withValues(alpha: 0.85),
+                    ),
+                    textAlign: TextAlign.right,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ] else ...[
+                  AppText(
+                    context.l10n.cancelRecording,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                     textAlign: TextAlign.right,
                     maxLines: 2,
