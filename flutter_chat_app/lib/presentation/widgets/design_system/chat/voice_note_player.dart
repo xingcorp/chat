@@ -178,10 +178,10 @@ class _VoiceWaveformPainter extends CustomPainter {
     if (bars.isEmpty || size.width <= 0 || size.height <= 0) return;
 
     final barCount = bars.length;
-    final spacing = AppDimens.spaceXSmall * 0.6;
+    const spacing = AppDimens.spaceXSmall * 0.6;
     final totalSpacing = spacing * (barCount - 1);
     final barWidth = (size.width - totalSpacing) / barCount;
-    final radius = Radius.circular(AppDimens.radiusSmall);
+    const radius = Radius.circular(AppDimens.radiusSmall);
 
     for (var i = 0; i < barCount; i++) {
       final amplitude = bars[i];

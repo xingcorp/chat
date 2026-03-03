@@ -1704,12 +1704,12 @@
     "description": "Hint text for voice recording"
   },
 
-  "slideToCancel": "Slide to cancel",
+  "slideToCancel": "Slide left to cancel",
   "@slideToCancel": {
     "description": "Hint text to cancel voice recording"
   },
 
-  "releaseToSend": "Release to send",
+  "releaseToSend": "Lift finger to send",
   "@releaseToSend": {
     "description": "Hint text to send voice recording"
   },

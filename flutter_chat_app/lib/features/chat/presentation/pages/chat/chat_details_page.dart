@@ -155,6 +155,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   double _recordingAmplitude = 0.0;
   Duration _recordingDuration = Duration.zero;
   double? _recordingDragStartDx;
+  DateTime? _lastVoiceRecordingHintAt;
 
   @override
   void initState() {
@@ -629,6 +630,24 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     safeSetState(() {
       _isSlidingToCancel = shouldCancel;
     });
+  }
+
+  void _onVoiceRecordingTap() {
+    if (_isRecordingVoice || !mounted) return;
+
+    final now = DateTime.now();
+    final lastHintAt = _lastVoiceRecordingHintAt;
+    if (lastHintAt != null &&
+        now.difference(lastHintAt) < const Duration(seconds: 2)) {
+      return;
+    }
+
+    _lastVoiceRecordingHintAt = now;
+    AppSnackBar.show(
+      context: context,
+      message: context.l10n.longPressToRecord,
+      type: FeedbackType.info,
+    );
   }
 
   Future<void> _onVoiceRecordingLongPressEnd(
@@ -1551,21 +1570,25 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
             )
           else
             GestureDetector(
+              onTap: _onVoiceRecordingTap,
               onLongPressStart: _onVoiceRecordingLongPressStart,
               onLongPressMoveUpdate: _onVoiceRecordingLongPressMoveUpdate,
               onLongPressEnd: _onVoiceRecordingLongPressEnd,
               behavior: HitTestBehavior.opaque,
-              child: Container(
-                width: AppDimens.iconButtonSize,
-                height: AppDimens.iconButtonSize,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.mic_rounded,
-                  color: AppColors.textButton,
-                  size: AppDimens.iconMedium,
+              child: Tooltip(
+                message: context.l10n.longPressToRecord,
+                child: Container(
+                  width: AppDimens.iconButtonSize,
+                  height: AppDimens.iconButtonSize,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.mic_rounded,
+                    color: AppColors.textButton,
+                    size: AppDimens.iconMedium,
+                  ),
                 ),
               ),
             ),
@@ -1576,9 +1599,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   Widget _buildVoiceRecordingInputArea() {
     final isCancelling = _isSlidingToCancel;
-    final hintText = isCancelling
-        ? context.l10n.cancelRecording
-        : context.l10n.slideToCancel;
     final statusColor = isCancelling ? AppColors.error : AppColors.primary;
 
     return AppCard.outlined(
@@ -1610,18 +1630,35 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           ),
           const SizedBox(width: AppDimens.spaceSmall),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 88),
-            child: AppText(
-              isCancelling
-                  ? context.l10n.cancelRecording
-                  : context.l10n.releaseToSend,
-              style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.right,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              semanticsLabel: hintText,
+            constraints: const BoxConstraints(maxWidth: 132),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppText(
+                  isCancelling
+                      ? context.l10n.cancelRecording
+                      : context.l10n.releaseToSend,
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.right,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (!isCancelling) ...[
+                  const SizedBox(height: AppDimens.spaceXSmall),
+                  AppText(
+                    context.l10n.slideToCancel,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.textSecondary.withValues(alpha: 0.85),
+                    ),
+                    textAlign: TextAlign.right,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
             ),
           ),
         ],

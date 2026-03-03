@@ -1923,7 +1923,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     final currentState = state as MessagesLoaded;
     final file = File(event.filePath);
-    final fileExists = await file.exists();
+    final fileExists = file.existsSync();
     if (!fileExists) {
       logger.w('Voice note file not found: ${event.filePath}');
       return;
@@ -2174,8 +2174,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   Future<void> _deleteLocalFile(String path) async {
     try {
       final file = File(path);
-      if (await file.exists()) {
-        await file.delete();
+      if (file.existsSync()) {
+        file.deleteSync();
       }
     } catch (error, stackTrace) {
       logger.w(

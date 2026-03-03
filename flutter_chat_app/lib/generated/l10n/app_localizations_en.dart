@@ -1004,10 +1004,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get longPressToRecord => 'Long press to record';
 
   @override
-  String get slideToCancel => 'Slide to cancel';
+  String get slideToCancel => 'Slide left to cancel';
 
   @override
-  String get releaseToSend => 'Release to send';
+  String get releaseToSend => 'Lift finger to send';
 
   @override
   String get microphonePermissionTitle => 'Microphone permission required';

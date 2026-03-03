@@ -1006,10 +1006,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get longPressToRecord => 'Giữ để ghi âm';
 
   @override
-  String get slideToCancel => 'Trượt để hủy';
+  String get slideToCancel => 'Kéo sang trái để hủy';
 
   @override
-  String get releaseToSend => 'Thả để gửi';
+  String get releaseToSend => 'Nhấc tay để gửi';
 
   @override
   String get microphonePermissionTitle => 'Cần quyền micro';

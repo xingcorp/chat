@@ -1961,13 +1961,13 @@ abstract class AppLocalizations {
   /// Hint text to cancel voice recording
   ///
   /// In en, this message translates to:
-  /// **'Slide to cancel'**
+  /// **'Slide left to cancel'**
   String get slideToCancel;
 
   /// Hint text to send voice recording
   ///
   /// In en, this message translates to:
-  /// **'Release to send'**
+  /// **'Lift finger to send'**
   String get releaseToSend;
 
   /// Dialog title for microphone permission
