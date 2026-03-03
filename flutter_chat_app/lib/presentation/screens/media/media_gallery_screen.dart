@@ -9,10 +9,10 @@ import 'package:flutter_chat_app/presentation/screens/media/image_viewer_screen.
 class MediaGalleryScreen extends StatefulWidget {
   /// ID của cuộc trò chuyện
   final String chatId;
-  
+
   /// Tiêu đề
   final String title;
-  
+
   const MediaGalleryScreen({
     Key? key,
     required this.chatId,
@@ -26,24 +26,24 @@ class MediaGalleryScreen extends StatefulWidget {
 class _MediaGalleryScreenState extends State<MediaGalleryScreen> {
   /// Service cấu hình animation
   final animationService = GetIt.I<AnimationService>();
-  
+
   /// Danh sách hình ảnh (sẽ thay bằng dữ liệu thật sau)
   late List<MediaItem> _mediaItems;
-  
+
   /// Đang tải dữ liệu
   bool _isLoading = true;
-  
+
   @override
   void initState() {
     super.initState();
     _loadMedia();
   }
-  
+
   /// Tải dữ liệu hình ảnh
   Future<void> _loadMedia() async {
     // Giả lập tải dữ liệu từ API hoặc local storage
     await Future.delayed(const Duration(milliseconds: 500));
-    
+
     // Mock data - sẽ thay bằng API call thực tế
     _mediaItems = [
       MediaItem(
@@ -103,12 +103,12 @@ class _MediaGalleryScreenState extends State<MediaGalleryScreen> {
         aspectRatio: 0.7,
       ),
     ];
-    
+
     setState(() {
       _isLoading = false;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,7 +128,7 @@ class _MediaGalleryScreenState extends State<MediaGalleryScreen> {
           : _buildMediaGrid(context),
     );
   }
-  
+
   /// Xây dựng layout lưới ảnh
   Widget _buildMediaGrid(BuildContext context) {
     return Padding(
@@ -142,17 +142,22 @@ class _MediaGalleryScreenState extends State<MediaGalleryScreen> {
           final item = _mediaItems[index];
           // Tạo hero tag duy nhất cho từng ảnh
           final heroTag = 'media_${widget.chatId}_${item.id}';
-          
-          return _buildMediaItem(context, item, heroTag);
+
+          return _buildMediaItem(context, item, heroTag, index);
         },
       ),
     );
   }
-  
+
   /// Xây dựng từng item media
-  Widget _buildMediaItem(BuildContext context, MediaItem item, String heroTag) {
+  Widget _buildMediaItem(
+    BuildContext context,
+    MediaItem item,
+    String heroTag,
+    int index,
+  ) {
     return GestureDetector(
-      onTap: () => _openImageViewer(context, item, heroTag),
+      onTap: () => _openImageViewer(context, item, heroTag, index),
       child: Hero(
         tag: heroTag,
         child: ClipRRect(
@@ -186,21 +191,47 @@ class _MediaGalleryScreenState extends State<MediaGalleryScreen> {
       ),
     );
   }
-  
+
   /// Mở ảnh xem chi tiết với Hero animation
-  void _openImageViewer(BuildContext context, MediaItem item, String heroTag) {
+  void _openImageViewer(
+    BuildContext context,
+    MediaItem item,
+    String heroTag,
+    int index,
+  ) {
+    final viewerItems = _mediaItems
+        .map(
+          (mediaItem) => ImageViewerItem(
+            imageUrl: mediaItem.url,
+            heroTag: 'media_${widget.chatId}_${mediaItem.id}',
+            title: _formatTimestamp(mediaItem.timestamp),
+          ),
+        )
+        .toList(growable: false);
+    final selectedIndex = _mediaItems.indexWhere((m) => m.id == item.id);
+
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ImageViewerScreen(
-          imageUrl: item.url,
-          heroTag: heroTag,
+        builder: (context) => ImageViewerScreen.gallery(
+          images: viewerItems.isNotEmpty
+              ? viewerItems
+              : <ImageViewerItem>[
+                  ImageViewerItem(
+                    imageUrl: item.url,
+                    heroTag: heroTag,
+                    title: _formatTimestamp(item.timestamp),
+                  ),
+                ],
+          initialIndex: selectedIndex >= 0 && selectedIndex < viewerItems.length
+              ? selectedIndex
+              : index,
           title: _formatTimestamp(item.timestamp),
         ),
       ),
     );
   }
-  
+
   /// Format thời gian chụp ảnh
   String _formatTimestamp(DateTime timestamp) {
     return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
@@ -218,19 +249,19 @@ enum MediaType {
 class MediaItem {
   /// ID duy nhất
   final String id;
-  
+
   /// URL đến nguồn
   final String url;
-  
+
   /// Loại media
   final MediaType type;
-  
+
   /// Thời gian gửi
   final DateTime timestamp;
-  
+
   /// Tỷ lệ chiều rộng/chiều cao
   final double aspectRatio;
-  
+
   /// Constructor
   const MediaItem({
     required this.id,
@@ -239,4 +270,4 @@ class MediaItem {
     required this.timestamp,
     this.aspectRatio = 1.0,
   });
-} 
+}

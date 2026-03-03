@@ -13,23 +13,33 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reactio
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/media_gallery.dart'
-    show EditedImageResult;
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/models/edited_image_result.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
+
+class ImageViewerItem {
+  final String imageUrl;
+  final String heroTag;
+  final String? title;
+
+  const ImageViewerItem({
+    required this.imageUrl,
+    required this.heroTag,
+    this.title,
+  });
+}
 
 /// Màn hình xem hình ảnh với khả năng zoom và phóng to
 /// Supports reactions and forwarding when ChatMessage is provided
 class ImageViewerScreen extends StatefulWidget {
-  /// URL hình ảnh
-  final String imageUrl;
+  final List<ImageViewerItem> images;
 
-  /// Tag cho Hero animation
-  final String heroTag;
+  final int initialIndex;
 
   /// Tiêu đề
   final String? title;
@@ -40,15 +50,58 @@ class ImageViewerScreen extends StatefulWidget {
   /// Chat ID for forwarding
   final String? chatId;
 
-  /// Constructor
-  const ImageViewerScreen({
+  ImageViewerScreen({
     Key? key,
     required this.imageUrl,
     required this.heroTag,
     this.title,
     this.message,
     this.chatId,
-  }) : super(key: key);
+  })  : images = <ImageViewerItem>[
+          ImageViewerItem(
+            imageUrl: imageUrl,
+            heroTag: heroTag,
+            title: title,
+          ),
+        ],
+        initialIndex = 0,
+        super(key: key);
+
+  ImageViewerScreen.gallery({
+    Key? key,
+    required this.images,
+    this.initialIndex = 0,
+    this.title,
+    this.message,
+    this.chatId,
+  })  : assert(images.isNotEmpty),
+        assert(initialIndex >= 0),
+        assert(initialIndex < images.length),
+        imageUrl = '',
+        heroTag = '',
+        super(key: key);
+
+  /// Legacy params kept for backward compatibility.
+  final String imageUrl;
+  final String heroTag;
+
+  List<ImageViewerItem> get effectiveImages {
+    if (images.isNotEmpty) return images;
+    return <ImageViewerItem>[
+      ImageViewerItem(
+        imageUrl: imageUrl,
+        heroTag: heroTag,
+        title: title,
+      ),
+    ];
+  }
+
+  int get safeInitialIndex {
+    final maxIndex = effectiveImages.length - 1;
+    if (initialIndex < 0) return 0;
+    if (initialIndex > maxIndex) return maxIndex;
+    return initialIndex;
+  }
 
   @override
   State<ImageViewerScreen> createState() => _ImageViewerScreenState();
@@ -71,8 +124,14 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
   /// Animation cho bottom overlay
   late Animation<double> _bottomOverlayAnimation;
 
+  late PageController _pageController;
+  late int _currentIndex;
+
   /// Có hiện UI không
   bool _showUI = true;
+
+  List<ImageViewerItem> get _images => widget.effectiveImages;
+  ImageViewerItem get _currentImage => _images[_currentIndex];
 
   @override
   void initState() {
@@ -114,6 +173,9 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
 
     // Khởi tạo hiển thị UI
     _animationController.value = 0.0;
+
+    _currentIndex = widget.safeInitialIndex;
+    _pageController = PageController(initialPage: _currentIndex);
   }
 
   @override
@@ -126,6 +188,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
       ),
     );
 
+    _pageController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -185,56 +248,53 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Hero animation giúp transition mượt mà từ danh sách hình ảnh
-              Hero(
-                tag: widget.heroTag,
-                child: PhotoView(
-                  imageProvider: CachedNetworkImageProvider(widget.imageUrl),
-                  initialScale: PhotoViewComputedScale.contained,
-                  minScale: PhotoViewComputedScale.contained * 0.8,
-                  maxScale: PhotoViewComputedScale.covered * 2.0,
-                  filterQuality: _resolveViewerFilterQuality(context),
-                  backgroundDecoration: const BoxDecoration(
-                    color: Colors.transparent,
-                  ),
-                  loadingBuilder: (context, event) {
-                    // Hiển thị tiến trình tải hình
-                    if (event == null) {
-                      return const SizedBox.shrink();
-                    }
-
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: event.expectedTotalBytes != null
-                            ? event.cumulativeBytesLoaded /
-                                event.expectedTotalBytes!
-                            : null,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                            theme.colorScheme.primary),
-                      ),
-                    );
-                  },
-                  onScaleEnd: (_, __, ___) {
-                    // No action needed
-                  },
-                  scaleStateCycle: (currentState) {
-                    // Chu kỳ trạng thái khi double tap
-                    if (currentState == PhotoViewScaleState.initial) {
-                      return PhotoViewScaleState.covering;
-                    } else {
+              PhotoViewGallery.builder(
+                pageController: _pageController,
+                itemCount: _images.length,
+                builder: (context, index) {
+                  final image = _images[index];
+                  return PhotoViewGalleryPageOptions(
+                    imageProvider: CachedNetworkImageProvider(image.imageUrl),
+                    initialScale: PhotoViewComputedScale.contained,
+                    minScale: PhotoViewComputedScale.contained * 0.8,
+                    maxScale: PhotoViewComputedScale.covered * 2.0,
+                    filterQuality: _resolveViewerFilterQuality(context),
+                    heroAttributes: image.heroTag.isNotEmpty
+                        ? PhotoViewHeroAttributes(tag: image.heroTag)
+                        : null,
+                    scaleStateCycle: (currentState) {
+                      if (currentState == PhotoViewScaleState.initial) {
+                        return PhotoViewScaleState.covering;
+                      }
                       return PhotoViewScaleState.initial;
-                    }
-                  },
-                  scaleStateChangedCallback: (state) {
-                    // Ẩn UI khi zoom
-                    if (state != PhotoViewScaleState.initial && _showUI) {
-                      setState(() {
-                        _showUI = false;
-                        _animationController.forward();
-                      });
-                    }
-                  },
+                    },
+                  );
+                },
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                },
+                scrollPhysics: const BouncingScrollPhysics(),
+                backgroundDecoration: const BoxDecoration(
+                  color: Colors.transparent,
                 ),
+                loadingBuilder: (context, event) {
+                  if (event == null) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: event.expectedTotalBytes != null
+                          ? event.cumulativeBytesLoaded /
+                              event.expectedTotalBytes!
+                          : null,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          theme.colorScheme.primary),
+                    ),
+                  );
+                },
               ),
 
               // Bottom overlay with forward/reaction bar (only if message provided)
@@ -287,7 +347,11 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                   style: topButtonStyle,
                 ),
                 title: Text(
-                  widget.title ?? context.l10n.imageMessage,
+                  _images.length > 1
+                      ? '${_currentIndex + 1} / ${_images.length}'
+                      : (widget.title ??
+                          _currentImage.title ??
+                          context.l10n.imageMessage),
                   style: const TextStyle(color: Colors.white),
                 ),
                 actions: [
@@ -602,7 +666,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
 
     final result = await saveMediaToGallery(
       SaveMediaToGalleryParams(
-        url: widget.imageUrl,
+        url: _currentImage.imageUrl,
         mediaType: GalleryMediaType.image,
         mediaId: widget.message?.id,
       ),
@@ -648,7 +712,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
 
     imageEditorService.editNetworkImage(
       context,
-      imageUrl: widget.imageUrl,
+      imageUrl: _currentImage.imageUrl,
       onComplete: (bytes) {
         if (!context.mounted) return;
         final fileName = 'edited_${DateTime.now().millisecondsSinceEpoch}.jpg';

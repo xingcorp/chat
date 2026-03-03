@@ -972,12 +972,35 @@ class _SharedMediaGalleryPageState extends BaseState<SharedMediaGalleryPage>
 
   void _openMediaPreview(SharedMedia media, SharedMediaType type) {
     if (type == SharedMediaType.photo) {
-      // Use ImageViewerScreen for photos with zoom capability
+      final photoItems = _filteredPhotos;
+      final viewerItems = photoItems
+          .map(
+            (photo) => ImageViewerItem(
+              imageUrl: photo.url,
+              heroTag: 'media_${photo.id}_full',
+              title: photo.fileName,
+            ),
+          )
+          .toList(growable: false);
+      final selectedIndex =
+          photoItems.indexWhere((photo) => photo.id == media.id);
+
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => ImageViewerScreen(
-            imageUrl: media.url,
-            heroTag: 'media_${media.id}_full',
+          builder: (context) => ImageViewerScreen.gallery(
+            images: viewerItems.isNotEmpty
+                ? viewerItems
+                : <ImageViewerItem>[
+                    ImageViewerItem(
+                      imageUrl: media.url,
+                      heroTag: 'media_${media.id}_full',
+                      title: media.fileName,
+                    ),
+                  ],
+            initialIndex:
+                selectedIndex >= 0 && selectedIndex < viewerItems.length
+                    ? selectedIndex
+                    : 0,
             title: media.fileName,
           ),
         ),

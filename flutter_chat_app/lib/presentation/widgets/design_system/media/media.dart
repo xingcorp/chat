@@ -9,6 +9,7 @@
 
 export 'app_audio_player.dart';
 export 'app_avatar.dart';
+export 'app_chat_image_gallery.dart';
 export 'app_emoji_picker.dart';
 export 'app_file_uploader.dart';
 export 'app_image_gallery.dart';
