@@ -1765,4 +1765,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get replyPreviewSticker => 'Sticker';
+
+  @override
+  String draftMessagePreview(String message) {
+    return 'Draft: $message';
+  }
+
+  @override
+  String get mentionEveryone => 'Mention everyone';
+
+  @override
+  String get mentionAllDisplayName => 'all';
+
+  @override
+  String get slashCommandShrugDescription =>
+      'Append a shrug emoticon to your message';
+
+  @override
+  String get slashCommandTableflipDescription => 'Send a table-flip emoticon';
+
+  @override
+  String get slashCommandMeDescription => 'Send an action-style message';
+
+  @override
+  String get slashCommandMuteDescription =>
+      'Open mute controls for this conversation';
+
+  @override
+  String get slashCommandMeUsage => '/me <text>';
+
+  @override
+  String get slashCommandUnknown => 'Unknown slash command';
+
+  @override
+  String get slashCommandMissingArgument =>
+      'This command requires additional text';
+
+  @override
+  String get slashCommandMuteActionHint =>
+      'Open chat info and choose a mute duration';
 }

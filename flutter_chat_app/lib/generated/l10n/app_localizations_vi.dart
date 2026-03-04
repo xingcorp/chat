@@ -1767,4 +1767,42 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get replyPreviewSticker => 'Sticker';
+
+  @override
+  String draftMessagePreview(String message) {
+    return 'Bản nháp: $message';
+  }
+
+  @override
+  String get mentionEveryone => 'Nhắc tới mọi người';
+
+  @override
+  String get mentionAllDisplayName => 'mọi người';
+
+  @override
+  String get slashCommandShrugDescription =>
+      'Thêm biểu tượng shrug vào tin nhắn';
+
+  @override
+  String get slashCommandTableflipDescription => 'Gửi biểu tượng lật bàn';
+
+  @override
+  String get slashCommandMeDescription => 'Gửi tin nhắn dạng hành động';
+
+  @override
+  String get slashCommandMuteDescription =>
+      'Mở tùy chọn tắt thông báo cho cuộc trò chuyện';
+
+  @override
+  String get slashCommandMeUsage => '/me <nội dung>';
+
+  @override
+  String get slashCommandUnknown => 'Lệnh slash không hợp lệ';
+
+  @override
+  String get slashCommandMissingArgument => 'Lệnh này cần thêm nội dung';
+
+  @override
+  String get slashCommandMuteActionHint =>
+      'Mở thông tin chat để chọn thời gian tắt thông báo';
 }

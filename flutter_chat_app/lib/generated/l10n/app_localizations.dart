@@ -3241,6 +3241,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sticker'**
   String get replyPreviewSticker;
+
+  /// Preview text shown for unsent draft in conversation list
+  ///
+  /// In en, this message translates to:
+  /// **'Draft: {message}'**
+  String draftMessagePreview(String message);
+
+  /// Subtitle for the @all mention option
+  ///
+  /// In en, this message translates to:
+  /// **'Mention everyone'**
+  String get mentionEveryone;
+
+  /// Display label used for @all mention insertion
+  ///
+  /// In en, this message translates to:
+  /// **'all'**
+  String get mentionAllDisplayName;
+
+  /// Description for /shrug command
+  ///
+  /// In en, this message translates to:
+  /// **'Append a shrug emoticon to your message'**
+  String get slashCommandShrugDescription;
+
+  /// Description for /tableflip command
+  ///
+  /// In en, this message translates to:
+  /// **'Send a table-flip emoticon'**
+  String get slashCommandTableflipDescription;
+
+  /// Description for /me command
+  ///
+  /// In en, this message translates to:
+  /// **'Send an action-style message'**
+  String get slashCommandMeDescription;
+
+  /// Description for /mute command
+  ///
+  /// In en, this message translates to:
+  /// **'Open mute controls for this conversation'**
+  String get slashCommandMuteDescription;
+
+  /// Usage hint for /me command
+  ///
+  /// In en, this message translates to:
+  /// **'/me <text>'**
+  String get slashCommandMeUsage;
+
+  /// Validation message when command is not supported
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown slash command'**
+  String get slashCommandUnknown;
+
+  /// Validation message when slash command argument is missing
+  ///
+  /// In en, this message translates to:
+  /// **'This command requires additional text'**
+  String get slashCommandMissingArgument;
+
+  /// Feedback after executing /mute command
+  ///
+  /// In en, this message translates to:
+  /// **'Open chat info and choose a mute duration'**
+  String get slashCommandMuteActionHint;
 }
 
 class _AppLocalizationsDelegate

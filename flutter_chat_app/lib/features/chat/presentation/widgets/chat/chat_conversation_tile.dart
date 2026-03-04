@@ -17,12 +17,14 @@ import 'package:get_it/get_it.dart';
 class ChatConversationTile extends StatelessWidget {
   final Chat chat;
   final String previewText;
+  final bool isDraftPreview;
   final VoidCallback? onTap;
 
   const ChatConversationTile({
     super.key,
     required this.chat,
     required this.previewText,
+    this.isDraftPreview = false,
     this.onTap,
   });
 
@@ -98,11 +100,16 @@ class ChatConversationTile extends StatelessWidget {
                         child: AppText(
                           isTyping ? context.l10n.typing : previewText,
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: hasUnread
-                                ? primaryTextColor
-                                : secondaryTextColor,
-                            fontWeight:
-                                hasUnread ? FontWeight.w500 : FontWeight.normal,
+                            color: isTyping
+                                ? secondaryTextColor
+                                : (isDraftPreview
+                                    ? AppColors.warning
+                                    : (hasUnread
+                                        ? primaryTextColor
+                                        : secondaryTextColor)),
+                            fontWeight: isDraftPreview || hasUnread
+                                ? FontWeight.w500
+                                : FontWeight.normal,
                             fontStyle:
                                 isTyping ? FontStyle.italic : FontStyle.normal,
                             fontSize: 14,

@@ -3122,5 +3122,65 @@
   "replyPreviewSticker": "Sticker",
   "@replyPreviewSticker": {
     "description": "Preview label for sticker reply/forward messages"
+  },
+
+  "draftMessagePreview": "Draft: {message}",
+  "@draftMessagePreview": {
+    "description": "Preview text shown for unsent draft in conversation list",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+
+  "mentionEveryone": "Mention everyone",
+  "@mentionEveryone": {
+    "description": "Subtitle for the @all mention option"
+  },
+
+  "mentionAllDisplayName": "all",
+  "@mentionAllDisplayName": {
+    "description": "Display label used for @all mention insertion"
+  },
+
+  "slashCommandShrugDescription": "Append a shrug emoticon to your message",
+  "@slashCommandShrugDescription": {
+    "description": "Description for /shrug command"
+  },
+
+  "slashCommandTableflipDescription": "Send a table-flip emoticon",
+  "@slashCommandTableflipDescription": {
+    "description": "Description for /tableflip command"
+  },
+
+  "slashCommandMeDescription": "Send an action-style message",
+  "@slashCommandMeDescription": {
+    "description": "Description for /me command"
+  },
+
+  "slashCommandMuteDescription": "Open mute controls for this conversation",
+  "@slashCommandMuteDescription": {
+    "description": "Description for /mute command"
+  },
+
+  "slashCommandMeUsage": "/me <text>",
+  "@slashCommandMeUsage": {
+    "description": "Usage hint for /me command"
+  },
+
+  "slashCommandUnknown": "Unknown slash command",
+  "@slashCommandUnknown": {
+    "description": "Validation message when command is not supported"
+  },
+
+  "slashCommandMissingArgument": "This command requires additional text",
+  "@slashCommandMissingArgument": {
+    "description": "Validation message when slash command argument is missing"
+  },
+
+  "slashCommandMuteActionHint": "Open chat info and choose a mute duration",
+  "@slashCommandMuteActionHint": {
+    "description": "Feedback after executing /mute command"
   }
 }

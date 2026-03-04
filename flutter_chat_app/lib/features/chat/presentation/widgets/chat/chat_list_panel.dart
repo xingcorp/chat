@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
-import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
+import 'package:flutter_chat_app/core/services/chat_draft_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/presence_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -13,6 +13,7 @@ import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
 import 'package:flutter_chat_app/domain/entities/user_presence.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/chat_conversation_preview_resolver.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_conversation_tile.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/conversation_type_tab_bar.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
@@ -37,6 +38,7 @@ class ChatListPanel extends BaseStatefulWidget {
 
 class _ChatListPanelState extends BaseState<ChatListPanel> {
   late final ChatBloc _chatBloc;
+  late final ChatDraftService _chatDraftService;
   late final PresenceService _presenceService;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
@@ -46,6 +48,7 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
   void initState() {
     super.initState();
     _chatBloc = getIt<ChatBloc>();
+    _chatDraftService = getIt<ChatDraftService>();
     _presenceService = getIt<PresenceService>();
     _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
   }
@@ -200,45 +203,54 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                         filterPages,
                         filterHasMore,
                         isSyncing) {
-                      return Column(
-                        children: [
-                          ConversationTypeTabBar(
-                            activeFilter: activeFilter,
-                            onFilterChanged: (filter) {
-                              _chatBloc.add(
-                                  ChatEvent.changeConversationTypeFilter(
-                                      filter: filter));
-                            },
-                          ),
-                          Expanded(
-                            child: isLoadingMore && chats.isEmpty
-                                ? Center(
-                                    child: AppProgressIndicator.circular(
-                                        label: context.l10n.loading),
-                                  )
-                                : AppListView<Chat>(
-                                    items: chats,
-                                    isLoading: isLoadingMore,
-                                    hasMore: hasMore,
-                                    onRefresh: _onRefresh,
-                                    onLoadMore: () async {
-                                      if (isLoadingMore) return;
-                                      _chatBloc
-                                          .add(const ChatEvent.loadMoreChats());
-                                    },
-                                    emptyWidget: _buildEmptyState(context,
-                                        activeFilter: activeFilter),
-                                    separatorBuilder: (context, index) =>
-                                        const Divider(
-                                      height: 1,
-                                      indent: AppDimens.spaceHuge,
-                                    ),
-                                    itemBuilder: (context, chat, index) {
-                                      return _buildChatListItem(context, chat);
-                                    },
-                                  ),
-                          ),
-                        ],
+                      return ValueListenableBuilder<Map<String, ChatDraft>>(
+                        valueListenable: _chatDraftService.draftsListenable,
+                        builder: (context, _, __) {
+                          return Column(
+                            children: [
+                              ConversationTypeTabBar(
+                                activeFilter: activeFilter,
+                                onFilterChanged: (filter) {
+                                  _chatBloc.add(
+                                      ChatEvent.changeConversationTypeFilter(
+                                          filter: filter));
+                                },
+                              ),
+                              Expanded(
+                                child: isLoadingMore && chats.isEmpty
+                                    ? Center(
+                                        child: AppProgressIndicator.circular(
+                                            label: context.l10n.loading),
+                                      )
+                                    : AppListView<Chat>(
+                                        items: chats,
+                                        isLoading: isLoadingMore,
+                                        hasMore: hasMore,
+                                        onRefresh: _onRefresh,
+                                        onLoadMore: () async {
+                                          if (isLoadingMore) return;
+                                          _chatBloc.add(
+                                            const ChatEvent.loadMoreChats(),
+                                          );
+                                        },
+                                        emptyWidget: _buildEmptyState(context,
+                                            activeFilter: activeFilter),
+                                        separatorBuilder: (context, index) =>
+                                            const Divider(
+                                          height: 1,
+                                          indent: AppDimens.spaceHuge,
+                                        ),
+                                        itemBuilder: (context, chat, index) {
+                                          return _buildChatListItem(
+                                            context,
+                                            chat,
+                                          );
+                                        },
+                                      ),
+                              ),
+                            ],
+                          );
+                        },
                       );
                     },
                     error: (message) {
@@ -283,18 +295,16 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
   }
 
   Widget _buildChatListItem(BuildContext context, Chat chat) {
-    final previewText =
-        (chat.lastMessagePreview ?? context.l10n.noMessages).formatChatMessage(
-      mentionNameById: {
-        for (final m in chat.members)
-          if ((m.userId).isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
-            m.userId: m.fullName!.trim(),
-      },
+    final previewData = ChatConversationPreviewResolver.resolve(
+      context: context,
+      chat: chat,
+      draftService: _chatDraftService,
     );
 
     return ChatConversationTile(
       chat: chat,
-      previewText: previewText,
+      previewText: previewData.text,
+      isDraftPreview: previewData.isDraft,
       onTap: () async {
         if (chat.unreadCount > 0) {
           _chatBloc.add(

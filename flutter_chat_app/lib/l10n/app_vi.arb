@@ -977,5 +977,27 @@
 
   "noStickersAvailable": "Không có sticker",
 
-  "replyPreviewSticker": "Sticker"
+  "replyPreviewSticker": "Sticker",
+
+  "draftMessagePreview": "Bản nháp: {message}",
+
+  "mentionEveryone": "Nhắc tới mọi người",
+
+  "mentionAllDisplayName": "mọi người",
+
+  "slashCommandShrugDescription": "Thêm biểu tượng shrug vào tin nhắn",
+
+  "slashCommandTableflipDescription": "Gửi biểu tượng lật bàn",
+
+  "slashCommandMeDescription": "Gửi tin nhắn dạng hành động",
+
+  "slashCommandMuteDescription": "Mở tùy chọn tắt thông báo cho cuộc trò chuyện",
+
+  "slashCommandMeUsage": "/me <nội dung>",
+
+  "slashCommandUnknown": "Lệnh slash không hợp lệ",
+
+  "slashCommandMissingArgument": "Lệnh này cần thêm nội dung",
+
+  "slashCommandMuteActionHint": "Mở thông tin chat để chọn thời gian tắt thông báo"
 }

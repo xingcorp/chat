@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, mapEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -15,6 +14,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
+import 'package:flutter_chat_app/core/services/chat_draft_service.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/services/voice_recorder_service.dart';
@@ -26,6 +26,7 @@ import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/chat_slash_command_engine.dart';
 import 'package:flutter_chat_app/presentation/screens/media/image_preview_screen.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/screens/chat/chat_header.dart';
@@ -54,7 +55,6 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/inputs/app_text_field.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_panel.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
@@ -63,6 +63,26 @@ import 'package:permission_handler/permission_handler.dart';
 
 // Service locator instance
 final getIt = GetIt.instance;
+
+class _SendMessageShortcutIntent extends Intent {
+  const _SendMessageShortcutIntent();
+}
+
+class _DismissChatInputShortcutIntent extends Intent {
+  const _DismissChatInputShortcutIntent();
+}
+
+class _OpenMessageSearchShortcutIntent extends Intent {
+  const _OpenMessageSearchShortcutIntent();
+}
+
+class _FocusMessageInputShortcutIntent extends Intent {
+  const _FocusMessageInputShortcutIntent();
+}
+
+class _CopySelectedMessagesShortcutIntent extends Intent {
+  const _CopySelectedMessagesShortcutIntent();
+}
 
 /// Chat details page with MessageBloc integration
 class ChatDetailsPage extends BaseStatefulWidget {
@@ -92,9 +112,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       ScrollOffsetListener.create();
   late final MessageBloc _messageBloc;
   late final ConversationDetailBloc _convDetailBloc;
+  late final ChatDraftService _chatDraftService;
+  final ChatSlashCommandEngine _slashCommandEngine =
+      const ChatSlashCommandEngine();
 
   Chat? _chat;
   String _currentUserId = '';
+  String _currentUserDisplayName = '';
   bool _hasInitializedContext = false;
 
   static const int _pageSize = 50;
@@ -126,6 +150,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   String? _typingUserName;
   StreamSubscription? _typingSubscription;
   Timer? _typingDebounceTimer;
+  Timer? _draftSaveDebounceTimer;
+  bool _isRestoringDraft = false;
+  bool _skipOneEmptyDraftPersist = false;
+  String? _pendingDraftContentToClear;
+  DateTime? _pendingDraftQueuedAt;
+  String _lastPersistedDraftText = '';
+  Map<String, String> _lastPersistedMentionNameById = const <String, String>{};
 
   // ══════════════════════════════════════════
   // Scroll-to-bottom FAB state
@@ -166,6 +197,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     // ensuring clean state and correct bloc scope.
     _messageBloc = getIt<MessageBloc>();
     _convDetailBloc = getIt<ConversationDetailBloc>();
+    _chatDraftService = getIt<ChatDraftService>();
     _voiceRecorderService = getIt<VoiceRecorderService>();
     _messageBloc.add(const FetchFrequentReactions());
 
@@ -197,12 +229,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
     // Single listener for efficiency
     _messageController.addListener(_handleControllerChanges);
+    unawaited(_restoreDraftIfAvailable());
   }
 
   void _handleControllerChanges() {
     if (!mounted) return;
     safeSetState(() {});
     _handleTypingIndicator();
+    _scheduleDraftPersistence();
   }
 
   void _handleTypingIndicator() {
@@ -224,6 +258,69 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         isTyping: false,
       ));
     });
+  }
+
+  Future<void> _restoreDraftIfAvailable() async {
+    final draft = await _chatDraftService.getDraft(widget.chatId);
+    if (!mounted || draft == null || !draft.hasContent) return;
+
+    _isRestoringDraft = true;
+    _messageController.updateMentions(draft.mentionNameById);
+    _messageController.value = TextEditingValue(
+      text: draft.text,
+      selection: TextSelection.collapsed(offset: draft.text.length),
+    );
+    _lastPersistedDraftText = draft.text;
+    _lastPersistedMentionNameById =
+        Map<String, String>.from(draft.mentionNameById);
+    _isRestoringDraft = false;
+  }
+
+  void _scheduleDraftPersistence() {
+    if (_isRestoringDraft || _isEditMode || _isRecordingVoice) {
+      return;
+    }
+
+    _draftSaveDebounceTimer?.cancel();
+    _draftSaveDebounceTimer = Timer(
+      const Duration(milliseconds: 400),
+      () => unawaited(_persistDraftNow()),
+    );
+  }
+
+  Future<void> _persistDraftNow() async {
+    if (_isRestoringDraft || _isEditMode || _isRecordingVoice) {
+      return;
+    }
+
+    final rawText = _messageController.text;
+    final mentionNameById = _messageController.mentionNameById;
+    if (_skipOneEmptyDraftPersist && rawText.trim().isEmpty) {
+      _skipOneEmptyDraftPersist = false;
+      return;
+    }
+
+    if (rawText == _lastPersistedDraftText &&
+        mapEquals(mentionNameById, _lastPersistedMentionNameById)) {
+      return;
+    }
+
+    _lastPersistedDraftText = rawText;
+    _lastPersistedMentionNameById = Map<String, String>.from(mentionNameById);
+    await _chatDraftService.saveDraft(
+      conversationId: widget.chatId,
+      text: rawText,
+      mentionNameById: mentionNameById,
+    );
+  }
+
+  Future<void> _clearDraft() async {
+    _skipOneEmptyDraftPersist = false;
+    _pendingDraftContentToClear = null;
+    _pendingDraftQueuedAt = null;
+    _lastPersistedDraftText = '';
+    _lastPersistedMentionNameById = const <String, String>{};
+    await _chatDraftService.removeDraft(widget.chatId);
   }
 
   void _setupRealtimeSubscriptions() {
@@ -252,6 +349,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         _currentUserId = authState.user.id;
+        _currentUserDisplayName =
+            (authState.user.fullName?.trim().isNotEmpty ?? false)
+                ? authState.user.fullName!.trim()
+                : authState.user.username;
         _messageBloc.setTransformContext(
           currentUserId: _currentUserId,
           isGroupChat: _chat?.type == ChatType.group,
@@ -326,6 +427,23 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   @override
   void dispose() {
+    _draftSaveDebounceTimer?.cancel();
+    if (!_isRestoringDraft && !_isEditMode && !_isRecordingVoice) {
+      final text = _messageController.text;
+      final mentionNameById = _messageController.mentionNameById;
+      final shouldKeepPendingDraft =
+          _pendingDraftContentToClear != null && text.trim().isEmpty;
+      if (!shouldKeepPendingDraft) {
+        unawaited(
+          _chatDraftService.saveDraft(
+            conversationId: widget.chatId,
+            text: text,
+            mentionNameById: mentionNameById,
+          ),
+        );
+      }
+    }
+
     _messageController.removeListener(_handleControllerChanges);
     _messageController.dispose();
     _messageFocusNode.dispose();
@@ -348,9 +466,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   // ══════════════════════════════════════════
 
   void _sendMessage() {
-    final raw = _messageController.text.trim();
-    final text = _messageController.toBackendMentionFormat(raw).trim();
-    if (text.isEmpty) {
+    final rawInput = _messageController.text.trim();
+    if (rawInput.isEmpty) {
       AppSnackBar.show(
         context: context,
         message: context.l10n.messageEmpty,
@@ -360,25 +477,139 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
 
     if (_isEditMode && _editingMessageId != null) {
+      final editedText =
+          _messageController.toBackendMentionFormat(rawInput).trim();
+      if (editedText.isEmpty) {
+        AppSnackBar.show(
+          context: context,
+          message: context.l10n.messageEmpty,
+          type: FeedbackType.warning,
+        );
+        return;
+      }
       _messageBloc.add(EditMessage(
         messageId: _editingMessageId!,
-        content: text,
+        content: editedText,
       ));
       _cancelEditMode();
-    } else {
-      _messageBloc.add(
-        SendMessage(
-          content: text,
-          senderId: _currentUserId,
-          contentType: 'text',
-          attachmentIds: const [],
-          replyMessageId: _replyingToMessage?.id,
-        ),
-      );
-      _cancelReply();
+      _messageController.clear();
+      unawaited(_clearDraft());
+      return;
     }
 
+    final slashCommandResult = _slashCommandEngine.parse(
+      input: rawInput,
+      actorDisplayName: _currentUserDisplayName.isNotEmpty
+          ? _currentUserDisplayName
+          : context.l10n.you,
+    );
+
+    if (slashCommandResult.outcome == ChatSlashCommandOutcome.invalid) {
+      _showSlashCommandValidationError(slashCommandResult.validationError);
+      return;
+    }
+
+    if (slashCommandResult.outcome == ChatSlashCommandOutcome.muteAction) {
+      _messageController.clear();
+      unawaited(_clearDraft());
+      _cancelReply();
+      _handleMuteSlashCommandAction();
+      return;
+    }
+
+    final effectiveContent =
+        slashCommandResult.outcome == ChatSlashCommandOutcome.sendMessage
+            ? (slashCommandResult.messageText ?? '')
+            : rawInput;
+    final messageText =
+        _messageController.toBackendMentionFormat(effectiveContent).trim();
+    if (messageText.isEmpty) {
+      AppSnackBar.show(
+        context: context,
+        message: context.l10n.messageEmpty,
+        type: FeedbackType.warning,
+      );
+      return;
+    }
+
+    _messageBloc.add(
+      SendMessage(
+        content: messageText,
+        senderId: _currentUserId,
+        contentType: 'text',
+        attachmentIds: const [],
+        replyMessageId: _replyingToMessage?.id,
+      ),
+    );
+    _pendingDraftContentToClear = messageText;
+    _pendingDraftQueuedAt = DateTime.now();
+    _skipOneEmptyDraftPersist = true;
+    _cancelReply();
     _messageController.clear();
+  }
+
+  void _showSlashCommandValidationError(
+    ChatSlashCommandValidationError? error,
+  ) {
+    final message = switch (error) {
+      ChatSlashCommandValidationError.missingArgument =>
+        context.l10n.slashCommandMissingArgument,
+      ChatSlashCommandValidationError.unknownCommand ||
+      null =>
+        context.l10n.slashCommandUnknown,
+    };
+
+    AppSnackBar.show(
+      context: context,
+      message: message,
+      type: FeedbackType.warning,
+    );
+  }
+
+  void _handleMuteSlashCommandAction() {
+    if (_chat != null) {
+      _showChatInfo();
+    }
+    AppSnackBar.show(
+      context: context,
+      message: context.l10n.slashCommandMuteActionHint,
+      type: FeedbackType.info,
+    );
+  }
+
+  void _tryClearPendingDraftOnDeliveredMessage(List<ChatMessage> messages) {
+    final pendingContent = _pendingDraftContentToClear;
+    final queuedAt = _pendingDraftQueuedAt;
+    if (pendingContent == null || queuedAt == null) return;
+
+    final normalizedPending = pendingContent.trim();
+    if (normalizedPending.isEmpty) {
+      _pendingDraftContentToClear = null;
+      _pendingDraftQueuedAt = null;
+      return;
+    }
+
+    final acknowledged = messages.any((message) {
+      if (message.sender.id != _currentUserId) return false;
+      if (message.id.startsWith('draft_')) return false;
+      if (message.createdAt
+          .isBefore(queuedAt.subtract(const Duration(seconds: 5)))) {
+        return false;
+      }
+      return message.content.trim() == normalizedPending;
+    });
+
+    if (!acknowledged) {
+      return;
+    }
+
+    if (_messageController.text.trim().isNotEmpty) {
+      _pendingDraftContentToClear = null;
+      _pendingDraftQueuedAt = null;
+      return;
+    }
+
+    unawaited(_clearDraft());
   }
 
   void _startReply(ChatMessage message) {
@@ -517,6 +748,122 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       }
       _exitSelectionMode();
     });
+  }
+
+  bool get _isDesktopKeyboardPlatform {
+    if (kIsWeb) return true;
+    return Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+  }
+
+  Widget _buildShortcutHost(Widget child) {
+    if (!_isDesktopKeyboardPlatform) {
+      return child;
+    }
+
+    return Shortcuts(
+      shortcuts: const <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.enter): _SendMessageShortcutIntent(),
+        SingleActivator(LogicalKeyboardKey.escape):
+            _DismissChatInputShortcutIntent(),
+        SingleActivator(LogicalKeyboardKey.keyF, control: true):
+            _OpenMessageSearchShortcutIntent(),
+        SingleActivator(LogicalKeyboardKey.keyF, meta: true):
+            _OpenMessageSearchShortcutIntent(),
+        SingleActivator(LogicalKeyboardKey.keyK, control: true):
+            _FocusMessageInputShortcutIntent(),
+        SingleActivator(LogicalKeyboardKey.keyK, meta: true):
+            _FocusMessageInputShortcutIntent(),
+        SingleActivator(
+          LogicalKeyboardKey.keyC,
+          control: true,
+          shift: true,
+        ): _CopySelectedMessagesShortcutIntent(),
+        SingleActivator(
+          LogicalKeyboardKey.keyC,
+          meta: true,
+          shift: true,
+        ): _CopySelectedMessagesShortcutIntent(),
+      },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          _SendMessageShortcutIntent:
+              CallbackAction<_SendMessageShortcutIntent>(
+            onInvoke: (_) {
+              _handleSendMessageShortcut();
+              return null;
+            },
+          ),
+          _DismissChatInputShortcutIntent:
+              CallbackAction<_DismissChatInputShortcutIntent>(
+            onInvoke: (_) {
+              _handleDismissShortcut();
+              return null;
+            },
+          ),
+          _OpenMessageSearchShortcutIntent:
+              CallbackAction<_OpenMessageSearchShortcutIntent>(
+            onInvoke: (_) {
+              _showMessageSearch();
+              return null;
+            },
+          ),
+          _FocusMessageInputShortcutIntent:
+              CallbackAction<_FocusMessageInputShortcutIntent>(
+            onInvoke: (_) {
+              if (!_messageFocusNode.hasFocus) {
+                FocusScope.of(context).requestFocus(_messageFocusNode);
+              }
+              return null;
+            },
+          ),
+          _CopySelectedMessagesShortcutIntent:
+              CallbackAction<_CopySelectedMessagesShortcutIntent>(
+            onInvoke: (_) {
+              _handleCopySelectedMessagesShortcut();
+              return null;
+            },
+          ),
+        },
+        child: Focus(
+          autofocus: true,
+          skipTraversal: true,
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  void _handleSendMessageShortcut() {
+    if (!_messageFocusNode.hasFocus) return;
+    if (_isSelectionMode || _isRecordingVoice) return;
+    if (_messageController.text.trim().isEmpty) return;
+    _sendMessage();
+  }
+
+  void _handleDismissShortcut() {
+    if (_isSelectionMode) {
+      _exitSelectionMode();
+      return;
+    }
+
+    if (_isEditMode) {
+      _cancelEditMode();
+      _messageController.clear();
+      unawaited(_clearDraft());
+      return;
+    }
+
+    if (_replyingToMessage != null) {
+      _cancelReply();
+      return;
+    }
+  }
+
+  void _handleCopySelectedMessagesShortcut() {
+    if (!_isSelectionMode) return;
+    final state = _messageBloc.state;
+    if (state is! MessagesLoaded) return;
+    _copySelectedMessages(state.uiMessages);
   }
 
   void _forwardSelectedMessages() {
@@ -1348,6 +1695,31 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     return mentionNameById;
   }
 
+  List<SlashCommandOption> _buildSlashCommandOptions(BuildContext context) {
+    return <SlashCommandOption>[
+      SlashCommandOption(
+        name: ChatSlashCommandEngine.shrugCommand,
+        usage: '/${ChatSlashCommandEngine.shrugCommand}',
+        description: context.l10n.slashCommandShrugDescription,
+      ),
+      SlashCommandOption(
+        name: ChatSlashCommandEngine.tableflipCommand,
+        usage: '/${ChatSlashCommandEngine.tableflipCommand}',
+        description: context.l10n.slashCommandTableflipDescription,
+      ),
+      SlashCommandOption(
+        name: ChatSlashCommandEngine.meCommand,
+        usage: context.l10n.slashCommandMeUsage,
+        description: context.l10n.slashCommandMeDescription,
+      ),
+      SlashCommandOption(
+        name: ChatSlashCommandEngine.muteCommand,
+        usage: '/${ChatSlashCommandEngine.muteCommand}',
+        description: context.l10n.slashCommandMuteDescription,
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final chatTitle = (_chat?.name?.trim().isNotEmpty ?? false)
@@ -1362,59 +1734,61 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       ],
       child: BlocListener<ConversationDetailBloc, ConversationDetailState>(
         listener: _handleConversationDetailStateChanges,
-        child: GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          child: Scaffold(
-            appBar: _isSelectionMode
-                ? _buildSelectionAppBar()
-                : _buildNormalAppBar(chatTitle),
-            body: Column(
-              children: [
-                Expanded(
-                  child: Stack(
-                    children: [
-                      BlocConsumer<MessageBloc, MessageState>(
-                        listener: _handleBlocStateChanges,
-                        builder: _buildMessagesList,
-                      ),
-                      if (_showScrollToBottom)
-                        Positioned(
-                          bottom: 16,
-                          right: 16,
-                          child: Badge(
-                            isLabelVisible: _newMessageCount > 0,
-                            label: Text('$_newMessageCount'),
-                            child: FloatingActionButton.small(
-                              heroTag: 'scrollToBottom',
-                              onPressed: _scrollToBottom,
-                              tooltip: context.l10n.scrollToBottom,
-                              child: const Icon(Icons.keyboard_arrow_down),
+        child: _buildShortcutHost(
+          GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: Scaffold(
+              appBar: _isSelectionMode
+                  ? _buildSelectionAppBar()
+                  : _buildNormalAppBar(chatTitle),
+              body: Column(
+                children: [
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        BlocConsumer<MessageBloc, MessageState>(
+                          listener: _handleBlocStateChanges,
+                          builder: _buildMessagesList,
+                        ),
+                        if (_showScrollToBottom)
+                          Positioned(
+                            bottom: 16,
+                            right: 16,
+                            child: Badge(
+                              isLabelVisible: _newMessageCount > 0,
+                              label: Text('$_newMessageCount'),
+                              child: FloatingActionButton.small(
+                                heroTag: 'scrollToBottom',
+                                onPressed: _scrollToBottom,
+                                tooltip: context.l10n.scrollToBottom,
+                                child: const Icon(Icons.keyboard_arrow_down),
+                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                ),
-                TypingIndicatorWithFade(
-                  isTyping: _isOtherTyping,
-                  displayName: _typingUserName,
-                ),
-                if (_replyingToMessage != null)
-                  ReplyInputBar(
-                    replyMessage: ReplyMessagePreview(
-                      id: _replyingToMessage!.id,
-                      senderName: _replyingToMessage!.sender.name,
-                      contentType: _replyingToMessage!.contentType,
-                      previewText: _buildReplyInputPreviewText(
-                        _replyingToMessage!,
-                        context,
-                      ),
+                      ],
                     ),
-                    onCancel: _cancelReply,
                   ),
-                if (_isEditMode) _buildEditModeBar(),
-                _buildMessageInputArea(),
-              ],
+                  TypingIndicatorWithFade(
+                    isTyping: _isOtherTyping,
+                    displayName: _typingUserName,
+                  ),
+                  if (_replyingToMessage != null)
+                    ReplyInputBar(
+                      replyMessage: ReplyMessagePreview(
+                        id: _replyingToMessage!.id,
+                        senderName: _replyingToMessage!.sender.name,
+                        contentType: _replyingToMessage!.contentType,
+                        previewText: _buildReplyInputPreviewText(
+                          _replyingToMessage!,
+                          context,
+                        ),
+                      ),
+                      onCancel: _cancelReply,
+                    ),
+                  if (_isEditMode) _buildEditModeBar(),
+                  _buildMessageInputArea(),
+                ],
+              ),
             ),
           ),
         ),
@@ -1455,6 +1829,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           state.messages.isNotEmpty) {
         _messageBloc.add(MarkChatAsRead(widget.chatId));
       }
+
+      _tryClearPendingDraftOnDeliveredMessage(state.messages);
 
       final wasLoadingMore = _isLoadingMore;
       safeSetState(() => _isLoadingMore = false);
@@ -1660,24 +2036,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
             tooltip: context.l10n.attachments,
           ),
           Expanded(
-            child: _chat != null && _chat!.members.isNotEmpty
-                ? MentionTextField(
-                    controller: _messageController,
-                    focusNode: _messageFocusNode,
-                    members: _chat!.members,
-                    currentUserId: _currentUserId,
-                    hint: context.l10n.typeMessage,
-                    minLines: 1,
-                    maxLines: 5,
-                  )
-                : AppTextField(
-                    controller: _messageController,
-                    minLines: 1,
-                    maxLines: 5,
-                    hint: context.l10n.typeMessage,
-                    keyboardType: TextInputType.multiline,
-                    textInputAction: TextInputAction.newline,
-                  ),
+            child: MentionTextField(
+              controller: _messageController,
+              focusNode: _messageFocusNode,
+              members: _chat?.members ?? const <ConversationMember>[],
+              currentUserId: _currentUserId,
+              hint: context.l10n.typeMessage,
+              minLines: 1,
+              maxLines: 5,
+              slashCommands: _buildSlashCommandOptions(context),
+            ),
           ),
           AppIconButton(
             icon: Icons.sticky_note_2_outlined,

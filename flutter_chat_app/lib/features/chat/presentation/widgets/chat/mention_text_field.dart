@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/chat_slash_command_engine.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_portal/flutter_portal.dart';
@@ -13,6 +16,11 @@ class _AllConversationMember extends ConversationMember {
           userId: 'all',
           fullName: 'All',
         );
+}
+
+enum _SuggestionMode {
+  mention,
+  slashCommand,
 }
 
 class MentionTextEditingController extends TextEditingController {
@@ -35,6 +43,9 @@ class MentionTextEditingController extends TextEditingController {
     _mentionNameById[id] = name;
     notifyListeners();
   }
+
+  Map<String, String> get mentionNameById =>
+      Map<String, String>.unmodifiable(_mentionNameById);
 
   String toBackendMentionFormat(String input) {
     var result = input;
@@ -80,6 +91,7 @@ class MentionTextField extends StatefulWidget {
   final String? hint;
   final int minLines;
   final int maxLines;
+  final List<SlashCommandOption> slashCommands;
   final ValueChanged<String>? onSubmitted;
   final VoidCallback? onChanged;
   final FocusNode? focusNode;
@@ -92,6 +104,7 @@ class MentionTextField extends StatefulWidget {
     this.hint,
     this.minLines = 1,
     this.maxLines = 5,
+    this.slashCommands = const <SlashCommandOption>[],
     this.onSubmitted,
     this.onChanged,
     this.focusNode,
@@ -110,7 +123,9 @@ class _MentionTextFieldState extends State<MentionTextField> {
   int _mentionStartIndex = -1;
   int _mentionEndIndex = -1;
   String _currentMentionQuery = '';
+  _SuggestionMode? _suggestionMode;
   List<ConversationMember> _filteredMembers = [];
+  List<SlashCommandOption> _filteredSlashCommands = [];
   int _selectedMentionIndex = 0;
 
   @override
@@ -152,79 +167,144 @@ class _MentionTextFieldState extends State<MentionTextField> {
       setState(() {
         _showMentionList = false;
         _currentMentionQuery = '';
+        _suggestionMode = null;
+        _filteredSlashCommands = const <SlashCommandOption>[];
+        _filteredMembers = const <ConversationMember>[];
       });
     }
   }
 
-  /// Check if user is typing a mention (@username)
+  /// Check if user is typing a mention (@username) or slash command (/command)
   void _checkForMention() {
     final text = widget.controller.text;
     final cursorPos = widget.controller.selection.baseOffset;
 
     if (cursorPos < 0) return;
 
-    // Find the last '@' before cursor
+    if (_checkForMentionSuggestions(text, cursorPos)) return;
+    if (_checkForSlashCommandSuggestions(text, cursorPos)) return;
+    _hideSuggestions();
+  }
+
+  bool _checkForMentionSuggestions(String text, int cursorPos) {
     int atIndex = -1;
     for (int i = cursorPos - 1; i >= 0; i--) {
       if (text[i] == '@') {
-        // Check if it's a new mention (not already completed)
         // Completed mentions look like [@userId]
         if (i == 0 || text[i - 1] != '[') {
           atIndex = i;
           break;
         }
       }
-      // Stop if we hit a space or newline (mention ended)
+
       if (text[i] == ' ' || text[i] == '\n') {
         break;
       }
     }
 
-    if (atIndex >= 0 && cursorPos > atIndex) {
-      // Extract query after '@'
-      final query = text.substring(atIndex + 1, cursorPos).toLowerCase();
-
-      // Build member list with @all option (only for group chats)
-      List<ConversationMember> allMembers = [];
-
-      // Add @all option for group chats (3 or more members total)
-      if (widget.members.length >= 3 &&
-          (query.isEmpty || 'all'.startsWith(query))) {
-        allMembers.add(_createAllMember());
-      }
-
-      // Filter members with query (exclude current user)
-      final filtered = widget.members
-          .where((m) =>
-              m.userId != widget.currentUserId && // Exclude self
-              _matchesMemberQuery(m, query))
-          .toList();
-
-      // Combine @all + filtered members
-      final combinedMembers = [...allMembers, ...filtered];
-
-      if (combinedMembers.isNotEmpty) {
-        setState(() {
-          _showMentionList = true;
-          _mentionStartIndex = atIndex;
-          _mentionEndIndex = cursorPos;
-          _currentMentionQuery = query;
-          _filteredMembers = combinedMembers;
-          _selectedMentionIndex = 0;
-        });
-        return;
-      }
+    if (atIndex < 0 || cursorPos <= atIndex) {
+      return false;
     }
 
-    // Hide mention list
-    if (_showMentionList) {
-      setState(() {
-        _showMentionList = false;
-        _mentionStartIndex = -1;
-        _mentionEndIndex = -1;
-        _currentMentionQuery = '';
-      });
+    final query = text.substring(atIndex + 1, cursorPos).toLowerCase();
+
+    final allMembers = <ConversationMember>[];
+    if (widget.members.length >= 3 &&
+        (query.isEmpty || 'all'.startsWith(query))) {
+      allMembers.add(_createAllMember());
     }
+
+    final filtered = widget.members
+        .where((member) =>
+            member.userId != widget.currentUserId &&
+            _matchesMemberQuery(member, query))
+        .toList(growable: false);
+    final combinedMembers = <ConversationMember>[...allMembers, ...filtered];
+
+    if (combinedMembers.isEmpty) {
+      return false;
+    }
+
+    setState(() {
+      _showMentionList = true;
+      _suggestionMode = _SuggestionMode.mention;
+      _mentionStartIndex = atIndex;
+      _mentionEndIndex = cursorPos;
+      _currentMentionQuery = query;
+      _filteredMembers = combinedMembers;
+      _filteredSlashCommands = const <SlashCommandOption>[];
+      _selectedMentionIndex = 0;
+    });
+    return true;
+  }
+
+  bool _checkForSlashCommandSuggestions(String text, int cursorPos) {
+    if (widget.slashCommands.isEmpty) {
+      return false;
+    }
+
+    final triggerMatch = _matchSlashCommandTrigger(text, cursorPos);
+    if (triggerMatch == null) {
+      return false;
+    }
+
+    final slashIndex = triggerMatch.key;
+    final query = triggerMatch.value;
+    final filtered = widget.slashCommands
+        .where((command) => command.name.toLowerCase().contains(query))
+        .toList(growable: false);
+
+    if (filtered.isEmpty) {
+      return false;
+    }
+
+    setState(() {
+      _showMentionList = true;
+      _suggestionMode = _SuggestionMode.slashCommand;
+      _mentionStartIndex = slashIndex;
+      _mentionEndIndex = cursorPos;
+      _currentMentionQuery = query;
+      _filteredMembers = const <ConversationMember>[];
+      _filteredSlashCommands = filtered;
+      _selectedMentionIndex = 0;
+    });
+    return true;
+  }
+
+  MapEntry<int, String>? _matchSlashCommandTrigger(String text, int cursorPos) {
+    final lineStart = text.lastIndexOf('\n', cursorPos - 1);
+    final segmentStart = lineStart == -1 ? 0 : lineStart + 1;
+    if (segmentStart >= cursorPos) {
+      return null;
+    }
+
+    final segment = text.substring(segmentStart, cursorPos);
+    final match = RegExp(r'^\s*/([a-zA-Z]*)$').firstMatch(segment);
+    if (match == null) {
+      return null;
+    }
+
+    final slashOffset = segment.indexOf('/');
+    if (slashOffset < 0) {
+      return null;
+    }
+
+    final query = (match.group(1) ?? '').toLowerCase();
+    return MapEntry<int, String>(segmentStart + slashOffset, query);
+  }
+
+  void _hideSuggestions() {
+    if (!_showMentionList) return;
+    setState(() {
+      _showMentionList = false;
+      _suggestionMode = null;
+      _mentionStartIndex = -1;
+      _mentionEndIndex = -1;
+      _currentMentionQuery = '';
+      _filteredMembers = const <ConversationMember>[];
+      _filteredSlashCommands = const <SlashCommandOption>[];
+      _selectedMentionIndex = 0;
+    });
   }
 
   /// Insert selected mention into text
@@ -245,7 +325,10 @@ class _MentionTextFieldState extends State<MentionTextField> {
     final before = text.substring(0, mentionStart);
     final after = text.substring(cursorPos);
 
-    final name = (member.fullName ?? member.displayName ?? '').trim();
+    final localizedAllName = context.l10n.mentionAllDisplayName;
+    final name = member is _AllConversationMember
+        ? localizedAllName
+        : (member.fullName ?? member.displayName ?? '').trim();
     final display = name.isNotEmpty ? '@$name' : '@${member.userId}';
     final mentionText = '$display ';
     final newText = before + mentionText + after;
@@ -264,13 +347,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
 
     final caretOffset = before.length + mentionText.length;
 
-    // Hide overlay
-    setState(() {
-      _showMentionList = false;
-      _mentionStartIndex = -1;
-      _mentionEndIndex = -1;
-      _currentMentionQuery = '';
-    });
+    _hideSuggestions();
 
     // Keep cursor/focus in input after selecting from overlay.
     final focusNode = widget.focusNode;
@@ -282,6 +359,89 @@ class _MentionTextFieldState extends State<MentionTextField> {
             TextSelection.collapsed(offset: caretOffset);
       });
     }
+  }
+
+  void _insertSlashCommand(SlashCommandOption command) {
+    final text = widget.controller.text;
+    var cursorPos = widget.controller.selection.baseOffset;
+    if (cursorPos < 0 || cursorPos > text.length) {
+      cursorPos = _mentionEndIndex;
+    }
+
+    final slashStart = _mentionStartIndex;
+    if (slashStart < 0 || slashStart > text.length) return;
+    if (cursorPos < slashStart || cursorPos > text.length) {
+      cursorPos = text.length;
+    }
+
+    final before = text.substring(0, slashStart);
+    final after = text.substring(cursorPos);
+    final commandText = '/${command.name} ';
+    final newText = before + commandText + after;
+    final caretOffset = before.length + commandText.length;
+
+    widget.controller.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: caretOffset),
+    );
+
+    _hideSuggestions();
+
+    final focusNode = widget.focusNode;
+    if (focusNode != null) {
+      FocusScope.of(context).requestFocus(focusNode);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!focusNode.hasFocus) FocusScope.of(context).requestFocus(focusNode);
+        widget.controller.selection = TextSelection.collapsed(
+          offset: caretOffset,
+        );
+      });
+    }
+  }
+
+  KeyEventResult _handleSuggestionKeyEvent(FocusNode _, KeyEvent event) {
+    if (!_showMentionList || event is! KeyDownEvent) {
+      return KeyEventResult.ignored;
+    }
+
+    final isMentionMode = _suggestionMode == _SuggestionMode.mention;
+    final totalItems =
+        isMentionMode ? _filteredMembers.length : _filteredSlashCommands.length;
+    if (totalItems == 0) {
+      return KeyEventResult.ignored;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      setState(() {
+        _selectedMentionIndex = (_selectedMentionIndex + 1) % totalItems;
+      });
+      return KeyEventResult.handled;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      setState(() {
+        _selectedMentionIndex =
+            (_selectedMentionIndex - 1 + totalItems) % totalItems;
+      });
+      return KeyEventResult.handled;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.escape) {
+      _hideSuggestions();
+      return KeyEventResult.handled;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.enter &&
+        !HardwareKeyboard.instance.isShiftPressed) {
+      if (isMentionMode) {
+        _insertMention(_filteredMembers[_selectedMentionIndex]);
+      } else {
+        _insertSlashCommand(_filteredSlashCommands[_selectedMentionIndex]);
+      }
+      return KeyEventResult.handled;
+    }
+
+    return KeyEventResult.ignored;
   }
 
   /// Create a special "all" member for mentioning everyone in the group
@@ -308,9 +468,12 @@ class _MentionTextFieldState extends State<MentionTextField> {
   }
 
   Widget _buildSuggestionsPanel() {
+    final isMentionMode = _suggestionMode == _SuggestionMode.mention;
+    final itemCount =
+        isMentionMode ? _filteredMembers.length : _filteredSlashCommands.length;
     final double preferredHeight = math.min(
       _kOverlayMaxHeight,
-      _filteredMembers.length * _kTileHeight,
+      itemCount * _kTileHeight,
     );
 
     return TextFieldTapRegion(
@@ -324,89 +487,152 @@ class _MentionTextFieldState extends State<MentionTextField> {
           child: ListView.builder(
             padding: EdgeInsets.zero,
             itemExtent: _kTileHeight,
-            itemCount: _filteredMembers.length,
-            itemBuilder: (context, index) {
-              final member = _filteredMembers[index];
-              final isSelected = index == _selectedMentionIndex;
-              final isAllMention = member is _AllConversationMember;
-              final avatarUrl = member.avatarUrl?.trim();
-              final department = member.departmentName?.trim() ?? '';
-              final title = member.titleName?.trim() ?? '';
-              final subtitle = isAllMention
-                  ? 'Mention everyone'
-                  : [
-                      if (department.isNotEmpty) department,
-                      if (title.isNotEmpty) title,
-                    ].join(' - ');
-              final titleStyle =
-                  Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.normal,
-                      );
-
-              final hasAllMention = _filteredMembers.isNotEmpty &&
-                  _filteredMembers.first is _AllConversationMember;
-
-              return ListTile(
-                dense: false,
-                selected: isSelected,
-                leading: isAllMention
-                    ? Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.people_outline,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      )
-                    : ((avatarUrl?.isNotEmpty ?? false)
-                        ? AppAvatar.network(
-                            imageUrl: avatarUrl!,
-                            size: AvatarSize.small,
-                          )
-                        : AppAvatar.initials(
-                            name: member.fullName ?? 'Unknown',
-                            size: AvatarSize.small,
-                          )),
-                title: _buildHighlightedName(
-                  member.fullName ?? 'Unknown',
-                  _currentMentionQuery,
-                  titleStyle,
-                  Theme.of(context).colorScheme.primary,
-                ),
-                subtitle: subtitle.isNotEmpty
-                    ? Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.color
-                                  ?.withValues(alpha: 0.7),
-                            ),
-                      )
-                    : null,
-                trailing: Icon(
-                  hasAllMention && index == 0
-                      ? Icons.people_outline
-                      : Icons.alternate_email,
-                  size: 18,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                onTap: () => _insertMention(member),
-              );
-            },
+            itemCount: itemCount,
+            itemBuilder: (context, index) => isMentionMode
+                ? _buildMentionSuggestionTile(index)
+                : _buildSlashCommandSuggestionTile(index),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildMentionSuggestionTile(int index) {
+    final member = _filteredMembers[index];
+    final isSelected = index == _selectedMentionIndex;
+    final isAllMention = member is _AllConversationMember;
+    final displayName = isAllMention
+        ? context.l10n.mentionAllDisplayName
+        : (member.fullName ?? context.l10n.unknownUser);
+    final avatarUrl = member.avatarUrl?.trim();
+    final department = member.departmentName?.trim() ?? '';
+    final title = member.titleName?.trim() ?? '';
+    final subtitle = isAllMention
+        ? context.l10n.mentionEveryone
+        : [
+            if (department.isNotEmpty) department,
+            if (title.isNotEmpty) title,
+          ].join(' - ');
+    final titleStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        );
+
+    return ListTile(
+      dense: false,
+      selected: isSelected,
+      leading: isAllMention
+          ? Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.people_outline,
+                color: Colors.white,
+                size: 18,
+              ),
+            )
+          : ((avatarUrl?.isNotEmpty ?? false)
+              ? AppAvatar.network(
+                  imageUrl: avatarUrl!,
+                  size: AvatarSize.small,
+                )
+              : AppAvatar.initials(
+                  name: displayName,
+                  size: AvatarSize.small,
+                )),
+      title: _buildHighlightedName(
+        displayName,
+        _currentMentionQuery,
+        titleStyle,
+        Theme.of(context).colorScheme.primary,
+      ),
+      subtitle: subtitle.isNotEmpty
+          ? Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.color
+                        ?.withValues(alpha: 0.7),
+                  ),
+            )
+          : null,
+      trailing: Icon(
+        isAllMention ? Icons.people_outline : Icons.alternate_email,
+        size: 18,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      onTap: () => _insertMention(member),
+    );
+  }
+
+  Widget _buildSlashCommandSuggestionTile(int index) {
+    final command = _filteredSlashCommands[index];
+    final isSelected = index == _selectedMentionIndex;
+    final titleStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        );
+
+    return ListTile(
+      dense: false,
+      selected: isSelected,
+      leading: CircleAvatar(
+        radius: 16,
+        backgroundColor:
+            Theme.of(context).colorScheme.primary.withValues(alpha: 0.14),
+        child: Icon(
+          _commandIconFor(command.name),
+          size: 18,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
+      title: _buildHighlightedName(
+        '/${command.name}',
+        _currentMentionQuery,
+        titleStyle,
+        Theme.of(context).colorScheme.primary,
+      ),
+      subtitle: Text(
+        command.description,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.color
+                  ?.withValues(alpha: 0.7),
+            ),
+      ),
+      trailing: Text(
+        command.usage,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+      ),
+      onTap: () => _insertSlashCommand(command),
+    );
+  }
+
+  IconData _commandIconFor(String commandName) {
+    switch (commandName.trim().toLowerCase()) {
+      case ChatSlashCommandEngine.shrugCommand:
+        return Icons.sentiment_satisfied_alt_rounded;
+      case ChatSlashCommandEngine.tableflipCommand:
+        return Icons.flip;
+      case ChatSlashCommandEngine.meCommand:
+        return Icons.person_outline_rounded;
+      case ChatSlashCommandEngine.muteCommand:
+        return Icons.notifications_off_outlined;
+      default:
+        return Icons.bolt_rounded;
+    }
   }
 
   Widget _buildHighlightedName(
@@ -465,7 +691,10 @@ class _MentionTextFieldState extends State<MentionTextField> {
 
   @override
   Widget build(BuildContext context) {
-    final shouldShow = _showMentionList && _filteredMembers.isNotEmpty;
+    final isMentionMode = _suggestionMode == _SuggestionMode.mention;
+    final itemCount =
+        isMentionMode ? _filteredMembers.length : _filteredSlashCommands.length;
+    final shouldShow = _showMentionList && itemCount > 0;
 
     return PortalTarget(
       visible: shouldShow,
@@ -475,22 +704,25 @@ class _MentionTextFieldState extends State<MentionTextField> {
         widthFactor: 1,
       ),
       portalFollower: shouldShow ? _buildSuggestionsPanel() : null,
-      child: TextField(
-        controller: widget.controller,
-        focusNode: widget.focusNode,
-        minLines: widget.minLines,
-        maxLines: widget.maxLines,
-        keyboardType: TextInputType.multiline,
-        decoration: InputDecoration(
-          hintText: widget.hint,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12.0,
-            vertical: 8.0,
+      child: Focus(
+        onKeyEvent: _handleSuggestionKeyEvent,
+        child: TextField(
+          controller: widget.controller,
+          focusNode: widget.focusNode,
+          minLines: widget.minLines,
+          maxLines: widget.maxLines,
+          keyboardType: TextInputType.multiline,
+          decoration: InputDecoration(
+            hintText: widget.hint,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12.0,
+              vertical: 8.0,
+            ),
           ),
+          onSubmitted: widget.onSubmitted,
+          textInputAction: TextInputAction.newline,
         ),
-        onSubmitted: widget.onSubmitted,
-        textInputAction: TextInputAction.newline,
       ),
     );
   }
