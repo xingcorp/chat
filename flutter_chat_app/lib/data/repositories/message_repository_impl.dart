@@ -663,6 +663,125 @@ class MessageRepositoryImpl extends BaseRepository
     );
   }
 
+  /// **RETRY PENDING MESSAGES FOR A SPECIFIC CHAT**
+  ///
+  /// Finds messages with status=pending in the given chat,
+  /// locks them (pending→sending), sends to server, then updates status.
+  /// Anti-duplicate: only picks up messages still in pending state.
+  @override
+  Future<Either<Failure, int>> retryPendingMessages(String chatId) async {
+    return _retryPendingMessagesInternal(chatId: chatId);
+  }
+
+  /// **RETRY ALL PENDING MESSAGES ACROSS ALL CHATS**
+  ///
+  /// Scans all local storage for pending/stale-sending messages,
+  /// groups by chatId, and retries them in FIFO order.
+  @override
+  Future<Either<Failure, int>> retryAllPendingMessages() async {
+    return _retryPendingMessagesInternal();
+  }
+
+  /// Internal retry implementation.
+  /// If [chatId] is provided, retries only for that chat.
+  /// If null, retries all pending messages across all chats.
+  Future<Either<Failure, int>> _retryPendingMessagesInternal({
+    String? chatId,
+  }) async {
+    try {
+      if (!(await networkInfo.isConnected)) {
+        logger.w('retryPendingMessages: no internet, skipping');
+        return const Right(0);
+      }
+
+      // Gather pending messages
+      final List<MessageModel> pendingMessages;
+      if (chatId != null) {
+        final allMessages =
+            await _localDataSource.getMessagesForChat(chatId);
+        pendingMessages = allMessages
+            .where((m) =>
+                m.status == MessageStatus.pending ||
+                (m.status == MessageStatus.sending &&
+                    DateTime.now().difference(m.createdAt) >
+                        const Duration(minutes: 2)))
+            .toList();
+      } else {
+        pendingMessages = await _localDataSource.getAllPendingMessages();
+      }
+
+      if (pendingMessages.isEmpty) {
+        logger.d('retryPendingMessages: no pending messages found');
+        return const Right(0);
+      }
+
+      logger.i(
+          'retryPendingMessages: found ${pendingMessages.length} pending messages');
+
+      int successCount = 0;
+
+      for (final message in pendingMessages) {
+        try {
+          // Lock: mark as sending to prevent duplicate retry
+          final sendingMessage =
+              message.copyWith(status: MessageStatus.sending);
+          await _localDataSource.saveMessage(sendingMessage);
+
+          // Send to server
+          final serverType = _toServerMessageType(message.type);
+          final dto = await _remoteDataSource.sendMessage(
+            conversationId: message.chatId,
+            type: serverType,
+            message: message.content,
+            replyMessageId: message.replyToMessageId,
+            createdAt: message.createdAt.millisecondsSinceEpoch,
+          );
+
+          // Update local with server response
+          final sentMessage = MessageMapper.toModel(dto);
+          final updatedMessage = sentMessage.copyWith(
+            localId: message.localId,
+            status: MessageStatus.sent,
+          );
+          await _localDataSource.saveMessage(updatedMessage);
+
+          // Cache individual message
+          await _cacheManager.cacheApiResponse(
+            'message_${sentMessage.serverId}',
+            updatedMessage.toMap(),
+          );
+
+          logger.i(
+              'retryPendingMessages: sent ${message.localId} -> ${sentMessage.serverId}');
+          successCount++;
+        } catch (e) {
+          // Revert to pending so it can be retried later
+          final revertedMessage =
+              message.copyWith(status: MessageStatus.pending);
+          await _localDataSource.saveMessage(revertedMessage);
+
+          logger.e(
+              'retryPendingMessages: failed to send ${message.localId}: $e');
+        }
+      }
+
+      // Invalidate cache for affected chats
+      final affectedChatIds =
+          pendingMessages.map((m) => m.chatId).toSet();
+      for (final cid in affectedChatIds) {
+        _cacheSyncStrategy.markChatMessagesDirty(cid);
+        await _cacheManager.invalidateCache('chat_messages_$cid');
+      }
+
+      logger.i(
+          'retryPendingMessages: completed $successCount/${pendingMessages.length}');
+      return Right(successCount);
+    } catch (e) {
+      logger.e('retryPendingMessages: unexpected error: $e');
+      return Left(CacheFailure(message: 'Retry failed: $e'));
+    }
+  }
+
   /// **HELPER METHODS**
 
   /// Parse contentType string to MessageType enum

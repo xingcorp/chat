@@ -52,6 +52,12 @@ class OfflineQueueService implements IOfflineQueueService {
         if (isConnected) {
           _logger.debug('Device came online, processing queue...');
           await processQueue();
+
+          // After processing queued operations, also retry any pending
+          // messages that were saved to local storage while offline
+          // (these are NOT in the Isar operation queue — they live in
+          // MessageLocalDataSource with status=pending).
+          await _processor.retryAllPendingMessages();
         }
       },
     );

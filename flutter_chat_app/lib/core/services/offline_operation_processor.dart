@@ -304,4 +304,29 @@ class OfflineOperationProcessor {
       },
     );
   }
+
+  /// Retry all pending messages across all chats.
+  ///
+  /// Called by [OfflineQueueService] after processing its operation queue
+  /// when connectivity is restored. Delegates to the repository which
+  /// scans local storage for pending/stale-sending messages.
+  Future<void> retryAllPendingMessages() async {
+    try {
+      final result = await _messageRepository.retryAllPendingMessages();
+      result.fold(
+        (failure) {
+          _logger.error(
+              'retryAllPendingMessages failed: ${failure.message}');
+        },
+        (count) {
+          if (count > 0) {
+            _logger.info(
+                'retryAllPendingMessages: synced $count messages');
+          }
+        },
+      );
+    } catch (e, stackTrace) {
+      _logger.error('retryAllPendingMessages: unexpected error', e, stackTrace);
+    }
+  }
 }

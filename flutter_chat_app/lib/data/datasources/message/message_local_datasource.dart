@@ -1,6 +1,7 @@
 import 'package:flutter_chat_app/core/error/exceptions.dart';
 import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 /// Interface for message local data source operations
 abstract class MessageLocalDataSource {
@@ -28,6 +29,15 @@ abstract class MessageLocalDataSource {
   
   /// Get unread message count for a chat
   Future<int> getUnreadCountForChat(String chatId, String userId);
+
+  /// Get all pending messages across all chats
+  ///
+  /// Scans all `messages_*` keys and returns messages with status=pending
+  /// or stale sending (sending > [staleSendingThreshold]).
+  /// Used for offline sync retry when connectivity is restored.
+  Future<List<MessageModel>> getAllPendingMessages({
+    Duration staleSendingThreshold = const Duration(minutes: 2),
+  });
 }
 
 /// Implementation of [MessageLocalDataSource] using local storage
@@ -179,11 +189,51 @@ class MessageLocalDataSourceImpl implements MessageLocalDataSource {
   @override
   Future<int> getUnreadCountForChat(String chatId, String userId) async {
     final messages = await getMessagesForChat(chatId);
-    
+
     // Count messages not sent by user and not read by user
     return messages.where(
       (msg) => msg.senderId != userId &&
               !msg.readBy.contains(userId),
     ).length;
+  }
+
+  @override
+  Future<List<MessageModel>> getAllPendingMessages({
+    Duration staleSendingThreshold = const Duration(minutes: 2),
+  }) async {
+    final now = DateTime.now();
+    final pendingMessages = <MessageModel>[];
+
+    // Scan all message keys
+    final keys = _localStorage.getKeys();
+    final messageKeys = keys.where((k) => k.startsWith('messages_'));
+
+    for (final key in messageKeys) {
+      try {
+        final messagesList = await _localStorage.getList(key);
+        for (final json in messagesList) {
+          final message =
+              MessageModel.fromMap(json as Map<String, dynamic>);
+
+          // Pending messages: waiting to be sent
+          if (message.status == MessageStatus.pending) {
+            pendingMessages.add(message);
+            continue;
+          }
+
+          // Stale sending messages: stuck in sending state (app crash, etc.)
+          if (message.status == MessageStatus.sending &&
+              now.difference(message.createdAt) > staleSendingThreshold) {
+            pendingMessages.add(message);
+          }
+        }
+      } catch (_) {
+        // Skip corrupt entries
+      }
+    }
+
+    // Sort by creation time (FIFO) to preserve message order
+    pendingMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return pendingMessages;
   }
 } 

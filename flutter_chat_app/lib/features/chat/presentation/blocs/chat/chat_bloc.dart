@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
 import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/delete_conversation_usecase.dart';
@@ -68,7 +67,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   StreamSubscription<ChatMessage>? _messageSubscription;
   StreamSubscription<TypingIndicator>? _typingSubscription;
   StreamSubscription<MessageReadReceipt>? _readReceiptSubscription;
-  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  StreamSubscription<bool>? _connectivitySubscription;
   StreamSubscription<Chat>? _chatUpdatesSubscription;
   StreamSubscription<SocketConnectionState>? _connectionStateSubscription;
 
@@ -110,9 +109,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     on<_ClearSearch>(_onClearSearch);
     on<_ChangeConversationTypeFilter>(_onChangeConversationTypeFilter);
 
-    // Listen to socket connection state: when transitioning from
-    // any non-connected state to connected, reload chats so the
-    // chat list picks up messages missed during the disconnection.
+    // When network restores but socket is dead (Socket.IO exhausted its
+    // auto-reconnect attempts), trigger reconnection + data reload.
+    _connectivitySubscription =
+        _connectivityService.onConnectivityChanged.listen((isConnected) {
+      if (isConnected) {
+        add(const ChatEvent.connectivityChanged(true));
+      }
+    });
+
+    // When socket transitions from any non-connected state to connected
+    // (e.g. after Socket.IO auto-reconnect during short outages),
+    // reload chats to pick up messages missed during the gap.
     SocketConnectionState? previousSocketState;
     _connectionStateSubscription = _realtimeService.connectionState.listen(
       (socketState) {

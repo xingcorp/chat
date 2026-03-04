@@ -1408,15 +1408,42 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
   // === Phase 3: Reconnection & App Resume ===
 
-  /// Handle reconnection — trigger delta sync for active conversation
+  /// Handle reconnection — trigger delta sync AND retry pending messages
   void _onReconnectionDetected(
       _ReconnectionDetected event, Emitter<MessageState> emit) {
     if (state is! MessagesLoaded) return;
     final currentState = state as MessagesLoaded;
 
     logger.i(
-        'Reconnection detected, triggering delta sync for chat ${currentState.chatId}');
-    _startBackgroundFetch(currentState.chatId, 20);
+        'Reconnection detected, triggering delta sync + pending retry for chat ${currentState.chatId}');
+
+    // 1. Retry pending messages first (fire-and-forget),
+    //    then refresh UI so sent messages show updated status
+    unawaited(_retryAndRefresh(currentState.chatId));
+  }
+
+  /// Retry pending messages for [chatId], then trigger a background fetch
+  /// so the UI picks up the updated message statuses.
+  Future<void> _retryAndRefresh(String chatId) async {
+    try {
+      final result =
+          await _getMessages.repository.retryPendingMessages(chatId);
+      result.fold(
+        (failure) =>
+            logger.e('Pending message retry failed: ${failure.message}'),
+        (count) {
+          if (count > 0) {
+            logger.i('Retried $count pending messages for chat $chatId');
+          }
+        },
+      );
+    } catch (e) {
+      logger.e('Pending message retry error', error: e);
+    }
+
+    // 2. Always do a delta sync to get new messages from server
+    //    (also refreshes UI with updated statuses from step 1)
+    _startBackgroundFetch(chatId, 20);
   }
 
   /// Handle app resume — delta sync if backgrounded > 30 seconds

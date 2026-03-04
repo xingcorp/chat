@@ -136,4 +136,19 @@ abstract class IMessageRepository {
     required int fromTimestamp,
     int limit = 20,
   });
+
+  /// **Retry gửi lại pending messages cho 1 chat cụ thể**
+  ///
+  /// **Strategy**: Tìm messages có status=pending trong chat, gửi lại lên server
+  /// **Anti-duplicate**: Lock status pending→sending trước khi gửi
+  /// **Use Case**: Reconnection detected khi user đang ở trong chat
+  /// **Returns**: Số messages đã retry thành công
+  Future<Either<Failure, int>> retryPendingMessages(String chatId);
+
+  /// **Retry gửi lại TẤT CẢ pending messages cross-chat**
+  ///
+  /// **Strategy**: Scan all chats, gửi lại pending messages theo thứ tự FIFO
+  /// **Use Case**: Connectivity restored (global sync)
+  /// **Returns**: Số messages đã retry thành công
+  Future<Either<Failure, int>> retryAllPendingMessages();
 }
