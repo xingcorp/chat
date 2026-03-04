@@ -1584,11 +1584,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
   }
 
-  Future<void> _onRefresh() async {
-    _messageBloc.add(const RefreshMessages());
-    await Future.delayed(const Duration(milliseconds: 500));
-  }
-
   // ══════════════════════════════════════════
   // UI Building
   // ══════════════════════════════════════════
@@ -1938,7 +1933,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         uiMessages: state.uiMessages,
         hasMore: !state.hasReachedMax,
         isLoadingMore: _isLoadingMore,
-        onRefresh: _onRefresh,
         itemBuilder: (context, uiState, allUiMessages) =>
             _buildListItem(context, uiState, allUiMessages),
       );

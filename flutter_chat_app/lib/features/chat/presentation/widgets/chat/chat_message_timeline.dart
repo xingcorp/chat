@@ -16,7 +16,6 @@ class ChatMessageTimeline extends StatelessWidget {
   final List<MessageUIState> uiMessages;
   final bool hasMore;
   final bool isLoadingMore;
-  final Future<void> Function()? onRefresh;
   final Widget Function(
     BuildContext context,
     MessageUIState uiState,
@@ -33,7 +32,6 @@ class ChatMessageTimeline extends StatelessWidget {
     required this.hasMore,
     required this.isLoadingMore,
     required this.itemBuilder,
-    this.onRefresh,
   });
 
   @override
@@ -86,13 +84,6 @@ class ChatMessageTimeline extends StatelessWidget {
         return child;
       },
     );
-
-    if (onRefresh != null) {
-      list = RefreshIndicator(
-        onRefresh: onRefresh!,
-        child: list,
-      );
-    }
 
     return list;
   }
