@@ -12,7 +12,6 @@ import 'package:get_it/get_it.dart';
 import 'package:isar/isar.dart';
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
-import 'package:flutter_chat_app/core/services/chat_draft_service.dart';
 import 'package:flutter_chat_app/core/services/device_capability_service.dart';
 import 'package:flutter_chat_app/core/services/image_editor_service.dart';
 import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
@@ -69,15 +68,6 @@ Future<void> registerCoreModule(GetIt getIt) async {
   if (!getIt.isRegistered<VoiceNotePlaybackManager>()) {
     getIt.registerLazySingleton<VoiceNotePlaybackManager>(
       () => VoiceNotePlaybackManager(
-        logger: getIt<AppLogger>(),
-      ),
-    );
-  }
-
-  if (!getIt.isRegistered<ChatDraftService>()) {
-    getIt.registerLazySingleton<ChatDraftService>(
-      () => ChatDraftService(
-        preferences: getIt<SharedPreferences>(),
         logger: getIt<AppLogger>(),
       ),
     );

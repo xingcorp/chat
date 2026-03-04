@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart' show kIsWeb, mapEquals;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -14,7 +14,6 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
-import 'package:flutter_chat_app/core/services/chat_draft_service.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/services/voice_recorder_service.dart';
@@ -25,6 +24,8 @@ import 'package:flutter_chat_app/domain/entities/sticker.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/chat_composer/chat_composer_bloc.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/chat_draft/chat_draft_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/chat_slash_command_engine.dart';
 import 'package:flutter_chat_app/presentation/screens/media/image_preview_screen.dart';
@@ -112,9 +113,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       ScrollOffsetListener.create();
   late final MessageBloc _messageBloc;
   late final ConversationDetailBloc _convDetailBloc;
-  late final ChatDraftService _chatDraftService;
-  final ChatSlashCommandEngine _slashCommandEngine =
-      const ChatSlashCommandEngine();
+  late final ChatComposerBloc _chatComposerBloc;
+  late final ChatDraftBloc _chatDraftBloc;
 
   Chat? _chat;
   String _currentUserId = '';
@@ -150,13 +150,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   String? _typingUserName;
   StreamSubscription? _typingSubscription;
   Timer? _typingDebounceTimer;
-  Timer? _draftSaveDebounceTimer;
-  bool _isRestoringDraft = false;
-  bool _skipOneEmptyDraftPersist = false;
-  String? _pendingDraftContentToClear;
-  DateTime? _pendingDraftQueuedAt;
-  String _lastPersistedDraftText = '';
-  Map<String, String> _lastPersistedMentionNameById = const <String, String>{};
 
   // ══════════════════════════════════════════
   // Scroll-to-bottom FAB state
@@ -197,7 +190,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     // ensuring clean state and correct bloc scope.
     _messageBloc = getIt<MessageBloc>();
     _convDetailBloc = getIt<ConversationDetailBloc>();
-    _chatDraftService = getIt<ChatDraftService>();
+    _chatComposerBloc = getIt<ChatComposerBloc>();
+    _chatDraftBloc = getIt<ChatDraftBloc>();
     _voiceRecorderService = getIt<VoiceRecorderService>();
     _messageBloc.add(const FetchFrequentReactions());
 
@@ -226,17 +220,27 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
     _convDetailBloc.add(LoadConversationDetail(chatId: widget.chatId));
     _setupRealtimeSubscriptions();
+    _chatDraftBloc.add(
+      ChatDraftConversationOpened(conversationId: widget.chatId),
+    );
 
     // Single listener for efficiency
     _messageController.addListener(_handleControllerChanges);
-    unawaited(_restoreDraftIfAvailable());
   }
 
   void _handleControllerChanges() {
     if (!mounted) return;
     safeSetState(() {});
     _handleTypingIndicator();
-    _scheduleDraftPersistence();
+    _chatDraftBloc.add(
+      ChatDraftInputChanged(
+        conversationId: widget.chatId,
+        text: _messageController.text,
+        mentionNameById: _messageController.mentionNameById,
+        isEditMode: _isEditMode,
+        isRecordingVoice: _isRecordingVoice,
+      ),
+    );
   }
 
   void _handleTypingIndicator() {
@@ -260,69 +264,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     });
   }
 
-  Future<void> _restoreDraftIfAvailable() async {
-    final draft = await _chatDraftService.getDraft(widget.chatId);
-    if (!mounted || draft == null || !draft.hasContent) return;
-
-    _isRestoringDraft = true;
-    _messageController.updateMentions(draft.mentionNameById);
-    _messageController.value = TextEditingValue(
-      text: draft.text,
-      selection: TextSelection.collapsed(offset: draft.text.length),
-    );
-    _lastPersistedDraftText = draft.text;
-    _lastPersistedMentionNameById =
-        Map<String, String>.from(draft.mentionNameById);
-    _isRestoringDraft = false;
-  }
-
-  void _scheduleDraftPersistence() {
-    if (_isRestoringDraft || _isEditMode || _isRecordingVoice) {
-      return;
-    }
-
-    _draftSaveDebounceTimer?.cancel();
-    _draftSaveDebounceTimer = Timer(
-      const Duration(milliseconds: 400),
-      () => unawaited(_persistDraftNow()),
-    );
-  }
-
-  Future<void> _persistDraftNow() async {
-    if (_isRestoringDraft || _isEditMode || _isRecordingVoice) {
-      return;
-    }
-
-    final rawText = _messageController.text;
-    final mentionNameById = _messageController.mentionNameById;
-    if (_skipOneEmptyDraftPersist && rawText.trim().isEmpty) {
-      _skipOneEmptyDraftPersist = false;
-      return;
-    }
-
-    if (rawText == _lastPersistedDraftText &&
-        mapEquals(mentionNameById, _lastPersistedMentionNameById)) {
-      return;
-    }
-
-    _lastPersistedDraftText = rawText;
-    _lastPersistedMentionNameById = Map<String, String>.from(mentionNameById);
-    await _chatDraftService.saveDraft(
-      conversationId: widget.chatId,
-      text: rawText,
-      mentionNameById: mentionNameById,
-    );
-  }
-
-  Future<void> _clearDraft() async {
-    _skipOneEmptyDraftPersist = false;
-    _pendingDraftContentToClear = null;
-    _pendingDraftQueuedAt = null;
-    _lastPersistedDraftText = '';
-    _lastPersistedMentionNameById = const <String, String>{};
-    await _chatDraftService.removeDraft(widget.chatId);
-  }
-
   void _setupRealtimeSubscriptions() {
     if (!getIt.isRegistered<RealtimeService>()) return;
     final realtimeService = getIt<RealtimeService>();
@@ -339,6 +280,150 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
     // Read receipts are handled by MessageBloc (ReceiveMessageRead event)
     // which updates readBy on messages and re-transforms to readReceiptReaders
+  }
+
+  void _handleDraftStateChanges(BuildContext context, ChatDraftState state) {
+    final draft = state.restoreDraft;
+    if (state.restoreConversationId == widget.chatId &&
+        draft != null &&
+        draft.hasContent) {
+      if (_messageController.text.trim().isEmpty) {
+        _messageController.updateMentions(draft.mentionNameById);
+        _messageController.value = TextEditingValue(
+          text: draft.text,
+          selection: TextSelection.collapsed(offset: draft.text.length),
+        );
+      }
+      _chatDraftBloc.add(
+        ChatDraftRestoreHandled(conversationId: widget.chatId),
+      );
+    }
+
+    final errorMessage = state.errorMessage;
+    if (errorMessage == null || errorMessage.trim().isEmpty) {
+      return;
+    }
+
+    AppSnackBar.show(
+      context: context,
+      message: errorMessage,
+      type: FeedbackType.warning,
+    );
+    _chatDraftBloc.add(const ChatDraftErrorCleared());
+  }
+
+  void _handleComposerStateChanges(
+    BuildContext context,
+    ChatComposerState state,
+  ) {
+    final effect = state.effect;
+    if (effect == null) {
+      return;
+    }
+
+    switch (effect) {
+      case ChatComposerShowWarningEffect warningEffect:
+        final message = switch (warningEffect.warning) {
+          ChatComposerWarning.emptyMessage => context.l10n.messageEmpty,
+          ChatComposerWarning.missingSlashArgument =>
+            context.l10n.slashCommandMissingArgument,
+          ChatComposerWarning.unknownSlashCommand =>
+            context.l10n.slashCommandUnknown,
+        };
+
+        AppSnackBar.show(
+          context: context,
+          message: message,
+          type: FeedbackType.warning,
+        );
+        break;
+
+      case ChatComposerEditTextEffect editEffect:
+        final editedText =
+            _messageController.toBackendMentionFormat(editEffect.text).trim();
+        if (editedText.isEmpty) {
+          AppSnackBar.show(
+            context: context,
+            message: context.l10n.messageEmpty,
+            type: FeedbackType.warning,
+          );
+          break;
+        }
+
+        _messageBloc.add(EditMessage(
+          messageId: editEffect.messageId,
+          content: editedText,
+        ));
+        _cancelEditMode();
+        _messageController.clear();
+        _chatDraftBloc.add(
+          ChatDraftClearRequested(conversationId: widget.chatId),
+        );
+        break;
+
+      case ChatComposerSendTextEffect sendEffect:
+        final messageText =
+            _messageController.toBackendMentionFormat(sendEffect.text).trim();
+        if (messageText.isEmpty) {
+          AppSnackBar.show(
+            context: context,
+            message: context.l10n.messageEmpty,
+            type: FeedbackType.warning,
+          );
+          break;
+        }
+
+        _messageBloc.add(
+          SendMessage(
+            content: messageText,
+            senderId: _currentUserId,
+            contentType: 'text',
+            attachmentIds: const [],
+            replyMessageId: _replyingToMessage?.id,
+          ),
+        );
+        _chatDraftBloc.add(
+          ChatDraftMessageQueued(
+            conversationId: widget.chatId,
+            content: messageText,
+            queuedAt: DateTime.now(),
+          ),
+        );
+        _cancelReply();
+        _messageController.clear();
+        break;
+
+      case ChatComposerMuteActionEffect _:
+        _messageController.clear();
+        _chatDraftBloc.add(
+          ChatDraftClearRequested(conversationId: widget.chatId),
+        );
+        _cancelReply();
+        _handleMuteSlashCommandAction();
+        break;
+
+      case ChatComposerDismissEffect dismissEffect:
+        switch (dismissEffect.action) {
+          case ChatComposerDismissAction.exitSelection:
+            _exitSelectionMode();
+            break;
+          case ChatComposerDismissAction.cancelEditAndClear:
+            _cancelEditMode();
+            _messageController.clear();
+            _chatDraftBloc.add(
+              ChatDraftClearRequested(conversationId: widget.chatId),
+            );
+            break;
+          case ChatComposerDismissAction.cancelReply:
+            _cancelReply();
+            break;
+          case ChatComposerDismissAction.none:
+            break;
+        }
+        break;
+    }
+
+    _chatComposerBloc.add(const ChatComposerEffectConsumed());
   }
 
   @override
@@ -427,22 +512,15 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   @override
   void dispose() {
-    _draftSaveDebounceTimer?.cancel();
-    if (!_isRestoringDraft && !_isEditMode && !_isRecordingVoice) {
-      final text = _messageController.text;
-      final mentionNameById = _messageController.mentionNameById;
-      final shouldKeepPendingDraft =
-          _pendingDraftContentToClear != null && text.trim().isEmpty;
-      if (!shouldKeepPendingDraft) {
-        unawaited(
-          _chatDraftService.saveDraft(
-            conversationId: widget.chatId,
-            text: text,
-            mentionNameById: mentionNameById,
-          ),
-        );
-      }
-    }
+    _chatDraftBloc.add(
+      ChatDraftFlushRequested(
+        conversationId: widget.chatId,
+        text: _messageController.text,
+        mentionNameById: _messageController.mentionNameById,
+        isEditMode: _isEditMode,
+        isRecordingVoice: _isRecordingVoice,
+      ),
+    );
 
     _messageController.removeListener(_handleControllerChanges);
     _messageController.dispose();
@@ -450,6 +528,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);
     _messageBloc.close();
     _convDetailBloc.close();
+    _chatComposerBloc.close();
+    _chatDraftBloc.close();
     _typingSubscription?.cancel();
     _typingDebounceTimer?.cancel();
     _recordingAmplitudeSubscription?.cancel();
@@ -466,103 +546,15 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   // ══════════════════════════════════════════
 
   void _sendMessage() {
-    final rawInput = _messageController.text.trim();
-    if (rawInput.isEmpty) {
-      AppSnackBar.show(
-        context: context,
-        message: context.l10n.messageEmpty,
-        type: FeedbackType.warning,
-      );
-      return;
-    }
-
-    if (_isEditMode && _editingMessageId != null) {
-      final editedText =
-          _messageController.toBackendMentionFormat(rawInput).trim();
-      if (editedText.isEmpty) {
-        AppSnackBar.show(
-          context: context,
-          message: context.l10n.messageEmpty,
-          type: FeedbackType.warning,
-        );
-        return;
-      }
-      _messageBloc.add(EditMessage(
-        messageId: _editingMessageId!,
-        content: editedText,
-      ));
-      _cancelEditMode();
-      _messageController.clear();
-      unawaited(_clearDraft());
-      return;
-    }
-
-    final slashCommandResult = _slashCommandEngine.parse(
-      input: rawInput,
-      actorDisplayName: _currentUserDisplayName.isNotEmpty
-          ? _currentUserDisplayName
-          : context.l10n.you,
-    );
-
-    if (slashCommandResult.outcome == ChatSlashCommandOutcome.invalid) {
-      _showSlashCommandValidationError(slashCommandResult.validationError);
-      return;
-    }
-
-    if (slashCommandResult.outcome == ChatSlashCommandOutcome.muteAction) {
-      _messageController.clear();
-      unawaited(_clearDraft());
-      _cancelReply();
-      _handleMuteSlashCommandAction();
-      return;
-    }
-
-    final effectiveContent =
-        slashCommandResult.outcome == ChatSlashCommandOutcome.sendMessage
-            ? (slashCommandResult.messageText ?? '')
-            : rawInput;
-    final messageText =
-        _messageController.toBackendMentionFormat(effectiveContent).trim();
-    if (messageText.isEmpty) {
-      AppSnackBar.show(
-        context: context,
-        message: context.l10n.messageEmpty,
-        type: FeedbackType.warning,
-      );
-      return;
-    }
-
-    _messageBloc.add(
-      SendMessage(
-        content: messageText,
-        senderId: _currentUserId,
-        contentType: 'text',
-        attachmentIds: const [],
-        replyMessageId: _replyingToMessage?.id,
+    _chatComposerBloc.add(
+      ChatComposerSendRequested(
+        rawInput: _messageController.text,
+        actorDisplayName: _currentUserDisplayName.isNotEmpty
+            ? _currentUserDisplayName
+            : context.l10n.you,
+        isEditMode: _isEditMode,
+        editingMessageId: _editingMessageId,
       ),
-    );
-    _pendingDraftContentToClear = messageText;
-    _pendingDraftQueuedAt = DateTime.now();
-    _skipOneEmptyDraftPersist = true;
-    _cancelReply();
-    _messageController.clear();
-  }
-
-  void _showSlashCommandValidationError(
-    ChatSlashCommandValidationError? error,
-  ) {
-    final message = switch (error) {
-      ChatSlashCommandValidationError.missingArgument =>
-        context.l10n.slashCommandMissingArgument,
-      ChatSlashCommandValidationError.unknownCommand ||
-      null =>
-        context.l10n.slashCommandUnknown,
-    };
-
-    AppSnackBar.show(
-      context: context,
-      message: message,
-      type: FeedbackType.warning,
     );
   }
 
@@ -575,41 +567,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       message: context.l10n.slashCommandMuteActionHint,
       type: FeedbackType.info,
     );
-  }
-
-  void _tryClearPendingDraftOnDeliveredMessage(List<ChatMessage> messages) {
-    final pendingContent = _pendingDraftContentToClear;
-    final queuedAt = _pendingDraftQueuedAt;
-    if (pendingContent == null || queuedAt == null) return;
-
-    final normalizedPending = pendingContent.trim();
-    if (normalizedPending.isEmpty) {
-      _pendingDraftContentToClear = null;
-      _pendingDraftQueuedAt = null;
-      return;
-    }
-
-    final acknowledged = messages.any((message) {
-      if (message.sender.id != _currentUserId) return false;
-      if (message.id.startsWith('draft_')) return false;
-      if (message.createdAt
-          .isBefore(queuedAt.subtract(const Duration(seconds: 5)))) {
-        return false;
-      }
-      return message.content.trim() == normalizedPending;
-    });
-
-    if (!acknowledged) {
-      return;
-    }
-
-    if (_messageController.text.trim().isNotEmpty) {
-      _pendingDraftContentToClear = null;
-      _pendingDraftQueuedAt = null;
-      return;
-    }
-
-    unawaited(_clearDraft());
   }
 
   void _startReply(ChatMessage message) {
@@ -841,22 +798,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   void _handleDismissShortcut() {
-    if (_isSelectionMode) {
-      _exitSelectionMode();
-      return;
-    }
-
-    if (_isEditMode) {
-      _cancelEditMode();
-      _messageController.clear();
-      unawaited(_clearDraft());
-      return;
-    }
-
-    if (_replyingToMessage != null) {
-      _cancelReply();
-      return;
-    }
+    _chatComposerBloc.add(
+      ChatComposerDismissShortcutRequested(
+        isSelectionMode: _isSelectionMode,
+        isEditMode: _isEditMode,
+        hasReply: _replyingToMessage != null,
+      ),
+    );
   }
 
   void _handleCopySelectedMessagesShortcut() {
@@ -1730,10 +1678,22 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       providers: [
         BlocProvider<MessageBloc>.value(value: _messageBloc),
         BlocProvider<ConversationDetailBloc>.value(value: _convDetailBloc),
+        BlocProvider<ChatComposerBloc>.value(value: _chatComposerBloc),
+        BlocProvider<ChatDraftBloc>.value(value: _chatDraftBloc),
         BlocProvider<ChatBloc>(create: (_) => getIt<ChatBloc>()),
       ],
-      child: BlocListener<ConversationDetailBloc, ConversationDetailState>(
-        listener: _handleConversationDetailStateChanges,
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<ConversationDetailBloc, ConversationDetailState>(
+            listener: _handleConversationDetailStateChanges,
+          ),
+          BlocListener<ChatDraftBloc, ChatDraftState>(
+            listener: _handleDraftStateChanges,
+          ),
+          BlocListener<ChatComposerBloc, ChatComposerState>(
+            listener: _handleComposerStateChanges,
+          ),
+        ],
         child: _buildShortcutHost(
           GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
@@ -1830,7 +1790,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         _messageBloc.add(MarkChatAsRead(widget.chatId));
       }
 
-      _tryClearPendingDraftOnDeliveredMessage(state.messages);
+      _chatDraftBloc.add(
+        ChatDraftMessageDeliveryChecked(
+          conversationId: widget.chatId,
+          currentUserId: _currentUserId,
+          currentInputText: _messageController.text,
+          messages: state.messages,
+        ),
+      );
 
       final wasLoadingMore = _isLoadingMore;
       safeSetState(() => _isLoadingMore = false);

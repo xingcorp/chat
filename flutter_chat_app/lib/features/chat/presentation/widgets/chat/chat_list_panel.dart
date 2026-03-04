@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
-import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
-import 'package:flutter_chat_app/core/services/chat_draft_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/presence_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
 import 'package:flutter_chat_app/domain/entities/user_presence.dart';
+import 'package:flutter_chat_app/features/chat/domain/entities/chat_draft_entity.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/chat_draft/chat_draft_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/chat_conversation_preview_resolver.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_conversation_tile.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/conversation_type_tab_bar.dart';
@@ -39,8 +39,9 @@ class ChatListPanel extends BaseStatefulWidget {
 
 class _ChatListPanelState extends BaseState<ChatListPanel> {
   late final ChatBloc _chatBloc;
-  late final ChatDraftService _chatDraftService;
+  late final ChatDraftBloc _chatDraftBloc;
   late final PresenceService _presenceService;
+  bool _ownsChatBloc = false;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
   bool _isSearching = false;
@@ -48,12 +49,14 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
   @override
   void initState() {
     super.initState();
-    _chatBloc = getIt<ChatBloc>();
-    _chatDraftService = getIt<ChatDraftService>();
-    // Use the shared ChatBloc from ChatAppShell's BlocProvider.
-    // Do NOT create a new instance via getIt — that would create an isolated
-    // factory instance whose realtime subscriptions die on dispose().
-    _chatBloc = context.read<ChatBloc>();
+    try {
+      _chatBloc = context.read<ChatBloc>();
+      _ownsChatBloc = false;
+    } catch (_) {
+      _chatBloc = getIt<ChatBloc>();
+      _ownsChatBloc = true;
+    }
+    _chatDraftBloc = getIt<ChatDraftBloc>();
     _presenceService = getIt<PresenceService>();
     _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
   }
@@ -62,10 +65,10 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
-    // Do NOT close _chatBloc — it's owned by BlocProvider in ChatAppShell.
-    // Closing it kills realtime subscriptions (messageStream, typingStream,
-    // readReceiptStream) permanently, causing chat list to stop updating
-    // after navigating back from chat details.
+    if (_ownsChatBloc) {
+      _chatBloc.close();
+    }
+    _chatDraftBloc.close();
     super.dispose();
   }
 
@@ -101,8 +104,11 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<ChatBloc>.value(
-      value: _chatBloc,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ChatBloc>.value(value: _chatBloc),
+        BlocProvider<ChatDraftBloc>.value(value: _chatDraftBloc),
+      ],
       child: Material(
         color: Theme.of(context).scaffoldBackgroundColor,
         child: Column(
@@ -211,9 +217,8 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                         filterPages,
                         filterHasMore,
                         isSyncing) {
-                      return ValueListenableBuilder<Map<String, ChatDraft>>(
-                        valueListenable: _chatDraftService.draftsListenable,
-                        builder: (context, _, __) {
+                      return BlocBuilder<ChatDraftBloc, ChatDraftState>(
+                        builder: (context, draftState) {
                           return Column(
                             children: [
                               ConversationTypeTabBar(
@@ -252,6 +257,7 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                                           return _buildChatListItem(
                                             context,
                                             chat,
+                                            draftState.draftsByConversationId,
                                           );
                                         },
                                       ),
@@ -302,11 +308,15 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
     );
   }
 
-  Widget _buildChatListItem(BuildContext context, Chat chat) {
+  Widget _buildChatListItem(
+    BuildContext context,
+    Chat chat,
+    Map<String, ChatDraftEntity> draftsByConversationId,
+  ) {
     final previewData = ChatConversationPreviewResolver.resolve(
       context: context,
       chat: chat,
-      draftService: _chatDraftService,
+      draftsByConversationId: draftsByConversationId,
     );
 
     return ChatConversationTile(

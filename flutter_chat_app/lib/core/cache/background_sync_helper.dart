@@ -5,13 +5,16 @@ import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:flutter_chat_app/data/graphql/chat_operations.dart' show ChatQueries;
+import 'package:flutter_chat_app/data/graphql/chat_operations.dart'
+    show ChatQueries;
 import 'package:flutter_chat_app/data/models/chat_model.dart';
+import 'package:flutter_chat_app/data/models/chat_draft_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/models/offline_operation_model.dart';
 import 'package:flutter_chat_app/data/models/sync_metadata_model.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat.dart' show ChatType;
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart'
+    show ChatType;
 
 /// Lightweight helper for background sync operations.
 ///
@@ -61,7 +64,8 @@ class BackgroundSyncHelper {
     final accessToken = prefs.getString(keyAccessToken) ?? '';
 
     if (graphqlUrl.isEmpty) {
-      throw StateError('BackgroundSyncHelper: No graphqlUrl in SharedPreferences. '
+      throw StateError(
+          'BackgroundSyncHelper: No graphqlUrl in SharedPreferences. '
           'Ensure ChatModule was initialized at least once in the foreground.');
     }
 
@@ -105,6 +109,7 @@ class BackgroundSyncHelper {
 
   static final List<IsarGeneratedSchema> _schemas = [
     ChatModelSchema,
+    ChatDraftModelSchema,
     MessageModelSchema,
     UserModelSchema,
     OfflineOperationModelSchema,
@@ -158,8 +163,10 @@ class BackgroundSyncHelper {
         }
       });
 
-      await _prefs.setString(keyLastBgSyncTime, DateTime.now().toIso8601String());
-      _logger.i('BackgroundSyncHelper: Synced ${conversations.length} conversations');
+      await _prefs.setString(
+          keyLastBgSyncTime, DateTime.now().toIso8601String());
+      _logger.i(
+          'BackgroundSyncHelper: Synced ${conversations.length} conversations');
     } catch (e) {
       _logger.e('BackgroundSyncHelper: Sync failed: $e');
       rethrow;
@@ -185,9 +192,8 @@ class BackgroundSyncHelper {
         final sender = lastMessage['sender'] as Map<String, dynamic>?;
         final senderName = sender?['fullname'] as String? ?? '';
         final messageText = lastMessage['message'] as String? ?? '';
-        lastMessagePreview = senderName.isNotEmpty
-            ? '$senderName: $messageText'
-            : messageText;
+        lastMessagePreview =
+            senderName.isNotEmpty ? '$senderName: $messageText' : messageText;
       }
 
       // Build member IDs list
@@ -196,24 +202,28 @@ class BackgroundSyncHelper {
       if (members.isNotEmpty) {
         for (final member in members) {
           final m = member as Map<String, dynamic>;
-          final userId = m['userId'] as String? ?? m['user']?['id'] as String? ?? '';
+          final userId =
+              m['userId'] as String? ?? m['user']?['id'] as String? ?? '';
           if (userId.isNotEmpty) participantIds.add(userId);
         }
-        membersJsonStr = members.map((m) {
-          final mm = m as Map<String, dynamic>;
-          final user = mm['user'] as Map<String, dynamic>?;
-          return {
-            'id': mm['id'],
-            'userId': mm['userId'] ?? user?['id'],
-            'fullName': user?['fullname'],
-            'avatarUrl': (user?['imageUrls'] as List?)?.firstOrNull,
-            'admin': mm['admin'] ?? false,
-            'connected': mm['connected'] ?? false,
-            'hide': mm['hide'] ?? false,
-            'unreadCount': mm['unreadCount'] ?? 0,
-            'lastMessageReadId': mm['lastMessageReadId'],
-          };
-        }).toList().toString();
+        membersJsonStr = members
+            .map((m) {
+              final mm = m as Map<String, dynamic>;
+              final user = mm['user'] as Map<String, dynamic>?;
+              return {
+                'id': mm['id'],
+                'userId': mm['userId'] ?? user?['id'],
+                'fullName': user?['fullname'],
+                'avatarUrl': (user?['imageUrls'] as List?)?.firstOrNull,
+                'admin': mm['admin'] ?? false,
+                'connected': mm['connected'] ?? false,
+                'hide': mm['hide'] ?? false,
+                'unreadCount': mm['unreadCount'] ?? 0,
+                'lastMessageReadId': mm['lastMessageReadId'],
+              };
+            })
+            .toList()
+            .toString();
       }
 
       // Parse ChatType enum
@@ -235,11 +245,13 @@ class BackgroundSyncHelper {
         creatorId: creator?['id'] as String?,
         membersJson: membersJsonStr,
         lastMessagePreview: lastMessagePreview,
-        lastMessageTime: DateTime.tryParse(map['lastMessageAt'] as String? ?? ''),
+        lastMessageTime:
+            DateTime.tryParse(map['lastMessageAt'] as String? ?? ''),
         unreadCount: personalConv?['unreadCount'] as int? ?? 0,
         participantIds: participantIds,
         avatarUrl: map['imgUrl'] as String?,
-        createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
+        createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+            DateTime.now(),
       );
     } catch (e) {
       _logger.w('BackgroundSyncHelper: Failed to parse conversation: $e');

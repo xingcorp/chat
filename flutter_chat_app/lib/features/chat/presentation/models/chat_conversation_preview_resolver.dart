@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
-import 'package:flutter_chat_app/core/services/chat_draft_service.dart';
+import 'package:flutter_chat_app/features/chat/domain/entities/chat_draft_entity.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 
@@ -19,9 +19,9 @@ class ChatConversationPreviewResolver {
   static ChatConversationPreviewData resolve({
     required BuildContext context,
     required Chat chat,
-    required ChatDraftService draftService,
+    required Map<String, ChatDraftEntity> draftsByConversationId,
   }) {
-    final draft = draftService.getDraftSync(chat.id);
+    final draft = draftsByConversationId[chat.id];
     if (draft != null && draft.hasContent) {
       final formattedDraft = _normalizeSingleLine(
         draft.text.formatChatMessage(
