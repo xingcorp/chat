@@ -52,7 +52,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   final LeaveConversationUseCase _leaveConversation;
   final DeleteConversationUseCase _deleteConversation;
   final SearchConversationsUseCase _searchConversations;
-  
+
   // Services
   final ConnectivityService _connectivityService;
   final CacheSyncStrategy _cacheSyncStrategy;
@@ -75,7 +75,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   // Key: "chatId:userId", Value: Timer that will clear typing status
   final Map<String, Timer> _typingTimers = {};
   static const _typingTimeout = Duration(seconds: 5);
-  
+  DateTime? _lastOnlineRefreshTriggerAt;
+  static const _onlineRefreshTriggerCooldown = Duration(seconds: 2);
+
   /// Constructor with UseCases injection
   ChatBloc(
     this._getConversations,
@@ -114,7 +116,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     _connectivitySubscription =
         _connectivityService.onConnectivityChanged.listen((isConnected) {
       if (isConnected) {
-        add(const ChatEvent.connectivityChanged(true));
+        _triggerOnlineRefresh(source: 'connectivity_stream');
       }
     });
 
@@ -124,16 +126,26 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     SocketConnectionState? previousSocketState;
     _connectionStateSubscription = _realtimeService.connectionState.listen(
       (socketState) {
-        final wasDisconnected =
-            previousSocketState != null &&
+        final wasDisconnected = previousSocketState != null &&
             previousSocketState != SocketConnectionState.connected;
         previousSocketState = socketState;
-        if (wasDisconnected &&
-            socketState == SocketConnectionState.connected) {
-          add(const ChatEvent.connectivityChanged(true));
+        if (wasDisconnected && socketState == SocketConnectionState.connected) {
+          _triggerOnlineRefresh(source: 'socket_connected_transition');
         }
       },
     );
+  }
+
+  void _triggerOnlineRefresh({required String source}) {
+    final now = DateTime.now();
+    final lastTrigger = _lastOnlineRefreshTriggerAt;
+    if (lastTrigger != null &&
+        now.difference(lastTrigger) < _onlineRefreshTriggerCooldown) {
+      logger.d('Skip duplicate online refresh trigger from $source');
+      return;
+    }
+    _lastOnlineRefreshTriggerAt = now;
+    add(const ChatEvent.connectivityChanged(true));
   }
 
   /// **Load chats with cache-first pattern**
@@ -145,8 +157,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     Emitter<ChatState> emit,
   ) async {
     final current = state.whenOrNull(
-      loaded: (chats, hasMore, isLoadingMore, page, pageSize, total,
-          activeFilter, cachedLists, filterPages, filterHasMore, isSyncing) => (
+      loaded: (chats,
+              hasMore,
+              isLoadingMore,
+              page,
+              pageSize,
+              total,
+              activeFilter,
+              cachedLists,
+              filterPages,
+              filterHasMore,
+              isSyncing) =>
+          (
         pageSize: pageSize,
         activeFilter: activeFilter,
         cachedLists: cachedLists,
@@ -175,7 +197,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       filterHasMore.remove(activeFilter);
     }
 
-    logger.i('Loading conversations (filter: $activeFilter, forceRefresh: ${event.forceRefresh})');
+    logger.i(
+        'Loading conversations (filter: $activeFilter, forceRefresh: ${event.forceRefresh})');
 
     // === CACHE-FIRST: Show local data instantly ===
     final localResult = await _getLocalConversations();
@@ -210,7 +233,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     }
 
     // === NETWORK REFRESH: Fetch fresh data in background ===
-    final shouldRefresh = event.forceRefresh || _cacheSyncStrategy.shouldRefreshChatList();
+    final shouldRefresh =
+        event.forceRefresh || _cacheSyncStrategy.shouldRefreshChatList();
 
     final request = PageRequest.first(size: pageSize);
     final result = await _getConversations(
@@ -285,8 +309,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     Emitter<ChatState> emit,
   ) async {
     final current = state.whenOrNull(
-      loaded: (chats, hasMore, isLoadingMore, page, pageSize, total,
-          activeFilter, cachedLists, filterPages, filterHasMore, isSyncing) => (
+      loaded: (chats,
+              hasMore,
+              isLoadingMore,
+              page,
+              pageSize,
+              total,
+              activeFilter,
+              cachedLists,
+              filterPages,
+              filterHasMore,
+              isSyncing) =>
+          (
         chats: chats,
         hasMore: hasMore,
         isLoadingMore: isLoadingMore,
@@ -304,9 +338,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     if (!current.hasMore) return;
     if (current.isLoadingMore) return;
 
-    final cachedLists = Map<ConversationTypeFilter, List<Chat>>.from(current.cachedLists);
-    final filterPages = Map<ConversationTypeFilter, int>.from(current.filterPages);
-    final filterHasMore = Map<ConversationTypeFilter, bool>.from(current.filterHasMore);
+    final cachedLists =
+        Map<ConversationTypeFilter, List<Chat>>.from(current.cachedLists);
+    final filterPages =
+        Map<ConversationTypeFilter, int>.from(current.filterPages);
+    final filterHasMore =
+        Map<ConversationTypeFilter, bool>.from(current.filterHasMore);
 
     emit(ChatState.loaded(
       chats: current.chats,
@@ -375,7 +412,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
           }
         }
 
-        final effectiveHasMore = addedNew > 0 && paged.items.length == nextRequest.size;
+        final effectiveHasMore =
+            addedNew > 0 && paged.items.length == nextRequest.size;
 
         cachedLists[current.activeFilter] = merged;
         filterPages[current.activeFilter] = nextPage;
@@ -420,7 +458,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
           logger.i('Loaded conversation detail successfully');
           emit(ChatState.chatDetailsLoaded(chat: chat));
         } else {
-          emit(const ChatState.error(message: 'Không tìm thấy cuộc trò chuyện'));
+          emit(
+              const ChatState.error(message: 'Không tìm thấy cuộc trò chuyện'));
         }
       },
     );
@@ -526,8 +565,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     _ConnectivityChanged event,
     Emitter<ChatState> emit,
   ) async {
-    logger.i('Connectivity changed: ${event.isConnected ? "online" : "offline"}');
-    
+    logger
+        .i('Connectivity changed: ${event.isConnected ? "online" : "offline"}');
+
     if (event.isConnected) {
       // Sync when connection is restored
       logger.i('Connection restored, reloading chats');
@@ -584,7 +624,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       (chats) {
         // Search results don't filter by type — preserve activeFilter from current state
         final activeFilter = state.whenOrNull(
-              loaded: (_, __, ___, ____, _____, ______, activeFilter, _______, ________, _________, __________) =>
+              loaded: (_, __, ___, ____, _____, ______, activeFilter, _______,
+                      ________, _________, __________) =>
                   activeFilter,
             ) ??
             ConversationTypeFilter.all;
@@ -622,8 +663,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
 
     // Extract current loaded state fields (if loaded)
     final current = state.whenOrNull(
-      loaded: (chats, hasMore, isLoadingMore, page, pageSize, total,
-          activeFilter, cachedLists, filterPages, filterHasMore, isSyncing) => (
+      loaded: (chats,
+              hasMore,
+              isLoadingMore,
+              page,
+              pageSize,
+              total,
+              activeFilter,
+              cachedLists,
+              filterPages,
+              filterHasMore,
+              isSyncing) =>
+          (
         chats: chats,
         hasMore: hasMore,
         page: page,
@@ -695,7 +746,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
 
     result.fold(
       (failure) {
-        logger.e('ChangeConversationTypeFilter: failed for $filter: ${failure.message}');
+        logger.e(
+            'ChangeConversationTypeFilter: failed for $filter: ${failure.message}');
         emit(ChatState.error(message: getUserErrorMessage(failure)));
       },
       (paged) {
@@ -728,7 +780,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
         .where((chat) => chat.avatarUrl != null)
         .map((chat) => chat.avatarUrl!)
         .toList();
-    
+
     if (avatarUrls.isNotEmpty) {
       logger.d('Pre-fetching ${avatarUrls.length} avatars');
       _mediaCacheManager.prefetchThumbnails(avatarUrls);
@@ -797,7 +849,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     final updatedChat = existingChat.copyWith(
       lastMessageTime: message.createdAt,
       lastMessagePreview: preview,
-      unreadCount: isIncoming ? (existingChat.unreadCount + 1) : existingChat.unreadCount,
+      unreadCount: isIncoming
+          ? (existingChat.unreadCount + 1)
+          : existingChat.unreadCount,
     );
 
     final updatedChats = List<Chat>.from(currentState.chats);
@@ -854,7 +908,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       }
     }
 
-    final result = await _markAsRead(MarkAsReadParams(conversationId: event.chatId));
+    final result =
+        await _markAsRead(MarkAsReadParams(conversationId: event.chatId));
     result.fold(
       (failure) {
         logger.w('Failed to mark messages as read: ${failure.message}');
@@ -964,8 +1019,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
         if (m.userId.isNotEmpty && (m.fullName?.trim().isNotEmpty ?? false))
           m.userId: m.fullName!.trim(),
       for (final m in message.mentionTo)
-        if (m.id.isNotEmpty && m.name.trim().isNotEmpty)
-          m.id: m.name.trim(),
+        if (m.id.isNotEmpty && m.name.trim().isNotEmpty) m.id: m.name.trim(),
     };
 
     String formatContent(String? content) {

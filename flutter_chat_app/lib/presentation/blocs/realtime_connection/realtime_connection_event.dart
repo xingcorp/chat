@@ -11,30 +11,41 @@ abstract class RealtimeConnectionEvent extends Equatable {
 /// **Connect to real-time server event**
 class ConnectToRealtime extends RealtimeConnectionEvent {
   final bool autoReconnect;
+  final String source;
 
-  const ConnectToRealtime({this.autoReconnect = true});
+  const ConnectToRealtime({
+    this.autoReconnect = true,
+    this.source = 'unknown',
+  });
 
   @override
-  List<Object> get props => [autoReconnect];
+  List<Object> get props => [autoReconnect, source];
 }
 
 /// **Disconnect from real-time server event**
 class DisconnectFromRealtime extends RealtimeConnectionEvent {
   final String? reason;
   final RealtimeConnectionIssueType issueType;
+  final String source;
 
   const DisconnectFromRealtime({
     this.reason,
     this.issueType = RealtimeConnectionIssueType.unknown,
+    this.source = 'unknown',
   });
 
   @override
-  List<Object?> get props => [reason, issueType];
+  List<Object?> get props => [reason, issueType, source];
 }
 
 /// **Reconnect to real-time server event**
 class ReconnectToRealtime extends RealtimeConnectionEvent {
-  const ReconnectToRealtime();
+  final String source;
+
+  const ReconnectToRealtime({this.source = 'unknown'});
+
+  @override
+  List<Object> get props => [source];
 }
 
 /// **Check connection health event**
@@ -55,9 +66,13 @@ class RealtimeConnectionStateChanged extends RealtimeConnectionEvent {
 /// **Network connectivity changed event (internal)**
 class NetworkConnectivityChanged extends RealtimeConnectionEvent {
   final bool isConnected;
+  final String source;
 
-  const NetworkConnectivityChanged({required this.isConnected});
+  const NetworkConnectivityChanged({
+    required this.isConnected,
+    this.source = 'connectivity_stream',
+  });
 
   @override
-  List<Object> get props => [isConnected];
+  List<Object> get props => [isConnected, source];
 }

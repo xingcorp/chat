@@ -10,7 +10,6 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/realtime_connection/realtime_connection_bloc.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/button_enums.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 
 /// Wraps content and renders a global top connection banner above all routes.
@@ -64,17 +63,20 @@ class _GlobalConnectionBannerState extends State<GlobalConnectionBanner> {
       return;
     }
 
-    if (authState.isAuthenticated) {
-      connectionBloc.add(const ConnectToRealtime());
+    if (authState is AuthAuthenticated) {
+      connectionBloc.add(const ConnectToRealtime(source: 'auth_sync'));
       return;
     }
 
-    connectionBloc.add(
-      const DisconnectFromRealtime(
-        reason: 'User unauthenticated',
-        issueType: RealtimeConnectionIssueType.auth,
-      ),
-    );
+    if (authState is AuthUnauthenticated) {
+      connectionBloc.add(
+        const DisconnectFromRealtime(
+          reason: 'User unauthenticated',
+          issueType: RealtimeConnectionIssueType.auth,
+          source: 'auth_sync',
+        ),
+      );
+    }
   }
 
   RealtimeConnectionBloc? _tryGetConnectionBloc(BuildContext context) {
@@ -83,6 +85,10 @@ class _GlobalConnectionBannerState extends State<GlobalConnectionBanner> {
     } catch (_) {
       return null;
     }
+  }
+
+  bool _isAuthResolved(AuthState state) {
+    return state is AuthAuthenticated || state is AuthUnauthenticated;
   }
 
   _BannerModel? _buildBannerModel(
@@ -124,7 +130,7 @@ class _GlobalConnectionBannerState extends State<GlobalConnectionBanner> {
                 text: context.l10n.retryOperation,
                 onPressed: () => context
                     .read<RealtimeConnectionBloc>()
-                    .add(const ReconnectToRealtime()),
+                    .add(const ReconnectToRealtime(source: 'user_retry')),
                 size: ButtonSize.small,
               )
             : null,
@@ -144,8 +150,15 @@ class _GlobalConnectionBannerState extends State<GlobalConnectionBanner> {
     return MultiBlocListener(
       listeners: [
         BlocListener<AuthBloc, AuthState>(
-          listenWhen: (previous, current) =>
-              previous.isAuthenticated != current.isAuthenticated,
+          listenWhen: (previous, current) {
+            final currentResolved = _isAuthResolved(current);
+            if (!currentResolved) return false;
+
+            final previousResolved = _isAuthResolved(previous);
+            if (!previousResolved) return true;
+
+            return previous.isAuthenticated != current.isAuthenticated;
+          },
           listener: (context, authState) =>
               _syncRealtimeConnectionWithAuth(authState),
         ),
@@ -177,21 +190,7 @@ class _GlobalConnectionBannerState extends State<GlobalConnectionBanner> {
                 : SafeArea(
                     key: ValueKey<String>(banner.message),
                     bottom: false,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimens.paddingMedium,
-                        vertical: AppDimens.paddingXSmall,
-                      ),
-                      child: Align(
-                        alignment: Alignment.topCenter,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: AppDimens.breakpointTablet,
-                          ),
-                          child: _ConnectionStatusBar(data: banner),
-                        ),
-                      ),
-                    ),
+                    child: _ConnectionStatusBar(data: banner),
                   ),
           );
         },
@@ -232,51 +231,48 @@ class _ConnectionStatusBar extends StatelessWidget {
     final baseColor = _baseColor(context, data.kind);
     final textColor =
         isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary;
-    final borderColor = baseColor.withValues(alpha: isDark ? 0.55 : 0.35);
-    final backgroundColor = baseColor.withValues(alpha: isDark ? 0.24 : 0.14);
+    final borderColor = baseColor.withValues(alpha: isDark ? 0.45 : 0.30);
+    final backgroundColor = baseColor.withValues(alpha: isDark ? 0.20 : 0.12);
 
-    return AppCard.filled(
-      margin: EdgeInsets.zero,
-      padding: EdgeInsets.zero,
-      borderRadius: AppDimens.radiusMedium,
-      color: backgroundColor,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-          border: Border.all(
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: Border(
+          bottom: BorderSide(
             color: borderColor,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimens.paddingMedium,
-            vertical: AppDimens.paddingSmall,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                _icon(data.kind),
-                size: AppDimens.iconSizeSmall,
-                color: baseColor,
-              ),
-              const SizedBox(width: AppDimens.spaceSmall),
-              Expanded(
-                child: AppText(
-                  data.message,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodySmallCustom(
-                    color: textColor,
-                    fontWeight: FontWeight.w600,
-                  ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.paddingMedium,
+          vertical: AppDimens.paddingSmall,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _icon(data.kind),
+              size: AppDimens.iconSizeSmall,
+              color: baseColor,
+            ),
+            const SizedBox(width: AppDimens.spaceSmall),
+            Expanded(
+              child: AppText(
+                data.message,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodySmallCustom(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              if (data.action != null) ...[
-                const SizedBox(width: AppDimens.spaceSmall),
-                data.action!,
-              ],
+            ),
+            if (data.action != null) ...[
+              const SizedBox(width: AppDimens.spaceSmall),
+              data.action!,
             ],
-          ),
+          ],
         ),
       ),
     );

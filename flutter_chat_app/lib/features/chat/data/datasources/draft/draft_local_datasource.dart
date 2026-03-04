@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/utils/isar_id.dart';
 import 'package:flutter_chat_app/data/models/chat_draft_model.dart';
 import 'package:injectable/injectable.dart';
@@ -20,6 +23,8 @@ class DraftLocalDataSourceImpl implements DraftLocalDataSource {
   DraftLocalDataSourceImpl(this._isar);
 
   final Isar _isar;
+  final StreamController<List<ChatDraftModel>> _webDraftsController =
+      StreamController<List<ChatDraftModel>>.broadcast();
 
   @override
   Future<ChatDraftModel?> getDraft(String conversationId) async {
@@ -38,6 +43,10 @@ class DraftLocalDataSourceImpl implements DraftLocalDataSource {
 
   @override
   Stream<List<ChatDraftModel>> watchAllDrafts() {
+    if (kIsWeb) {
+      scheduleMicrotask(_emitWebDraftsSnapshot);
+      return _webDraftsController.stream;
+    }
     return _isar.chatDraftModels.where().watch(fireImmediately: true);
   }
 
@@ -46,6 +55,9 @@ class DraftLocalDataSourceImpl implements DraftLocalDataSource {
     _isar.write((isar) {
       isar.chatDraftModels.put(draft);
     });
+    if (kIsWeb) {
+      await _emitWebDraftsSnapshot();
+    }
   }
 
   @override
@@ -58,5 +70,16 @@ class DraftLocalDataSourceImpl implements DraftLocalDataSource {
     _isar.write((isar) {
       isar.chatDraftModels.delete(normalizedConversationId.toIsarId());
     });
+    if (kIsWeb) {
+      await _emitWebDraftsSnapshot();
+    }
+  }
+
+  Future<void> _emitWebDraftsSnapshot() async {
+    if (_webDraftsController.isClosed) {
+      return;
+    }
+    final drafts = await getAllDrafts();
+    _webDraftsController.add(drafts);
   }
 }
