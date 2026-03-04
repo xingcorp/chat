@@ -12,7 +12,8 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/typography/a
 /// Wraps content and renders a global top connection banner above all routes.
 ///
 /// Uses a column layout (not overlay) so the banner does not cover app bars
-/// and main content.
+/// and main content. When the banner is visible it removes the top safe-area
+/// padding for the child so that [Scaffold]/[AppBar] does not double-pad.
 class GlobalConnectionBannerScope extends StatelessWidget {
   const GlobalConnectionBannerScope({
     required this.child,
@@ -23,12 +24,7 @@ class GlobalConnectionBannerScope extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const GlobalConnectionBanner(),
-        Expanded(child: child),
-      ],
-    );
+    return GlobalConnectionBanner(child: child);
   }
 }
 
@@ -37,7 +33,9 @@ class GlobalConnectionBannerScope extends StatelessWidget {
 /// Source of truth is [RealtimeConnectionBloc].
 /// Auth state automatically drives connect/disconnect lifecycle.
 class GlobalConnectionBanner extends StatefulWidget {
-  const GlobalConnectionBanner({super.key});
+  const GlobalConnectionBanner({required this.child, super.key});
+
+  final Widget child;
 
   @override
   State<GlobalConnectionBanner> createState() => _GlobalConnectionBannerState();
@@ -142,7 +140,7 @@ class _GlobalConnectionBannerState extends State<GlobalConnectionBanner> {
   Widget build(BuildContext context) {
     final connectionBloc = _tryGetConnectionBloc(context);
     if (connectionBloc == null) {
-      return const SizedBox.shrink();
+      return widget.child;
     }
 
     return MultiBlocListener(
@@ -168,8 +166,9 @@ class _GlobalConnectionBannerState extends State<GlobalConnectionBanner> {
             (bloc) => bloc.state.isAuthenticated,
           );
           final banner = _buildBannerModel(context, state, isAuthenticated);
+          final bannerVisible = banner != null;
 
-          return AnimatedSwitcher(
+          final bannerWidget = AnimatedSwitcher(
             duration: const Duration(milliseconds: 220),
             switchInCurve: Curves.easeOutCubic,
             switchOutCurve: Curves.easeInCubic,
@@ -190,6 +189,21 @@ class _GlobalConnectionBannerState extends State<GlobalConnectionBanner> {
                     bottom: false,
                     child: _ConnectionStatusBar(data: banner),
                   ),
+          );
+
+          final child = bannerVisible
+              ? MediaQuery.removePadding(
+                  context: context,
+                  removeTop: true,
+                  child: widget.child,
+                )
+              : widget.child;
+
+          return Column(
+            children: [
+              bannerWidget,
+              Expanded(child: child),
+            ],
           );
         },
       ),
