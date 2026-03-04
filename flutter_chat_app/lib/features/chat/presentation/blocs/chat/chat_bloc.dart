@@ -17,6 +17,7 @@ import 'package:flutter_chat_app/core/services/chat_module_event_bus.dart';
 import 'package:flutter_chat_app/core/services/connectivity_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
+import 'package:flutter_chat_app/core/network/models/socket_connection_state.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/core/pagination/page_request.dart';
@@ -69,6 +70,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   StreamSubscription<MessageReadReceipt>? _readReceiptSubscription;
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
   StreamSubscription<Chat>? _chatUpdatesSubscription;
+  StreamSubscription<SocketConnectionState>? _connectionStateSubscription;
 
   // Typing indicator timeout management
   // Key: "chatId:userId", Value: Timer that will clear typing status
@@ -107,6 +109,23 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     on<_SearchChats>(_onSearchChats);
     on<_ClearSearch>(_onClearSearch);
     on<_ChangeConversationTypeFilter>(_onChangeConversationTypeFilter);
+
+    // Listen to socket connection state: when transitioning from
+    // any non-connected state to connected, reload chats so the
+    // chat list picks up messages missed during the disconnection.
+    SocketConnectionState? previousSocketState;
+    _connectionStateSubscription = _realtimeService.connectionState.listen(
+      (socketState) {
+        final wasDisconnected =
+            previousSocketState != null &&
+            previousSocketState != SocketConnectionState.connected;
+        previousSocketState = socketState;
+        if (wasDisconnected &&
+            socketState == SocketConnectionState.connected) {
+          add(const ChatEvent.connectivityChanged(true));
+        }
+      },
+    );
   }
 
   /// **Load chats with cache-first pattern**
@@ -1000,6 +1019,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     _readReceiptSubscription?.cancel();
     _connectivitySubscription?.cancel();
     _chatUpdatesSubscription?.cancel();
+    _connectionStateSubscription?.cancel();
     // Cancel all typing timers
     for (final timer in _typingTimers.values) {
       timer.cancel();

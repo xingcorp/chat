@@ -269,11 +269,13 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
     if (event.isConnected) {
       // Network restored, attempt reconnection if disconnected
       if (state is RealtimeConnectionDisconnected) {
-        final disconnectedState = state as RealtimeConnectionDisconnected;
-        if (disconnectedState.canRetry) {
-          _logger.i('Network restored, attempting reconnection');
-          add(const ReconnectToRealtime());
-        }
+        // Always reset attempts when real network comes back.
+        // Previous attempts failed because there was no network,
+        // not because the server is unreachable.
+        _reconnectionAttempts = 0;
+        _reconnectionTimer?.cancel();
+        _logger.i('Network restored, resetting attempts and reconnecting');
+        add(const ReconnectToRealtime());
       }
     } else {
       // Network lost

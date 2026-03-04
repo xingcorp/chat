@@ -305,6 +305,18 @@ class RealtimeService {
     _subscriptions.add(
       _socketManager.connectionState.listen((state) {
         _logger.d('Connection state changed: $state');
+        // When socket disconnects, server-side room memberships are lost.
+        // Clear the local set so joinChatRoom() will re-emit
+        // 'conversation:joined' after the next reconnect.
+        if (state == SocketConnectionState.disconnected ||
+            state == SocketConnectionState.disconnectedByServer ||
+            state == SocketConnectionState.disconnectedByUser ||
+            state == SocketConnectionState.error) {
+          if (_joinedChats.isNotEmpty) {
+            _logger.i('Socket disconnected, clearing ${_joinedChats.length} joined rooms');
+            _joinedChats.clear();
+          }
+        }
         _connectionStateController.add(state);
       }),
     );
