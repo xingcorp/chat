@@ -299,8 +299,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         unawaited(_cancelMessageSubscription(event.chatId));
       }
 
-      // Phase 2: Background fetch (delta or full)
-      _startBackgroundFetch(event.chatId, event.limit);
+      // Phase 2: Retry pending messages + background fetch (delta or full)
+      unawaited(_retryAndRefresh(event.chatId, event.limit));
     } else {
       // === FIRST-TIME LOAD PATH (Phase 1 behavior) ===
       // logger.i('[TwoPhase] Taking FIRST-TIME path (hasLocal=$hasLocalData, forceRefresh=${event.forceRefresh})');
@@ -1424,7 +1424,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
   /// Retry pending messages for [chatId], then trigger a background fetch
   /// so the UI picks up the updated message statuses.
-  Future<void> _retryAndRefresh(String chatId) async {
+  Future<void> _retryAndRefresh(String chatId, [int limit = 20]) async {
     try {
       final result =
           await _getMessages.repository.retryPendingMessages(chatId);
@@ -1443,7 +1443,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     // 2. Always do a delta sync to get new messages from server
     //    (also refreshes UI with updated statuses from step 1)
-    _startBackgroundFetch(chatId, 20);
+    _startBackgroundFetch(chatId, limit);
   }
 
   /// Handle app resume — delta sync if backgrounded > 30 seconds

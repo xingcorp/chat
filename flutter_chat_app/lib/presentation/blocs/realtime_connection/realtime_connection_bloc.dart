@@ -41,6 +41,15 @@ class RealtimeConnectionBloc
   static const int _maxReconnectionAttempts = 5;
   static const Duration _baseReconnectionDelay = Duration(seconds: 2);
 
+  /// True after at least one successful connection has been established.
+  /// Used by the UI to distinguish initial connect (silent) from reconnect
+  /// (show banner). WhatsApp/Telegram pattern: only show "Reconnecting..."
+  /// after a prior successful session, never on cold start.
+  bool _hasEverConnected = false;
+
+  /// Whether the bloc has ever reached [RealtimeConnectionConnected].
+  bool get hasEverConnected => _hasEverConnected;
+
   /// Constructor
   RealtimeConnectionBloc({
     required RealtimeService realtimeService,
@@ -127,7 +136,8 @@ class RealtimeConnectionBloc
       (success) {
         _logger.i('Successfully connected to real-time server');
         _cancelReconnectionTimer(reason: 'connected');
-        _reconnectionAttempts = 0; // Reset attempts on successful connection
+        _reconnectionAttempts = 0;
+        _hasEverConnected = true;
         _emitIfChanged(
           emit,
           RealtimeConnectionStateX.connected,
@@ -152,6 +162,7 @@ class RealtimeConnectionBloc
 
     _cancelReconnectionTimer(reason: 'manual disconnect');
     _reconnectionAttempts = 0;
+    _hasEverConnected = false;
 
     _emitIfChanged(
       emit,
@@ -291,6 +302,7 @@ class RealtimeConnectionBloc
         _logger
             .i('Reconnection successful after $_reconnectionAttempts attempts');
         _reconnectionAttempts = 0;
+        _hasEverConnected = true;
         _cancelReconnectionTimer(reason: 'reconnect success');
         _emitIfChanged(
           emit,
@@ -342,6 +354,7 @@ class RealtimeConnectionBloc
     switch (socketState) {
       case SocketConnectionState.connected:
         _reconnectionAttempts = 0;
+        _hasEverConnected = true;
         _cancelReconnectionTimer(reason: 'socket connected');
         _emitIfChanged(
           emit,

@@ -95,6 +95,15 @@ class _GlobalConnectionBannerState extends State<GlobalConnectionBanner> {
   ) {
     if (!isAuthenticated) return null;
 
+    // WhatsApp/Telegram pattern: only show connection banner after the user
+    // has had at least one successful session. On cold start (initial connect),
+    // the banner is suppressed — the user sees their cached chat list instead
+    // of a jarring "Reconnecting..." bar.
+    final connectionBloc = _tryGetConnectionBloc(context);
+    if (connectionBloc != null && !connectionBloc.hasEverConnected) {
+      return null;
+    }
+
     if (state is RealtimeConnectionConnecting ||
         state is RealtimeConnectionReconnecting) {
       return _BannerModel(

@@ -569,9 +569,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
         .i('Connectivity changed: ${event.isConnected ? "online" : "offline"}');
 
     if (event.isConnected) {
-      // Sync when connection is restored
-      logger.i('Connection restored, reloading chats');
-      add(const ChatEvent.loadChats(forceRefresh: true));
+      // Connection restored — use soft reload (no forceRefresh) so the
+      // cache-first pattern keeps showing existing data while syncing
+      // in the background. Using forceRefresh would clear the cache and
+      // cause a shimmer flash, which breaks the WhatsApp/Telegram UX.
+      logger.i('Connection restored, soft-syncing chats');
+      _cacheSyncStrategy.markChatListDirty();
+      add(const ChatEvent.loadChats());
     } else {
       logger.w('Connection lost, switching to offline mode');
       emit(const ChatState.offline());

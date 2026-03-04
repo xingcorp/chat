@@ -12,6 +12,7 @@ import 'package:flutter_chat_app/core/services/chat_message_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
+import 'package:flutter_chat_app/core/services/offline_queue_service.dart';
 import 'package:flutter_chat_app/core/services/performance_service.dart';
 
 /// Initializes non-critical and platform-specific services after the app has
@@ -116,15 +117,38 @@ class ServiceInitializer {
   }
 
   static Future<void> _initializeMobileServices() async {
+    final logger = GetIt.I<Logger>();
+
     final databaseService = GetIt.I<DatabaseService>();
     await databaseService.initialize();
+
+    _initializeOfflineQueueService(logger);
   }
 
   static Future<void> _initializeDesktopServices() async {
+    final logger = GetIt.I<Logger>();
+
     final databaseService = GetIt.I<DatabaseService>();
     await databaseService.initialize();
 
     final chatMessageService = GetIt.I<ChatMessageService>();
     await chatMessageService.initialize();
+
+    _initializeOfflineQueueService(logger);
+  }
+
+  /// Force-init [OfflineQueueService] so its connectivity listener starts.
+  ///
+  /// Without this call the lazySingleton is never instantiated and pending
+  /// messages are never retried when the device comes back online.
+  static void _initializeOfflineQueueService(Logger logger) {
+    try {
+      if (GetIt.I.isRegistered<OfflineQueueService>()) {
+        GetIt.I<OfflineQueueService>();
+        logger.i('OfflineQueueService initialized (connectivity listener active)');
+      }
+    } catch (e) {
+      logger.e('OfflineQueueService initialization failed', error: e);
+    }
   }
 }
