@@ -115,6 +115,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   late final ConversationDetailBloc _convDetailBloc;
   late final ChatComposerBloc _chatComposerBloc;
   late final ChatDraftBloc _chatDraftBloc;
+  bool _ownsChatDraftBloc = false;
 
   Chat? _chat;
   String _currentUserId = '';
@@ -191,7 +192,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _messageBloc = getIt<MessageBloc>();
     _convDetailBloc = getIt<ConversationDetailBloc>();
     _chatComposerBloc = getIt<ChatComposerBloc>();
-    _chatDraftBloc = getIt<ChatDraftBloc>();
+    try {
+      _chatDraftBloc = context.read<ChatDraftBloc>();
+      _ownsChatDraftBloc = false;
+    } catch (_) {
+      _chatDraftBloc = getIt<ChatDraftBloc>();
+      _ownsChatDraftBloc = true;
+    }
     _voiceRecorderService = getIt<VoiceRecorderService>();
     _messageBloc.add(const FetchFrequentReactions());
 
@@ -529,7 +536,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _messageBloc.close();
     _convDetailBloc.close();
     _chatComposerBloc.close();
-    _chatDraftBloc.close();
+    if (_ownsChatDraftBloc) {
+      _chatDraftBloc.close();
+    }
     _typingSubscription?.cancel();
     _typingDebounceTimer?.cancel();
     _recordingAmplitudeSubscription?.cancel();

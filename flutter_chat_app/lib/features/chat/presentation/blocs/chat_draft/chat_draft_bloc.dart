@@ -199,10 +199,57 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
     ChatDraftInputChanged event,
     Emitter<ChatDraftState> emit,
   ) {
+    final conversationId = event.conversationId.trim();
+    if (conversationId.isEmpty) {
+      return;
+    }
+
+    if (_restoringConversationIds.contains(conversationId) ||
+        event.isEditMode ||
+        event.isRecordingVoice) {
+      return;
+    }
+
+    final normalizedText = event.text.replaceAll('\r\n', '\n');
+    final normalizedMentionNameById = _normalizeMentions(event.mentionNameById);
+
+    final currentDrafts =
+        Map<String, ChatDraftEntity>.from(state.draftsByConversationId);
+    final existingDraft = currentDrafts[conversationId];
+
+    if (normalizedText.trim().isEmpty) {
+      if (existingDraft != null) {
+        currentDrafts.remove(conversationId);
+        emit(state.copyWith(
+          draftsByConversationId:
+              Map<String, ChatDraftEntity>.unmodifiable(currentDrafts),
+          errorMessage: null,
+        ));
+      }
+    } else {
+      final isSameAsCurrent = existingDraft != null &&
+          existingDraft.text == normalizedText &&
+          mapEquals(existingDraft.mentionNameById, normalizedMentionNameById);
+
+      if (!isSameAsCurrent) {
+        currentDrafts[conversationId] = ChatDraftEntity(
+          conversationId: conversationId,
+          text: normalizedText,
+          updatedAt: DateTime.now(),
+          mentionNameById: normalizedMentionNameById,
+        );
+        emit(state.copyWith(
+          draftsByConversationId:
+              Map<String, ChatDraftEntity>.unmodifiable(currentDrafts),
+          errorMessage: null,
+        ));
+      }
+    }
+
     _schedulePersist(
-      conversationId: event.conversationId,
-      text: event.text,
-      mentionNameById: event.mentionNameById,
+      conversationId: conversationId,
+      text: normalizedText,
+      mentionNameById: normalizedMentionNameById,
       isEditMode: event.isEditMode,
       isRecordingVoice: event.isRecordingVoice,
     );
@@ -289,8 +336,16 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
         emit(state.copyWith(errorMessage: failure.userMessage));
       },
       (_) {
-        if (state.errorMessage != null) {
-          emit(state.copyWith(errorMessage: null));
+        final currentDrafts =
+            Map<String, ChatDraftEntity>.from(state.draftsByConversationId);
+        final hadDraft = currentDrafts.remove(conversationId) != null;
+
+        if (hadDraft || state.errorMessage != null) {
+          emit(state.copyWith(
+            draftsByConversationId:
+                Map<String, ChatDraftEntity>.unmodifiable(currentDrafts),
+            errorMessage: null,
+          ));
         }
       },
     );

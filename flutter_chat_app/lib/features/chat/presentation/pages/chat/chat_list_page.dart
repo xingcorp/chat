@@ -52,6 +52,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
   late final ChatDraftBloc _chatDraftBloc;
   late final PresenceService _presenceService;
   bool _ownsChatBloc = false;
+  bool _ownsChatDraftBloc = false;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
   bool _isSearching = false;
@@ -66,7 +67,13 @@ class _ChatListPageState extends BaseState<ChatListPage> {
       _chatBloc = getIt<ChatBloc>();
       _ownsChatBloc = true;
     }
-    _chatDraftBloc = getIt<ChatDraftBloc>();
+    try {
+      _chatDraftBloc = context.read<ChatDraftBloc>();
+      _ownsChatDraftBloc = false;
+    } catch (_) {
+      _chatDraftBloc = getIt<ChatDraftBloc>();
+      _ownsChatDraftBloc = true;
+    }
     _presenceService = getIt<PresenceService>();
     _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
   }
@@ -78,7 +85,9 @@ class _ChatListPageState extends BaseState<ChatListPage> {
     if (_ownsChatBloc) {
       _chatBloc.close();
     }
-    _chatDraftBloc.close();
+    if (_ownsChatDraftBloc) {
+      _chatDraftBloc.close();
+    }
     super.dispose();
   }
 
