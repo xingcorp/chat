@@ -22,7 +22,7 @@ enum VideoQuality {
 
 /// Service responsible for managing media resources in the chat application
 /// Handles progressive loading, compression, and caching of media files
-@singleton
+@lazySingleton
 class ResourceManagerService {
   final BehaviorSubject<double> _cacheSizeSubject = BehaviorSubject<double>.seeded(0);
   Stream<double> get cacheSizeStream => _cacheSizeSubject.stream;

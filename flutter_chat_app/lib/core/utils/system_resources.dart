@@ -96,7 +96,7 @@ class SystemResourceState {
 /// 
 /// Monitors CPU, memory, and UI performance metrics.
 /// Provides resource-aware task scheduling capabilities.
-@singleton
+@lazySingleton
 class SystemResourceMonitor {
   /// Timer for metrics collection
   Timer? _monitorTimer;

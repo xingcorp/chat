@@ -15,7 +15,7 @@ typedef ConnectionFactory = Future<IRealtimeConnectionService> Function();
 
 /// Class quản lý connection pool cho các kết nối WebSocket
 /// Được cải tiến với cơ chế tự phục hồi, kiểm tra sức khỏe và quản lý bộ nhớ tối ưu
-@singleton
+@lazySingleton
 class ConnectionPoolManager {
   /// Kích thước tối đa của pool
   final int _maxPoolSize;

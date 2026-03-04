@@ -28,7 +28,7 @@ enum CacheStrategy {
 }
 
 /// Class quản lý cache cho network responses
-@singleton
+@lazySingleton
 class NetworkResponseCache {
   /// Box chứa dữ liệu cache
   Box<String>? _cacheBox;

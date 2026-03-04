@@ -24,7 +24,7 @@ import 'package:rxdart/rxdart.dart';
 /// - Memory usage: <50MB for real-time operations
 ///
 /// **Architecture**: Clean Architecture + SOLID principles + Either error handling
-@singleton
+@lazySingleton
 class RealtimeService {
   final EnhancedSocketManager _socketManager;
 

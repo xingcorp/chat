@@ -95,7 +95,7 @@ class MessageDeleteEvent {
 ///
 /// Converts raw Socket.IO event data to domain entities.
 /// Handles data validation and error cases.
-@singleton
+@lazySingleton
 class SocketIOEventMapper {
   /// Map message:sent event to ChatMessage
   ///

@@ -30,7 +30,7 @@ import 'package:logger/logger.dart';
 /// - Compression and payload optimization
 ///
 /// **Architecture**: Clean Architecture + SOLID principles + Either error handling
-@singleton
+@lazySingleton
 class NetworkOptimizer {
   final ConnectivityService _connectivityService;
   final IPerformanceMonitor _performanceMonitor;

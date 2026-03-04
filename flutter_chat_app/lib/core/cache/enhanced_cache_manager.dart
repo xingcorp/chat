@@ -30,7 +30,7 @@ import 'package:logger/logger.dart';
 /// - Performance monitoring and analytics
 ///
 /// **Architecture**: Clean Architecture + SOLID principles + Either error handling
-@singleton
+@lazySingleton
 class EnhancedCacheManager {
   final LocalStorage _localStorage;
   final IPerformanceMonitor _performanceMonitor;

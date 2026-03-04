@@ -64,7 +64,7 @@ class SocketError {
 /// **WEBSOCKET CLIENT**
 ///
 /// Clean, focused WebSocket client following single responsibility principle
-@singleton
+@lazySingleton
 class WebSocketClient {
   /// Socket.IO client instance
   io.Socket? _socket;

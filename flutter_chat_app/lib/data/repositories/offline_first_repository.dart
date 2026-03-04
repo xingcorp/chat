@@ -52,7 +52,7 @@ abstract class OfflineFirstRepository {
 }
 
 /// Implementation of the offline-first repository
-@singleton
+@lazySingleton
 class OfflineFirstRepositoryImpl implements OfflineFirstRepository {
   final DatabaseService _databaseService;
   final ConnectivityService _connectivityService;

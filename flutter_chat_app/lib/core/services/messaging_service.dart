@@ -127,7 +127,7 @@ class ReadReceipt {
 ///
 /// Clean, focused messaging service following SOLID principles
 /// Implements multiple focused interfaces (ISP)
-@singleton
+@lazySingleton
 class MessagingService implements IConnectionManager, IMessageSender, IMessageReceiver, IChatRoomManager {
   /// WebSocket client for real-time communication
   final WebSocketClient _webSocketClient;

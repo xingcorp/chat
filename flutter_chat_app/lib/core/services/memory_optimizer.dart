@@ -22,7 +22,7 @@ import 'package:logger/logger.dart';
 /// - Memory leaks: Zero tolerance
 ///
 /// **Architecture**: Clean Architecture + SOLID principles + Either error handling
-@singleton
+@lazySingleton
 class MemoryOptimizer {
   final IPerformanceMonitor _performanceMonitor;
   final Logger _logger = Logger();

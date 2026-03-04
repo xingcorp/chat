@@ -9,22 +9,22 @@
 ///
 /// **Usage:** flutter run --flavor staging --target lib/main_staging.dart
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:flutter_chat_app/core/config/flavor_config.dart';
 import 'package:flutter_chat_app/main.dart' as main_app;
 
 /// **Staging Main Function**
-/// 
+///
 /// Initializes staging environment and launches app
 Future<void> main() async {
-  // Ensure Flutter binding is initialized
+  // Binding needed for SystemChrome calls below; ensureInitialized is idempotent
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize staging flavor
   FlavorConfig.initializeStaging();
-  
+
   // Set staging-specific system UI
   await _setupStagingSystemUI();
   

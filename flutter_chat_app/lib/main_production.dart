@@ -9,22 +9,22 @@
 ///
 /// **Usage:** flutter run --flavor production --target lib/main_production.dart
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:flutter_chat_app/core/config/flavor_config.dart';
 import 'package:flutter_chat_app/main.dart' as main_app;
 
 /// **Production Main Function**
-/// 
+///
 /// Initializes production environment and launches app
 Future<void> main() async {
-  // Ensure Flutter binding is initialized
+  // Binding needed for SystemChrome calls below; ensureInitialized is idempotent
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize production flavor
   FlavorConfig.initializeProduction();
-  
+
   // Set production-specific system UI
   await _setupProductionSystemUI();
   

@@ -228,30 +228,31 @@ extension GetItInjectableX on _i174.GetIt {
     );
     final externalModule = _$ExternalModule();
     gh.singleton<_i221.AppLogger>(() => externalModule.appLogger);
-    gh.singleton<_i514.CacheSyncStrategy>(() => _i514.CacheSyncStrategy());
-    gh.singleton<_i995.ProtoConverter>(() => _i995.ProtoConverter());
-    gh.singleton<_i260.SystemResourceMonitor>(
-        () => _i260.SystemResourceMonitor());
-    gh.singleton<_i558.ResourceManagerService>(
-        () => _i558.ResourceManagerService());
-    gh.singleton<_i976.SocketIOEventMapper>(() => _i976.SocketIOEventMapper());
+    gh.lazySingleton<_i514.CacheSyncStrategy>(() => _i514.CacheSyncStrategy());
     gh.lazySingleton<_i163.MediaCacheManager>(() => _i163.MediaCacheManager());
-    gh.lazySingletonAsync<_i527.LocalStorageService>(
-        () => _i527.LocalStorageService.init());
-    gh.lazySingleton<_i590.CrossPlatformFileService>(
-        () => _i590.CrossPlatformFileService());
-    gh.lazySingleton<_i1030.ChatModuleEventBus>(
-        () => _i1030.ChatModuleEventBus());
     gh.lazySingleton<_i200.BackgroundSyncService>(
         () => _i200.BackgroundSyncService());
+    gh.lazySingleton<_i1030.ChatModuleEventBus>(
+        () => _i1030.ChatModuleEventBus());
+    gh.lazySingleton<_i590.CrossPlatformFileService>(
+        () => _i590.CrossPlatformFileService());
+    gh.lazySingleton<_i930.ImageEditorService>(
+        () => _i930.ImageEditorService());
+    gh.lazySingletonAsync<_i527.LocalStorageService>(
+        () => _i527.LocalStorageService.init());
     gh.lazySingleton<_i695.MediaProcessingServiceFactory>(
         () => _i695.MediaProcessingServiceFactory());
     gh.lazySingleton<_i695.MediaProcessingService>(
         () => _i695.MediaProcessingService());
-    gh.lazySingleton<_i930.ImageEditorService>(
-        () => _i930.ImageEditorService());
+    gh.lazySingleton<_i558.ResourceManagerService>(
+        () => _i558.ResourceManagerService());
+    gh.lazySingleton<_i995.ProtoConverter>(() => _i995.ProtoConverter());
+    gh.lazySingleton<_i260.SystemResourceMonitor>(
+        () => _i260.SystemResourceMonitor());
     gh.lazySingleton<_i982.MediaLocalDataSourceImpl>(
         () => _i982.MediaLocalDataSourceImpl());
+    gh.lazySingleton<_i976.SocketIOEventMapper>(
+        () => _i976.SocketIOEventMapper());
     gh.lazySingleton<_i271.UserRepository>(() => _i790.UserRepositoryImpl(
           localDataSource: gh<_i439.UserLocalDataSource>(),
           remoteDataSource: gh<_i404.UserRemoteDataSource>(),
@@ -261,10 +262,10 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i933.IChatInfoRemoteDataSource>(
         () => _i933.ChatInfoRemoteDataSource(gh<_i788.GraphQLClientWrapper>()));
-    gh.singleton<_i903.NetworkResponseCache>(
-        () => _i903.NetworkResponseCache(gh<_i460.SharedPreferences>()));
     gh.lazySingleton<_i694.TokenManager>(
         () => _i694.TokenManager(gh<_i460.SharedPreferences>()));
+    gh.lazySingleton<_i903.NetworkResponseCache>(
+        () => _i903.NetworkResponseCache(gh<_i460.SharedPreferences>()));
     gh.lazySingleton<_i966.MediaRemoteDataSourceImpl>(
         () => _i966.MediaRemoteDataSourceImpl(
               httpClient: gh<_i519.Client>(),
@@ -291,9 +292,9 @@ extension GetItInjectableX on _i174.GetIt {
         _standalone,
       },
     );
-    gh.singleton<_i475.MessageDeliveryTracker>(
+    gh.lazySingleton<_i475.MessageDeliveryTracker>(
         () => _i475.MessageDeliveryTracker(gh<_i610.IPerformanceMonitor>()));
-    gh.singleton<_i393.MediaCache>(
+    gh.lazySingleton<_i393.MediaCache>(
         () => _i393.MediaCache(logger: gh<_i221.AppLogger>()));
     gh.lazySingleton<_i99.StickerLocalDataSource>(
         () => _i99.StickerLocalDataSource(
@@ -302,14 +303,14 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.lazySingleton<_i745.AuthService>(
         () => _i745.AuthService(gh<_i328.TokenRepository>()));
-    gh.singleton<_i803.MemoryOptimizer>(() => _i803.MemoryOptimizer(
+    gh.lazySingleton<_i803.MemoryOptimizer>(() => _i803.MemoryOptimizer(
         performanceMonitor: gh<_i610.IPerformanceMonitor>()));
     gh.lazySingleton<_i282.IChatInfoRepository>(
         () => _i855.ChatInfoRepositoryImpl(
               remoteDataSource: gh<_i933.IChatInfoRemoteDataSource>(),
               logger: gh<_i221.AppLogger>(),
             ));
-    gh.singleton<_i1005.ApiRequestTracker>(() => _i1005.ApiRequestTracker(
+    gh.lazySingleton<_i1005.ApiRequestTracker>(() => _i1005.ApiRequestTracker(
           gh<_i221.AppLogger>(),
           gh<_i451.IAnalyticsService>(),
         ));
@@ -334,10 +335,10 @@ extension GetItInjectableX on _i174.GetIt {
           logger: gh<_i221.AppLogger>(),
           performanceMonitor: gh<_i610.IPerformanceMonitor>(),
         ));
-    gh.singleton<_i808.IntegrationService>(
-        () => _i808.IntegrationService(gh<_i665.DatabaseService>()));
-    gh.singleton<_i479.AppService>(
+    gh.lazySingleton<_i479.AppService>(
         () => _i479.AppService(gh<_i665.DatabaseService>()));
+    gh.lazySingleton<_i808.IntegrationService>(
+        () => _i808.IntegrationService(gh<_i665.DatabaseService>()));
     gh.lazySingleton<_i1011.ChatLocalDataSourceImpl>(
         () => _i1011.ChatLocalDataSourceImpl(gh<_i665.DatabaseService>()));
     gh.lazySingleton<_i395.IPushNotificationRepository>(
@@ -347,17 +348,18 @@ extension GetItInjectableX on _i174.GetIt {
               logger: gh<_i221.AppLogger>(),
               performanceMonitor: gh<_i610.IPerformanceMonitor>(),
             ));
-    gh.singleton<_i567.ConnectionPoolManager>(() => _i567.ConnectionPoolManager(
-          connectionFactory: gh<_i567.ConnectionFactory>(),
-          maxPoolSize: gh<int>(instanceName: 'connectionPoolMaxPoolSize'),
-          maxConnectionLifetime:
-              gh<int>(instanceName: 'connectionPoolMaxConnectionLifetime'),
-          maxIdleTime: gh<int>(instanceName: 'connectionPoolMaxIdleTime'),
-          cleanupInterval:
-              gh<int>(instanceName: 'connectionPoolCleanupInterval'),
-          healthCheckInterval:
-              gh<int>(instanceName: 'connectionPoolHealthCheckInterval'),
-        ));
+    gh.lazySingleton<_i567.ConnectionPoolManager>(
+        () => _i567.ConnectionPoolManager(
+              connectionFactory: gh<_i567.ConnectionFactory>(),
+              maxPoolSize: gh<int>(instanceName: 'connectionPoolMaxPoolSize'),
+              maxConnectionLifetime:
+                  gh<int>(instanceName: 'connectionPoolMaxConnectionLifetime'),
+              maxIdleTime: gh<int>(instanceName: 'connectionPoolMaxIdleTime'),
+              cleanupInterval:
+                  gh<int>(instanceName: 'connectionPoolCleanupInterval'),
+              healthCheckInterval:
+                  gh<int>(instanceName: 'connectionPoolHealthCheckInterval'),
+            ));
     gh.lazySingleton<_i537.FrequentReactionService>(
         () => _i537.FrequentReactionService(
               gh<_i788.GraphQLClientWrapper>(),
@@ -365,20 +367,21 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.lazySingleton<_i404.UserRemoteDataSourceImpl>(
         () => _i404.UserRemoteDataSourceImpl(gh<_i788.GraphQLClientWrapper>()));
-    gh.singleton<_i604.EnhancedCacheManager>(() => _i604.EnhancedCacheManager(
-          localStorage: gh<_i329.LocalStorage>(),
-          performanceMonitor: gh<_i610.IPerformanceMonitor>(),
-        ));
+    gh.lazySingleton<_i604.EnhancedCacheManager>(
+        () => _i604.EnhancedCacheManager(
+              localStorage: gh<_i329.LocalStorage>(),
+              performanceMonitor: gh<_i610.IPerformanceMonitor>(),
+            ));
     gh.lazySingleton<_i113.CurrentUserProvider>(
         () => _i113.CurrentUserProviderImpl(
               userLocalDataSource: gh<_i439.UserLocalDataSource>(),
               tokenRepository: gh<_i328.TokenRepository>(),
             ));
-    gh.singleton<_i855.AnimationService>(() => _i855.AnimationService(
+    gh.lazySingleton<_i855.AnimationService>(() => _i855.AnimationService(
           gh<_i98.DeviceCapabilityService>(),
           gh<_i610.IPerformanceMonitor>(),
         ));
-    gh.singleton<_i686.IsolateManager>(() => _i686.IsolateManager(
+    gh.lazySingleton<_i686.IsolateManager>(() => _i686.IsolateManager(
           gh<_i610.IPerformanceMonitor>(),
           gh<_i260.SystemResourceMonitor>(),
         ));
@@ -390,7 +393,7 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i888.ConnectivityServiceImpl(gh<_i895.Connectivity>()));
     gh.lazySingleton<_i286.ConnectivityAnalyzerService>(
         () => _i286.ConnectivityAnalyzerService(gh<_i895.Connectivity>()));
-    gh.singleton<_i47.ConnectivityService>(
+    gh.lazySingleton<_i47.ConnectivityService>(
         () => _i47.ConnectivityService(gh<_i895.Connectivity>()));
     gh.factory<_i222.UserBloc>(
         () => _i222.UserBloc(userRepository: gh<_i271.UserRepository>()));
@@ -399,17 +402,17 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i1005.ApiRequestTracker>(),
           gh<_i931.ApiCacheManager>(),
         ));
-    gh.singleton<_i428.IntegrationHub>(
+    gh.lazySingleton<_i428.IntegrationHub>(
         () => _i428.IntegrationHub(gh<_i665.DatabaseService>()));
     gh.factory<_i962.PersistIncomingMessageUseCase>(
         () => _i962.PersistIncomingMessageUseCase(
               localDataSource: gh<_i1011.ChatLocalDataSource>(),
               logger: gh<_i221.AppLogger>(),
             ));
-    gh.lazySingleton<_i677.TombstoneStore>(
-        () => _i677.TombstoneStore(gh<_i329.LocalStorage>()));
     gh.lazySingleton<_i999.LocalizationService>(
         () => _i999.LocalizationService(gh<_i329.LocalStorage>()));
+    gh.lazySingleton<_i677.TombstoneStore>(
+        () => _i677.TombstoneStore(gh<_i329.LocalStorage>()));
     gh.lazySingleton<_i439.UserLocalDataSourceImpl>(
         () => _i439.UserLocalDataSourceImpl(gh<_i329.LocalStorage>()));
     gh.factory<_i128.LocaleCubit>(
@@ -421,7 +424,7 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i428.PresenceRemoteDataSource>(),
               gh<_i221.AppLogger>(),
             ));
-    gh.singleton<_i777.WebSocketClient>(() => _i777.WebSocketClient(
+    gh.lazySingleton<_i777.WebSocketClient>(() => _i777.WebSocketClient(
           serverUrl: gh<String>(instanceName: 'socketUrl'),
           options: gh<Map<String, dynamic>>(),
           reconnectConfig: gh<_i459.RetryConfig>(),
@@ -442,12 +445,12 @@ extension GetItInjectableX on _i174.GetIt {
           isar: gh<_i338.Isar>(),
           logger: gh<_i221.AppLogger>(),
         ));
-    gh.singleton<_i706.RealtimeMessagingService>(
+    gh.lazySingleton<_i706.RealtimeMessagingService>(
         () => _i706.RealtimeMessagingService(
               gh<_i932.NetworkInfo>(),
               serverUrl: gh<String>(instanceName: 'socketUrl'),
             ));
-    gh.singleton<_i797.StatePersistenceService>(
+    gh.lazySingleton<_i797.StatePersistenceService>(
         () => _i797.StatePersistenceService(gh<_i460.SharedPreferences>()));
     gh.lazySingleton<_i225.EnhancedRealtimeConnectionService>(
         () => _i225.EnhancedRealtimeConnectionService(
@@ -518,19 +521,19 @@ extension GetItInjectableX on _i174.GetIt {
               repository: gh<_i395.IPushNotificationRepository>(),
               logger: gh<_i221.AppLogger>(),
             ));
-    gh.factory<_i939.UpdateNotificationSettingsUseCase>(() =>
-        _i939.UpdateNotificationSettingsUseCase(
-            gh<_i282.IChatInfoRepository>()));
     gh.factory<_i735.BlockUserUseCase>(
         () => _i735.BlockUserUseCase(gh<_i282.IChatInfoRepository>()));
-    gh.factory<_i34.ReportChatUseCase>(
-        () => _i34.ReportChatUseCase(gh<_i282.IChatInfoRepository>()));
-    gh.factory<_i776.UnblockUserUseCase>(
-        () => _i776.UnblockUserUseCase(gh<_i282.IChatInfoRepository>()));
     gh.factory<_i450.GetNotificationSettingsUseCase>(() =>
         _i450.GetNotificationSettingsUseCase(gh<_i282.IChatInfoRepository>()));
     gh.factory<_i436.GetSharedMediaUseCase>(
         () => _i436.GetSharedMediaUseCase(gh<_i282.IChatInfoRepository>()));
+    gh.factory<_i34.ReportChatUseCase>(
+        () => _i34.ReportChatUseCase(gh<_i282.IChatInfoRepository>()));
+    gh.factory<_i776.UnblockUserUseCase>(
+        () => _i776.UnblockUserUseCase(gh<_i282.IChatInfoRepository>()));
+    gh.factory<_i939.UpdateNotificationSettingsUseCase>(() =>
+        _i939.UpdateNotificationSettingsUseCase(
+            gh<_i282.IChatInfoRepository>()));
     gh.lazySingleton<_i357.RealtimeConnectionService>(
         () => _i357.RealtimeConnectionService(
               webSocketUrl: gh<String>(instanceName: 'graphQlWsUrl'),
@@ -539,7 +542,7 @@ extension GetItInjectableX on _i174.GetIt {
               connectivityAnalyzer: gh<_i286.ConnectivityAnalyzerService>(),
               connectivityService: gh<_i47.ConnectivityService>(),
             ));
-    gh.singleton<_i199.NetworkOptimizer>(() => _i199.NetworkOptimizer(
+    gh.lazySingleton<_i199.NetworkOptimizer>(() => _i199.NetworkOptimizer(
           connectivityService: gh<_i47.ConnectivityService>(),
           performanceMonitor: gh<_i610.IPerformanceMonitor>(),
         ));
@@ -549,7 +552,7 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i198.RequestPermissionUseCase>(() =>
         _i198.RequestPermissionUseCase(gh<_i473.PermissionsRepository>()));
-    gh.singleton<_i914.MessagingService>(() =>
+    gh.lazySingleton<_i914.MessagingService>(() =>
         _i914.MessagingService(webSocketClient: gh<_i777.WebSocketClient>()));
     gh.factory<_i915.ChatInfoBloc>(() => _i915.ChatInfoBloc(
           getSharedMediaUseCase: gh<_i436.GetSharedMediaUseCase>(),
@@ -568,7 +571,7 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i357.RealtimeConnectionService>(),
               gh<_i128.GraphQLClient>(),
             ));
-    gh.singleton<_i264.OfflineFirstRepositoryImpl>(
+    gh.lazySingleton<_i264.OfflineFirstRepositoryImpl>(
         () => _i264.OfflineFirstRepositoryImpl(
               gh<_i665.DatabaseService>(),
               gh<_i47.ConnectivityService>(),
@@ -578,7 +581,7 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i293.IChatObjectRemoteDataSource>(),
               gh<_i221.AppLogger>(),
             ));
-    gh.singleton<_i179.PermissionsService>(() => _i179.PermissionsService(
+    gh.lazySingleton<_i179.PermissionsService>(() => _i179.PermissionsService(
           gh<_i473.PermissionsRepository>(),
           gh<_i198.RequestPermissionUseCase>(),
           gh<_i451.IAnalyticsService>(),
@@ -598,16 +601,17 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i393.MediaCache>(),
               gh<_i221.AppLogger>(),
             ));
-    gh.singleton<_i301.EnhancedSocketManager>(() => _i301.EnhancedSocketManager(
-          gh<_i498.SocketManager>(),
-          gh<_i604.SocketAnalytics>(),
-          gh<_i727.SocketRateLimiter>(),
-        ));
+    gh.lazySingleton<_i301.EnhancedSocketManager>(
+        () => _i301.EnhancedSocketManager(
+              gh<_i498.SocketManager>(),
+              gh<_i604.SocketAnalytics>(),
+              gh<_i727.SocketRateLimiter>(),
+            ));
     gh.factory<_i921.MediaBloc>(() => _i921.MediaBloc(
           mediaRepository: gh<_i394.IMediaRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
-    gh.singleton<_i301.RealtimeService>(() => _i301.RealtimeService(
+    gh.lazySingleton<_i301.RealtimeService>(() => _i301.RealtimeService(
         socketManager: gh<_i301.EnhancedSocketManager>()));
     gh.lazySingleton<_i102.MessageRemoteDataSourceImpl>(
         () => _i102.MessageRemoteDataSourceImpl(
@@ -615,11 +619,15 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i706.RealtimeMessagingService>(),
               gh<_i976.SocketIOEventMapper>(),
             ));
+    gh.factory<_i409.AddReactionUseCase>(() => _i409.AddReactionUseCase(
+          repository: gh<_i572.IMessageRepository>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
     gh.factory<_i434.DeleteMessageUseCase>(() => _i434.DeleteMessageUseCase(
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
-    gh.factory<_i409.AddReactionUseCase>(() => _i409.AddReactionUseCase(
+    gh.factory<_i203.EditMessageUseCase>(() => _i203.EditMessageUseCase(
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
@@ -627,7 +635,7 @@ extension GetItInjectableX on _i174.GetIt {
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
-    gh.factory<_i203.EditMessageUseCase>(() => _i203.EditMessageUseCase(
+    gh.factory<_i848.MarkAsReadUseCase>(() => _i848.MarkAsReadUseCase(
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
@@ -636,10 +644,6 @@ extension GetItInjectableX on _i174.GetIt {
           logger: gh<_i221.AppLogger>(),
         ));
     gh.factory<_i67.SendMessageUseCase>(() => _i67.SendMessageUseCase(
-          repository: gh<_i572.IMessageRepository>(),
-          logger: gh<_i221.AppLogger>(),
-        ));
-    gh.factory<_i848.MarkAsReadUseCase>(() => _i848.MarkAsReadUseCase(
           repository: gh<_i572.IMessageRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
@@ -710,21 +714,7 @@ extension GetItInjectableX on _i174.GetIt {
           networkInfo: gh<_i932.INetworkInfo>(),
           logger: gh<_i221.AppLogger>(),
         ));
-    gh.factory<_i787.GetConversationsUseCase>(
-        () => _i787.GetConversationsUseCase(
-              repository: gh<_i81.IChatRepository>(),
-              logger: gh<_i221.AppLogger>(),
-            ));
     gh.factory<_i224.CreateGroupUseCase>(() => _i224.CreateGroupUseCase(
-          repository: gh<_i81.IChatRepository>(),
-          logger: gh<_i221.AppLogger>(),
-        ));
-    gh.factory<_i462.LeaveConversationUseCase>(
-        () => _i462.LeaveConversationUseCase(
-              repository: gh<_i81.IChatRepository>(),
-              logger: gh<_i221.AppLogger>(),
-            ));
-    gh.factory<_i277.UpdateGroupUseCase>(() => _i277.UpdateGroupUseCase(
           repository: gh<_i81.IChatRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
@@ -737,8 +727,8 @@ extension GetItInjectableX on _i174.GetIt {
           repository: gh<_i81.IChatRepository>(),
           logger: gh<_i221.AppLogger>(),
         ));
-    gh.factory<_i130.SearchConversationsUseCase>(
-        () => _i130.SearchConversationsUseCase(
+    gh.factory<_i787.GetConversationsUseCase>(
+        () => _i787.GetConversationsUseCase(
               repository: gh<_i81.IChatRepository>(),
               logger: gh<_i221.AppLogger>(),
             ));
@@ -752,7 +742,21 @@ extension GetItInjectableX on _i174.GetIt {
               repository: gh<_i81.IChatRepository>(),
               logger: gh<_i221.AppLogger>(),
             ));
-    gh.singleton<_i985.OfflineOperationProcessor>(
+    gh.factory<_i462.LeaveConversationUseCase>(
+        () => _i462.LeaveConversationUseCase(
+              repository: gh<_i81.IChatRepository>(),
+              logger: gh<_i221.AppLogger>(),
+            ));
+    gh.factory<_i130.SearchConversationsUseCase>(
+        () => _i130.SearchConversationsUseCase(
+              repository: gh<_i81.IChatRepository>(),
+              logger: gh<_i221.AppLogger>(),
+            ));
+    gh.factory<_i277.UpdateGroupUseCase>(() => _i277.UpdateGroupUseCase(
+          repository: gh<_i81.IChatRepository>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
+    gh.lazySingleton<_i985.OfflineOperationProcessor>(
         () => _i985.OfflineOperationProcessor(
               messageRepository: gh<_i572.IMessageRepository>(),
               chatRepository: gh<_i81.IChatRepository>(),
@@ -769,7 +773,7 @@ extension GetItInjectableX on _i174.GetIt {
               logger: gh<_i974.Logger>(),
               chatRepository: gh<_i81.IChatRepository>(),
             ));
-    gh.singleton<_i520.OfflineQueueService>(() => _i520.OfflineQueueService(
+    gh.lazySingleton<_i520.OfflineQueueService>(() => _i520.OfflineQueueService(
           isar: gh<_i338.Isar>(),
           networkInfo: gh<_i932.INetworkInfo>(),
           logger: gh<_i221.AppLogger>(),
