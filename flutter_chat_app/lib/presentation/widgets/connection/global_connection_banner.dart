@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
-import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/theme/app_theme_extensions.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/realtime_connection/realtime_connection_bloc.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/button_enums.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 
 /// Wraps content and renders a global top connection banner above all routes.
@@ -125,15 +122,7 @@ class _GlobalConnectionBannerState extends State<GlobalConnectionBanner> {
       return _BannerModel(
         message: message,
         kind: kind,
-        action: state.canRetry
-            ? AppButton.text(
-                text: context.l10n.retryOperation,
-                onPressed: () => context
-                    .read<RealtimeConnectionBloc>()
-                    .add(const ReconnectToRealtime(source: 'user_retry')),
-                size: ButtonSize.small,
-              )
-            : null,
+        canRetry: state.canRetry,
       );
     }
 
@@ -209,12 +198,24 @@ class _BannerModel {
   const _BannerModel({
     required this.message,
     required this.kind,
-    this.action,
+    this.canRetry = false,
   });
 
   final String message;
   final _BannerKind kind;
-  final Widget? action;
+  final bool canRetry;
+}
+
+class _BannerVisual {
+  const _BannerVisual({
+    required this.backgroundColor,
+    required this.textColor,
+    required this.accentColor,
+  });
+
+  final Color backgroundColor;
+  final Color textColor;
+  final Color accentColor;
 }
 
 class _ConnectionStatusBar extends StatelessWidget {
@@ -226,64 +227,107 @@ class _ConnectionStatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final baseColor = _baseColor(context, data.kind);
-    final textColor =
-        isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary;
-    final borderColor = baseColor.withValues(alpha: isDark ? 0.45 : 0.30);
-    final backgroundColor = baseColor.withValues(alpha: isDark ? 0.20 : 0.12);
+    final visual = _visual(context, data.kind);
+    final dividerColor = visual.accentColor.withValues(alpha: 0.34);
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        border: Border(
-          bottom: BorderSide(
-            color: borderColor,
+    return Material(
+      color: visual.backgroundColor,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: dividerColor,
+            ),
           ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimens.paddingMedium,
-          vertical: AppDimens.paddingSmall,
-        ),
-        child: Row(
-          children: [
-            Icon(
-              _icon(data.kind),
-              size: AppDimens.iconSizeSmall,
-              color: baseColor,
-            ),
-            const SizedBox(width: AppDimens.spaceSmall),
-            Expanded(
-              child: AppText(
-                data.message,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.bodySmallCustom(
-                  color: textColor,
-                  fontWeight: FontWeight.w600,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.paddingMedium,
+            vertical: AppDimens.paddingSmall,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _icon(data.kind),
+                size: AppDimens.iconSizeSmall,
+                color: visual.accentColor,
+              ),
+              const SizedBox(width: AppDimens.spaceSmall),
+              Expanded(
+                child: AppText(
+                  data.message,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySmallCustom(
+                    color: visual.textColor,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                  ),
                 ),
               ),
-            ),
-            if (data.action != null) ...[
-              const SizedBox(width: AppDimens.spaceSmall),
-              data.action!,
+              if (data.canRetry) ...[
+                const SizedBox(width: AppDimens.spaceSmall),
+                _RetryActionButton(
+                  label: context.l10n.retryOperation,
+                  foregroundColor: visual.accentColor,
+                  onPressed: () => context
+                      .read<RealtimeConnectionBloc>()
+                      .add(const ReconnectToRealtime(source: 'user_retry')),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Color _baseColor(BuildContext context, _BannerKind kind) {
-    final extensions = Theme.of(context).appExtensions;
+  _BannerVisual _visual(BuildContext context, _BannerKind kind) {
+    final theme = Theme.of(context);
+    final extensions = theme.appExtensions;
+    final isDark = theme.brightness == Brightness.dark;
+    final surface = theme.colorScheme.surface;
+    final textColor =
+        theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.96 : 0.92);
+
+    final (baseColor, tintAlpha) = switch (kind) {
+      _BannerKind.reconnecting => (
+          extensions.infoColor,
+          isDark ? 0.26 : 0.15,
+        ),
+      _BannerKind.offline => (
+          extensions.warningColor,
+          isDark ? 0.24 : 0.14,
+        ),
+      _BannerKind.server => (
+          theme.colorScheme.error,
+          isDark ? 0.22 : 0.12,
+        ),
+    };
+
+    final backgroundColor = Color.alphaBlend(
+      baseColor.withValues(alpha: tintAlpha),
+      surface,
+    );
+    final accentColor = baseColor.withValues(alpha: isDark ? 0.95 : 0.90);
+
     return switch (kind) {
-      _BannerKind.reconnecting => extensions.infoColor,
-      _BannerKind.offline => extensions.warningColor,
-      _BannerKind.server => Theme.of(context).colorScheme.error,
+      _BannerKind.reconnecting => _BannerVisual(
+          backgroundColor: backgroundColor,
+          textColor: textColor,
+          accentColor: accentColor,
+        ),
+      _BannerKind.offline => _BannerVisual(
+          backgroundColor: backgroundColor,
+          textColor: textColor,
+          accentColor: accentColor,
+        ),
+      _BannerKind.server => _BannerVisual(
+          backgroundColor: backgroundColor,
+          textColor: textColor,
+          accentColor: accentColor,
+        ),
     };
   }
 
@@ -293,5 +337,52 @@ class _ConnectionStatusBar extends StatelessWidget {
       _BannerKind.offline => Icons.wifi_off_rounded,
       _BannerKind.server => Icons.cloud_off_rounded,
     };
+  }
+}
+
+class _RetryActionButton extends StatelessWidget {
+  const _RetryActionButton({
+    required this.label,
+    required this.foregroundColor,
+    required this.onPressed,
+  });
+
+  final String label;
+  final Color foregroundColor;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
+        onTap: onPressed,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: AppDimens.buttonHeightSmall,
+            minWidth: AppDimens.buttonMinWidth,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.paddingSmall,
+              vertical: AppDimens.paddingXSmall,
+            ),
+            child: Center(
+              child: AppText(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodySmallCustom(
+                  color: foregroundColor,
+                  fontWeight: FontWeight.w700,
+                  height: 1.1,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
