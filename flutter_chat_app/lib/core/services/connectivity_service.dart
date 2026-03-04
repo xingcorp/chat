@@ -1,143 +1,245 @@
 import 'dart:async';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:logger/logger.dart';
 
-/// Service for monitoring and managing network connectivity
+/// Service for monitoring and managing network connectivity.
+///
+/// Uses 2 layers:
+/// - Transport connectivity (wifi/mobile/ethernet) via `connectivity_plus`
+/// - Real internet reachability via `internet_connection_checker`
 @lazySingleton
 class ConnectivityService {
-  /// Current connection types
+  /// Current transport connection types.
   List<ConnectivityResult> _connectionStatus = [];
-  
-  /// Stream that emits the current connections
-  final _connectionController = StreamController<List<ConnectivityResult>>.broadcast();
-  
-  /// Stream that emits whether network is connected
+
+  /// Stream that emits the current transport connections.
+  final _connectionController =
+      StreamController<List<ConnectivityResult>>.broadcast();
+
+  /// Stream that emits whether internet is reachable.
   final _hasConnectionController = StreamController<bool>.broadcast();
-  
-  /// Logger
+
+  /// Logger.
   final _logger = Logger();
-  
-  /// Connectivity Plus instance
+
+  /// Connectivity Plus instance.
   final Connectivity _connectivity;
-  
-  /// Subscription for connectivity changes
+
+  /// Internet reachability checker.
+  final InternetConnectionChecker _internetConnectionChecker;
+
+  /// Subscription for transport connectivity changes.
   StreamSubscription<List<ConnectivityResult>>? _subscription;
-  
-  /// Time of last check
-  DateTime _lastCheck = DateTime.now();
-  
-  /// Minimum interval between checks
+
+  /// Subscription for internet reachability changes.
+  StreamSubscription<InternetConnectionStatus>? _internetStatusSubscription;
+
+  /// Time of last transport check.
+  DateTime _lastCheck = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// Minimum interval between transport checks.
   static const Duration _minCheckInterval = Duration(seconds: 2);
-  
-  /// Constructor
-  ConnectivityService(this._connectivity) {
+
+  /// Whether internet is currently reachable.
+  bool _hasInternetAccess = false;
+
+  /// Monotonic token to drop stale async internet checks.
+  int _internetCheckToken = 0;
+
+  /// Constructor.
+  ConnectivityService(
+    this._connectivity, [
+    InternetConnectionChecker? internetConnectionChecker,
+  ]) : _internetConnectionChecker =
+            internetConnectionChecker ?? InternetConnectionChecker.instance {
     _initialize();
   }
-  
-  /// Stream for connectivity status changes
-  Stream<List<ConnectivityResult>> get onStatusChanged => 
+
+  /// Stream for transport connectivity changes.
+  Stream<List<ConnectivityResult>> get onStatusChanged =>
       _connectionController.stream;
-  
-  /// Stream for connectivity availability changes
-  Stream<bool> get onConnectivityChanged => 
-      _hasConnectionController.stream;
-  
-  /// Getter for current connectivity types
+
+  /// Stream for internet availability changes.
+  Stream<bool> get onConnectivityChanged => _hasConnectionController.stream;
+
+  /// Getter for current transport connectivity types.
   List<ConnectivityResult> get connectionStatus => _connectionStatus;
-  
-  /// Check if there is any connection
-  bool get hasConnection => 
-      _connectionStatus.isNotEmpty && _connectionStatus.any((result) => result != ConnectivityResult.none);
-  
-  /// Check if WiFi connection exists
+
+  /// Whether real internet is reachable.
+  bool get hasConnection => _hasInternetAccess;
+
+  /// Check if WiFi transport exists.
   bool get isWifi => _connectionStatus.contains(ConnectivityResult.wifi);
-  
-  /// Check if mobile data connection exists
+
+  /// Check if mobile transport exists.
   bool get isMobile => _connectionStatus.contains(ConnectivityResult.mobile);
-  
-  /// Check if ethernet connection exists
-  bool get isEthernet => _connectionStatus.contains(ConnectivityResult.ethernet);
-  
-  /// Initialize service and listen for events
+
+  /// Check if ethernet transport exists.
+  bool get isEthernet =>
+      _connectionStatus.contains(ConnectivityResult.ethernet);
+
+  /// Initialize service and listen for events.
   Future<void> _initialize() async {
     try {
-      // Get initial connection status
+      // Get initial transport status and initial internet reachability.
       _connectionStatus = await _connectivity.checkConnectivity();
+      await _refreshInternetStatus();
       _emitCurrentState();
-      
-      // Subscribe to connectivity changes
-      _subscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
-      
-      _logger.i('Connectivity Service initialized. Initial status: $_connectionStatus');
+
+      // Subscribe to transport changes.
+      _subscription = _connectivity.onConnectivityChanged.listen(
+        (results) => unawaited(_updateConnectionStatus(results)),
+      );
+
+      // Subscribe to internet reachability changes (captured portal, DNS, etc).
+      _internetStatusSubscription =
+          _internetConnectionChecker.onStatusChange.listen(
+        _handleInternetStatus,
+      );
+
+      _logger.i(
+        'Connectivity Service initialized. '
+        'transport=$_connectionStatus, internet=$_hasInternetAccess',
+      );
     } catch (e) {
       _logger.e('Error initializing Connectivity Service: $e');
     }
   }
-  
-  /// Update connection status when changes occur
-  void _updateConnectionStatus(List<ConnectivityResult> results) {
+
+  /// Handle transport connectivity changes.
+  Future<void> _updateConnectionStatus(
+    List<ConnectivityResult> results, {
+    bool force = false,
+  }) async {
     final now = DateTime.now();
-    if (now.difference(_lastCheck) < _minCheckInterval) {
-      // Avoid too many events in a short time
+    if (!force && now.difference(_lastCheck) < _minCheckInterval) {
+      // Avoid too many events in a short time.
       return;
     }
-    
+
     _lastCheck = now;
-    
-    // Only update if actually changed - compare regardless of order
-    if (!_areListsEqual(_connectionStatus, results)) {
-      _logger.d('Connection status changed: $_connectionStatus -> $results');
+
+    final statusChanged = !_areListsEqual(_connectionStatus, results);
+    if (statusChanged) {
+      _logger.d('Transport changed: $_connectionStatus -> $results');
       _connectionStatus = results;
-      _emitCurrentState();
     }
-  }
-  
-  /// Compare two lists regardless of order
-  bool _areListsEqual(List<ConnectivityResult> list1, List<ConnectivityResult> list2) {
-    if (list1.length != list2.length) return false;
-    
-    final sortedList1 = List<ConnectivityResult>.from(list1)..sort((a, b) => a.index.compareTo(b.index));
-    final sortedList2 = List<ConnectivityResult>.from(list2)..sort((a, b) => a.index.compareTo(b.index));
-    
-    for (int i = 0; i < sortedList1.length; i++) {
-      if (sortedList1[i] != sortedList2[i]) return false;
+
+    if (!statusChanged && !force) {
+      return;
     }
-    
-    return true;
+
+    await _refreshInternetStatus();
+    _emitCurrentState();
   }
-  
-  /// Emit current state
+
+  /// Handle internet reachability stream updates.
+  void _handleInternetStatus(InternetConnectionStatus status) {
+    final hasTransport = _hasNetworkTransport(_connectionStatus);
+    final hasInternet =
+        hasTransport && status == InternetConnectionStatus.connected;
+    if (_hasInternetAccess == hasInternet) {
+      return;
+    }
+
+    _hasInternetAccess = hasInternet;
+    if (!_hasConnectionController.isClosed) {
+      _hasConnectionController.add(_hasInternetAccess);
+    }
+    _logger.d(
+      'Internet reachability changed: $_hasInternetAccess '
+      '(transport=$_connectionStatus)',
+    );
+  }
+
+  /// Refresh real internet reachability.
+  Future<void> _refreshInternetStatus() async {
+    final hasTransport = _hasNetworkTransport(_connectionStatus);
+    if (!hasTransport) {
+      _hasInternetAccess = false;
+      return;
+    }
+
+    final checkToken = ++_internetCheckToken;
+    bool hasInternet = false;
+    try {
+      hasInternet = await _internetConnectionChecker.hasConnection;
+    } catch (e) {
+      _logger.w('Internet reachability check failed: $e');
+    }
+
+    // Drop stale async result.
+    if (checkToken != _internetCheckToken) {
+      return;
+    }
+    _hasInternetAccess = hasInternet;
+  }
+
+  /// Emit current connectivity state.
   void _emitCurrentState() {
-    _connectionController.add(_connectionStatus);
-    _hasConnectionController.add(hasConnection);
+    if (!_connectionController.isClosed) {
+      _connectionController.add(_connectionStatus);
+    }
+    if (!_hasConnectionController.isClosed) {
+      _hasConnectionController.add(_hasInternetAccess);
+    }
   }
-  
-  /// Manually check connectivity
+
+  /// Manually check transport connectivity and internet reachability.
   Future<List<ConnectivityResult>> checkConnectivity() async {
     try {
       final results = await _connectivity.checkConnectivity();
-      _updateConnectionStatus(results);
+      await _updateConnectionStatus(results, force: true);
       return results;
     } catch (e) {
       _logger.e('Error checking connectivity: $e');
+      _connectionStatus = [];
+      _hasInternetAccess = false;
+      _emitCurrentState();
       return [];
     }
   }
-  
-  /// Check if connected to any network
+
+  /// Check if real internet is reachable.
   Future<bool> isConnected() async {
-    final results = await checkConnectivity();
-    return results.isNotEmpty && results.any((result) => result != ConnectivityResult.none);
+    await checkConnectivity();
+    return _hasInternetAccess;
   }
-  
-  /// Release resources
+
+  /// Compare two lists regardless of order.
+  bool _areListsEqual(
+    List<ConnectivityResult> list1,
+    List<ConnectivityResult> list2,
+  ) {
+    if (list1.length != list2.length) return false;
+
+    final sortedList1 = List<ConnectivityResult>.from(list1)
+      ..sort((a, b) => a.index.compareTo(b.index));
+    final sortedList2 = List<ConnectivityResult>.from(list2)
+      ..sort((a, b) => a.index.compareTo(b.index));
+
+    for (int i = 0; i < sortedList1.length; i++) {
+      if (sortedList1[i] != sortedList2[i]) return false;
+    }
+
+    return true;
+  }
+
+  /// Check whether any non-none network transport exists.
+  bool _hasNetworkTransport(List<ConnectivityResult> results) {
+    return results.isNotEmpty &&
+        results.any((result) => result != ConnectivityResult.none);
+  }
+
+  /// Release resources.
   void dispose() {
     _subscription?.cancel();
+    _internetStatusSubscription?.cancel();
     _connectionController.close();
     _hasConnectionController.close();
     _logger.d('Connectivity Service disposed');
   }
-
 }
