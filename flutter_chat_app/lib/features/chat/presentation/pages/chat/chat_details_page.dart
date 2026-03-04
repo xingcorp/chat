@@ -125,7 +125,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   static const int _pageSize = 50;
   bool _isLoadingMore = false;
   DateTime? _lastLoadMoreAt;
-  String? _lastLoadMoreCursor;
+  String? _oldestMessageIdBeforeLoadMore;
+  Timer? _loadMoreSafetyTimer;
   String? _pendingScrollToMessageId;
   int? _pendingScrollCreatedAtMs;
   int _pendingScrollAttempts = 0;
@@ -506,16 +507,21 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     final state = _messageBloc.state;
     if (state is! MessagesLoaded) return;
     if (state.hasReachedMax) return;
-
-    final cursor = state.messages.isNotEmpty
-        ? state.messages.last.createdAt.millisecondsSinceEpoch.toString()
-        : null;
-    if (cursor != null && cursor == _lastLoadMoreCursor) return;
+    if (state.messages.isEmpty) return;
 
     _lastLoadMoreAt = now;
-    _lastLoadMoreCursor = cursor;
+    _oldestMessageIdBeforeLoadMore = state.messages.last.id;
 
     safeSetState(() => _isLoadingMore = true);
+
+    // Safety timer: force-reset if BLoC never responds (e.g. event dropped,
+    // network hung). 15s is generous enough for slow connections.
+    _loadMoreSafetyTimer?.cancel();
+    _loadMoreSafetyTimer = Timer(const Duration(seconds: 15), () {
+      if (!mounted || !_isLoadingMore) return;
+      safeSetState(() => _isLoadingMore = false);
+    });
+
     _messageBloc.add(const LoadMoreMessages(limit: _pageSize));
   }
 
@@ -543,6 +549,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
     _typingSubscription?.cancel();
     _typingDebounceTimer?.cancel();
+    _loadMoreSafetyTimer?.cancel();
     _recordingAmplitudeSubscription?.cancel();
     _recordingLimitReachedSubscription?.cancel();
     _recordingTimer?.cancel();
@@ -1837,32 +1844,46 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         ),
       );
 
-      final wasLoadingMore = _isLoadingMore;
-      safeSetState(() => _isLoadingMore = false);
+      // ── Load-more completion detection ──
+      // Only reset _isLoadingMore when load-more ACTUALLY completes, not on
+      // every MessagesLoaded emission (real-time messages, background fetch,
+      // reactions, etc. all emit MessagesLoaded too).
+      //
+      // Detection: load-more adds OLDER messages to the end of the list, so
+      // the oldest message ID changes. Also covers hasReachedMax and errors.
+      if (_isLoadingMore) {
+        final oldestId =
+            state.messages.isNotEmpty ? state.messages.last.id : null;
+        final loadMoreCompleted =
+            oldestId != _oldestMessageIdBeforeLoadMore ||
+            state.hasReachedMax ||
+            state.paginationError != null;
 
-      // Workaround: ScrollablePositionedList with reverse:true doesn't
-      // recalculate its internal scroll extent after itemCount increases.
-      // A jumpTo on the current visible index forces a full re-layout so
-      // the user can keep scrolling to the newly loaded older messages.
-      if (wasLoadingMore) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          try {
-            final positions =
-                _itemPositionsListener.itemPositions.value.toList();
-            if (positions.isEmpty) return;
+        if (loadMoreCompleted) {
+          _loadMoreSafetyTimer?.cancel();
+          safeSetState(() => _isLoadingMore = false);
 
-            // Find the topmost visible item (highest index in reverse list
-            // = oldest visible message).
-            positions.sort((a, b) => b.index.compareTo(a.index));
-            final anchor = positions.first;
+          // Workaround: ScrollablePositionedList with reverse:true doesn't
+          // recalculate its internal scroll extent after itemCount increases.
+          // A jumpTo on the current visible index forces a full re-layout so
+          // the user can keep scrolling to the newly loaded older messages.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            try {
+              final positions =
+                  _itemPositionsListener.itemPositions.value.toList();
+              if (positions.isEmpty) return;
 
-            _itemScrollController.jumpTo(
-              index: anchor.index,
-              alignment: anchor.itemLeadingEdge,
-            );
-          } catch (_) {}
-        });
+              positions.sort((a, b) => b.index.compareTo(a.index));
+              final anchor = positions.first;
+
+              _itemScrollController.jumpTo(
+                index: anchor.index,
+                alignment: anchor.itemLeadingEdge,
+              );
+            } catch (_) {}
+          });
+        }
       }
 
       final pendingId = _pendingScrollToMessageId;

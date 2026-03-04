@@ -255,14 +255,18 @@ class _BackgroundFetchCompleted extends MessageEvent {
   /// true = delta sync (chi tin nhan moi), false = full page fetch
   final bool isDelta;
 
+  /// Limit used for the fetch request (for hasReachedMax calculation)
+  final int fetchLimit;
+
   const _BackgroundFetchCompleted({
     required this.chatId,
     required this.serverMessages,
     required this.isDelta,
+    required this.fetchLimit,
   });
 
   @override
-  List<Object?> get props => [chatId, serverMessages, isDelta];
+  List<Object?> get props => [chatId, serverMessages, isDelta, fetchLimit];
 }
 
 /// Event khi background fetch thất bại (internal)

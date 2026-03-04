@@ -1077,7 +1077,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
               : 'N/A';
           // logger.i('[TwoPhase] Background fetch OK: count=${messages.length} newest=$newestTs oldest=$oldestTs isDelta=$isDelta');
           add(_BackgroundFetchCompleted(
-              chatId: chatId, serverMessages: messages, isDelta: isDelta));
+              chatId: chatId, serverMessages: messages, isDelta: isDelta, fetchLimit: limit));
         },
       );
     } catch (e) {
@@ -1136,7 +1136,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     // it just means there are few new messages.
     final hasReachedMax = event.isDelta
         ? currentState.hasReachedMax // preserve existing value for delta
-        : event.serverMessages.length < 20; // only set for full page fetch
+        : event.serverMessages.length < event.fetchLimit;
 
     emit(currentState.copyWith(
       messages: merged,
