@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_portal/flutter_portal.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_chat_app/core/app/chat_app_shell.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
@@ -46,7 +48,18 @@ class _AppViewState extends State<_AppView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_routerInitialized) {
-      _router = AppRouter.router(context);
+      // Returning user fast path: if SharedPreferences says authenticated,
+      // start directly at /chats (shows shimmer) instead of splash animation.
+      // AuthBloc still validates the token in background; if stale, router
+      // redirects to /login.
+      final prefs = GetIt.I<SharedPreferences>();
+      final isReturningUser = prefs.getBool('isAuthenticated') == true &&
+          prefs.getBool('isOnboarded') == true;
+
+      _router = AppRouter.router(
+        context,
+        initialLocation: isReturningUser ? '/chats' : '/splash',
+      );
       _routerInitialized = true;
     }
   }
