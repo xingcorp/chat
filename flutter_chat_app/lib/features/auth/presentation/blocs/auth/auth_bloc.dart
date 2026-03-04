@@ -172,21 +172,36 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
 
       final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
 
-      // Get current user from repository
+      // Get current user from local cache first
       final userResult = await _authRepository.getCurrentUser();
 
-      userResult.fold(
+      final user = userResult.isRight ? userResult.right : null;
+
+      if (user != null) {
+        emit(AuthAuthenticated(
+          user: user,
+          isOnboarded: isOnboarded,
+        ));
+        return;
+      }
+
+      // Local cache empty (e.g. after logout cleared data) — fetch from server
+      final refreshResult = await _authRepository.refreshUser(event.userId);
+
+      if (emit.isDone) return;
+
+      refreshResult.fold(
         (failure) {
           emit(AuthError(
             failure: failure,
-            operation: 'getCurrentUser',
+            operation: 'refreshUser',
             retryAction: () => add(event),
           ));
         },
-        (user) {
-          if (user != null) {
+        (refreshedUser) {
+          if (refreshedUser != null) {
             emit(AuthAuthenticated(
-              user: user,
+              user: refreshedUser,
               isOnboarded: isOnboarded,
             ));
           } else {
@@ -406,35 +421,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
 
       if (emit.isDone) return;
 
-      userResult.fold(
-        (failure) {
-          emit(AuthError(
-            failure: failure,
-            operation: 'sso_login',
-            retryAction: () => add(event),
-          ));
-        },
-        (user) {
-          if (user != null) {
-            _preferences.setString('userId', user.id);
-            final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
+      User? user;
+      if (userResult.isRight) {
+        user = userResult.right;
+      }
 
-            emit(AuthAuthenticated(
-              user: user,
-              isOnboarded: isOnboarded,
-            ));
-          } else {
-            emit(AuthError(
-              failure: UnexpectedFailure(
-                message: 'User not found after SSO login',
-                code: 'sso_user_not_found',
-              ),
-              operation: 'sso_login',
-              retryAction: () => add(event),
-            ));
+      // Local cache empty — fetch from server using userId from preferences
+      if (user == null) {
+        final userId = _preferences.getString('userId');
+        if (userId != null && userId.isNotEmpty) {
+          final refreshResult = await _authRepository.refreshUser(userId);
+          if (emit.isDone) return;
+          if (refreshResult.isRight) {
+            user = refreshResult.right;
           }
-        },
-      );
+        }
+      }
+
+      if (user != null) {
+        _preferences.setString('userId', user.id);
+        final isOnboarded = _preferences.getBool('isOnboarded') ?? false;
+
+        emit(AuthAuthenticated(
+          user: user,
+          isOnboarded: isOnboarded,
+        ));
+      } else {
+        emit(AuthError(
+          failure: UnexpectedFailure(
+            message: 'User not found after SSO login',
+            code: 'sso_user_not_found',
+          ),
+          operation: 'sso_login',
+          retryAction: () => add(event),
+        ));
+      }
     } catch (exception, stackTrace) {
       logger.e('SSO login exception', error: exception, stackTrace: stackTrace);
 

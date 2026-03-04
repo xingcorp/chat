@@ -1,12 +1,15 @@
 import 'package:flutter_chat_app/core/base/base_repository.dart';
+import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/error/repository_error_mixin.dart';
 import 'package:flutter_chat_app/core/exceptions/exceptions.dart';
+import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/features/auth/data/datasources/auth/auth_remote_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_local_datasource.dart';
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:flutter_chat_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 
 /// **ENTERPRISE AUTHENTICATION REPOSITORY IMPLEMENTATION**
@@ -148,12 +151,17 @@ class AuthRepositoryImpl extends BaseRepository
   ///
   /// **Performance**: <1s for logout process
   /// **Strategy**: Server logout → Local cleanup → Always succeed locally
+  ///
+  /// Clears all user-specific data to prevent data leakage between accounts:
+  /// - Current user profile from local storage
+  /// - Isar database (conversations, messages, drafts, offline operations)
+  /// - App cache (API cache, media cache, thumbnail cache, memory cache)
   @override
   Future<Either<Failure, bool>> logout() async {
     return executeOnlineFirst<bool>(
       remoteDataSource: () async {
         logger.i('Attempting server logout');
-        
+
         try {
           await _authRemoteDataSource.logout();
           logger.i('Server logout successful');
@@ -161,20 +169,52 @@ class AuthRepositoryImpl extends BaseRepository
           // Even if server logout fails, we'll still clear local session
           logger.w('Server logout failed, continuing with local cleanup: $e');
         }
-        
-        // Clear current user locally
-        await _userLocalDataSource.clearCurrentUser();
-        
+
+        // Clear all local user data
+        await _performLogoutCleanup();
+
         return true;
       },
       localDataSource: () async {
-        // Offline logout - just clear local session
+        // Offline logout - clear local session
         logger.i('Offline logout - clearing local session');
-        await _userLocalDataSource.clearCurrentUser();
+        await _performLogoutCleanup();
         return true;
       },
       operationName: 'logout',
     );
+  }
+
+  /// Clear all user-specific local data on logout.
+  ///
+  /// This prevents data from one user leaking into another user's session.
+  /// Order matters: clear user profile last so other operations can still
+  /// reference the current user if needed.
+  Future<void> _performLogoutCleanup() async {
+    final getIt = GetIt.instance;
+
+    // 1. Clear Isar database (conversations, messages, drafts, sync metadata)
+    try {
+      if (getIt.isRegistered<DatabaseService>()) {
+        await getIt<DatabaseService>().clearAllData();
+        logger.i('Database cleared on logout');
+      }
+    } catch (e) {
+      logger.w('Failed to clear database on logout: $e');
+    }
+
+    // 2. Clear all app caches (API, media, thumbnails, memory)
+    try {
+      if (getIt.isRegistered<AppCacheManager>()) {
+        await getIt<AppCacheManager>().clearAllCache();
+        logger.i('App cache cleared on logout');
+      }
+    } catch (e) {
+      logger.w('Failed to clear app cache on logout: $e');
+    }
+
+    // 3. Clear current user profile (last - after other cleanup)
+    await _userLocalDataSource.clearCurrentUser();
   }
 
   /// **Reset password with email - ONLINE-FIRST STRATEGY**

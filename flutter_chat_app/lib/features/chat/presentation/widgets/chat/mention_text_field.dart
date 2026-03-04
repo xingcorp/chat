@@ -272,6 +272,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
   }
 
   MapEntry<int, String>? _matchSlashCommandTrigger(String text, int cursorPos) {
+    if (cursorPos <= 0 || text.isEmpty) return null;
     final lineStart = text.lastIndexOf('\n', cursorPos - 1);
     final segmentStart = lineStart == -1 ? 0 : lineStart + 1;
     if (segmentStart >= cursorPos) {
