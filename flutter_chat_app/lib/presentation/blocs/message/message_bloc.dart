@@ -1464,9 +1464,10 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   ///
   /// **Performance**: <100ms cleanup
   /// **Strategy**: Clean subscription cancellation with room exit
-  Future<void> _cancelMessageSubscription(String chatId) async {
-    // logger.d('Cancelling real-time subscription for chat: $chatId');
-
+  Future<void> _cancelMessageSubscription(
+    String chatId, {
+    bool leaveRoom = true,
+  }) async {
     final subscription = _messageSubscriptions[chatId];
     if (subscription != null) {
       await subscription.cancel();
@@ -1474,16 +1475,18 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       logger.d('Subscription cancelled for chat: $chatId');
     }
 
-    // Leave chat room to stop receiving updates
-    final result = await _realtimeService.leaveChatRoom(chatId);
-    result.fold(
-      (failure) {
-        logger.w('Failed to leave chat room $chatId: ${failure.toString()}');
-      },
-      (_) {
-        logger.d('Successfully left chat room: $chatId');
-      },
-    );
+    if (leaveRoom) {
+      // Leave chat room to stop receiving updates
+      final result = await _realtimeService.leaveChatRoom(chatId);
+      result.fold(
+        (failure) {
+          logger.w('Failed to leave chat room $chatId: ${failure.toString()}');
+        },
+        (_) {
+          logger.d('Successfully left chat room: $chatId');
+        },
+      );
+    }
   }
 
   /// **Subscribe to real-time messages - ENTERPRISE REAL-TIME**
@@ -2495,9 +2498,11 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     _messageReactionSubscription?.cancel();
     _readReceiptSubscription?.cancel();
 
-    // Cancel existing Phase 1 subscriptions
+    // Cancel existing Phase 1 subscriptions without leaving rooms.
+    // The server should continue broadcasting to the client so ChatBloc
+    // (which listens to the global messageStream) can update the chat list.
     for (final chatId in _messageSubscriptions.keys) {
-      await _cancelMessageSubscription(chatId);
+      await _cancelMessageSubscription(chatId, leaveRoom: false);
     }
     _messageSubscriptions.clear();
     return super.close();

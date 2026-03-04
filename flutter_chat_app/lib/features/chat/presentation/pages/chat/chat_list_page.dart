@@ -55,7 +55,10 @@ class _ChatListPageState extends BaseState<ChatListPage> {
   @override
   void initState() {
     super.initState();
-    _chatBloc = getIt<ChatBloc>();
+    // Use the shared ChatBloc from ChatAppShell's BlocProvider.
+    // Do NOT create a new instance via getIt — that would create an isolated
+    // factory instance whose realtime subscriptions die on dispose().
+    _chatBloc = context.read<ChatBloc>();
     _presenceService = getIt<PresenceService>();
     _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
   }
@@ -64,7 +67,10 @@ class _ChatListPageState extends BaseState<ChatListPage> {
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
-    _chatBloc.close();
+    // Do NOT close _chatBloc — it's owned by BlocProvider in ChatAppShell.
+    // Closing it kills realtime subscriptions (messageStream, typingStream,
+    // readReceiptStream) permanently, causing chat list to stop updating
+    // after navigating back from chat details.
     super.dispose();
   }
 
