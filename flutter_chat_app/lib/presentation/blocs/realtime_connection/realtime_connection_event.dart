@@ -21,11 +21,15 @@ class ConnectToRealtime extends RealtimeConnectionEvent {
 /// **Disconnect from real-time server event**
 class DisconnectFromRealtime extends RealtimeConnectionEvent {
   final String? reason;
+  final RealtimeConnectionIssueType issueType;
 
-  const DisconnectFromRealtime({this.reason});
+  const DisconnectFromRealtime({
+    this.reason,
+    this.issueType = RealtimeConnectionIssueType.unknown,
+  });
 
   @override
-  List<Object?> get props => [reason];
+  List<Object?> get props => [reason, issueType];
 }
 
 /// **Reconnect to real-time server event**

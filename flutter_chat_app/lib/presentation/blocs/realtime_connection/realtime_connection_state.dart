@@ -8,6 +8,14 @@ abstract class RealtimeConnectionState extends Equatable {
   List<Object?> get props => [];
 }
 
+/// **Semantic issue type for disconnected state**
+enum RealtimeConnectionIssueType {
+  network,
+  server,
+  auth,
+  unknown,
+}
+
 /// **Initial state**
 class RealtimeConnectionInitial extends RealtimeConnectionState {
   const RealtimeConnectionInitial();
@@ -32,14 +40,16 @@ class RealtimeConnectionDisconnecting extends RealtimeConnectionState {
 class RealtimeConnectionDisconnected extends RealtimeConnectionState {
   final String reason;
   final bool canRetry;
+  final RealtimeConnectionIssueType issueType;
 
   const RealtimeConnectionDisconnected({
     required this.reason,
     required this.canRetry,
+    this.issueType = RealtimeConnectionIssueType.unknown,
   });
 
   @override
-  List<Object> get props => [reason, canRetry];
+  List<Object> get props => [reason, canRetry, issueType];
 }
 
 /// **Reconnecting state**
@@ -75,22 +85,32 @@ class RealtimeConnectionHealthCheckFailed extends RealtimeConnectionState {
 /// **Extension for convenient state creation**
 extension RealtimeConnectionStateX on RealtimeConnectionState {
   static const RealtimeConnectionInitial initial = RealtimeConnectionInitial();
-  static const RealtimeConnectionConnecting connecting = RealtimeConnectionConnecting();
-  static const RealtimeConnectionConnected connected = RealtimeConnectionConnected();
-  static const RealtimeConnectionDisconnecting disconnecting = RealtimeConnectionDisconnecting();
+  static const RealtimeConnectionConnecting connecting =
+      RealtimeConnectionConnecting();
+  static const RealtimeConnectionConnected connected =
+      RealtimeConnectionConnected();
+  static const RealtimeConnectionDisconnecting disconnecting =
+      RealtimeConnectionDisconnecting();
 
   static RealtimeConnectionDisconnected disconnected({
     required String reason,
     required bool canRetry,
+    RealtimeConnectionIssueType issueType = RealtimeConnectionIssueType.unknown,
   }) =>
-      RealtimeConnectionDisconnected(reason: reason, canRetry: canRetry);
+      RealtimeConnectionDisconnected(
+        reason: reason,
+        canRetry: canRetry,
+        issueType: issueType,
+      );
 
   static RealtimeConnectionReconnecting reconnecting({required int attempt}) =>
       RealtimeConnectionReconnecting(attempt: attempt);
 
-  static RealtimeConnectionHealthChecked healthChecked({required ConnectionHealth health}) =>
+  static RealtimeConnectionHealthChecked healthChecked(
+          {required ConnectionHealth health}) =>
       RealtimeConnectionHealthChecked(health: health);
 
-  static RealtimeConnectionHealthCheckFailed healthCheckFailed({required String reason}) =>
+  static RealtimeConnectionHealthCheckFailed healthCheckFailed(
+          {required String reason}) =>
       RealtimeConnectionHealthCheckFailed(reason: reason);
 }

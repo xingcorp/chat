@@ -15,7 +15,7 @@ part 'realtime_connection_state.dart';
 /// **ENTERPRISE REAL-TIME CONNECTION BLOC**
 ///
 /// Manages real-time connection state, automatic reconnection, and online/offline transitions
-/// with RealtimeService and ConnectivityService integration using Either<Failure, T> pattern.
+/// with RealtimeService and ConnectivityService integration using `Either<Failure, T>`.
 ///
 /// **Performance Targets:**
 /// - Connection establishment: <2s
@@ -25,14 +25,15 @@ part 'realtime_connection_state.dart';
 ///
 /// **Architecture**: Clean Architecture + BLoC pattern + Either error handling
 @injectable
-class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConnectionState> {
+class RealtimeConnectionBloc
+    extends Bloc<RealtimeConnectionEvent, RealtimeConnectionState> {
   final RealtimeService _realtimeService;
   final ConnectivityService _connectivityService;
   final Logger _logger = Logger();
 
   // Active subscriptions for cleanup
   final List<StreamSubscription> _subscriptions = [];
-  
+
   // Reconnection management
   Timer? _reconnectionTimer;
   int _reconnectionAttempts = 0;
@@ -43,16 +44,16 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
   RealtimeConnectionBloc({
     required RealtimeService realtimeService,
     required ConnectivityService connectivityService,
-  }) : _realtimeService = realtimeService,
-       _connectivityService = connectivityService,
-       super(RealtimeConnectionStateX.initial) {
+  })  : _realtimeService = realtimeService,
+        _connectivityService = connectivityService,
+        super(RealtimeConnectionStateX.initial) {
     on<ConnectToRealtime>(_onConnectToRealtime);
     on<DisconnectFromRealtime>(_onDisconnectFromRealtime);
     on<ReconnectToRealtime>(_onReconnectToRealtime);
     on<CheckConnectionHealth>(_onCheckConnectionHealth);
     on<RealtimeConnectionStateChanged>(_onConnectionStateChanged);
     on<NetworkConnectivityChanged>(_onNetworkConnectivityChanged);
-    
+
     _initializeConnectionMonitoring();
   }
 
@@ -64,7 +65,8 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
     ConnectToRealtime event,
     Emitter<RealtimeConnectionState> emit,
   ) async {
-    if (state is RealtimeConnectionConnecting || state is RealtimeConnectionConnected) {
+    if (state is RealtimeConnectionConnecting ||
+        state is RealtimeConnectionConnected) {
       _logger.d('Already connecting or connected');
       return;
     }
@@ -80,8 +82,9 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
         emit(RealtimeConnectionStateX.disconnected(
           reason: _getErrorMessage(failure),
           canRetry: true,
+          issueType: _mapIssueType(failure),
         ));
-        
+
         // Start automatic reconnection if enabled
         if (event.autoReconnect) {
           _startReconnectionTimer();
@@ -104,7 +107,7 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
     Emitter<RealtimeConnectionState> emit,
   ) async {
     _logger.i('Disconnecting from real-time server');
-    
+
     // Cancel reconnection timer
     _reconnectionTimer?.cancel();
     _reconnectionTimer = null;
@@ -121,6 +124,7 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
         emit(RealtimeConnectionStateX.disconnected(
           reason: event.reason ?? 'Disconnected by user',
           canRetry: false,
+          issueType: event.issueType,
         ));
       },
       (success) {
@@ -128,6 +132,7 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
         emit(RealtimeConnectionStateX.disconnected(
           reason: event.reason ?? 'Disconnected by user',
           canRetry: false,
+          issueType: event.issueType,
         ));
       },
     );
@@ -144,14 +149,16 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
     if (_reconnectionAttempts >= _maxReconnectionAttempts) {
       _logger.w('Max reconnection attempts reached');
       emit(RealtimeConnectionStateX.disconnected(
-        reason: 'Không thể kết nối lại sau ${_maxReconnectionAttempts} lần thử',
+        reason: 'Không thể kết nối lại sau $_maxReconnectionAttempts lần thử',
         canRetry: false,
+        issueType: RealtimeConnectionIssueType.server,
       ));
       return;
     }
 
     _reconnectionAttempts++;
-    _logger.i('Reconnection attempt $_reconnectionAttempts/$_maxReconnectionAttempts');
+    _logger.i(
+        'Reconnection attempt $_reconnectionAttempts/$_maxReconnectionAttempts');
 
     emit(RealtimeConnectionStateX.reconnecting(attempt: _reconnectionAttempts));
 
@@ -159,6 +166,11 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
     final isConnected = await _connectivityService.isConnected();
     if (!isConnected) {
       _logger.w('No network connectivity, delaying reconnection');
+      emit(RealtimeConnectionStateX.disconnected(
+        reason: 'No internet connection',
+        canRetry: true,
+        issueType: RealtimeConnectionIssueType.network,
+      ));
       _startReconnectionTimer();
       return;
     }
@@ -167,23 +179,29 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
 
     result.fold(
       (failure) {
-        _logger.e('Reconnection attempt $_reconnectionAttempts failed: ${failure.message}');
-        
+        _logger.e(
+            'Reconnection attempt $_reconnectionAttempts failed: ${failure.message}');
+
         if (_reconnectionAttempts < _maxReconnectionAttempts) {
           emit(RealtimeConnectionStateX.disconnected(
-            reason: 'Đang thử kết nối lại... (${_reconnectionAttempts}/$_maxReconnectionAttempts)',
+            reason:
+                'Đang thử kết nối lại... ($_reconnectionAttempts/$_maxReconnectionAttempts)',
             canRetry: true,
+            issueType: _mapIssueType(failure),
           ));
           _startReconnectionTimer();
         } else {
           emit(RealtimeConnectionStateX.disconnected(
-            reason: 'Không thể kết nối lại sau ${_maxReconnectionAttempts} lần thử',
+            reason:
+                'Không thể kết nối lại sau $_maxReconnectionAttempts lần thử',
             canRetry: false,
+            issueType: _mapIssueType(failure),
           ));
         }
       },
       (success) {
-        _logger.i('Reconnection successful after $_reconnectionAttempts attempts');
+        _logger
+            .i('Reconnection successful after $_reconnectionAttempts attempts');
         _reconnectionAttempts = 0;
         emit(RealtimeConnectionStateX.connected);
       },
@@ -210,7 +228,8 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
         ));
       },
       (health) {
-        _logger.t('Connection health: latency=${health.latency}ms, connected=${health.isConnected}');
+        _logger.t(
+            'Connection health: latency=${health.latency}ms, connected=${health.isConnected}');
         emit(RealtimeConnectionStateX.healthChecked(health: health));
       },
     );
@@ -233,13 +252,15 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
         emit(RealtimeConnectionStateX.connecting);
         break;
       case SocketConnectionState.reconnecting:
-        emit(RealtimeConnectionStateX.reconnecting(attempt: _reconnectionAttempts));
+        emit(RealtimeConnectionStateX.reconnecting(
+            attempt: _reconnectionAttempts));
         break;
       case SocketConnectionState.disconnected:
       case SocketConnectionState.disconnectedByServer:
         emit(RealtimeConnectionStateX.disconnected(
           reason: 'Connection lost',
           canRetry: true,
+          issueType: RealtimeConnectionIssueType.server,
         ));
         _startReconnectionTimer();
         break;
@@ -247,12 +268,14 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
         emit(RealtimeConnectionStateX.disconnected(
           reason: 'Disconnected by user',
           canRetry: false,
+          issueType: RealtimeConnectionIssueType.unknown,
         ));
         break;
       case SocketConnectionState.error:
         emit(RealtimeConnectionStateX.disconnected(
           reason: 'Connection error',
           canRetry: true,
+          issueType: RealtimeConnectionIssueType.server,
         ));
         _startReconnectionTimer();
         break;
@@ -279,10 +302,12 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
       }
     } else {
       // Network lost
-      if (state is RealtimeConnectionConnected || state is RealtimeConnectionConnecting) {
+      if (state is RealtimeConnectionConnected ||
+          state is RealtimeConnectionConnecting) {
         emit(RealtimeConnectionStateX.disconnected(
           reason: 'Mất kết nối mạng',
           canRetry: true,
+          issueType: RealtimeConnectionIssueType.network,
         ));
       }
     }
@@ -322,14 +347,14 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
   /// **Start reconnection timer with exponential backoff**
   void _startReconnectionTimer() {
     _reconnectionTimer?.cancel();
-    
+
     final delay = Duration(
-      milliseconds: _baseReconnectionDelay.inMilliseconds * 
+      milliseconds: _baseReconnectionDelay.inMilliseconds *
           (1 << (_reconnectionAttempts - 1).clamp(0, 4)), // Max 32s delay
     );
-    
+
     _logger.d('Starting reconnection timer: ${delay.inSeconds}s');
-    
+
     _reconnectionTimer = Timer(delay, () {
       add(const ReconnectToRealtime());
     });
@@ -346,6 +371,16 @@ class RealtimeConnectionBloc extends Bloc<RealtimeConnectionEvent, RealtimeConne
           ? failure.message
           : 'Lỗi kết nối không xác định.';
     }
+  }
+
+  RealtimeConnectionIssueType _mapIssueType(Failure failure) {
+    if (failure is ConnectionFailure) {
+      return RealtimeConnectionIssueType.network;
+    }
+    if (failure is ServerFailure) {
+      return RealtimeConnectionIssueType.server;
+    }
+    return RealtimeConnectionIssueType.unknown;
   }
 
   @override

@@ -17,19 +17,19 @@ Date: 2026-03-04
 
 - [x] T2.1 Move slash command execution decision to bloc/use-case flow.
 - [x] T2.2 Keep parser pure and deterministic; UI only for suggestions/feedback rendering.
-- [ ] T2.3 Add tests for command parse + execution mapping.
+- [x] T2.3 Add tests for command parse + execution mapping.
 
 ## Epic 3: Keyboard Shortcut Refactor (5.2)
 
 - [x] T3.1 Keep shortcut capture in UI, dispatch stateful actions to bloc.
 - [x] T3.2 Ensure no business side-effects handled directly in page shortcuts.
-- [ ] T3.3 Add regression checks for desktop/web shortcuts.
+- [x] T3.3 Add regression checks for desktop/web shortcuts.
 
 ## Verification
 
 - [x] V1 Run `dart run build_runner build --delete-conflicting-outputs`.
-- [ ] V2 Run `dart analyze` for modified scope.
-- [ ] V3 Run impacted tests (draft + chat presentation where available).
+- [x] V2 Run `dart analyze` for modified scope.
+- [x] V3 Run impacted tests (draft + chat presentation where available).
 
 ## Progress Log
 
@@ -38,3 +38,5 @@ Date: 2026-03-04
 - 2026-03-04: Wired ChatDetailsPage, ChatListPage, ChatListPanel to bloc-based draft state.
 - 2026-03-04: Added ChatComposerBloc and moved slash-command send + dismiss shortcut decision logic out of page.
 - 2026-03-04: Ran build_runner successfully. Analyzer on modified scope still has pre-existing warnings in core files.
+- 2026-03-04: Added unit tests for slash parser, composer execution mapping, shortcut dismiss mapping, and draft lifecycle reconciliation.
+- 2026-03-04: Ran targeted `flutter test` for new test suites (all passed) and targeted `dart analyze` for tests + modified scope.

@@ -157,6 +157,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   // ══════════════════════════════════════════
   bool _showScrollToBottom = false;
   int _newMessageCount = 0;
+  bool _hasTrackedLatestMessage = false;
+  String? _latestMessageId;
 
   // ══════════════════════════════════════════
   // Highlight state (scroll-to-reply)
@@ -865,6 +867,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   }
 
   void _scrollToBottom() {
+    if (!_itemScrollController.isAttached) return;
     _itemScrollController.scrollTo(
       index: 0,
       duration: const Duration(milliseconds: 300),
@@ -873,6 +876,34 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       _showScrollToBottom = false;
       _newMessageCount = 0;
     });
+  }
+
+  bool _maybeAutoScrollToBottomForOwnMessage(MessagesLoaded state) {
+    final latestMessage =
+        state.messages.isNotEmpty ? state.messages.first : null;
+    final hadSnapshot = _hasTrackedLatestMessage;
+    final previousLatestMessageId = _latestMessageId;
+
+    _hasTrackedLatestMessage = true;
+    _latestMessageId = latestMessage?.id;
+
+    if (!hadSnapshot || latestMessage == null) return false;
+    if (latestMessage.id == previousLatestMessageId) return false;
+    if (latestMessage.sender.id != _currentUserId) return false;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_itemScrollController.isAttached) return;
+
+      // Keep behavior aligned with Stream's MessageListView:
+      // own new message -> snap to bottom index in reverse list.
+      _itemScrollController.jumpTo(index: 0);
+      safeSetState(() {
+        _showScrollToBottom = false;
+        _newMessageCount = 0;
+      });
+    });
+
+    return true;
   }
 
   Future<void> _onVoiceRecordingLongPressStart(
@@ -1781,6 +1812,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   void _handleBlocStateChanges(BuildContext context, MessageState state) {
     if (state is MessagesLoaded) {
+      final didAutoScrollForOwnMessage =
+          _maybeAutoScrollToBottomForOwnMessage(state);
+
       // Mark chat as read when first loaded with unread messages (Req 5.1)
       if (!_hasMarkedAsReadOnOpen && state.messages.isNotEmpty) {
         _hasMarkedAsReadOnOpen = true;
@@ -1886,7 +1920,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           );
         }
       }
-      if (_showScrollToBottom) safeSetState(() => _newMessageCount++);
+      if (_showScrollToBottom && !didAutoScrollForOwnMessage) {
+        safeSetState(() => _newMessageCount++);
+      }
     } else if (state is MessagesError) {
       safeSetState(() => _isLoadingMore = false);
       AppSnackBar.show(

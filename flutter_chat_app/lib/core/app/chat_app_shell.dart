@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:get_it/get_it.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:flutter_chat_app/chat_module.dart';
 import 'package:flutter_chat_app/core/app/package_mode_auth_repository.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
@@ -11,9 +7,13 @@ import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/presentation/blocs/app/app_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
-import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
 import 'package:flutter_chat_app/presentation/blocs/permissions/permissions_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/realtime_connection/realtime_connection_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Defines the operation mode of the chat module.
 enum ChatShellMode {
@@ -22,7 +22,7 @@ enum ChatShellMode {
   standalone,
 
   /// Package mode - embedded in host app.
-  /// Uses [PackageModeAuthBloc] with user info from [ChatConfig].
+  /// Uses package-mode auth flow with user info from ChatConfig.
   package,
 }
 
@@ -75,8 +75,8 @@ class ChatAppShell extends StatelessWidget {
   /// Creates a ChatAppShell for package mode.
   ///
   /// In package mode:
-  /// - [AuthBloc] is replaced with [PackageModeAuthBloc]
-  /// - User info comes from [ChatModule.config]
+  /// - AuthBloc is replaced with package-mode authenticated AuthBloc
+  /// - User info comes from ChatModule.config
   /// - Only essential blocs are provided (AuthBloc, ChatBloc)
   /// - Host app provides ThemeCubit, LocaleCubit, etc.
   const ChatAppShell.package({
@@ -119,6 +119,10 @@ class ChatAppShell extends StatelessWidget {
         BlocProvider<PermissionsBloc>(
           create: (_) => getIt<PermissionsBloc>(),
         ),
+        if (getIt.isRegistered<RealtimeConnectionBloc>())
+          BlocProvider<RealtimeConnectionBloc>(
+            create: (_) => getIt<RealtimeConnectionBloc>(),
+          ),
         if (getIt.isRegistered<ChatBloc>())
           BlocProvider<ChatBloc>(
             create: (_) => getIt<ChatBloc>(),
@@ -176,6 +180,11 @@ class ChatAppShell extends StatelessWidget {
         if (getIt.isRegistered<ChatBloc>())
           BlocProvider<ChatBloc>(
             create: (_) => getIt<ChatBloc>(),
+          ),
+        // RealtimeConnectionBloc from GetIt (registered in ChatModuleInjection)
+        if (getIt.isRegistered<RealtimeConnectionBloc>())
+          BlocProvider<RealtimeConnectionBloc>(
+            create: (_) => getIt<RealtimeConnectionBloc>(),
           ),
       ];
     }

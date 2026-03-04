@@ -5,16 +5,17 @@ import 'package:flutter_chat_app/chat_config.dart';
 import 'package:flutter_chat_app/core/app/chat_app_shell.dart';
 import 'package:flutter_chat_app/core/cache/background_sync_helper.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
-import 'package:flutter_chat_app/core/theme/app_theme.dart';
-import 'package:flutter_chat_app/core/theme/app_theme_extensions.dart';
 import 'package:flutter_chat_app/core/di/chat_module_injection.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
 import 'package:flutter_chat_app/core/services/chat_fcm_handler.dart';
 import 'package:flutter_chat_app/core/services/chat_module_event_bus.dart';
-import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
+import 'package:flutter_chat_app/core/theme/app_theme.dart';
+import 'package:flutter_chat_app/core/theme/app_theme_extensions.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
+import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/create_group_page.dart';
 import 'package:flutter_chat_app/features/contacts/presentation/pages/contacts_page.dart';
+import 'package:flutter_chat_app/presentation/widgets/connection/global_connection_banner.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_portal/flutter_portal.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -162,10 +163,12 @@ class ChatModule {
   /// Returns a [StreamSubscription] that the caller should cancel
   /// when no longer needed.
   static StreamSubscription<ChatMessage> onNewMessage(
-      void Function(ChatMessage message) callback,
-      ) {
+    void Function(ChatMessage message) callback,
+  ) {
     _ensureInitialized();
-    return GetIt.instance<ChatModuleEventBus>().newMessageStream.listen(callback);
+    return GetIt.instance<ChatModuleEventBus>()
+        .newMessageStream
+        .listen(callback);
   }
 
   /// Forward an FCM data payload into the chat module for processing.
@@ -312,7 +315,7 @@ class ChatModule {
     if (!_initialized) {
       throw StateError(
         'ChatModule has not been initialized. '
-            'Call ChatModule.initialize(ChatConfig(...)) first.',
+        'Call ChatModule.initialize(ChatConfig(...)) first.',
       );
     }
   }
@@ -350,20 +353,22 @@ class _ChatPackageWrapper extends StatelessWidget {
             final themeData = configTheme ?? AppTheme.lightTheme;
             // Ensure AppThemeExtensions is always available
             final effectiveTheme =
-            themeData.extension<AppThemeExtensions>() != null
-                ? themeData
-                : themeData.copyWith(
-              extensions: [
-                ...themeData.extensions.values,
-                AppThemeExtensions.light,
-              ],
-            );
+                themeData.extension<AppThemeExtensions>() != null
+                    ? themeData
+                    : themeData.copyWith(
+                        extensions: [
+                          ...themeData.extensions.values,
+                          AppThemeExtensions.light,
+                        ],
+                      );
 
             return Theme(
               data: effectiveTheme,
               child: Portal(
                 child: ChatAppShell.package(
-                  child: child,
+                  child: GlobalConnectionBannerScope(
+                    child: child,
+                  ),
                 ),
               ),
             );

@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_portal/flutter_portal.dart';
-import 'package:go_router/go_router.dart';
-
+import 'package:flutter_chat_app/config/route/app_router.dart';
 import 'package:flutter_chat_app/core/app/chat_app_shell.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
-import 'package:flutter_chat_app/core/localization/l10n_helper.dart' as l10n_helper;
+import 'package:flutter_chat_app/core/localization/l10n_helper.dart'
+    as l10n_helper;
 import 'package:flutter_chat_app/core/theme/app_theme.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter_chat_app/config/route/app_router.dart';
 import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
+import 'package:flutter_chat_app/presentation/widgets/connection/global_connection_banner.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_portal/flutter_portal.dart';
+import 'package:go_router/go_router.dart';
 
 /// Root widget that wires up BLoC providers for the entire application.
 ///
@@ -61,7 +62,8 @@ class _AppViewState extends State<_AppView> {
       builder: (context, themeState) {
         return BlocBuilder<LocaleCubit, LocaleState>(
           builder: (context, localeState) {
-            l10n_helper.L10nHelper.initialize(localeState.locale ?? const Locale('en'));
+            l10n_helper.L10nHelper.initialize(
+                localeState.locale ?? const Locale('en'));
 
             return Portal(
               child: MaterialApp.router(
@@ -79,10 +81,15 @@ class _AppViewState extends State<_AppView> {
                   GlobalCupertinoLocalizations.delegate,
                 ],
                 builder: (context, child) {
-                  return Directionality(
-                    textDirection:
-                        localeState.isRtl ? TextDirection.rtl : TextDirection.ltr,
-                    child: child!,
+                  final appContent = Directionality(
+                    textDirection: localeState.isRtl
+                        ? TextDirection.rtl
+                        : TextDirection.ltr,
+                    child: child ?? const SizedBox.shrink(),
+                  );
+
+                  return GlobalConnectionBannerScope(
+                    child: appContent,
                   );
                 },
                 routerConfig: _router,
