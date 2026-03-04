@@ -32,7 +32,7 @@ enum MessageDeliveryStatus {
 }
 
 /// Class theo dõi hiệu suất gửi và nhận tin nhắn
-@singleton
+@lazySingleton
 class MessageDeliveryTracker {
   /// Logger
   final _logger = Logger();

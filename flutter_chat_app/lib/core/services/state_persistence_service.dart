@@ -5,7 +5,7 @@ import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Dịch vụ lưu trữ trạng thái ứng dụng
-@singleton
+@lazySingleton
 class StatePersistenceService {
   /// Logger
   final _logger = Logger();

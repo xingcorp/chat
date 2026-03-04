@@ -100,7 +100,7 @@ enum MediaEventType { fileStored, fileDeleted }
 /// **ENTERPRISE INTEGRATION SERVICE**
 /// 
 /// Orchestrates all enterprise components for messaging app functionality
-@singleton
+@lazySingleton
 class IntegrationService {
   // Core services
   final DatabaseService _databaseService;

@@ -83,20 +83,26 @@ Future<void> registerCoreModule(GetIt getIt) async {
     );
   }
 
-  // 2.1 ApiCacheManager - API cache layer
-  if (!getIt.isRegistered<ApiCacheManager>()) {
-    await ApiCacheManager.init(
-      logger: getIt<AppLogger>(),
-      prefs: getIt<SharedPreferences>(),
-    );
-    getIt.registerSingleton<ApiCacheManager>(ApiCacheManager.instance);
-  }
+  // 2.1 ApiCacheManager + AppCacheManager + DatabaseService
+  // Run heavy async inits in parallel to reduce total blocking time.
+  final apiCacheFuture = (!getIt.isRegistered<ApiCacheManager>())
+      ? ApiCacheManager.init(
+          logger: getIt<AppLogger>(),
+          prefs: getIt<SharedPreferences>(),
+        )
+      : Future<void>.value();
 
-  if (!getIt.isRegistered<AppCacheManager>()) {
-    final appCacheManager = AppCacheManager();
-    await appCacheManager.initialize();
-    getIt.registerSingleton<AppCacheManager>(appCacheManager);
-  }
+  final appCacheFuture = (!getIt.isRegistered<AppCacheManager>())
+      ? () async {
+          final m = AppCacheManager();
+          await m.initialize();
+          return m;
+        }()
+      : Future<AppCacheManager?>.value(null);
+
+  final dbFuture = (!getIt.isRegistered<DatabaseService>())
+      ? DatabaseService.create()
+      : Future<DatabaseService?>.value(null);
 
   // GraphQLClientWrapperImpl + GraphQLClientWrapper — must be registered before
   // getIt.init() because auto-generated eager singletons (e.g. OfflineOperationProcessor)
@@ -217,12 +223,25 @@ Future<void> registerCoreModule(GetIt getIt) async {
     getIt.registerLazySingleton<INetworkInfo>(() => getIt<NetworkInfo>());
   }
 
-  // 6. DatabaseService - Async initialization with @preResolve
-  if (!getIt.isRegistered<DatabaseService>()) {
-    final databaseService = await DatabaseService.create();
-    getIt.registerSingleton<DatabaseService>(databaseService);
+  // 6. DatabaseService + heavy caches — await parallel futures started above
+  final results = await Future.wait([apiCacheFuture, appCacheFuture, dbFuture]);
+
+  if (!getIt.isRegistered<ApiCacheManager>()) {
+    getIt.registerSingleton<ApiCacheManager>(ApiCacheManager.instance);
+  }
+
+  final appCacheResult = results[1] as AppCacheManager?;
+  if (appCacheResult != null && !getIt.isRegistered<AppCacheManager>()) {
+    getIt.registerSingleton<AppCacheManager>(appCacheResult);
+  }
+
+  final dbResult = results[2] as DatabaseService?;
+  if (dbResult != null) {
+    if (!getIt.isRegistered<DatabaseService>()) {
+      getIt.registerSingleton<DatabaseService>(dbResult);
+    }
     if (!getIt.isRegistered<Isar>()) {
-      getIt.registerSingleton<Isar>(databaseService.isar);
+      getIt.registerSingleton<Isar>(dbResult.isar);
     }
   }
 

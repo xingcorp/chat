@@ -22,14 +22,18 @@ class AppRouter {
 
   static final _refreshListenable = _AuthBlocListenable();
 
-  /// Router instance
-  static GoRouter router(BuildContext context) {
+  /// Router instance.
+  ///
+  /// [initialLocation] defaults to `/splash`. Pass `/chats` for returning
+  /// users whose cached auth flag is set, so they skip the splash animation
+  /// and see the chat list (with shimmer) immediately.
+  static GoRouter router(BuildContext context, {String initialLocation = '/splash'}) {
     final authBloc = BlocProvider.of<AuthBloc>(context);
     _refreshListenable.attach(authBloc);
-    
+
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: '/splash',
+      initialLocation: initialLocation,
       debugLogDiagnostics: true,
       refreshListenable: _refreshListenable,
       redirect: (context, state) {
@@ -59,8 +63,10 @@ class AppRouter {
           return null;
         }
 
-        // While resolving auth state, force to splash to avoid redirect flicker
-        if (isAuthResolving) return '/splash';
+        // While resolving auth state, stay on current page. Returning users
+        // see /chats with shimmer; first-launch users see /splash animation.
+        // Once auth resolves, the refreshListenable triggers a re-evaluation.
+        if (isAuthResolving) return null;
 
         // Normalize /home to /chats (legacy navigation paths)
         if (isHomeAlias) return '/chats';

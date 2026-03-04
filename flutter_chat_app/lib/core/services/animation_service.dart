@@ -58,7 +58,7 @@ enum AnimationLevel {
 }
 
 /// Service quản lý animation trong ứng dụng
-@singleton
+@lazySingleton
 class AnimationService {
   /// Service đánh giá khả năng thiết bị
   final DeviceCapabilityService? _deviceCapabilityService;

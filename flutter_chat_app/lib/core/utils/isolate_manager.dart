@@ -141,7 +141,7 @@ class _PendingTask {
 }
 
 /// A service for offloading heavy processing tasks to a background isolate
-@singleton
+@lazySingleton
 class IsolateManager {
   static const String _isolateName = 'processing_isolate';
   

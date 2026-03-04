@@ -150,7 +150,7 @@ class ApiRequestStats {
 /// 
 /// Uses dependency injection for logger and analytics.
 /// Injectable manages the singleton lifecycle automatically.
-@singleton
+@lazySingleton
 class ApiRequestTracker {
   // Dependencies (injected via constructor)
   final AppLogger _logger;

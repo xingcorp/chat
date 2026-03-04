@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/services/chat_draft_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
@@ -49,6 +50,10 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
     super.initState();
     _chatBloc = getIt<ChatBloc>();
     _chatDraftService = getIt<ChatDraftService>();
+    // Use the shared ChatBloc from ChatAppShell's BlocProvider.
+    // Do NOT create a new instance via getIt — that would create an isolated
+    // factory instance whose realtime subscriptions die on dispose().
+    _chatBloc = context.read<ChatBloc>();
     _presenceService = getIt<PresenceService>();
     _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
   }
@@ -57,7 +62,10 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
-    _chatBloc.close();
+    // Do NOT close _chatBloc — it's owned by BlocProvider in ChatAppShell.
+    // Closing it kills realtime subscriptions (messageStream, typingStream,
+    // readReceiptStream) permanently, causing chat list to stop updating
+    // after navigating back from chat details.
     super.dispose();
   }
 

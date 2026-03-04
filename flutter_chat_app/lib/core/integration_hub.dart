@@ -24,7 +24,7 @@ import 'package:flutter_chat_app/core/services/integration_service.dart';
 /// 
 /// Orchestrates all enterprise components for messaging app
 /// Uses Injectable DI for proper dependency management
-@singleton
+@lazySingleton
 class IntegrationHub {
   final DatabaseService _database;
   

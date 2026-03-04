@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// Splash page
 class SplashPage extends StatefulWidget {
@@ -21,30 +20,26 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 1500),
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
       ),
     );
-    
+
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.0, 0.7, curve: Curves.easeIn),
       ),
     );
-    
+
     _controller.forward();
-    
-    // Navigate to next screen after delay
-    Future.delayed(const Duration(seconds: 3), () {
-      // This would typically be handled by a BLoC or other state management
-      // For now, we'll just simulate navigation to be handled by router
-    });
+    // Navigation is handled by GoRouter's redirect logic.
+    // Once AuthBloc resolves, the router redirects to /chats or /login.
   }
 
   @override

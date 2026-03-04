@@ -46,6 +46,10 @@ class _AppViewState extends State<_AppView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_routerInitialized) {
+      // Always start at /splash for branded experience.
+      // Splash shows a short animation (~1.5s) while AuthBloc validates
+      // the token in background. Once auth resolves, router redirects to
+      // /chats (if authenticated) or /login.
       _router = AppRouter.router(context);
       _routerInitialized = true;
     }

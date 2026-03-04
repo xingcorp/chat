@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/services/sso_auth_service.dart';
+import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:flutter_chat_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:flutter_chat_app/presentation/blocs/base/bloc_error_mixin.dart';
@@ -86,8 +87,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
     emit(const AuthLoading(operation: 'check'));
 
     try {
-      // Check authentication status
-      final result = await _authRepository.isLoggedIn();
+      // Run isLoggedIn and getCurrentUser in parallel since getCurrentUser
+      // is a local cache read that's safe to call even if unauthenticated.
+      final futures = await Future.wait([
+        _authRepository.isLoggedIn(),
+        _authRepository.getCurrentUser(),
+      ]);
+
+      final result = futures[0] as Either<Failure, bool>;
+      final userResult = futures[1] as Either<Failure, User?>;
 
       if (result.isLeft) {
         if (emit.isDone) return;
@@ -108,8 +116,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
         return;
       }
 
-      // Get current user details
-      final userResult = await _authRepository.getCurrentUser();
+      // Already have user result from parallel call
       if (emit.isDone) return;
 
       if (userResult.isLeft) {

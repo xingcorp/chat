@@ -12,7 +12,7 @@ import 'package:injectable/injectable.dart';
 /// **Architecture:** Service Layer → Domain Layer (Repositories)
 /// **Pattern:** Strategy pattern for operation-specific processing
 /// **Error Handling:** Throws exceptions for failed operations (caught by queue service)
-@singleton
+@lazySingleton
 class OfflineOperationProcessor {
   final IMessageRepository _messageRepository;
   final IChatRepository _chatRepository;

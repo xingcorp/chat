@@ -17,53 +17,55 @@ import 'package:flutter_chat_app/core/initialization/service_initializer.dart';
 import 'package:flutter_chat_app/app.dart';
 
 /// Bootstraps the application: binding, env, DI, system chrome, then [runApp].
+///
+/// All work runs inside [runZonedGuarded] so the binding and [runApp] share
+/// the same zone (avoids the "Zone mismatch" assertion).
 Future<void> runMainApp() async {
-  final startupWatch = Stopwatch()..start();
+  await runZonedGuarded(() async {
+    final startupWatch = Stopwatch()..start();
 
-  WidgetsFlutterBinding.ensureInitialized();
-  _logStartupCheckpoint(startupWatch, 'WidgetsBinding');
+    WidgetsFlutterBinding.ensureInitialized();
+    _logStartupCheckpoint(startupWatch, 'WidgetsBinding');
 
-  if (!FlavorConfig.isInitialized) {
-    FlavorConfig.initializeFromEnvironment();
-  }
-  _logStartupCheckpoint(startupWatch, 'FlavorConfig');
+    if (!FlavorConfig.isInitialized) {
+      FlavorConfig.initializeFromEnvironment();
+    }
+    _logStartupCheckpoint(startupWatch, 'FlavorConfig');
 
-  await initializeDownloadPlugin();
-  _logStartupCheckpoint(startupWatch, 'DownloadPlugin');
+    await initializeDownloadPlugin();
+    _logStartupCheckpoint(startupWatch, 'DownloadPlugin');
 
-  final envFileName = await EnvValidator.loadDotenvForFlavor();
-  EnvValidator.validateDotenvConfiguration(envFileName);
-  _logStartupCheckpoint(startupWatch, 'EnvValidator');
+    final envFileName = await EnvValidator.loadDotenvForFlavor();
+    EnvValidator.validateDotenvConfiguration(envFileName);
+    _logStartupCheckpoint(startupWatch, 'EnvValidator');
 
-  await configureDependencies();
-  _logStartupCheckpoint(startupWatch, 'DI (configureDependencies)');
+    await configureDependencies();
+    _logStartupCheckpoint(startupWatch, 'DI (configureDependencies)');
 
-  // Initialize environment manager
-  final environmentManager = GetIt.I<EnvironmentManager>();
-  await environmentManager.initialize();
-  _logStartupCheckpoint(startupWatch, 'EnvironmentManager');
+    // Initialize environment manager
+    final environmentManager = GetIt.I<EnvironmentManager>();
+    await environmentManager.initialize();
+    _logStartupCheckpoint(startupWatch, 'EnvironmentManager');
 
-  // Screen orientation
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  _logStartupCheckpoint(startupWatch, 'SystemChrome');
+    // Screen orientation
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    _logStartupCheckpoint(startupWatch, 'SystemChrome');
 
-  // Flavor-specific system UI
-  final flavorColors = FlavorUtils.getFlavorColors();
-  SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
-      statusBarColor:
-          Color(flavorColors['primary'] as int).withValues(alpha: 0.8),
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(flavorColors['background'] as int),
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ),
-  );
+    // Flavor-specific system UI
+    final flavorColors = FlavorUtils.getFlavorColors();
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor:
+            Color(flavorColors['primary'] as int).withValues(alpha: 0.8),
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Color(flavorColors['background'] as int),
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
 
-  // Start app immediately for fast startup
-  runZonedGuarded(() {
     runApp(
       LayoutBuilder(
         builder: (context, constraints) {
@@ -80,17 +82,21 @@ Future<void> runMainApp() async {
         },
       ),
     );
+
+    _logStartupCheckpoint(startupWatch, 'runApp');
+
+    // Initialize non-critical services in background
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _logStartupCheckpoint(startupWatch, 'First frame rendered');
+      ServiceInitializer.initializeNonCriticalServices();
+    });
   }, (error, stackTrace) {
-    GetIt.I<Logger>()
-        .e('Unhandled error', error: error, stackTrace: stackTrace);
-  });
-
-  _logStartupCheckpoint(startupWatch, 'runApp');
-
-  // Initialize non-critical services in background
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    _logStartupCheckpoint(startupWatch, 'First frame rendered');
-    ServiceInitializer.initializeNonCriticalServices();
+    if (GetIt.I.isRegistered<Logger>()) {
+      GetIt.I<Logger>()
+          .e('Unhandled error', error: error, stackTrace: stackTrace);
+    } else {
+      debugPrint('Unhandled error: $error\n$stackTrace');
+    }
   });
 }
 

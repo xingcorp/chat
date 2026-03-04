@@ -5,7 +5,7 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
 /// Manager quản lý chiến lược đồng bộ và invalidate cache
-@singleton
+@lazySingleton
 class CacheSyncStrategy {
   /// Singleton instance
   static final CacheSyncStrategy _instance = CacheSyncStrategy._internal();

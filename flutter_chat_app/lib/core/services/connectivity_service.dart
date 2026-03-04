@@ -5,7 +5,7 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
 /// Service for monitoring and managing network connectivity
-@singleton
+@lazySingleton
 class ConnectivityService {
   /// Current connection types
   List<ConnectivityResult> _connectionStatus = [];

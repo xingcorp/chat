@@ -19,7 +19,7 @@ import 'package:flutter_chat_app/domain/usecases/request_permission_usecase.dart
 
 /// Enterprise-grade permissions service
 /// Cung cấp high-level API cho permissions management
-@singleton
+@lazySingleton
 class PermissionsService {
   
   PermissionsService(

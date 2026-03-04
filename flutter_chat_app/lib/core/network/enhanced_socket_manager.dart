@@ -12,7 +12,7 @@ import 'package:logger/logger.dart';
 import 'package:rxdart/rxdart.dart';
 
 /// Manager nâng cao cho Socket.IO với các tính năng mở rộng
-@singleton
+@lazySingleton
 class EnhancedSocketManager {
   /// Logger
   final Logger _logger;

@@ -143,7 +143,7 @@ class WebSocketMetrics {
 }
 
 /// **REALTIME MESSAGING SERVICE**
-@singleton
+@lazySingleton
 class RealtimeMessagingService {
   // Dependencies
   final NetworkInfo _networkInfo;

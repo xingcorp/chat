@@ -9,52 +9,27 @@
 ///
 /// **Usage:** flutter run --flavor staging --target lib/main_staging.dart
 
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
 import 'package:flutter_chat_app/core/config/flavor_config.dart';
 import 'package:flutter_chat_app/main.dart' as main_app;
 
 /// **Staging Main Function**
-/// 
-/// Initializes staging environment and launches app
+///
+/// Sets the flavor and delegates to [runMainApp] which handles binding
+/// initialization, system UI, and [runApp] inside a single [runZonedGuarded]
+/// zone — avoiding the "Zone mismatch" warning.
+///
+/// **Important:** Do NOT call `WidgetsFlutterBinding.ensureInitialized()`
+/// or `SystemChrome` methods here. Those require the binding, which must be
+/// created inside `runZonedGuarded` (same zone as `runApp`).
 Future<void> main() async {
-  // Ensure Flutter binding is initialized
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize staging flavor
+  // FlavorConfig is pure Dart — safe to call before binding init
   FlavorConfig.initializeStaging();
-  
-  // Set staging-specific system UI
-  await _setupStagingSystemUI();
-  
+
   // Print environment information for debugging
   _printStagingInfo();
-  
-  // Launch main app with staging configuration
-  await main_app.runMainApp();
-}
 
-/// Setup staging-specific system UI
-Future<void> _setupStagingSystemUI() async {
-  // Set staging status bar style
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Color(0xFFFF9800), // Orange for staging
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark,
-      systemNavigationBarColor: Color(0xFFFF9800),
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
-  
-  // Set preferred orientations for staging
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-    DeviceOrientation.landscapeLeft, // Allow landscape in staging
-    DeviceOrientation.landscapeRight,
-  ]);
+  // Launch main app (binding + SystemChrome + runApp all inside runZonedGuarded)
+  await main_app.runMainApp();
 }
 
 /// Print staging environment information

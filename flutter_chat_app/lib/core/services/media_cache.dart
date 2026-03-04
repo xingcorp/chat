@@ -13,7 +13,7 @@ import 'package:injectable/injectable.dart';
 /// - Automatic expiration cleanup
 /// - Size limits to prevent memory issues
 /// - Cache statistics for monitoring
-@singleton
+@lazySingleton
 class MediaCache {
   final AppLogger _logger;
   final Map<String, CachedMedia> _cache = {};

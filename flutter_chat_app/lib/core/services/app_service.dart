@@ -20,7 +20,7 @@ import 'database_service.dart';
 /// **ENTERPRISE APP SERVICE**
 /// 
 /// Orchestrates enterprise app functionality with performance monitoring
-@singleton
+@lazySingleton
 class AppService {
   // Core services
   final DatabaseService _databaseService;
