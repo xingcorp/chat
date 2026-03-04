@@ -15,6 +15,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -450,6 +451,12 @@ class ChatModuleInjection {
     // Connectivity
     if (!_getIt.isRegistered<Connectivity>()) {
       _getIt.registerSingleton<Connectivity>(Connectivity());
+    }
+
+    if (!_getIt.isRegistered<InternetConnectionChecker>()) {
+      _getIt.registerLazySingleton<InternetConnectionChecker>(
+        () => InternetConnectionChecker.instance,
+      );
     }
 
     // HTTP Client

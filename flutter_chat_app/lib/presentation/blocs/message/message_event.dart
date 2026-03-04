@@ -211,6 +211,19 @@ class MarkChatAsRead extends MessageEvent {
   List<Object?> get props => [chatId];
 }
 
+/// Sự kiện page cập nhật các item hiện đang visible
+/// để BLoC chủ động prefetch duration cho voice note.
+class PrefetchVisibleVoiceNoteDurations extends MessageEvent {
+  final List<int> visibleIndices;
+
+  const PrefetchVisibleVoiceNoteDurations({
+    required this.visibleIndices,
+  });
+
+  @override
+  List<Object?> get props => [visibleIndices];
+}
+
 /// Sự kiện nhận tin nhắn thời gian thực mới
 class ReceiveRealTimeMessage extends MessageEvent {
   final ChatMessage message;

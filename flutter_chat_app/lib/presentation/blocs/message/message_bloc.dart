@@ -18,6 +18,7 @@ import 'package:flutter_chat_app/core/services/frequent_reaction_service.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart'
     hide MessageReaction;
+import 'package:flutter_chat_app/core/services/voice_note_playback_manager.dart';
 import 'package:flutter_chat_app/core/storage/tombstone_store.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
@@ -75,6 +76,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   final ILocationService _locationService;
   final FrequentReactionService _frequentReactionService;
   final TombstoneStore _tombstoneStore;
+  final VoiceNotePlaybackManager _voiceNotePlaybackManager;
 
   // === Phase 2 + 3 Dependencies ===
   final SyncMetadataManager _syncMetadataManager;
@@ -98,6 +100,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
   // Debounced mark-as-read
   Timer? _markAsReadDebouncer;
+  DateTime? _lastVoiceDurationPrefetchAt;
+  static const Duration _voiceDurationPrefetchThrottle =
+      Duration(milliseconds: 220);
 
   // UI transform context
   String _currentUserId = '';
@@ -178,6 +183,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     required FrequentReactionService frequentReactionService,
     required SendPushNotificationUseCase sendPushNotification,
     required TombstoneStore tombstoneStore,
+    required VoiceNotePlaybackManager voiceNotePlaybackManager,
     required this.logger,
   })  : _getMessages = getMessages,
         _sendMessage = sendMessage,
@@ -194,6 +200,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         _frequentReactionService = frequentReactionService,
         _sendPushNotification = sendPushNotification,
         _tombstoneStore = tombstoneStore,
+        _voiceNotePlaybackManager = voiceNotePlaybackManager,
         super(const MessageState.initial()) {
     on<LoadMessages>(_onLoadMessages);
     on<LoadMoreMessages>(_onLoadMoreMessages);
@@ -202,6 +209,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     on<EditMessage>(_onEditMessage);
     on<DeleteMessage>(_onDeleteMessage);
     on<MarkChatAsRead>(_onMarkChatAsRead);
+    on<PrefetchVisibleVoiceNoteDurations>(
+      _onPrefetchVisibleVoiceNoteDurations,
+    );
     on<ReceiveRealTimeMessage>(_onReceiveRealTimeMessage);
     on<RefreshMessages>(_onRefreshMessages);
     on<ClearMessages>(_onClearMessages);
@@ -872,6 +882,88 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     });
   }
 
+  void _onPrefetchVisibleVoiceNoteDurations(
+    PrefetchVisibleVoiceNoteDurations event,
+    Emitter<MessageState> emit,
+  ) {
+    final currentState = state;
+    if (currentState is! MessagesLoaded) return;
+    if (event.visibleIndices.isEmpty) return;
+
+    final now = DateTime.now();
+    final lastPrefetchAt = _lastVoiceDurationPrefetchAt;
+    if (lastPrefetchAt != null &&
+        now.difference(lastPrefetchAt) < _voiceDurationPrefetchThrottle) {
+      return;
+    }
+    _lastVoiceDurationPrefetchAt = now;
+
+    final prefetchedMessageIds = <String>{};
+    for (final index in event.visibleIndices) {
+      if (index < 0 || index >= currentState.uiMessages.length) {
+        continue;
+      }
+
+      final uiState = currentState.uiMessages[index];
+      if (!prefetchedMessageIds.add(uiState.id)) continue;
+
+      final sourceUrl = _resolveVoiceNoteSourceForUiState(uiState);
+      if (sourceUrl == null) continue;
+
+      unawaited(
+        _voiceNotePlaybackManager.prefetchDuration(
+          messageId: uiState.id,
+          audioUrl: sourceUrl,
+        ),
+      );
+    }
+  }
+
+  String? _resolveVoiceNoteSourceForUiState(MessageUIState uiState) {
+    if (uiState.itemType != MessageListItemType.message) {
+      return null;
+    }
+    if (uiState.contentType != ContentType.audio) {
+      return null;
+    }
+
+    final attachments = uiState.attachments;
+    if (attachments.length != 1) {
+      return null;
+    }
+
+    final attachment = attachments.first;
+    final isVoiceNoteAttachment =
+        attachment.type.trim().toLowerCase() == 'voice_note';
+    final isVoiceNoteFromName = _isVoiceNoteFileName(uiState.fileName) ||
+        _isVoiceNoteFileName(attachment.name);
+    if (!isVoiceNoteAttachment && !isVoiceNoteFromName) {
+      return null;
+    }
+
+    final sourceUrl = _resolveVoiceNoteSourceUrl(attachment);
+    if (sourceUrl.isEmpty) return null;
+    return sourceUrl;
+  }
+
+  bool _isVoiceNoteFileName(String? fileName) {
+    if (fileName == null) return false;
+    final normalized = fileName.trim().toLowerCase();
+    return normalized.startsWith('voice_note_') && normalized.endsWith('.m4a');
+  }
+
+  String _resolveVoiceNoteSourceUrl(MessageAttachment attachment) {
+    final remoteUrl = attachment.url.trim();
+    if (remoteUrl.isNotEmpty) return remoteUrl;
+
+    final localPath = attachment.localPath?.trim();
+    if (localPath != null && localPath.isNotEmpty) {
+      return localPath;
+    }
+
+    return '';
+  }
+
   /// Execute the actual mark-as-read mutation with retry logic.
   /// Retries up to 2 times with 1 second backoff between attempts.
   Future<void> _executeMarkAsReadWithRetry(String chatId) async {
@@ -1077,7 +1169,10 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
               : 'N/A';
           // logger.i('[TwoPhase] Background fetch OK: count=${messages.length} newest=$newestTs oldest=$oldestTs isDelta=$isDelta');
           add(_BackgroundFetchCompleted(
-              chatId: chatId, serverMessages: messages, isDelta: isDelta, fetchLimit: limit));
+              chatId: chatId,
+              serverMessages: messages,
+              isDelta: isDelta,
+              fetchLimit: limit));
         },
       );
     } catch (e) {
@@ -1426,8 +1521,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   /// so the UI picks up the updated message statuses.
   Future<void> _retryAndRefresh(String chatId, [int limit = 20]) async {
     try {
-      final result =
-          await _getMessages.repository.retryPendingMessages(chatId);
+      final result = await _getMessages.repository.retryPendingMessages(chatId);
       result.fold(
         (failure) =>
             logger.e('Pending message retry failed: ${failure.message}'),

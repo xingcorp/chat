@@ -464,6 +464,20 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     // --- Load more: check if max visible index is near the end ---
     final state = _messageBloc.state;
     if (state is MessagesLoaded) {
+      final visibleIndices = positions
+          .where((p) => p.itemTrailingEdge > 0 && p.itemLeadingEdge < 1)
+          .map((p) => p.index)
+          .toSet()
+          .toList()
+        ..sort();
+      if (visibleIndices.isNotEmpty) {
+        _messageBloc.add(
+          PrefetchVisibleVoiceNoteDurations(
+            visibleIndices: visibleIndices,
+          ),
+        );
+      }
+
       final maxVisibleIndex =
           positions.map((p) => p.index).reduce((a, b) => a > b ? a : b);
       final totalItems = state.uiMessages.length;
@@ -1854,8 +1868,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       if (_isLoadingMore) {
         final oldestId =
             state.messages.isNotEmpty ? state.messages.last.id : null;
-        final loadMoreCompleted =
-            oldestId != _oldestMessageIdBeforeLoadMore ||
+        final loadMoreCompleted = oldestId != _oldestMessageIdBeforeLoadMore ||
             state.hasReachedMax ||
             state.paginationError != null;
 

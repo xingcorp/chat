@@ -39,25 +39,35 @@ class _VoiceNotePlayerWidgetState extends BaseState<VoiceNotePlayerWidget> {
   late final List<double> _waveformPattern;
 
   bool _isTogglingPlayback = false;
+  Duration _initialDuration = Duration.zero;
 
   @override
   void initState() {
     super.initState();
     _playbackManager = GetIt.I<VoiceNotePlaybackManager>();
+    _initialDuration = _resolveInitialDuration();
     _waveformPattern = _buildWaveformPattern(widget.messageId);
+  }
+
+  @override
+  void didUpdateWidget(covariant VoiceNotePlayerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.messageId != widget.messageId ||
+        oldWidget.audioUrl != widget.audioUrl ||
+        oldWidget.duration != widget.duration) {
+      _initialDuration = _resolveInitialDuration();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<VoiceNotePlaybackState>(
       stream: _playbackManager.getPlaybackStream(widget.messageId),
-      initialData:
-          VoiceNotePlaybackState(duration: widget.duration ?? Duration.zero),
+      initialData: VoiceNotePlaybackState(duration: _initialDuration),
       builder: (context, snapshot) {
         final state = snapshot.data ?? const VoiceNotePlaybackState();
-        final resolvedDuration = state.duration > Duration.zero
-            ? state.duration
-            : (widget.duration ?? Duration.zero);
+        final resolvedDuration =
+            state.duration > Duration.zero ? state.duration : _initialDuration;
         final progress = resolvedDuration.inMilliseconds <= 0
             ? 0.0
             : (state.position.inMilliseconds / resolvedDuration.inMilliseconds)
@@ -107,8 +117,10 @@ class _VoiceNotePlayerWidgetState extends BaseState<VoiceNotePlayerWidget> {
               ),
               const SizedBox(width: AppDimens.spaceSmall),
               AppText(
-                _formatDuration(
-                  state.isPlaying ? state.position : resolvedDuration,
+                _resolveDurationLabel(
+                  isPlaying: state.isPlaying,
+                  position: state.position,
+                  duration: resolvedDuration,
                 ),
                 style: AppTextStyles.labelSmall.copyWith(color: timestampColor),
               ),
@@ -125,6 +137,23 @@ class _VoiceNotePlayerWidgetState extends BaseState<VoiceNotePlayerWidget> {
           ),
         );
       },
+    );
+  }
+
+  Duration _resolveInitialDuration() {
+    final providedDuration = widget.duration ?? Duration.zero;
+    if (providedDuration > Duration.zero) {
+      _playbackManager.seedDuration(
+        messageId: widget.messageId,
+        audioUrl: widget.audioUrl,
+        duration: providedDuration,
+      );
+      return providedDuration;
+    }
+
+    return _playbackManager.getKnownDuration(
+      messageId: widget.messageId,
+      audioUrl: widget.audioUrl,
     );
   }
 
@@ -150,6 +179,17 @@ class _VoiceNotePlayerWidgetState extends BaseState<VoiceNotePlayerWidget> {
       final curve = sin((index / 26) * pi * 2).abs() * 0.22;
       return (base + curve).clamp(0.12, 1.0);
     });
+  }
+
+  String _resolveDurationLabel({
+    required bool isPlaying,
+    required Duration position,
+    required Duration duration,
+  }) {
+    if (!isPlaying && duration <= Duration.zero) {
+      return '--:--';
+    }
+    return _formatDuration(isPlaying ? position : duration);
   }
 
   String _formatDuration(Duration duration) {

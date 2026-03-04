@@ -23,6 +23,7 @@ import 'package:get_it/get_it.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -312,7 +313,8 @@ Future<void> _registerExternalDependencies(Logger logger) async {
 
   // SharedPreferences + Firebase init are independent – run in parallel
   late final SharedPreferences prefs;
-  if (!getIt.isRegistered<SharedPreferences>() || !FirebaseConfigManager.isInitialized) {
+  if (!getIt.isRegistered<SharedPreferences>() ||
+      !FirebaseConfigManager.isInitialized) {
     final results = await Future.wait([
       if (!getIt.isRegistered<SharedPreferences>())
         SharedPreferences.getInstance()
@@ -385,6 +387,12 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   // Connectivity - required for network monitoring
   if (!getIt.isRegistered<Connectivity>()) {
     getIt.registerSingleton<Connectivity>(Connectivity());
+  }
+
+  if (!getIt.isRegistered<InternetConnectionChecker>()) {
+    getIt.registerLazySingleton<InternetConnectionChecker>(
+      () => InternetConnectionChecker.instance,
+    );
   }
 
   // HTTP Client - required for API calls

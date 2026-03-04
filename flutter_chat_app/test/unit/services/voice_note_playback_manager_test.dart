@@ -12,7 +12,9 @@ class _FakeVoiceNoteAudioPlayer implements VoiceNoteAudioPlayer {
   final StreamController<PlayerState> _playerStateController =
       StreamController<PlayerState>.broadcast();
 
-  Duration _duration = const Duration(seconds: 18);
+  Duration resolvedDuration = const Duration(seconds: 18);
+  Duration setUrlDelay = Duration.zero;
+  int setUrlCallCount = 0;
   bool _isPlaying = false;
 
   @override
@@ -47,11 +49,15 @@ class _FakeVoiceNoteAudioPlayer implements VoiceNoteAudioPlayer {
 
   @override
   Future<Duration?> setUrl(String url) async {
-    _durationController.add(_duration);
+    setUrlCallCount += 1;
+    if (setUrlDelay > Duration.zero) {
+      await Future<void>.delayed(setUrlDelay);
+    }
+    _durationController.add(resolvedDuration);
     _playerStateController.add(
       PlayerState(_isPlaying, ProcessingState.ready),
     );
-    return _duration;
+    return resolvedDuration;
   }
 
   @override
@@ -79,12 +85,17 @@ class _FakeVoiceNoteAudioPlayer implements VoiceNoteAudioPlayer {
 
 void main() {
   group('VoiceNotePlaybackManager', () {
-    late _FakeVoiceNoteAudioPlayer fakePlayer;
+    late _FakeVoiceNoteAudioPlayer fakePlaybackPlayer;
+    late _FakeVoiceNoteAudioPlayer fakeProbePlayer;
     late VoiceNotePlaybackManager manager;
 
     setUp(() {
-      fakePlayer = _FakeVoiceNoteAudioPlayer();
-      manager = VoiceNotePlaybackManager(audioPlayer: fakePlayer);
+      fakePlaybackPlayer = _FakeVoiceNoteAudioPlayer();
+      fakeProbePlayer = _FakeVoiceNoteAudioPlayer();
+      manager = VoiceNotePlaybackManager(
+        audioPlayer: fakePlaybackPlayer,
+        probeAudioPlayer: fakeProbePlayer,
+      );
     });
 
     tearDown(() async {
@@ -134,7 +145,7 @@ void main() {
           manager.getPlaybackStream('message_1').listen(states.add);
 
       await manager.play('message_1', 'https://example.com/voice-note-1.m4a');
-      fakePlayer.emitCompleted();
+      fakePlaybackPlayer.emitCompleted();
 
       await Future<void>.delayed(const Duration(milliseconds: 20));
 
@@ -144,6 +155,40 @@ void main() {
       expect(latest.duration, const Duration(seconds: 18));
 
       await subscription.cancel();
+    });
+
+    test('prefetch duration updates non-playing message stream', () async {
+      final states = <VoiceNotePlaybackState>[];
+      final subscription =
+          manager.getPlaybackStream('message_1').listen(states.add);
+
+      final resolved = await manager.prefetchDuration(
+        messageId: 'message_1',
+        audioUrl: 'https://example.com/voice-note-1.m4a',
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(resolved, const Duration(seconds: 18));
+      expect(states, isNotEmpty);
+      expect(states.last.duration, const Duration(seconds: 18));
+
+      await subscription.cancel();
+    });
+
+    test('prefetch deduplicates concurrent probes for same URL', () async {
+      fakeProbePlayer.setUrlDelay = const Duration(milliseconds: 40);
+
+      const url = 'https://example.com/voice-note-shared.m4a';
+      await Future.wait([
+        manager.prefetchDuration(messageId: 'message_1', audioUrl: url),
+        manager.prefetchDuration(messageId: 'message_2', audioUrl: url),
+      ]);
+
+      expect(fakeProbePlayer.setUrlCallCount, 1);
+      expect(
+        manager.getKnownDuration(messageId: 'message_2', audioUrl: url),
+        const Duration(seconds: 18),
+      );
     });
   });
 }
