@@ -202,10 +202,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
 
     // === CACHE-FIRST: Show local data instantly ===
     final localResult = await _getLocalConversations();
-    final localChats = localResult.fold(
+    final localChatsRaw = localResult.fold(
       (_) => <Chat>[],
       (chats) => chats,
     );
+    // Defensive dedup: Isar may contain duplicates from race conditions
+    // between saveChat/saveChats and socket-driven persist operations.
+    final localChats = _deduplicateChats(localChatsRaw);
 
     if (localChats.isNotEmpty && !event.forceRefresh) {
       // Emit cached data immediately — user sees content in < 50ms
@@ -266,7 +269,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
         }
       },
       (paged) {
-        final chats = paged.items;
+        // Defensive dedup: API pagination overlap may return duplicates
+        final chats = _deduplicateChats(paged.items);
         final effectiveHasMore = chats.length == request.size;
 
         if (shouldRefresh) {
@@ -488,6 +492,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       (chat) {
         logger.i('Chat created successfully: ${chat.id}');
         emit(ChatState.chatDetailsLoaded(chat: chat));
+
+        // Mark chat list as dirty so the next _onLoadChats knows to refresh.
+        // This ensures the newly created conversation appears when the user
+        // navigates back to the conversation list.
+        _cacheSyncStrategy.markChatListDirty();
       },
     );
   }
@@ -626,6 +635,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
         emit(ChatState.error(message: getUserErrorMessage(failure)));
       },
       (chats) {
+        final dedupedChats = _deduplicateChats(chats);
         // Search results don't filter by type — preserve activeFilter from current state
         final activeFilter = state.whenOrNull(
               loaded: (_, __, ___, ____, _____, ______, activeFilter, _______,
@@ -634,12 +644,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
             ) ??
             ConversationTypeFilter.all;
         emit(ChatState.loaded(
-          chats: chats,
+          chats: dedupedChats,
           hasMore: false,
           isLoadingMore: false,
           page: 0,
           pageSize: 100,
-          total: chats.length,
+          total: dedupedChats.length,
           activeFilter: activeFilter,
         ));
       },
@@ -755,7 +765,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
         emit(ChatState.error(message: getUserErrorMessage(failure)));
       },
       (paged) {
-        final chats = paged.items;
+        final chats = _deduplicateChats(paged.items);
         final effectiveHasMore = chats.length == request.size;
 
         cachedLists[filter] = chats;
@@ -990,6 +1000,26 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     final updatedChats = List<Chat>.from(currentState.chats);
     updatedChats[idx] = chat.copyWith(unreadCount: 0);
     emit(_preserveLoaded(currentState, chats: updatedChats));
+  }
+
+  /// Deduplicate chats by [Chat.id], keeping the LAST occurrence
+  /// (which is typically the most recently updated version).
+  ///
+  /// This is a defensive safety net for the cache-first pattern:
+  /// - Phase 1 (local cache) may contain stale duplicates from Isar
+  /// - Phase 2 (remote) may return duplicates if API has pagination overlap
+  /// - Socket events may add a chat that already exists in the list
+  List<Chat> _deduplicateChats(List<Chat> chats) {
+    final seen = <String>{};
+    final result = <Chat>[];
+    // Iterate in reverse so the LAST (most recent) occurrence wins,
+    // then reverse back to preserve original order.
+    for (var i = chats.length - 1; i >= 0; i--) {
+      if (seen.add(chats[i].id)) {
+        result.add(chats[i]);
+      }
+    }
+    return result.reversed.toList();
   }
 
   /// Emit a new loaded state preserving all filter/cache/pagination fields

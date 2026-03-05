@@ -631,10 +631,37 @@ class NativeDatabaseImplementation implements IDatabaseImplementation {
     return isar.userModels.where().watch(fireImmediately: true);
   }
 
-  /// Save chat
+  /// Save chat — atomic upsert by serverId.
+  ///
+  /// Isar v4 `put()` upserts by `@Id()` only, not by unique index.
+  /// To prevent duplicates when the Isar int ID differs between callers,
+  /// we delete any stale record with the same serverId in the same txn.
   Future<void> saveChat(ChatModel chat) async {
     isar.write((isar) {
+      final existing =
+          isar.chatModels.where().serverIdEqualTo(chat.serverId).findFirst();
+      if (existing != null && existing.id != chat.id) {
+        isar.chatModels.delete(existing.id);
+      }
       isar.chatModels.put(chat);
+    });
+  }
+
+  /// Save multiple chats in a single write transaction — O(1) txn overhead.
+  ///
+  /// For each chat, removes any stale record whose serverId matches but whose
+  /// Isar int ID differs (same dedup logic as [saveChat]), then bulk-inserts.
+  Future<void> saveChatsBatch(List<ChatModel> chats) async {
+    if (chats.isEmpty) return;
+    isar.write((isar) {
+      for (final chat in chats) {
+        final existing =
+            isar.chatModels.where().serverIdEqualTo(chat.serverId).findFirst();
+        if (existing != null && existing.id != chat.id) {
+          isar.chatModels.delete(existing.id);
+        }
+      }
+      isar.chatModels.putAll(chats);
     });
   }
 
@@ -703,10 +730,32 @@ extension WebDatabaseImplementationExtension on WebDatabaseImplementation {
         .asyncMap((_) => isar.userModels.where().findAll());
   }
 
-  /// Save chat
+  /// Save chat — atomic upsert by serverId (Web implementation).
+  ///
+  /// Same dedup-safe logic as NativeDatabaseImplementation.saveChat.
   Future<void> saveChat(ChatModel chat) async {
     isar.write((isar) {
+      final existing =
+          isar.chatModels.where().serverIdEqualTo(chat.serverId).findFirst();
+      if (existing != null && existing.id != chat.id) {
+        isar.chatModels.delete(existing.id);
+      }
       isar.chatModels.put(chat);
+    });
+  }
+
+  /// Save multiple chats in a single write transaction (Web implementation).
+  Future<void> saveChatsBatch(List<ChatModel> chats) async {
+    if (chats.isEmpty) return;
+    isar.write((isar) {
+      for (final chat in chats) {
+        final existing =
+            isar.chatModels.where().serverIdEqualTo(chat.serverId).findFirst();
+        if (existing != null && existing.id != chat.id) {
+          isar.chatModels.delete(existing.id);
+        }
+      }
+      isar.chatModels.putAll(chats);
     });
   }
 
@@ -795,6 +844,15 @@ extension DatabaseServiceExtension on DatabaseService {
         ? await (_implementation as WebDatabaseImplementation).saveChat(chat)
         : await (_implementation as NativeDatabaseImplementation)
             .saveChat(chat);
+  }
+
+  /// Save multiple chats in a single write transaction.
+  Future<void> saveChatsBatch(List<ChatModel> chats) async {
+    return _implementation is WebDatabaseImplementation
+        ? await (_implementation as WebDatabaseImplementation)
+            .saveChatsBatch(chats)
+        : await (_implementation as NativeDatabaseImplementation)
+            .saveChatsBatch(chats);
   }
 
   /// Save message

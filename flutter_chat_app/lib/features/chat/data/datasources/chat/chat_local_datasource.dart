@@ -165,7 +165,10 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   @override
   Future<void> saveChats(List<Chat> chats) async {
     try {
-      // Save each chat using database service
+      // Build all ChatModels first, then save in a single batch transaction.
+      // This replaces N sequential (lookup + write) = 2N DB ops with:
+      //   N lookups (parallel-safe) + 1 batch write = N+1 ops inside 1 txn.
+      final models = <ChatModel>[];
       for (final chat in chats) {
         final existing = await _databaseService.getChatByServerId(chat.id);
 
@@ -173,7 +176,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
             ? jsonEncode(chat.members.map((m) => m.toJson()).toList())
             : existing?.membersJson;
 
-        final chatModel = ChatModel(
+        models.add(ChatModel(
           id: existing?.id ?? chat.id.toIsarId(),
           serverId: chat.id,
           name: chat.name,
@@ -186,9 +189,9 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
           avatarUrl: chat.avatarUrl,
           membersJson: membersJson,
           createdAt: chat.createdAt ?? existing?.createdAt ?? DateTime.now(),
-        );
-        await _databaseService.saveChat(chatModel);
+        ));
       }
+      await _databaseService.saveChatsBatch(models);
     } catch (e) {
       throw CacheException(message: 'Failed to save chats to local storage: $e');
     }
@@ -197,14 +200,13 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   @override
   Future<void> deleteChat(String id) async {
     try {
-      // Delete chat using database service
-      // Note: In a real implementation, this would cascade delete messages
-      // For now, we'll implement a simple approach
-      debugPrint('🗑️ Deleting chat: $id');
-
-      // TODO: Implement proper cascade delete in database service
-      // await _databaseService.deleteChat(id);
-
+      // Find the chat by serverId and delete it from Isar.
+      // This handles both temp-ID records (optimistic create) and
+      // server-ID records — both use serverId == id in domain layer.
+      final existing = await _databaseService.getChatByServerId(id);
+      if (existing != null) {
+        await _databaseService.deleteChat(existing.id);
+      }
     } catch (e) {
       throw CacheException(message: 'Failed to delete chat from local storage: $e');
     }

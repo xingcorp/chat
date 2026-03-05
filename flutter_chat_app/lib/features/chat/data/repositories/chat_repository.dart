@@ -305,7 +305,7 @@ class ChatRepositoryImpl implements IChatRepository {
         // **OPTIMISTIC UPDATE STRATEGY**
         // 1. Save locally immediately for instant UI feedback
         await _localDataSource.saveChat(chat);
-        debugPrint('✅ Chat saved locally (optimistic)');
+        _logger.d('Chat saved locally (optimistic) with temp ID: ${chat.id}');
 
         // 2. Try to create on remote
         final remoteResult = isGroup
@@ -317,20 +317,19 @@ class ChatRepositoryImpl implements IChatRepository {
             : await _remoteDataSource.createDirectChat(
                 receiverId: participantIds.first,
               );
-        
+
         // Remote datasource returns ChatModel, not Either
         try {
-          // Remote success, update local with server version
+          // Remote success — replace optimistic record with server version.
+          // Delete the temp-ID record first to prevent duplicate (temp ID ≠ server ID).
+          await _localDataSource.deleteChat(chat.id);
           final serverChat = remoteResult.toDomain();
           await _localDataSource.saveChat(serverChat);
-          debugPrint('✅ Chat created successfully on remote and updated locally');
+          _logger.i('Chat created on server and persisted locally: ${serverChat.id}');
           return Right(serverChat);
         } catch (e) {
-          // Remote failed, keep local version but mark for sync
-          debugPrint('⚠️  Remote create failed, queued for sync: $e');
-
-          // In real implementation, would add to sync queue
-          // For now, return the local version
+          // Remote mapping failed, keep local version
+          _logger.w('Remote create mapping failed, keeping optimistic version', error: e);
           return Right(chat);
         }
         
