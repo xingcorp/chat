@@ -1,0 +1,44 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter *)",
+      "Bash(dart *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git checkout*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git stash*)",
+      "Bash(git merge*)",
+      "Bash(gh *)",
+      "Bash(node *)",
+      "Bash(npm install*)",
+      "Bash(npm run*)",
+      "Bash(npx *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(find *)",
+      "Bash(mkdir *)",
+      "Bash(cd *)",
+      "WebFetch(domain:docs.flutter.dev)",
+      "WebFetch(domain:pub.dev)",
+      "WebFetch(domain:api.flutter.dev)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:graphql.org)",
+      "WebSearch"
+    ],
+    "deny": [
+      "Bash(sudo *)",
+      "Bash(rm -rf /*)",
+      "Bash(chmod 777 *)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(npm publish*)",
+      "Read(./.env*)",
+      "Read(./**/secrets/**)",
+      "Read(./**/credentials/**)"
+    ]
+  }
+}
