@@ -74,13 +74,16 @@ class TextSpanBuilder {
   );
 
   /// Regex cho HTML bold tag
-  static final RegExp _boldRegex = RegExp(r'<b>([^<]*)</b>', caseSensitive: false);
+  static final RegExp _boldRegex =
+      RegExp(r'<b>([^<]*)</b>', caseSensitive: false);
 
   /// Regex cho HTML italic tag
-  static final RegExp _italicRegex = RegExp(r'<i>([^<]*)</i>', caseSensitive: false);
+  static final RegExp _italicRegex =
+      RegExp(r'<i>([^<]*)</i>', caseSensitive: false);
 
   /// Regex cho HTML underline tag
-  static final RegExp _underlineRegex = RegExp(r'<u>([^<]*)</u>', caseSensitive: false);
+  static final RegExp _underlineRegex =
+      RegExp(r'<u>([^<]*)</u>', caseSensitive: false);
 
   // ══════════════════════════════════════════
   // Main Build Method
@@ -93,7 +96,9 @@ class TextSpanBuilder {
   /// [textStyle] Style cho text thường
   /// [linkStyle] Style cho links (primary color, underline)
   /// [mentionStyle] Style cho mentions
+  /// [highlightedMentionStyle] Style cho mention cần nhấn mạnh (ví dụ mention current user)
   /// [mentionNameById] Map id -> display name cho mentions
+  /// [highlightMentionIds] Danh sách mention id cần tô nổi bật
   /// [onTapMention] Callback khi tap mention
   /// [context] BuildContext để show action sheets
   static List<InlineSpan> buildSpans({
@@ -102,7 +107,9 @@ class TextSpanBuilder {
     required TextStyle textStyle,
     required TextStyle linkStyle,
     required TextStyle mentionStyle,
+    TextStyle? highlightedMentionStyle,
     required Map<String, String> mentionNameById,
+    Set<String> highlightMentionIds = const <String>{},
     required void Function(String userId) onTapMention,
     required BuildContext context,
   }) {
@@ -128,8 +135,16 @@ class TextSpanBuilder {
       }
 
       // Thêm span cho entity
-      spans.add(_buildEntitySpan(entity, textStyle, linkStyle, mentionStyle,
-          mentionNameById, onTapMention, context));
+      spans.add(_buildEntitySpan(
+          entity,
+          textStyle,
+          linkStyle,
+          mentionStyle,
+          highlightedMentionStyle,
+          mentionNameById,
+          highlightMentionIds,
+          onTapMention,
+          context));
 
       lastIndex = entity.end;
     }
@@ -150,14 +165,14 @@ class TextSpanBuilder {
   /// Kiểm tra có entity nào trong text không
   static bool _hasAnyEntities(String text) {
     return _mentionRegex.hasMatch(text) ||
-           _urlRegex.hasMatch(text) ||
-           _phoneRegex.hasMatch(text) ||
-           _emailRegex.hasMatch(text) ||
-           _brRegex.hasMatch(text) ||
-           _anchorRegex.hasMatch(text) ||
-           _boldRegex.hasMatch(text) ||
-           _italicRegex.hasMatch(text) ||
-           _underlineRegex.hasMatch(text);
+        _urlRegex.hasMatch(text) ||
+        _phoneRegex.hasMatch(text) ||
+        _emailRegex.hasMatch(text) ||
+        _brRegex.hasMatch(text) ||
+        _anchorRegex.hasMatch(text) ||
+        _boldRegex.hasMatch(text) ||
+        _italicRegex.hasMatch(text) ||
+        _underlineRegex.hasMatch(text);
   }
 
   /// Parse tất cả entities từ text
@@ -280,13 +295,22 @@ class TextSpanBuilder {
     TextStyle textStyle,
     TextStyle linkStyle,
     TextStyle mentionStyle,
+    TextStyle? highlightedMentionStyle,
     Map<String, String> mentionNameById,
+    Set<String> highlightMentionIds,
     void Function(String userId) onTapMention,
     BuildContext context,
   ) {
     switch (entity.type) {
       case EntityType.mention:
-        return _buildMentionSpan(entity, mentionStyle, mentionNameById, onTapMention);
+        return _buildMentionSpan(
+          entity,
+          mentionStyle,
+          highlightedMentionStyle,
+          mentionNameById,
+          highlightMentionIds,
+          onTapMention,
+        );
 
       case EntityType.url:
         return _buildUrlSpan(entity, linkStyle, context);
@@ -327,15 +351,21 @@ class TextSpanBuilder {
   static InlineSpan _buildMentionSpan(
     TextEntity entity,
     TextStyle mentionStyle,
+    TextStyle? highlightedMentionStyle,
     Map<String, String> mentionNameById,
+    Set<String> highlightMentionIds,
     void Function(String userId) onTapMention,
   ) {
     final id = entity.value;
     final displayName = mentionNameById[id];
+    final shouldHighlight = highlightMentionIds.contains(id);
+    final effectiveStyle = shouldHighlight
+        ? (highlightedMentionStyle ?? mentionStyle)
+        : mentionStyle;
 
     if (displayName == null || displayName.trim().isEmpty) {
       // Mention không tìm thấy user, hiển thị text thường
-      return TextSpan(text: entity.text, style: mentionStyle);
+      return TextSpan(text: entity.text, style: effectiveStyle);
     }
 
     final text = '@${displayName.trim()}';
@@ -346,7 +376,7 @@ class TextSpanBuilder {
         onTap: () => onTapMention(id),
         child: Text(
           text,
-          style: mentionStyle,
+          style: effectiveStyle,
         ),
       ),
     );
@@ -414,7 +444,8 @@ class TextSpanBuilder {
   // ══════════════════════════════════════════
 
   /// Show action sheet cho URL
-  static Future<void> _showUrlActionSheet(BuildContext context, String url) async {
+  static Future<void> _showUrlActionSheet(
+      BuildContext context, String url) async {
     await showModalBottomSheet(
       context: context,
       builder: (context) => UrlActionSheet(url: url),
@@ -423,7 +454,8 @@ class TextSpanBuilder {
   }
 
   /// Show action sheet cho phone
-  static Future<void> _showPhoneActionSheet(BuildContext context, String phone) async {
+  static Future<void> _showPhoneActionSheet(
+      BuildContext context, String phone) async {
     await showModalBottomSheet(
       context: context,
       builder: (context) => PhoneActionSheet(phone: phone),
@@ -432,7 +464,8 @@ class TextSpanBuilder {
   }
 
   /// Show action sheet cho email
-  static Future<void> _showEmailActionSheet(BuildContext context, String email) async {
+  static Future<void> _showEmailActionSheet(
+      BuildContext context, String email) async {
     await showModalBottomSheet(
       context: context,
       builder: (context) => EmailActionSheet(email: email),
@@ -517,8 +550,7 @@ class UrlActionSheet extends StatelessWidget {
             title: AppText(l10n.share),
             onTap: () async {
               await SharePlus.instance.share(
-                  ShareParams(uri: Uri.parse(url), subject: 'Link preview')
-              );
+                  ShareParams(uri: Uri.parse(url), subject: 'Link preview'));
               Navigator.pop(context);
             },
           ),

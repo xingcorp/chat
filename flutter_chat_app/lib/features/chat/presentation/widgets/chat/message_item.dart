@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/extensions/text_span_builder.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
@@ -56,6 +57,7 @@ class MessageItem extends StatefulWidget {
   // Callback when user edits and sends an image from fullscreen gallery
   final void Function(Uint8List editedBytes, String fileName)?
       onEditedImageSend;
+  final String currentUserId;
 
   const MessageItem({
     Key? key,
@@ -69,6 +71,7 @@ class MessageItem extends StatefulWidget {
     this.onReplyPreviewTap,
     this.isGroupChat = false,
     this.onEditedImageSend,
+    this.currentUserId = '',
   }) : super(key: key);
 
   @override
@@ -133,7 +136,17 @@ class _MessageItemState extends State<MessageItem>
         fontSize: 16.0,
         fontWeight: FontWeight.w600,
       ),
+      highlightedMentionStyle: const TextStyle(
+        color: AppColors.error,
+        fontSize: 16.0,
+        fontWeight: FontWeight.w600,
+      ),
       mentionNameById: mentionNameById,
+      highlightMentionIds: {
+        if (widget.currentUserId.trim().isNotEmpty) widget.currentUserId.trim(),
+        // "@all" should be highlighted for everyone.
+        'all',
+      },
       onTapMention: (userId) {
         context.push(
           '/users/$userId',

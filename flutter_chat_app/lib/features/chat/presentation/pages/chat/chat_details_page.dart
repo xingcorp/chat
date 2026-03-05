@@ -2351,6 +2351,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                 _buildDateSeparator(uiState.dateSeparatorText ?? ''),
               MessageItem(
                 uiState: uiState,
+                currentUserId: _currentUserId,
                 isSelectionMode: _isSelectionMode,
                 isSelected: _selectedMessageIds.contains(uiState.id),
                 onSelectionChanged: (_) => _toggleSelection(uiState.id),
