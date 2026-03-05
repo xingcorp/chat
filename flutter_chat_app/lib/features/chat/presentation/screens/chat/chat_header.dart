@@ -14,6 +14,7 @@ import 'package:get_it/get_it.dart';
 /// Header cho màn hình chi tiết chat.
 class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
   final Chat chat;
+  final bool showBackButton;
   final VoidCallback? onBackPressed;
   final VoidCallback? onAvatarTap;
   final VoidCallback? onInfoPressed;
@@ -23,6 +24,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
   const ChatHeader({
     super.key,
     required this.chat,
+    this.showBackButton = true,
     this.onBackPressed,
     this.onAvatarTap,
     this.onInfoPressed,
@@ -36,11 +38,14 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
     final directPresence = _resolveDirectChatPresence();
 
     return AppBar(
-      titleSpacing: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
-      ),
+      automaticallyImplyLeading: false,
+      titleSpacing: showBackButton ? 0 : 8,
+      leading: showBackButton
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
+            )
+          : null,
       title: Row(
         children: <Widget>[
           GestureDetector(

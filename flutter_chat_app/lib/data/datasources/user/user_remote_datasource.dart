@@ -6,23 +6,23 @@ import 'package:injectable/injectable.dart';
 abstract class UserRemoteDataSource {
   /// Get user profile for the current authenticated user
   Future<UserModel> getCurrentUserProfile();
-  
+
   /// Get user profile by ID
   Future<UserModel> getUserProfile(String userId);
-  
+
   /// Search for users by name or username
   Future<List<UserModel>> searchUsers(String query, {int limit = 20});
-  
+
   /// Get user contacts/friends
   Future<List<UserModel>> getUserContacts();
-  
+
   /// Update user profile
   Future<UserModel> updateUserProfile({
     String? displayName,
     String? bio,
     String? avatarUrl,
   });
-  
+
   /// Set user online/offline status
   Future<bool> setUserStatus(bool isOnline);
 }
@@ -31,10 +31,31 @@ abstract class UserRemoteDataSource {
 @lazySingleton
 class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   final GraphQLClientWrapper _client;
-  
+
   /// Constructor
   UserRemoteDataSourceImpl(this._client);
-  
+
+  Future<Map<String, dynamic>?> _fetchOfficeUserProfile(String userId) async {
+    final result = await _client.query(
+      '''
+      query ManagementGetEmployee(\$id: String!) {
+        managementGetEmployee(id: \$id) {
+          id
+          fullname
+          phone
+          email
+          status
+          imageUrls
+        }
+      }
+      ''',
+      variables: {'id': userId},
+      operationName: 'ManagementGetEmployee',
+    );
+
+    return result['managementGetEmployee'] as Map<String, dynamic>?;
+  }
+
   @override
   Future<UserModel> getCurrentUserProfile() async {
     final result = await _client.query(
@@ -57,36 +78,57 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       throw Exception('Failed to get current user profile');
     }
 
-    return UserModel.fromMap(profile);
+    final userId = (profile['id'] ?? '').toString().trim();
+    if (userId.isEmpty) {
+      return UserModel.fromMap(profile);
+    }
+
+    // Identity profile đang không map đúng avatar/fullname cho OfficeUser,
+    // nên lấy chuẩn từ managementGetEmployee (OfficeUser).
+    Map<String, dynamic>? officeProfile;
+    try {
+      officeProfile = await _fetchOfficeUserProfile(userId);
+    } catch (_) {
+      return UserModel.fromMap(profile);
+    }
+    if (officeProfile == null) {
+      return UserModel.fromMap(profile);
+    }
+
+    final officeFullName = (officeProfile['fullname'] as String?)?.trim();
+    final officeImageUrls = officeProfile['imageUrls'];
+    final hasOfficeImageUrls =
+        officeImageUrls is List && officeImageUrls.isNotEmpty;
+
+    final mergedProfile = <String, dynamic>{
+      ...profile,
+      ...officeProfile,
+      'id': userId,
+      if (officeFullName != null && officeFullName.isNotEmpty) ...{
+        'fullname': officeFullName,
+        'name': officeFullName,
+      },
+      if (hasOfficeImageUrls) ...{
+        'imageUrls': officeImageUrls,
+        // Force UserModel.fromMap ưu tiên imageUrls thay vì avatar identity.
+        'avatar': null,
+        'avatarUrl': null,
+      },
+    };
+
+    return UserModel.fromMap(mergedProfile);
   }
-  
+
   @override
   Future<UserModel> getUserProfile(String userId) async {
-    final result = await _client.query(
-      '''
-      query ManagementGetEmployee(\$id: String!) {
-        managementGetEmployee(id: \$id) {
-          id
-          fullname
-          phone
-          email
-          status
-          imageUrls
-        }
-      }
-      ''',
-      variables: {'id': userId},
-      operationName: 'ManagementGetEmployee',
-    );
-
-    final profile = result['managementGetEmployee'] as Map<String, dynamic>?;
+    final profile = await _fetchOfficeUserProfile(userId);
     if (profile == null) {
       throw Exception('Failed to get user profile');
     }
 
     return UserModel.fromMap(profile);
   }
-  
+
   @override
   Future<List<UserModel>> searchUsers(String query, {int limit = 20}) async {
     final result = await _client.query(
@@ -116,7 +158,8 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       operationName: 'OfficeEmployeeFullOrgChartList',
     );
 
-    final response = result['officeEmployeeFullOrgChartList'] as Map<String, dynamic>?;
+    final response =
+        result['officeEmployeeFullOrgChartList'] as Map<String, dynamic>?;
     if (response == null) return [];
 
     final usersData = response['officeUsers'] as List<dynamic>?;
@@ -124,7 +167,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
 
     return usersData.map((userData) => UserModel.fromMap(userData)).toList();
   }
-  
+
   @override
   Future<List<UserModel>> getUserContacts() async {
     final result = await _client.query(
@@ -152,15 +195,18 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       operationName: 'OfficeEmployeeFullOrgChartList',
     );
 
-    final response = result['officeEmployeeFullOrgChartList'] as Map<String, dynamic>?;
+    final response =
+        result['officeEmployeeFullOrgChartList'] as Map<String, dynamic>?;
     if (response == null) return [];
 
     final contactsData = response['officeUsers'] as List<dynamic>?;
     if (contactsData == null) return [];
 
-    return contactsData.map((contactData) => UserModel.fromMap(contactData)).toList();
+    return contactsData
+        .map((contactData) => UserModel.fromMap(contactData))
+        .toList();
   }
-  
+
   @override
   Future<UserModel> updateUserProfile({
     String? displayName,
@@ -170,7 +216,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
     // Note: Server does not have a direct updateUserProfile mutation
     // Avatar update should use officeEmployeeAvatarUpdate mutation
     // For now, return current profile as this feature is not fully supported
-    return await getCurrentUserProfile();
+    return getCurrentUserProfile();
   }
 
   @override
@@ -180,4 +226,4 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
     // Return true as a no-op for now
     return true;
   }
-} 
+}

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
+import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/navigation/app_scaffold.dart';
 import 'package:go_router/go_router.dart';
 
 /// Login page
 class LoginPage extends StatefulWidget {
   /// Constructor
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -45,9 +46,11 @@ class _LoginPageState extends State<LoginPage> {
         builder: (context, state) {
           final isLoading = state is AuthLoading &&
               (state.operation == 'login' || state.operation == 'sso_login');
-          final isSsoLoading = state is AuthLoading && state.operation == 'sso_login';
+          final isSsoLoading =
+              state is AuthLoading && state.operation == 'sso_login';
 
-          return Scaffold(
+          return AppScaffold(
+            dismissKeyboardOnTap: true,
             appBar: AppBar(
               title: Text(context.l10n.login),
             ),
@@ -193,7 +196,8 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 16),
 
                   TextButton(
-                    onPressed: isLoading ? null : () => context.go('/forgot-password'),
+                    onPressed:
+                        isLoading ? null : () => context.go('/forgot-password'),
                     child: Text(context.l10n.forgotPassword),
                   ),
 
@@ -202,7 +206,8 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       Text(context.l10n.dontHaveAccount),
                       TextButton(
-                        onPressed: isLoading ? null : () => context.go('/register'),
+                        onPressed:
+                            isLoading ? null : () => context.go('/register'),
                         child: Text(context.l10n.register),
                       ),
                     ],
@@ -216,4 +221,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
- 

@@ -11,17 +11,20 @@ import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
 import 'package:flutter_chat_app/domain/entities/user_presence.dart';
+import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/features/chat/domain/entities/chat_draft_entity.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat_draft/chat_draft_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/chat_conversation_preview_resolver.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_conversation_tile.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/conversation_type_tab_bar.dart';
+import 'package:flutter_chat_app/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/lists/app_list_view.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/media.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:get_it/get_it.dart';
@@ -111,6 +114,47 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
+  void _openSettingsPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const SettingsPage(),
+        settings: const RouteSettings(name: '/settings'),
+      ),
+    );
+  }
+
+  Widget _buildProfileShortcut(AuthState authState) {
+    if (authState is! AuthAuthenticated) {
+      return const SizedBox.shrink();
+    }
+
+    final user = authState.user;
+    final avatarUrl = user.avatar?.trim();
+    final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
+    final displayName = (user.fullName?.trim().isNotEmpty ?? false)
+        ? user.fullName!.trim()
+        : user.username.trim();
+    final fallbackName = displayName.isNotEmpty ? displayName : user.id;
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: Tooltip(
+        message: context.l10n.settingsTitle,
+        child: hasAvatar
+            ? AppAvatar.network(
+                imageUrl: avatarUrl,
+                size: AvatarSize.small,
+                onTap: _openSettingsPage,
+              )
+            : AppAvatar.initials(
+                name: fallbackName,
+                size: AvatarSize.small,
+                onTap: _openSettingsPage,
+              ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -172,6 +216,10 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                           child: AppText(context.l10n.createNewGroup),
                         ),
                       ],
+                    ),
+                    BlocBuilder<AuthBloc, AuthState>(
+                      builder: (context, authState) =>
+                          _buildProfileShortcut(authState),
                     ),
                   ],
                 ),

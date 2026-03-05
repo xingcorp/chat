@@ -2258,11 +2258,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     final subtitleText = _isOtherTyping && _typingUserName != null
         ? context.l10n.isTyping(_typingUserName!)
         : context.l10n.online;
+    final showBackButton = !context.isDesktop && Navigator.of(context).canPop();
 
     if (_chat != null) {
       return ChatHeader(
         chat: _chat!,
-        onBackPressed: () => Navigator.of(context).pop(),
+        showBackButton: showBackButton,
+        onBackPressed:
+            showBackButton ? () => Navigator.of(context).maybePop() : null,
         onInfoPressed: _showChatInfo,
         onAddMemberPressed:
             _chat!.type == ChatType.group ? _showAddMember : null,
