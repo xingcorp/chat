@@ -24,7 +24,6 @@ import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/data/managers/sync_metadata_manager.dart';
 import 'package:flutter_chat_app/data/strategies/gap_detection_logic.dart';
-import 'package:flutter_chat_app/data/strategies/message_merge_strategy.dart';
 import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
 import 'package:flutter_chat_app/domain/usecases/message/add_reaction_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/delete_message_usecase.dart';
@@ -1181,7 +1180,13 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     }
   }
 
-  /// Handle background fetch completion — merge local + server + tombstones
+  /// Handle background fetch completion — re-read from Isar (upsert already handled dedup)
+  ///
+  /// Since the repository's _fetchAndCacheFromRemote / getMessagesDelta already
+  /// upserts server messages into Isar (with atomic dedup via _resolveExisting),
+  /// we simply re-read the merged data from local storage instead of performing
+  /// manual MessageMergeStrategy merge. This eliminates the duplicate bug and
+  /// simplifies the entire flow.
   Future<void> _onBackgroundFetchCompleted(
     _BackgroundFetchCompleted event,
     Emitter<MessageState> emit,
@@ -1201,50 +1206,67 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       return;
     }
 
-    // logger.i('[TwoPhase] _onBackgroundFetchCompleted: localCount=${currentState.messages.length} serverCount=${event.serverMessages.length} isDelta=${event.isDelta}');
-
-    // Get tombstones for this chat (async load from disk if needed)
-    await _tombstoneStore.loadFromDisk(event.chatId);
-    final tombstones = _tombstoneStore.getTombstonesForChat(event.chatId);
-
-    // Merge local + server + tombstones with correct mode
-    final mergeMode = event.isDelta ? MergeMode.delta : MergeMode.fullPage;
-    final merged = MessageMergeStrategy.merge(
-      localMessages: currentState.messages,
-      serverMessages: event.serverMessages,
-      tombstones: tombstones,
-      mergeMode: mergeMode,
+    // === KEY CHANGE: Re-read from Isar instead of manual merge ===
+    // The repository already upserted server messages into Isar with atomic
+    // dedup. We re-read to get the clean, merged, deduplicated list.
+    final localResult = await _getMessages.repository.getMessagesFromLocal(
+      event.chatId,
+      limit: currentState.messages.length > event.fetchLimit
+          ? currentState.messages.length
+          : event.fetchLimit,
     );
 
-    final newestTs =
-        merged.isNotEmpty ? merged.first.createdAt.toIso8601String() : 'N/A';
-    final oldestTs =
-        merged.isNotEmpty ? merged.last.createdAt.toIso8601String() : 'N/A';
-    // logger.i('[TwoPhase] Merge result: count=${merged.length} newest=$newestTs oldest=$oldestTs mode=$mergeMode');
+    final merged = localResult.fold(
+      (_) => currentState.messages, // On error, keep current state
+      (messages) => messages,
+    );
+
+    // Apply tombstones (deleted messages) — still needed for hard-delete consistency
+    await _tombstoneStore.loadFromDisk(event.chatId);
+    final tombstones = _tombstoneStore.getTombstonesForChat(event.chatId);
+    final tombstoneIds = tombstones.map((t) => t.messageId).toSet();
+
+    final filteredMerged = tombstoneIds.isEmpty
+        ? merged
+        : merged.where((m) => !tombstoneIds.contains(m.id)).toList();
+
+    // Preserve optimistic messages (sending/pending) that may not be in Isar yet
+    // These are draft messages with clientId that haven't been confirmed by server
+    final optimisticMessages = currentState.messages
+        .where((m) =>
+            m.clientId != null &&
+            (m.localStatus == MessageStatus.sending ||
+                m.localStatus == MessageStatus.pending ||
+                m.localStatus == MessageStatus.failed))
+        .toList();
+
+    // Merge: server-synced data from Isar + optimistic messages from BLoC state
+    final mergedIds = filteredMerged.map((m) => m.id).toSet();
+    final missingOptimistic =
+        optimisticMessages.where((m) => !mergedIds.contains(m.id)).toList();
+
+    final finalMessages = [...missingOptimistic, ...filteredMerged];
+    finalMessages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     // Update sync metadata
-    unawaited(_syncMetadataManager.updateFromMessages(event.chatId, merged));
+    unawaited(_syncMetadataManager.updateFromMessages(event.chatId, finalMessages));
     _cacheSyncStrategy.resetChatMessagesDirtyFlag(event.chatId);
 
-    // hasReachedMax: only meaningful for full page fetch.
-    // Delta sync returning fewer than pageSize does NOT mean we've reached the end —
-    // it just means there are few new messages.
+    // hasReachedMax: only meaningful for full page fetch
     final hasReachedMax = event.isDelta
-        ? currentState.hasReachedMax // preserve existing value for delta
+        ? currentState.hasReachedMax
         : event.serverMessages.length < event.fetchLimit;
 
     emit(currentState.copyWith(
-      messages: merged,
-      uiMessages: _transformMessages(merged),
+      messages: finalMessages,
+      uiMessages: _transformMessages(finalMessages),
       dataSource: MessageDataSource.merged,
       isBackgroundFetching: false,
       hasReachedMax: hasReachedMax,
-      // copyWith preserves conversationDetail automatically (freezed)
-      // — no need to explicitly re-assign it
     ));
 
     logger.i(
-        '[TwoPhase] _onBackgroundFetchCompleted EMITTED new state: mergedCount=${merged.length} dataSource=merged bgFetching=false blocHashCode=$hashCode');
+        '[TwoPhase] _onBackgroundFetchCompleted EMITTED: mergedCount=${finalMessages.length} (isar=${filteredMerged.length} + optimistic=${missingOptimistic.length}) dataSource=merged bgFetching=false');
 
     // Flush buffered socket events
     final bufferedEvents = _socketEventBuffer.stopBuffering();

@@ -69,6 +69,7 @@ class MessageModel {
   final MessageType type;
 
   /// Status of the message
+  @Index()
   @enumValue
   final MessageStatus status;
 

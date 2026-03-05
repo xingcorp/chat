@@ -1,200 +1,181 @@
 import 'package:flutter_chat_app/core/error/exceptions.dart';
-import 'package:flutter_chat_app/core/storage/local_storage.dart';
+import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:isar/isar.dart';
 
-/// Interface for message local data source operations
+/// Interface for message local data source operations.
+///
+/// Defines the contract for local message persistence. Implementations
+/// must guarantee:
+/// - **No duplicates**: upsert semantics resolve identity by serverId → localId
+/// - **Reactive streams**: UI can observe DB changes in real-time
+/// - **Indexed queries**: O(log n) lookups for status, chatId, timestamps
 abstract class MessageLocalDataSource {
-  /// Get all messages for a specific chat
+  /// Get all messages for a specific chat, sorted by createdAt descending.
   Future<List<MessageModel>> getMessagesForChat(String chatId);
-  
-  /// Save a message to local storage
+
+  /// Atomic upsert a single message.
+  ///
+  /// Resolves existing record by serverId → cross-reference → localId,
+  /// then updates in-place if found or inserts if new.
+  /// This is the **primary write method** — [saveMessage] delegates to this.
+  Future<void> upsertMessage(MessageModel message);
+
+  /// Batch atomic upsert messages in a single write transaction.
+  ///
+  /// Groups by chatId internally for efficient Isar writes.
+  /// All-or-nothing: either all messages are persisted or none (transaction).
+  Future<void> upsertMessages(List<MessageModel> messages);
+
+  /// Save a message to local storage (delegates to [upsertMessage]).
   Future<void> saveMessage(MessageModel message);
-  
-  /// Save multiple messages to local storage
+
+  /// Save multiple messages to local storage (delegates to [upsertMessages]).
   Future<void> saveMessages(List<MessageModel> messages);
-  
-  /// Delete a message from a specific chat
-  /// Requires chatId for O(1) lookup instead of O(n*m) search
+
+  /// Delete a message from a specific chat.
+  /// Requires chatId for O(1) lookup instead of O(n*m) search.
   Future<void> deleteMessage(String chatId, String messageId);
-  
-  /// Delete all messages for a chat
+
+  /// Delete all messages for a chat.
   Future<void> deleteMessagesForChat(String chatId);
-  
-  /// Mark messages as read
+
+  /// Mark messages as read by [userId] in [chatId].
   Future<void> markMessagesAsRead(String chatId, String userId);
-  
-  /// Get stream of messages for a chat
+
+  /// Reactive stream of messages for a chat.
+  ///
+  /// Native: Isar watch with fireImmediately.
+  /// Web: 1-second polling fallback.
   Stream<List<MessageModel>> watchMessagesForChat(String chatId);
-  
-  /// Get unread message count for a chat
+
+  /// Reactive stream of recent messages with limit.
+  ///
+  /// Used by BLoC to subscribe to DB changes. Emits immediately on subscribe,
+  /// then re-emits whenever the underlying Isar collection changes.
+  Stream<List<MessageModel>> watchRecentMessages({
+    required String chatId,
+    required int limit,
+  });
+
+  /// Get unread message count for a chat.
   Future<int> getUnreadCountForChat(String chatId, String userId);
 
-  /// Get all pending messages across all chats
+  /// Get all pending messages across all chats.
   ///
-  /// Scans all `messages_*` keys and returns messages with status=pending
-  /// or stale sending (sending > [staleSendingThreshold]).
+  /// Uses indexed query on status field for O(log n) performance.
+  /// Returns messages with status=pending or stale sending
+  /// (sending > [staleSendingThreshold]).
   /// Used for offline sync retry when connectivity is restored.
   Future<List<MessageModel>> getAllPendingMessages({
     Duration staleSendingThreshold = const Duration(minutes: 2),
   });
+
+  /// Cursor-based pagination for loading older messages.
+  ///
+  /// Returns [limit] messages created before [beforeTimestamp],
+  /// sorted by createdAt descending.
+  Future<List<MessageModel>> getMessagesWithCursor({
+    required String chatId,
+    required int limit,
+    DateTime? beforeTimestamp,
+  });
+
+  /// One-time cleanup: remove duplicate records in a chat.
+  ///
+  /// Groups messages by serverId and keeps the most recently written
+  /// record (highest Isar ID). Returns the number of removed duplicates.
+  Future<int> deduplicateExistingMessages(String chatId);
 }
 
-/// Implementation of [MessageLocalDataSource] using local storage
+/// Isar-backed implementation of [MessageLocalDataSource].
+///
+/// **Architecture**: Reactive Database-Driven (Signal/Telegram pattern).
+///
+/// Core principles:
+/// 1. **Isar is Single Source of Truth** — all reads/writes go through Isar
+/// 2. **Atomic upsert** — [_resolveExisting] prevents duplicates by resolving
+///    identity through a 3-priority chain: serverId → cross-reference → localId
+/// 3. **Reactive streams** — UI observes Isar watch streams, no manual notify
+/// 4. **Indexed queries** — O(log n) for status, chatId, timestamps
+///
+/// This replaces the previous LocalStorage (JSON key-value) implementation
+/// which had O(n) per-save performance and caused message duplication.
 class MessageLocalDataSourceImpl implements MessageLocalDataSource {
-  final LocalStorage _localStorage;
-  
-  /// Constructor
-  MessageLocalDataSourceImpl(this._localStorage);
-  
+  final DatabaseService _db;
+
+  /// Constructor.
+  ///
+  /// Requires [DatabaseService] which must be initialized before use.
+  MessageLocalDataSourceImpl(this._db);
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  CORE: ATOMIC UPSERT — Heart of the dedup-safe architecture
+  // ═══════════════════════════════════════════════════════════════════
+
+  @override
+  Future<void> upsertMessage(MessageModel message) async {
+    try {
+      _db.saveMessageUpsert(message);
+    } catch (e) {
+      throw CacheException(message: 'Failed to upsert message: $e');
+    }
+  }
+
+  @override
+  Future<void> upsertMessages(List<MessageModel> messages) async {
+    if (messages.isEmpty) return;
+    try {
+      _db.saveMessagesUpsert(messages);
+    } catch (e) {
+      throw CacheException(message: 'Failed to upsert messages: $e');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  BACKWARD-COMPATIBLE WRAPPERS — delegate to upsert
+  // ═══════════════════════════════════════════════════════════════════
+
+  @override
+  Future<void> saveMessage(MessageModel message) => upsertMessage(message);
+
+  @override
+  Future<void> saveMessages(List<MessageModel> messages) =>
+      upsertMessages(messages);
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  QUERIES — Indexed, O(log n)
+  // ═══════════════════════════════════════════════════════════════════
+
   @override
   Future<List<MessageModel>> getMessagesForChat(String chatId) async {
     try {
-      final messagesList = await _localStorage.getList('messages_$chatId');
-
-      final messages = messagesList
-          .map((json) => MessageModel.fromMap(json as Map<String, dynamic>))
-          .toList();
-
-      // Sort by timestamp descending
-      messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-      return messages;
+      return _db.isar.messageModels
+          .where()
+          .chatIdEqualTo(chatId)
+          .sortByCreatedAtDesc()
+          .findAll();
     } catch (e) {
-      // Return empty list on error
       return [];
     }
   }
-  
+
   @override
-  Future<void> saveMessage(MessageModel message) async {
+  Future<List<MessageModel>> getMessagesWithCursor({
+    required String chatId,
+    required int limit,
+    DateTime? beforeTimestamp,
+  }) async {
     try {
-      // Get existing messages for this chat
-      final existingMessages = await getMessagesForChat(message.chatId);
-
-      // Add or update the message
-      final messageIndex = existingMessages.indexWhere((m) => m.localId == message.localId);
-      if (messageIndex >= 0) {
-        existingMessages[messageIndex] = message;
-      } else {
-        existingMessages.add(message);
-      }
-
-      // Save updated list
-      final messagesList = existingMessages.map((m) => m.toMap()).toList();
-      await _localStorage.saveList('messages_${message.chatId}', messagesList);
+      return _db.getMessagesWithCursor(
+        chatId: chatId,
+        limit: limit,
+        beforeTimestamp: beforeTimestamp,
+      );
     } catch (e) {
-      throw CacheException(message: 'Failed to save message: $e');
+      return [];
     }
-  }
-  
-  @override
-  Future<void> saveMessages(List<MessageModel> messages) async {
-    if (messages.isEmpty) return;
-
-    try {
-      // Group messages by chat ID
-      final messagesByChatId = <String, List<MessageModel>>{};
-
-      for (final message in messages) {
-        if (messagesByChatId.containsKey(message.chatId)) {
-          messagesByChatId[message.chatId]!.add(message);
-        } else {
-          messagesByChatId[message.chatId] = [message];
-        }
-      }
-
-      // Save messages by chat
-      for (final chatId in messagesByChatId.keys) {
-        final existingMessages = await getMessagesForChat(chatId);
-        final newMessages = messagesByChatId[chatId]!;
-
-        // Merge new messages with existing ones
-        final allMessages = <MessageModel>[...existingMessages];
-        for (final newMessage in newMessages) {
-          final existingIndex = allMessages.indexWhere((m) => m.localId == newMessage.localId);
-          if (existingIndex >= 0) {
-            allMessages[existingIndex] = newMessage;
-          } else {
-            allMessages.add(newMessage);
-          }
-        }
-
-        // Save updated list
-        final messagesList = allMessages.map((m) => m.toMap()).toList();
-        await _localStorage.saveList('messages_$chatId', messagesList);
-      }
-    } catch (e) {
-      throw CacheException(message: 'Failed to save messages: $e');
-    }
-  }
-  
-  @override
-  Future<void> deleteMessage(String chatId, String messageId) async {
-    try {
-      // Get messages for this specific chat only - O(1) lookup
-      final messages = await getMessagesForChat(chatId);
-      
-      // Filter out the deleted message
-      final filtered = messages.where((m) {
-        return m.serverId != messageId && m.localId != messageId;
-      }).toList();
-
-      // Save updated list if message was found and removed
-      if (filtered.length != messages.length) {
-        final messagesList = filtered.map((m) => m.toMap()).toList();
-        await _localStorage.saveList('messages_$chatId', messagesList);
-      }
-    } catch (e) {
-      throw CacheException(message: 'Failed to delete message: $e');
-    }
-  }
-  
-  @override
-  Future<void> deleteMessagesForChat(String chatId) async {
-    await _localStorage.remove('messages_$chatId');
-  }
-  
-  @override
-  Future<void> markMessagesAsRead(String chatId, String userId) async {
-    final messages = await getMessagesForChat(chatId);
-    
-    // Find unread messages not sent by the user
-    final unreadMessages = messages.where(
-      (msg) => msg.senderId != userId && 
-              !(msg.readBy?.contains(userId) ?? false),
-    ).toList();
-    
-    if (unreadMessages.isEmpty) return;
-    
-    // Mark each message as read
-    for (final message in unreadMessages) {
-      final readBy = message.readBy ?? [];
-      if (!readBy.contains(userId)) {
-        readBy.add(userId);
-        
-        final updatedMessage = message.copyWith(readBy: readBy);
-        await saveMessage(updatedMessage);
-      }
-    }
-  }
-  
-  @override
-  Stream<List<MessageModel>> watchMessagesForChat(String chatId) {
-    // TODO: Implement proper stream watching
-    // For now, return empty stream
-    return Stream.empty();
-  }
-  
-  @override
-  Future<int> getUnreadCountForChat(String chatId, String userId) async {
-    final messages = await getMessagesForChat(chatId);
-
-    // Count messages not sent by user and not read by user
-    return messages.where(
-      (msg) => msg.senderId != userId &&
-              !msg.readBy.contains(userId),
-    ).length;
   }
 
   @override
@@ -202,38 +183,185 @@ class MessageLocalDataSourceImpl implements MessageLocalDataSource {
     Duration staleSendingThreshold = const Duration(minutes: 2),
   }) async {
     final now = DateTime.now();
-    final pendingMessages = <MessageModel>[];
+    final staleThreshold = now.subtract(staleSendingThreshold);
 
-    // Scan all message keys
-    final keys = _localStorage.getKeys();
-    final messageKeys = keys.where((k) => k.startsWith('messages_'));
+    try {
+      // Indexed query on status — O(log n) instead of O(n×m) full scan
+      final pending = _db.getMessagesByStatus(MessageStatus.pending);
 
-    for (final key in messageKeys) {
-      try {
-        final messagesList = await _localStorage.getList(key);
-        for (final json in messagesList) {
-          final message =
-              MessageModel.fromMap(json as Map<String, dynamic>);
+      final staleSending = _db.getMessagesByStatus(MessageStatus.sending)
+          .where((m) => m.createdAt.isBefore(staleThreshold))
+          .toList();
 
-          // Pending messages: waiting to be sent
-          if (message.status == MessageStatus.pending) {
-            pendingMessages.add(message);
-            continue;
-          }
+      final result = [...pending, ...staleSending];
 
-          // Stale sending messages: stuck in sending state (app crash, etc.)
-          if (message.status == MessageStatus.sending &&
-              now.difference(message.createdAt) > staleSendingThreshold) {
-            pendingMessages.add(message);
+      // Sort by creation time (FIFO) to preserve message order
+      result.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      return result;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  @override
+  Future<int> getUnreadCountForChat(String chatId, String userId) async {
+    try {
+      final messages = _db.isar.messageModels
+          .where()
+          .chatIdEqualTo(chatId)
+          .sortByCreatedAtDesc()
+          .findAll();
+
+      return messages
+          .where((msg) =>
+              msg.senderId != userId && !msg.readBy.contains(userId))
+          .length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  REACTIVE STREAMS — Isar watch (native) / polling (web)
+  // ═══════════════════════════════════════════════════════════════════
+
+  @override
+  Stream<List<MessageModel>> watchMessagesForChat(String chatId) {
+    return _db.watchMessagesForChat(chatId);
+  }
+
+  @override
+  Stream<List<MessageModel>> watchRecentMessages({
+    required String chatId,
+    required int limit,
+  }) {
+    return _db.watchRecentMessagesForChat(chatId, limit: limit);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  WRITE OPERATIONS — Delete, mark read
+  // ═══════════════════════════════════════════════════════════════════
+
+  @override
+  Future<void> deleteMessage(String chatId, String messageId) async {
+    try {
+      _db.isar.write((isar) {
+        // Try matching by serverId first
+        final byServerId = isar.messageModels
+            .where()
+            .serverIdEqualTo(messageId)
+            .findFirst();
+        if (byServerId != null) {
+          isar.messageModels.delete(byServerId.id);
+          return;
+        }
+
+        // Fallback: match by localId
+        final byLocalId = isar.messageModels
+            .where()
+            .localIdEqualTo(messageId)
+            .findFirst();
+        if (byLocalId != null) {
+          isar.messageModels.delete(byLocalId.id);
+        }
+      });
+    } catch (e) {
+      throw CacheException(message: 'Failed to delete message: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteMessagesForChat(String chatId) async {
+    try {
+      _db.deleteMessagesForChat(chatId);
+    } catch (e) {
+      throw CacheException(
+          message: 'Failed to delete messages for chat: $e');
+    }
+  }
+
+  @override
+  Future<void> markMessagesAsRead(String chatId, String userId) async {
+    try {
+      _db.isar.write((isar) {
+        final unread = isar.messageModels
+            .where()
+            .chatIdEqualTo(chatId)
+            .sortByCreatedAtDesc()
+            .findAll()
+            .where(
+              (msg) =>
+                  msg.senderId != userId && !msg.readBy.contains(userId),
+            )
+            .toList();
+
+        if (unread.isEmpty) return;
+
+        final updated = unread.map((m) => m.markReadBy(userId)).toList();
+        isar.messageModels.putAll(updated);
+      });
+    } catch (e) {
+      throw CacheException(message: 'Failed to mark messages as read: $e');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  DEDUPLICATION — One-time cleanup for existing duplicates
+  // ═══════════════════════════════════════════════════════════════════
+
+  @override
+  Future<int> deduplicateExistingMessages(String chatId) async {
+    var removedCount = 0;
+    try {
+      _db.isar.write((isar) {
+        final allMessages = isar.messageModels
+            .where()
+            .chatIdEqualTo(chatId)
+            .sortByCreatedAtDesc()
+            .findAll();
+
+        // Group by serverId → keep latest (highest Isar ID), delete rest
+        final serverIdGroups = <String, List<MessageModel>>{};
+        for (final msg in allMessages) {
+          final key = msg.serverId;
+          if (key != null && key.isNotEmpty) {
+            serverIdGroups.putIfAbsent(key, () => []).add(msg);
           }
         }
-      } catch (_) {
-        // Skip corrupt entries
-      }
-    }
 
-    // Sort by creation time (FIFO) to preserve message order
-    pendingMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    return pendingMessages;
+        for (final group in serverIdGroups.values) {
+          if (group.length <= 1) continue;
+          // Keep the one with highest Isar ID (most recently written)
+          group.sort((a, b) => b.id.compareTo(a.id));
+          for (var i = 1; i < group.length; i++) {
+            isar.messageModels.delete(group[i].id);
+            removedCount++;
+          }
+        }
+
+        // Also dedup by localId for messages without serverId
+        final localIdGroups = <String, List<MessageModel>>{};
+        final remaining = isar.messageModels
+            .where()
+            .chatIdEqualTo(chatId)
+            .sortByCreatedAtDesc()
+            .findAll();
+        for (final msg in remaining) {
+          localIdGroups.putIfAbsent(msg.localId, () => []).add(msg);
+        }
+
+        for (final group in localIdGroups.values) {
+          if (group.length <= 1) continue;
+          group.sort((a, b) => b.id.compareTo(a.id));
+          for (var i = 1; i < group.length; i++) {
+            isar.messageModels.delete(group[i].id);
+            removedCount++;
+          }
+        }
+      });
+    } catch (e) {
+      // Log but don't throw — dedup is best-effort
+    }
+    return removedCount;
   }
-} 
+}

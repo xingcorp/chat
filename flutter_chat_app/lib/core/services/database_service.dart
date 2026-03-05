@@ -7,6 +7,7 @@ import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/models/offline_operation_model.dart';
 import 'package:flutter_chat_app/data/models/sync_metadata_model.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'dart:async';
 
 /// Service class responsible for managing the Isar database instance
@@ -672,6 +673,123 @@ class NativeDatabaseImplementation implements IDatabaseImplementation {
     });
   }
 
+  /// Atomic upsert message — resolves existing record by serverId or localId
+  /// before writing. Prevents duplicate messages regardless of ID source.
+  ///
+  /// Lookup priority:
+  ///   1. serverId (strongest server-side identity)
+  ///   2. Cross-reference: existing.localId == incoming.serverId
+  ///      (handles client-sent message being fetched from server)
+  ///   3. localId (for pending messages without serverId)
+  void saveMessageUpsert(MessageModel message) {
+    isar.write((isar) {
+      final existing = _resolveExistingMessage(isar, message);
+      final toSave = existing != null
+          ? message.copyWith(id: existing.id)
+          : message;
+      isar.messageModels.put(toSave);
+    });
+  }
+
+  /// Batch atomic upsert messages in a single write transaction.
+  void saveMessagesUpsert(List<MessageModel> messages) {
+    if (messages.isEmpty) return;
+    isar.write((isar) {
+      final toSave = <MessageModel>[];
+      for (final message in messages) {
+        final existing = _resolveExistingMessage(isar, message);
+        toSave.add(existing != null
+            ? message.copyWith(id: existing.id)
+            : message);
+      }
+      isar.messageModels.putAll(toSave);
+    });
+  }
+
+  /// Core identity resolution — finds existing record for a message.
+  ///
+  /// Solves the identity mismatch problem:
+  ///   Client sends: {localId: "UUID-1", serverId: null} → later updated to {serverId: "S1"}
+  ///   Server sync:  {localId: "S1",     serverId: "S1"}
+  ///   → Must recognize these as the SAME message.
+  MessageModel? _resolveExistingMessage(Isar isar, MessageModel incoming) {
+    // Priority 1: Match by serverId (strongest identity)
+    if (incoming.serverId != null && incoming.serverId!.isNotEmpty) {
+      final byServerId = isar.messageModels
+          .where()
+          .serverIdEqualTo(incoming.serverId!)
+          .findFirst();
+      if (byServerId != null) return byServerId;
+
+      // Priority 2: Cross-reference — existing.localId == incoming.serverId
+      final byLocalIdAsServerId = isar.messageModels
+          .where()
+          .localIdEqualTo(incoming.serverId!)
+          .findFirst();
+      if (byLocalIdAsServerId != null) return byLocalIdAsServerId;
+    }
+
+    // Priority 3: Match by localId (for pending messages)
+    final byLocalId = isar.messageModels
+        .where()
+        .localIdEqualTo(incoming.localId)
+        .findFirst();
+    return byLocalId;
+  }
+
+  /// Query messages by status — uses indexed field for O(log n) performance.
+  List<MessageModel> getMessagesByStatus(MessageStatus status) {
+    return isar.messageModels
+        .where()
+        .statusEqualTo(status)
+        .findAll();
+  }
+
+  /// Watch recent messages for a chat with limit and descending order.
+  ///
+  /// Uses Isar watch + Dart take() for limiting since Isar v4 QueryBuilder
+  /// does not support .limit() in the chain before .watch().
+  Stream<List<MessageModel>> watchRecentMessagesForChat(
+    String chatId, {
+    int limit = 20,
+  }) {
+    return _isar.messageModels
+        .where()
+        .chatIdEqualTo(chatId)
+        .sortByCreatedAtDesc()
+        .watch(fireImmediately: true)
+        .map((messages) => messages.take(limit).toList());
+  }
+
+  /// Get messages for chat with cursor-based pagination.
+  List<MessageModel> getMessagesWithCursor({
+    required String chatId,
+    required int limit,
+    DateTime? beforeTimestamp,
+  }) {
+    final allForChat = _isar.messageModels
+        .where()
+        .chatIdEqualTo(chatId)
+        .sortByCreatedAtDesc()
+        .findAll();
+
+    if (beforeTimestamp != null) {
+      return allForChat
+          .where((m) => m.createdAt.isBefore(beforeTimestamp))
+          .take(limit)
+          .toList();
+    }
+
+    return allForChat.take(limit).toList();
+  }
+
+  /// Delete all messages for a chat.
+  void deleteMessagesForChat(String chatId) {
+    isar.write((isar) {
+      isar.messageModels.where().chatIdEqualTo(chatId).deleteAll();
+    });
+  }
+
   /// Save user
   Future<void> saveUser(UserModel user) async {
     isar.write((isar) {
@@ -700,8 +818,6 @@ class NativeDatabaseImplementation implements IDatabaseImplementation {
     });
   }
 }
-
-// Add extensions to WebDatabaseImplementation class as well
 extension WebDatabaseImplementationExtension on WebDatabaseImplementation {
   /// Watch chats collection changes
   Stream<List<ChatModel>> watchChats() {
@@ -763,6 +879,107 @@ extension WebDatabaseImplementationExtension on WebDatabaseImplementation {
   Future<void> saveMessage(MessageModel message) async {
     isar.write((isar) {
       isar.messageModels.put(message);
+    });
+  }
+
+  /// Atomic upsert message (Web) — same logic as NativeDatabaseImplementation.
+  void saveMessageUpsert(MessageModel message) {
+    isar.write((isar) {
+      final existing = _resolveExistingMessage(isar, message);
+      final toSave = existing != null
+          ? message.copyWith(id: existing.id)
+          : message;
+      isar.messageModels.put(toSave);
+    });
+  }
+
+  /// Batch atomic upsert messages (Web).
+  void saveMessagesUpsert(List<MessageModel> messages) {
+    if (messages.isEmpty) return;
+    isar.write((isar) {
+      final toSave = <MessageModel>[];
+      for (final message in messages) {
+        final existing = _resolveExistingMessage(isar, message);
+        toSave.add(existing != null
+            ? message.copyWith(id: existing.id)
+            : message);
+      }
+      isar.messageModels.putAll(toSave);
+    });
+  }
+
+  /// Core identity resolution (Web) — same as NativeDatabaseImplementation.
+  MessageModel? _resolveExistingMessage(Isar isar, MessageModel incoming) {
+    if (incoming.serverId != null && incoming.serverId!.isNotEmpty) {
+      final byServerId = isar.messageModels
+          .where()
+          .serverIdEqualTo(incoming.serverId!)
+          .findFirst();
+      if (byServerId != null) return byServerId;
+
+      final byLocalIdAsServerId = isar.messageModels
+          .where()
+          .localIdEqualTo(incoming.serverId!)
+          .findFirst();
+      if (byLocalIdAsServerId != null) return byLocalIdAsServerId;
+    }
+
+    final byLocalId = isar.messageModels
+        .where()
+        .localIdEqualTo(incoming.localId)
+        .findFirst();
+    return byLocalId;
+  }
+
+  /// Query messages by status (Web).
+  List<MessageModel> getMessagesByStatus(MessageStatus status) {
+    return isar.messageModels
+        .where()
+        .statusEqualTo(status)
+        .findAll();
+  }
+
+  /// Watch recent messages for a chat (Web — polling fallback).
+  Stream<List<MessageModel>> watchRecentMessagesForChat(
+    String chatId, {
+    int limit = 20,
+  }) {
+    return Stream.periodic(const Duration(seconds: 1)).asyncMap((_) {
+      final messages = isar.messageModels
+          .where()
+          .chatIdEqualTo(chatId)
+          .sortByCreatedAtDesc()
+          .findAll();
+      return messages.take(limit).toList();
+    });
+  }
+
+  /// Get messages with cursor-based pagination (Web).
+  List<MessageModel> getMessagesWithCursor({
+    required String chatId,
+    required int limit,
+    DateTime? beforeTimestamp,
+  }) {
+    final allForChat = isar.messageModels
+        .where()
+        .chatIdEqualTo(chatId)
+        .sortByCreatedAtDesc()
+        .findAll();
+
+    if (beforeTimestamp != null) {
+      return allForChat
+          .where((m) => m.createdAt.isBefore(beforeTimestamp))
+          .take(limit)
+          .toList();
+    }
+
+    return allForChat.take(limit).toList();
+  }
+
+  /// Delete all messages for a chat (Web).
+  void deleteMessagesForChat(String chatId) {
+    isar.write((isar) {
+      isar.messageModels.where().chatIdEqualTo(chatId).deleteAll();
     });
   }
 
@@ -862,6 +1079,77 @@ extension DatabaseServiceExtension on DatabaseService {
             .saveMessage(message)
         : await (_implementation as NativeDatabaseImplementation)
             .saveMessage(message);
+  }
+
+  /// Atomic upsert message — prevents duplicates by resolving identity
+  /// through serverId → cross-reference → localId priority chain.
+  void saveMessageUpsert(MessageModel message) {
+    return _implementation is WebDatabaseImplementation
+        ? (_implementation as WebDatabaseImplementation)
+            .saveMessageUpsert(message)
+        : (_implementation as NativeDatabaseImplementation)
+            .saveMessageUpsert(message);
+  }
+
+  /// Batch atomic upsert messages in a single write transaction.
+  void saveMessagesUpsert(List<MessageModel> messages) {
+    return _implementation is WebDatabaseImplementation
+        ? (_implementation as WebDatabaseImplementation)
+            .saveMessagesUpsert(messages)
+        : (_implementation as NativeDatabaseImplementation)
+            .saveMessagesUpsert(messages);
+  }
+
+  /// Query messages by status (indexed for O(log n) performance).
+  List<MessageModel> getMessagesByStatus(MessageStatus status) {
+    return _implementation is WebDatabaseImplementation
+        ? (_implementation as WebDatabaseImplementation)
+            .getMessagesByStatus(status)
+        : (_implementation as NativeDatabaseImplementation)
+            .getMessagesByStatus(status);
+  }
+
+  /// Watch recent messages for a chat with limit.
+  /// Native: Isar native watch. Web: 1s polling fallback.
+  Stream<List<MessageModel>> watchRecentMessagesForChat(
+    String chatId, {
+    int limit = 20,
+  }) {
+    return _implementation is WebDatabaseImplementation
+        ? (_implementation as WebDatabaseImplementation)
+            .watchRecentMessagesForChat(chatId, limit: limit)
+        : (_implementation as NativeDatabaseImplementation)
+            .watchRecentMessagesForChat(chatId, limit: limit);
+  }
+
+  /// Get messages with cursor-based pagination.
+  List<MessageModel> getMessagesWithCursor({
+    required String chatId,
+    required int limit,
+    DateTime? beforeTimestamp,
+  }) {
+    return _implementation is WebDatabaseImplementation
+        ? (_implementation as WebDatabaseImplementation)
+            .getMessagesWithCursor(
+              chatId: chatId,
+              limit: limit,
+              beforeTimestamp: beforeTimestamp,
+            )
+        : (_implementation as NativeDatabaseImplementation)
+            .getMessagesWithCursor(
+              chatId: chatId,
+              limit: limit,
+              beforeTimestamp: beforeTimestamp,
+            );
+  }
+
+  /// Delete all messages for a chat.
+  void deleteMessagesForChat(String chatId) {
+    return _implementation is WebDatabaseImplementation
+        ? (_implementation as WebDatabaseImplementation)
+            .deleteMessagesForChat(chatId)
+        : (_implementation as NativeDatabaseImplementation)
+            .deleteMessagesForChat(chatId);
   }
 
   /// Save user

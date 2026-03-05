@@ -194,6 +194,14 @@ const MessageModelSchema = IsarGeneratedSchema(
         hash: false,
       ),
       IsarIndexSchema(
+        name: 'status',
+        properties: [
+          "status",
+        ],
+        unique: false,
+        hash: false,
+      ),
+      IsarIndexSchema(
         name: 'createdAt',
         properties: [
           "createdAt",

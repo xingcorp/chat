@@ -15,7 +15,6 @@ import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/device_capability_service.dart';
 import 'package:flutter_chat_app/core/services/image_editor_service.dart';
 import 'package:flutter_chat_app/core/network/socket_rate_limiter.dart';
-import 'package:flutter_chat_app/core/storage/local_storage.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/core/services/voice_note_playback_manager.dart';
 import 'package:flutter_chat_app/core/services/voice_recorder_service.dart';
@@ -149,7 +148,7 @@ Future<void> registerCoreModule(GetIt getIt) async {
 
   if (!getIt.isRegistered<MessageLocalDataSource>()) {
     getIt.registerLazySingleton<MessageLocalDataSource>(
-      () => MessageLocalDataSourceImpl(getIt<LocalStorage>()),
+      () => MessageLocalDataSourceImpl(getIt<DatabaseService>()),
     );
   }
 
