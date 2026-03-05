@@ -21,7 +21,11 @@ abstract class UserRepository {
   Future<Either<Failure, List<User>>> getUsers([int limit = 50]);
 
   /// Search for users by query string with online-first strategy
-  Future<Either<Failure, List<User>>> searchUsers(String query, {int limit = 20});
+  Future<Either<Failure, List<User>>> searchUsers(
+    String query, {
+    int limit = 20,
+    int page = 0,
+  });
 
   /// Update user status with remote-only strategy
   Future<Either<Failure, User?>> updateUserStatus(String userId, String status);

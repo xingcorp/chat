@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
@@ -21,6 +22,7 @@ import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/core/pagination/page_request.dart';
 import 'package:flutter_chat_app/domain/usecases/message/mark_as_read_usecase.dart';
+import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversations_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_local_conversations_usecase.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversation_detail_usecase.dart';
@@ -62,6 +64,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   final CurrentUserProvider _currentUserProvider;
   final PersistIncomingMessageUseCase _persistIncomingMessage;
   final ChatModuleEventBus _eventBus;
+  final IAttachmentRepository _attachmentRepository;
 
   // Subscriptions for real-time updates
   StreamSubscription<ChatMessage>? _messageSubscription;
@@ -96,6 +99,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     this._currentUserProvider,
     this._persistIncomingMessage,
     this._eventBus,
+    this._attachmentRepository,
   ) : super(const ChatState.initial()) {
     on<_LoadChats>(_onLoadChats);
     on<_LoadMoreChats>(_onLoadMoreChats);
@@ -484,20 +488,90 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       description: event.description,
     );
 
+    Chat? createdChat;
     result.fold(
       (failure) {
         logger.e('Failed to create chat: ${failure.message}');
         emit(ChatState.error(message: getUserErrorMessage(failure)));
       },
       (chat) {
-        logger.i('Chat created successfully: ${chat.id}');
-        emit(ChatState.chatDetailsLoaded(chat: chat));
-
-        // Mark chat list as dirty so the next _onLoadChats knows to refresh.
-        // This ensures the newly created conversation appears when the user
-        // navigates back to the conversation list.
-        _cacheSyncStrategy.markChatListDirty();
+        createdChat = chat;
       },
+    );
+
+    final chat = createdChat;
+    if (chat == null) {
+      return;
+    }
+
+    var resolvedChat = chat;
+    if (event.type == ChatType.group &&
+        event.avatarBytes != null &&
+        event.avatarBytes!.isNotEmpty) {
+      resolvedChat = await _applyAvatarForCreatedGroup(
+        chat: chat,
+        avatarBytes: event.avatarBytes!,
+        avatarFileName: event.avatarFileName,
+      );
+    }
+
+    logger.i('Chat created successfully: ${resolvedChat.id}');
+    emit(ChatState.chatDetailsLoaded(chat: resolvedChat));
+
+    // Mark chat list as dirty so the next _onLoadChats knows to refresh.
+    // This ensures the newly created conversation appears when the user
+    // navigates back to the conversation list.
+    _cacheSyncStrategy.markChatListDirty();
+  }
+
+  Future<Chat> _applyAvatarForCreatedGroup({
+    required Chat chat,
+    required Uint8List avatarBytes,
+    String? avatarFileName,
+  }) async {
+    final uploadResult = await _attachmentRepository.uploadAttachment(
+      messageId: 'group-avatar-${chat.id}',
+      chatId: chat.id,
+      bytes: avatarBytes,
+      fileName: avatarFileName?.trim().isNotEmpty == true
+          ? avatarFileName!.trim()
+          : 'group_avatar_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
+
+    String? uploadedAvatarUrl;
+    uploadResult.fold(
+      (failure) {
+        logger.w(
+          'Create group avatar upload failed: ${failure.message}. '
+          'Continue without avatar update.',
+        );
+      },
+      (result) {
+        uploadedAvatarUrl = result.url;
+      },
+    );
+
+    final avatarUrl = uploadedAvatarUrl?.trim() ?? '';
+    if (avatarUrl.isEmpty) {
+      return chat;
+    }
+
+    final updateResult = await _updateGroup(
+      UpdateGroupParams(
+        conversationId: chat.id,
+        imageUrl: avatarUrl,
+      ),
+    );
+
+    return updateResult.fold(
+      (failure) {
+        logger.w(
+          'Create group avatar apply failed: ${failure.message}. '
+          'Continue with created chat.',
+        );
+        return chat;
+      },
+      (updatedChat) => updatedChat,
     );
   }
 

@@ -834,10 +834,6 @@ extension GetItInjectableX on _i174.GetIt {
           searchMessages: gh<_i56.SearchMessagesUseCase>(),
           logger: gh<_i221.AppLogger>(),
         ));
-    gh.factory<_i1028.ChatMembersBloc>(() => _i1028.ChatMembersBloc(
-          logger: gh<_i221.AppLogger>(),
-          chatRepository: gh<_i81.IChatRepository>(),
-        ));
     gh.factory<_i863.ChatBloc>(() => _i863.ChatBloc(
           gh<_i787.GetConversationsUseCase>(),
           gh<_i163.GetLocalConversationsUseCase>(),
@@ -855,6 +851,11 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i113.CurrentUserProvider>(),
           gh<_i962.PersistIncomingMessageUseCase>(),
           gh<_i1030.ChatModuleEventBus>(),
+          gh<_i817.IAttachmentRepository>(),
+        ));
+    gh.factory<_i1028.ChatMembersBloc>(() => _i1028.ChatMembersBloc(
+          logger: gh<_i221.AppLogger>(),
+          chatRepository: gh<_i81.IChatRepository>(),
         ));
     gh.factory<_i101.ConversationDetailBloc>(() => _i101.ConversationDetailBloc(
           getConversationDetail: gh<_i899.GetConversationDetailUseCase>(),

@@ -11,7 +11,8 @@ abstract class UserRemoteDataSource {
   Future<UserModel> getUserProfile(String userId);
 
   /// Search for users by name or username
-  Future<List<UserModel>> searchUsers(String query, {int limit = 20});
+  Future<List<UserModel>> searchUsers(String query,
+      {int limit = 20, int page = 0});
 
   /// Get user contacts/friends
   Future<List<UserModel>> getUserContacts();
@@ -130,7 +131,8 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   }
 
   @override
-  Future<List<UserModel>> searchUsers(String query, {int limit = 20}) async {
+  Future<List<UserModel>> searchUsers(String query,
+      {int limit = 20, int page = 0}) async {
     final result = await _client.query(
       '''
       query OfficeEmployeeFullOrgChartList(\$filter: UserOrgChartFilter!) {
@@ -149,7 +151,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       ''',
       variables: {
         'filter': {
-          'page': 0,
+          'page': page,
           'size': limit,
           'keyword': query,
           'onlyActive': true,

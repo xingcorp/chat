@@ -27,8 +27,8 @@ class UserRepositoryImpl extends BaseRepository implements UserRepository {
     required super.networkInfo,
     required super.logger,
     required super.performanceMonitor,
-  }) : _localDataSource = localDataSource,
-       _remoteDataSource = remoteDataSource;
+  })  : _localDataSource = localDataSource,
+        _remoteDataSource = remoteDataSource;
 
   @override
   Future<Either<Failure, User?>> getUserById(String userId) async {
@@ -64,7 +64,8 @@ class UserRepositoryImpl extends BaseRepository implements UserRepository {
         return remoteUsers.map((model) => model.toDomain()).toList();
       },
       cacheData: (users) async {
-        final userModels = users.map((user) => UserModel.fromDomain(user)).toList();
+        final userModels =
+            users.map((user) => UserModel.fromDomain(user)).toList();
         await _localDataSource.saveUsers(userModels);
       },
       operationName: 'getUsers',
@@ -72,23 +73,38 @@ class UserRepositoryImpl extends BaseRepository implements UserRepository {
   }
 
   @override
-  Future<Either<Failure, List<User>>> searchUsers(String query, {int limit = 20}) async {
+  Future<Either<Failure, List<User>>> searchUsers(
+    String query, {
+    int limit = 20,
+    int page = 0,
+  }) async {
     return executeOnlineFirst<List<User>>(
       remoteDataSource: () async {
-        final remoteUsers = await _remoteDataSource.searchUsers(query, limit: limit);
+        final remoteUsers = await _remoteDataSource.searchUsers(
+          query,
+          limit: limit,
+          page: page,
+        );
         return remoteUsers.map((model) => model.toDomain()).toList();
       },
       localDataSource: () async {
         // Local search - filter from all users
         final allUsers = await _localDataSource.getAllUsers();
-        final filteredUsers = allUsers.where((user) =>
-          user.username.toLowerCase().contains(query.toLowerCase()) ||
-          (user.displayName?.toLowerCase().contains(query.toLowerCase()) ?? false)
-        ).take(limit).toList();
+        final filteredUsers = allUsers
+            .where((user) =>
+                user.username.toLowerCase().contains(query.toLowerCase()) ||
+                (user.displayName
+                        ?.toLowerCase()
+                        .contains(query.toLowerCase()) ??
+                    false))
+            .skip(page * limit)
+            .take(limit)
+            .toList();
         return filteredUsers.map((model) => model.toDomain()).toList();
       },
       cacheData: (users) async {
-        final userModels = users.map((user) => UserModel.fromDomain(user)).toList();
+        final userModels =
+            users.map((user) => UserModel.fromDomain(user)).toList();
         await _localDataSource.saveUsers(userModels);
       },
       operationName: 'searchUsers',
@@ -96,11 +112,13 @@ class UserRepositoryImpl extends BaseRepository implements UserRepository {
   }
 
   @override
-  Future<Either<Failure, User?>> updateUserStatus(String userId, String status) async {
+  Future<Either<Failure, User?>> updateUserStatus(
+      String userId, String status) async {
     return executeRemoteOnly<User?>(
       remoteDataSource: () async {
         // TODO: Implement proper remote user status update
-        final isOnline = await _remoteDataSource.setUserStatus(status == 'online');
+        final isOnline =
+            await _remoteDataSource.setUserStatus(status == 'online');
         if (isOnline) {
           // Get updated user profile
           final updatedUser = await _remoteDataSource.getUserProfile(userId);
@@ -185,8 +203,6 @@ class UserRepositoryImpl extends BaseRepository implements UserRepository {
     );
   }
 
-
-
   @override
   Future<Either<Failure, List<User>>> getUserContacts() async {
     return executeOfflineFirst<List<User>>(
@@ -200,7 +216,8 @@ class UserRepositoryImpl extends BaseRepository implements UserRepository {
         return remoteContacts.map((model) => model.toDomain()).toList();
       },
       cacheData: (contacts) async {
-        final contactModels = contacts.map((user) => UserModel.fromDomain(user)).toList();
+        final contactModels =
+            contacts.map((user) => UserModel.fromDomain(user)).toList();
         await _localDataSource.saveUsers(contactModels);
       },
       operationName: 'getUserContacts',
@@ -257,7 +274,8 @@ class UserRepositoryImpl extends BaseRepository implements UserRepository {
       return Stream<Either<Failure, User>>.empty();
     } catch (e) {
       logger.e('Error subscribing to user status: $e');
-      return Stream.value(Left(ServerFailure(message: 'Failed to subscribe to user status: ${e.toString()}')));
+      return Stream.value(Left(ServerFailure(
+          message: 'Failed to subscribe to user status: ${e.toString()}')));
     }
   }
 }
