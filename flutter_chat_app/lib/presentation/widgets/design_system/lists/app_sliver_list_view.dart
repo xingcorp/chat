@@ -27,7 +27,10 @@ class AppSliverListView<T> extends BaseStatefulWidget {
     this.loadMoreTriggerThreshold = 240,
     this.autoLoadWhenNotScrollable = true,
     super.key,
-  });
+  }) : assert(
+          onLoadMore == null || controller != null,
+          'AppSliverListView requires a scroll controller for load-more.',
+        );
 
   final List<T> items;
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
@@ -51,8 +54,7 @@ class AppSliverListView<T> extends BaseStatefulWidget {
 }
 
 class _AppSliverListViewState<T> extends BaseState<AppSliverListView<T>> {
-  late ScrollController _scrollController;
-  bool _ownsController = false;
+  ScrollController? _scrollController;
   bool _isLoadingMoreInternally = false;
 
   @override
@@ -77,21 +79,13 @@ class _AppSliverListViewState<T> extends BaseState<AppSliverListView<T>> {
   }
 
   void _attachController(ScrollController? controller) {
-    if (controller != null) {
-      _scrollController = controller;
-      _ownsController = false;
-    } else {
-      _scrollController = ScrollController();
-      _ownsController = true;
-    }
-    _scrollController.addListener(_onScroll);
+    _scrollController = controller;
+    _scrollController?.addListener(_onScroll);
   }
 
   void _detachController() {
-    _scrollController.removeListener(_onScroll);
-    if (_ownsController) {
-      _scrollController.dispose();
-    }
+    _scrollController?.removeListener(_onScroll);
+    _scrollController = null;
   }
 
   bool get _canLoadMore {
@@ -103,9 +97,9 @@ class _AppSliverListViewState<T> extends BaseState<AppSliverListView<T>> {
   }
 
   void _onScroll() {
-    if (!_canLoadMore || !_scrollController.hasClients) return;
-    if (_scrollController.position.extentAfter >
-        widget.loadMoreTriggerThreshold) {
+    final controller = _scrollController;
+    if (controller == null || !_canLoadMore || !controller.hasClients) return;
+    if (controller.position.extentAfter > widget.loadMoreTriggerThreshold) {
       return;
     }
     _loadMore();
@@ -114,9 +108,12 @@ class _AppSliverListViewState<T> extends BaseState<AppSliverListView<T>> {
   void _scheduleAutoLoadMoreIfNeeded() {
     if (!widget.autoLoadWhenNotScrollable) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final controller = _scrollController;
       if (!mounted) return;
-      if (!_canLoadMore || !_scrollController.hasClients) return;
-      if (_scrollController.position.maxScrollExtent > 0) return;
+      if (controller == null || !_canLoadMore || !controller.hasClients) {
+        return;
+      }
+      if (controller.position.maxScrollExtent > 0) return;
       _loadMore();
     });
   }
