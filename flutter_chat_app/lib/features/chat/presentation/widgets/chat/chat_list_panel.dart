@@ -155,6 +155,7 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
     await ChatNavigationHelper.navigateToChatDetail(
       context,
       chatId: createdChatId,
+      receiverId: _extractReceiverIdIfPending(chat),
     );
   }
 
@@ -205,6 +206,31 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
       context,
       chatId: createdChatId,
     );
+  }
+
+  /// Extract receiverId for pending direct chats (temp numeric ID, no members).
+  String? _extractReceiverIdIfPending(Chat chat) {
+    final isPending =
+        chat.type == ChatType.direct && !chat.id.contains('-');
+    if (!isPending) return null;
+
+    final currentUserId = getIt<CurrentUserProvider>().currentUserId;
+    if (chat.participantIds.isNotEmpty) {
+      final otherId = chat.participantIds
+          .cast<String?>()
+          .firstWhere((id) => id != currentUserId, orElse: () => null);
+      if (otherId != null && otherId.isNotEmpty) return otherId;
+    }
+
+    if (chat.members.isNotEmpty) {
+      final otherMember = chat.members
+          .cast<ConversationMember?>()
+          .firstWhere(
+              (m) => m?.userId != currentUserId, orElse: () => null);
+      return otherMember?.userId;
+    }
+
+    return null;
   }
 
   Future<void> _onRefresh() async {
@@ -506,6 +532,7 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
         await ChatNavigationHelper.navigateToChatDetail(
           context,
           chatId: chat.id,
+          receiverId: _extractReceiverIdIfPending(chat),
         );
       },
     );

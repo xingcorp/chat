@@ -343,7 +343,8 @@ class MessageRepositoryImpl extends BaseRepository
         );
         if (kDebugMode) {
           logger.i('[sendMessage][remote] chatId=$chatId type=$serverType '
-              'replyMessageId=$replyMessageId urls=${attachmentIds.length}');
+              'replyMessageId=$replyMessageId urls=${attachmentIds.length} '
+              'receiverId=$receiverId isPendingDirect=${receiverId != null && receiverId.isNotEmpty}');
         }
         // For pending direct chats (no server conversation yet), pass receiverId
         // so backend auto-creates the conversation. Don't pass temp chatId as
@@ -635,6 +636,15 @@ class MessageRepositoryImpl extends BaseRepository
           // Try to send pending messages
           for (final pendingMessage in pendingMessages) {
             try {
+              // Skip pending direct chat messages (temp numeric chatId).
+              // These need receiverId from UI layer to create conversation.
+              if (!pendingMessage.chatId.contains('-')) {
+                logger.w(
+                    'syncMessages: skipping pending message ${pendingMessage.localId} — '
+                    'pending direct chat needs receiverId');
+                continue;
+              }
+
               final dto = await _remoteDataSource.sendMessage(
                 conversationId: pendingMessage.chatId,
                 type: pendingMessage.type.name.toUpperCase(),
@@ -736,6 +746,18 @@ class MessageRepositoryImpl extends BaseRepository
 
       for (final message in pendingMessages) {
         try {
+          // Skip pending direct chat messages (temp numeric chatId, no UUID hyphens).
+          // These require receiverId which is only available from the UI/Bloc layer.
+          // Once the navigation-layer fix propagates receiverId correctly, the first
+          // message will create the conversation with a real UUID chatId, so
+          // subsequent retry won't hit this path.
+          if (!message.chatId.contains('-')) {
+            logger.w(
+                'retryPendingMessages: skipping ${message.localId} — '
+                'pending direct chat (chatId=${message.chatId}) needs receiverId');
+            continue;
+          }
+
           // Lock: mark as sending to prevent duplicate retry
           final sendingMessage =
               message.copyWith(status: MessageStatus.sending);

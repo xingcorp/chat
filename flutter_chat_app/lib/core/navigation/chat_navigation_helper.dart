@@ -67,7 +67,9 @@ class ChatNavigationHelper {
   }) {
     if (isPackageMode) {
       return Navigator.push(
-          context, ChatModule.chatDetailRoute(chatId: chatId));
+          context,
+          ChatModule.chatDetailRoute(
+              chatId: chatId, receiverId: receiverId));
     } else {
       return Navigator.push(
         context,
@@ -134,12 +136,17 @@ class ChatNavigationHelper {
   }
 
   /// Returns a route to chat detail page.
-  static Route<dynamic> chatDetailRoute({required String chatId}) {
+  static Route<dynamic> chatDetailRoute({
+    required String chatId,
+    String? receiverId,
+  }) {
     if (isPackageMode) {
-      return ChatModule.chatDetailRoute(chatId: chatId);
+      return ChatModule.chatDetailRoute(
+          chatId: chatId, receiverId: receiverId);
     } else {
       return MaterialPageRoute(
-        builder: (_) => ChatDetailsPage(chatId: chatId),
+        builder: (_) =>
+            ChatDetailsPage(chatId: chatId, receiverId: receiverId),
         settings: RouteSettings(name: '/chat/$chatId'),
       );
     }
@@ -192,17 +199,19 @@ class ChatNavigationHelper {
   static Future<void> replaceToChatDetail(
     BuildContext context, {
     required String chatId,
+    String? receiverId,
   }) {
     if (isPackageMode) {
       return Navigator.pushReplacement(
         context,
-        ChatModule.chatDetailRoute(chatId: chatId),
+        ChatModule.chatDetailRoute(chatId: chatId, receiverId: receiverId),
       );
     } else {
       return Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => ChatDetailsPage(chatId: chatId),
+          builder: (_) =>
+              ChatDetailsPage(chatId: chatId, receiverId: receiverId),
           settings: RouteSettings(name: '/chat/$chatId'),
         ),
       );
