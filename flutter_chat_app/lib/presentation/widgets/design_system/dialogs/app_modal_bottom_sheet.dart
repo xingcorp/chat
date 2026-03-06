@@ -83,7 +83,13 @@ class AppModalBottomSheet extends BaseBottomSheet {
     bool enableDrag = true,
   }) {
     final screenHeight = MediaQuery.sizeOf(context).height;
-    final clampedMaxChildSize = maxChildSize.clamp(minChildSize, 1.0);
+    final clampedMinChildSize = minChildSize.clamp(0.0, 1.0);
+    final clampedMaxChildSize = maxChildSize.clamp(clampedMinChildSize, 1.0);
+    final clampedInitialChildSize =
+        initialChildSize.clamp(clampedMinChildSize, clampedMaxChildSize);
+    final normalizedMinChildSize = clampedMinChildSize / clampedMaxChildSize;
+    final normalizedInitialChildSize =
+        clampedInitialChildSize / clampedMaxChildSize;
 
     return BaseBottomSheet.show<T>(
       context: context,
@@ -97,9 +103,9 @@ class AppModalBottomSheet extends BaseBottomSheet {
         builder: builder,
         title: title,
         showCloseButton: showCloseButton,
-        initialChildSize: initialChildSize,
-        minChildSize: minChildSize,
-        maxChildSize: maxChildSize,
+        initialChildSize: normalizedInitialChildSize,
+        minChildSize: normalizedMinChildSize,
+        maxChildSize: 1.0,
       ),
     );
   }

@@ -414,18 +414,52 @@ class _ChatMembersPageState extends BaseState<ChatMembersPage> {
 
   Widget _buildAvatar(ConversationMember member) {
     final avatarUrl = member.avatarUrl?.trim();
-    if (avatarUrl != null && avatarUrl.isNotEmpty) {
-      return AppAvatar.network(
-        imageUrl: avatarUrl,
-        size: AvatarSize.medium,
-      );
+    final avatar = avatarUrl != null && avatarUrl.isNotEmpty
+        ? AppAvatar.network(
+            imageUrl: avatarUrl,
+            size: AvatarSize.medium,
+          )
+        : AppAvatar.initials(
+            name: member.fullName ?? '?',
+            size: AvatarSize.medium,
+            backgroundColor:
+                _isDark ? AppColors.primaryDarkMode : AppColors.primary,
+            foregroundColor: AppColors.textPrimaryDarkMode,
+          );
+
+    if (!member.isAdmin) {
+      return avatar;
     }
 
-    return AppAvatar.initials(
-      name: member.fullName ?? '?',
-      size: AvatarSize.medium,
-      backgroundColor: _isDark ? AppColors.primaryDarkMode : AppColors.primary,
-      foregroundColor: AppColors.textPrimaryDarkMode,
+    return SizedBox(
+      width: AppDimens.avatarSizeMedium,
+      height: AppDimens.avatarSizeMedium,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          avatar,
+          Positioned(
+            right: -AppDimens.spaceXSmall / 2,
+            bottom: -AppDimens.spaceXSmall / 2,
+            child: Container(
+              key: ValueKey<String>('chat_member_admin_badge_${member.userId}'),
+              padding: const EdgeInsets.all(AppDimens.paddingXSmall / 2),
+              decoration: BoxDecoration(
+                color: _isDark ? AppColors.surfaceDarkMode : AppColors.surface,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: _isDark ? AppColors.borderDarkMode : AppColors.border,
+                ),
+              ),
+              child: Icon(
+                Icons.key_rounded,
+                size: AppDimens.iconSizeXSmall,
+                color: AppColors.warning,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -469,8 +503,7 @@ class _ChatMembersPageState extends BaseState<ChatMembersPage> {
     final canDemote = member.isAdmin &&
         member.userId != currentUserId &&
         _hasAnotherAdmin(state.members, member.userId);
-    final canRemove = member.userId != currentUserId &&
-        (!member.isAdmin || _hasAnotherAdmin(state.members, member.userId));
+    final canRemove = member.userId != currentUserId;
 
     await AppModalBottomSheet.show<void>(
       context: context,
@@ -485,7 +518,7 @@ class _ChatMembersPageState extends BaseState<ChatMembersPage> {
             if (canPromote)
               AppListTile(
                 leading: Icon(
-                  Icons.admin_panel_settings_outlined,
+                  Icons.key_rounded,
                   color: _isDark ? AppColors.iconDarkMode : AppColors.icon,
                 ),
                 title: context.l10n.makeGroupAdmin,
@@ -502,7 +535,7 @@ class _ChatMembersPageState extends BaseState<ChatMembersPage> {
             if (canDemote)
               AppListTile(
                 leading: Icon(
-                  Icons.shield_outlined,
+                  Icons.person_remove,
                   color: _isDark ? AppColors.iconDarkMode : AppColors.icon,
                 ),
                 title: context.l10n.removeGroupAdmin,
@@ -519,7 +552,7 @@ class _ChatMembersPageState extends BaseState<ChatMembersPage> {
             if (canRemove)
               AppListTile(
                 leading: const Icon(
-                  Icons.person_remove_outlined,
+                  Icons.clear,
                   color: AppColors.error,
                 ),
                 title: context.l10n.removeMemberFromGroup,

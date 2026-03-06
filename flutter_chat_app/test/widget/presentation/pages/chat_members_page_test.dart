@@ -114,13 +114,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(
+      find.byKey(const ValueKey<String>('chat_member_admin_badge_u1')),
+      findsOneWidget,
+    );
     expect(find.byTooltip('Member actions'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Member actions'));
     await tester.pumpAndSettle();
 
     expect(find.text('Make group admin'), findsOneWidget);
-    await tester.ensureVisible(find.text('Make group admin'));
+    expect(find.text('Make group admin').hitTestable(), findsOneWidget);
 
     await tester.tap(find.text('Make group admin'));
     await tester.pumpAndSettle();
@@ -169,13 +173,23 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(
+      find.byKey(const ValueKey<String>('chat_member_admin_badge_u1')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('chat_member_admin_badge_u2')),
+      findsOneWidget,
+    );
     expect(find.byTooltip('Thao tác thành viên'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Thao tác thành viên'));
     await tester.pumpAndSettle();
 
     expect(find.text('Gỡ quyền quản trị'), findsOneWidget);
-    await tester.ensureVisible(find.text('Gỡ quyền quản trị'));
+    expect(find.text('Xóa khỏi nhóm'), findsOneWidget);
+    expect(find.text('Gỡ quyền quản trị').hitTestable(), findsOneWidget);
+    expect(find.text('Xóa khỏi nhóm').hitTestable(), findsOneWidget);
 
     await tester.tap(find.text('Gỡ quyền quản trị'));
     await tester.pumpAndSettle();
@@ -183,6 +197,55 @@ void main() {
     verify(
       () => bloc.add(
         const ChatMembersRemoveAdmin(
+          chatId: 'chat-1',
+          memberId: 'u2',
+        ),
+      ),
+    ).called(1);
+  });
+
+  testWidgets('shows remove action and dispatches remove event after confirm',
+      (tester) async {
+    final state = ChatMembersLoaded(
+      members: chat.members,
+      filteredMembers: chat.members,
+      creatorName: 'Alice',
+      createdAt: DateTime(2026, 3, 6, 9),
+    );
+
+    when(() => bloc.state).thenReturn(state);
+    whenListen(
+      bloc,
+      const Stream<ChatMembersState>.empty(),
+      initialState: state,
+    );
+
+    await tester.pumpWidget(
+      _host(
+        locale: const Locale('en'),
+        child: ChatMembersPage(
+          chat: chat,
+          currentUserId: 'u1',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Member actions'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Remove from group'), findsOneWidget);
+    expect(find.text('Remove from group').hitTestable(), findsOneWidget);
+    await tester.tap(find.text('Remove from group'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Remove'), findsOneWidget);
+    await tester.tap(find.text('Remove'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => bloc.add(
+        const ChatMembersRemove(
           chatId: 'chat-1',
           memberId: 'u2',
         ),
