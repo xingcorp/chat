@@ -543,6 +543,15 @@ class AppLocalizationsVi extends AppLocalizations {
   String get groupDescription => 'Mô tả nhóm';
 
   @override
+  String get groupType => 'Loại nhóm';
+
+  @override
+  String get privateGroup => 'Nhóm riêng tư';
+
+  @override
+  String get publicGroup => 'Nhóm công khai';
+
+  @override
   String get optional => 'Tùy chọn';
 
   @override
@@ -1654,6 +1663,27 @@ class AppLocalizationsVi extends AppLocalizations {
   String confirmRemoveMember(String name) {
     return 'Bạn có chắc muốn xóa $name khỏi nhóm không?';
   }
+
+  @override
+  String get groupAdmin => 'Quản trị viên';
+
+  @override
+  String get memberActions => 'Thao tác thành viên';
+
+  @override
+  String get makeGroupAdmin => 'Cấp quyền quản trị';
+
+  @override
+  String get removeGroupAdmin => 'Gỡ quyền quản trị';
+
+  @override
+  String get memberRemovedSuccessfully => 'Đã xóa thành viên khỏi nhóm';
+
+  @override
+  String get adminRoleGranted => 'Đã cấp quyền quản trị thành công';
+
+  @override
+  String get adminRoleRemoved => 'Đã gỡ quyền quản trị thành công';
 
   @override
   String readByCount(int count) {

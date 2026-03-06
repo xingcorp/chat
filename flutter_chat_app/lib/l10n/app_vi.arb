@@ -184,6 +184,9 @@
   "searchMessages": "Tìm kiếm tin nhắn...",
   "selectMembers": "Chọn thành viên",
   "groupDescription": "Mô tả nhóm",
+  "groupType": "Loại nhóm",
+  "privateGroup": "Nhóm riêng tư",
+  "publicGroup": "Nhóm công khai",
   "optional": "Tùy chọn",
   "required": "Bắt buộc",
 
@@ -887,6 +890,13 @@
       }
     }
   },
+  "groupAdmin": "Quản trị viên",
+  "memberActions": "Thao tác thành viên",
+  "makeGroupAdmin": "Cấp quyền quản trị",
+  "removeGroupAdmin": "Gỡ quyền quản trị",
+  "memberRemovedSuccessfully": "Đã xóa thành viên khỏi nhóm",
+  "adminRoleGranted": "Đã cấp quyền quản trị thành công",
+  "adminRoleRemoved": "Đã gỡ quyền quản trị thành công",
 
   "readByCount": "{count, plural, =0{Chưa ai đọc} =1{Đã xem bởi 1 người} other{Đã xem bởi {count} người}}",
   "@readByCount": {

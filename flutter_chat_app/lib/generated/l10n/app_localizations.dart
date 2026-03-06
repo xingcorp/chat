@@ -67,8 +67,8 @@ abstract class AppLocalizations {
 
   final String localeName;
 
-  static AppLocalizations? of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
@@ -1105,6 +1105,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Group Description'**
   String get groupDescription;
+
+  /// Label for the group visibility type selector
+  ///
+  /// In en, this message translates to:
+  /// **'Group Type'**
+  String get groupType;
+
+  /// Option label for a private group
+  ///
+  /// In en, this message translates to:
+  /// **'Private Group'**
+  String get privateGroup;
+
+  /// Option label for a public group
+  ///
+  /// In en, this message translates to:
+  /// **'Public Group'**
+  String get publicGroup;
 
   /// Label for optional fields
   ///
@@ -3055,6 +3073,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to remove {name} from the group?'**
   String confirmRemoveMember(String name);
+
+  /// Role label shown for a group admin
+  ///
+  /// In en, this message translates to:
+  /// **'Group admin'**
+  String get groupAdmin;
+
+  /// Tooltip and sheet title for member management actions
+  ///
+  /// In en, this message translates to:
+  /// **'Member actions'**
+  String get memberActions;
+
+  /// Action to promote a member to group admin
+  ///
+  /// In en, this message translates to:
+  /// **'Make group admin'**
+  String get makeGroupAdmin;
+
+  /// Action to remove group admin role from a member
+  ///
+  /// In en, this message translates to:
+  /// **'Remove admin role'**
+  String get removeGroupAdmin;
+
+  /// Success message after removing a member from the group
+  ///
+  /// In en, this message translates to:
+  /// **'Member removed successfully'**
+  String get memberRemovedSuccessfully;
+
+  /// Success message after promoting a member to admin
+  ///
+  /// In en, this message translates to:
+  /// **'Admin role granted successfully'**
+  String get adminRoleGranted;
+
+  /// Success message after removing admin role from a member
+  ///
+  /// In en, this message translates to:
+  /// **'Admin role removed successfully'**
+  String get adminRoleRemoved;
 
   /// Pluralized read receipt count showing how many people have read the message
   ///

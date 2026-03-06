@@ -1,5 +1,6 @@
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/data/models/offline_operation_model.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
 import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -76,7 +77,8 @@ class OfflineOperationProcessor {
           break;
       }
 
-      _logger.info('Successfully processed offline operation: ${operation.type.name}');
+      _logger.info(
+          'Successfully processed offline operation: ${operation.type.name}');
     } catch (e, stackTrace) {
       _logger.error(
         'Failed to process offline operation: ${operation.type.name}',
@@ -157,6 +159,8 @@ class OfflineOperationProcessor {
     final result = await _chatRepository.createChat(
       name: data['name'] as String,
       participantIds: List<String>.from(data['participantIds'] as List),
+      description: data['description'] as String?,
+      groupType: _parseGroupType(data['groupType'] as String?),
       isGroup: data['isGroup'] as bool? ?? true,
     );
 
@@ -179,6 +183,14 @@ class OfflineOperationProcessor {
       chatId: data['chatId'] as String,
       name: data['name'] as String?,
       avatarUrl: data['avatarUrl'] as String?,
+      description: data['description'] as String?,
+      groupType: _parseGroupType(data['groupType'] as String?),
+      memberIds: (data['memberIds'] as List<dynamic>?)
+          ?.map((item) => item.toString())
+          .toList(),
+      adminIds: (data['adminIds'] as List<dynamic>?)
+          ?.map((item) => item.toString())
+          .toList(),
     );
 
     result.fold(
@@ -193,7 +205,8 @@ class OfflineOperationProcessor {
   }
 
   /// Process leave conversation operation
-  Future<void> _processLeaveConversation(OfflineOperationModel operation) async {
+  Future<void> _processLeaveConversation(
+      OfflineOperationModel operation) async {
     final data = operation.dataMap;
 
     final result = await _chatRepository.leaveChat(
@@ -212,7 +225,8 @@ class OfflineOperationProcessor {
   }
 
   /// Process delete conversation operation
-  Future<void> _processDeleteConversation(OfflineOperationModel operation) async {
+  Future<void> _processDeleteConversation(
+      OfflineOperationModel operation) async {
     final data = operation.dataMap;
 
     final result = await _chatRepository.deleteChat(
@@ -256,7 +270,10 @@ class OfflineOperationProcessor {
     final messageId = data['messageId'] as String?;
     final code = data['code'] as String?;
 
-    if (messageId == null || messageId.isEmpty || code == null || code.isEmpty) {
+    if (messageId == null ||
+        messageId.isEmpty ||
+        code == null ||
+        code.isEmpty) {
       throw Exception('Add reaction failed: invalid payload');
     }
 
@@ -284,7 +301,10 @@ class OfflineOperationProcessor {
     final messageId = data['messageId'] as String?;
     final code = data['code'] as String?;
 
-    if (messageId == null || messageId.isEmpty || code == null || code.isEmpty) {
+    if (messageId == null ||
+        messageId.isEmpty ||
+        code == null ||
+        code.isEmpty) {
       throw Exception('Remove reaction failed: invalid payload');
     }
 
@@ -315,18 +335,31 @@ class OfflineOperationProcessor {
       final result = await _messageRepository.retryAllPendingMessages();
       result.fold(
         (failure) {
-          _logger.error(
-              'retryAllPendingMessages failed: ${failure.message}');
+          _logger.error('retryAllPendingMessages failed: ${failure.message}');
         },
         (count) {
           if (count > 0) {
-            _logger.info(
-                'retryAllPendingMessages: synced $count messages');
+            _logger.info('retryAllPendingMessages: synced $count messages');
           }
         },
       );
     } catch (e, stackTrace) {
       _logger.error('retryAllPendingMessages: unexpected error', e, stackTrace);
+    }
+  }
+
+  GroupType? _parseGroupType(String? value) {
+    if (value == null) {
+      return null;
+    }
+
+    switch (value.trim().toLowerCase()) {
+      case 'public':
+        return GroupType.public;
+      case 'private':
+        return GroupType.private;
+      default:
+        return null;
     }
   }
 }

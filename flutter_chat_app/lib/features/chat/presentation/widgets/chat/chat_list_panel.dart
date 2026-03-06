@@ -439,6 +439,8 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                         },
                       );
                     },
+                    conversationActionCompleted: (_, __) =>
+                        _buildLoading(context),
                     chatDetailsLoaded: (_) => const SizedBox.shrink(),
                     messagesLoading: (_) => const SizedBox.shrink(),
                     messagesLoaded: (_, __, ___) => const SizedBox.shrink(),

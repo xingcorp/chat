@@ -283,8 +283,8 @@ class _ChatListPageState extends BaseState<ChatListPage> {
           },
           builder: (context, state) {
             return state.when(
-              initial: () => _buildShimmerList(),
-              loading: () => _buildShimmerList(),
+              initial: _buildShimmerList,
+              loading: _buildShimmerList,
               loaded: (chats,
                   hasMore,
                   isLoadingMore,
@@ -375,6 +375,9 @@ class _ChatListPageState extends BaseState<ChatListPage> {
                   },
                 );
               },
+              conversationActionCompleted: (_, __) {
+                return _buildShimmerList();
+              },
               chatDetailsLoaded: (chat) {
                 // Not used in list view
                 return const SizedBox.shrink();
@@ -418,7 +421,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.cloud_off,
                           size: AppDimens.iconSizeXXLarge,
                           color: AppColors.textSecondary,
@@ -544,7 +547,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.chat_bubble_outline,
               size: AppDimens.iconSizeXXLarge,
               color: AppColors.textSecondary,
@@ -572,7 +575,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
                 size: AppDimens.iconSizeXXLarge,
                 color: AppColors.error,

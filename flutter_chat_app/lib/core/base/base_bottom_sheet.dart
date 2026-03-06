@@ -146,6 +146,34 @@ abstract class BaseBottomSheet extends StatelessWidget {
   /// ```
   Widget buildContent(BuildContext context);
 
+  /// Whether the content should be wrapped in the default scroll view.
+  ///
+  /// Subclasses that manage their own scroll/drag behavior, such as those
+  /// using [DraggableScrollableSheet], should override this to `false`.
+  @protected
+  bool get wrapContentInScrollView => true;
+
+  Widget _buildSheetBody(BuildContext context) {
+    if (!wrapContentInScrollView) {
+      return Flexible(
+        child: buildContent(context),
+      );
+    }
+
+    return Flexible(
+      child: SingleChildScrollView(
+        padding: padding ??
+            const EdgeInsets.fromLTRB(
+              AppDimens.paddingBottomSheet,
+              0,
+              AppDimens.paddingBottomSheet,
+              AppDimens.paddingBottomSheet,
+            ),
+        child: buildContent(context),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -174,9 +202,8 @@ abstract class BaseBottomSheet extends StatelessWidget {
                   width: 32,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.dividerDarkMode
-                        : AppColors.divider,
+                    color:
+                        isDark ? AppColors.dividerDarkMode : AppColors.divider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -204,7 +231,8 @@ abstract class BaseBottomSheet extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.close),
                         onPressed: () => Navigator.of(context).pop(),
-                        tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                        tooltip: MaterialLocalizations.of(context)
+                            .closeButtonTooltip,
                         constraints: const BoxConstraints(
                           minWidth: AppDimens.iconButtonSize,
                           minHeight: AppDimens.iconButtonSize,
@@ -215,18 +243,7 @@ abstract class BaseBottomSheet extends StatelessWidget {
               ),
 
             // Content
-            Flexible(
-              child: SingleChildScrollView(
-                padding: padding ??
-                    const EdgeInsets.fromLTRB(
-                      AppDimens.paddingBottomSheet,
-                      0,
-                      AppDimens.paddingBottomSheet,
-                      AppDimens.paddingBottomSheet,
-                    ),
-                child: buildContent(context),
-              ),
-            ),
+            _buildSheetBody(context),
           ],
         ),
       ),

@@ -36,6 +36,7 @@ class ChatEvent with _$ChatEvent {
     required ChatType type,
     String? name,
     String? description,
+    @Default(GroupType.private) GroupType groupType,
     required List<String> participantIds,
     Uint8List? avatarBytes,
     String? avatarFileName,
@@ -48,12 +49,20 @@ class ChatEvent with _$ChatEvent {
     String? name,
     String? description,
     String? avatar,
+    GroupType? groupType,
+    List<String>? memberIds,
+    List<String>? adminIds,
   }) = _UpdateChat;
 
   /// Leave a chat
   const factory ChatEvent.leaveChat({
     required String chatId,
   }) = _LeaveChat;
+
+  /// Delete a chat
+  const factory ChatEvent.deleteChat({
+    required String chatId,
+  }) = _DeleteChat;
 
   /// Add users to a chat
   const factory ChatEvent.addUsersToChat({

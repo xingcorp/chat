@@ -119,8 +119,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       ScrollOffsetListener.create();
   late final MessageBloc _messageBloc;
   late final ConversationDetailBloc _convDetailBloc;
+  late final ChatBloc _chatBloc;
   late final ChatComposerBloc _chatComposerBloc;
   late final ChatDraftBloc _chatDraftBloc;
+  bool _ownsChatBloc = false;
   bool _ownsChatDraftBloc = false;
 
   Chat? _chat;
@@ -200,6 +202,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     // ensuring clean state and correct bloc scope.
     _messageBloc = getIt<MessageBloc>();
     _convDetailBloc = getIt<ConversationDetailBloc>();
+    try {
+      _chatBloc = context.read<ChatBloc>();
+      _ownsChatBloc = false;
+    } catch (_) {
+      _chatBloc = getIt<ChatBloc>();
+      _ownsChatBloc = true;
+    }
     _chatComposerBloc = getIt<ChatComposerBloc>();
     try {
       _chatDraftBloc = context.read<ChatDraftBloc>();
@@ -565,6 +574,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _messageBloc.close();
     _convDetailBloc.close();
     _chatComposerBloc.close();
+    if (_ownsChatBloc) {
+      _chatBloc.close();
+    }
     if (_ownsChatDraftBloc) {
       _chatDraftBloc.close();
     }
@@ -1135,6 +1147,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       builder: (context) => MultiBlocProvider(
         providers: [
           BlocProvider(create: (_) => getIt<ChatInfoBloc>()),
+          BlocProvider<ChatBloc>.value(value: _chatBloc),
           BlocProvider<ConversationDetailBloc>.value(value: _convDetailBloc),
         ],
         child: DraggableScrollableSheet(
@@ -1144,10 +1157,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           builder: (context, scrollController) => ChatInfoPanel(
             chat: _chat!,
             onClose: () => Navigator.of(context).pop(),
+            currentUserId: _currentUserId,
           ),
         ),
       ),
-    ).then((_) {
+    ).then((result) {
+      if (result is ChatConversationAction) {
+        Navigator.of(context).maybePop();
+        return;
+      }
+
       // Refresh conversation detail after info panel closes
       // (members may have been added/removed)
       if (_chat != null) {
@@ -1743,7 +1762,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         BlocProvider<ConversationDetailBloc>.value(value: _convDetailBloc),
         BlocProvider<ChatComposerBloc>.value(value: _chatComposerBloc),
         BlocProvider<ChatDraftBloc>.value(value: _chatDraftBloc),
-        BlocProvider<ChatBloc>(create: (_) => getIt<ChatBloc>()),
+        BlocProvider<ChatBloc>.value(value: _chatBloc),
       ],
       child: MultiBlocListener(
         listeners: [

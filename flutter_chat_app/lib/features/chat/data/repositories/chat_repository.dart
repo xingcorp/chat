@@ -300,9 +300,11 @@ class ChatRepositoryImpl implements IChatRepository {
     required List<String> participantIds,
     String? avatarUrl,
     String? description,
+    GroupType? groupType,
     bool isGroup = false,
   }) async {
     return await _executeWithMonitoring('create_chat', () async {
+      Chat? optimisticChat;
       try {
         _logger.i('Creating chat', {'name': name, 'isGroup': isGroup});
 
@@ -312,9 +314,11 @@ class ChatRepositoryImpl implements IChatRepository {
           name: name,
           avatarUrl: avatarUrl,
           description: description,
+          groupType: isGroup ? (groupType ?? GroupType.private) : null,
           type: isGroup ? ChatType.group : ChatType.direct,
           participantIds: participantIds,
         );
+        optimisticChat = chat;
 
         // **OPTIMISTIC UPDATE STRATEGY**
         // 1. Save locally immediately for instant UI feedback
@@ -327,9 +331,10 @@ class ChatRepositoryImpl implements IChatRepository {
             name: name,
             imgUrl: avatarUrl,
             description: description,
-            groupType: 'Private', // Default to private group
+            groupType: _mapGroupTypeToRemote(groupType ?? GroupType.private),
             memberIds: participantIds,
           );
+
           // Remote success — replace optimistic record with server version.
           try {
             await _localDataSource.deleteChat(chat.id);
@@ -376,8 +381,15 @@ class ChatRepositoryImpl implements IChatRepository {
             return Right(chat);
           }
         }
-      } catch (e) {
-        _logger.e('Create chat failed', error: e);
+      } catch (e, stackTrace) {
+        if (optimisticChat != null) {
+          try {
+            await _localDataSource.deleteChat(optimisticChat.id);
+          } catch (_) {
+            // Ignore rollback failure and surface original error.
+          }
+        }
+        _logger.e('Create chat failed', error: e, stackTrace: stackTrace);
         return Left(ServerFailure(message: 'Failed to create chat: $e'));
       }
     });
@@ -391,52 +403,67 @@ class ChatRepositoryImpl implements IChatRepository {
     required String chatId,
     String? name,
     String? avatarUrl,
+    String? description,
+    GroupType? groupType,
+    List<String>? memberIds,
+    List<String>? adminIds,
   }) async {
     return await _executeWithMonitoring('update_chat', () async {
       try {
-        debugPrint('📝 Updating chat: $chatId');
+        _logger.i('Updating chat', {
+          'chatId': chatId,
+          'hasName': name != null,
+          'hasAvatarUrl': avatarUrl != null,
+          'hasDescription': description != null,
+          'hasGroupType': groupType != null,
+          'hasMemberIds': memberIds != null,
+          'hasAdminIds': adminIds != null,
+        });
 
         // Get current chat from local storage
         final currentChat = await _localDataSource.getChatById(chatId);
-        if (currentChat == null) {
-          return Left(CacheFailure(message: 'Chat not found locally'));
-        }
-
-        // Create updated chat
-        final updatedChat = currentChat.copyWith(
+        final updatedChat = currentChat?.copyWith(
           name: name,
           avatarUrl: avatarUrl,
+          description: description,
+          groupType: groupType,
+          participantIds: memberIds,
         );
 
-        // **OPTIMISTIC UPDATE WITH CONFLICT RESOLUTION**
-        // 1. Save locally immediately
-        await _localDataSource.saveChat(updatedChat);
-        debugPrint('✅ Chat updated locally (optimistic)');
+        if (updatedChat != null) {
+          await _localDataSource.saveChat(updatedChat);
+          _logger.d('Chat updated locally (optimistic)');
+        }
 
-        // 2. Try to update on remote
         try {
-          await _remoteDataSource.updateChat(
+          final remoteChat = await _remoteDataSource.updateChat(
             conversationId: chatId,
             name: name,
             imgUrl: avatarUrl,
+            description: description,
+            groupType:
+                groupType != null ? _mapGroupTypeToRemote(groupType) : null,
+            memberIds: memberIds,
+            adminIds: adminIds,
           );
 
-          // Remote success, fetch updated chat from remote
-          final updatedRemote = await _remoteDataSource.getChatById(chatId);
-          final serverChat = updatedRemote.toDomain();
+          final serverChat = remoteChat.toDomain();
           await _localDataSource.saveChat(serverChat);
-          debugPrint(
-              '✅ Chat updated successfully on remote and synced locally');
+          _logger.i('Chat updated successfully on remote and synced locally');
           return Right(serverChat);
-        } catch (e) {
-          // Remote failed, handle conflict resolution
-          debugPrint('⚠️  Remote update failed: $e');
-
-          // For now, keep local version and queue for manual resolution
-          return Right(updatedChat);
+        } catch (e, stackTrace) {
+          if (currentChat != null) {
+            await _localDataSource.saveChat(currentChat);
+          }
+          _logger.e(
+            'Remote update chat failed',
+            error: e,
+            stackTrace: stackTrace,
+          );
+          return Left(ServerFailure(message: 'Failed to update chat: $e'));
         }
-      } catch (e) {
-        debugPrint('❌ Update chat failed: $e');
+      } catch (e, stackTrace) {
+        _logger.e('Update chat failed', error: e, stackTrace: stackTrace);
         return Left(ServerFailure(message: 'Failed to update chat: $e'));
       }
     });
@@ -449,34 +476,18 @@ class ChatRepositoryImpl implements IChatRepository {
   Future<Either<Failure, bool>> deleteChat(String chatId) async {
     return await _executeWithMonitoring('delete_chat', () async {
       try {
-        debugPrint('🗑️  Deleting chat: $chatId');
+        _logger.i('Deleting chat', {'chatId': chatId});
 
-        // **SOFT DELETE STRATEGY**
-        // 1. Mark as deleted locally immediately
-        await _localDataSource.deleteChat(chatId);
-        debugPrint('✅ Chat marked as deleted locally');
-
-        // 2. Try to delete on remote
-        try {
-          final remoteResult = await _remoteDataSource.deleteChat(chatId);
-
-          if (remoteResult.isNotEmpty) {
-            _logger.i('Chat deleted successfully on remote: $chatId');
-            return const Right(true);
-          } else {
-            debugPrint('⚠️  Remote delete failed, but local delete succeeded');
-            return const Right(
-                true); // Return success since local delete succeeded
-          }
-        } catch (e) {
-          // Remote failed, but local is already deleted
-          debugPrint('⚠️  Remote delete failed, queued for sync: $e');
-
-          // Return success since local delete succeeded
-          return const Right(true);
+        final remoteResult = await _remoteDataSource.deleteChat(chatId);
+        if (remoteResult.isEmpty) {
+          return const Left(ServerFailure(message: 'Failed to delete chat'));
         }
-      } catch (e) {
-        debugPrint('❌ Delete chat failed: $e');
+
+        await _localDataSource.deleteChat(chatId);
+        _logger.i('Chat deleted successfully on remote and locally');
+        return const Right(true);
+      } catch (e, stackTrace) {
+        _logger.e('Delete chat failed', error: e, stackTrace: stackTrace);
         return Left(ServerFailure(message: 'Failed to delete chat: $e'));
       }
     });
@@ -868,6 +879,15 @@ class ChatRepositoryImpl implements IChatRepository {
         return Left(ServerFailure(message: 'Failed to sync chat: $e'));
       }
     });
+  }
+
+  String _mapGroupTypeToRemote(GroupType groupType) {
+    switch (groupType) {
+      case GroupType.public:
+        return 'Public';
+      case GroupType.private:
+        return 'Private';
+    }
   }
 
   /// **GraphQL Client Getter**

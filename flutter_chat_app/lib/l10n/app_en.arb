@@ -897,6 +897,21 @@
     "description": "Label for group description field"
   },
 
+  "groupType": "Group Type",
+  "@groupType": {
+    "description": "Label for the group visibility type selector"
+  },
+
+  "privateGroup": "Private Group",
+  "@privateGroup": {
+    "description": "Option label for a private group"
+  },
+
+  "publicGroup": "Public Group",
+  "@publicGroup": {
+    "description": "Option label for a public group"
+  },
+
   "optional": "Optional",
   "@optional": {
     "description": "Label for optional fields"
@@ -2940,6 +2955,41 @@
         "type": "String"
       }
     }
+  },
+
+  "groupAdmin": "Group admin",
+  "@groupAdmin": {
+    "description": "Role label shown for a group admin"
+  },
+
+  "memberActions": "Member actions",
+  "@memberActions": {
+    "description": "Tooltip and sheet title for member management actions"
+  },
+
+  "makeGroupAdmin": "Make group admin",
+  "@makeGroupAdmin": {
+    "description": "Action to promote a member to group admin"
+  },
+
+  "removeGroupAdmin": "Remove admin role",
+  "@removeGroupAdmin": {
+    "description": "Action to remove group admin role from a member"
+  },
+
+  "memberRemovedSuccessfully": "Member removed successfully",
+  "@memberRemovedSuccessfully": {
+    "description": "Success message after removing a member from the group"
+  },
+
+  "adminRoleGranted": "Admin role granted successfully",
+  "@adminRoleGranted": {
+    "description": "Success message after promoting a member to admin"
+  },
+
+  "adminRoleRemoved": "Admin role removed successfully",
+  "@adminRoleRemoved": {
+    "description": "Success message after removing admin role from a member"
   },
 
   "readByCount": "{count, plural, =0{No one has read} =1{Read by 1 person} other{Read by {count} people}}",

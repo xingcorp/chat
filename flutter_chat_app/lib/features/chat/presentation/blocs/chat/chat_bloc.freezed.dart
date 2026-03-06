@@ -30,15 +30,23 @@ mixin _$ChatEvent {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -70,15 +78,23 @@ mixin _$ChatEvent {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -108,15 +124,23 @@ mixin _$ChatEvent {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -144,6 +168,7 @@ mixin _$ChatEvent {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -169,6 +194,7 @@ mixin _$ChatEvent {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -194,6 +220,7 @@ mixin _$ChatEvent {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -307,15 +334,23 @@ class _$LoadChatsImpl implements _LoadChats {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -350,15 +385,23 @@ class _$LoadChatsImpl implements _LoadChats {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -391,15 +434,23 @@ class _$LoadChatsImpl implements _LoadChats {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -433,6 +484,7 @@ class _$LoadChatsImpl implements _LoadChats {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -461,6 +513,7 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -489,6 +542,7 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -570,15 +624,23 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -613,15 +675,23 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -654,15 +724,23 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -696,6 +774,7 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -724,6 +803,7 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -752,6 +832,7 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -855,15 +936,23 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -898,15 +987,23 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -939,15 +1036,23 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -981,6 +1086,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -1009,6 +1115,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -1037,6 +1144,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -1164,15 +1272,23 @@ class _$LoadMessagesImpl implements _LoadMessages {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -1207,15 +1323,23 @@ class _$LoadMessagesImpl implements _LoadMessages {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -1248,15 +1372,23 @@ class _$LoadMessagesImpl implements _LoadMessages {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -1290,6 +1422,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -1318,6 +1451,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -1346,6 +1480,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -1500,15 +1635,23 @@ class _$SendMessageImpl implements _SendMessage {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -1543,15 +1686,23 @@ class _$SendMessageImpl implements _SendMessage {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -1584,15 +1735,23 @@ class _$SendMessageImpl implements _SendMessage {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -1626,6 +1785,7 @@ class _$SendMessageImpl implements _SendMessage {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -1654,6 +1814,7 @@ class _$SendMessageImpl implements _SendMessage {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -1682,6 +1843,7 @@ class _$SendMessageImpl implements _SendMessage {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -1730,6 +1892,7 @@ abstract class _$$CreateChatImplCopyWith<$Res> {
       {ChatType type,
       String? name,
       String? description,
+      GroupType groupType,
       List<String> participantIds,
       Uint8List? avatarBytes,
       String? avatarFileName,
@@ -1750,6 +1913,7 @@ class __$$CreateChatImplCopyWithImpl<$Res>
     Object? type = null,
     Object? name = freezed,
     Object? description = freezed,
+    Object? groupType = null,
     Object? participantIds = null,
     Object? avatarBytes = freezed,
     Object? avatarFileName = freezed,
@@ -1768,6 +1932,10 @@ class __$$CreateChatImplCopyWithImpl<$Res>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
+      groupType: null == groupType
+          ? _value.groupType
+          : groupType // ignore: cast_nullable_to_non_nullable
+              as GroupType,
       participantIds: null == participantIds
           ? _value._participantIds
           : participantIds // ignore: cast_nullable_to_non_nullable
@@ -1795,6 +1963,7 @@ class _$CreateChatImpl implements _CreateChat {
       {required this.type,
       this.name,
       this.description,
+      this.groupType = GroupType.private,
       required final List<String> participantIds,
       this.avatarBytes,
       this.avatarFileName,
@@ -1807,6 +1976,9 @@ class _$CreateChatImpl implements _CreateChat {
   final String? name;
   @override
   final String? description;
+  @override
+  @JsonKey()
+  final GroupType groupType;
   final List<String> _participantIds;
   @override
   List<String> get participantIds {
@@ -1824,7 +1996,7 @@ class _$CreateChatImpl implements _CreateChat {
 
   @override
   String toString() {
-    return 'ChatEvent.createChat(type: $type, name: $name, description: $description, participantIds: $participantIds, avatarBytes: $avatarBytes, avatarFileName: $avatarFileName, avatarFilePath: $avatarFilePath)';
+    return 'ChatEvent.createChat(type: $type, name: $name, description: $description, groupType: $groupType, participantIds: $participantIds, avatarBytes: $avatarBytes, avatarFileName: $avatarFileName, avatarFilePath: $avatarFilePath)';
   }
 
   @override
@@ -1836,6 +2008,8 @@ class _$CreateChatImpl implements _CreateChat {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
                 other.description == description) &&
+            (identical(other.groupType, groupType) ||
+                other.groupType == groupType) &&
             const DeepCollectionEquality()
                 .equals(other._participantIds, _participantIds) &&
             const DeepCollectionEquality()
@@ -1852,6 +2026,7 @@ class _$CreateChatImpl implements _CreateChat {
       type,
       name,
       description,
+      groupType,
       const DeepCollectionEquality().hash(_participantIds),
       const DeepCollectionEquality().hash(avatarBytes),
       avatarFileName,
@@ -1878,15 +2053,23 @@ class _$CreateChatImpl implements _CreateChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -1904,8 +2087,8 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
   }) {
-    return createChat(type, name, description, participantIds, avatarBytes,
-        avatarFileName, avatarFilePath);
+    return createChat(type, name, description, groupType, participantIds,
+        avatarBytes, avatarFileName, avatarFilePath);
   }
 
   @override
@@ -1922,15 +2105,23 @@ class _$CreateChatImpl implements _CreateChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -1946,7 +2137,7 @@ class _$CreateChatImpl implements _CreateChat {
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
   }) {
-    return createChat?.call(type, name, description, participantIds,
+    return createChat?.call(type, name, description, groupType, participantIds,
         avatarBytes, avatarFileName, avatarFilePath);
   }
 
@@ -1964,15 +2155,23 @@ class _$CreateChatImpl implements _CreateChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -1990,8 +2189,8 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult orElse(),
   }) {
     if (createChat != null) {
-      return createChat(type, name, description, participantIds, avatarBytes,
-          avatarFileName, avatarFilePath);
+      return createChat(type, name, description, groupType, participantIds,
+          avatarBytes, avatarFileName, avatarFilePath);
     }
     return orElse();
   }
@@ -2007,6 +2206,7 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -2035,6 +2235,7 @@ class _$CreateChatImpl implements _CreateChat {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -2063,6 +2264,7 @@ class _$CreateChatImpl implements _CreateChat {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -2090,6 +2292,7 @@ abstract class _CreateChat implements ChatEvent {
       {required final ChatType type,
       final String? name,
       final String? description,
+      final GroupType groupType,
       required final List<String> participantIds,
       final Uint8List? avatarBytes,
       final String? avatarFileName,
@@ -2098,6 +2301,7 @@ abstract class _CreateChat implements ChatEvent {
   ChatType get type;
   String? get name;
   String? get description;
+  GroupType get groupType;
   List<String> get participantIds;
   Uint8List? get avatarBytes;
   String? get avatarFileName;
@@ -2113,7 +2317,14 @@ abstract class _$$UpdateChatImplCopyWith<$Res> {
           _$UpdateChatImpl value, $Res Function(_$UpdateChatImpl) then) =
       __$$UpdateChatImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({String chatId, String? name, String? description, String? avatar});
+  $Res call(
+      {String chatId,
+      String? name,
+      String? description,
+      String? avatar,
+      GroupType? groupType,
+      List<String>? memberIds,
+      List<String>? adminIds});
 }
 
 /// @nodoc
@@ -2131,6 +2342,9 @@ class __$$UpdateChatImplCopyWithImpl<$Res>
     Object? name = freezed,
     Object? description = freezed,
     Object? avatar = freezed,
+    Object? groupType = freezed,
+    Object? memberIds = freezed,
+    Object? adminIds = freezed,
   }) {
     return _then(_$UpdateChatImpl(
       chatId: null == chatId
@@ -2149,6 +2363,18 @@ class __$$UpdateChatImplCopyWithImpl<$Res>
           ? _value.avatar
           : avatar // ignore: cast_nullable_to_non_nullable
               as String?,
+      groupType: freezed == groupType
+          ? _value.groupType
+          : groupType // ignore: cast_nullable_to_non_nullable
+              as GroupType?,
+      memberIds: freezed == memberIds
+          ? _value._memberIds
+          : memberIds // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      adminIds: freezed == adminIds
+          ? _value._adminIds
+          : adminIds // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
     ));
   }
 }
@@ -2157,7 +2383,15 @@ class __$$UpdateChatImplCopyWithImpl<$Res>
 
 class _$UpdateChatImpl implements _UpdateChat {
   const _$UpdateChatImpl(
-      {required this.chatId, this.name, this.description, this.avatar});
+      {required this.chatId,
+      this.name,
+      this.description,
+      this.avatar,
+      this.groupType,
+      final List<String>? memberIds,
+      final List<String>? adminIds})
+      : _memberIds = memberIds,
+        _adminIds = adminIds;
 
   @override
   final String chatId;
@@ -2167,10 +2401,31 @@ class _$UpdateChatImpl implements _UpdateChat {
   final String? description;
   @override
   final String? avatar;
+  @override
+  final GroupType? groupType;
+  final List<String>? _memberIds;
+  @override
+  List<String>? get memberIds {
+    final value = _memberIds;
+    if (value == null) return null;
+    if (_memberIds is EqualUnmodifiableListView) return _memberIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _adminIds;
+  @override
+  List<String>? get adminIds {
+    final value = _adminIds;
+    if (value == null) return null;
+    if (_adminIds is EqualUnmodifiableListView) return _adminIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'ChatEvent.updateChat(chatId: $chatId, name: $name, description: $description, avatar: $avatar)';
+    return 'ChatEvent.updateChat(chatId: $chatId, name: $name, description: $description, avatar: $avatar, groupType: $groupType, memberIds: $memberIds, adminIds: $adminIds)';
   }
 
   @override
@@ -2182,12 +2437,24 @@ class _$UpdateChatImpl implements _UpdateChat {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
                 other.description == description) &&
-            (identical(other.avatar, avatar) || other.avatar == avatar));
+            (identical(other.avatar, avatar) || other.avatar == avatar) &&
+            (identical(other.groupType, groupType) ||
+                other.groupType == groupType) &&
+            const DeepCollectionEquality()
+                .equals(other._memberIds, _memberIds) &&
+            const DeepCollectionEquality().equals(other._adminIds, _adminIds));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, chatId, name, description, avatar);
+  int get hashCode => Object.hash(
+      runtimeType,
+      chatId,
+      name,
+      description,
+      avatar,
+      groupType,
+      const DeepCollectionEquality().hash(_memberIds),
+      const DeepCollectionEquality().hash(_adminIds));
 
   @JsonKey(ignore: true)
   @override
@@ -2210,15 +2477,23 @@ class _$UpdateChatImpl implements _UpdateChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -2236,7 +2511,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
   }) {
-    return updateChat(chatId, name, description, avatar);
+    return updateChat(
+        chatId, name, description, avatar, groupType, memberIds, adminIds);
   }
 
   @override
@@ -2253,15 +2529,23 @@ class _$UpdateChatImpl implements _UpdateChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -2277,7 +2561,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
   }) {
-    return updateChat?.call(chatId, name, description, avatar);
+    return updateChat?.call(
+        chatId, name, description, avatar, groupType, memberIds, adminIds);
   }
 
   @override
@@ -2294,15 +2579,23 @@ class _$UpdateChatImpl implements _UpdateChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -2320,7 +2613,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     required TResult orElse(),
   }) {
     if (updateChat != null) {
-      return updateChat(chatId, name, description, avatar);
+      return updateChat(
+          chatId, name, description, avatar, groupType, memberIds, adminIds);
     }
     return orElse();
   }
@@ -2336,6 +2630,7 @@ class _$UpdateChatImpl implements _UpdateChat {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -2364,6 +2659,7 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -2392,6 +2688,7 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -2419,12 +2716,18 @@ abstract class _UpdateChat implements ChatEvent {
       {required final String chatId,
       final String? name,
       final String? description,
-      final String? avatar}) = _$UpdateChatImpl;
+      final String? avatar,
+      final GroupType? groupType,
+      final List<String>? memberIds,
+      final List<String>? adminIds}) = _$UpdateChatImpl;
 
   String get chatId;
   String? get name;
   String? get description;
   String? get avatar;
+  GroupType? get groupType;
+  List<String>? get memberIds;
+  List<String>? get adminIds;
   @JsonKey(ignore: true)
   _$$UpdateChatImplCopyWith<_$UpdateChatImpl> get copyWith =>
       throw _privateConstructorUsedError;
@@ -2506,15 +2809,23 @@ class _$LeaveChatImpl implements _LeaveChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -2549,15 +2860,23 @@ class _$LeaveChatImpl implements _LeaveChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -2590,15 +2909,23 @@ class _$LeaveChatImpl implements _LeaveChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -2632,6 +2959,7 @@ class _$LeaveChatImpl implements _LeaveChat {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -2660,6 +2988,7 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -2688,6 +3017,7 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -2716,6 +3046,322 @@ abstract class _LeaveChat implements ChatEvent {
   String get chatId;
   @JsonKey(ignore: true)
   _$$LeaveChatImplCopyWith<_$LeaveChatImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$DeleteChatImplCopyWith<$Res> {
+  factory _$$DeleteChatImplCopyWith(
+          _$DeleteChatImpl value, $Res Function(_$DeleteChatImpl) then) =
+      __$$DeleteChatImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({String chatId});
+}
+
+/// @nodoc
+class __$$DeleteChatImplCopyWithImpl<$Res>
+    extends _$ChatEventCopyWithImpl<$Res, _$DeleteChatImpl>
+    implements _$$DeleteChatImplCopyWith<$Res> {
+  __$$DeleteChatImplCopyWithImpl(
+      _$DeleteChatImpl _value, $Res Function(_$DeleteChatImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? chatId = null,
+  }) {
+    return _then(_$DeleteChatImpl(
+      chatId: null == chatId
+          ? _value.chatId
+          : chatId // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$DeleteChatImpl implements _DeleteChat {
+  const _$DeleteChatImpl({required this.chatId});
+
+  @override
+  final String chatId;
+
+  @override
+  String toString() {
+    return 'ChatEvent.deleteChat(chatId: $chatId)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$DeleteChatImpl &&
+            (identical(other.chatId, chatId) || other.chatId == chatId));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, chatId);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$DeleteChatImplCopyWith<_$DeleteChatImpl> get copyWith =>
+      __$$DeleteChatImplCopyWithImpl<_$DeleteChatImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
+    required TResult Function(String chatId) loadChatDetails,
+    required TResult Function(String chatId, int limit, int offset)
+        loadMessages,
+    required TResult Function(String chatId, String content,
+            ContentType contentType, List<String> attachmentIds)
+        sendMessage,
+    required TResult Function(
+            ChatType type,
+            String? name,
+            String? description,
+            GroupType groupType,
+            List<String> participantIds,
+            Uint8List? avatarBytes,
+            String? avatarFileName,
+            String? avatarFilePath)
+        createChat,
+    required TResult Function(
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
+        updateChat,
+    required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
+    required TResult Function(String chatId, List<String> userIds)
+        addUsersToChat,
+    required TResult Function(String chatId, List<String> userIds)
+        removeUsersFromChat,
+    required TResult Function(String chatId, List<String> messageIds)
+        markMessagesAsRead,
+    required TResult Function() syncChats,
+    required TResult Function(String chatId) syncMessages,
+    required TResult Function(ChatMessage message) newMessageReceived,
+    required TResult Function(bool isConnected) connectivityChanged,
+    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
+  }) {
+    return deleteChat(chatId);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
+    TResult? Function(String chatId)? loadChatDetails,
+    TResult? Function(String chatId, int limit, int offset)? loadMessages,
+    TResult? Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult? Function(
+            ChatType type,
+            String? name,
+            String? description,
+            GroupType groupType,
+            List<String> participantIds,
+            Uint8List? avatarBytes,
+            String? avatarFileName,
+            String? avatarFilePath)?
+        createChat,
+    TResult? Function(
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
+        updateChat,
+    TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
+    TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult? Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult? Function()? syncChats,
+    TResult? Function(String chatId)? syncMessages,
+    TResult? Function(ChatMessage message)? newMessageReceived,
+    TResult? Function(bool isConnected)? connectivityChanged,
+    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
+  }) {
+    return deleteChat?.call(chatId);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
+    TResult Function(String chatId)? loadChatDetails,
+    TResult Function(String chatId, int limit, int offset)? loadMessages,
+    TResult Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult Function(
+            ChatType type,
+            String? name,
+            String? description,
+            GroupType groupType,
+            List<String> participantIds,
+            Uint8List? avatarBytes,
+            String? avatarFileName,
+            String? avatarFilePath)?
+        createChat,
+    TResult Function(
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
+        updateChat,
+    TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
+    TResult Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult Function()? syncChats,
+    TResult Function(String chatId)? syncMessages,
+    TResult Function(ChatMessage message)? newMessageReceived,
+    TResult Function(bool isConnected)? connectivityChanged,
+    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
+    required TResult orElse(),
+  }) {
+    if (deleteChat != null) {
+      return deleteChat(chatId);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
+    required TResult Function(_LoadChatDetails value) loadChatDetails,
+    required TResult Function(_LoadMessages value) loadMessages,
+    required TResult Function(_SendMessage value) sendMessage,
+    required TResult Function(_CreateChat value) createChat,
+    required TResult Function(_UpdateChat value) updateChat,
+    required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
+    required TResult Function(_AddUsersToChat value) addUsersToChat,
+    required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
+    required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
+    required TResult Function(_SyncChats value) syncChats,
+    required TResult Function(_SyncMessages value) syncMessages,
+    required TResult Function(_NewMessageReceived value) newMessageReceived,
+    required TResult Function(_ConnectivityChanged value) connectivityChanged,
+    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
+  }) {
+    return deleteChat(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
+    TResult? Function(_LoadChatDetails value)? loadChatDetails,
+    TResult? Function(_LoadMessages value)? loadMessages,
+    TResult? Function(_SendMessage value)? sendMessage,
+    TResult? Function(_CreateChat value)? createChat,
+    TResult? Function(_UpdateChat value)? updateChat,
+    TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
+    TResult? Function(_AddUsersToChat value)? addUsersToChat,
+    TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult? Function(_SyncChats value)? syncChats,
+    TResult? Function(_SyncMessages value)? syncMessages,
+    TResult? Function(_NewMessageReceived value)? newMessageReceived,
+    TResult? Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
+  }) {
+    return deleteChat?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
+    TResult Function(_LoadChatDetails value)? loadChatDetails,
+    TResult Function(_LoadMessages value)? loadMessages,
+    TResult Function(_SendMessage value)? sendMessage,
+    TResult Function(_CreateChat value)? createChat,
+    TResult Function(_UpdateChat value)? updateChat,
+    TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
+    TResult Function(_AddUsersToChat value)? addUsersToChat,
+    TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult Function(_SyncChats value)? syncChats,
+    TResult Function(_SyncMessages value)? syncMessages,
+    TResult Function(_NewMessageReceived value)? newMessageReceived,
+    TResult Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
+    required TResult orElse(),
+  }) {
+    if (deleteChat != null) {
+      return deleteChat(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _DeleteChat implements ChatEvent {
+  const factory _DeleteChat({required final String chatId}) = _$DeleteChatImpl;
+
+  String get chatId;
+  @JsonKey(ignore: true)
+  _$$DeleteChatImplCopyWith<_$DeleteChatImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -2812,15 +3458,23 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -2855,15 +3509,23 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -2896,15 +3558,23 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -2938,6 +3608,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -2966,6 +3637,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -2994,6 +3666,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -3121,15 +3794,23 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -3164,15 +3845,23 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -3205,15 +3894,23 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -3247,6 +3944,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -3275,6 +3973,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -3303,6 +4002,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -3431,15 +4131,23 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -3474,15 +4182,23 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -3515,15 +4231,23 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -3557,6 +4281,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -3585,6 +4310,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -3613,6 +4339,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -3697,15 +4424,23 @@ class _$SyncChatsImpl implements _SyncChats {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -3740,15 +4475,23 @@ class _$SyncChatsImpl implements _SyncChats {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -3781,15 +4524,23 @@ class _$SyncChatsImpl implements _SyncChats {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -3823,6 +4574,7 @@ class _$SyncChatsImpl implements _SyncChats {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -3851,6 +4603,7 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -3879,6 +4632,7 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -3981,15 +4735,23 @@ class _$SyncMessagesImpl implements _SyncMessages {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -4024,15 +4786,23 @@ class _$SyncMessagesImpl implements _SyncMessages {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -4065,15 +4835,23 @@ class _$SyncMessagesImpl implements _SyncMessages {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -4107,6 +4885,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -4135,6 +4914,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -4163,6 +4943,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -4272,15 +5053,23 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -4315,15 +5104,23 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -4356,15 +5153,23 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -4398,6 +5203,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -4426,6 +5232,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -4454,6 +5261,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -4564,15 +5372,23 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -4607,15 +5423,23 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -4648,15 +5472,23 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -4690,6 +5522,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -4718,6 +5551,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -4746,6 +5580,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -4856,15 +5691,23 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -4899,15 +5742,23 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -4940,15 +5791,23 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -4982,6 +5841,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -5010,6 +5870,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -5038,6 +5899,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -5146,15 +6008,23 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -5189,15 +6059,23 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -5230,15 +6108,23 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -5272,6 +6158,7 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -5300,6 +6187,7 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -5328,6 +6216,7 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -5435,15 +6324,23 @@ class _$SearchChatsImpl implements _SearchChats {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -5478,15 +6375,23 @@ class _$SearchChatsImpl implements _SearchChats {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -5519,15 +6424,23 @@ class _$SearchChatsImpl implements _SearchChats {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -5561,6 +6474,7 @@ class _$SearchChatsImpl implements _SearchChats {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -5589,6 +6503,7 @@ class _$SearchChatsImpl implements _SearchChats {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -5617,6 +6532,7 @@ class _$SearchChatsImpl implements _SearchChats {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -5699,15 +6615,23 @@ class _$ClearSearchImpl implements _ClearSearch {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -5742,15 +6666,23 @@ class _$ClearSearchImpl implements _ClearSearch {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -5783,15 +6715,23 @@ class _$ClearSearchImpl implements _ClearSearch {
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -5825,6 +6765,7 @@ class _$ClearSearchImpl implements _ClearSearch {
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -5853,6 +6794,7 @@ class _$ClearSearchImpl implements _ClearSearch {
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -5881,6 +6823,7 @@ class _$ClearSearchImpl implements _ClearSearch {
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -5988,15 +6931,23 @@ class _$ChangeConversationTypeFilterImpl
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)
         createChat,
     required TResult Function(
-            String chatId, String? name, String? description, String? avatar)
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
         updateChat,
     required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
     required TResult Function(String chatId, List<String> userIds)
         addUsersToChat,
     required TResult Function(String chatId, List<String> userIds)
@@ -6031,15 +6982,23 @@ class _$ChangeConversationTypeFilterImpl
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult? Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
     TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult? Function(String chatId, List<String> messageIds)?
@@ -6072,15 +7031,23 @@ class _$ChangeConversationTypeFilterImpl
             ChatType type,
             String? name,
             String? description,
+            GroupType groupType,
             List<String> participantIds,
             Uint8List? avatarBytes,
             String? avatarFileName,
             String? avatarFilePath)?
         createChat,
     TResult Function(
-            String chatId, String? name, String? description, String? avatar)?
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
         updateChat,
     TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
     TResult Function(String chatId, List<String> userIds)? addUsersToChat,
     TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
     TResult Function(String chatId, List<String> messageIds)?
@@ -6114,6 +7081,7 @@ class _$ChangeConversationTypeFilterImpl
     required TResult Function(_CreateChat value) createChat,
     required TResult Function(_UpdateChat value) updateChat,
     required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
     required TResult Function(_AddUsersToChat value) addUsersToChat,
     required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
     required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
@@ -6142,6 +7110,7 @@ class _$ChangeConversationTypeFilterImpl
     TResult? Function(_CreateChat value)? createChat,
     TResult? Function(_UpdateChat value)? updateChat,
     TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
     TResult? Function(_AddUsersToChat value)? addUsersToChat,
     TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -6170,6 +7139,7 @@ class _$ChangeConversationTypeFilterImpl
     TResult Function(_CreateChat value)? createChat,
     TResult Function(_UpdateChat value)? updateChat,
     TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
     TResult Function(_AddUsersToChat value)? addUsersToChat,
     TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
     TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
@@ -6224,6 +7194,8 @@ mixin _$ChatState {
             bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)
@@ -6255,6 +7227,8 @@ mixin _$ChatState {
             bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -6286,6 +7260,8 @@ mixin _$ChatState {
             bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -6306,6 +7282,8 @@ mixin _$ChatState {
     required TResult Function(_Loading value) loading,
     required TResult Function(_Loaded value) loaded,
     required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
     required TResult Function(_MessagesLoading value) messagesLoading,
     required TResult Function(_MessagesLoaded value) messagesLoaded,
     required TResult Function(_MessageSending value) messageSending,
@@ -6321,6 +7299,8 @@ mixin _$ChatState {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Loaded value)? loaded,
     TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult? Function(_MessagesLoading value)? messagesLoading,
     TResult? Function(_MessagesLoaded value)? messagesLoaded,
     TResult? Function(_MessageSending value)? messageSending,
@@ -6336,6 +7316,8 @@ mixin _$ChatState {
     TResult Function(_Loading value)? loading,
     TResult Function(_Loaded value)? loaded,
     TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult Function(_MessagesLoading value)? messagesLoading,
     TResult Function(_MessagesLoaded value)? messagesLoaded,
     TResult Function(_MessageSending value)? messageSending,
@@ -6419,6 +7401,8 @@ class _$InitialImpl implements _Initial {
             bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)
@@ -6453,6 +7437,8 @@ class _$InitialImpl implements _Initial {
             bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -6487,6 +7473,8 @@ class _$InitialImpl implements _Initial {
             bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -6513,6 +7501,8 @@ class _$InitialImpl implements _Initial {
     required TResult Function(_Loading value) loading,
     required TResult Function(_Loaded value) loaded,
     required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
     required TResult Function(_MessagesLoading value) messagesLoading,
     required TResult Function(_MessagesLoaded value) messagesLoaded,
     required TResult Function(_MessageSending value) messageSending,
@@ -6531,6 +7521,8 @@ class _$InitialImpl implements _Initial {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Loaded value)? loaded,
     TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult? Function(_MessagesLoading value)? messagesLoading,
     TResult? Function(_MessagesLoaded value)? messagesLoaded,
     TResult? Function(_MessageSending value)? messageSending,
@@ -6549,6 +7541,8 @@ class _$InitialImpl implements _Initial {
     TResult Function(_Loading value)? loading,
     TResult Function(_Loaded value)? loaded,
     TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult Function(_MessagesLoading value)? messagesLoading,
     TResult Function(_MessagesLoaded value)? messagesLoaded,
     TResult Function(_MessageSending value)? messageSending,
@@ -6623,6 +7617,8 @@ class _$LoadingImpl implements _Loading {
             bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)
@@ -6657,6 +7653,8 @@ class _$LoadingImpl implements _Loading {
             bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -6691,6 +7689,8 @@ class _$LoadingImpl implements _Loading {
             bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -6717,6 +7717,8 @@ class _$LoadingImpl implements _Loading {
     required TResult Function(_Loading value) loading,
     required TResult Function(_Loaded value) loaded,
     required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
     required TResult Function(_MessagesLoading value) messagesLoading,
     required TResult Function(_MessagesLoaded value) messagesLoaded,
     required TResult Function(_MessageSending value) messageSending,
@@ -6735,6 +7737,8 @@ class _$LoadingImpl implements _Loading {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Loaded value)? loaded,
     TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult? Function(_MessagesLoading value)? messagesLoading,
     TResult? Function(_MessagesLoaded value)? messagesLoaded,
     TResult? Function(_MessageSending value)? messageSending,
@@ -6753,6 +7757,8 @@ class _$LoadingImpl implements _Loading {
     TResult Function(_Loading value)? loading,
     TResult Function(_Loaded value)? loaded,
     TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult Function(_MessagesLoading value)? messagesLoading,
     TResult Function(_MessagesLoaded value)? messagesLoaded,
     TResult Function(_MessageSending value)? messageSending,
@@ -7016,6 +8022,8 @@ class _$LoadedImpl implements _Loaded {
             bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)
@@ -7051,6 +8059,8 @@ class _$LoadedImpl implements _Loaded {
             bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -7086,6 +8096,8 @@ class _$LoadedImpl implements _Loaded {
             bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -7113,6 +8125,8 @@ class _$LoadedImpl implements _Loaded {
     required TResult Function(_Loading value) loading,
     required TResult Function(_Loaded value) loaded,
     required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
     required TResult Function(_MessagesLoading value) messagesLoading,
     required TResult Function(_MessagesLoaded value) messagesLoaded,
     required TResult Function(_MessageSending value) messageSending,
@@ -7131,6 +8145,8 @@ class _$LoadedImpl implements _Loaded {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Loaded value)? loaded,
     TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult? Function(_MessagesLoading value)? messagesLoading,
     TResult? Function(_MessagesLoaded value)? messagesLoaded,
     TResult? Function(_MessageSending value)? messageSending,
@@ -7149,6 +8165,8 @@ class _$LoadedImpl implements _Loaded {
     TResult Function(_Loading value)? loading,
     TResult Function(_Loaded value)? loaded,
     TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult Function(_MessagesLoading value)? messagesLoading,
     TResult Function(_MessagesLoaded value)? messagesLoaded,
     TResult Function(_MessageSending value)? messageSending,
@@ -7278,6 +8296,8 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
             bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)
@@ -7312,6 +8332,8 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
             bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -7346,6 +8368,8 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
             bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -7372,6 +8396,8 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
     required TResult Function(_Loading value) loading,
     required TResult Function(_Loaded value) loaded,
     required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
     required TResult Function(_MessagesLoading value) messagesLoading,
     required TResult Function(_MessagesLoaded value) messagesLoaded,
     required TResult Function(_MessageSending value) messageSending,
@@ -7390,6 +8416,8 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Loaded value)? loaded,
     TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult? Function(_MessagesLoading value)? messagesLoading,
     TResult? Function(_MessagesLoaded value)? messagesLoaded,
     TResult? Function(_MessageSending value)? messageSending,
@@ -7408,6 +8436,8 @@ class _$ChatDetailsLoadedImpl implements _ChatDetailsLoaded {
     TResult Function(_Loading value)? loading,
     TResult Function(_Loaded value)? loaded,
     TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult Function(_MessagesLoading value)? messagesLoading,
     TResult Function(_MessagesLoaded value)? messagesLoaded,
     TResult Function(_MessageSending value)? messageSending,
@@ -7432,6 +8462,270 @@ abstract class _ChatDetailsLoaded implements ChatState {
   @JsonKey(ignore: true)
   _$$ChatDetailsLoadedImplCopyWith<_$ChatDetailsLoadedImpl> get copyWith =>
       throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$ConversationActionCompletedImplCopyWith<$Res> {
+  factory _$$ConversationActionCompletedImplCopyWith(
+          _$ConversationActionCompletedImpl value,
+          $Res Function(_$ConversationActionCompletedImpl) then) =
+      __$$ConversationActionCompletedImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({String chatId, ChatConversationAction action});
+}
+
+/// @nodoc
+class __$$ConversationActionCompletedImplCopyWithImpl<$Res>
+    extends _$ChatStateCopyWithImpl<$Res, _$ConversationActionCompletedImpl>
+    implements _$$ConversationActionCompletedImplCopyWith<$Res> {
+  __$$ConversationActionCompletedImplCopyWithImpl(
+      _$ConversationActionCompletedImpl _value,
+      $Res Function(_$ConversationActionCompletedImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? chatId = null,
+    Object? action = null,
+  }) {
+    return _then(_$ConversationActionCompletedImpl(
+      chatId: null == chatId
+          ? _value.chatId
+          : chatId // ignore: cast_nullable_to_non_nullable
+              as String,
+      action: null == action
+          ? _value.action
+          : action // ignore: cast_nullable_to_non_nullable
+              as ChatConversationAction,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ConversationActionCompletedImpl
+    implements _ConversationActionCompleted {
+  const _$ConversationActionCompletedImpl(
+      {required this.chatId, required this.action});
+
+  @override
+  final String chatId;
+  @override
+  final ChatConversationAction action;
+
+  @override
+  String toString() {
+    return 'ChatState.conversationActionCompleted(chatId: $chatId, action: $action)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ConversationActionCompletedImpl &&
+            (identical(other.chatId, chatId) || other.chatId == chatId) &&
+            (identical(other.action, action) || other.action == action));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, chatId, action);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ConversationActionCompletedImplCopyWith<_$ConversationActionCompletedImpl>
+      get copyWith => __$$ConversationActionCompletedImplCopyWithImpl<
+          _$ConversationActionCompletedImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() initial,
+    required TResult Function() loading,
+    required TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)
+        loaded,
+    required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
+    required TResult Function(List<Chat>? chats) messagesLoading,
+    required TResult Function(
+            List<Chat>? chats, String chatId, List<ChatMessage> messages)
+        messagesLoaded,
+    required TResult Function(String chatId, String localId) messageSending,
+    required TResult Function(String chatId, String localId,
+            MessageQueueStatus status, String? serverId)
+        messageStatusChanged,
+    required TResult Function() syncing,
+    required TResult Function() offline,
+    required TResult Function(String message) error,
+  }) {
+    return conversationActionCompleted(chatId, action);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? initial,
+    TResult? Function()? loading,
+    TResult? Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
+        loaded,
+    TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
+    TResult? Function(List<Chat>? chats)? messagesLoading,
+    TResult? Function(
+            List<Chat>? chats, String chatId, List<ChatMessage> messages)?
+        messagesLoaded,
+    TResult? Function(String chatId, String localId)? messageSending,
+    TResult? Function(String chatId, String localId, MessageQueueStatus status,
+            String? serverId)?
+        messageStatusChanged,
+    TResult? Function()? syncing,
+    TResult? Function()? offline,
+    TResult? Function(String message)? error,
+  }) {
+    return conversationActionCompleted?.call(chatId, action);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? initial,
+    TResult Function()? loading,
+    TResult Function(
+            List<Chat> chats,
+            bool hasMore,
+            bool isLoadingMore,
+            int page,
+            int pageSize,
+            int total,
+            ConversationTypeFilter activeFilter,
+            Map<ConversationTypeFilter, List<Chat>> cachedLists,
+            Map<ConversationTypeFilter, int> filterPages,
+            Map<ConversationTypeFilter, bool> filterHasMore,
+            bool isSyncing)?
+        loaded,
+    TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
+    TResult Function(List<Chat>? chats)? messagesLoading,
+    TResult Function(
+            List<Chat>? chats, String chatId, List<ChatMessage> messages)?
+        messagesLoaded,
+    TResult Function(String chatId, String localId)? messageSending,
+    TResult Function(String chatId, String localId, MessageQueueStatus status,
+            String? serverId)?
+        messageStatusChanged,
+    TResult Function()? syncing,
+    TResult Function()? offline,
+    TResult Function(String message)? error,
+    required TResult orElse(),
+  }) {
+    if (conversationActionCompleted != null) {
+      return conversationActionCompleted(chatId, action);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_Initial value) initial,
+    required TResult Function(_Loading value) loading,
+    required TResult Function(_Loaded value) loaded,
+    required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
+    required TResult Function(_MessagesLoading value) messagesLoading,
+    required TResult Function(_MessagesLoaded value) messagesLoaded,
+    required TResult Function(_MessageSending value) messageSending,
+    required TResult Function(_MessageStatusChanged value) messageStatusChanged,
+    required TResult Function(_Syncing value) syncing,
+    required TResult Function(_Offline value) offline,
+    required TResult Function(_Error value) error,
+  }) {
+    return conversationActionCompleted(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_Initial value)? initial,
+    TResult? Function(_Loading value)? loading,
+    TResult? Function(_Loaded value)? loaded,
+    TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
+    TResult? Function(_MessagesLoading value)? messagesLoading,
+    TResult? Function(_MessagesLoaded value)? messagesLoaded,
+    TResult? Function(_MessageSending value)? messageSending,
+    TResult? Function(_MessageStatusChanged value)? messageStatusChanged,
+    TResult? Function(_Syncing value)? syncing,
+    TResult? Function(_Offline value)? offline,
+    TResult? Function(_Error value)? error,
+  }) {
+    return conversationActionCompleted?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_Initial value)? initial,
+    TResult Function(_Loading value)? loading,
+    TResult Function(_Loaded value)? loaded,
+    TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
+    TResult Function(_MessagesLoading value)? messagesLoading,
+    TResult Function(_MessagesLoaded value)? messagesLoaded,
+    TResult Function(_MessageSending value)? messageSending,
+    TResult Function(_MessageStatusChanged value)? messageStatusChanged,
+    TResult Function(_Syncing value)? syncing,
+    TResult Function(_Offline value)? offline,
+    TResult Function(_Error value)? error,
+    required TResult orElse(),
+  }) {
+    if (conversationActionCompleted != null) {
+      return conversationActionCompleted(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ConversationActionCompleted implements ChatState {
+  const factory _ConversationActionCompleted(
+          {required final String chatId,
+          required final ChatConversationAction action}) =
+      _$ConversationActionCompletedImpl;
+
+  String get chatId;
+  ChatConversationAction get action;
+  @JsonKey(ignore: true)
+  _$$ConversationActionCompletedImplCopyWith<_$ConversationActionCompletedImpl>
+      get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -7523,6 +8817,8 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
             bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)
@@ -7557,6 +8853,8 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
             bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -7591,6 +8889,8 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
             bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -7617,6 +8917,8 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
     required TResult Function(_Loading value) loading,
     required TResult Function(_Loaded value) loaded,
     required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
     required TResult Function(_MessagesLoading value) messagesLoading,
     required TResult Function(_MessagesLoaded value) messagesLoaded,
     required TResult Function(_MessageSending value) messageSending,
@@ -7635,6 +8937,8 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Loaded value)? loaded,
     TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult? Function(_MessagesLoading value)? messagesLoading,
     TResult? Function(_MessagesLoaded value)? messagesLoaded,
     TResult? Function(_MessageSending value)? messageSending,
@@ -7653,6 +8957,8 @@ class _$MessagesLoadingImpl implements _MessagesLoading {
     TResult Function(_Loading value)? loading,
     TResult Function(_Loaded value)? loaded,
     TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult Function(_MessagesLoading value)? messagesLoading,
     TResult Function(_MessagesLoaded value)? messagesLoaded,
     TResult Function(_MessageSending value)? messageSending,
@@ -7798,6 +9104,8 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
             bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)
@@ -7832,6 +9140,8 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
             bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -7866,6 +9176,8 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
             bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -7892,6 +9204,8 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
     required TResult Function(_Loading value) loading,
     required TResult Function(_Loaded value) loaded,
     required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
     required TResult Function(_MessagesLoading value) messagesLoading,
     required TResult Function(_MessagesLoaded value) messagesLoaded,
     required TResult Function(_MessageSending value) messageSending,
@@ -7910,6 +9224,8 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Loaded value)? loaded,
     TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult? Function(_MessagesLoading value)? messagesLoading,
     TResult? Function(_MessagesLoaded value)? messagesLoaded,
     TResult? Function(_MessageSending value)? messageSending,
@@ -7928,6 +9244,8 @@ class _$MessagesLoadedImpl implements _MessagesLoaded {
     TResult Function(_Loading value)? loading,
     TResult Function(_Loaded value)? loaded,
     TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult Function(_MessagesLoading value)? messagesLoading,
     TResult Function(_MessagesLoaded value)? messagesLoaded,
     TResult Function(_MessageSending value)? messageSending,
@@ -8047,6 +9365,8 @@ class _$MessageSendingImpl implements _MessageSending {
             bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)
@@ -8081,6 +9401,8 @@ class _$MessageSendingImpl implements _MessageSending {
             bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -8115,6 +9437,8 @@ class _$MessageSendingImpl implements _MessageSending {
             bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -8141,6 +9465,8 @@ class _$MessageSendingImpl implements _MessageSending {
     required TResult Function(_Loading value) loading,
     required TResult Function(_Loaded value) loaded,
     required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
     required TResult Function(_MessagesLoading value) messagesLoading,
     required TResult Function(_MessagesLoaded value) messagesLoaded,
     required TResult Function(_MessageSending value) messageSending,
@@ -8159,6 +9485,8 @@ class _$MessageSendingImpl implements _MessageSending {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Loaded value)? loaded,
     TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult? Function(_MessagesLoading value)? messagesLoading,
     TResult? Function(_MessagesLoaded value)? messagesLoaded,
     TResult? Function(_MessageSending value)? messageSending,
@@ -8177,6 +9505,8 @@ class _$MessageSendingImpl implements _MessageSending {
     TResult Function(_Loading value)? loading,
     TResult Function(_Loaded value)? loaded,
     TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult Function(_MessagesLoading value)? messagesLoading,
     TResult Function(_MessagesLoaded value)? messagesLoaded,
     TResult Function(_MessageSending value)? messageSending,
@@ -8321,6 +9651,8 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
             bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)
@@ -8355,6 +9687,8 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
             bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -8389,6 +9723,8 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
             bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -8415,6 +9751,8 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
     required TResult Function(_Loading value) loading,
     required TResult Function(_Loaded value) loaded,
     required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
     required TResult Function(_MessagesLoading value) messagesLoading,
     required TResult Function(_MessagesLoaded value) messagesLoaded,
     required TResult Function(_MessageSending value) messageSending,
@@ -8433,6 +9771,8 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Loaded value)? loaded,
     TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult? Function(_MessagesLoading value)? messagesLoading,
     TResult? Function(_MessagesLoaded value)? messagesLoaded,
     TResult? Function(_MessageSending value)? messageSending,
@@ -8451,6 +9791,8 @@ class _$MessageStatusChangedImpl implements _MessageStatusChanged {
     TResult Function(_Loading value)? loading,
     TResult Function(_Loaded value)? loaded,
     TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult Function(_MessagesLoading value)? messagesLoading,
     TResult Function(_MessagesLoaded value)? messagesLoaded,
     TResult Function(_MessageSending value)? messageSending,
@@ -8537,6 +9879,8 @@ class _$SyncingImpl implements _Syncing {
             bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)
@@ -8571,6 +9915,8 @@ class _$SyncingImpl implements _Syncing {
             bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -8605,6 +9951,8 @@ class _$SyncingImpl implements _Syncing {
             bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -8631,6 +9979,8 @@ class _$SyncingImpl implements _Syncing {
     required TResult Function(_Loading value) loading,
     required TResult Function(_Loaded value) loaded,
     required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
     required TResult Function(_MessagesLoading value) messagesLoading,
     required TResult Function(_MessagesLoaded value) messagesLoaded,
     required TResult Function(_MessageSending value) messageSending,
@@ -8649,6 +9999,8 @@ class _$SyncingImpl implements _Syncing {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Loaded value)? loaded,
     TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult? Function(_MessagesLoading value)? messagesLoading,
     TResult? Function(_MessagesLoaded value)? messagesLoaded,
     TResult? Function(_MessageSending value)? messageSending,
@@ -8667,6 +10019,8 @@ class _$SyncingImpl implements _Syncing {
     TResult Function(_Loading value)? loading,
     TResult Function(_Loaded value)? loaded,
     TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult Function(_MessagesLoading value)? messagesLoading,
     TResult Function(_MessagesLoaded value)? messagesLoaded,
     TResult Function(_MessageSending value)? messageSending,
@@ -8741,6 +10095,8 @@ class _$OfflineImpl implements _Offline {
             bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)
@@ -8775,6 +10131,8 @@ class _$OfflineImpl implements _Offline {
             bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -8809,6 +10167,8 @@ class _$OfflineImpl implements _Offline {
             bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -8835,6 +10195,8 @@ class _$OfflineImpl implements _Offline {
     required TResult Function(_Loading value) loading,
     required TResult Function(_Loaded value) loaded,
     required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
     required TResult Function(_MessagesLoading value) messagesLoading,
     required TResult Function(_MessagesLoaded value) messagesLoaded,
     required TResult Function(_MessageSending value) messageSending,
@@ -8853,6 +10215,8 @@ class _$OfflineImpl implements _Offline {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Loaded value)? loaded,
     TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult? Function(_MessagesLoading value)? messagesLoading,
     TResult? Function(_MessagesLoaded value)? messagesLoaded,
     TResult? Function(_MessageSending value)? messageSending,
@@ -8871,6 +10235,8 @@ class _$OfflineImpl implements _Offline {
     TResult Function(_Loading value)? loading,
     TResult Function(_Loaded value)? loaded,
     TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult Function(_MessagesLoading value)? messagesLoading,
     TResult Function(_MessagesLoaded value)? messagesLoaded,
     TResult Function(_MessageSending value)? messageSending,
@@ -8971,6 +10337,8 @@ class _$ErrorImpl implements _Error {
             bool isSyncing)
         loaded,
     required TResult Function(Chat chat) chatDetailsLoaded,
+    required TResult Function(String chatId, ChatConversationAction action)
+        conversationActionCompleted,
     required TResult Function(List<Chat>? chats) messagesLoading,
     required TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)
@@ -9005,6 +10373,8 @@ class _$ErrorImpl implements _Error {
             bool isSyncing)?
         loaded,
     TResult? Function(Chat chat)? chatDetailsLoaded,
+    TResult? Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult? Function(List<Chat>? chats)? messagesLoading,
     TResult? Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -9039,6 +10409,8 @@ class _$ErrorImpl implements _Error {
             bool isSyncing)?
         loaded,
     TResult Function(Chat chat)? chatDetailsLoaded,
+    TResult Function(String chatId, ChatConversationAction action)?
+        conversationActionCompleted,
     TResult Function(List<Chat>? chats)? messagesLoading,
     TResult Function(
             List<Chat>? chats, String chatId, List<ChatMessage> messages)?
@@ -9065,6 +10437,8 @@ class _$ErrorImpl implements _Error {
     required TResult Function(_Loading value) loading,
     required TResult Function(_Loaded value) loaded,
     required TResult Function(_ChatDetailsLoaded value) chatDetailsLoaded,
+    required TResult Function(_ConversationActionCompleted value)
+        conversationActionCompleted,
     required TResult Function(_MessagesLoading value) messagesLoading,
     required TResult Function(_MessagesLoaded value) messagesLoaded,
     required TResult Function(_MessageSending value) messageSending,
@@ -9083,6 +10457,8 @@ class _$ErrorImpl implements _Error {
     TResult? Function(_Loading value)? loading,
     TResult? Function(_Loaded value)? loaded,
     TResult? Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult? Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult? Function(_MessagesLoading value)? messagesLoading,
     TResult? Function(_MessagesLoaded value)? messagesLoaded,
     TResult? Function(_MessageSending value)? messageSending,
@@ -9101,6 +10477,8 @@ class _$ErrorImpl implements _Error {
     TResult Function(_Loading value)? loading,
     TResult Function(_Loaded value)? loaded,
     TResult Function(_ChatDetailsLoaded value)? chatDetailsLoaded,
+    TResult Function(_ConversationActionCompleted value)?
+        conversationActionCompleted,
     TResult Function(_MessagesLoading value)? messagesLoading,
     TResult Function(_MessagesLoaded value)? messagesLoaded,
     TResult Function(_MessageSending value)? messageSending,

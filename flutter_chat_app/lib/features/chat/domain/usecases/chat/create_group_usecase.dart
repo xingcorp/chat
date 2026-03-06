@@ -37,6 +37,7 @@ class CreateGroupUseCase {
     required List<String> memberIds,
     String? avatar,
     String? description,
+    GroupType groupType = GroupType.private,
   }) async {
     _logger.info('CreateGroupUseCase: Starting operation', {
       'name': name,
@@ -62,6 +63,7 @@ class CreateGroupUseCase {
         participantIds: memberIds,
         avatarUrl: avatar,
         description: description,
+        groupType: groupType,
         isGroup: true,
       );
 
