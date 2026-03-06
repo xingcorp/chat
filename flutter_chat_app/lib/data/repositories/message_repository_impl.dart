@@ -236,6 +236,14 @@ class MessageRepositoryImpl extends BaseRepository
 
     await _localDataSource.saveMessages(models);
 
+    // Verify persistence — read back from Isar to confirm messages were saved
+    final verifyCount =
+        (await _localDataSource.getMessagesForChat(chatId)).length;
+    logger.i(
+        '[_fetchAndCacheFromRemote] chatId=$chatId: '
+        'fetched=${dtos.length} models=${models.length} '
+        'isarAfterSave=$verifyCount');
+
     await _cacheManager.cacheApiResponse(
       cacheKey,
       models.map((m) => m.toMap()).toList(),
