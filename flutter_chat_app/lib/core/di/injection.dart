@@ -78,6 +78,7 @@ import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/core/monitoring/performance_monitor.dart';
 import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
+import 'package:flutter_chat_app/core/services/performance_service.dart';
 
 import 'injection.config.dart';
 import 'modules/core_module.dart';
@@ -127,33 +128,69 @@ Future<void> configureDependencies() async {
     // Step 3: Initialize auto-generated dependencies (feature services)
     getIt.init(environment: 'standalone');
 
+    final bool useFirebaseBackedMonitoring =
+        FirebaseConfigManager.supportsConfiguredPlatform;
+
     // Step 4: Override monitoring with Firebase-backed implementations
     // (standalone mode only — package mode uses NoOp defaults from core_module
     // or host-provided implementations from chat_module_injection)
-    if (getIt.isRegistered<IPerformanceMonitor>()) {
-      await getIt.unregister<IPerformanceMonitor>();
-    }
-    getIt.registerLazySingleton<IPerformanceMonitor>(
-      () => PerformanceMonitor(getIt<FirebasePerformance>()),
-    );
+    if (useFirebaseBackedMonitoring) {
+      if (getIt.isRegistered<IPerformanceMonitor>()) {
+        await getIt.unregister<IPerformanceMonitor>();
+      }
+      getIt.registerLazySingleton<IPerformanceMonitor>(
+        () => PerformanceMonitor(getIt<FirebasePerformance>()),
+      );
 
-    if (getIt.isRegistered<ICrashReporter>()) {
-      await getIt.unregister<ICrashReporter>();
-    }
-    getIt.registerLazySingleton<ICrashReporter>(
-      () => CrashReporter(getIt<FirebaseCrashlytics>()),
-    );
+      if (getIt.isRegistered<ICrashReporter>()) {
+        await getIt.unregister<ICrashReporter>();
+      }
+      getIt.registerLazySingleton<ICrashReporter>(
+        () => CrashReporter(getIt<FirebaseCrashlytics>()),
+      );
 
-    if (getIt.isRegistered<IAnalyticsService>()) {
-      await getIt.unregister<IAnalyticsService>();
+      if (getIt.isRegistered<IAnalyticsService>()) {
+        await getIt.unregister<IAnalyticsService>();
+      }
+      getIt.registerLazySingleton<IAnalyticsService>(
+        () => AnalyticsService(
+          getIt<FirebaseAnalytics>(),
+          getIt<ICrashReporter>(),
+          getIt<IPerformanceMonitor>(),
+        ),
+      );
+    } else {
+      if (getIt.isRegistered<IPerformanceMonitor>()) {
+        await getIt.unregister<IPerformanceMonitor>();
+      }
+      getIt.registerSingleton<IPerformanceMonitor>(
+        const NoOpPerformanceMonitor(),
+      );
+
+      if (getIt.isRegistered<ICrashReporter>()) {
+        await getIt.unregister<ICrashReporter>();
+      }
+      getIt.registerSingleton<ICrashReporter>(
+        const NoOpCrashReporter(),
+      );
+
+      if (getIt.isRegistered<IAnalyticsService>()) {
+        await getIt.unregister<IAnalyticsService>();
+      }
+      getIt.registerSingleton<IAnalyticsService>(
+        const NoOpAnalyticsService(),
+      );
+
+      if (getIt.isRegistered<PerformanceService>()) {
+        await getIt.unregister<PerformanceService>();
+      }
+
+      logger.i(
+        'Using no-op monitoring on '
+        '${FirebaseConfigManager.currentPlatformLabel} until desktop '
+        'Firebase configuration is added.',
+      );
     }
-    getIt.registerLazySingleton<IAnalyticsService>(
-      () => AnalyticsService(
-        getIt<FirebaseAnalytics>(),
-        getIt<ICrashReporter>(),
-        getIt<IPerformanceMonitor>(),
-      ),
-    );
 
     if (kIsWeb) {
       if (getIt.isRegistered<PermissionsDataSource>()) {
@@ -305,6 +342,8 @@ Future<void> configureDependencies() async {
 /// - Connectivity: For network status monitoring
 Future<void> _registerExternalDependencies(Logger logger) async {
   // logger.d('📦 Registering external dependencies...');
+  final bool shouldInitializeFirebase =
+      FirebaseConfigManager.supportsConfiguredPlatform;
 
   // Logger - required by many services
   if (!getIt.isRegistered<Logger>()) {
@@ -314,13 +353,13 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   // SharedPreferences + Firebase init are independent – run in parallel
   late final SharedPreferences prefs;
   if (!getIt.isRegistered<SharedPreferences>() ||
-      !FirebaseConfigManager.isInitialized) {
+      (shouldInitializeFirebase && !FirebaseConfigManager.isInitialized)) {
     final results = await Future.wait([
       if (!getIt.isRegistered<SharedPreferences>())
         SharedPreferences.getInstance()
       else
         Future.value(getIt<SharedPreferences>()),
-      if (!FirebaseConfigManager.isInitialized)
+      if (shouldInitializeFirebase && !FirebaseConfigManager.isInitialized)
         FirebaseConfigManager.initialize()
       else
         Future.value(null),
@@ -411,7 +450,6 @@ Future<void> _registerExternalDependencies(Logger logger) async {
     getIt.registerSingleton<String>(baseUrl, instanceName: 'baseUrl');
   }
 
-  final apiBaseUrl = (dotenv.env['API_BASE_URL'] ?? '').trim();
   final graphQlApiUrlRaw = (dotenv.env['GRAPHQL_API_URL'] ?? '').trim();
   final graphQlWsUrlRaw = (dotenv.env['GRAPHQL_WS_URL'] ?? '').trim();
   final socketUrlRaw =
@@ -443,7 +481,6 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   socketUrl = socketUrl.replaceFirst(RegExp(r'/+$'), '');
 
   // logger.i('Resolved endpoints (dotenv):');
-  // logger.i('  API_BASE_URL=$apiBaseUrl');
   // logger.i('  GRAPHQL_API_URL(raw)=$graphQlApiUrlRaw');
   // logger.i('  GRAPHQL_WS_URL(raw)=$graphQlWsUrlRaw');
   // logger.i('  SOCKET_URL(raw)=$socketUrlRaw');
@@ -469,21 +506,35 @@ Future<void> _registerExternalDependencies(Logger logger) async {
         app_retry.RetryConfig.realtime);
   }
 
-  // Firebase already initialized in parallel block above
+  // Firebase already initialized in parallel block above when the platform
+  // has configured standalone Firebase support.
+  if (shouldInitializeFirebase) {
+    if (!getIt.isRegistered<FirebasePerformance>()) {
+      getIt.registerLazySingleton<FirebasePerformance>(
+          () => FirebasePerformance.instance);
+    }
 
-  if (!getIt.isRegistered<FirebasePerformance>()) {
-    getIt.registerLazySingleton<FirebasePerformance>(
-        () => FirebasePerformance.instance);
-  }
+    if (!getIt.isRegistered<FirebaseAnalytics>()) {
+      getIt.registerLazySingleton<FirebaseAnalytics>(
+          () => FirebaseAnalytics.instance);
+    }
 
-  if (!getIt.isRegistered<FirebaseAnalytics>()) {
-    getIt.registerLazySingleton<FirebaseAnalytics>(
-        () => FirebaseAnalytics.instance);
-  }
+    if (!getIt.isRegistered<FirebaseCrashlytics>()) {
+      getIt.registerLazySingleton<FirebaseCrashlytics>(
+          () => FirebaseCrashlytics.instance);
+    }
+  } else {
+    if (getIt.isRegistered<FirebasePerformance>()) {
+      await getIt.unregister<FirebasePerformance>();
+    }
 
-  if (!getIt.isRegistered<FirebaseCrashlytics>()) {
-    getIt.registerLazySingleton<FirebaseCrashlytics>(
-        () => FirebaseCrashlytics.instance);
+    if (getIt.isRegistered<FirebaseAnalytics>()) {
+      await getIt.unregister<FirebaseAnalytics>();
+    }
+
+    if (getIt.isRegistered<FirebaseCrashlytics>()) {
+      await getIt.unregister<FirebaseCrashlytics>();
+    }
   }
 
   if (!getIt.isRegistered<int>(instanceName: 'connectionPoolMaxPoolSize')) {

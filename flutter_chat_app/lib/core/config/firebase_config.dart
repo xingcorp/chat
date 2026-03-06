@@ -30,6 +30,27 @@ class FirebaseConfigManager {
   static final AppLogger _logger = AppLogger();
   static bool _isInitialized = false;
 
+  /// Standalone app currently has compile-time Firebase options only for web,
+  /// Android, and iOS. Desktop should skip Firebase until configured.
+  static bool get supportsConfiguredPlatform {
+    if (kIsWeb) {
+      return true;
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        return true;
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.fuchsia:
+        return false;
+    }
+  }
+
+  static String get currentPlatformLabel => _getCurrentPlatformKey();
+
   /// Required `--dart-define` keys for Firebase initialization.
   ///
   /// Build will fail fast if any of these are missing.
@@ -59,6 +80,14 @@ class FirebaseConfigManager {
   static Future<void> initialize() async {
     if (_isInitialized) {
       _logger.info('Firebase already initialized');
+      return;
+    }
+
+    if (!supportsConfiguredPlatform) {
+      _logger.info(
+        'Skipping Firebase initialization on $currentPlatformLabel until '
+        'desktop Firebase options are configured.',
+      );
       return;
     }
 
@@ -184,6 +213,12 @@ class FirebaseConfigManager {
         return 'android';
       case TargetPlatform.iOS:
         return 'ios';
+      case TargetPlatform.macOS:
+        return 'macos';
+      case TargetPlatform.windows:
+        return 'windows';
+      case TargetPlatform.linux:
+        return 'linux';
       default:
         return 'unknown';
     }
@@ -318,6 +353,10 @@ class FirebaseConfigManager {
   ///
   /// Useful for services that need direct access to Firebase configuration.
   static FirebaseOptions? getCurrentOptions() {
+    if (!supportsConfiguredPlatform) {
+      return null;
+    }
+
     try {
       final config = FlavorConfig.instance;
       return _getFirebaseOptions(config.flavor);

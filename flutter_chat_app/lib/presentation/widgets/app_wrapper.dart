@@ -9,24 +9,24 @@ class AppWrapper extends StatelessWidget {
   final Widget child;
 
   /// Constructor
-  const AppWrapper({
-    Key? key,
-    required this.child,
-  }) : super(key: key);
+  const AppWrapper({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
+    final bool showPerformanceToggle =
+        kDebugMode && GetIt.I.isRegistered<PerformanceService>();
+
     return Stack(
       children: [
         // Widget chính của ứng dụng
         child,
-        
+
         // Các widget overlay debug (chỉ hiển thị trong chế độ debug)
-        if (kDebugMode) _buildPerformanceToggleButton(),
+        if (showPerformanceToggle) _buildPerformanceToggleButton(),
       ],
     );
   }
-  
+
   /// Tạo nút toggle hiển thị performance overlay
   Widget _buildPerformanceToggleButton() {
     return Positioned(
@@ -44,7 +44,7 @@ class AppWrapper extends StatelessWidget {
           },
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(8),
                 bottomLeft: Radius.circular(8),
@@ -69,4 +69,4 @@ class AppWrapper extends StatelessWidget {
 /// Hàm tiện ích để bọc widget bất kỳ trong AppWrapper
 Widget wrapApp(Widget child) {
   return AppWrapper(child: child);
-} 
+}
