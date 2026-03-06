@@ -107,11 +107,10 @@ class ChatObjectRemoteDataSource implements IChatObjectRemoteDataSource {
       final file = File(filePath);
       final bytes = await file.readAsBytes();
 
-      // Upload file binary directly with Content-Type header
-      // Matching Angular: uploadMessageFileS3Observable
+      // Upload raw bytes directly, matching Angular's httpClient.put(url, file).
       await _dio.put(
         presignedUrl,
-        data: Stream.fromIterable([bytes]),
+        data: bytes,
         options: Options(
           headers: {
             'Content-Type': contentType,
@@ -135,10 +134,10 @@ class ChatObjectRemoteDataSource implements IChatObjectRemoteDataSource {
     void Function(double progress)? onProgress,
   }) async {
     try {
-      // Upload bytes directly - for web platform where File is not available
+      // Upload raw bytes directly - for web/platform flows without File access.
       await _dio.put(
         presignedUrl,
-        data: Stream.fromIterable([bytes]),
+        data: bytes,
         options: Options(
           headers: {
             'Content-Type': contentType,

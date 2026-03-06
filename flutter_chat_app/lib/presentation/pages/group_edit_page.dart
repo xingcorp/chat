@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -42,6 +44,7 @@ class _GroupEditPageState extends BaseState<GroupEditPage> {
 
   Uint8List? _avatarBytes;
   String? _avatarFileName;
+  String? _avatarFilePath;
   bool _isSaving = false;
   double? _uploadProgress;
 
@@ -80,6 +83,8 @@ class _GroupEditPageState extends BaseState<GroupEditPage> {
         _avatarFileName = selectedImage.name.isNotEmpty
             ? selectedImage.name
             : 'group_avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        _avatarFilePath =
+            selectedImage.path.trim().isNotEmpty ? selectedImage.path : null;
       });
     } catch (_) {
       _showMessage(errorMessage, isError: true);
@@ -116,10 +121,16 @@ class _GroupEditPageState extends BaseState<GroupEditPage> {
 
     String? uploadedAvatarUrl;
     if (hasAvatarChanged) {
+      final avatarBytes = _avatarBytes;
+      final avatarFilePath = _avatarFilePath?.trim();
+      final canUseFileUpload =
+          !kIsWeb && avatarFilePath != null && avatarFilePath.isNotEmpty;
+
       final uploadResult = await _attachmentRepository.uploadAttachment(
         messageId: 'group-avatar-${widget.chat.id}',
         chatId: widget.chat.id,
-        bytes: _avatarBytes,
+        file: canUseFileUpload ? File(avatarFilePath) : null,
+        bytes: canUseFileUpload ? null : avatarBytes,
         fileName: _avatarFileName ??
             'group_avatar_${DateTime.now().millisecondsSinceEpoch}.jpg',
         onProgress: (progress) {

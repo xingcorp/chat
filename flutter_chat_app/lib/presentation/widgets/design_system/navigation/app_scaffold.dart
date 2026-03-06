@@ -41,9 +41,15 @@ class AppScaffold extends BaseStatelessWidget {
     return Scaffold(
       appBar: appBar,
       body: dismissKeyboardOnTap
-          ? GestureDetector(
+          ? Listener(
               behavior: HitTestBehavior.translucent,
-              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              onPointerDown: (_) {
+                final focusScope = FocusScope.of(context);
+                if (!focusScope.hasPrimaryFocus &&
+                    focusScope.focusedChild != null) {
+                  focusScope.unfocus();
+                }
+              },
               child: content,
             )
           : content,

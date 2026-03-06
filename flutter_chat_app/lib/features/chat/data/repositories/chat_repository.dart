@@ -1,8 +1,8 @@
 /// **CHAT REPOSITORY IMPLEMENTATION**
-/// 
+///
 /// Production-ready repository implementation for messaging apps with
 /// WhatsApp/Telegram/Zalo-level performance.
-/// 
+///
 /// **Features:**
 /// - Clean Architecture compliance with SOLID principles
 /// - Either<Failure, T> pattern for comprehensive error handling
@@ -33,7 +33,7 @@ import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dar
 import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
 
 /// **CHAT REPOSITORY**
-/// 
+///
 /// Production-ready repository with clean architecture patterns
 @LazySingleton(as: IChatRepository)
 class ChatRepositoryImpl implements IChatRepository {
@@ -58,9 +58,9 @@ class ChatRepositoryImpl implements IChatRepository {
         _remoteDataSource = remoteDataSource,
         _networkInfo = networkInfo,
         _logger = logger;
-  
+
   /// **Get Chats**
-  /// 
+  ///
   /// Retrieves chats with offline-first strategy and performance monitoring.
   /// Performance target: <10ms for local, <500ms for remote
   @override
@@ -68,18 +68,18 @@ class ChatRepositoryImpl implements IChatRepository {
     return _executeWithMonitoring('get_chats', () async {
       try {
         _logger.i('Getting chats with offline-first strategy');
-        
+
         // **OFFLINE-FIRST STRATEGY**
         // 1. Get local chats immediately for instant UI
         final localChats = await _localDataSource.getChats();
         _logger.d('Loaded ${localChats.length} local chats');
-        
+
         // 2. Check network connectivity
         if (!await _networkInfo.isConnected) {
           _logger.w('No internet connection, using cached data');
           return Right(localChats);
         }
-        
+
         // 3. Try to sync with remote if available
         try {
           const pageSize = 25;
@@ -119,7 +119,6 @@ class ChatRepositoryImpl implements IChatRepository {
           // Return updated local data
           final updatedChats = await _localDataSource.getChats();
           return Right(updatedChats);
-          
         } on app_exceptions.ServerException catch (e) {
           _logger.w('Server error, using cached data', error: e);
           return Right(localChats);
@@ -127,26 +126,29 @@ class ChatRepositoryImpl implements IChatRepository {
           _logger.w('Network error, using cached data', error: e);
           return Right(localChats);
         }
-        
       } on app_exceptions.CacheException catch (e) {
         _logger.e('Cache error', error: e);
         return const Left(CacheFailure(message: 'Unable to load chats'));
       } catch (e, stackTrace) {
-        _logger.e('Unexpected error getting chats', error: e, stackTrace: stackTrace);
-        return const Left(UnexpectedFailure(message: 'An unexpected error occurred'));
+        _logger.e('Unexpected error getting chats',
+            error: e, stackTrace: stackTrace);
+        return const Left(
+            UnexpectedFailure(message: 'An unexpected error occurred'));
       }
     });
   }
 
   @override
-  Future<Either<Failure, PagedResult<Chat>>> getChatsPage(PageRequest request, {String? typeFilter}) async {
+  Future<Either<Failure, PagedResult<Chat>>> getChatsPage(PageRequest request,
+      {String? typeFilter}) async {
     return _executeWithMonitoring('get_chats_page', () async {
       final localChats = await _localDataSource.getChats();
       try {
         if (!await _networkInfo.isConnected) {
           final start = request.page * request.size;
           if (start >= localChats.length) {
-            return Right(PagedResult(items: const <Chat>[], total: localChats.length));
+            return Right(
+                PagedResult(items: const <Chat>[], total: localChats.length));
           }
           final end = (start + request.size) > localChats.length
               ? localChats.length
@@ -168,12 +170,15 @@ class ChatRepositoryImpl implements IChatRepository {
         final remoteChats = remoteResult.toDomainList();
         await _localDataSource.saveChats(remoteChats);
 
-        return Right(PagedResult(items: remoteChats, total: remoteResult.total));
+        return Right(
+            PagedResult(items: remoteChats, total: remoteResult.total));
       } on app_exceptions.ServerException catch (e) {
-        _logger.w('Server error fetching paged chats, using cached data', error: e);
+        _logger.w('Server error fetching paged chats, using cached data',
+            error: e);
         final start = request.page * request.size;
         if (start >= localChats.length) {
-          return Right(PagedResult(items: const <Chat>[], total: localChats.length));
+          return Right(
+              PagedResult(items: const <Chat>[], total: localChats.length));
         }
         final end = (start + request.size) > localChats.length
             ? localChats.length
@@ -185,10 +190,12 @@ class ChatRepositoryImpl implements IChatRepository {
           ),
         );
       } on app_exceptions.NetworkException catch (e) {
-        _logger.w('Network error fetching paged chats, using cached data', error: e);
+        _logger.w('Network error fetching paged chats, using cached data',
+            error: e);
         final start = request.page * request.size;
         if (start >= localChats.length) {
-          return Right(PagedResult(items: const <Chat>[], total: localChats.length));
+          return Right(
+              PagedResult(items: const <Chat>[], total: localChats.length));
         }
         final end = (start + request.size) > localChats.length
             ? localChats.length
@@ -207,16 +214,16 @@ class ChatRepositoryImpl implements IChatRepository {
       }
     });
   }
-  
+
   /// **Get Chat by ID**
-  /// 
+  ///
   /// Ultra-fast chat lookup with O(log n) performance using unique index.
   @override
   Future<Either<Failure, Chat?>> getChatById(String id) async {
     return _executeWithMonitoring('get_chat_by_id', () async {
       try {
         // _logger.d('Getting chat by ID: $id');
-        
+
         // Try local first for instant response
         final localChat = await _localDataSource.getChatById(id);
 
@@ -233,21 +240,24 @@ class ChatRepositoryImpl implements IChatRepository {
 
           // Local cache is missing group creation info needed for UI header.
           // Fall through to remote fetch when possible.
-          _logger.d('Found chat locally but missing creator info; fetching remote');
+          _logger.d(
+              'Found chat locally but missing creator info; fetching remote');
         } else if (localChat != null) {
-          _logger.d('Found chat locally but members empty; will try remote, fallback to local');
+          _logger.d(
+              'Found chat locally but members empty; will try remote, fallback to local');
         }
-        
+
         // Check network connectivity
         if (!await _networkInfo.isConnected) {
           if (localChat != null) {
-            _logger.w('No internet connection; using local chat without members');
+            _logger
+                .w('No internet connection; using local chat without members');
             return Right(localChat);
           }
           _logger.w('No internet connection, chat not found locally');
           return const Right(null);
         }
-        
+
         // If not found locally OR local missing members, fetch remote details
         try {
           final remoteResult = await _remoteDataSource.getChatById(id);
@@ -257,7 +267,6 @@ class ChatRepositoryImpl implements IChatRepository {
           await _localDataSource.saveChat(remoteChat);
           _logger.i('Found chat remotely and cached locally');
           return Right(remoteChat);
-
         } on app_exceptions.ServerException catch (e) {
           _logger.e('Server error fetching chat', error: e);
           // Fall back to local data if available, even without members
@@ -270,17 +279,18 @@ class ChatRepositoryImpl implements IChatRepository {
           _logger.e('Network error fetching chat', error: e);
           return Right(localChat);
         }
-        
       } on app_exceptions.CacheException catch (e) {
         _logger.e('Cache error', error: e);
         return const Left(CacheFailure(message: 'Unable to load chat'));
       } catch (e, stackTrace) {
-        _logger.e('Unexpected error getting chat', error: e, stackTrace: stackTrace);
-        return const Left(UnexpectedFailure(message: 'An unexpected error occurred'));
+        _logger.e('Unexpected error getting chat',
+            error: e, stackTrace: stackTrace);
+        return const Left(
+            UnexpectedFailure(message: 'An unexpected error occurred'));
       }
     });
   }
-  
+
   /// **Create Chat**
   ///
   /// Creates chat with optimistic updates and enterprise error handling.
@@ -288,6 +298,8 @@ class ChatRepositoryImpl implements IChatRepository {
   Future<Either<Failure, Chat>> createChat({
     required String name,
     required List<String> participantIds,
+    String? avatarUrl,
+    String? description,
     bool isGroup = false,
   }) async {
     return await _executeWithMonitoring('create_chat', () async {
@@ -298,6 +310,8 @@ class ChatRepositoryImpl implements IChatRepository {
         final chat = Chat(
           id: DateTime.now().millisecondsSinceEpoch.toString(), // Temporary ID
           name: name,
+          avatarUrl: avatarUrl,
+          description: description,
           type: isGroup ? ChatType.group : ChatType.direct,
           participantIds: participantIds,
         );
@@ -311,6 +325,8 @@ class ChatRepositoryImpl implements IChatRepository {
         final remoteResult = isGroup
             ? await _remoteDataSource.createGroupChat(
                 name: name,
+                imgUrl: avatarUrl,
+                description: description,
                 groupType: 'Private', // Default to private group
                 memberIds: participantIds,
               )
@@ -325,21 +341,22 @@ class ChatRepositoryImpl implements IChatRepository {
           await _localDataSource.deleteChat(chat.id);
           final serverChat = remoteResult.toDomain();
           await _localDataSource.saveChat(serverChat);
-          _logger.i('Chat created on server and persisted locally: ${serverChat.id}');
+          _logger.i(
+              'Chat created on server and persisted locally: ${serverChat.id}');
           return Right(serverChat);
         } catch (e) {
           // Remote mapping failed, keep local version
-          _logger.w('Remote create mapping failed, keeping optimistic version', error: e);
+          _logger.w('Remote create mapping failed, keeping optimistic version',
+              error: e);
           return Right(chat);
         }
-        
       } catch (e) {
         debugPrint('❌ Create chat failed: $e');
         return Left(ServerFailure(message: 'Failed to create chat: $e'));
       }
     });
   }
-  
+
   /// **Update Chat**
   ///
   /// Updates chat with conflict resolution and enterprise sync patterns.
@@ -377,14 +394,14 @@ class ChatRepositoryImpl implements IChatRepository {
             name: name,
             imgUrl: avatarUrl,
           );
-        
+
           // Remote success, fetch updated chat from remote
           final updatedRemote = await _remoteDataSource.getChatById(chatId);
           final serverChat = updatedRemote.toDomain();
           await _localDataSource.saveChat(serverChat);
-          debugPrint('✅ Chat updated successfully on remote and synced locally');
+          debugPrint(
+              '✅ Chat updated successfully on remote and synced locally');
           return Right(serverChat);
-
         } catch (e) {
           // Remote failed, handle conflict resolution
           debugPrint('⚠️  Remote update failed: $e');
@@ -392,14 +409,13 @@ class ChatRepositoryImpl implements IChatRepository {
           // For now, keep local version and queue for manual resolution
           return Right(updatedChat);
         }
-        
       } catch (e) {
         debugPrint('❌ Update chat failed: $e');
         return Left(ServerFailure(message: 'Failed to update chat: $e'));
       }
     });
   }
-  
+
   /// **Delete Chat**
   ///
   /// Deletes chat with cascade operations and enterprise cleanup.
@@ -417,15 +433,15 @@ class ChatRepositoryImpl implements IChatRepository {
         // 2. Try to delete on remote
         try {
           final remoteResult = await _remoteDataSource.deleteChat(chatId);
-        
+
           if (remoteResult.isNotEmpty) {
             _logger.i('Chat deleted successfully on remote: $chatId');
             return const Right(true);
           } else {
             debugPrint('⚠️  Remote delete failed, but local delete succeeded');
-            return const Right(true); // Return success since local delete succeeded
+            return const Right(
+                true); // Return success since local delete succeeded
           }
-
         } catch (e) {
           // Remote failed, but local is already deleted
           debugPrint('⚠️  Remote delete failed, queued for sync: $e');
@@ -433,14 +449,13 @@ class ChatRepositoryImpl implements IChatRepository {
           // Return success since local delete succeeded
           return const Right(true);
         }
-        
       } catch (e) {
         debugPrint('❌ Delete chat failed: $e');
         return Left(ServerFailure(message: 'Failed to delete chat: $e'));
       }
     });
   }
-  
+
   /// **Get Chat Messages**
   ///
   /// Retrieves messages with pagination and performance optimization.
@@ -452,7 +467,7 @@ class ChatRepositoryImpl implements IChatRepository {
     return await _executeWithMonitoring('get_chat_messages', () async {
       try {
         debugPrint('📋 Getting messages for chat: $chatId (limit: $limit)');
-        
+
         // **HYBRID LOADING STRATEGY**
         // 1. Get local messages immediately
         final localMessages = await _localDataSource.getChatMessages(
@@ -461,7 +476,7 @@ class ChatRepositoryImpl implements IChatRepository {
           before: before,
         );
         debugPrint('✅ Loaded ${localMessages.length} local messages');
-        
+
         // 2. Try to get newer messages from remote
         try {
           final remoteResult = await _remoteDataSource.getChatMessages(
@@ -470,7 +485,8 @@ class ChatRepositoryImpl implements IChatRepository {
           );
 
           // Remote success, convert models to domain entities
-          final remoteMessages = remoteResult.messages.map((model) => model.toDomain()).toList();
+          final remoteMessages =
+              remoteResult.messages.map((model) => model.toDomain()).toList();
           debugPrint('✅ Synced ${remoteMessages.length} remote messages');
 
           // Save remote messages to local
@@ -488,28 +504,28 @@ class ChatRepositoryImpl implements IChatRepository {
           debugPrint('⚠️  Network error, using local messages: $e');
           return Right(localMessages);
         }
-        
       } catch (e) {
         debugPrint('❌ Get chat messages failed: $e');
         return Left(CacheFailure(message: 'Failed to get messages: $e'));
       }
     });
   }
-  
+
   /// **Send Message**
-  /// 
+  ///
   /// Sends message with optimistic updates and enterprise delivery guarantees.
   @override
   Future<Either<Failure, ChatMessage>> sendMessage(ChatMessage message) async {
     return await _executeWithMonitoring('send_message', () async {
       try {
         debugPrint('📤 Sending message: ${message.id}');
-        
+
         // **OPTIMISTIC SEND STRATEGY**
         // 1. Save locally immediately with pending status
-        await _localDataSource.saveMessage(message.chatId, message, needsSync: true);
+        await _localDataSource.saveMessage(message.chatId, message,
+            needsSync: true);
         debugPrint('✅ Message saved locally (pending)');
-        
+
         // 2. Try to send to remote
         await _remoteDataSource.sendMessage(
           conversationId: message.chatId,
@@ -518,7 +534,7 @@ class ChatRepositoryImpl implements IChatRepository {
           createdAt: message.createdAt.millisecondsSinceEpoch,
           urls: message.attachments.map((a) => a.url).toList(),
         );
-        
+
         try {
           // Remote success, update local status
           await _localDataSource.updateMessageStatus(
@@ -528,7 +544,6 @@ class ChatRepositoryImpl implements IChatRepository {
           );
           debugPrint('✅ Message sent successfully');
           return Right(message);
-
         } catch (e) {
           // Remote failed, update status to failed
           await _localDataSource.updateMessageStatus(
@@ -539,19 +554,19 @@ class ChatRepositoryImpl implements IChatRepository {
           debugPrint('❌ Message send failed, marked for retry: $e');
           return Left(ServerFailure(message: 'Failed to send message: $e'));
         }
-        
       } catch (e) {
         debugPrint('❌ Send message failed: $e');
         return Left(ServerFailure(message: 'Failed to send message: $e'));
       }
     });
   }
-  
+
   /// **Search Chats**
   ///
   /// Full-text search with enterprise performance optimization.
   @override
-  Future<Either<Failure, List<Chat>>> searchChats(String searchTerm, {int limit = 20}) async {
+  Future<Either<Failure, List<Chat>>> searchChats(String searchTerm,
+      {int limit = 20}) async {
     return await _executeWithMonitoring('search_chats', () async {
       try {
         // Call remote API with keyword filter (same as Angular frontend)
@@ -565,16 +580,18 @@ class ChatRepositoryImpl implements IChatRepository {
             final remoteChats = remoteResult.toDomainList();
             return Right(remoteChats);
           } on app_exceptions.ServerException catch (e) {
-            _logger.w('Server error searching chats, falling back to local', error: e);
+            _logger.w('Server error searching chats, falling back to local',
+                error: e);
           } on app_exceptions.NetworkException catch (e) {
-            _logger.w('Network error searching chats, falling back to local', error: e);
+            _logger.w('Network error searching chats, falling back to local',
+                error: e);
           }
         }
 
         // Fallback to local search when offline or remote fails
-        final localResults = await _localDataSource.searchChats(searchTerm, limit: limit);
+        final localResults =
+            await _localDataSource.searchChats(searchTerm, limit: limit);
         return Right(localResults);
-
       } catch (e) {
         return Left(CacheFailure(message: 'Failed to search chats: $e'));
       }
@@ -594,7 +611,6 @@ class ChatRepositoryImpl implements IChatRepository {
         debugPrint('✅ Retrieved ${localChats.length} local chats');
 
         return Right(localChats);
-
       } catch (e) {
         debugPrint('❌ Get local chats failed: $e');
         return Left(CacheFailure(message: 'Failed to get local chats: $e'));
@@ -615,7 +631,6 @@ class ChatRepositoryImpl implements IChatRepository {
         debugPrint('✅ Chat saved to local storage');
 
         return const Right(null);
-
       } catch (e) {
         debugPrint('❌ Save local chat failed: $e');
         return Left(CacheFailure(message: 'Failed to save local chat: $e'));
@@ -651,11 +666,11 @@ class ChatRepositoryImpl implements IChatRepository {
           debugPrint('✅ Local cache updated with fresh member list');
         } catch (e) {
           // Non-critical: local cache will be refreshed on next getChatById call
-          debugPrint('⚠️ Could not refresh local cache after adding members: $e');
+          debugPrint(
+              '⚠️ Could not refresh local cache after adding members: $e');
         }
 
         return const Right(true);
-
       } catch (e) {
         debugPrint('❌ Add participants failed: $e');
         return const Left(ServerFailure(message: 'Failed to add participants'));
@@ -673,7 +688,8 @@ class ChatRepositoryImpl implements IChatRepository {
   }) async {
     return await _executeWithMonitoring('remove_participants', () async {
       try {
-        debugPrint('👥 Removing ${userIds.length} participants from chat: $chatId');
+        debugPrint(
+            '👥 Removing ${userIds.length} participants from chat: $chatId');
 
         // Try remote operation first
         await _remoteDataSource.removeUsersFromChat(
@@ -688,17 +704,19 @@ class ChatRepositoryImpl implements IChatRepository {
           final freshRemote = await _remoteDataSource.getChatById(chatId);
           final freshChat = freshRemote.toDomain();
           await _localDataSource.saveChat(freshChat);
-          debugPrint('✅ Local cache updated with fresh member list after removal');
+          debugPrint(
+              '✅ Local cache updated with fresh member list after removal');
         } catch (e) {
           // Non-critical: local cache will be refreshed on next getChatById call
-          debugPrint('⚠️ Could not refresh local cache after removing members: $e');
+          debugPrint(
+              '⚠️ Could not refresh local cache after removing members: $e');
         }
 
         return const Right(true);
-
       } catch (e) {
         debugPrint('❌ Remove participants failed: $e');
-        return const Left(ServerFailure(message: 'Failed to remove participants'));
+        return const Left(
+            ServerFailure(message: 'Failed to remove participants'));
       }
     });
   }
@@ -731,7 +749,6 @@ class ChatRepositoryImpl implements IChatRepository {
         }
 
         return const Right(true);
-
       } catch (e) {
         debugPrint('❌ Update admins failed: $e');
         return Left(ServerFailure(message: 'Failed to update admins: $e'));
@@ -762,7 +779,6 @@ class ChatRepositoryImpl implements IChatRepository {
           debugPrint('❌ Failed to leave chat');
           return Left(ServerFailure(message: 'Failed to leave chat'));
         }
-
       } catch (e) {
         debugPrint('❌ Leave chat failed: $e');
         return Left(ServerFailure(message: 'Failed to leave chat: $e'));
@@ -790,7 +806,6 @@ class ChatRepositoryImpl implements IChatRepository {
         _syncChatReadStatus(chatId);
 
         return const Right(true);
-
       } catch (e) {
         debugPrint('❌ Mark chat as read failed: $e');
         return Left(CacheFailure(message: 'Failed to mark chat as read: $e'));
@@ -822,7 +837,6 @@ class ChatRepositoryImpl implements IChatRepository {
 
         debugPrint('✅ Chat synced successfully');
         return const Right(null);
-
       } catch (e) {
         debugPrint('❌ Sync chat failed: $e');
         return Left(ServerFailure(message: 'Failed to sync chat: $e'));
@@ -856,24 +870,23 @@ class ChatRepositoryImpl implements IChatRepository {
       }
     });
   }
-  
+
   /// **Execute with Performance Monitoring**
-  /// 
+  ///
   /// Wraps operations with comprehensive performance monitoring and error handling.
   Future<Either<Failure, T>> _executeWithMonitoring<T>(
     String operationName,
     Future<Either<Failure, T>> Function() operation,
   ) async {
     final stopwatch = Stopwatch()..start();
-    
+
     try {
       final result = await operation();
-      
+
       stopwatch.stop();
       _recordOperation(operationName, stopwatch.elapsed);
-      
+
       return result;
-      
     } catch (e) {
       stopwatch.stop();
       debugPrint('❌ Operation failed: $operationName - $e');
@@ -881,25 +894,27 @@ class ChatRepositoryImpl implements IChatRepository {
       return Left(UnknownFailure(message: 'Operation failed: $e'));
     }
   }
-  
+
   /// **Record Operation Performance**
   void _recordOperation(String operation, Duration duration) {
     _operationCounts[operation] = (_operationCounts[operation] ?? 0) + 1;
     _operationTimes[operation] = duration;
-    
+
     // Log slow operations
     if (duration.inMilliseconds > 100) {
-      debugPrint('⚠️  Slow repository operation: $operation took ${duration.inMilliseconds}ms');
+      debugPrint(
+          '⚠️  Slow repository operation: $operation took ${duration.inMilliseconds}ms');
     }
   }
-  
+
   /// **Get Performance Metrics**
-  /// 
+  ///
   /// Returns comprehensive performance metrics for monitoring and optimization.
   Map<String, dynamic> getPerformanceMetrics() {
     return {
       'repository_operations': Map.from(_operationCounts),
-      'operation_times': _operationTimes.map((k, v) => MapEntry(k, '${v.inMilliseconds}ms')),
+      'operation_times':
+          _operationTimes.map((k, v) => MapEntry(k, '${v.inMilliseconds}ms')),
     };
   }
 
@@ -908,7 +923,8 @@ class ChatRepositoryImpl implements IChatRepository {
   /// Fetches detailed member list for a conversation with department, title, code.
   /// Separate API call to avoid performance impact on conversation list.
   @override
-  Future<Either<Failure, Chat>> getConversationMembers(String conversationId) async {
+  Future<Either<Failure, Chat>> getConversationMembers(
+      String conversationId) async {
     return _executeWithMonitoring('get_conversation_members', () async {
       try {
         _logger.i('Getting conversation members for: $conversationId');
@@ -920,14 +936,17 @@ class ChatRepositoryImpl implements IChatRepository {
         }
 
         // Fetch from remote
-        final chatDto = await _remoteDataSource.getConversationMembers(conversationId);
+        final chatDto =
+            await _remoteDataSource.getConversationMembers(conversationId);
         final chat = chatDto.toDomain();
 
-        _logger.d('Loaded ${chat.members.length} members for conversation ${chat.id}');
+        _logger.d(
+            'Loaded ${chat.members.length} members for conversation ${chat.id}');
         return Right(chat);
       } catch (e) {
         _logger.e('Failed to get conversation members: $e');
-        return Left(UnknownFailure(message: 'Failed to get conversation members: $e'));
+        return Left(
+            UnknownFailure(message: 'Failed to get conversation members: $e'));
       }
     });
   }
@@ -944,7 +963,8 @@ class ChatRepositoryImpl implements IChatRepository {
   }) async {
     // Validate input
     if (keyword.trim().isEmpty) {
-      return const Left(ValidationFailure(message: 'Search keyword cannot be empty'));
+      return const Left(
+          ValidationFailure(message: 'Search keyword cannot be empty'));
     }
 
     return _executeWithMonitoring('search_messages', () async {
@@ -961,15 +981,17 @@ class ChatRepositoryImpl implements IChatRepository {
       );
 
       // Map MessageDto to MessageSearchResult
-      final results = messageDtos.map((dto) => MessageSearchResult(
-        id: dto.id,
-        message: dto.content,
-        type: dto.type,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(dto.createdAt),
-        conversationId: dto.chatId,
-        senderId: dto.senderId,
-        senderName: dto.sender?.fullName,
-      )).toList();
+      final results = messageDtos
+          .map((dto) => MessageSearchResult(
+                id: dto.id,
+                message: dto.content,
+                type: dto.type,
+                createdAt: DateTime.fromMillisecondsSinceEpoch(dto.createdAt),
+                conversationId: dto.chatId,
+                senderId: dto.senderId,
+                senderName: dto.sender?.fullName,
+              ))
+          .toList();
 
       return Right(results);
     });

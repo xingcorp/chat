@@ -39,6 +39,7 @@ class ChatEvent with _$ChatEvent {
     required List<String> participantIds,
     Uint8List? avatarBytes,
     String? avatarFileName,
+    String? avatarFilePath,
   }) = _CreateChat;
 
   /// Update an existing chat

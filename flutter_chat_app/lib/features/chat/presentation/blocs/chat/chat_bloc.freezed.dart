@@ -32,7 +32,8 @@ mixin _$ChatEvent {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -71,7 +72,8 @@ mixin _$ChatEvent {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -108,7 +110,8 @@ mixin _$ChatEvent {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -306,7 +309,8 @@ class _$LoadChatsImpl implements _LoadChats {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -348,7 +352,8 @@ class _$LoadChatsImpl implements _LoadChats {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -388,7 +393,8 @@ class _$LoadChatsImpl implements _LoadChats {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -566,7 +572,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -608,7 +615,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -648,7 +656,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -848,7 +857,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -890,7 +900,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -930,7 +941,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -1154,7 +1166,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -1196,7 +1209,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -1236,7 +1250,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -1487,7 +1502,8 @@ class _$SendMessageImpl implements _SendMessage {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -1529,7 +1545,8 @@ class _$SendMessageImpl implements _SendMessage {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -1569,7 +1586,8 @@ class _$SendMessageImpl implements _SendMessage {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -1714,7 +1732,8 @@ abstract class _$$CreateChatImplCopyWith<$Res> {
       String? description,
       List<String> participantIds,
       Uint8List? avatarBytes,
-      String? avatarFileName});
+      String? avatarFileName,
+      String? avatarFilePath});
 }
 
 /// @nodoc
@@ -1734,6 +1753,7 @@ class __$$CreateChatImplCopyWithImpl<$Res>
     Object? participantIds = null,
     Object? avatarBytes = freezed,
     Object? avatarFileName = freezed,
+    Object? avatarFilePath = freezed,
   }) {
     return _then(_$CreateChatImpl(
       type: null == type
@@ -1760,6 +1780,10 @@ class __$$CreateChatImplCopyWithImpl<$Res>
           ? _value.avatarFileName
           : avatarFileName // ignore: cast_nullable_to_non_nullable
               as String?,
+      avatarFilePath: freezed == avatarFilePath
+          ? _value.avatarFilePath
+          : avatarFilePath // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -1773,7 +1797,8 @@ class _$CreateChatImpl implements _CreateChat {
       this.description,
       required final List<String> participantIds,
       this.avatarBytes,
-      this.avatarFileName})
+      this.avatarFileName,
+      this.avatarFilePath})
       : _participantIds = participantIds;
 
   @override
@@ -1794,10 +1819,12 @@ class _$CreateChatImpl implements _CreateChat {
   final Uint8List? avatarBytes;
   @override
   final String? avatarFileName;
+  @override
+  final String? avatarFilePath;
 
   @override
   String toString() {
-    return 'ChatEvent.createChat(type: $type, name: $name, description: $description, participantIds: $participantIds, avatarBytes: $avatarBytes, avatarFileName: $avatarFileName)';
+    return 'ChatEvent.createChat(type: $type, name: $name, description: $description, participantIds: $participantIds, avatarBytes: $avatarBytes, avatarFileName: $avatarFileName, avatarFilePath: $avatarFilePath)';
   }
 
   @override
@@ -1814,7 +1841,9 @@ class _$CreateChatImpl implements _CreateChat {
             const DeepCollectionEquality()
                 .equals(other.avatarBytes, avatarBytes) &&
             (identical(other.avatarFileName, avatarFileName) ||
-                other.avatarFileName == avatarFileName));
+                other.avatarFileName == avatarFileName) &&
+            (identical(other.avatarFilePath, avatarFilePath) ||
+                other.avatarFilePath == avatarFilePath));
   }
 
   @override
@@ -1825,7 +1854,8 @@ class _$CreateChatImpl implements _CreateChat {
       description,
       const DeepCollectionEquality().hash(_participantIds),
       const DeepCollectionEquality().hash(avatarBytes),
-      avatarFileName);
+      avatarFileName,
+      avatarFilePath);
 
   @JsonKey(ignore: true)
   @override
@@ -1850,7 +1880,8 @@ class _$CreateChatImpl implements _CreateChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -1873,8 +1904,8 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
   }) {
-    return createChat(
-        type, name, description, participantIds, avatarBytes, avatarFileName);
+    return createChat(type, name, description, participantIds, avatarBytes,
+        avatarFileName, avatarFilePath);
   }
 
   @override
@@ -1893,7 +1924,8 @@ class _$CreateChatImpl implements _CreateChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -1914,8 +1946,8 @@ class _$CreateChatImpl implements _CreateChat {
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
   }) {
-    return createChat?.call(
-        type, name, description, participantIds, avatarBytes, avatarFileName);
+    return createChat?.call(type, name, description, participantIds,
+        avatarBytes, avatarFileName, avatarFilePath);
   }
 
   @override
@@ -1934,7 +1966,8 @@ class _$CreateChatImpl implements _CreateChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -1957,8 +1990,8 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult orElse(),
   }) {
     if (createChat != null) {
-      return createChat(
-          type, name, description, participantIds, avatarBytes, avatarFileName);
+      return createChat(type, name, description, participantIds, avatarBytes,
+          avatarFileName, avatarFilePath);
     }
     return orElse();
   }
@@ -2059,7 +2092,8 @@ abstract class _CreateChat implements ChatEvent {
       final String? description,
       required final List<String> participantIds,
       final Uint8List? avatarBytes,
-      final String? avatarFileName}) = _$CreateChatImpl;
+      final String? avatarFileName,
+      final String? avatarFilePath}) = _$CreateChatImpl;
 
   ChatType get type;
   String? get name;
@@ -2067,6 +2101,7 @@ abstract class _CreateChat implements ChatEvent {
   List<String> get participantIds;
   Uint8List? get avatarBytes;
   String? get avatarFileName;
+  String? get avatarFilePath;
   @JsonKey(ignore: true)
   _$$CreateChatImplCopyWith<_$CreateChatImpl> get copyWith =>
       throw _privateConstructorUsedError;
@@ -2177,7 +2212,8 @@ class _$UpdateChatImpl implements _UpdateChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -2219,7 +2255,8 @@ class _$UpdateChatImpl implements _UpdateChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -2259,7 +2296,8 @@ class _$UpdateChatImpl implements _UpdateChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -2470,7 +2508,8 @@ class _$LeaveChatImpl implements _LeaveChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -2512,7 +2551,8 @@ class _$LeaveChatImpl implements _LeaveChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -2552,7 +2592,8 @@ class _$LeaveChatImpl implements _LeaveChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -2773,7 +2814,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -2815,7 +2857,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -2855,7 +2898,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -3079,7 +3123,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -3121,7 +3166,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -3161,7 +3207,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -3386,7 +3433,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -3428,7 +3476,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -3468,7 +3517,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -3649,7 +3699,8 @@ class _$SyncChatsImpl implements _SyncChats {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -3691,7 +3742,8 @@ class _$SyncChatsImpl implements _SyncChats {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -3731,7 +3783,8 @@ class _$SyncChatsImpl implements _SyncChats {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -3930,7 +3983,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -3972,7 +4026,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -4012,7 +4067,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -4218,7 +4274,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -4260,7 +4317,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -4300,7 +4358,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -4507,7 +4566,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -4549,7 +4609,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -4589,7 +4650,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -4796,7 +4858,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -4838,7 +4901,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -4878,7 +4942,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -5083,7 +5148,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -5125,7 +5191,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -5165,7 +5232,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -5369,7 +5437,8 @@ class _$SearchChatsImpl implements _SearchChats {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -5411,7 +5480,8 @@ class _$SearchChatsImpl implements _SearchChats {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -5451,7 +5521,8 @@ class _$SearchChatsImpl implements _SearchChats {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -5630,7 +5701,8 @@ class _$ClearSearchImpl implements _ClearSearch {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -5672,7 +5744,8 @@ class _$ClearSearchImpl implements _ClearSearch {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -5712,7 +5785,8 @@ class _$ClearSearchImpl implements _ClearSearch {
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -5916,7 +5990,8 @@ class _$ChangeConversationTypeFilterImpl
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)
+            String? avatarFileName,
+            String? avatarFilePath)
         createChat,
     required TResult Function(
             String chatId, String? name, String? description, String? avatar)
@@ -5958,7 +6033,8 @@ class _$ChangeConversationTypeFilterImpl
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult? Function(
             String chatId, String? name, String? description, String? avatar)?
@@ -5998,7 +6074,8 @@ class _$ChangeConversationTypeFilterImpl
             String? description,
             List<String> participantIds,
             Uint8List? avatarBytes,
-            String? avatarFileName)?
+            String? avatarFileName,
+            String? avatarFilePath)?
         createChat,
     TResult Function(
             String chatId, String? name, String? description, String? avatar)?

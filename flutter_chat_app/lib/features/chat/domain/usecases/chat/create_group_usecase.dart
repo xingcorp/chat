@@ -46,18 +46,22 @@ class CreateGroupUseCase {
     // Validate inputs
     if (name.trim().isEmpty) {
       _logger.error('CreateGroupUseCase: Validation failed - empty name');
-      return const Left(ValidationFailure(message: 'Group name cannot be empty'));
+      return const Left(
+          ValidationFailure(message: 'Group name cannot be empty'));
     }
 
     if (memberIds.isEmpty) {
       _logger.error('CreateGroupUseCase: Validation failed - no members');
-      return const Left(ValidationFailure(message: 'Group must have at least one member'));
+      return const Left(
+          ValidationFailure(message: 'Group must have at least one member'));
     }
 
     try {
       final result = await _repository.createChat(
         name: name,
         participantIds: memberIds,
+        avatarUrl: avatar,
+        description: description,
         isGroup: true,
       );
 

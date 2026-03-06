@@ -23,7 +23,8 @@ abstract class IChatRepository {
   Future<Either<Failure, List<Chat>>> getChats();
 
   /// Get user's chat list by page with offline-first strategy.
-  Future<Either<Failure, PagedResult<Chat>>> getChatsPage(PageRequest request, {String? typeFilter});
+  Future<Either<Failure, PagedResult<Chat>>> getChatsPage(PageRequest request,
+      {String? typeFilter});
 
   /// Get chat details by ID with online-first strategy (fresh data)
   Future<Either<Failure, Chat?>> getChatById(String chatId);
@@ -38,6 +39,8 @@ abstract class IChatRepository {
   Future<Either<Failure, Chat>> createChat({
     required String name,
     required List<String> participantIds,
+    String? avatarUrl,
+    String? description,
     bool isGroup = false,
   });
 
@@ -88,7 +91,8 @@ abstract class IChatRepository {
   ///
   /// Searches chats by name or content with enterprise performance optimization.
   /// Uses local-first strategy for instant results with optional remote search.
-  Future<Either<Failure, List<Chat>>> searchChats(String searchTerm, {int limit = 20});
+  Future<Either<Failure, List<Chat>>> searchChats(String searchTerm,
+      {int limit = 20});
 
   /// **Get Conversation Members**
   ///
