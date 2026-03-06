@@ -170,6 +170,15 @@ class MessageUIState {
   /// Domain entity gốc — widget delegate xuống đây cho data access
   final ChatMessage? message;
 
+  /// Tên sender đã resolve từ members list (ưu tiên hơn message.sender.name)
+  ///
+  /// Fallback chain: member.fullName → message.sender.name → senderId
+  /// Giải quyết trường hợp backend trả sender=null → name=UUID
+  final String? resolvedSenderName;
+
+  /// Avatar sender đã resolve từ members list
+  final String? resolvedSenderAvatar;
+
   // ══════════════════════════════════════════
   // Loại item trong list
   // ══════════════════════════════════════════
@@ -289,8 +298,10 @@ class MessageUIState {
   ContentType get contentType => message?.contentType ?? ContentType.text;
   MessageSender? get sender => message?.sender;
   String get senderId => message?.sender.id ?? '';
-  String get senderName => message?.sender.name ?? '';
-  String? get senderAvatar => message?.sender.avatar;
+  String get senderName =>
+      resolvedSenderName ?? message?.sender.name ?? '';
+  String? get senderAvatar =>
+      resolvedSenderAvatar ?? message?.sender.avatar;
   DateTime get createdAt => message?.createdAt ?? DateTime.now();
   MessageStatus get status => message?.status ?? MessageStatus.sent;
   bool get hasMedia => message?.hasMedia ?? false;
@@ -302,6 +313,8 @@ class MessageUIState {
 
   const MessageUIState({
     this.message,
+    this.resolvedSenderName,
+    this.resolvedSenderAvatar,
     this.itemType = MessageListItemType.message,
     this.position = BubblePosition.standalone,
     this.showAvatar = false,
@@ -330,6 +343,8 @@ class MessageUIState {
   /// Create a copy with modified fields
   MessageUIState copyWith({
     ChatMessage? message,
+    String? resolvedSenderName,
+    String? resolvedSenderAvatar,
     MessageListItemType? itemType,
     BubblePosition? position,
     bool? showAvatar,
@@ -356,6 +371,8 @@ class MessageUIState {
   }) {
     return MessageUIState(
       message: message ?? this.message,
+      resolvedSenderName: resolvedSenderName ?? this.resolvedSenderName,
+      resolvedSenderAvatar: resolvedSenderAvatar ?? this.resolvedSenderAvatar,
       itemType: itemType ?? this.itemType,
       position: position ?? this.position,
       showAvatar: showAvatar ?? this.showAvatar,

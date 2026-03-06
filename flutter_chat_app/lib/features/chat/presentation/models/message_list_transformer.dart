@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/localization/l10n_helper.dart';
 import 'package:flutter_chat_app/domain/entities/reader_info.dart';
@@ -153,8 +154,18 @@ class MessageListTransformer {
           current.status == MessageStatus.sending;
       final isFailed = current.status == MessageStatus.failed;
 
+      // ── Resolve sender name/avatar from members ──
+      final resolvedSender = _resolveSenderFromMembers(
+        current.sender.id,
+        current.sender.name,
+        current.sender.avatar,
+        members,
+      );
+
       result.add(MessageUIState(
         message: current,
+        resolvedSenderName: resolvedSender.$1,
+        resolvedSenderAvatar: resolvedSender.$2,
         itemType: MessageListItemType.message,
         position: position,
         showAvatar: showAvatar,
@@ -304,6 +315,76 @@ class MessageListTransformer {
   /// So sánh 2 DateTime có cùng ngày không
   static bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  // ══════════════════════════════════════════
+  // Sender Resolution
+  // ══════════════════════════════════════════
+
+  /// Resolve sender name and avatar from members list.
+  ///
+  /// Fallback chain:
+  ///   1. members lookup by senderId → fullName / avatarUrl
+  ///   2. original message sender name / avatar (if non-empty and not a UUID)
+  ///   3. null (let MessageUIState fall through to message.sender defaults)
+  ///
+  /// Returns a Record `(String? resolvedName, String? resolvedAvatar)`.
+  static (String?, String?) _resolveSenderFromMembers(
+    String senderId,
+    String originalName,
+    String? originalAvatar,
+    List<ConversationMember> members,
+  ) {
+    if (members.isEmpty) {
+      debugPrint('[SenderResolve] members=EMPTY senderId=$senderId originalName="$originalName"');
+      return (null, null);
+    }
+
+    final member = members.cast<ConversationMember?>().firstWhere(
+          (m) => m!.userId == senderId,
+          orElse: () => null,
+        );
+
+    debugPrint('[SenderResolve] senderId=$senderId originalName="$originalName" '
+        'memberFound=${member != null} memberName="${member?.fullName}" '
+        'membersCount=${members.length} '
+        'memberIds=[${members.map((m) => m.userId).join(", ")}]');
+
+    // Resolve name: prefer member.fullName, fallback to original if not UUID-like
+    String? resolvedName;
+    if (member != null &&
+        member.fullName != null &&
+        member.fullName!.trim().isNotEmpty) {
+      resolvedName = member.fullName!.trim();
+    } else if (originalName.trim().isNotEmpty &&
+        !_looksLikeUUID(originalName.trim())) {
+      resolvedName = null; // original name is good, let getter use message.sender.name
+    } else {
+      // Original name is empty or looks like UUID, and no member found
+      // → return empty string to prevent UUID from showing in UI
+      resolvedName = '';
+    }
+
+    debugPrint('[SenderResolve] → resolvedName="$resolvedName"');
+
+    // Resolve avatar: prefer member.avatarUrl, fallback to original
+    String? resolvedAvatar;
+    if (member != null &&
+        member.avatarUrl != null &&
+        member.avatarUrl!.trim().isNotEmpty) {
+      resolvedAvatar = member.avatarUrl!.trim();
+    } else {
+      resolvedAvatar = null; // let default getter handle it
+    }
+
+    return (resolvedName, resolvedAvatar);
+  }
+
+  /// Check if a string looks like a UUID (8-4-4-4-12 hex pattern)
+  static bool _looksLikeUUID(String value) {
+    return RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    ).hasMatch(value);
   }
 
   // ══════════════════════════════════════════
