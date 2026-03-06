@@ -49,8 +49,8 @@ class AppModalBottomSheet extends BaseBottomSheet {
     this.minChildSize = 0.25,
     this.maxChildSize = 0.95,
     super.key,
-  }) : _titleText = title,
-       _showCloseButton = showCloseButton;
+  })  : _titleText = title,
+        _showCloseButton = showCloseButton;
 
   /// Builder for the bottom sheet content.
   final WidgetBuilder builder;
@@ -82,10 +82,17 @@ class AppModalBottomSheet extends BaseBottomSheet {
     bool isDismissible = true,
     bool enableDrag = true,
   }) {
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final clampedMaxChildSize = maxChildSize.clamp(minChildSize, 1.0);
+
     return BaseBottomSheet.show<T>(
       context: context,
       isDismissible: isDismissible,
       enableDrag: enableDrag,
+      constraints: BoxConstraints(
+        maxWidth: 640,
+        maxHeight: screenHeight * clampedMaxChildSize,
+      ),
       builder: (context) => AppModalBottomSheet(
         builder: builder,
         title: title,
@@ -115,6 +122,9 @@ class AppModalBottomSheet extends BaseBottomSheet {
   }
 
   @override
+  bool get wrapContentInScrollView => false;
+
+  @override
   Widget buildContent(BuildContext context) {
     return DraggableScrollableSheet(
       initialChildSize: initialChildSize,
@@ -136,16 +146,18 @@ class AppModalBottomSheet extends BaseBottomSheet {
                       Expanded(
                         child: Text(
                           _titleText!,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                       ),
                     if (_showCloseButton)
                       IconButton(
                         icon: const Icon(Icons.close),
                         onPressed: () => Navigator.of(context).pop(),
-                        tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                        tooltip: MaterialLocalizations.of(context)
+                            .closeButtonTooltip,
                       ),
                   ],
                 ),

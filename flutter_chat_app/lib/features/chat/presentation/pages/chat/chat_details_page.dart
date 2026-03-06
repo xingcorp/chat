@@ -1150,6 +1150,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           builder: (context, scrollController) => ChatInfoPanel(
             chat: _chat!,
             onClose: () => Navigator.of(context).pop(),
+            currentUserId: _currentUserId,
           ),
         ),
       ),

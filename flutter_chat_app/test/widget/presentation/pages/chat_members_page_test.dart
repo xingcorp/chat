@@ -115,7 +115,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byTooltip('Member actions'), findsOneWidget);
-    expect(find.text('Members'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Member actions'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Make group admin'), findsOneWidget);
+    await tester.ensureVisible(find.text('Make group admin'));
+
+    await tester.tap(find.text('Make group admin'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => bloc.add(
+        const ChatMembersMakeAdmin(
+          chatId: 'chat-1',
+          memberId: 'u2',
+        ),
+      ),
+    ).called(1);
   });
 
   testWidgets('shows localized demote action for admins in Vietnamese',
@@ -153,7 +170,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byTooltip('Thao tác thành viên'), findsOneWidget);
-    expect(find.text('Quản trị viên'), findsNWidgets(2));
+
+    await tester.tap(find.byTooltip('Thao tác thành viên'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Gỡ quyền quản trị'), findsOneWidget);
+    await tester.ensureVisible(find.text('Gỡ quyền quản trị'));
+
+    await tester.tap(find.text('Gỡ quyền quản trị'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => bloc.add(
+        const ChatMembersRemoveAdmin(
+          chatId: 'chat-1',
+          memberId: 'u2',
+        ),
+      ),
+    ).called(1);
   });
 
   testWidgets('hides member actions when current user is not admin',

@@ -62,6 +62,15 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
   bool _isConversationActionInProgress = false;
   final IChatRepository _chatRepository = getIt<IChatRepository>();
 
+  String get _effectiveCurrentUserId {
+    final providedUserId = widget.currentUserId?.trim() ?? '';
+    if (providedUserId.isNotEmpty) {
+      return providedUserId;
+    }
+
+    return getIt<CurrentUserProvider>().currentUserId;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -138,9 +147,7 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
 
   bool get _isCurrentUserGroupAdmin {
     if (_chat.type != ChatType.group) return false;
-    final currentUserId = (widget.currentUserId?.trim().isNotEmpty ?? false)
-        ? widget.currentUserId!.trim()
-        : getIt<CurrentUserProvider>().currentUserId;
+    final currentUserId = _effectiveCurrentUserId;
     if (currentUserId.isEmpty) return false;
     return _isUserAdminInChat(currentUserId);
   }
@@ -566,7 +573,9 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
       MaterialPageRoute(
         builder: (_) => ChatMembersPage(
           chat: _chat,
-          currentUserId: widget.currentUserId,
+          currentUserId: _effectiveCurrentUserId.isNotEmpty
+              ? _effectiveCurrentUserId
+              : null,
         ),
       ),
     ).then((_) {
