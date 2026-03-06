@@ -9,7 +9,8 @@ import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
-import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
+import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/audio_player_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
@@ -1085,24 +1086,45 @@ class _MessageItemState extends State<MessageItem>
           );
           break;
         case 'message':
-          _openDirectMessage(context, userId);
+          _openDirectMessage(context, userId, displayName);
           break;
       }
     });
   }
 
-  Future<void> _openDirectMessage(BuildContext context, String userId) async {
-    try {
-      final chatRemoteDataSource = GetIt.I<IChatRemoteDataSource>();
-      final chat =
-          await chatRemoteDataSource.createDirectChat(receiverId: userId);
-      if (!context.mounted) return;
-      await ChatNavigationHelper.navigateToChatDetail(context, chatId: chat.id);
-    } catch (_) {
-      if (!context.mounted) return;
-      // Fallback: navigate using userId as chatId
-      await ChatNavigationHelper.navigateToChatDetail(context, chatId: userId);
+  Future<void> _openDirectMessage(
+    BuildContext context,
+    String userId,
+    String displayName,
+  ) async {
+    final trimmedDisplayName = displayName.trim();
+    final chatRepository = GetIt.I<IChatRepository>();
+    final result = await chatRepository.createChat(
+      name: trimmedDisplayName.isNotEmpty ? trimmedDisplayName : userId,
+      participantIds: <String>[userId],
+    );
+
+    if (!context.mounted) {
+      return;
     }
+
+    await result.fold(
+      (_) async {
+        await ChatNavigationHelper.navigateToChatDetail(context,
+            chatId: userId);
+      },
+      (chat) async {
+        try {
+          context.read<ChatBloc>().add(ChatEvent.chatUpdated(chat: chat));
+        } catch (_) {
+          // MessageItem can be hosted in contexts without a shared ChatBloc.
+        }
+        await ChatNavigationHelper.navigateToChatDetail(
+          context,
+          chatId: chat.id,
+        );
+      },
+    );
   }
 
   Widget _buildReplyPreview(

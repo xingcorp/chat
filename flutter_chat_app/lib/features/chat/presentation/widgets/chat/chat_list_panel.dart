@@ -20,6 +20,7 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_co
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/conversation_type_tab_bar.dart';
 import 'package:flutter_chat_app/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/common/dismiss_keyboard_on_tap.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
@@ -105,14 +106,41 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
     });
   }
 
-  Future<void> _openCreateGroup() async {
-    final result = await ChatNavigationHelper.navigateToCreateGroup(context);
-    final createdChatId = result is String ? result.trim() : '';
+  Future<void> _openNewConversation() async {
+    final result = await ChatNavigationHelper.navigateToContacts(
+      context,
+      selectionMode: true,
+    );
+    final createdChat = result is Chat ? result : null;
+    final createdChatId = createdChat?.id.trim() ?? '';
     if (createdChatId.isEmpty) {
+      if (result is String && result.trim().isNotEmpty) {
+        _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
+
+        final onChatSelected = widget.onChatSelected;
+        if (onChatSelected != null) {
+          onChatSelected(result.trim());
+          return;
+        }
+
+        if (!mounted) {
+          return;
+        }
+
+        await ChatNavigationHelper.navigateToChatDetail(
+          context,
+          chatId: result.trim(),
+        );
+      }
       return;
     }
 
-    _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
+    final chat = createdChat;
+    if (chat == null) {
+      return;
+    }
+
+    _chatBloc.add(ChatEvent.chatUpdated(chat: chat));
 
     final onChatSelected = widget.onChatSelected;
     if (onChatSelected != null) {
@@ -120,7 +148,56 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
       return;
     }
 
-    if (!context.mounted) {
+    if (!mounted) {
+      return;
+    }
+
+    await ChatNavigationHelper.navigateToChatDetail(
+      context,
+      chatId: createdChatId,
+    );
+  }
+
+  Future<void> _openCreateGroup() async {
+    final result = await ChatNavigationHelper.navigateToCreateGroup(context);
+    final createdChat = result is Chat ? result : null;
+    final createdChatId = createdChat?.id.trim() ?? '';
+    if (createdChatId.isEmpty) {
+      if (result is String && result.trim().isNotEmpty) {
+        _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
+
+        final onChatSelected = widget.onChatSelected;
+        if (onChatSelected != null) {
+          onChatSelected(result.trim());
+          return;
+        }
+
+        if (!mounted) {
+          return;
+        }
+
+        await ChatNavigationHelper.navigateToChatDetail(
+          context,
+          chatId: result.trim(),
+        );
+      }
+      return;
+    }
+
+    final chat = createdChat;
+    if (chat == null) {
+      return;
+    }
+
+    _chatBloc.add(ChatEvent.chatUpdated(chat: chat));
+
+    final onChatSelected = widget.onChatSelected;
+    if (onChatSelected != null) {
+      onChatSelected(createdChatId);
+      return;
+    }
+
+    if (!mounted) {
       return;
     }
 
@@ -225,8 +302,7 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                       icon: const Icon(Icons.add),
                       onSelected: (value) async {
                         if (value == 'newConversation') {
-                          await ChatNavigationHelper.navigateToContacts(
-                              context);
+                          await _openNewConversation();
                           return;
                         }
                         if (value == 'newGroup') {
@@ -305,13 +381,15 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                         builder: (context, draftState) {
                           return Column(
                             children: [
-                              ConversationTypeTabBar(
-                                activeFilter: activeFilter,
-                                onFilterChanged: (filter) {
-                                  _chatBloc.add(
-                                      ChatEvent.changeConversationTypeFilter(
-                                          filter: filter));
-                                },
+                              DismissKeyboardOnTap(
+                                child: ConversationTypeTabBar(
+                                  activeFilter: activeFilter,
+                                  onFilterChanged: (filter) {
+                                    _chatBloc.add(
+                                        ChatEvent.changeConversationTypeFilter(
+                                            filter: filter));
+                                  },
+                                ),
                               ),
                               Expanded(
                                 child: isLoadingMore && chats.isEmpty
@@ -477,69 +555,75 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
       ConversationTypeFilter.group => context.l10n.noGroupConversations,
       _ => context.l10n.noConversations,
     };
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: AppDimens.iconSizeXXLarge,
-            color: AppColors.textSecondary,
-          ),
-          const SizedBox(height: AppDimens.spaceMedium),
-          AppText(
-            message,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState(
-      BuildContext context, String message, VoidCallback? retryAction) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.paddingLarge),
+    return DismissKeyboardOnTap(
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.error_outline,
+              Icons.chat_bubble_outline,
               size: AppDimens.iconSizeXXLarge,
-              color: AppColors.error,
+              color: AppColors.textSecondary,
             ),
             const SizedBox(height: AppDimens.spaceMedium),
             AppText(
               message,
               textAlign: TextAlign.center,
             ),
-            if (retryAction != null) ...[
-              const SizedBox(height: AppDimens.spaceLarge),
-              TextButton(
-                onPressed: retryAction,
-                child: Text(context.l10n.retryOperation),
-              ),
-            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildOfflineState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.cloud_off,
-            size: AppDimens.iconSizeXXLarge,
-            color: AppColors.textSecondary,
+  Widget _buildErrorState(
+      BuildContext context, String message, VoidCallback? retryAction) {
+    return DismissKeyboardOnTap(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimens.paddingLarge),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: AppDimens.iconSizeXXLarge,
+                color: AppColors.error,
+              ),
+              const SizedBox(height: AppDimens.spaceMedium),
+              AppText(
+                message,
+                textAlign: TextAlign.center,
+              ),
+              if (retryAction != null) ...[
+                const SizedBox(height: AppDimens.spaceLarge),
+                TextButton(
+                  onPressed: retryAction,
+                  child: Text(context.l10n.retryOperation),
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: AppDimens.spaceMedium),
-          AppText(context.l10n.offline),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOfflineState(BuildContext context) {
+    return DismissKeyboardOnTap(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cloud_off,
+              size: AppDimens.iconSizeXXLarge,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(height: AppDimens.spaceMedium),
+            AppText(context.l10n.offline),
+          ],
+        ),
       ),
     );
   }

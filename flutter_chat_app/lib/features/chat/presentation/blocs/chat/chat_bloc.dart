@@ -695,12 +695,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
 
     if (state is _Loaded) {
       final currentState = state as _Loaded;
-      final updatedChats = currentState.chats.map((chat) {
-        return chat.id == event.chat.id ? event.chat : chat;
-      }).toList();
-
-      emit(_preserveLoaded(currentState, chats: updatedChats));
-      logger.i('Chat list updated with new data');
+      emit(_upsertChatIntoLoadedState(currentState, event.chat));
+      logger.i('Chat list upserted with latest data');
     }
   }
 
@@ -966,14 +962,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     final updatedChats = List<Chat>.from(currentState.chats);
     updatedChats[idx] = updatedChat;
 
-    updatedChats.sort((a, b) {
-      final at = a.lastMessageTime;
-      final bt = b.lastMessageTime;
-      if (at == null && bt == null) return 0;
-      if (at == null) return 1;
-      if (bt == null) return -1;
-      return bt.compareTo(at);
-    });
+    _sortChatsByRecency(updatedChats);
 
     emit(_preserveLoaded(currentState, chats: updatedChats));
 
@@ -1115,6 +1104,108 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       }
     }
     return result.reversed.toList();
+  }
+
+  ChatState _upsertChatIntoLoadedState(_Loaded current, Chat updatedChat) {
+    final cachedLists =
+        Map<ConversationTypeFilter, List<Chat>>.from(current.cachedLists);
+    final filterPages =
+        Map<ConversationTypeFilter, int>.from(current.filterPages);
+    final filterHasMore =
+        Map<ConversationTypeFilter, bool>.from(current.filterHasMore);
+
+    List<Chat> visibleChats = current.chats;
+
+    for (final filter in ConversationTypeFilter.values) {
+      final hasExistingCache =
+          filter == current.activeFilter || cachedLists.containsKey(filter);
+      if (!hasExistingCache) {
+        continue;
+      }
+
+      final baseList = filter == current.activeFilter
+          ? current.chats
+          : cachedLists[filter] ?? const <Chat>[];
+      final matchesFilter = _chatMatchesFilter(updatedChat, filter);
+      final nextList = matchesFilter
+          ? _upsertAndSortChats(baseList, updatedChat)
+          : baseList.where((chat) => chat.id != updatedChat.id).toList();
+
+      cachedLists[filter] = nextList;
+      filterPages[filter] = filterPages[filter] ?? current.page;
+      filterHasMore[filter] = filterHasMore[filter] ?? current.hasMore;
+
+      if (filter == current.activeFilter) {
+        visibleChats = nextList;
+      }
+    }
+
+    return ChatState.loaded(
+      chats: visibleChats,
+      hasMore: current.hasMore,
+      isLoadingMore: current.isLoadingMore,
+      page: current.page,
+      pageSize: current.pageSize,
+      total: visibleChats.length,
+      activeFilter: current.activeFilter,
+      cachedLists: cachedLists,
+      filterPages: filterPages,
+      filterHasMore: filterHasMore,
+      isSyncing: current.isSyncing,
+    );
+  }
+
+  List<Chat> _upsertAndSortChats(List<Chat> chats, Chat updatedChat) {
+    final updatedChats =
+        chats.where((chat) => chat.id != updatedChat.id).toList(growable: true);
+    updatedChats.add(updatedChat);
+    _sortChatsByRecency(updatedChats);
+    return updatedChats;
+  }
+
+  void _sortChatsByRecency(List<Chat> chats) {
+    chats.sort((a, b) => _compareChatsByRecency(a, b));
+  }
+
+  int _compareChatsByRecency(Chat a, Chat b) {
+    final aRecency = _chatRecency(a);
+    final bRecency = _chatRecency(b);
+    final recencyCompare = bRecency.compareTo(aRecency);
+    if (recencyCompare != 0) {
+      return recencyCompare;
+    }
+
+    final aCreatedAt = a.createdAt;
+    final bCreatedAt = b.createdAt;
+    if (aCreatedAt != null && bCreatedAt != null) {
+      final createdAtCompare = bCreatedAt.compareTo(aCreatedAt);
+      if (createdAtCompare != 0) {
+        return createdAtCompare;
+      }
+    } else if (aCreatedAt == null && bCreatedAt != null) {
+      return 1;
+    } else if (aCreatedAt != null && bCreatedAt == null) {
+      return -1;
+    }
+
+    return a.id.compareTo(b.id);
+  }
+
+  DateTime _chatRecency(Chat chat) {
+    return chat.lastMessageTime ??
+        chat.createdAt ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  bool _chatMatchesFilter(Chat chat, ConversationTypeFilter filter) {
+    switch (filter) {
+      case ConversationTypeFilter.all:
+        return true;
+      case ConversationTypeFilter.direct:
+        return chat.type == ChatType.direct;
+      case ConversationTypeFilter.group:
+        return chat.type == ChatType.group;
+    }
   }
 
   /// Emit a new loaded state preserving all filter/cache/pagination fields

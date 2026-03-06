@@ -245,9 +245,11 @@ class ChatModule {
   }
 
   /// Returns the contacts page widget.
-  static Widget contactsPage() {
+  static Widget contactsPage({bool selectionMode = false}) {
     _ensureInitialized();
-    return const _ChatPackageWrapper(child: ContactsPage());
+    return _ChatPackageWrapper(
+      child: ContactsPage(selectionMode: selectionMode),
+    );
   }
 
   // ===========================================================
@@ -288,7 +290,7 @@ class ChatModule {
   /// ```
   static Route<dynamic> createGroupRoute() {
     _ensureInitialized();
-    return MaterialPageRoute<void>(
+    return MaterialPageRoute<dynamic>(
       builder: (_) => const _ChatPackageWrapper(child: CreateGroupPage()),
       settings: const RouteSettings(name: '/chat/create-group'),
     );
@@ -299,10 +301,12 @@ class ChatModule {
   /// ```dart
   /// Navigator.push(context, ChatModule.contactsRoute());
   /// ```
-  static Route<dynamic> contactsRoute() {
+  static Route<dynamic> contactsRoute({bool selectionMode = false}) {
     _ensureInitialized();
-    return MaterialPageRoute<void>(
-      builder: (_) => const _ChatPackageWrapper(child: ContactsPage()),
+    return MaterialPageRoute<dynamic>(
+      builder: (_) => _ChatPackageWrapper(
+        child: ContactsPage(selectionMode: selectionMode),
+      ),
       settings: const RouteSettings(name: '/chat/contacts'),
     );
   }

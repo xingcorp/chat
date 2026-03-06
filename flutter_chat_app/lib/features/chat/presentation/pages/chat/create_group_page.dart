@@ -15,6 +15,7 @@ import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/common/dismiss_keyboard_on_tap.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/button_enums.dart';
@@ -410,7 +411,7 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
         listener: (context, state) {
           state.maybeWhen(
             chatDetailsLoaded: (chat) {
-              Navigator.of(context).pop(chat.id);
+              Navigator.of(context).pop(chat);
             },
             error: (message) {
               AppSnackBar.error(
@@ -426,25 +427,34 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
             loading: () => true,
             orElse: () => false,
           );
+          final canCreate = !isCreating && _selectedUserIds.isNotEmpty;
           final filteredContacts = _filteredContacts;
 
           return AppScaffold(
-            dismissKeyboardOnTap: true,
+            dismissKeyboardOnTap: false,
             appBar: AppBar(
               title: AppText(
                 context.l10n.createNewGroup,
                 style: AppTextStyles.heading5(),
               ),
-              actions: [
-                AppButton.text(
-                  text: context.l10n.create,
-                  size: ButtonSize.small,
-                  isLoading: isCreating,
-                  onPressed: isCreating || _selectedUserIds.isEmpty
-                      ? null
-                      : () => _createGroup(context),
+            ),
+            bottomNavigationBar: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimens.paddingMedium,
+                  0,
+                  AppDimens.paddingMedium,
+                  AppDimens.paddingMedium,
                 ),
-              ],
+                child: AppButton.primary(
+                  text: context.l10n.create,
+                  size: ButtonSize.large,
+                  isFullWidth: true,
+                  isLoading: isCreating,
+                  onPressed: canCreate ? () => _createGroup(context) : null,
+                ),
+              ),
             ),
             body: ScrollConfiguration(
               behavior: const MaterialScrollBehavior()
@@ -453,20 +463,22 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
                 controller: _contactsScrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
                 keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
+                    ScrollViewKeyboardDismissBehavior.manual,
                 slivers: [
                   // Header: avatar picker + group name + search
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppDimens.paddingMedium),
-                      child: Column(
-                        children: [
-                          _buildAvatarPicker(context, isCreating, isDark),
-                          const SizedBox(height: AppDimens.spaceMedium),
-                          _buildGroupNameField(context, isCreating),
-                          const SizedBox(height: AppDimens.spaceMedium),
-                          _buildSearchField(context, isCreating),
-                        ],
+                    child: DismissKeyboardOnTap(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppDimens.paddingMedium),
+                        child: Column(
+                          children: [
+                            _buildAvatarPicker(context, isCreating, isDark),
+                            const SizedBox(height: AppDimens.spaceMedium),
+                            _buildGroupNameField(context, isCreating),
+                            const SizedBox(height: AppDimens.spaceMedium),
+                            _buildSearchField(context, isCreating),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -474,7 +486,9 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
                   // Selected members horizontal strip
                   if (_selectedUsers.isNotEmpty)
                     SliverToBoxAdapter(
-                      child: _buildSelectedMembersStrip(context, isDark),
+                      child: DismissKeyboardOnTap(
+                        child: _buildSelectedMembersStrip(context, isDark),
+                      ),
                     ),
 
                   // Contact list
@@ -486,9 +500,11 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
                     hasMore: _hasMoreContacts,
                     onLoadMore: _loadMoreContacts,
                     emptyWidget: Center(
-                      child: AppText(
-                        context.l10n.noSearchResults,
-                        style: AppTextStyles.bodyLarge,
+                      child: DismissKeyboardOnTap(
+                        child: AppText(
+                          context.l10n.noSearchResults,
+                          style: AppTextStyles.bodyLarge,
+                        ),
                       ),
                     ),
                     itemBuilder: (context, user, index) {

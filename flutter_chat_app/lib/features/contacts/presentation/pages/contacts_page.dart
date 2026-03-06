@@ -1,25 +1,34 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
-import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_remote_datasource.dart';
+import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/common/dismiss_keyboard_on_tap.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/indicators/user_presence_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:get_it/get_it.dart';
 
 /// Contacts page - displays list of users/contacts
 class ContactsPage extends BaseStatefulWidget {
-  const ContactsPage({super.key});
+  const ContactsPage({
+    super.key,
+    this.selectionMode = false,
+  });
+
+  final bool selectionMode;
 
   @override
   State<ContactsPage> createState() => _ContactsPageState();
@@ -27,7 +36,7 @@ class ContactsPage extends BaseStatefulWidget {
 
 class _ContactsPageState extends BaseState<ContactsPage> {
   final UserRepository _userRepository = GetIt.instance<UserRepository>();
-  final IChatRemoteDataSource _chatRemoteDataSource = GetIt.instance<IChatRemoteDataSource>();
+  final IChatRepository _chatRepository = GetIt.instance<IChatRepository>();
   final TextEditingController _searchController = TextEditingController();
 
   List<User> _contacts = [];
@@ -105,28 +114,30 @@ class _ContactsPageState extends BaseState<ContactsPage> {
       body: Column(
         children: [
           // Search bar
-          Padding(
-            padding: const EdgeInsets.all(AppDimens.paddingMedium),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: context.l10n.search,
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+          DismissKeyboardOnTap(
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.paddingMedium),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: context.l10n.search,
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+                  ),
+                  filled: true,
+                  fillColor: isDark
+                      ? theme.colorScheme.surface
+                      : AppColors.inputBackground,
                 ),
-                filled: true,
-                fillColor: isDark
-                    ? theme.colorScheme.surface
-                    : AppColors.inputBackground,
               ),
             ),
           ),
@@ -159,6 +170,7 @@ class _ContactsPageState extends BaseState<ContactsPage> {
     return RefreshIndicator(
       onRefresh: _onRefresh,
       child: ListView.separated(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
         padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingSmall),
         itemCount: _contacts.length,
         separatorBuilder: (context, index) => const Divider(
@@ -175,8 +187,10 @@ class _ContactsPageState extends BaseState<ContactsPage> {
   Widget _buildContactItem(BuildContext context, User user) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final primaryTextColor = isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary;
-    final secondaryTextColor = isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
+    final primaryTextColor =
+        isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary;
+    final secondaryTextColor =
+        isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
 
     return ListTile(
       leading: UserPresenceBadge(
@@ -215,46 +229,87 @@ class _ContactsPageState extends BaseState<ContactsPage> {
     );
   }
 
-  void _startChat(User user) async {
+  Future<void> _startChat(User user) async {
     await _navigateToChat(user);
   }
 
   Future<void> _navigateToChat(User user) async {
+    final fullName = user.fullName?.trim();
+    final displayName =
+        fullName != null && fullName.isNotEmpty ? fullName : user.username;
+    final result = await _chatRepository.createChat(
+      name: displayName,
+      participantIds: <String>[user.id],
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    await result.fold(
+      (_) async {
+        if (widget.selectionMode) {
+          Navigator.of(context).pop(user.id);
+          return;
+        }
+
+        await ChatNavigationHelper.navigateToChatDetail(
+          context,
+          chatId: user.id,
+        );
+      },
+      (chat) async {
+        _notifyChatUpdated(chat);
+
+        if (widget.selectionMode) {
+          Navigator.of(context).pop(chat);
+          return;
+        }
+
+        await ChatNavigationHelper.navigateToChatDetail(
+          context,
+          chatId: chat.id,
+        );
+      },
+    );
+  }
+
+  void _notifyChatUpdated(Chat chat) {
     try {
-      final chat = await _chatRemoteDataSource.createDirectChat(receiverId: user.id);
-      if (!mounted) return;
-      await ChatNavigationHelper.navigateToChatDetail(context, chatId: chat.id);
+      context.read<ChatBloc>().add(ChatEvent.chatUpdated(chat: chat));
     } catch (_) {
-      if (!mounted) return;
-      await ChatNavigationHelper.navigateToChatDetail(context, chatId: user.id);
+      // ContactsPage can be embedded without a shared ChatBloc ancestor.
     }
   }
 
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final secondaryTextColor = isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
+    final secondaryTextColor =
+        isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.contacts_outlined,
-            size: AppDimens.iconSizeXXLarge,
-            color: secondaryTextColor,
-          ),
-          const SizedBox(height: AppDimens.spaceMedium),
-          AppText(
-            _searchController.text.isNotEmpty
-                ? context.l10n.noResults
-                : context.l10n.noConversations,
-            style: AppTextStyles.bodyMedium.copyWith(
+    return DismissKeyboardOnTap(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.contacts_outlined,
+              size: AppDimens.iconSizeXXLarge,
               color: secondaryTextColor,
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: AppDimens.spaceMedium),
+            AppText(
+              _searchController.text.isNotEmpty
+                  ? context.l10n.noResults
+                  : context.l10n.noConversations,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: secondaryTextColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -262,32 +317,35 @@ class _ContactsPageState extends BaseState<ContactsPage> {
   Widget _buildErrorState(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final secondaryTextColor = isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
+    final secondaryTextColor =
+        isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: AppDimens.iconSizeXXLarge,
-            color: AppColors.error,
-          ),
-          const SizedBox(height: AppDimens.spaceMedium),
-          AppText(
-            _errorMessage ?? context.l10n.errorOccurred,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: secondaryTextColor,
+    return DismissKeyboardOnTap(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: AppDimens.iconSizeXXLarge,
+              color: AppColors.error,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppDimens.spaceLarge),
-          ElevatedButton.icon(
-            onPressed: () => _loadContacts(_searchController.text.trim()),
-            icon: const Icon(Icons.refresh),
-            label: Text(context.l10n.retryOperation),
-          ),
-        ],
+            const SizedBox(height: AppDimens.spaceMedium),
+            AppText(
+              _errorMessage ?? context.l10n.errorOccurred,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: secondaryTextColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppDimens.spaceLarge),
+            ElevatedButton.icon(
+              onPressed: () => _loadContacts(_searchController.text.trim()),
+              icon: const Icon(Icons.refresh),
+              label: Text(context.l10n.retryOperation),
+            ),
+          ],
+        ),
       ),
     );
   }

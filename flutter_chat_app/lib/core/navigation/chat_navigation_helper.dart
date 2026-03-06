@@ -93,14 +93,20 @@ class ChatNavigationHelper {
   }
 
   /// Navigate to contacts page.
-  static Future<void> navigateToContacts(BuildContext context) {
+  static Future<dynamic> navigateToContacts(
+    BuildContext context, {
+    bool selectionMode = false,
+  }) {
     if (isPackageMode) {
-      return Navigator.push(context, ChatModule.contactsRoute());
+      return Navigator.push(
+        context,
+        ChatModule.contactsRoute(selectionMode: selectionMode),
+      );
     } else {
       return Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => const ContactsPage(),
+          builder: (_) => ContactsPage(selectionMode: selectionMode),
           settings: const RouteSettings(name: '/chat/contacts'),
         ),
       );
@@ -150,12 +156,12 @@ class ChatNavigationHelper {
   }
 
   /// Returns a route to contacts page.
-  static Route<dynamic> contactsRoute() {
+  static Route<dynamic> contactsRoute({bool selectionMode = false}) {
     if (isPackageMode) {
-      return ChatModule.contactsRoute();
+      return ChatModule.contactsRoute(selectionMode: selectionMode);
     } else {
       return MaterialPageRoute(
-        builder: (_) => const ContactsPage(),
+        builder: (_) => ContactsPage(selectionMode: selectionMode),
         settings: const RouteSettings(name: '/chat/contacts'),
       );
     }
