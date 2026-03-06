@@ -2,15 +2,15 @@
 ///
 /// Manages Firebase initialization per flavor với:
 /// - Environment-specific Firebase projects
-/// - Dynamic configuration loading from generated options
+/// - Dynamic configuration loading via `--dart-define` (NO hardcoded keys)
 /// - Service initialization
+/// - Runtime validation of required env vars
 /// - Error handling và fallbacks
 ///
 /// **Architecture:** Factory Pattern + Environment Abstraction + Enterprise Standards
 ///
-/// **Firebase Projects:**
-/// - Staging: common-stag (616861138934)
-/// - Production: common-18e05 (159636416445)
+/// **SECURITY:** All Firebase API keys are injected at build time via
+/// `--dart-define` or `--dart-define-from-file`. See `FIREBASE_SETUP.md`.
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -23,12 +23,27 @@ import 'package:flutter_chat_app/firebase_options_production.dart';
 /// **Firebase Configuration Manager**
 ///
 /// Handles Firebase initialization based on current flavor.
-/// Uses generated Firebase options from FlutterFire CLI.
+/// Firebase options are loaded from compile-time `--dart-define` variables.
 class FirebaseConfigManager {
   FirebaseConfigManager._();
 
   static final AppLogger _logger = AppLogger();
   static bool _isInitialized = false;
+
+  /// Required `--dart-define` keys for Firebase initialization.
+  ///
+  /// Build will fail fast if any of these are missing.
+  static const List<String> _requiredEnvVars = [
+    'FIREBASE_PROJECT_ID',
+    'FIREBASE_MESSAGING_SENDER_ID',
+  ];
+
+  /// Platform-specific required keys (checked at runtime based on platform)
+  static const Map<String, List<String>> _platformRequiredVars = {
+    'web': ['FIREBASE_WEB_API_KEY', 'FIREBASE_WEB_APP_ID'],
+    'android': ['FIREBASE_ANDROID_API_KEY', 'FIREBASE_ANDROID_APP_ID'],
+    'ios': ['FIREBASE_IOS_API_KEY', 'FIREBASE_IOS_APP_ID'],
+  };
 
   /// Check if Firebase is initialized
   static bool get isInitialized => _isInitialized;
@@ -36,10 +51,11 @@ class FirebaseConfigManager {
   /// Initialize Firebase with flavor-specific configuration
   ///
   /// This method:
-  /// 1. Determines current flavor from FlavorConfig
-  /// 2. Loads appropriate Firebase options (staging/production)
-  /// 3. Initializes Firebase with platform-specific configuration
-  /// 4. Enables Firebase services based on flavor settings
+  /// 1. Validates required `--dart-define` env vars are present
+  /// 2. Determines current flavor from FlavorConfig
+  /// 3. Loads appropriate Firebase options (staging/production)
+  /// 4. Initializes Firebase with platform-specific configuration
+  /// 5. Enables Firebase services based on flavor settings
   static Future<void> initialize() async {
     if (_isInitialized) {
       _logger.info('Firebase already initialized');
@@ -48,10 +64,15 @@ class FirebaseConfigManager {
 
     try {
       final config = FlavorConfig.instance;
+
+      // Validate env vars before attempting initialization
+      _validateEnvironmentVariables();
+
       final firebaseOptions = _getFirebaseOptions(config.flavor);
 
-      // _logger.info('Initializing Firebase for ${config.flavor.name} environment...');
-      // _logger.info('Firebase project: ${firebaseOptions.projectId}');
+      _logger.info(
+        'Initializing Firebase for ${config.flavor.name} environment...',
+      );
 
       if (kIsWeb) {
         // Web: Single default app instance
@@ -67,15 +88,13 @@ class FirebaseConfigManager {
       }
 
       _isInitialized = true;
-      // _logger.info('Firebase initialized successfully');
-      // _logger.info('Firebase app ID: ${firebaseOptions.appId}');
+      _logger.info('Firebase initialized successfully');
 
       // Initialize Firebase services based on flavor config
       await _initializeFirebaseServices(config);
 
       // Verify Firebase connection
       await _verifyFirebaseConnection(config);
-
     } catch (e, stackTrace) {
       _logger.error('Failed to initialize Firebase', e, stackTrace);
 
@@ -88,9 +107,91 @@ class FirebaseConfigManager {
     }
   }
 
+  /// Validate that required `--dart-define` environment variables are set.
+  ///
+  /// Throws [StateError] in release mode if keys are missing.
+  /// Logs warning in debug mode to allow development without Firebase.
+  static void _validateEnvironmentVariables() {
+    final missingVars = <String>[];
+
+    // Check common required vars
+    for (final varName in _requiredEnvVars) {
+      final value = _getEnvVar(varName);
+      if (value.isEmpty) {
+        missingVars.add(varName);
+      }
+    }
+
+    // Check platform-specific required vars
+    final platform = _getCurrentPlatformKey();
+    final platformVars = _platformRequiredVars[platform];
+    if (platformVars != null) {
+      for (final varName in platformVars) {
+        final value = _getEnvVar(varName);
+        if (value.isEmpty) {
+          missingVars.add(varName);
+        }
+      }
+    }
+
+    if (missingVars.isNotEmpty) {
+      final message = 'Missing required Firebase --dart-define variables: '
+          '${missingVars.join(', ')}. '
+          'See FIREBASE_SETUP.md for configuration instructions.';
+
+      if (kDebugMode) {
+        _logger.warning(message);
+        _logger.warning(
+          'Firebase may not work correctly. '
+          'Run with: flutter run --dart-define-from-file=.env.staging',
+        );
+      } else {
+        throw StateError(message);
+      }
+    }
+  }
+
+  /// Read a `--dart-define` variable value at compile time.
+  static String _getEnvVar(String name) {
+    // String.fromEnvironment is resolved at compile time via --dart-define
+    switch (name) {
+      case 'FIREBASE_PROJECT_ID':
+        return const String.fromEnvironment('FIREBASE_PROJECT_ID');
+      case 'FIREBASE_MESSAGING_SENDER_ID':
+        return const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID');
+      case 'FIREBASE_WEB_API_KEY':
+        return const String.fromEnvironment('FIREBASE_WEB_API_KEY');
+      case 'FIREBASE_WEB_APP_ID':
+        return const String.fromEnvironment('FIREBASE_WEB_APP_ID');
+      case 'FIREBASE_ANDROID_API_KEY':
+        return const String.fromEnvironment('FIREBASE_ANDROID_API_KEY');
+      case 'FIREBASE_ANDROID_APP_ID':
+        return const String.fromEnvironment('FIREBASE_ANDROID_APP_ID');
+      case 'FIREBASE_IOS_API_KEY':
+        return const String.fromEnvironment('FIREBASE_IOS_API_KEY');
+      case 'FIREBASE_IOS_APP_ID':
+        return const String.fromEnvironment('FIREBASE_IOS_APP_ID');
+      default:
+        return '';
+    }
+  }
+
+  /// Get current platform key for validation lookup.
+  static String _getCurrentPlatformKey() {
+    if (kIsWeb) return 'web';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      default:
+        return 'unknown';
+    }
+  }
+
   /// Get Firebase options based on flavor
   ///
-  /// Uses generated options from FlutterFire CLI:
+  /// Uses options loaded from `--dart-define` env vars:
   /// - [StagingFirebaseOptions] for staging environment
   /// - [ProductionFirebaseOptions] for production environment
   static FirebaseOptions _getFirebaseOptions(FlavorType flavor) {
@@ -114,30 +215,23 @@ class FirebaseConfigManager {
       if (config.environment.enableAnalytics) {
         // await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
         // _logger.info('Firebase Analytics enabled');
-      } else {
-        // _logger.info('Firebase Analytics disabled for ${config.flavor.name}');
       }
 
       // Initialize Crashlytics if enabled
       if (config.environment.enableCrashlytics) {
         // await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
         // _logger.info('Firebase Crashlytics enabled');
-      } else {
-        // _logger.info('Firebase Crashlytics disabled for ${config.flavor.name}');
       }
 
       // Initialize Performance Monitoring if enabled
       if (config.environment.enablePerformanceMonitoring) {
         // await FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
         // _logger.info('Firebase Performance Monitoring enabled');
-      } else {
-        // _logger.info('Firebase Performance disabled for ${config.flavor.name}');
       }
 
       // Initialize Messaging (always enabled for push notifications)
       // await FirebaseMessaging.instance.requestPermission();
       // _logger.info('Firebase Messaging initialized');
-
     } catch (e, stackTrace) {
       _logger.error('Failed to initialize Firebase services', e, stackTrace);
     }
@@ -149,7 +243,9 @@ class FirebaseConfigManager {
   /// Should NOT be used in production.
   static Future<void> _initializeFallback() async {
     if (!kDebugMode) {
-      throw UnsupportedError('Fallback initialization only allowed in debug mode');
+      throw UnsupportedError(
+        'Fallback initialization only allowed in debug mode',
+      );
     }
 
     try {
@@ -168,7 +264,7 @@ class FirebaseConfigManager {
   ///
   /// Validates that:
   /// 1. Firebase app is accessible
-  /// 2. Project ID matches expected flavor configuration
+  /// 2. Project ID matches expected `--dart-define` value
   static Future<void> _verifyFirebaseConnection(FlavorConfig config) async {
     try {
       final app = getCurrentApp();
@@ -176,35 +272,25 @@ class FirebaseConfigManager {
         throw StateError('Firebase app not found');
       }
 
-      // Verify project ID matches flavor
-      final expectedProjectId = _getExpectedProjectId(config.flavor);
+      final expectedProjectId = const String.fromEnvironment(
+        'FIREBASE_PROJECT_ID',
+      );
       final actualProjectId = app.options.projectId;
 
-      if (actualProjectId != expectedProjectId) {
+      if (expectedProjectId.isNotEmpty &&
+          actualProjectId != expectedProjectId) {
         _logger.warning(
-          'Project ID mismatch: expected $expectedProjectId, got $actualProjectId'
+          'Project ID mismatch: expected $expectedProjectId, '
+          'got $actualProjectId',
         );
-      } else {
-        // _logger.info('Firebase project ID verified: $actualProjectId');
       }
 
-      // _logger.info('Firebase connection verified successfully');
-
+      _logger.info('Firebase connection verified: $actualProjectId');
     } catch (e, stackTrace) {
       _logger.error('Firebase connection verification failed', e, stackTrace);
       if (!kDebugMode) {
         throw StateError('Firebase verification failed: $e');
       }
-    }
-  }
-
-  /// Get expected Firebase project ID for flavor
-  static String _getExpectedProjectId(FlavorType flavor) {
-    switch (flavor) {
-      case FlavorType.staging:
-        return 'common-stag';
-      case FlavorType.production:
-        return 'common-18e05';
     }
   }
 
@@ -262,7 +348,9 @@ class FirebaseConfigManager {
     }
   }
 
-  /// Get Firebase configuration summary for debugging
+  /// Get Firebase configuration summary for debugging.
+  ///
+  /// **SECURITY:** Redacts API keys — only shows project-level info.
   static Map<String, dynamic> getConfigurationSummary() {
     final config = FlavorConfig.instance;
     final options = getCurrentOptions();
@@ -271,11 +359,19 @@ class FirebaseConfigManager {
       'flavor': config.flavor.name,
       'initialized': _isInitialized,
       'projectId': options?.projectId,
-      'appId': options?.appId,
+      // Redact sensitive fields — only show prefix for debugging
+      'appId': _redact(options?.appId),
       'messagingSenderId': options?.messagingSenderId,
       'analyticsEnabled': config.environment.enableAnalytics,
       'crashlyticsEnabled': config.environment.enableCrashlytics,
       'performanceEnabled': config.environment.enablePerformanceMonitoring,
     };
+  }
+
+  /// Redact sensitive string — show first 8 chars + '***'
+  static String? _redact(String? value) {
+    if (value == null || value.isEmpty) return null;
+    if (value.length <= 8) return '***';
+    return '${value.substring(0, 8)}***';
   }
 }

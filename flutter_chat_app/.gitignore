@@ -142,15 +142,10 @@ coverage/
 # Translations
 *.mo
 
-# Environment variables
+# Environment variables — NEVER commit real env files
 .env
-.env.local
-.env.development
-.env.test
-.env.production
-.env.staging
-!.env.production
-!.env.staging
+.env.*
+!.env.example
 
 # Flutter Version Management
 .fvm/flutter_sdk
@@ -183,7 +178,12 @@ local.properties
 !lib/**/*.g.dart
 !lib/**/*.freezed.dart
 
-# Firebase config
+# Firebase config — contains API keys, NEVER commit
 google-services.json
 firebase_options.dart
-GoogleService-Info.plist 
+firebase_options_*.dart
+GoogleService-Info.plist
+**/android/app/google-services.json
+**/android/app/src/*/google-services.json
+**/ios/Runner/GoogleService-Info.plist
+**/ios/Runner/GoogleService-Info-*.plist

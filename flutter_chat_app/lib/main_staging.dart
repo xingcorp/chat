@@ -10,6 +10,7 @@
 /// **Usage:** flutter run --flavor staging --target lib/main_staging.dart
 
 import 'package:flutter_chat_app/core/config/flavor_config.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/main.dart' as main_app;
 
 /// **Staging Main Function**
@@ -34,14 +35,11 @@ Future<void> main() async {
 
 /// Print staging environment information
 void _printStagingInfo() {
-  print('🧪 ===== STAGING ENVIRONMENT =====');
-  print('📱 App: OXII Chat STG');
-  print('🏷️ Flavor: staging');
-  print('🔥 Firebase: oxii-chat-staging');
-  print('🛠️ Debug Tools: ENABLED');
-  print('🧪 Mock Data: ENABLED');
-  print('📊 Analytics: ENABLED');
-  print('💥 Crashlytics: ENABLED');
-  print('⚡ Performance: ENABLED');
-  print('🧪 ===============================');
+  final logger = AppLogger();
+  logger.info('===== STAGING ENVIRONMENT =====');
+  logger.info('App: OXII Chat STG');
+  logger.info('Flavor: staging');
+  logger.info('Debug Tools: ENABLED');
+  logger.info('Mock Data: ENABLED');
+  logger.info('===============================');
 }

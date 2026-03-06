@@ -55,3 +55,26 @@ flutter_chat_app/.flutter-plugins-dependencies
 assets/*
 
 /src/services/typesense/typesense-data
+
+# ===== SECURITY: Firebase / Credentials =====
+# Flutter Firebase options (contain API keys)
+flutter_chat_app/lib/firebase_options_*.dart
+flutter_chat_app/lib/firebase_options.dart
+
+# Android Firebase config
+flutter_chat_app/android/app/google-services.json
+flutter_chat_app/android/app/src/*/google-services.json
+
+# iOS Firebase config
+flutter_chat_app/ios/Runner/GoogleService-Info.plist
+flutter_chat_app/ios/Runner/GoogleService-Info-*.plist
+
+# Flutter env files (credentials)
+flutter_chat_app/.env.production
+flutter_chat_app/.env.staging
+flutter_chat_app/.env.local
+
+# Frontend env files with secrets
+frontend/src/environments/environment.prod.ts
+frontend/src/environments/environment.stg.ts
+frontend/src/environments/environment.uat.ts
