@@ -9,6 +9,7 @@ import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/domain/entities/chat_info/notification_settings.dart';
 import 'package:flutter_chat_app/domain/entities/chat_info/shared_media.dart';
 import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_event.dart';
@@ -19,6 +20,8 @@ import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversa
 import 'package:flutter_chat_app/presentation/pages/chat_members_page.dart';
 import 'package:flutter_chat_app/presentation/pages/group_edit_page.dart';
 import 'package:flutter_chat_app/presentation/pages/shared_media_gallery_page.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_confirm_dialog.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_header.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_members_section.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_settings_section.dart';
@@ -55,6 +58,8 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
   List<SharedMedia> _videos = [];
   List<SharedMedia> _files = [];
   List<SharedMedia> _links = [];
+  ChatConversationAction? _pendingConversationAction;
+  bool _isConversationActionInProgress = false;
   final IChatRepository _chatRepository = getIt<IChatRepository>();
 
   @override
@@ -146,193 +151,258 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
     );
   }
 
+  void _handleChatBlocState(ChatState state) {
+    final pendingAction = _pendingConversationAction;
+    if (pendingAction == null) {
+      return;
+    }
+
+    state.maybeWhen(
+      loading: () {
+        safeSetState(() {
+          _isConversationActionInProgress = true;
+        });
+      },
+      error: (message) {
+        safeSetState(() {
+          _isConversationActionInProgress = false;
+          _pendingConversationAction = null;
+        });
+        AppSnackBar.error(
+          context: context,
+          message: message,
+        );
+      },
+      conversationActionCompleted: (chatId, action) {
+        if (chatId != widget.chat.id || action != pendingAction) {
+          return;
+        }
+        safeSetState(() {
+          _isConversationActionInProgress = false;
+          _pendingConversationAction = null;
+        });
+        Navigator.of(context).pop(action);
+      },
+      orElse: () {},
+    );
+  }
+
+  void _dispatchConversationAction(ChatConversationAction action) {
+    if (_isConversationActionInProgress) {
+      return;
+    }
+
+    safeSetState(() {
+      _pendingConversationAction = action;
+      _isConversationActionInProgress = true;
+    });
+
+    switch (action) {
+      case ChatConversationAction.leave:
+        context
+            .read<ChatBloc>()
+            .add(ChatEvent.leaveChat(chatId: widget.chat.id));
+        break;
+      case ChatConversationAction.delete:
+        context
+            .read<ChatBloc>()
+            .add(ChatEvent.deleteChat(chatId: widget.chat.id));
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ConversationDetailBloc, ConversationDetailState>(
-      listener: (context, convState) {
-        if (convState is ConversationDetailLoaded) {
-          setState(() {
-            _chat = convState.chat;
-          });
-        }
-      },
-      child: BlocListener<ChatInfoBloc, ChatInfoState>(
-        listener: (context, state) {
-          // Handle state changes
-          if (state is ChatInfoNotificationSettingsLoaded ||
-              state is ChatInfoNotificationSettingsUpdated) {
-            if (state is ChatInfoNotificationSettingsLoaded) {
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ChatBloc, ChatState>(
+          listener: (context, state) => _handleChatBlocState(state),
+        ),
+        BlocListener<ConversationDetailBloc, ConversationDetailState>(
+          listener: (context, convState) {
+            if (convState is ConversationDetailLoaded) {
               setState(() {
-                _isMuted = state.settings.isMuted;
+                _chat = convState.chat;
               });
-            } else if (state is ChatInfoNotificationSettingsUpdated) {
+            }
+          },
+        ),
+        BlocListener<ChatInfoBloc, ChatInfoState>(
+          listener: (context, state) {
+            // Handle state changes
+            if (state is ChatInfoNotificationSettingsLoaded ||
+                state is ChatInfoNotificationSettingsUpdated) {
+              if (state is ChatInfoNotificationSettingsLoaded) {
+                setState(() {
+                  _isMuted = state.settings.isMuted;
+                });
+              } else if (state is ChatInfoNotificationSettingsUpdated) {
+                setState(() {
+                  _isMuted = state.settings.isMuted;
+                });
+                // Show success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(_isMuted
+                        ? 'Notifications muted'
+                        : 'Notifications unmuted'),
+                  ),
+                );
+              }
+            }
+
+            if (state is ChatInfoSharedMediaLoaded) {
               setState(() {
-                _isMuted = state.settings.isMuted;
+                switch (state.type) {
+                  case SharedMediaType.photo:
+                    _photos = state.media;
+                    break;
+                  case SharedMediaType.video:
+                    _videos = state.media;
+                    break;
+                  case SharedMediaType.file:
+                    _files = state.media;
+                    break;
+                  case SharedMediaType.link:
+                    _links = state.media;
+                    break;
+                }
               });
-              // Show success message
+            }
+
+            if (state is ChatInfoUserBlockStatusChecked) {
+              setState(() {
+                _isBlocked = state.isBlocked;
+              });
+            }
+
+            if (state is ChatInfoUserBlocked) {
+              setState(() {
+                _isBlocked = true;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('User blocked successfully')),
+              );
+            }
+
+            if (state is ChatInfoUserUnblocked) {
+              setState(() {
+                _isBlocked = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('User unblocked successfully')),
+              );
+            }
+
+            if (state is ChatInfoChatReported) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Chat reported successfully')),
+              );
+            }
+
+            if (state is ChatInfoError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(_isMuted
-                      ? 'Notifications muted'
-                      : 'Notifications unmuted'),
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
                 ),
               );
             }
-          }
-
-          if (state is ChatInfoSharedMediaLoaded) {
-            setState(() {
-              switch (state.type) {
-                case SharedMediaType.photo:
-                  _photos = state.media;
-                  break;
-                case SharedMediaType.video:
-                  _videos = state.media;
-                  break;
-                case SharedMediaType.file:
-                  _files = state.media;
-                  break;
-                case SharedMediaType.link:
-                  _links = state.media;
-                  break;
-              }
-            });
-          }
-
-          if (state is ChatInfoUserBlockStatusChecked) {
-            setState(() {
-              _isBlocked = state.isBlocked;
-            });
-          }
-
-          if (state is ChatInfoUserBlocked) {
-            setState(() {
-              _isBlocked = true;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('User blocked successfully')),
-            );
-          }
-
-          if (state is ChatInfoUserUnblocked) {
-            setState(() {
-              _isBlocked = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('User unblocked successfully')),
-            );
-          }
-
-          if (state is ChatInfoChatReported) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Chat reported successfully')),
-            );
-          }
-
-          if (state is ChatInfoError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
+          },
+        ),
+      ],
+      child: Scaffold(
+        body: CustomScrollView(
+          slivers: [
+            // Header with close button
+            SliverAppBar(
+              pinned: true,
+              expandedHeight: 0,
+              leading: IconButton(
+                icon: Icon(Icons.close),
+                onPressed: widget.onClose ?? () => Navigator.of(context).pop(),
               ),
-            );
-          }
-        },
-        child: Scaffold(
-          body: CustomScrollView(
-            slivers: [
-              // Header with close button
-              SliverAppBar(
-                pinned: true,
-                expandedHeight: 0,
-                leading: IconButton(
-                  icon: Icon(Icons.close),
-                  onPressed:
-                      widget.onClose ?? () => Navigator.of(context).pop(),
-                ),
-                title: AppText(context.l10n.chatInfo),
-                actions: [
-                  if (_isCurrentUserGroupAdmin)
-                    PopupMenuButton<String>(
-                      onSelected: (value) {
-                        if (value == _editGroupMenuAction) {
-                          _handleEditGroup();
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem<String>(
-                          value: _editGroupMenuAction,
-                          child: AppText(context.l10n.editGroup),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-
-              // Chat Info Header
-              SliverToBoxAdapter(
-                child: ChatInfoHeader(chat: _chat),
-              ),
-
-              // Members Section (for group chats)
-              if (_chat.type == ChatType.group) ...[
-                SliverToBoxAdapter(
-                  child: ChatInfoMembersSection(
-                    chat: _chat,
-                    onTap: () => _handleViewMembers(context),
+              title: AppText(context.l10n.chatInfo),
+              actions: [
+                if (_isCurrentUserGroupAdmin)
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == _editGroupMenuAction) {
+                        _handleEditGroup();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem<String>(
+                        value: _editGroupMenuAction,
+                        child: AppText(context.l10n.editGroup),
+                      ),
+                    ],
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: SizedBox(height: AppDimens.spaceMedium),
-                ),
               ],
+            ),
 
-              SliverToBoxAdapter(
-                child: SizedBox(height: AppDimens.spaceMedium),
-              ),
+            // Chat Info Header
+            SliverToBoxAdapter(
+              child: ChatInfoHeader(chat: _chat),
+            ),
 
-              // Shared Media Section
+            // Members Section (for group chats)
+            if (_chat.type == ChatType.group) ...[
               SliverToBoxAdapter(
-                child: ChatInfoSharedMediaSection(
-                  photos: _photos,
-                  videos: _videos,
-                  files: _files,
-                  links: _links,
-                  onViewAllPhotos: () =>
-                      _handleViewAllMedia(SharedMediaType.photo),
-                  onViewAllVideos: () =>
-                      _handleViewAllMedia(SharedMediaType.video),
-                  onViewAllFiles: () =>
-                      _handleViewAllMedia(SharedMediaType.file),
-                  onViewAllLinks: () =>
-                      _handleViewAllMedia(SharedMediaType.link),
+                child: ChatInfoMembersSection(
+                  chat: _chat,
+                  onTap: () => _handleViewMembers(context),
                 ),
               ),
-
               SliverToBoxAdapter(
                 child: SizedBox(height: AppDimens.spaceMedium),
-              ),
-
-              // Settings Section
-              SliverToBoxAdapter(
-                child: ChatInfoSettingsSection(
-                  isMuted: _isMuted,
-                  isBlocked: _isBlocked,
-                  isGroup: widget.chat.type == ChatType.group,
-                  onMuteToggle: _handleMuteToggle,
-                  onBlockToggle: _handleBlockToggle,
-                  onReport: _handleReport,
-                  onLeaveGroup: _handleLeaveGroup,
-                  onDeleteChat: _handleDeleteChat,
-                ),
-              ),
-
-              // Bottom padding
-              SliverToBoxAdapter(
-                child: SizedBox(height: AppDimens.spaceLarge),
               ),
             ],
-          ),
+
+            SliverToBoxAdapter(
+              child: SizedBox(height: AppDimens.spaceMedium),
+            ),
+
+            // Shared Media Section
+            SliverToBoxAdapter(
+              child: ChatInfoSharedMediaSection(
+                photos: _photos,
+                videos: _videos,
+                files: _files,
+                links: _links,
+                onViewAllPhotos: () =>
+                    _handleViewAllMedia(SharedMediaType.photo),
+                onViewAllVideos: () =>
+                    _handleViewAllMedia(SharedMediaType.video),
+                onViewAllFiles: () => _handleViewAllMedia(SharedMediaType.file),
+                onViewAllLinks: () => _handleViewAllMedia(SharedMediaType.link),
+              ),
+            ),
+
+            SliverToBoxAdapter(
+              child: SizedBox(height: AppDimens.spaceMedium),
+            ),
+
+            // Settings Section
+            SliverToBoxAdapter(
+              child: ChatInfoSettingsSection(
+                isMuted: _isMuted,
+                isBlocked: _isBlocked,
+                isGroup: widget.chat.type == ChatType.group,
+                isActionInProgress: _isConversationActionInProgress,
+                onMuteToggle: _handleMuteToggle,
+                onBlockToggle: _handleBlockToggle,
+                onReport: _handleReport,
+                onLeaveGroup: _handleLeaveGroup,
+                onDeleteChat: _handleDeleteChat,
+              ),
+            ),
+
+            // Bottom padding
+            SliverToBoxAdapter(
+              child: SizedBox(height: AppDimens.spaceLarge),
+            ),
+          ],
         ),
       ),
     );
@@ -469,34 +539,23 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
   }
 
   void _handleLeaveGroup() {
-    // Show confirmation dialog
-    showDialog(
+    if (_isConversationActionInProgress) {
+      return;
+    }
+
+    AppConfirmDialog.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Leave Group?'),
-        content: Text(
-          'Are you sure you want to leave this group? You will no longer receive messages.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement leave group logic
-              // This would typically be handled by a different BLoC
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text('Leave group functionality coming soon')),
-              );
-            },
-            child: Text('Leave'),
-          ),
-        ],
-      ),
-    );
+      title: context.l10n.leaveGroup,
+      content: context.l10n.confirmLeaveGroup,
+      confirmText: context.l10n.leaveGroup,
+      cancelText: context.l10n.cancel,
+      isDestructive: true,
+    ).then((confirmed) {
+      if (confirmed != true || !mounted) {
+        return;
+      }
+      _dispatchConversationAction(ChatConversationAction.leave);
+    });
   }
 
   void _handleViewMembers(BuildContext context) {
@@ -507,6 +566,7 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
       MaterialPageRoute(
         builder: (_) => ChatMembersPage(
           chat: _chat,
+          currentUserId: widget.currentUserId,
         ),
       ),
     ).then((_) {
@@ -525,42 +585,35 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
       MaterialPageRoute(
         builder: (_) => GroupEditPage(chat: _chat),
       ),
-    ).then((_) {
+    ).then((result) {
       if (!mounted) return;
+      if (result is Chat) {
+        safeSetState(() {
+          _chat = result;
+        });
+      }
       convDetailBloc.add(LoadConversationDetail(chatId: chatId));
     });
   }
 
   void _handleDeleteChat() {
-    // Show confirmation dialog
-    showDialog(
+    if (_isConversationActionInProgress) {
+      return;
+    }
+
+    AppConfirmDialog.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete Chat?'),
-        content: Text(
-          'Are you sure you want to delete this chat? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement delete chat logic
-              // This would typically be handled by a different BLoC
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text('Delete chat functionality coming soon')),
-              );
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text('Delete'),
-          ),
-        ],
-      ),
-    );
+      title: context.l10n.deleteChat,
+      content: context.l10n.confirmDeleteConversation,
+      confirmText: context.l10n.deleteChat,
+      cancelText: context.l10n.cancel,
+      isDestructive: true,
+    ).then((confirmed) {
+      if (confirmed != true || !mounted) {
+        return;
+      }
+      _dispatchConversationAction(ChatConversationAction.delete);
+    });
   }
 
   void _handleViewAllMedia(SharedMediaType type) {

@@ -1,11 +1,9 @@
-/// Update Group Use Case
-///
-/// Updates group conversation information (name, image, etc.).
-/// Validates input and handles update logic.
-///
-/// Author: Senior Flutter/Mobile Architect
-library update_group_usecase;
-
+// Update Group Use Case
+//
+// Updates group conversation information (name, image, etc.).
+// Validates input and handles update logic.
+//
+// Author: Senior Flutter/Mobile Architect
 import 'package:equatable/equatable.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
@@ -20,16 +18,30 @@ class UpdateGroupParams extends Equatable {
   final String? name;
   final String? imageUrl;
   final String? description;
+  final GroupType? groupType;
+  final List<String>? memberIds;
+  final List<String>? adminIds;
 
   const UpdateGroupParams({
     required this.conversationId,
     this.name,
     this.imageUrl,
     this.description,
+    this.groupType,
+    this.memberIds,
+    this.adminIds,
   });
 
   @override
-  List<Object?> get props => [conversationId, name, imageUrl, description];
+  List<Object?> get props => [
+        conversationId,
+        name,
+        imageUrl,
+        description,
+        groupType,
+        memberIds,
+        adminIds,
+      ];
 }
 
 /// Update group use case implementation
@@ -53,6 +65,9 @@ class UpdateGroupUseCase {
       'hasName': params.name != null,
       'hasImageUrl': params.imageUrl != null,
       'hasDescription': params.description != null,
+      'hasGroupType': params.groupType != null,
+      'hasMemberIds': params.memberIds != null,
+      'hasAdminIds': params.adminIds != null,
     });
 
     // Validate input
@@ -67,6 +82,10 @@ class UpdateGroupUseCase {
       chatId: params.conversationId,
       name: params.name,
       avatarUrl: params.imageUrl,
+      description: params.description,
+      groupType: params.groupType,
+      memberIds: params.memberIds,
+      adminIds: params.adminIds,
     );
 
     // Convert Either to Either
@@ -94,9 +113,12 @@ class UpdateGroupUseCase {
     }
 
     // At least one field must be provided
-    if (params.name == null && 
-        params.imageUrl == null && 
-        params.description == null) {
+    if (params.name == null &&
+        params.imageUrl == null &&
+        params.description == null &&
+        params.groupType == null &&
+        params.memberIds == null &&
+        params.adminIds == null) {
       errors.add('At least one field must be provided for update');
     }
 

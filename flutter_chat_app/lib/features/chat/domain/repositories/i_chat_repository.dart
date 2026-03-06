@@ -41,6 +41,7 @@ abstract class IChatRepository {
     required List<String> participantIds,
     String? avatarUrl,
     String? description,
+    GroupType? groupType,
     bool isGroup = false,
   });
 
@@ -49,6 +50,10 @@ abstract class IChatRepository {
     required String chatId,
     String? name,
     String? avatarUrl,
+    String? description,
+    GroupType? groupType,
+    List<String>? memberIds,
+    List<String>? adminIds,
   });
 
   /// Add participants to chat with remote-only strategy

@@ -542,6 +542,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupDescription => 'Group Description';
 
   @override
+  String get groupType => 'Group Type';
+
+  @override
+  String get privateGroup => 'Private Group';
+
+  @override
+  String get publicGroup => 'Public Group';
+
+  @override
   String get optional => 'Optional';
 
   @override
@@ -1652,6 +1661,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String confirmRemoveMember(String name) {
     return 'Are you sure you want to remove $name from the group?';
   }
+
+  @override
+  String get groupAdmin => 'Group admin';
+
+  @override
+  String get memberActions => 'Member actions';
+
+  @override
+  String get makeGroupAdmin => 'Make group admin';
+
+  @override
+  String get removeGroupAdmin => 'Remove admin role';
+
+  @override
+  String get memberRemovedSuccessfully => 'Member removed successfully';
+
+  @override
+  String get adminRoleGranted => 'Admin role granted successfully';
+
+  @override
+  String get adminRoleRemoved => 'Admin role removed successfully';
 
   @override
   String readByCount(int count) {

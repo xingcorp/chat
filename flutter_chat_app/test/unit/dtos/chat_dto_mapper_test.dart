@@ -1,4 +1,5 @@
 import 'package:flutter_chat_app/data/dtos/chat_dto.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -54,5 +55,41 @@ void main() {
       member.viewMessagesFrom,
       DateTime.fromMillisecondsSinceEpoch(1705000000000),
     );
+  });
+
+  test('maps description, group type and creator metadata for group chats', () {
+    final dto = ChatDto.fromJson(<String, dynamic>{
+      'id': 'chat_3',
+      'name': 'Platform Guild',
+      'type': 'group',
+      'description': 'Architecture decisions',
+      'groupType': 'Public',
+      'createdAt': 1700000000000,
+      'creator': <String, dynamic>{
+        'id': 'user_admin',
+        'fullname': 'Tech Lead',
+        'imageUrls': <String>[],
+      },
+      'members': <dynamic>[
+        <String, dynamic>{
+          'id': 'member_1',
+          'userId': 'user_admin',
+          'admin': true,
+          'user': <String, dynamic>{
+            'id': 'user_admin',
+            'fullname': 'Tech Lead',
+            'imageUrls': <String>[],
+            'departments': <dynamic>[],
+          },
+        },
+      ],
+    });
+
+    final chat = dto.toDomain();
+
+    expect(chat.description, 'Architecture decisions');
+    expect(chat.groupType, GroupType.public);
+    expect(chat.creatorId, 'user_admin');
+    expect(chat.creatorName, 'Tech Lead');
   });
 }

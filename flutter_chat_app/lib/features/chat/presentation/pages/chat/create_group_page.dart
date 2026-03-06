@@ -18,8 +18,10 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/dismiss_keyboard_on_tap.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/button_enums.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/forms/app_dropdown.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/indicators/user_presence_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/inputs/app_text_field.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/lists/app_sliver_list_view.dart';
@@ -55,6 +57,8 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
   };
 
   final TextEditingController _groupNameController = TextEditingController();
+  final TextEditingController _groupDescriptionController =
+      TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _contactsScrollController = ScrollController();
   final UserRepository _userRepository = getIt<UserRepository>();
@@ -75,6 +79,7 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
   bool _hasMoreContacts = true;
   bool _isLoadingMore = false;
   final Set<String> _loggedSelfLeakIds = <String>{};
+  GroupType _selectedGroupType = GroupType.private;
 
   @override
   void initState() {
@@ -88,6 +93,7 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
   @override
   void dispose() {
     _groupNameController.dispose();
+    _groupDescriptionController.dispose();
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     _contactsScrollController.removeListener(_onContactsControllerChanged);
@@ -338,6 +344,7 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
 
   void _createGroup(BuildContext context) {
     final groupName = _groupNameController.text.trim();
+    final groupDescription = _groupDescriptionController.text.trim();
 
     if (groupName.isEmpty) {
       AppSnackBar.error(
@@ -359,6 +366,8 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
           ChatEvent.createChat(
             type: ChatType.group,
             name: groupName,
+            description: groupDescription,
+            groupType: _selectedGroupType,
             participantIds: _selectedUserIds,
             avatarBytes: _avatarBytes,
             avatarFileName: _avatarFileName,
@@ -397,6 +406,19 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
         .toList();
   }
 
+  List<_GroupTypeOption> _buildGroupTypeOptions(BuildContext context) {
+    return <_GroupTypeOption>[
+      _GroupTypeOption(
+        type: GroupType.private,
+        label: context.l10n.privateGroup,
+      ),
+      _GroupTypeOption(
+        type: GroupType.public,
+        label: context.l10n.publicGroup,
+      ),
+    ];
+  }
+
   // ---------------------------------------------------------------------------
   // Build
   // ---------------------------------------------------------------------------
@@ -404,6 +426,11 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final groupTypeOptions = _buildGroupTypeOptions(context);
+    final selectedGroupTypeOption = groupTypeOptions.firstWhere(
+      (option) => option.type == _selectedGroupType,
+      orElse: () => groupTypeOptions.first,
+    );
 
     return BlocProvider(
       create: (_) => getIt<ChatBloc>(),
@@ -475,6 +502,15 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
                             _buildAvatarPicker(context, isCreating, isDark),
                             const SizedBox(height: AppDimens.spaceMedium),
                             _buildGroupNameField(context, isCreating),
+                            const SizedBox(height: AppDimens.spaceMedium),
+                            _buildGroupDescriptionField(context, isCreating),
+                            const SizedBox(height: AppDimens.spaceMedium),
+                            _buildGroupTypeField(
+                              context,
+                              isCreating,
+                              groupTypeOptions,
+                              selectedGroupTypeOption,
+                            ),
                             const SizedBox(height: AppDimens.spaceMedium),
                             _buildSearchField(context, isCreating),
                           ],
@@ -589,6 +625,42 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
     );
   }
 
+  Widget _buildGroupDescriptionField(BuildContext context, bool isCreating) {
+    return AppTextField(
+      controller: _groupDescriptionController,
+      label: context.l10n.groupDescription,
+      prefixIcon: Icons.notes_rounded,
+      enabled: !isCreating,
+      maxLines: 3,
+      minLines: 3,
+      textInputAction: TextInputAction.newline,
+    );
+  }
+
+  Widget _buildGroupTypeField(
+    BuildContext context,
+    bool isCreating,
+    List<_GroupTypeOption> options,
+    _GroupTypeOption selectedOption,
+  ) {
+    return AppDropdown<_GroupTypeOption>(
+      items: options,
+      value: selectedOption,
+      onChanged: isCreating
+          ? null
+          : (option) {
+              if (option == null) {
+                return;
+              }
+              safeSetState(() {
+                _selectedGroupType = option.type;
+              });
+            },
+      label: context.l10n.groupType,
+      itemBuilder: (option) => AppText(option.label),
+    );
+  }
+
   /// Contact search field.
   Widget _buildSearchField(BuildContext context, bool isCreating) {
     return AppTextField(
@@ -597,8 +669,10 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
       prefixIcon: Icons.search,
       enabled: !isCreating,
       suffixIcon: _searchQuery.isNotEmpty
-          ? IconButton(
-              icon: const Icon(Icons.clear),
+          ? AppIconButton(
+              icon: Icons.close_rounded,
+              size: ButtonSize.small,
+              tooltip: context.l10n.cancel,
               onPressed: _searchController.clear,
             )
           : null,
@@ -733,4 +807,17 @@ class _CurrentUserIdentity {
     required this.authId,
     required this.lookupKeys,
   });
+}
+
+class _GroupTypeOption {
+  final GroupType type;
+  final String label;
+
+  const _GroupTypeOption({
+    required this.type,
+    required this.label,
+  });
+
+  @override
+  String toString() => label;
 }

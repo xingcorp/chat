@@ -11,16 +11,30 @@ class EditGroupParams extends Equatable {
   final String? name;
   final String? avatarUrl;
   final String? description;
+  final GroupType? groupType;
+  final List<String>? memberIds;
+  final List<String>? adminIds;
 
   const EditGroupParams({
     required this.conversationId,
     this.name,
     this.avatarUrl,
     this.description,
+    this.groupType,
+    this.memberIds,
+    this.adminIds,
   });
 
   @override
-  List<Object?> get props => [conversationId, name, avatarUrl, description];
+  List<Object?> get props => [
+        conversationId,
+        name,
+        avatarUrl,
+        description,
+        groupType,
+        memberIds,
+        adminIds,
+      ];
 }
 
 @injectable
@@ -40,22 +54,38 @@ class EditGroupUseCase {
       'hasName': params.name != null,
       'hasAvatarUrl': params.avatarUrl != null,
       'hasDescription': params.description != null,
+      'hasGroupType': params.groupType != null,
+      'hasMemberIds': params.memberIds != null,
+      'hasAdminIds': params.adminIds != null,
     });
 
     if (params.conversationId.trim().isEmpty) {
-      _logger.error('EditGroupUseCase: Validation failed - empty conversationId');
-      return const Left(ValidationFailure(message: 'Conversation ID cannot be empty'));
+      _logger
+          .error('EditGroupUseCase: Validation failed - empty conversationId');
+      return const Left(
+          ValidationFailure(message: 'Conversation ID cannot be empty'));
     }
 
-    if (params.name == null && params.avatarUrl == null && params.description == null) {
-      _logger.error('EditGroupUseCase: Validation failed - no fields to update');
-      return const Left(ValidationFailure(message: 'At least one field must be provided for update'));
+    if (params.name == null &&
+        params.avatarUrl == null &&
+        params.description == null &&
+        params.groupType == null &&
+        params.memberIds == null &&
+        params.adminIds == null) {
+      _logger
+          .error('EditGroupUseCase: Validation failed - no fields to update');
+      return const Left(ValidationFailure(
+          message: 'At least one field must be provided for update'));
     }
 
     final result = await _repository.updateChat(
       chatId: params.conversationId,
       name: params.name,
       avatarUrl: params.avatarUrl,
+      description: params.description,
+      groupType: params.groupType,
+      memberIds: params.memberIds,
+      adminIds: params.adminIds,
     );
 
     return result.fold(

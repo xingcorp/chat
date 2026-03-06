@@ -370,6 +370,9 @@ extension ChatDtoMapper on ChatDto {
       id: id,
       name: name,
       avatarUrl: imageUrl,
+      description: description,
+      groupType: _mapGroupType(groupType),
+      creatorId: creator?.id,
       lastMessageTime: lastMessageAt != null
           ? DateTime.fromMillisecondsSinceEpoch(lastMessageAt!)
           : null,
@@ -412,6 +415,21 @@ extension ChatDtoMapper on ChatDto {
         return ChatType.channel;
       default:
         return ChatType.direct;
+    }
+  }
+
+  GroupType? _mapGroupType(String? type) {
+    if (type == null) {
+      return null;
+    }
+
+    switch (type.trim().toLowerCase()) {
+      case 'public':
+        return GroupType.public;
+      case 'private':
+        return GroupType.private;
+      default:
+        return null;
     }
   }
 }

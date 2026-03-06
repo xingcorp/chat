@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
@@ -10,15 +11,18 @@ import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
-import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
+import 'package:flutter_chat_app/features/chat/domain/usecases/chat/update_group_usecase.dart';
+import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/group_avatar_source_bottom_sheet.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/forms/app_dropdown.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/inputs/app_text_field.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/navigation/app_scaffold.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:image_picker/image_picker.dart';
@@ -37,14 +41,16 @@ class GroupEditPage extends BaseStatefulWidget {
 
 class _GroupEditPageState extends BaseState<GroupEditPage> {
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
   final IAttachmentRepository _attachmentRepository =
       getIt<IAttachmentRepository>();
-  final IChatRepository _chatRepository = getIt<IChatRepository>();
+  final UpdateGroupUseCase _updateGroupUseCase = getIt<UpdateGroupUseCase>();
 
   Uint8List? _avatarBytes;
   String? _avatarFileName;
   String? _avatarFilePath;
+  GroupType _selectedGroupType = GroupType.private;
   bool _isSaving = false;
   double? _uploadProgress;
 
@@ -52,11 +58,14 @@ class _GroupEditPageState extends BaseState<GroupEditPage> {
   void initState() {
     super.initState();
     _nameController.text = widget.chat.name?.trim() ?? '';
+    _descriptionController.text = widget.chat.description?.trim() ?? '';
+    _selectedGroupType = widget.chat.groupType ?? GroupType.private;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -101,15 +110,23 @@ class _GroupEditPageState extends BaseState<GroupEditPage> {
     if (_isSaving) return;
 
     final newName = _nameController.text.trim();
+    final newDescription = _descriptionController.text.trim();
     if (newName.isEmpty) {
       _showMessage(context.l10n.pleaseEnterGroupName, isError: true);
       return;
     }
 
     final oldName = widget.chat.name?.trim() ?? '';
+    final oldDescription = widget.chat.description?.trim() ?? '';
     final hasNameChanged = newName != oldName;
+    final hasDescriptionChanged = newDescription != oldDescription;
+    final hasGroupTypeChanged =
+        _selectedGroupType != (widget.chat.groupType ?? GroupType.private);
     final hasAvatarChanged = _avatarBytes != null;
-    if (!hasNameChanged && !hasAvatarChanged) {
+    if (!hasNameChanged &&
+        !hasDescriptionChanged &&
+        !hasGroupTypeChanged &&
+        !hasAvatarChanged) {
       Navigator.of(context).pop();
       return;
     }
@@ -157,10 +174,14 @@ class _GroupEditPageState extends BaseState<GroupEditPage> {
       }
     }
 
-    final updateResult = await _chatRepository.updateChat(
-      chatId: widget.chat.id,
-      name: hasNameChanged ? newName : null,
-      avatarUrl: hasAvatarChanged ? uploadedAvatarUrl : null,
+    final updateResult = await _updateGroupUseCase(
+      UpdateGroupParams(
+        conversationId: widget.chat.id,
+        name: hasNameChanged ? newName : null,
+        imageUrl: hasAvatarChanged ? uploadedAvatarUrl : null,
+        description: hasDescriptionChanged ? newDescription : null,
+        groupType: hasGroupTypeChanged ? _selectedGroupType : null,
+      ),
     );
 
     if (!mounted) return;
@@ -174,6 +195,16 @@ class _GroupEditPageState extends BaseState<GroupEditPage> {
         });
       },
       (updatedChat) {
+        try {
+          context
+              .read<ChatBloc>()
+              .add(ChatEvent.chatUpdated(chat: updatedChat));
+          context.read<ChatBloc>().add(
+                const ChatEvent.loadChats(forceRefresh: true),
+              );
+        } catch (_) {
+          // GroupEditPage can be used in contexts without a shared ChatBloc.
+        }
         _showMessage(context.l10n.groupUpdated);
         Navigator.of(context).pop(updatedChat);
       },
@@ -251,11 +282,29 @@ class _GroupEditPageState extends BaseState<GroupEditPage> {
     );
   }
 
+  List<_GroupTypeOption> _buildGroupTypeOptions(BuildContext context) {
+    return <_GroupTypeOption>[
+      _GroupTypeOption(
+        type: GroupType.private,
+        label: context.l10n.privateGroup,
+      ),
+      _GroupTypeOption(
+        type: GroupType.public,
+        label: context.l10n.publicGroup,
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final groupTypeOptions = _buildGroupTypeOptions(context);
+    final selectedGroupTypeOption = groupTypeOptions.firstWhere(
+      (option) => option.type == _selectedGroupType,
+      orElse: () => groupTypeOptions.first,
+    );
 
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         title: AppText(
           context.l10n.editGroup,
@@ -298,10 +347,36 @@ class _GroupEditPageState extends BaseState<GroupEditPage> {
                     AppTextField(
                       controller: _nameController,
                       enabled: !_isSaving,
-                      textInputAction: TextInputAction.done,
+                      textInputAction: TextInputAction.next,
                       label: context.l10n.groupName,
                       prefixIcon: Icons.group_outlined,
-                      onSubmitted: (_) => _saveGroup(),
+                    ),
+                    const SizedBox(height: AppDimens.spaceMedium),
+                    AppTextField(
+                      controller: _descriptionController,
+                      enabled: !_isSaving,
+                      label: context.l10n.groupDescription,
+                      prefixIcon: Icons.notes_rounded,
+                      maxLines: 3,
+                      minLines: 3,
+                      textInputAction: TextInputAction.newline,
+                    ),
+                    const SizedBox(height: AppDimens.spaceMedium),
+                    AppDropdown<_GroupTypeOption>(
+                      items: groupTypeOptions,
+                      value: selectedGroupTypeOption,
+                      onChanged: _isSaving
+                          ? null
+                          : (option) {
+                              if (option == null) {
+                                return;
+                              }
+                              safeSetState(() {
+                                _selectedGroupType = option.type;
+                              });
+                            },
+                      label: context.l10n.groupType,
+                      itemBuilder: (option) => AppText(option.label),
                     ),
                   ],
                 ),
@@ -321,4 +396,17 @@ class _GroupEditPageState extends BaseState<GroupEditPage> {
       ),
     );
   }
+}
+
+class _GroupTypeOption {
+  final GroupType type;
+  final String label;
+
+  const _GroupTypeOption({
+    required this.type,
+    required this.label,
+  });
+
+  @override
+  String toString() => label;
 }

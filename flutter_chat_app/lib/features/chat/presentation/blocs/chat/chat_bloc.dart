@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:bloc/bloc.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/domain/models/queued_message.dart';
 import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
@@ -39,6 +39,11 @@ import 'package:flutter_chat_app/presentation/blocs/base/bloc_error_mixin.dart';
 part 'chat_event.dart';
 part 'chat_state.dart';
 part 'chat_bloc.freezed.dart';
+
+enum ChatConversationAction {
+  leave,
+  delete,
+}
 
 /// **ENTERPRISE CHAT BLOC - CLEAN ARCHITECTURE**
 ///
@@ -111,6 +116,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     on<_CreateChat>(_onCreateChat);
     on<_UpdateChat>(_onUpdateChat);
     on<_LeaveChat>(_onLeaveChat);
+    on<_DeleteChat>(_onDeleteChat);
     on<_MarkMessagesAsRead>(_onMarkMessagesAsRead);
     on<_NewMessageReceived>(_onNewMessageReceived);
     on<_ConnectivityChanged>(_onConnectivityChanged);
@@ -530,6 +536,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       memberIds: event.participantIds,
       avatar: avatarUrl,
       description: event.description,
+      groupType: event.groupType,
     );
 
     Chat? createdChat;
@@ -611,6 +618,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       name: event.name,
       imageUrl: event.avatar,
       description: event.description,
+      groupType: event.groupType,
+      memberIds: event.memberIds,
+      adminIds: event.adminIds,
     );
 
     // Execute UseCase
@@ -656,8 +666,47 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       (success) {
         if (success) {
           logger.i('Left chat successfully');
+          _cacheSyncStrategy.markChatListDirty();
+          emit(
+            ChatState.conversationActionCompleted(
+              chatId: event.chatId,
+              action: ChatConversationAction.leave,
+            ),
+          );
 
           // Reload chats to remove the left chat
+          add(const ChatEvent.loadChats(forceRefresh: true));
+        }
+      },
+    );
+  }
+
+  /// **Delete chat using DeleteConversationUseCase - CLEAN ARCHITECTURE**
+  Future<void> _onDeleteChat(
+    _DeleteChat event,
+    Emitter<ChatState> emit,
+  ) async {
+    logger.i('Deleting chat: ${event.chatId}');
+
+    emit(const ChatState.loading());
+
+    final result = await _deleteConversation(event.chatId);
+
+    result.fold(
+      (failure) {
+        logger.e('Failed to delete chat: ${failure.message}');
+        emit(ChatState.error(message: getUserErrorMessage(failure)));
+      },
+      (success) {
+        if (success) {
+          logger.i('Deleted chat successfully');
+          _cacheSyncStrategy.markChatListDirty();
+          emit(
+            ChatState.conversationActionCompleted(
+              chatId: event.chatId,
+              action: ChatConversationAction.delete,
+            ),
+          );
           add(const ChatEvent.loadChats(forceRefresh: true));
         }
       },

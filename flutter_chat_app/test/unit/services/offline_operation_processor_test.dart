@@ -53,7 +53,8 @@ void main() {
       final operation = OfflineOperationModel(
         operationId: 'op-1',
         type: OperationType.sendMessage,
-        data: '{"chatId":"test-chat-id","content":"Test message","senderId":"user-1","contentType":"text","attachmentIds":[]}',
+        data:
+            '{"chatId":"test-chat-id","content":"Test message","senderId":"user-1","contentType":"text","attachmentIds":[]}',
         timestamp: DateTime.now(),
       );
 
@@ -95,7 +96,8 @@ void main() {
       final operation = OfflineOperationModel(
         operationId: 'op-2',
         type: OperationType.sendMessage,
-        data: '{"chatId":"test-chat-id","content":"Test message","senderId":"user-1","contentType":"text","attachmentIds":[]}',
+        data:
+            '{"chatId":"test-chat-id","content":"Test message","senderId":"user-1","contentType":"text","attachmentIds":[]}',
         timestamp: DateTime.now(),
       );
 
@@ -180,18 +182,18 @@ void main() {
       final operation = OfflineOperationModel(
         operationId: 'op-5',
         type: OperationType.deleteMessage,
-        data: '{"messageId":"msg-1"}',
+        data: '{"chatId":"chat-1","messageId":"msg-1"}',
         timestamp: DateTime.now(),
       );
 
-      when(mockMessageRepository.deleteMessage(any))
+      when(mockMessageRepository.deleteMessage(any, any))
           .thenAnswer((_) async => const Right(true));
 
       // Act
       await processor.processOperation(operation);
 
       // Assert
-      verify(mockMessageRepository.deleteMessage('msg-1')).called(1);
+      verify(mockMessageRepository.deleteMessage('chat-1', 'msg-1')).called(1);
     });
   });
 
@@ -201,13 +203,16 @@ void main() {
       final operation = OfflineOperationModel(
         operationId: 'op-6',
         type: OperationType.createGroup,
-        data: '{"name":"Test Group","participantIds":["user-1","user-2"],"isGroup":true}',
+        data:
+            '{"name":"Test Group","participantIds":["user-1","user-2"],"description":"Architecture sync","groupType":"public","isGroup":true}',
         timestamp: DateTime.now(),
       );
 
       final testChat = Chat(
         id: 'chat-1',
         name: 'Test Group',
+        description: 'Architecture sync',
+        groupType: GroupType.public,
         type: ChatType.group,
         participantIds: const ['user-1', 'user-2'],
         unreadCount: 0,
@@ -216,6 +221,8 @@ void main() {
       when(mockChatRepository.createChat(
         name: anyNamed('name'),
         participantIds: anyNamed('participantIds'),
+        description: anyNamed('description'),
+        groupType: anyNamed('groupType'),
         isGroup: anyNamed('isGroup'),
       )).thenAnswer((_) async => Right(testChat));
 
@@ -226,6 +233,8 @@ void main() {
       verify(mockChatRepository.createChat(
         name: 'Test Group',
         participantIds: ['user-1', 'user-2'],
+        description: 'Architecture sync',
+        groupType: GroupType.public,
         isGroup: true,
       )).called(1);
     });
@@ -235,13 +244,16 @@ void main() {
       final operation = OfflineOperationModel(
         operationId: 'op-7',
         type: OperationType.createGroup,
-        data: '{"name":"Test Group","participantIds":["user-1","user-2"],"isGroup":true}',
+        data:
+            '{"name":"Test Group","participantIds":["user-1","user-2"],"description":"Architecture sync","groupType":"private","isGroup":true}',
         timestamp: DateTime.now(),
       );
 
       when(mockChatRepository.createChat(
         name: anyNamed('name'),
         participantIds: anyNamed('participantIds'),
+        description: anyNamed('description'),
+        groupType: anyNamed('groupType'),
         isGroup: anyNamed('isGroup'),
       )).thenAnswer(
         (_) async => const Left(ServerFailure(message: 'Creation failed')),
@@ -261,15 +273,18 @@ void main() {
       final operation = OfflineOperationModel(
         operationId: 'op-8',
         type: OperationType.editGroup,
-        data: '{"chatId":"chat-1","name":"Updated Group Name","avatarUrl":"https://example.com/avatar.jpg"}',
+        data:
+            '{"chatId":"chat-1","name":"Updated Group Name","avatarUrl":"https://example.com/avatar.jpg","description":"Updated description","groupType":"private","memberIds":["user-1","user-2","user-3"],"adminIds":["user-1","user-3"]}',
         timestamp: DateTime.now(),
       );
 
       final testChat = Chat(
         id: 'chat-1',
         name: 'Updated Group Name',
+        description: 'Updated description',
+        groupType: GroupType.private,
         type: ChatType.group,
-        participantIds: const [],
+        participantIds: const ['user-1', 'user-2', 'user-3'],
         unreadCount: 0,
       );
 
@@ -277,6 +292,10 @@ void main() {
         chatId: anyNamed('chatId'),
         name: anyNamed('name'),
         avatarUrl: anyNamed('avatarUrl'),
+        description: anyNamed('description'),
+        groupType: anyNamed('groupType'),
+        memberIds: anyNamed('memberIds'),
+        adminIds: anyNamed('adminIds'),
       )).thenAnswer((_) async => Right(testChat));
 
       // Act
@@ -287,6 +306,10 @@ void main() {
         chatId: 'chat-1',
         name: 'Updated Group Name',
         avatarUrl: 'https://example.com/avatar.jpg',
+        description: 'Updated description',
+        groupType: GroupType.private,
+        memberIds: ['user-1', 'user-2', 'user-3'],
+        adminIds: ['user-1', 'user-3'],
       )).called(1);
     });
   });
@@ -330,6 +353,24 @@ void main() {
 
       // Assert
       verify(mockMessageRepository.markChatAsRead('chat-1')).called(1);
+    });
+  });
+
+  group('OfflineOperationProcessor - DeleteConversation', () {
+    test('should process deleteConversation operation successfully', () async {
+      final operation = OfflineOperationModel(
+        operationId: 'op-10b',
+        type: OperationType.deleteConversation,
+        data: '{"chatId":"chat-1"}',
+        timestamp: DateTime.now(),
+      );
+
+      when(mockChatRepository.deleteChat(any))
+          .thenAnswer((_) async => const Right(true));
+
+      await processor.processOperation(operation);
+
+      verify(mockChatRepository.deleteChat('chat-1')).called(1);
     });
   });
 

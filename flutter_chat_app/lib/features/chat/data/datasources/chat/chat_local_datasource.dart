@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/utils/isar_id.dart';
@@ -16,39 +15,43 @@ import 'package:injectable/injectable.dart';
 abstract class ChatLocalDataSource {
   /// Get all chats from local storage
   Future<List<Chat>> getChats();
-  
+
   /// Get a specific chat by ID
   Future<Chat?> getChatById(String id);
-  
+
   /// Save a chat to local storage
   Future<void> saveChat(Chat chat);
-  
+
   /// Save multiple chats to local storage
   Future<void> saveChats(List<Chat> chats);
-  
+
   /// Delete a chat from local storage
   Future<void> deleteChat(String id);
-  
+
   /// Mark a chat as read
   Future<void> markChatAsRead(String chatId);
-  
+
   /// Get all pending messages that need to be synced
   Future<List<ChatMessage>> getPendingMessages();
-  
+
   /// Save a message to local storage
-  Future<void> saveMessage(String chatId, ChatMessage message, {bool needsSync = false});
-  
+  Future<void> saveMessage(String chatId, ChatMessage message,
+      {bool needsSync = false});
+
   /// Save multiple messages to local storage
   Future<void> saveMessages(String chatId, List<ChatMessage> messages);
-  
+
   /// Replace a local message with a synced message from the server
-  Future<void> replaceMessage(String chatId, String localId, ChatMessage syncedMessage);
-  
+  Future<void> replaceMessage(
+      String chatId, String localId, ChatMessage syncedMessage);
+
   /// Update message status (for offline messages)
-  Future<void> updateMessageStatus(String chatId, String messageId, MessageQueueStatus status);
-  
+  Future<void> updateMessageStatus(
+      String chatId, String messageId, MessageQueueStatus status);
+
   /// Get messages for a chat
-  Future<List<ChatMessage>> getChatMessages(String chatId, {int limit = 20, String? before});
+  Future<List<ChatMessage>> getChatMessages(String chatId,
+      {int limit = 20, String? before});
 
   /// Get unread count for a specific chat
   Future<int> getUnreadCount(String chatId);
@@ -80,7 +83,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
 
   /// Constructor
   ChatLocalDataSourceImpl(this._databaseService);
-  
+
   @override
   Future<List<Chat>> getChats() async {
     try {
@@ -103,20 +106,22 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
       throw CacheException(message: 'Failed to get chats from database: $e');
     }
   }
-  
+
   @override
   Future<Chat?> getChatById(String id) async {
     try {
       final chats = await getChats();
-      return chats.firstWhere((chat) => chat.id == id, orElse: () => throw NotFoundException());
+      return chats.firstWhere((chat) => chat.id == id,
+          orElse: () => throw NotFoundException());
     } catch (e) {
       if (e is NotFoundException) {
         return null;
       }
-      throw CacheException(message: 'Failed to get chat by ID from local storage: $e');
+      throw CacheException(
+          message: 'Failed to get chat by ID from local storage: $e');
     }
   }
-  
+
   @override
   Future<void> saveChat(Chat chat) async {
     try {
@@ -132,7 +137,9 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         id: existing?.id ?? chat.id.toIsarId(),
         serverId: chat.id,
         name: chat.name,
+        description: chat.description,
         type: _mapToDataChatType(chat.type),
+        groupType: chat.groupType?.name,
         creatorId: chat.creatorId ?? existing?.creatorId,
         lastMessagePreview: chat.lastMessagePreview,
         lastMessageTime: chat.lastMessageTime,
@@ -142,14 +149,14 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         membersJson: membersJson,
         createdAt: chat.createdAt ?? existing?.createdAt ?? DateTime.now(),
       );
-      
+
       // Save using database service
       await _databaseService.saveChat(chatModel);
     } catch (e) {
       throw CacheException(message: 'Failed to save chat to local storage: $e');
     }
   }
-  
+
   /// Map domain ChatType to data ChatType
   ChatType _mapToDataChatType(domain.ChatType domainType) {
     switch (domainType) {
@@ -161,7 +168,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         return ChatType.channel;
     }
   }
-  
+
   @override
   Future<void> saveChats(List<Chat> chats) async {
     try {
@@ -180,7 +187,9 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
           id: existing?.id ?? chat.id.toIsarId(),
           serverId: chat.id,
           name: chat.name,
+          description: chat.description,
           type: _mapToDataChatType(chat.type),
+          groupType: chat.groupType?.name,
           creatorId: chat.creatorId ?? existing?.creatorId,
           lastMessagePreview: chat.lastMessagePreview,
           lastMessageTime: chat.lastMessageTime,
@@ -193,10 +202,11 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
       }
       await _databaseService.saveChatsBatch(models);
     } catch (e) {
-      throw CacheException(message: 'Failed to save chats to local storage: $e');
+      throw CacheException(
+          message: 'Failed to save chats to local storage: $e');
     }
   }
-  
+
   @override
   Future<void> deleteChat(String id) async {
     try {
@@ -208,25 +218,26 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         await _databaseService.deleteChat(existing.id);
       }
     } catch (e) {
-      throw CacheException(message: 'Failed to delete chat from local storage: $e');
+      throw CacheException(
+          message: 'Failed to delete chat from local storage: $e');
     }
   }
-  
+
   @override
   Future<void> markChatAsRead(String chatId) async {
     try {
       final chat = await getChatById(chatId);
-      
+
       if (chat != null) {
         // Update chat's unread count
         final updatedChat = chat.copyWith(unreadCount: 0);
         await saveChat(updatedChat);
       }
-      
+
       // Also mark all messages as read
       final messages = await getChatMessages(chatId);
-      
-      // This is a simplified version. In a real app, you'd only mark 
+
+      // This is a simplified version. In a real app, you'd only mark
       // messages not from the current user and track read status per user
       final updatedMessages = messages.map((message) {
         // Add current user ID to readBy list if not already there
@@ -235,38 +246,41 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         }
         return message;
       }).toList();
-      
+
       await saveMessages(chatId, updatedMessages);
     } catch (e) {
-      throw CacheException(message: 'Failed to mark chat as read in local storage: $e');
+      throw CacheException(
+          message: 'Failed to mark chat as read in local storage: $e');
     }
   }
-  
+
   @override
   Future<List<ChatMessage>> getPendingMessages() async {
     try {
       final result = <ChatMessage>[];
-      
+
       // Get all chats
       final chats = await getChats();
-      
+
       // For each chat, get pending messages
       for (final chat in chats) {
         final messages = await getChatMessages(chat.id);
-        
+
         // Filter for pending messages (this would need to be implemented with a proper flag in a real app)
         // For now, we'll assume no pending messages since we'd need a custom field
         // In a real implementation this would use the MessageQueueStatus
       }
-      
+
       return result;
     } catch (e) {
-      throw CacheException(message: 'Failed to get pending messages from local storage: $e');
+      throw CacheException(
+          message: 'Failed to get pending messages from local storage: $e');
     }
   }
-  
+
   @override
-  Future<void> saveMessage(String chatId, ChatMessage message, {bool needsSync = false}) async {
+  Future<void> saveMessage(String chatId, ChatMessage message,
+      {bool needsSync = false}) async {
     try {
       // Convert ChatMessage domain entity to MessageModel
       final messageModel = MessageModel(
@@ -281,10 +295,10 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         updatedAt: message.updatedAt,
         readBy: message.readBy,
       );
-      
+
       // Save updated message using database service
       await _databaseService.saveMessage(messageModel);
-      
+
       // Update last message in chat
       final chat = await getChatById(chatId);
       if (chat != null) {
@@ -294,13 +308,14 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         );
         await saveChat(updatedChat);
       }
-      
+
       // TODO: If needsSync is true, we would add to a sync queue in a real implementation
     } catch (e) {
-      throw CacheException(message: 'Failed to save message to local storage: $e');
+      throw CacheException(
+          message: 'Failed to save message to local storage: $e');
     }
   }
-  
+
   /// Map domain ContentType to data MessageType
   MessageType _mapToDataMessageType(ContentType contentType) {
     switch (contentType) {
@@ -324,13 +339,13 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         return MessageType.sticker;
     }
   }
-  
+
   /// Map domain MessageStatus to data MessageStatus
   MessageStatus _mapToDataMessageStatus(MessageStatus domainStatus) {
     // Both enums have the same values, so we can just return it
     return domainStatus;
   }
-  
+
   @override
   Future<void> saveMessages(String chatId, List<ChatMessage> messages) async {
     try {
@@ -350,18 +365,18 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         );
         await _databaseService.saveMessage(messageModel);
       }
-      
+
       // Update last message in chat
       if (messages.isNotEmpty) {
         final chat = await getChatById(chatId);
         if (chat != null) {
           // Find the latest message
           final latestMessage = messages.reduce(
-            (current, message) => current.createdAt.isAfter(message.createdAt) 
-                ? current 
+            (current, message) => current.createdAt.isAfter(message.createdAt)
+                ? current
                 : message,
           );
-          
+
           final updatedChat = chat.copyWith(
             lastMessageTime: latestMessage.createdAt,
             lastMessagePreview: latestMessage.content,
@@ -370,52 +385,58 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         }
       }
     } catch (e) {
-      throw CacheException(message: 'Failed to save messages to local storage: $e');
+      throw CacheException(
+          message: 'Failed to save messages to local storage: $e');
     }
   }
-  
+
   @override
-  Future<void> replaceMessage(String chatId, String localId, ChatMessage syncedMessage) async {
+  Future<void> replaceMessage(
+      String chatId, String localId, ChatMessage syncedMessage) async {
     try {
       final messages = await getChatMessages(chatId);
-      
+
       // Find and replace the message
       final index = messages.indexWhere((m) => m.id == localId);
-      
+
       if (index >= 0) {
         messages[index] = syncedMessage;
-        
+
         // Save updated list
         await saveMessages(chatId, messages);
       }
     } catch (e) {
-      throw CacheException(message: 'Failed to replace message in local storage: $e');
+      throw CacheException(
+          message: 'Failed to replace message in local storage: $e');
     }
   }
-  
+
   @override
-  Future<void> updateMessageStatus(String chatId, String messageId, MessageQueueStatus status) async {
+  Future<void> updateMessageStatus(
+      String chatId, String messageId, MessageQueueStatus status) async {
     try {
       final messages = await getChatMessages(chatId);
-      
+
       // Find the message
       final index = messages.indexWhere((m) => m.id == messageId);
-      
+
       if (index >= 0) {
         // In a real implementation, we'd have a status field in ChatMessage
         // For now, we'll just make a note in the message content
         final updatedMessage = messages[index];
-        
+
         // Save updated list
         await saveMessages(chatId, messages);
       }
     } catch (e) {
-      throw CacheException(message: 'Failed to update message status in local storage: $e');
+      throw CacheException(
+          message: 'Failed to update message status in local storage: $e');
     }
   }
-  
+
   @override
-  Future<List<ChatMessage>> getChatMessages(String chatId, {int limit = 20, String? before}) async {
+  Future<List<ChatMessage>> getChatMessages(String chatId,
+      {int limit = 20, String? before}) async {
     try {
       // Get messages using database service
       final messageModels = await _databaseService.getMessagesForChat(chatId);
@@ -425,7 +446,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
 
       // Sort by creation time (newest first)
       messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      
+
       // Apply limit
       if (messages.length > limit) {
         messages = messages.take(limit).toList();
@@ -434,7 +455,8 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
       // Apply pagination if needed
       if (before != null) {
         final beforeTime = DateTime.parse(before);
-        messages = messages.where((m) => m.createdAt.isBefore(beforeTime)).toList();
+        messages =
+            messages.where((m) => m.createdAt.isBefore(beforeTime)).toList();
       }
 
       // Apply limit
@@ -444,7 +466,8 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
 
       return messages;
     } catch (e) {
-      throw CacheException(message: 'Failed to get chat messages from local storage: $e');
+      throw CacheException(
+          message: 'Failed to get chat messages from local storage: $e');
     }
   }
 

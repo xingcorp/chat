@@ -19,7 +19,7 @@ abstract class IChatRemoteDataSource {
     String? keyword,
     String? type,
   });
-  
+
   /// Get conversation details by ID or receiverId
   Future<ChatDto> getConversationDetail({
     String? conversationId,
@@ -29,7 +29,7 @@ abstract class IChatRemoteDataSource {
   /// Get conversation members with detailed user info (department, title, code)
   /// Separate API to avoid performance impact on conversation list
   Future<ChatDto> getConversationMembers(String conversationId);
-  
+
   /// Create a new group conversation
   Future<ChatDto> createGroup({
     required String name,
@@ -38,7 +38,7 @@ abstract class IChatRemoteDataSource {
     required String groupType,
     required List<String> memberIds,
   });
-  
+
   /// Update group information
   Future<ChatDto> updateGroup({
     required String conversationId,
@@ -49,13 +49,13 @@ abstract class IChatRemoteDataSource {
     List<String>? memberIds,
     List<String>? adminIds,
   });
-  
+
   /// Leave a conversation
   Future<String> leaveConversation(String conversationId);
-  
+
   /// Delete a conversation
   Future<Map<String, dynamic>> deleteConversation(String conversationId);
-  
+
   /// Get messages for a conversation
   Future<MessageListResponseDto> getMessageList({
     required String conversationId,
@@ -65,7 +65,7 @@ abstract class IChatRemoteDataSource {
     String order = 'DESC',
     int? from,
   });
-  
+
   /// Send a message
   Future<MessageDto> sendMessage({
     String? conversationId,
@@ -78,7 +78,7 @@ abstract class IChatRemoteDataSource {
     String? forwardedFromMessageId,
     required int createdAt,
   });
-  
+
   /// Edit or delete a message
   /// Returns null for DEL action (partial response), MessageDto for EDIT action
   Future<MessageDto?> editMessage({
@@ -86,23 +86,23 @@ abstract class IChatRemoteDataSource {
     required String act,
     String? message,
   });
-  
+
   /// Mark messages as read
   Future<String> markAsRead({
     required String conversationId,
     required int readCount,
   });
-  
+
   /// Add or remove reaction
   Future<MessageDto> updateReaction({
     required String messageId,
     required String code,
     required String act,
   });
-  
+
   /// Delete message history
   Future<Map<String, dynamic>> deleteHistory(String conversationId);
-  
+
   /// Search messages
   Future<List<MessageDto>> searchMessages({
     required String keyword,
@@ -114,97 +114,113 @@ abstract class IChatRemoteDataSource {
     int page = 0,
     int size = 100,
   });
-  
+
   /// Add members to group
   Future<void> addMembersToGroup({
     required String conversationId,
     required List<String> memberIds,
   });
-  
+
   /// Remove members from group
   Future<void> removeMembersFromGroup({
     required String conversationId,
     required List<String> memberIds,
   });
-  
+
   /// Search conversations
   Future<ChatListResponseDto> searchConversations({
     required String keyword,
     int limit = 20,
   });
-  
+
   /// Alias methods for compatibility
   Future<ChatListResponseDto> getChats({
     int size = 25,
     int page = 0,
     String? keyword,
     String? type,
-  }) => getConversationList(size: size, page: page, keyword: keyword, type: type);
-  
-  Future<ChatDto> getChatById(String chatId) => getConversationDetail(conversationId: chatId);
-  
+  }) =>
+      getConversationList(size: size, page: page, keyword: keyword, type: type);
+
+  Future<ChatDto> getChatById(String chatId) =>
+      getConversationDetail(conversationId: chatId);
+
   Future<ChatDto> createGroupChat({
     required String name,
     String? imgUrl,
     String? description,
     required String groupType,
     required List<String> memberIds,
-  }) => createGroup(
-    name: name,
-    imgUrl: imgUrl,
-    description: description,
-    groupType: groupType,
-    memberIds: memberIds,
-  );
-  
+  }) =>
+      createGroup(
+        name: name,
+        imgUrl: imgUrl,
+        description: description,
+        groupType: groupType,
+        memberIds: memberIds,
+      );
+
   Future<ChatDto> createDirectChat({
     required String receiverId,
-  }) => getConversationDetail(receiverId: receiverId);
-  
+  }) =>
+      getConversationDetail(receiverId: receiverId);
+
   Future<ChatDto> updateChat({
     required String conversationId,
     String? name,
     String? imgUrl,
     String? description,
-  }) => updateGroup(
-    conversationId: conversationId,
-    name: name,
-    imgUrl: imgUrl,
-    description: description,
-  );
-  
-  Future<Map<String, dynamic>> deleteChat(String chatId) => deleteConversation(chatId);
-  
+    String? groupType,
+    List<String>? memberIds,
+    List<String>? adminIds,
+  }) =>
+      updateGroup(
+        conversationId: conversationId,
+        name: name,
+        imgUrl: imgUrl,
+        description: description,
+        groupType: groupType,
+        memberIds: memberIds,
+        adminIds: adminIds,
+      );
+
+  Future<Map<String, dynamic>> deleteChat(String chatId) =>
+      deleteConversation(chatId);
+
   Future<MessageListResponseDto> getChatMessages({
     required String conversationId,
     int size = 100,
     Map<String, dynamic>? lastKey,
-  }) => getMessageList(
-    conversationId: conversationId,
-    size: size,
-    lastKey: lastKey,
-  );
-  
+  }) =>
+      getMessageList(
+        conversationId: conversationId,
+        size: size,
+        lastKey: lastKey,
+      );
+
   Future<void> addUsersToChat({
     required String conversationId,
     required List<String> userIds,
-  }) => addMembersToGroup(
-    conversationId: conversationId,
-    memberIds: userIds,
-  );
-  
+  }) =>
+      addMembersToGroup(
+        conversationId: conversationId,
+        memberIds: userIds,
+      );
+
   Future<void> removeUsersFromChat({
     required String conversationId,
     required List<String> userIds,
-  }) => removeMembersFromGroup(
-    conversationId: conversationId,
-    memberIds: userIds,
-  );
-  
+  }) =>
+      removeMembersFromGroup(
+        conversationId: conversationId,
+        memberIds: userIds,
+      );
+
   Future<String> leaveChat(String chatId) => leaveConversation(chatId);
-  
-  Future<ChatDto> getChatDetails(String chatId) => getConversationDetail(conversationId: chatId);
-  
+
+  Future<ChatDto> getChatDetails(String chatId) =>
+      getConversationDetail(conversationId: chatId);
+
   /// Subscribe to chat updates via Socket.IO
   Stream<ChatDto> subscribeToChats();
 }
@@ -217,12 +233,12 @@ abstract class IChatRemoteDataSource {
 class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
   final GraphQLClientWrapper _client;
   final EnhancedSocketManager _socketManager;
-  
+
   ChatRemoteDataSourceImpl(
     this._client,
     this._socketManager,
   );
-  
+
   @override
   Future<ChatListResponseDto> getConversationList({
     int size = 25,
@@ -238,14 +254,14 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         if (type != null) 'type': type,
       },
     };
-    
+
     final result = await _client.query(
       ChatQueries.getConversationList,
       variables: variables,
       fetchPolicy: FetchPolicy.networkOnly,
       operationName: 'GetConversationList',
     );
-    
+
     final data = result['chatConversationList'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to fetch conversation list');
@@ -254,33 +270,34 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     final dto = ChatListResponseDto.fromJson(data);
     return dto;
   }
-  
+
   @override
   Future<ChatDto> getConversationDetail({
     String? conversationId,
     String? receiverId,
   }) async {
     if (conversationId == null && receiverId == null) {
-      throw ArgumentError('Either conversationId or receiverId must be provided');
+      throw ArgumentError(
+          'Either conversationId or receiverId must be provided');
     }
-    
+
     final variables = <String, dynamic>{
       if (conversationId != null) 'conversationId': conversationId,
       if (receiverId != null) 'receiverId': receiverId,
     };
-    
+
     final result = await _client.query(
       ChatQueries.getConversationDetail,
       variables: variables,
       fetchPolicy: FetchPolicy.networkOnly,
       operationName: 'GetConversationDetail',
     );
-    
+
     final data = result['chatConversationDetail'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to fetch conversation detail');
     }
-    
+
     return ChatDto.fromJson(data);
   }
 
@@ -317,7 +334,8 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
           for (var i = 0; i < rawMembers.length; i++) {
             final m = rawMembers[i];
             if (m is! Map) {
-              debugPrint('[ChatRemoteDataSourceImpl] members[$i] type=${m.runtimeType} value=$m');
+              debugPrint(
+                  '[ChatRemoteDataSourceImpl] members[$i] type=${m.runtimeType} value=$m');
               continue;
             }
             final user = m['user'];
@@ -376,21 +394,21 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         'memberIds': memberIds,
       },
     };
-    
+
     final result = await _client.mutate(
       ChatMutations.createGroup,
       variables: variables,
       operationName: 'CreateGroup',
     );
-    
+
     final data = result['chatGroupAdd'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to create group');
     }
-    
+
     return ChatDto.fromJson(data);
   }
-  
+
   @override
   Future<ChatDto> updateGroup({
     required String conversationId,
@@ -412,21 +430,21 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         if (adminIds != null) 'adminIds': adminIds,
       },
     };
-    
+
     final result = await _client.mutate(
       ChatMutations.editGroup,
       variables: variables,
       operationName: 'EditGroup',
     );
-    
+
     final data = result['chatGroupEdit'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to update group');
     }
-    
+
     return ChatDto.fromJson(data);
   }
-  
+
   @override
   Future<String> leaveConversation(String conversationId) async {
     final variables = <String, dynamic>{
@@ -434,21 +452,21 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         'conversationId': conversationId,
       },
     };
-    
+
     final result = await _client.mutate(
       ChatMutations.leaveConversation,
       variables: variables,
       operationName: 'LeaveConversation',
     );
-    
+
     final data = result['chatConversationLeave'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to leave conversation');
     }
-    
+
     return data['id'] as String;
   }
-  
+
   @override
   Future<Map<String, dynamic>> deleteConversation(String conversationId) async {
     final variables = <String, dynamic>{
@@ -456,21 +474,21 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         'conversationId': conversationId,
       },
     };
-    
+
     final result = await _client.mutate(
       ChatMutations.deleteConversation,
       variables: variables,
       operationName: 'DeleteConversation',
     );
-    
+
     final data = result['chatConversationDelete'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to delete conversation');
     }
-    
+
     return data;
   }
-  
+
   @override
   Future<MessageListResponseDto> getMessageList({
     required String conversationId,
@@ -490,21 +508,21 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         if (from != null) 'from': from,
       },
     };
-    
+
     final result = await _client.query(
       ChatQueries.getMessageList,
       variables: variables,
       operationName: 'GetMessageList',
     );
-    
+
     final data = result['chatMessageList'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to fetch message list');
     }
-    
+
     return MessageListResponseDto.fromJson(data);
   }
-  
+
   @override
   Future<MessageDto> sendMessage({
     String? conversationId,
@@ -518,9 +536,10 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     required int createdAt,
   }) async {
     if (conversationId == null && receiverId == null) {
-      throw ArgumentError('Either conversationId or receiverId must be provided');
+      throw ArgumentError(
+          'Either conversationId or receiverId must be provided');
     }
-    
+
     final variables = <String, dynamic>{
       'arguments': {
         if (conversationId != null) 'conversationId': conversationId,
@@ -530,25 +549,26 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         if (urls != null && urls.isNotEmpty) 'urls': urls,
         if (fileName != null) 'fileName': fileName,
         if (replyMessageId != null) 'replyMessageId': replyMessageId,
-        if (forwardedFromMessageId != null) 'forwardedFromMessageId': forwardedFromMessageId,
+        if (forwardedFromMessageId != null)
+          'forwardedFromMessageId': forwardedFromMessageId,
         'createdAt': createdAt,
       },
     };
-    
+
     final result = await _client.mutate(
       ChatMutations.sendMessage,
       variables: variables,
       operationName: 'SendMessage',
     );
-    
+
     final data = result['chatMessageAdd'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to send message');
     }
-    
+
     return MessageDto.fromJson(data);
   }
-  
+
   @override
   Future<MessageDto?> editMessage({
     required String messageId,
@@ -562,27 +582,27 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         if (message != null) 'message': message,
       },
     };
-    
+
     final result = await _client.mutate(
       ChatMutations.editMessage,
       variables: variables,
       operationName: 'EditMessage',
     );
-    
+
     final data = result['chatMessageEdit'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to edit message');
     }
-    
+
     // For DEL action, mutation only returns partial fields (id, message, editAt, deletedAt)
     // MessageDto requires all fields, so return null for delete operations
     if (act == 'DEL') {
       return null; // Delete success - no need to parse partial response
     }
-    
+
     return MessageDto.fromJson(data);
   }
-  
+
   @override
   Future<String> markAsRead({
     required String conversationId,
@@ -594,21 +614,21 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         'readCount': readCount,
       },
     };
-    
+
     final result = await _client.mutate(
       ChatMutations.markAsRead,
       variables: variables,
       operationName: 'MarkAsRead',
     );
-    
+
     final data = result['chatMessageUpdateRead'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to mark as read');
     }
-    
+
     return data['conversationId'] as String;
   }
-  
+
   @override
   Future<MessageDto> updateReaction({
     required String messageId,
@@ -622,21 +642,21 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         'act': act,
       },
     };
-    
+
     final result = await _client.mutate(
       ChatMutations.updateReaction,
       variables: variables,
       operationName: 'UpdateReaction',
     );
-    
+
     final data = result['chatMessageUpdateReaction'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to update reaction');
     }
-    
+
     return MessageDto.fromJson(data);
   }
-  
+
   @override
   Future<Map<String, dynamic>> deleteHistory(String conversationId) async {
     final variables = <String, dynamic>{
@@ -644,21 +664,21 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         'conversationId': conversationId,
       },
     };
-    
+
     final result = await _client.mutate(
       ChatMutations.deleteHistory,
       variables: variables,
       operationName: 'DeleteHistory',
     );
-    
+
     final data = result['chatMessageDeleteHistory'] as Map<String, dynamic>?;
     if (data == null) {
       throw Exception('Failed to delete history');
     }
-    
+
     return data;
   }
-  
+
   @override
   Future<List<MessageDto>> searchMessages({
     required String keyword,
@@ -682,27 +702,29 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
         'size': size,
       },
     };
-    
+
     debugPrint('[SearchMessages] Variables: $variables');
-    
+
     final result = await _client.query(
       ChatQueries.searchMessages,
       variables: variables,
       operationName: 'SearchMessages',
     );
-    
+
     debugPrint('[SearchMessages] Result: $result');
-    
+
     final data = result['chatSearch'] as List<dynamic>?;
     if (data == null) {
       debugPrint('[SearchMessages] No data returned');
       return [];
     }
-    
+
     debugPrint('[SearchMessages] Found ${data.length} results');
-    return data.map((json) => MessageDto.fromJson(json as Map<String, dynamic>)).toList();
+    return data
+        .map((json) => MessageDto.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
-  
+
   @override
   Future<void> addMembersToGroup({
     required String conversationId,
@@ -710,17 +732,15 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
   }) async {
     // Get current members and merge with new ones to avoid replacing existing members
     final chat = await getConversationDetail(conversationId: conversationId);
-    final currentMemberIds = chat.members
-        .map((m) => m.userId)
-        .whereType<String>()
-        .toSet();
+    final currentMemberIds =
+        chat.members.map((m) => m.userId).whereType<String>().toSet();
     final mergedMemberIds = {...currentMemberIds, ...memberIds}.toList();
     await updateGroup(
       conversationId: conversationId,
       memberIds: mergedMemberIds,
     );
   }
-  
+
   @override
   Future<void> removeMembersFromGroup({
     required String conversationId,
@@ -739,7 +759,7 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
       memberIds: remainingMemberIds,
     );
   }
-  
+
   @override
   Future<ChatListResponseDto> searchConversations({
     required String keyword,
@@ -750,16 +770,16 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
       size: limit,
     );
   }
-  
+
   @override
   Stream<ChatDto> subscribeToChats() {
     _socketManager.connect();
-    
+
     return _socketManager
         .on<Map<String, dynamic>>('chat_updated')
         .map((data) => ChatDto.fromJson(data));
   }
-  
+
   // Implement alias methods
   @override
   Future<ChatListResponseDto> getChats({
@@ -767,11 +787,13 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     int page = 0,
     String? keyword,
     String? type,
-  }) => getConversationList(size: size, page: page, keyword: keyword, type: type);
-  
+  }) =>
+      getConversationList(size: size, page: page, keyword: keyword, type: type);
+
   @override
-  Future<ChatDto> getChatById(String chatId) => getConversationDetail(conversationId: chatId);
-  
+  Future<ChatDto> getChatById(String chatId) =>
+      getConversationDetail(conversationId: chatId);
+
   @override
   Future<ChatDto> createGroupChat({
     required String name,
@@ -779,67 +801,81 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
     String? description,
     required String groupType,
     required List<String> memberIds,
-  }) => createGroup(
-    name: name,
-    imgUrl: imgUrl,
-    description: description,
-    groupType: groupType,
-    memberIds: memberIds,
-  );
-  
+  }) =>
+      createGroup(
+        name: name,
+        imgUrl: imgUrl,
+        description: description,
+        groupType: groupType,
+        memberIds: memberIds,
+      );
+
   @override
   Future<ChatDto> createDirectChat({
     required String receiverId,
-  }) => getConversationDetail(receiverId: receiverId);
-  
+  }) =>
+      getConversationDetail(receiverId: receiverId);
+
   @override
   Future<ChatDto> updateChat({
     required String conversationId,
     String? name,
     String? imgUrl,
     String? description,
-  }) => updateGroup(
-    conversationId: conversationId,
-    name: name,
-    imgUrl: imgUrl,
-    description: description,
-  );
-  
+    String? groupType,
+    List<String>? memberIds,
+    List<String>? adminIds,
+  }) =>
+      updateGroup(
+        conversationId: conversationId,
+        name: name,
+        imgUrl: imgUrl,
+        description: description,
+        groupType: groupType,
+        memberIds: memberIds,
+        adminIds: adminIds,
+      );
+
   @override
-  Future<Map<String, dynamic>> deleteChat(String chatId) => deleteConversation(chatId);
-  
+  Future<Map<String, dynamic>> deleteChat(String chatId) =>
+      deleteConversation(chatId);
+
   @override
   Future<MessageListResponseDto> getChatMessages({
     required String conversationId,
     int size = 100,
     Map<String, dynamic>? lastKey,
-  }) => getMessageList(
-    conversationId: conversationId,
-    size: size,
-    lastKey: lastKey,
-  );
-  
+  }) =>
+      getMessageList(
+        conversationId: conversationId,
+        size: size,
+        lastKey: lastKey,
+      );
+
   @override
   Future<void> addUsersToChat({
     required String conversationId,
     required List<String> userIds,
-  }) => addMembersToGroup(
-    conversationId: conversationId,
-    memberIds: userIds,
-  );
-  
+  }) =>
+      addMembersToGroup(
+        conversationId: conversationId,
+        memberIds: userIds,
+      );
+
   @override
   Future<void> removeUsersFromChat({
     required String conversationId,
     required List<String> userIds,
-  }) => removeMembersFromGroup(
-    conversationId: conversationId,
-    memberIds: userIds,
-  );
-  
+  }) =>
+      removeMembersFromGroup(
+        conversationId: conversationId,
+        memberIds: userIds,
+      );
+
   @override
   Future<String> leaveChat(String chatId) => leaveConversation(chatId);
-  
+
   @override
-  Future<ChatDto> getChatDetails(String chatId) => getConversationDetail(conversationId: chatId);
+  Future<ChatDto> getChatDetails(String chatId) =>
+      getConversationDetail(conversationId: chatId);
 }

@@ -11,6 +11,7 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
   final bool isMuted;
   final bool isBlocked;
   final bool isGroup;
+  final bool isActionInProgress;
   final VoidCallback onMuteToggle;
   final VoidCallback onBlockToggle;
   final VoidCallback onReport;
@@ -22,6 +23,7 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
     required this.isMuted,
     required this.isBlocked,
     required this.isGroup,
+    this.isActionInProgress = false,
     required this.onMuteToggle,
     required this.onBlockToggle,
     required this.onReport,
@@ -36,12 +38,13 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
       children: [
         // Settings title
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium),
+          padding:
+              const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium),
           child: AppText(
             context.l10n.settings,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
         ),
 
@@ -49,7 +52,8 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
 
         // Settings card
         AppCard.elevated(
-          margin: const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium),
+          margin:
+              const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium),
           padding: const EdgeInsets.all(AppDimens.paddingMedium),
           child: Column(
             children: [
@@ -103,7 +107,8 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
 
         // Danger zone card
         AppCard.elevated(
-          margin: const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium),
+          margin:
+              const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium),
           padding: const EdgeInsets.all(AppDimens.paddingMedium),
           child: Column(
             children: [
@@ -114,7 +119,7 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
                   icon: Icons.exit_to_app,
                   title: context.l10n.leaveGroup,
                   subtitle: context.l10n.leaveThisGroup,
-                  onTap: onLeaveGroup,
+                  onTap: isActionInProgress ? null : onLeaveGroup,
                   isDestructive: true,
                 ),
                 Divider(height: 1),
@@ -126,7 +131,7 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
                 icon: Icons.delete,
                 title: context.l10n.deleteChat,
                 subtitle: context.l10n.deleteThisConversation,
-                onTap: onDeleteChat,
+                onTap: isActionInProgress ? null : onDeleteChat,
                 isDestructive: true,
               ),
             ],
@@ -141,7 +146,7 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
     required IconData icon,
     required String title,
     required String subtitle,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
     bool isDestructive = false,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -187,19 +192,19 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
                   AppText(
                     title,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: titleColor,
-                      fontWeight: FontWeight.w500,
-                    ),
+                          color: titleColor,
+                          fontWeight: FontWeight.w500,
+                        ),
                   ),
                   if (subtitle.isNotEmpty) ...[
                     SizedBox(height: 2),
                     AppText(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: isDark
-                            ? AppColors.textSecondaryDarkMode
-                            : AppColors.textSecondary,
-                      ),
+                            color: isDark
+                                ? AppColors.textSecondaryDarkMode
+                                : AppColors.textSecondary,
+                          ),
                     ),
                   ],
                 ],
