@@ -699,82 +699,32 @@ class NativeDatabaseImplementation implements IDatabaseImplementation {
         toSave = message.copyWith(id: newId);
       }
       isar.messageModels.put(toSave);
-      debugPrint(
-          '[DB-DIAG] saveMessageUpsert(single): '
-          'chatId="${message.chatId}" '
-          'serverId="${message.serverId}" '
-          'existingId=${existing?.id} '
-          'saveId=${toSave.id}');
     });
   }
 
   /// Batch atomic upsert messages in a single write transaction.
   ///
-  /// Uses individual `put()` calls instead of `putAll()` to avoid
-  /// Isar v4-dev issue where batch putAll with id=0 (auto-increment)
-  /// combined with unique indexes silently fails to persist records.
-  /// Each put() within the same write transaction is still atomic.
+  /// Uses individual `put()` calls instead of `putAll()` because
+  /// Isar v4 treats id=0 as a valid ID (not auto-increment).
+  /// Each message gets an explicit autoIncrement() ID if new.
   void saveMessagesUpsert(List<MessageModel> messages) {
     if (messages.isEmpty) return;
 
-    // DEBUG: count BEFORE write — total in Isar (no filter)
-    final totalBefore = isar.messageModels.where().findAll().length;
-    final chatId = messages.first.chatId;
-    final byChatBefore = isar.messageModels
-        .where()
-        .chatIdEqualTo(chatId)
-        .findAll()
-        .length;
-    debugPrint(
-        '[DB-DIAG] saveMessagesUpsert START: '
-        'input=${messages.length} chatId=$chatId '
-        'totalBefore=$totalBefore byChatBefore=$byChatBefore');
-
     isar.write((isar) {
-      var newCount = 0;
-      var updateCount = 0;
       for (final message in messages) {
         final existing = _resolveExistingMessage(isar, message);
         final MessageModel toSave;
         if (existing != null) {
           toSave = message.copyWith(id: existing.id);
-          updateCount++;
         } else {
           // Isar v4: id=0 is a valid ID, NOT auto-increment.
           // Must explicitly get next ID for new records.
           final newId = isar.messageModels.autoIncrement();
           toSave = message.copyWith(id: newId);
-          newCount++;
-        }
-        // DEBUG: log first 3 + last message details
-        if (newCount + updateCount <= 3 ||
-            newCount + updateCount == messages.length) {
-          debugPrint(
-              '[DB-DIAG]   msg[${newCount + updateCount - 1}]: '
-              'chatId="${message.chatId}" '
-              'serverId="${message.serverId}" '
-              'localId="${message.localId}" '
-              'existingId=${existing?.id} '
-              'saveId=${toSave.id}');
         }
         isar.messageModels.put(toSave);
       }
-      debugPrint(
-          '[DB-DIAG] saveMessagesUpsert WROTE: '
-          'new=$newCount updated=$updateCount');
     });
-
-    // DEBUG: count AFTER write — verify persistence
-    final totalAfter = isar.messageModels.where().findAll().length;
-    final byChatAfter = isar.messageModels
-        .where()
-        .chatIdEqualTo(chatId)
-        .findAll()
-        .length;
-    debugPrint(
-        '[DB-DIAG] saveMessagesUpsert END: '
-        'totalAfter=$totalAfter byChatAfter=$byChatAfter '
-        'delta=${totalAfter - totalBefore}');
   }
 
   /// Core identity resolution — finds existing record for a message.
@@ -975,67 +925,26 @@ extension WebDatabaseImplementationExtension on WebDatabaseImplementation {
 
   /// Batch atomic upsert messages (Web).
   ///
-  /// Uses individual `put()` calls instead of `putAll()` — same fix
-  /// as NativeDatabaseImplementation to avoid Isar v4-dev batch issue.
+  /// Uses individual `put()` calls because Isar v4 treats id=0 as
+  /// a valid ID (not auto-increment). Each message gets an explicit
+  /// autoIncrement() ID if new.
   void saveMessagesUpsert(List<MessageModel> messages) {
     if (messages.isEmpty) return;
 
-    // DEBUG: count BEFORE write
-    final totalBefore = isar.messageModels.where().findAll().length;
-    final chatId = messages.first.chatId;
-    final byChatBefore = isar.messageModels
-        .where()
-        .chatIdEqualTo(chatId)
-        .findAll()
-        .length;
-    debugPrint(
-        '[DB-DIAG] saveMessagesUpsert(Web) START: '
-        'input=${messages.length} chatId=$chatId '
-        'totalBefore=$totalBefore byChatBefore=$byChatBefore');
-
     isar.write((isar) {
-      var newCount = 0;
-      var updateCount = 0;
       for (final message in messages) {
         final existing = _resolveExistingMessage(isar, message);
         final MessageModel toSave;
         if (existing != null) {
           toSave = message.copyWith(id: existing.id);
-          updateCount++;
         } else {
           // Isar v4: id=0 is a valid ID, NOT auto-increment.
           final newId = isar.messageModels.autoIncrement();
           toSave = message.copyWith(id: newId);
-          newCount++;
-        }
-        if (newCount + updateCount <= 3 ||
-            newCount + updateCount == messages.length) {
-          debugPrint(
-              '[DB-DIAG]   msg[${newCount + updateCount - 1}]: '
-              'chatId="${message.chatId}" '
-              'serverId="${message.serverId}" '
-              'localId="${message.localId}" '
-              'existingId=${existing?.id} '
-              'saveId=${toSave.id}');
         }
         isar.messageModels.put(toSave);
       }
-      debugPrint(
-          '[DB-DIAG] saveMessagesUpsert(Web) WROTE: '
-          'new=$newCount updated=$updateCount');
     });
-
-    // DEBUG: count AFTER write
-    final totalAfter = isar.messageModels.where().findAll().length;
-    final byChatAfter = isar.messageModels
-        .where()
-        .chatIdEqualTo(chatId)
-        .findAll()
-        .length;
-    debugPrint(
-        '[DB-DIAG] saveMessagesUpsert(Web) END: '
-        'totalAfter=$totalAfter byChatAfter=$byChatAfter '
-        'delta=${totalAfter - totalBefore}');
   }
 
   /// Core identity resolution (Web) — same as NativeDatabaseImplementation.
