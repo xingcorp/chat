@@ -7,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
-import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
@@ -411,8 +410,7 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
         listener: (context, state) {
           state.maybeWhen(
             chatDetailsLoaded: (chat) {
-              ChatNavigationHelper.replaceToChatDetail(context,
-                  chatId: chat.id);
+              Navigator.of(context).pop(chat.id);
             },
             error: (message) {
               AppSnackBar.error(

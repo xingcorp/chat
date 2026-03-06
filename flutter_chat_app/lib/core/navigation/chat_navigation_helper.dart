@@ -64,7 +64,8 @@ class ChatNavigationHelper {
     required String chatId,
   }) {
     if (isPackageMode) {
-      return Navigator.push(context, ChatModule.chatDetailRoute(chatId: chatId));
+      return Navigator.push(
+          context, ChatModule.chatDetailRoute(chatId: chatId));
     } else {
       return Navigator.push(
         context,
@@ -77,7 +78,7 @@ class ChatNavigationHelper {
   }
 
   /// Navigate to create group page.
-  static Future<void> navigateToCreateGroup(BuildContext context) {
+  static Future<dynamic> navigateToCreateGroup(BuildContext context) {
     if (isPackageMode) {
       return Navigator.push(context, ChatModule.createGroupRoute());
     } else {

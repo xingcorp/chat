@@ -112,6 +112,24 @@ class _ChatListPageState extends BaseState<ChatListPage> {
     });
   }
 
+  Future<void> _openCreateGroup() async {
+    final result = await ChatNavigationHelper.navigateToCreateGroup(context);
+    final createdChatId = result is String ? result.trim() : '';
+    if (createdChatId.isEmpty) {
+      return;
+    }
+
+    _chatBloc.add(const ChatEvent.loadChats(forceRefresh: false));
+    if (!context.mounted) {
+      return;
+    }
+
+    await ChatNavigationHelper.navigateToChatDetail(
+      context,
+      chatId: createdChatId,
+    );
+  }
+
   Future<void> _onRefresh() async {
     if (_isSearching && _searchController.text.trim().isNotEmpty) {
       _chatBloc.add(ChatEvent.searchChats(keyword: _searchController.text));
@@ -154,12 +172,13 @@ class _ChatListPageState extends BaseState<ChatListPage> {
             ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.add),
-              onSelected: (value) {
-                switch (value) {
-                  case 'newConversation':
-                    ChatNavigationHelper.navigateToContacts(context);
-                  case 'newGroup':
-                    ChatNavigationHelper.navigateToCreateGroup(context);
+              onSelected: (value) async {
+                if (value == 'newConversation') {
+                  await ChatNavigationHelper.navigateToContacts(context);
+                  return;
+                }
+                if (value == 'newGroup') {
+                  await _openCreateGroup();
                 }
               },
               itemBuilder: (context) => [
