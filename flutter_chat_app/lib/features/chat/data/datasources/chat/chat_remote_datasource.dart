@@ -157,9 +157,12 @@ abstract class IChatRemoteDataSource {
     memberIds: memberIds,
   );
   
-  Future<ChatDto> createDirectChat({
+  /// Try to find an existing direct conversation with [receiverId].
+  /// Returns `null` if no conversation exists yet (first contact).
+  /// The conversation will be auto-created by the backend on first message send.
+  Future<ChatDto?> createDirectChat({
     required String receiverId,
-  }) => getConversationDetail(receiverId: receiverId);
+  });
   
   Future<ChatDto> updateChat({
     required String conversationId,
@@ -788,9 +791,23 @@ class ChatRemoteDataSourceImpl implements IChatRemoteDataSource {
   );
   
   @override
-  Future<ChatDto> createDirectChat({
+  Future<ChatDto?> createDirectChat({
     required String receiverId,
-  }) => getConversationDetail(receiverId: receiverId);
+  }) async {
+    try {
+      return await getConversationDetail(receiverId: receiverId);
+    } on Exception catch (e) {
+      // "Failed to fetch conversation detail" means the direct conversation
+      // doesn't exist yet. This is normal for first-time contact.
+      // Backend will auto-create it on the first message send (chatMessageAdd
+      // with receiverId).
+      if (e.toString().contains('Failed to fetch conversation detail') ||
+          e.toString().contains('ChatConversationNotExist')) {
+        return null;
+      }
+      rethrow;
+    }
+  }
   
   @override
   Future<ChatDto> updateChat({

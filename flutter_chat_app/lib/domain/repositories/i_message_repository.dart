@@ -76,6 +76,9 @@ abstract class IMessageRepository {
     String? replyMessageId,
     String? fileName,
     String? forwardedFromMessageId,
+    /// For pending direct chats (no server conversation yet).
+    /// When provided, the backend auto-creates the conversation on first message.
+    String? receiverId,
   });
 
   /// **Kiểm tra xung đột tin nhắn**

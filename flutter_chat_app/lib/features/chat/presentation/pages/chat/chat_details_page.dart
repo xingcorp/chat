@@ -90,10 +90,16 @@ class ChatDetailsPage extends BaseStatefulWidget {
   /// Chat ID
   final String chatId;
 
+  /// For pending direct chats — receiverId to auto-create conversation on first message.
+  /// When set, the conversation doesn't exist on server yet and will be
+  /// created automatically when the first message is sent.
+  final String? receiverId;
+
   /// Constructor
   const ChatDetailsPage({
     super.key,
     required this.chatId,
+    this.receiverId,
   }) : super();
 
   @override
@@ -225,6 +231,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         chatId: widget.chatId,
         limit: _pageSize,
         forceRefresh: false,
+        receiverId: widget.receiverId,
       ),
     );
 

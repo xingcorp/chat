@@ -303,6 +303,7 @@ class MessageRepositoryImpl extends BaseRepository
     String? replyMessageId,
     String? fileName,
     String? forwardedFromMessageId,
+    String? receiverId,
   }) async {
     // Create local message with sending status
     final localId = _uuid.v4();
@@ -344,8 +345,13 @@ class MessageRepositoryImpl extends BaseRepository
           logger.i('[sendMessage][remote] chatId=$chatId type=$serverType '
               'replyMessageId=$replyMessageId urls=${attachmentIds.length}');
         }
+        // For pending direct chats (no server conversation yet), pass receiverId
+        // so backend auto-creates the conversation. Don't pass temp chatId as
+        // conversationId — backend doesn't know it.
+        final isPendingDirect = receiverId != null && receiverId.isNotEmpty;
         final dto = await _remoteDataSource.sendMessage(
-          conversationId: chatId,
+          conversationId: isPendingDirect ? null : chatId,
+          receiverId: isPendingDirect ? receiverId : null,
           type: serverType,
           message: content,
           urls: attachmentIds,

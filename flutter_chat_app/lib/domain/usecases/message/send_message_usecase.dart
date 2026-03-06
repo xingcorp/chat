@@ -42,6 +42,8 @@ class SendMessageUseCase {
     String? fileName,
     String? replyMessageId,
     String? forwardedFromMessageId,
+    /// For pending direct chats — backend auto-creates conversation on first message.
+    String? receiverId,
   }) async {
     _logger.info('SendMessageUseCase: Starting operation', {
       'conversationId': conversationId,
@@ -75,6 +77,7 @@ class SendMessageUseCase {
         replyMessageId: replyMessageId,
         fileName: fileName,
         forwardedFromMessageId: forwardedFromMessageId,
+        receiverId: receiverId,
       );
 
       return result.fold(

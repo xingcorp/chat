@@ -266,9 +266,18 @@ class _ContactsPageState extends BaseState<ContactsPage> {
           return;
         }
 
+        // For pending direct chats (no server conversation yet), pass the
+        // receiverId so ChatDetailsPage/MessageBloc can auto-create the
+        // conversation on first message send.
+        final isPendingDirect = chat.type == ChatType.direct &&
+            chat.participantIds.isNotEmpty &&
+            chat.members.isEmpty;
+        final receiverId = isPendingDirect ? user.id : null;
+
         await ChatNavigationHelper.navigateToChatDetail(
           context,
           chatId: chat.id,
+          receiverId: receiverId,
         );
       },
     );

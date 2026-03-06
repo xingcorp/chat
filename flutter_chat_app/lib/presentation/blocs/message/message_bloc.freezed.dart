@@ -29,7 +29,8 @@ mixin _$MessageState {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)
+            List<String> frequentReactions,
+            String? receiverId)
         loaded,
     required TResult Function(
             String chatId, String error, List<ChatMessage>? previousMessages)
@@ -49,7 +50,8 @@ mixin _$MessageState {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)?
+            List<String> frequentReactions,
+            String? receiverId)?
         loaded,
     TResult? Function(
             String chatId, String error, List<ChatMessage>? previousMessages)?
@@ -69,7 +71,8 @@ mixin _$MessageState {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)?
+            List<String> frequentReactions,
+            String? receiverId)?
         loaded,
     TResult Function(
             String chatId, String error, List<ChatMessage>? previousMessages)?
@@ -157,7 +160,8 @@ class _$MessageInitialImpl extends MessageInitial {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)
+            List<String> frequentReactions,
+            String? receiverId)
         loaded,
     required TResult Function(
             String chatId, String error, List<ChatMessage>? previousMessages)
@@ -180,7 +184,8 @@ class _$MessageInitialImpl extends MessageInitial {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)?
+            List<String> frequentReactions,
+            String? receiverId)?
         loaded,
     TResult? Function(
             String chatId, String error, List<ChatMessage>? previousMessages)?
@@ -203,7 +208,8 @@ class _$MessageInitialImpl extends MessageInitial {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)?
+            List<String> frequentReactions,
+            String? receiverId)?
         loaded,
     TResult Function(
             String chatId, String error, List<ChatMessage>? previousMessages)?
@@ -319,7 +325,8 @@ class _$MessagesLoadingImpl extends MessagesLoading {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)
+            List<String> frequentReactions,
+            String? receiverId)
         loaded,
     required TResult Function(
             String chatId, String error, List<ChatMessage>? previousMessages)
@@ -342,7 +349,8 @@ class _$MessagesLoadingImpl extends MessagesLoading {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)?
+            List<String> frequentReactions,
+            String? receiverId)?
         loaded,
     TResult? Function(
             String chatId, String error, List<ChatMessage>? previousMessages)?
@@ -365,7 +373,8 @@ class _$MessagesLoadingImpl extends MessagesLoading {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)?
+            List<String> frequentReactions,
+            String? receiverId)?
         loaded,
     TResult Function(
             String chatId, String error, List<ChatMessage>? previousMessages)?
@@ -442,7 +451,8 @@ abstract class _$$MessagesLoadedImplCopyWith<$Res> {
       MessageDataSource dataSource,
       bool isBackgroundFetching,
       List<ConversationMember> conversationMembers,
-      List<String> frequentReactions});
+      List<String> frequentReactions,
+      String? receiverId});
 }
 
 /// @nodoc
@@ -465,6 +475,7 @@ class __$$MessagesLoadedImplCopyWithImpl<$Res>
     Object? isBackgroundFetching = null,
     Object? conversationMembers = null,
     Object? frequentReactions = null,
+    Object? receiverId = freezed,
   }) {
     return _then(_$MessagesLoadedImpl(
       chatId: null == chatId
@@ -503,6 +514,10 @@ class __$$MessagesLoadedImplCopyWithImpl<$Res>
           ? _value._frequentReactions
           : frequentReactions // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      receiverId: freezed == receiverId
+          ? _value.receiverId
+          : receiverId // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -526,7 +541,8 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
         '😮',
         '😢',
         '😡'
-      ]})
+      ],
+      this.receiverId})
       : _messages = messages,
         _uiMessages = uiMessages,
         _conversationMembers = conversationMembers,
@@ -594,6 +610,10 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
     return EqualUnmodifiableListView(_frequentReactions);
   }
 
+  /// For pending direct chats — receiverId to auto-create conversation on first message
+  @override
+  final String? receiverId;
+
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
@@ -615,7 +635,8 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)
+            List<String> frequentReactions,
+            String? receiverId)
         loaded,
     required TResult Function(
             String chatId, String error, List<ChatMessage>? previousMessages)
@@ -630,7 +651,8 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
         dataSource,
         isBackgroundFetching,
         conversationMembers,
-        frequentReactions);
+        frequentReactions,
+        receiverId);
   }
 
   @override
@@ -647,7 +669,8 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)?
+            List<String> frequentReactions,
+            String? receiverId)?
         loaded,
     TResult? Function(
             String chatId, String error, List<ChatMessage>? previousMessages)?
@@ -662,7 +685,8 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
         dataSource,
         isBackgroundFetching,
         conversationMembers,
-        frequentReactions);
+        frequentReactions,
+        receiverId);
   }
 
   @override
@@ -679,7 +703,8 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)?
+            List<String> frequentReactions,
+            String? receiverId)?
         loaded,
     TResult Function(
             String chatId, String error, List<ChatMessage>? previousMessages)?
@@ -696,7 +721,8 @@ class _$MessagesLoadedImpl extends MessagesLoaded {
           dataSource,
           isBackgroundFetching,
           conversationMembers,
-          frequentReactions);
+          frequentReactions,
+          receiverId);
     }
     return orElse();
   }
@@ -749,7 +775,8 @@ abstract class MessagesLoaded extends MessageState {
       final MessageDataSource dataSource,
       final bool isBackgroundFetching,
       final List<ConversationMember> conversationMembers,
-      final List<String> frequentReactions}) = _$MessagesLoadedImpl;
+      final List<String> frequentReactions,
+      final String? receiverId}) = _$MessagesLoadedImpl;
   const MessagesLoaded._() : super._();
 
   String get chatId;
@@ -768,6 +795,9 @@ abstract class MessagesLoaded extends MessageState {
 
   /// Danh sách emoji reactions hay dùng nhất của user
   List<String> get frequentReactions;
+
+  /// For pending direct chats — receiverId to auto-create conversation on first message
+  String? get receiverId;
   @JsonKey(ignore: true)
   _$$MessagesLoadedImplCopyWith<_$MessagesLoadedImpl> get copyWith =>
       throw _privateConstructorUsedError;
@@ -863,7 +893,8 @@ class _$MessagesErrorImpl extends MessagesError {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)
+            List<String> frequentReactions,
+            String? receiverId)
         loaded,
     required TResult Function(
             String chatId, String error, List<ChatMessage>? previousMessages)
@@ -886,7 +917,8 @@ class _$MessagesErrorImpl extends MessagesError {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)?
+            List<String> frequentReactions,
+            String? receiverId)?
         loaded,
     TResult? Function(
             String chatId, String error, List<ChatMessage>? previousMessages)?
@@ -909,7 +941,8 @@ class _$MessagesErrorImpl extends MessagesError {
             MessageDataSource dataSource,
             bool isBackgroundFetching,
             List<ConversationMember> conversationMembers,
-            List<String> frequentReactions)?
+            List<String> frequentReactions,
+            String? receiverId)?
         loaded,
     TResult Function(
             String chatId, String error, List<ChatMessage>? previousMessages)?

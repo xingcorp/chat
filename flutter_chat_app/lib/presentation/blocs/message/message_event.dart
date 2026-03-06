@@ -15,15 +15,20 @@ class LoadMessages extends MessageEvent {
   final bool forceRefresh;
   final bool subscribeToUpdates;
 
+  /// For pending direct chats (no server conversation yet).
+  /// Stores the receiverId so first message can auto-create the conversation.
+  final String? receiverId;
+
   const LoadMessages({
     required this.chatId,
     this.limit = 20,
     this.forceRefresh = false,
     this.subscribeToUpdates = true,
+    this.receiverId,
   });
 
   @override
-  List<Object?> get props => [chatId, limit, forceRefresh, subscribeToUpdates];
+  List<Object?> get props => [chatId, limit, forceRefresh, subscribeToUpdates, receiverId];
 }
 
 /// Sự kiện tải thêm tin nhắn (pagination)

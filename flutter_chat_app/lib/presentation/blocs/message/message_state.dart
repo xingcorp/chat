@@ -61,6 +61,8 @@ class MessageState extends BaseState with _$MessageState {
     @Default([]) List<ConversationMember> conversationMembers,
     /// Danh sách emoji reactions hay dùng nhất của user
     @Default(<String>['👍', '❤️', '😂', '😮', '😢', '😡']) List<String> frequentReactions,
+    /// For pending direct chats — receiverId to auto-create conversation on first message
+    String? receiverId,
   }) = MessagesLoaded;
 
   /// Trạng thái khi có lỗi với enterprise error handling

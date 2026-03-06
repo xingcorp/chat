@@ -59,9 +59,11 @@ class ChatNavigationHelper {
   /// Navigate to chat detail page.
   ///
   /// [chatId] is the conversation ID to display.
+  /// [receiverId] is for pending direct chats (no server conversation yet).
   static Future<void> navigateToChatDetail(
     BuildContext context, {
     required String chatId,
+    String? receiverId,
   }) {
     if (isPackageMode) {
       return Navigator.push(
@@ -70,7 +72,7 @@ class ChatNavigationHelper {
       return Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => ChatDetailsPage(chatId: chatId),
+          builder: (_) => ChatDetailsPage(chatId: chatId, receiverId: receiverId),
           settings: RouteSettings(name: '/chat/$chatId'),
         ),
       );

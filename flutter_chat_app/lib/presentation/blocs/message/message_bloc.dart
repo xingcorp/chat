@@ -289,6 +289,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         hasReachedMax: false,
         dataSource: MessageDataSource.local,
         isBackgroundFetching: true,
+        receiverId: event.receiverId,
       ));
 
       // Apply pending frequent reactions if they arrived before this emit
@@ -322,6 +323,31 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
       result.fold(
         (failure) {
+          // For pending direct chats (no server conversation yet), a remote
+          // failure is expected. Emit an empty loaded state so the user can
+          // start typing their first message. The conversation will be
+          // auto-created by the backend on first message send.
+          if (event.receiverId != null) {
+            logger.i(
+                '[TwoPhase] Pending direct chat — remote load expected to fail. '
+                'Emitting empty loaded state for receiverId=${event.receiverId}');
+            emit(MessageState.loaded(
+              chatId: event.chatId,
+              messages: const [],
+              uiMessages: const [],
+              hasReachedMax: true,
+              dataSource: MessageDataSource.local,
+              receiverId: event.receiverId,
+            ));
+
+            // Subscribe to real-time updates (for when conversation is created)
+            if (event.subscribeToUpdates) {
+              unawaited(_subscribeToMessages(event.chatId));
+              _subscribeToEditDeleteReaction(event.chatId);
+            }
+            return;
+          }
+
           logger.e('[TwoPhase] First-time load FAILED: ${failure.message}',
               error: failure);
           emit(MessageState.error(
@@ -356,6 +382,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
             uiMessages: _transformMessages(messages),
             hasReachedMax: messages.length < event.limit,
             dataSource: MessageDataSource.server,
+            receiverId: event.receiverId,
           ));
 
           // Apply pending frequent reactions if they arrived during the await
@@ -487,9 +514,12 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       SendMessage event, Emitter<MessageState> emit) async {
     if (state is! MessagesLoaded) return;
 
-    final chatId = (state as MessagesLoaded).chatId;
+    final currentLoaded = state as MessagesLoaded;
+    final chatId = currentLoaded.chatId;
+    final receiverId = currentLoaded.receiverId;
 
-    logger.i('Sending message in chat: $chatId');
+    logger.i('Sending message in chat: $chatId'
+        '${receiverId != null ? ' (pending direct, receiverId=$receiverId)' : ''}');
 
     // Execute UseCase
     final result = await _sendMessage(
@@ -499,6 +529,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       type: event.contentType,
       urls: event.attachmentIds,
       replyMessageId: event.replyMessageId,
+      receiverId: receiverId,
     );
 
     // Re-read state after await — it may have changed during the API call
@@ -530,12 +561,30 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           return;
         }
 
+        // For pending direct chats: after first message, the server returns
+        // the real conversationId. Update chatId and clear receiverId.
+        final serverChatId = newMessage.chatId;
+        final wasPendingDirect = freshState.receiverId != null &&
+            serverChatId.isNotEmpty &&
+            serverChatId != freshState.chatId;
+
         // Add new message to the beginning of the list
         final allMessages = [newMessage, ...freshState.messages];
         emit(freshState.copyWith(
+          chatId: wasPendingDirect ? serverChatId : freshState.chatId,
           messages: allMessages,
           uiMessages: _transformMessages(allMessages),
+          receiverId: wasPendingDirect ? null : freshState.receiverId,
         ));
+
+        if (wasPendingDirect) {
+          logger.i(
+              'Pending direct chat resolved: tempId=${freshState.chatId} → '
+              'serverId=$serverChatId. Subscribing to real-time updates.');
+          // Subscribe to real-time updates with the real conversation ID
+          unawaited(_subscribeToMessages(serverChatId));
+          _subscribeToEditDeleteReaction(serverChatId);
+        }
 
         // Mark message list as dirty
         _cacheSyncStrategy.markChatMessagesDirty(freshState.chatId);
@@ -825,7 +874,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         logger.e('Failed to forward message', error: failure);
         // Emit error state if we have a current chat context
         state.maybeWhen(
-          loaded: (chatId, messages, _, __, ___, ____, _____, ______, _______) {
+          loaded: (chatId, messages, _, __, ___, ____, _____, ______, _______, ________) {
             emit(MessageState.error(
               chatId: chatId,
               error: failure.message,

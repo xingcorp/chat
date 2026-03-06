@@ -10,8 +10,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
-import 'package:logger/logger.dart';
 
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
@@ -24,12 +24,12 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app
 @lazySingleton
 class NotificationHandlerService {
   NotificationHandlerService({
-    required Logger logger,
+    required AppLogger logger,
     required IChatRepository chatRepository,
   })  : _logger = logger,
         _chatRepository = chatRepository;
 
-  final Logger _logger;
+  final AppLogger _logger;
   final IChatRepository _chatRepository;
 
   /// Initialize notification handlers

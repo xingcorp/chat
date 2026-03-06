@@ -321,37 +321,63 @@ class ChatRepositoryImpl implements IChatRepository {
         await _localDataSource.saveChat(chat);
         _logger.d('Chat saved locally (optimistic) with temp ID: ${chat.id}');
 
-        // 2. Try to create on remote
-        final remoteResult = isGroup
-            ? await _remoteDataSource.createGroupChat(
-                name: name,
-                imgUrl: avatarUrl,
-                description: description,
-                groupType: 'Private', // Default to private group
-                memberIds: participantIds,
-              )
-            : await _remoteDataSource.createDirectChat(
-                receiverId: participantIds.first,
-              );
-
-        // Remote datasource returns ChatModel, not Either
-        try {
+        // 2. Try to create/find on remote
+        if (isGroup) {
+          final remoteResult = await _remoteDataSource.createGroupChat(
+            name: name,
+            imgUrl: avatarUrl,
+            description: description,
+            groupType: 'Private', // Default to private group
+            memberIds: participantIds,
+          );
           // Remote success — replace optimistic record with server version.
-          // Delete the temp-ID record first to prevent duplicate (temp ID ≠ server ID).
-          await _localDataSource.deleteChat(chat.id);
-          final serverChat = remoteResult.toDomain();
-          await _localDataSource.saveChat(serverChat);
-          _logger.i(
-              'Chat created on server and persisted locally: ${serverChat.id}');
-          return Right(serverChat);
-        } catch (e) {
-          // Remote mapping failed, keep local version
-          _logger.w('Remote create mapping failed, keeping optimistic version',
-              error: e);
-          return Right(chat);
+          try {
+            await _localDataSource.deleteChat(chat.id);
+            final serverChat = remoteResult.toDomain();
+            await _localDataSource.saveChat(serverChat);
+            _logger.i(
+                'Group created on server and persisted locally: ${serverChat.id}');
+            return Right(serverChat);
+          } catch (e) {
+            _logger.w(
+                'Remote create mapping failed, keeping optimistic version',
+                error: e);
+            return Right(chat);
+          }
+        } else {
+          // Direct chat: try to find existing conversation with receiverId
+          final remoteResult = await _remoteDataSource.createDirectChat(
+            receiverId: participantIds.first,
+          );
+
+          if (remoteResult != null) {
+            // Existing direct conversation found — use server version
+            try {
+              await _localDataSource.deleteChat(chat.id);
+              final serverChat = remoteResult.toDomain();
+              await _localDataSource.saveChat(serverChat);
+              _logger.i(
+                  'Existing direct chat found and persisted locally: ${serverChat.id}');
+              return Right(serverChat);
+            } catch (e) {
+              _logger.w(
+                  'Remote direct chat mapping failed, keeping optimistic version',
+                  error: e);
+              return Right(chat);
+            }
+          } else {
+            // No existing direct conversation — this is normal for first contact.
+            // Keep the local optimistic chat. Backend will auto-create the
+            // conversation when the first message is sent (chatMessageAdd with
+            // receiverId). The participantIds[0] stores the receiverId for later.
+            _logger.i(
+                'No existing direct chat with receiverId=${participantIds.first}. '
+                'Pending direct chat created locally with temp ID: ${chat.id}');
+            return Right(chat);
+          }
         }
       } catch (e) {
-        debugPrint('❌ Create chat failed: $e');
+        _logger.e('Create chat failed', error: e);
         return Left(ServerFailure(message: 'Failed to create chat: $e'));
       }
     });
