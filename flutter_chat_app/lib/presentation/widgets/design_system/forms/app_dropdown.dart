@@ -158,10 +158,10 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
     // Determine display text
     final displayText = widget.value != null
         ? _getItemText(widget.value as T)
-        : (widget.hint ?? l10n.selectOption);
+        : (widget.hint ?? l10n?.selectOption);
 
     return Semantics(
-      label: widget.label ?? l10n.selectOption,
+      label: widget.label ?? l10n?.selectOption,
       value: widget.value != null ? _getItemText(widget.value as T) : null,
       enabled: !isDisabled,
       button: true,
@@ -218,7 +218,7 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
                   children: [
                     Expanded(
                       child: Text(
-                        displayText,
+                        displayText ?? '',
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: widget.value == null
                               ? (isDark
@@ -321,7 +321,7 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
                           child: TextField(
                             controller: _searchController,
                             decoration: InputDecoration(
-                              hintText: l10n.searchPlaceholder,
+                              hintText: l10n?.searchPlaceholder,
                               prefixIcon: const Icon(Icons.search),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(
@@ -350,7 +350,7 @@ class _AppDropdownState<T> extends BaseState<AppDropdown<T>> {
                                   AppDimens.paddingMedium,
                                 ),
                                 child: Text(
-                                  l10n.noResults,
+                                  l10n?.noResults ?? '',
                                   style: AppTextStyles.bodyMedium.copyWith(
                                     color: isDark
                                         ? AppColors.textSecondaryDarkMode

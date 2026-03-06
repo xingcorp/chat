@@ -274,11 +274,15 @@ class ChatModule {
   /// ```dart
   /// Navigator.push(context, ChatModule.chatDetailRoute(chatId: 'abc123'));
   /// ```
-  static Route<dynamic> chatDetailRoute({required String chatId}) {
+  static Route<dynamic> chatDetailRoute({
+    required String chatId,
+    String? receiverId,
+  }) {
     _ensureInitialized();
     return MaterialPageRoute<void>(
-      builder: (_) =>
-          _ChatPackageWrapper(child: ChatDetailsPage(chatId: chatId)),
+      builder: (_) => _ChatPackageWrapper(
+        child: ChatDetailsPage(chatId: chatId, receiverId: receiverId),
+      ),
       settings: RouteSettings(name: '/chat/$chatId'),
     );
   }

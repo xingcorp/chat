@@ -147,6 +147,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
     await ChatNavigationHelper.navigateToChatDetail(
       context,
       chatId: createdChatId,
+      receiverId: _extractReceiverIdIfPending(chat),
     );
   }
 
@@ -182,6 +183,38 @@ class _ChatListPageState extends BaseState<ChatListPage> {
       context,
       chatId: createdChatId,
     );
+  }
+
+  /// Extract receiverId for pending direct chats (temp numeric ID, no members).
+  ///
+  /// For pending direct chats the conversation doesn't exist on the server yet.
+  /// We pass the other participant's userId so [MessageBloc] can auto-create
+  /// the conversation on first message via `chatMessageAdd(receiverId)`.
+  String? _extractReceiverIdIfPending(Chat chat) {
+    // Pending direct chats have a numeric temp ID (no hyphens = not UUID)
+    final isPending =
+        chat.type == ChatType.direct && !chat.id.contains('-');
+    if (!isPending) return null;
+
+    // Try participantIds first (always set on optimistic chat)
+    final currentUserId = getIt<CurrentUserProvider>().currentUserId;
+    if (chat.participantIds.isNotEmpty) {
+      final otherId = chat.participantIds
+          .cast<String?>()
+          .firstWhere((id) => id != currentUserId, orElse: () => null);
+      if (otherId != null && otherId.isNotEmpty) return otherId;
+    }
+
+    // Fallback to members (if populated)
+    if (chat.members.isNotEmpty) {
+      final otherMember = chat.members
+          .cast<ConversationMember?>()
+          .firstWhere(
+              (m) => m?.userId != currentUserId, orElse: () => null);
+      return otherMember?.userId;
+    }
+
+    return null;
   }
 
   Future<void> _onRefresh() async {
@@ -491,6 +524,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
         await ChatNavigationHelper.navigateToChatDetail(
           context,
           chatId: chat.id,
+          receiverId: _extractReceiverIdIfPending(chat),
         );
       },
     );

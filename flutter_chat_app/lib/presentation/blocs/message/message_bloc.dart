@@ -683,6 +683,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       senderId: event.senderId,
       type: 'sticker',
       replyMessageId: event.replyMessageId,
+      receiverId: currentState.receiverId,
     );
 
     result.fold(
@@ -2083,6 +2084,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         urls: uploadedUrls,
         replyMessageId: event.replyMessageId,
         fileName: fileName,
+        receiverId: currentState.receiverId,
       );
 
       result.fold(
@@ -2246,6 +2248,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         urls: [uploadedUrl],
         replyMessageId: event.replyMessageId,
         fileName: voiceNoteFileName,
+        receiverId: currentState.receiverId,
       );
 
       await sendResult.fold(
@@ -2568,6 +2571,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         content: locationData.toJson(),
         senderId: event.senderId,
         type: 'LOCATION',
+        receiverId: currentState.receiverId,
       );
 
       result.fold(
