@@ -4,6 +4,7 @@ import 'package:flutter_chat_app/core/services/video/chat_video_player_factory.d
 import 'package:flutter_chat_app/core/services/video/i_chat_video_player.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/common/media_viewer_shortcut_host.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
@@ -21,12 +22,12 @@ class VideoViewerScreen extends StatefulWidget {
   final bool looping;
 
   const VideoViewerScreen({
-    Key? key,
+    super.key,
     required this.videoUrl,
     this.title,
     this.autoPlay = true,
     this.looping = false,
-  }) : super(key: key);
+  });
 
   static Future<void> show(
     BuildContext context, {
@@ -118,7 +119,7 @@ class _VideoViewerScreenState extends State<VideoViewerScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            const Icon(
               Icons.error_outline,
               color: AppColors.error,
               size: AppDimens.iconSizeXLarge,
@@ -167,32 +168,34 @@ class _VideoViewerScreenState extends State<VideoViewerScreen> {
         ? widget.title!.trim()
         : context.l10n.video;
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundDarkMode,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
+    return MediaViewerShortcutHost(
+      child: Scaffold(
         backgroundColor: AppColors.backgroundDarkMode,
-        foregroundColor: AppColors.textPrimaryDarkMode,
-        leading: IconButton(
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          icon: const Icon(
-            Icons.arrow_back,
-            color: AppColors.textPrimaryDarkMode,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: AppColors.backgroundDarkMode,
+          foregroundColor: AppColors.textPrimaryDarkMode,
+          leading: IconButton(
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            icon: const Icon(
+              Icons.arrow_back,
+              color: AppColors.textPrimaryDarkMode,
+            ),
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
-          onPressed: () => Navigator.of(context).maybePop(),
+          title: AppText(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: AppColors.textPrimaryDarkMode),
+          ),
         ),
-        title: AppText(
-          title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: AppColors.textPrimaryDarkMode),
+        body: SafeArea(
+          top: false,
+          child: _isLoading
+              ? _buildLoadingState()
+              : (_errorMessage != null ? _buildErrorState() : _buildPlayer()),
         ),
-      ),
-      body: SafeArea(
-        top: false,
-        child: _isLoading
-            ? _buildLoadingState()
-            : (_errorMessage != null ? _buildErrorState() : _buildPlayer()),
       ),
     );
   }

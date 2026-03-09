@@ -38,6 +38,7 @@ import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/common/media_viewer_shortcut_host.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/media_enums.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -195,7 +196,7 @@ class AppImageGalleryState extends BaseState<AppImageGallery> {
       runSpacing: widget.mainAxisSpacing,
       children: widget.images.asMap().entries.map((entry) {
         return SizedBox(
-          width: (MediaQuery.of(context).size.width - 
+          width: (MediaQuery.of(context).size.width -
                   (widget.crossAxisCount - 1) * widget.crossAxisSpacing) /
               widget.crossAxisCount,
           child: _buildImageTile(entry.value, entry.key),
@@ -213,7 +214,8 @@ class AppImageGalleryState extends BaseState<AppImageGallery> {
           imageUrl: image.thumbnailUrl,
           fit: BoxFit.cover,
           placeholder: (context, url) =>
-              widget.loadingBuilder?.call(context) ?? _buildLoadingPlaceholder(),
+              widget.loadingBuilder?.call(context) ??
+              _buildLoadingPlaceholder(),
           errorWidget: (context, url, error) =>
               widget.errorBuilder?.call(context, error) ??
               _buildErrorPlaceholder(),
@@ -243,7 +245,9 @@ class AppImageGalleryState extends BaseState<AppImageGallery> {
       child: Icon(
         Icons.broken_image,
         size: AppDimens.iconLarge,
-        color: isDark ? AppColors.iconDarkMode.withValues(alpha: 0.5) : AppColors.icon.withValues(alpha: 0.5),
+        color: isDark
+            ? AppColors.iconDarkMode.withValues(alpha: 0.5)
+            : AppColors.icon.withValues(alpha: 0.5),
       ),
     );
   }
@@ -259,13 +263,17 @@ class AppImageGalleryState extends BaseState<AppImageGallery> {
           Icon(
             Icons.photo_library_outlined,
             size: AppDimens.iconXXLarge,
-            color: isDark ? AppColors.iconDarkMode.withValues(alpha: 0.5) : AppColors.icon.withValues(alpha: 0.5),
+            color: isDark
+                ? AppColors.iconDarkMode.withValues(alpha: 0.5)
+                : AppColors.icon.withValues(alpha: 0.5),
           ),
           const SizedBox(height: AppDimens.spaceMedium),
           Text(
             context.l10n.noImagesAvailable,
             style: AppTextStyles.bodyLarge.copyWith(
-              color: isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary,
+              color: isDark
+                  ? AppColors.textSecondaryDarkMode
+                  : AppColors.textSecondary,
             ),
           ),
         ],
@@ -346,66 +354,69 @@ class _LightboxViewState extends BaseState<_LightboxView> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundDarkMode,
-      body: GestureDetector(
-        onTap: () {
-          safeSetState(() {
-            _showControls = !_showControls;
-          });
-        },
-        child: Stack(
-          children: [
-            // Image gallery
-            PhotoViewGallery.builder(
-              pageController: _pageController,
-              itemCount: widget.images.length,
-              builder: (context, index) {
-                final image = widget.images[index];
-                return PhotoViewGalleryPageOptions(
-                  imageProvider: CachedNetworkImageProvider(image.url),
-                  minScale: PhotoViewComputedScale.contained,
-                  maxScale: PhotoViewComputedScale.covered * 3,
-                  initialScale: PhotoViewComputedScale.contained,
-                  heroAttributes: PhotoViewHeroAttributes(tag: image.url),
-                );
-              },
-              onPageChanged: (index) {
-                safeSetState(() {
-                  _currentIndex = index;
-                });
-              },
-              scrollPhysics: const BouncingScrollPhysics(),
-              backgroundDecoration: const BoxDecoration(
-                color: AppColors.backgroundDarkMode,
-              ),
-              loadingBuilder: (context, event) => Center(
-                child: CircularProgressIndicator(
-                  value: event == null
-                      ? 0
-                      : event.cumulativeBytesLoaded / (event.expectedTotalBytes ?? 1),
+    return MediaViewerShortcutHost(
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundDarkMode,
+        body: GestureDetector(
+          onTap: () {
+            safeSetState(() {
+              _showControls = !_showControls;
+            });
+          },
+          child: Stack(
+            children: [
+              // Image gallery
+              PhotoViewGallery.builder(
+                pageController: _pageController,
+                itemCount: widget.images.length,
+                builder: (context, index) {
+                  final image = widget.images[index];
+                  return PhotoViewGalleryPageOptions(
+                    imageProvider: CachedNetworkImageProvider(image.url),
+                    minScale: PhotoViewComputedScale.contained,
+                    maxScale: PhotoViewComputedScale.covered * 3,
+                    initialScale: PhotoViewComputedScale.contained,
+                    heroAttributes: PhotoViewHeroAttributes(tag: image.url),
+                  );
+                },
+                onPageChanged: (index) {
+                  safeSetState(() {
+                    _currentIndex = index;
+                  });
+                },
+                scrollPhysics: const BouncingScrollPhysics(),
+                backgroundDecoration: const BoxDecoration(
+                  color: AppColors.backgroundDarkMode,
+                ),
+                loadingBuilder: (context, event) => Center(
+                  child: CircularProgressIndicator(
+                    value: event == null
+                        ? 0
+                        : event.cumulativeBytesLoaded /
+                            (event.expectedTotalBytes ?? 1),
+                  ),
                 ),
               ),
-            ),
 
-            // Top bar
-            if (_showControls)
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: _buildTopBar(theme, isDark),
-              ),
+              // Top bar
+              if (_showControls)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildTopBar(theme, isDark),
+                ),
 
-            // Bottom bar
-            if (_showControls)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: _buildBottomBar(theme, isDark),
-              ),
-          ],
+              // Bottom bar
+              if (_showControls)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildBottomBar(theme, isDark),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -449,12 +460,14 @@ class _LightboxViewState extends BaseState<_LightboxView> {
               if (widget.enableShare)
                 IconButton(
                   icon: const Icon(Icons.share, color: AppColors.iconDarkMode),
-                  onPressed: () => widget.onShare?.call(widget.images[_currentIndex]),
+                  onPressed: () =>
+                      widget.onShare?.call(widget.images[_currentIndex]),
                   tooltip: context.l10n.share,
                 ),
               if (widget.enableDownload)
                 IconButton(
-                  icon: const Icon(Icons.download, color: AppColors.iconDarkMode),
+                  icon:
+                      const Icon(Icons.download, color: AppColors.iconDarkMode),
                   onPressed: () =>
                       widget.onDownload?.call(widget.images[_currentIndex]),
                   tooltip: context.l10n.download,

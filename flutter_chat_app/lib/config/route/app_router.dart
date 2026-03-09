@@ -8,8 +8,8 @@ import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc
 import 'package:flutter_chat_app/features/auth/presentation/pages/auth/forgot_password_page.dart';
 import 'package:flutter_chat_app/features/auth/presentation/pages/auth/login_page.dart';
 import 'package:flutter_chat_app/features/auth/presentation/pages/auth/register_page.dart';
-import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
+import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/create_group_page.dart';
 import 'package:flutter_chat_app/presentation/pages/error_page.dart';
 import 'package:flutter_chat_app/presentation/pages/permissions/permissions_onboarding_page.dart';
@@ -45,7 +45,8 @@ class AppRouter {
       redirect: (context, state) {
         final authState = authBloc.state;
         final isLoggedIn = authState.isAuthenticated;
-        final isOnboarded = authState.isOnboarded;
+        final shouldSkipOnboarding = _shouldSkipOnboardingForDesktop(context);
+        final isOnboarded = authState.isOnboarded || shouldSkipOnboarding;
         final isAuthResolving = authState is AuthInitial ||
             (authState is AuthLoading && authState.operation == 'check');
         final isLoggingIn = state.matchedLocation.startsWith('/login') ||
@@ -58,7 +59,7 @@ class AppRouter {
         // Splash acts as an auth gate: stay while checking, then route to target
         if (isSplash) {
           if (authState is AuthAuthenticated) {
-            return authState.isOnboarded ? '/chats' : '/onboarding';
+            return isOnboarded ? '/chats' : '/onboarding';
           }
           if (authState is AuthUnauthenticated) {
             return '/login';
@@ -182,6 +183,11 @@ class AppRouter {
       ],
       errorBuilder: (context, state) => ErrorPage(error: state.error),
     );
+  }
+
+  static bool _shouldSkipOnboardingForDesktop(BuildContext context) {
+    final screenWidth = MediaQuery.maybeOf(context)?.size.width ?? 0;
+    return screenWidth >= AppDimens.breakpointDesktop;
   }
 }
 

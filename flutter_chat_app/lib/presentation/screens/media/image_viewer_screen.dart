@@ -1,24 +1,25 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:get_it/get_it.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/image_editor_service.dart';
 import 'package:flutter_chat_app/domain/usecases/media/save_media_to_gallery_usecase.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart'
-    as domain;
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
-import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
-import 'package:flutter_chat_app/core/services/current_user_provider.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reaction_bar.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter_chat_app/presentation/models/edited_image_result.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
+import 'package:flutter_chat_app/presentation/models/edited_image_result.dart';
+import 'package:flutter_chat_app/presentation/widgets/common/media_viewer_shortcut_host.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart'
+    as domain;
+import 'package:get_it/get_it.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
@@ -51,7 +52,7 @@ class ImageViewerScreen extends StatefulWidget {
   final String? chatId;
 
   ImageViewerScreen({
-    Key? key,
+    super.key,
     required this.imageUrl,
     required this.heroTag,
     this.title,
@@ -64,11 +65,10 @@ class ImageViewerScreen extends StatefulWidget {
             title: title,
           ),
         ],
-        initialIndex = 0,
-        super(key: key);
+        initialIndex = 0;
 
   ImageViewerScreen.gallery({
-    Key? key,
+    super.key,
     required this.images,
     this.initialIndex = 0,
     this.title,
@@ -78,8 +78,7 @@ class ImageViewerScreen extends StatefulWidget {
         assert(initialIndex >= 0),
         assert(initialIndex < images.length),
         imageUrl = '',
-        heroTag = '',
-        super(key: key);
+        heroTag = '';
 
   /// Legacy params kept for backward compatibility.
   final String imageUrl;
@@ -239,80 +238,82 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
     final theme = Theme.of(context);
     final hasMessage = widget.message != null;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(theme),
-      body: GestureDetector(
-        onTap: _toggleUI,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedBuilder(
-          animation: _colorAnimation,
-          builder: (context, child) {
-            return Container(
-              color: _colorAnimation.value,
-              child: child,
-            );
-          },
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              PhotoViewGallery.builder(
-                pageController: _pageController,
-                itemCount: _images.length,
-                builder: (context, index) {
-                  final image = _images[index];
-                  return PhotoViewGalleryPageOptions(
-                    imageProvider: CachedNetworkImageProvider(image.imageUrl),
-                    initialScale: PhotoViewComputedScale.contained,
-                    minScale: PhotoViewComputedScale.contained * 0.8,
-                    maxScale: PhotoViewComputedScale.covered * 2.0,
-                    filterQuality: _resolveViewerFilterQuality(context),
-                    heroAttributes: image.heroTag.isNotEmpty
-                        ? PhotoViewHeroAttributes(tag: image.heroTag)
-                        : null,
-                    scaleStateCycle: (currentState) {
-                      if (currentState == PhotoViewScaleState.initial) {
-                        return PhotoViewScaleState.covering;
-                      }
-                      return PhotoViewScaleState.initial;
-                    },
-                  );
-                },
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                  _scrollThumbnailToCurrent();
-                },
-                scrollPhysics: const BouncingScrollPhysics(),
-                backgroundDecoration: const BoxDecoration(
-                  color: Colors.transparent,
-                ),
-                loadingBuilder: (context, event) {
-                  if (event == null) {
-                    return const SizedBox.shrink();
-                  }
-
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: event.expectedTotalBytes != null
-                          ? event.cumulativeBytesLoaded /
-                              event.expectedTotalBytes!
+    return MediaViewerShortcutHost(
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        extendBodyBehindAppBar: true,
+        appBar: _buildAppBar(theme),
+        body: GestureDetector(
+          onTap: _toggleUI,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedBuilder(
+            animation: _colorAnimation,
+            builder: (context, child) {
+              return Container(
+                color: _colorAnimation.value,
+                child: child,
+              );
+            },
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                PhotoViewGallery.builder(
+                  pageController: _pageController,
+                  itemCount: _images.length,
+                  builder: (context, index) {
+                    final image = _images[index];
+                    return PhotoViewGalleryPageOptions(
+                      imageProvider: CachedNetworkImageProvider(image.imageUrl),
+                      initialScale: PhotoViewComputedScale.contained,
+                      minScale: PhotoViewComputedScale.contained * 0.8,
+                      maxScale: PhotoViewComputedScale.covered * 2.0,
+                      filterQuality: _resolveViewerFilterQuality(context),
+                      heroAttributes: image.heroTag.isNotEmpty
+                          ? PhotoViewHeroAttributes(tag: image.heroTag)
                           : null,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                          theme.colorScheme.primary),
-                    ),
-                  );
-                },
-              ),
+                      scaleStateCycle: (currentState) {
+                        if (currentState == PhotoViewScaleState.initial) {
+                          return PhotoViewScaleState.covering;
+                        }
+                        return PhotoViewScaleState.initial;
+                      },
+                    );
+                  },
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                    _scrollThumbnailToCurrent();
+                  },
+                  scrollPhysics: const BouncingScrollPhysics(),
+                  backgroundDecoration: const BoxDecoration(
+                    color: Colors.transparent,
+                  ),
+                  loadingBuilder: (context, event) {
+                    if (event == null) {
+                      return const SizedBox.shrink();
+                    }
 
-              if (!hasMessage && _images.length > 1)
-                _buildStandaloneThumbnailStrip(context),
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: event.expectedTotalBytes != null
+                            ? event.cumulativeBytesLoaded /
+                                event.expectedTotalBytes!
+                            : null,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.primary),
+                      ),
+                    );
+                  },
+                ),
 
-              // Bottom overlay with forward/reaction bar (only if message provided)
-              if (hasMessage) _buildBottomOverlay(context, theme),
-            ],
+                if (!hasMessage && _images.length > 1)
+                  _buildStandaloneThumbnailStrip(context),
+
+                // Bottom overlay with forward/reaction bar (only if message provided)
+                if (hasMessage) _buildBottomOverlay(context, theme),
+              ],
+            ),
           ),
         ),
       ),
@@ -388,15 +389,6 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                   ),
                   PopupMenuButton<String>(
                     padding: EdgeInsets.zero,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.45),
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      child: const Icon(Icons.more_vert, color: Colors.white),
-                    ),
                     onSelected: _handleMenuOption,
                     itemBuilder: (context) => [
                       PopupMenuItem(
@@ -423,6 +415,15 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                           child: Text(context.l10n.forward),
                         ),
                     ],
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: const Icon(Icons.more_vert, color: Colors.white),
+                    ),
                   ),
                 ],
               ),
