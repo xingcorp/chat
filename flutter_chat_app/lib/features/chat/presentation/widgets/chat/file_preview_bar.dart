@@ -10,6 +10,8 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/file_pr
 ///
 /// Displayed between the message timeline and the chat input when
 /// there are files in the attachment queue.
+///
+/// Bar height adapts to screen size via [FilePreviewCard.thumbnailSize].
 class FilePreviewBar extends BaseStatelessWidget {
   /// List of pending files to display
   final List<PendingFile> files;
@@ -42,6 +44,9 @@ class FilePreviewBar extends BaseStatelessWidget {
   @override
   Widget buildContent(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Derive bar height from the responsive thumbnail size + padding
+    final thumbSize = FilePreviewCard.thumbnailSize(context);
+    final barHeight = thumbSize + AppDimens.paddingSmall * 2;
 
     return Container(
       decoration: BoxDecoration(
@@ -54,7 +59,7 @@ class FilePreviewBar extends BaseStatelessWidget {
         ),
       ),
       child: SizedBox(
-        height: 80.0,
+        height: barHeight,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(
@@ -67,7 +72,7 @@ class FilePreviewBar extends BaseStatelessWidget {
           itemBuilder: (context, index) {
             // "Add more" button at the end
             if (index == files.length) {
-              return _buildAddMoreButton(context, isDark);
+              return _buildAddMoreButton(context, isDark, thumbSize);
             }
 
             final file = files[index];
@@ -83,34 +88,27 @@ class FilePreviewBar extends BaseStatelessWidget {
     );
   }
 
-  Widget _buildAddMoreButton(BuildContext context, bool isDark) {
+  Widget _buildAddMoreButton(
+      BuildContext context, bool isDark, double thumbSize) {
     return GestureDetector(
       onTap: onAddMore,
-      child: SizedBox(
-        width: 52.0,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 52.0,
-              height: 52.0,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
-                border: Border.all(
-                  color: isDark ? AppColors.borderDarkMode : AppColors.border,
-                  width: 1.0,
-                ),
-                color: isDark
-                    ? AppColors.inputBackgroundDarkMode
-                    : AppColors.inputBackground,
-              ),
-              child: Icon(
-                Icons.add,
-                size: 28.0,
-                color: isDark ? AppColors.iconDarkMode : AppColors.icon,
-              ),
-            ),
-          ],
+      child: Container(
+        width: thumbSize,
+        height: thumbSize,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
+          border: Border.all(
+            color: isDark ? AppColors.borderDarkMode : AppColors.border,
+            width: 1.0,
+          ),
+          color: isDark
+              ? AppColors.inputBackgroundDarkMode
+              : AppColors.inputBackground,
+        ),
+        child: Icon(
+          Icons.add,
+          size: 28.0,
+          color: isDark ? AppColors.iconDarkMode : AppColors.icon,
         ),
       ),
     );

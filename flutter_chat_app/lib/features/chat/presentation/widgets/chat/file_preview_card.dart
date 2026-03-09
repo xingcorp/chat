@@ -5,15 +5,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/utils/screen_utils.dart';
 import 'package:flutter_chat_app/data/services/file_validation_service.dart';
 import 'package:flutter_chat_app/domain/entities/pending_file.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 import 'package:flutter_chat_app/shared/domain/entities/attachment.dart';
 
 /// Individual file preview card showing thumbnail, name, size, and upload status.
 ///
 /// Used in [FilePreviewBar] to display each pending attachment.
+/// File name and size are shown in a tooltip on hover/long press to
+/// keep the card compact and prevent overflow.
+///
+/// Card size adapts to screen size:
+/// - Mobile: 48×48  |  Tablet: 52×52  |  Desktop: 60×60
 class FilePreviewCard extends BaseStatelessWidget {
   /// The pending file to display
   final PendingFile file;
@@ -35,81 +40,64 @@ class FilePreviewCard extends BaseStatelessWidget {
     this.onRetry,
   });
 
+  /// Responsive thumbnail size: mobile 48, tablet 52, desktop 60.
+  static double thumbnailSize(BuildContext context) =>
+      ScreenUtils.responsiveValue(
+        context: context,
+        mobile: 48.0,
+        tablet: 52.0,
+        desktop: 60.0,
+      );
+
   @override
   Widget buildContent(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final size = thumbnailSize(context);
 
-    return SizedBox(
-      width: 64.0,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Thumbnail area with overlay controls
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Thumbnail or type icon
-              _buildThumbnail(context, isDark),
+    return Tooltip(
+      message: '${file.fileName}\n'
+          '${fileValidationService.formatFileSize(file.fileSize)}',
+      preferBelow: false,
+      child: SizedBox(
+        width: size + 4.0, // extra room for remove button overflow
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Thumbnail or type icon
+            _buildThumbnail(context, isDark, size),
 
-              // Remove button (top-right)
-              if (onRemove != null)
-                Positioned(
-                  top: -4.0,
-                  right: -4.0,
-                  child: _buildRemoveButton(context),
-                ),
+            // Remove button (top-right)
+            if (onRemove != null)
+              Positioned(
+                top: -4.0,
+                right: -4.0,
+                child: _buildRemoveButton(context),
+              ),
 
-              // Upload progress or error overlay
-              if (file.isUploading)
-                _buildProgressOverlay(context),
+            // Upload progress or error overlay
+            if (file.isUploading)
+              _buildProgressOverlay(context),
 
-              if (file.hasFailed)
-                _buildErrorOverlay(context),
+            if (file.hasFailed)
+              _buildErrorOverlay(context),
 
-              // Completed badge
-              if (file.isCompleted)
-                Positioned(
-                  bottom: 2.0,
-                  right: 2.0,
-                  child: _buildCompletedBadge(context),
-                ),
-            ],
-          ),
-
-          const SizedBox(height: AppDimens.spaceXSmall),
-
-          // File name
-          AppText(
-            file.fileName,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontSize: 10.0,
-                  color: isDark
-                      ? AppColors.textSecondaryDarkMode
-                      : AppColors.textSecondary,
-                ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-
-          // File size
-          AppText(
-            fileValidationService.formatFileSize(file.fileSize),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontSize: 9.0,
-                  color: isDark
-                      ? AppColors.textHintDarkMode
-                      : AppColors.textHint,
-                ),
-          ),
-        ],
+            // Completed badge
+            if (file.isCompleted)
+              Positioned(
+                bottom: 2.0,
+                right: 2.0,
+                child: _buildCompletedBadge(context),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildThumbnail(BuildContext context, bool isDark) {
+  Widget _buildThumbnail(BuildContext context, bool isDark, double size) {
     return Container(
-      width: 52.0,
-      height: 52.0,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
         color: isDark ? AppColors.surfaceDarkMode : AppColors.inputBackground,
@@ -119,19 +107,19 @@ class FilePreviewCard extends BaseStatelessWidget {
         ),
       ),
       clipBehavior: Clip.antiAlias,
-      child: _buildThumbnailContent(context),
+      child: _buildThumbnailContent(context, size),
     );
   }
 
-  Widget _buildThumbnailContent(BuildContext context) {
+  Widget _buildThumbnailContent(BuildContext context, double size) {
     // Image preview: try bytes first (web/paste), then path (desktop)
     if (file.isImage) {
       if (file.bytes != null) {
         return Image.memory(
           file.bytes!,
           fit: BoxFit.cover,
-          width: 52.0,
-          height: 52.0,
+          width: size,
+          height: size,
           errorBuilder: (_, __, ___) => _buildTypeIcon(context),
         );
       }
@@ -139,8 +127,8 @@ class FilePreviewCard extends BaseStatelessWidget {
         return Image.file(
           File(file.localPath!),
           fit: BoxFit.cover,
-          width: 52.0,
-          height: 52.0,
+          width: size,
+          height: size,
           errorBuilder: (_, __, ___) => _buildTypeIcon(context),
         );
       }
