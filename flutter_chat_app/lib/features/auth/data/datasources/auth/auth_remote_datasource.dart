@@ -1,4 +1,4 @@
-import 'package:flutter_chat_app/core/exceptions/exceptions.dart';
+import 'package:flutter_chat_app/core/error/exceptions.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
 import 'package:flutter_chat_app/core/network/graphql_client.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
@@ -161,11 +161,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       return _mapApiUserToUserModel(userData);
     } catch (e) {
-      if (e is ServerException) rethrow;
+      if (e is AppException) rethrow;
       throw ServerException(message: 'Login failed: $e');
     }
   }
-  
+
   @override
   Future<UserModel> register({
     required String email,
@@ -218,7 +218,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       return _mapApiUserToUserModel(userData);
     } catch (e) {
-      if (e is ServerException) rethrow;
+      if (e is AppException) rethrow;
       throw ServerException(message: 'Registration failed: $e');
     }
   }
@@ -261,7 +261,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       return result['forgotPassword'] == true;
     } catch (e) {
-      if (e is ServerException) rethrow;
+      if (e is AppException) rethrow;
       throw ServerException(message: 'Failed to send reset email: $e');
     }
   }
@@ -284,7 +284,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       return result['resetPassword'] == true;
     } catch (e) {
-      if (e is ServerException) rethrow;
+      if (e is AppException) rethrow;
       throw ServerException(message: 'Failed to reset password: $e');
     }
   }
@@ -310,7 +310,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       return result['changePassword'] == true;
     } catch (e) {
-      if (e is ServerException) rethrow;
+      if (e is AppException) rethrow;
       throw ServerException(message: 'Failed to change password: $e');
     }
   }
@@ -332,7 +332,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       return result['verifyEmail'] == true;
     } catch (e) {
-      if (e is ServerException) rethrow;
+      if (e is AppException) rethrow;
       throw ServerException(message: 'Failed to verify email: $e');
     }
   }
@@ -367,7 +367,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       return _mapApiUserToUserModel(userData);
     } catch (e) {
-      if (e is ServerException) rethrow;
+      if (e is AppException) rethrow;
       throw ServerException(message: 'Failed to refresh user: $e');
     }
   }

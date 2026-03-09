@@ -13,6 +13,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 
+import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
 import 'package:flutter_chat_app/core/error/failures.dart';
 
 /// **Error Handler Utility**
@@ -130,6 +131,11 @@ class ErrorHandler {
           ...?additionalDetails,
         },
       );
+    }
+
+    // App-specific exceptions (ServerException, ValidationException, AuthException, etc.)
+    if (exception is app_exceptions.AppException) {
+      return _mapAppException(exception, context, additionalDetails);
     }
 
     // Generic exceptions
@@ -303,6 +309,141 @@ class ErrorHandler {
           },
         );
     }
+  }
+
+  /// **Map App Exception to Failure**
+  ///
+  /// Specialized mapping for application-specific exceptions (GraphQL errors, etc.)
+  /// Preserves the original API error message for display to users.
+  static Failure _mapAppException(
+    app_exceptions.AppException exception,
+    String? context,
+    Map<String, dynamic>? additionalDetails,
+  ) {
+    final originalMessage = _extractCleanMessage(exception.message);
+    final code = exception.code;
+
+    // Authentication exceptions
+    if (exception is app_exceptions.AuthException) {
+      return AuthenticationFailure(
+        message: exception.message,
+        code: code ?? 'auth_error',
+        details: {
+          'context': context,
+          'originalMessage': originalMessage,
+          ...?additionalDetails,
+        },
+      );
+    }
+
+    // Validation exceptions
+    if (exception is app_exceptions.ValidationException) {
+      return ValidationFailure(
+        message: exception.message,
+        code: code ?? 'validation_error',
+        details: {
+          'context': context,
+          'originalMessage': originalMessage,
+          ...?additionalDetails,
+        },
+      );
+    }
+
+    // No internet exceptions
+    if (exception is app_exceptions.NoInternetException) {
+      return ConnectionFailure(
+        message: exception.message,
+        code: code ?? 'no_internet',
+        details: {
+          'context': context,
+          ...?additionalDetails,
+        },
+      );
+    }
+
+    // Cache exceptions
+    if (exception is app_exceptions.CacheException) {
+      return CacheFailure(
+        message: exception.message,
+        code: code ?? 'cache_error',
+        details: {
+          'context': context,
+          ...?additionalDetails,
+        },
+      );
+    }
+
+    // Timeout exceptions
+    if (exception is app_exceptions.TimeoutException) {
+      return TimeoutFailure(
+        message: exception.message,
+        code: code ?? 'timeout',
+        details: {
+          'context': context,
+          ...?additionalDetails,
+        },
+      );
+    }
+
+    // Permission exceptions
+    if (exception is app_exceptions.PermissionDeniedException) {
+      return PermissionFailure(
+        message: exception.message,
+        code: code ?? 'permission_denied',
+        details: {
+          'context': context,
+          ...?additionalDetails,
+        },
+      );
+    }
+
+    // Network exceptions
+    if (exception is app_exceptions.NetworkException) {
+      return NetworkFailure(
+        message: exception.message,
+        code: code ?? 'network_error',
+        details: {
+          'context': context,
+          ...?additionalDetails,
+        },
+      );
+    }
+
+    // ServerException and any other AppException subtypes
+    // Use ServerFailure with 'graphql_error' code to preserve the API message
+    return ServerFailure(
+      message: exception.message,
+      code: code ?? 'graphql_error',
+      details: {
+        'context': context,
+        'originalMessage': originalMessage,
+        ...?additionalDetails,
+      },
+    );
+  }
+
+  /// **Extract Clean Message**
+  ///
+  /// Strips prefixes like "GraphQL error: " or "Validation error: "
+  /// to get the original API message for user display.
+  static String _extractCleanMessage(String message) {
+    const prefixes = [
+      'GraphQL error: ',
+      'Validation error: ',
+      'Authentication error: ',
+      'Network error: ',
+      'Login failed: ',
+    ];
+    var cleaned = message;
+    for (final prefix in prefixes) {
+      if (cleaned.startsWith(prefix)) {
+        cleaned = cleaned.substring(prefix.length);
+      }
+    }
+    // Also strip nested AppException toString wrappers
+    final appExRegex = RegExp(r'AppException:\s*\[.*?\]\s*');
+    cleaned = cleaned.replaceAll(appExRegex, '');
+    return cleaned.trim();
   }
 
   /// **Get Recovery Strategy**

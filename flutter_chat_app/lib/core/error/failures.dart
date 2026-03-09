@@ -50,7 +50,7 @@ abstract class Failure extends Equatable {
 // **NETWORK FAILURES**
 
 /// **Server Failure**
-/// Lỗi từ server (5xx errors, server unavailable, etc.)
+/// Lỗi từ server (5xx errors, server unavailable, GraphQL business errors, etc.)
 class ServerFailure extends Failure {
   const ServerFailure({
     required super.message,
@@ -60,6 +60,17 @@ class ServerFailure extends Failure {
 
   @override
   String get userMessage {
+    // GraphQL business errors: show the original API message directly
+    // These are meaningful messages from backend like "Người dùng không tồn tại"
+    if (code == 'graphql_error') {
+      final originalMessage = details?['originalMessage'] as String?;
+      if (originalMessage != null && originalMessage.isNotEmpty) {
+        return originalMessage;
+      }
+      // Fallback: strip known prefixes from technical message
+      return _stripPrefixes(message);
+    }
+
     switch (code) {
       case '500':
         return ErrorMessages.getMessage('server_error');
@@ -72,6 +83,27 @@ class ServerFailure extends Failure {
       default:
         return ErrorMessages.getMessage('server_error');
     }
+  }
+
+  /// Strip known technical prefixes to get clean user-facing message
+  static String _stripPrefixes(String msg) {
+    var cleaned = msg;
+    const prefixes = [
+      'GraphQL error: ',
+      'Server error: ',
+      'HTTP error: ',
+    ];
+    for (final prefix in prefixes) {
+      if (cleaned.startsWith(prefix)) {
+        cleaned = cleaned.substring(prefix.length);
+      }
+    }
+    // Strip nested AppException wrappers
+    final appExRegex = RegExp(r'AppException:\s*\[.*?\]\s*');
+    cleaned = cleaned.replaceAll(appExRegex, '');
+    return cleaned.trim().isEmpty
+        ? ErrorMessages.getMessage('server_error')
+        : cleaned.trim();
   }
 
   @override
@@ -161,6 +193,12 @@ class AuthenticationFailure extends Failure {
       case 'account_disabled':
         return ErrorMessages.getMessage('account_disabled');
       default:
+        // For backend error codes (e.g. AUTH_ERROR, Office.AccountNotExisted),
+        // show the original API message if available
+        final originalMessage = details?['originalMessage'] as String?;
+        if (originalMessage != null && originalMessage.isNotEmpty) {
+          return originalMessage;
+        }
         return ErrorMessages.getMessage('login_failed');
     }
   }

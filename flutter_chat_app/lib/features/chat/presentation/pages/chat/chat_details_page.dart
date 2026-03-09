@@ -699,6 +699,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             : context.l10n.you,
         isEditMode: _isEditMode,
         editingMessageId: _editingMessageId,
+        hasAttachments: _fileAttachmentBloc.state.hasFiles,
       ),
     );
   }

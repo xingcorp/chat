@@ -184,6 +184,7 @@ dev_dependencies:
   
   # Testing
   golden_toolkit: ^0.15.0
+  msix: ^3.16.12
 
 flutter:
   generate: true
@@ -213,3 +214,12 @@ flutter:
 # Production build commands:
 # flutter build apk --release --tree-shake-icons --split-debug-info=build/debug-info --obfuscate
 # flutter build ios --release --tree-shake-icons --split-debug-info=build/debug-info --obfuscate
+
+msix_config:
+  display_name: OXII Chat
+  publisher_display_name: OXII
+  identity_name: com.oxii.chat
+  msix_version: 1.0.0.0
+  logo_path: windows\runner\resources\app_icon.ico
+  capabilities: internetClient, microphone, webcam
+  install_certificate: false

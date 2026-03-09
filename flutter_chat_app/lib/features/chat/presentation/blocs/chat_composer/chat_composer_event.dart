@@ -13,6 +13,7 @@ class ChatComposerSendRequested extends ChatComposerEvent {
     required this.actorDisplayName,
     required this.isEditMode,
     required this.editingMessageId,
+    this.hasAttachments = false,
   });
 
   final String rawInput;
@@ -20,12 +21,17 @@ class ChatComposerSendRequested extends ChatComposerEvent {
   final bool isEditMode;
   final String? editingMessageId;
 
+  /// Whether there are file attachments ready to send.
+  /// When true, allows sending even if rawInput is empty (file-only message).
+  final bool hasAttachments;
+
   @override
   List<Object?> get props => <Object?>[
         rawInput,
         actorDisplayName,
         isEditMode,
         editingMessageId,
+        hasAttachments,
       ];
 }
 
