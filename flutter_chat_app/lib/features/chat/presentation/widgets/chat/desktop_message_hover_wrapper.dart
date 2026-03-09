@@ -80,6 +80,12 @@ class _DesktopMessageHoverWrapperState
 
   OverlayEntry? _overlayEntry;
   Timer? _hideTimer;
+
+  /// Timer to delay showing bar when stealing focus from another message.
+  /// Prevents bar "jumping" when cursor crosses an intermediate message
+  /// on the way to the currently active bar.
+  Timer? _showTimer;
+
   bool _isMouseOnMessage = false;
   bool _isMouseOnBar = false;
   final GlobalKey _moreButtonKey = GlobalKey();
@@ -93,9 +99,14 @@ class _DesktopMessageHoverWrapperState
   /// Delay before hiding the action bar after mouse exits
   static const Duration _hideDelay = Duration(milliseconds: 200);
 
+  /// Delay before stealing focus from another active bar.
+  /// Allows cursor to pass through intermediate messages without jumping.
+  static const Duration _showDelay = Duration(milliseconds: 150);
+
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _showTimer?.cancel();
     _dismissOverlay();
     if (_activeInstance == this) {
       _activeInstance = null;
@@ -119,10 +130,20 @@ class _DesktopMessageHoverWrapperState
   void _onMessageMouseEnter() {
     _isMouseOnMessage = true;
     _hideTimer?.cancel();
+    _showTimer?.cancel();
 
-    // Dismiss any other active instance
+    // If there's already an active bar from a different message,
+    // DON'T immediately steal focus. Delay to allow cursor to pass
+    // through intermediate messages on the way to the active bar.
     if (_activeInstance != null && _activeInstance != this) {
-      _activeInstance?._dismissOverlay();
+      _showTimer = Timer(_showDelay, () {
+        if (_isMouseOnMessage && mounted) {
+          _activeInstance?._dismissOverlay();
+          _showActionBar();
+          _activeInstance = this;
+        }
+      });
+      return;
     }
 
     _showActionBar();
@@ -131,6 +152,7 @@ class _DesktopMessageHoverWrapperState
 
   void _onMessageMouseExit() {
     _isMouseOnMessage = false;
+    _showTimer?.cancel();
     _scheduleHideIfNeeded();
   }
 
