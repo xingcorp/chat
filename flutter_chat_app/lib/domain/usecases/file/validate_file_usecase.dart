@@ -4,7 +4,6 @@ import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:injectable/injectable.dart';
-import 'package:path/path.dart' as p;
 
 /// Parameters for file validation
 class ValidateFileParams extends Equatable {
@@ -42,21 +41,6 @@ class ValidateFileParams extends Equatable {
 /// This is pure domain logic — no Data or Presentation layer dependencies.
 @injectable
 class ValidateFileUseCase extends UseCase<bool, ValidateFileParams> {
-  /// Allowed file extensions for upload
-  static const Set<String> _allowedExtensions = {
-    // Images
-    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif',
-    // Videos
-    '.mp4', '.mov', '.avi', '.mkv', '.webm',
-    // Audio
-    '.mp3', '.wav', '.ogg', '.m4a', '.aac',
-    // Documents
-    '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-    '.txt', '.csv', '.json', '.xml',
-    // Archives
-    '.zip', '.rar', '.7z',
-  };
-
   ValidateFileUseCase();
 
   @override
@@ -82,16 +66,9 @@ class ValidateFileUseCase extends UseCase<bool, ValidateFileParams> {
       );
     }
 
-    // Check: file type is allowed
-    final extension = p.extension(params.fileName).toLowerCase();
-    if (extension.isNotEmpty && !_allowedExtensions.contains(extension)) {
-      return Left(
-        ValidationFailure(
-          message: 'File type not allowed: ${params.fileName}',
-          code: 'file_type_not_allowed',
-        ),
-      );
-    }
+    // Note: All file types are allowed for upload.
+    // Type detection is handled by FileValidationService.detectType()
+    // which categorizes files for preview display only.
 
     // Check: attachment count within limit (10)
     if (params.currentAttachmentCount >= AppConstants.kMaxAttachmentsPerMessage) {

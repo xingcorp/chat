@@ -77,23 +77,12 @@ class FileValidationService {
     }
   }
 
-  /// Check if the file type is in the allowed list.
+  /// Check if the file type is allowed.
+  ///
+  /// Currently all file types are allowed for upload.
+  /// The extension/MIME sets above are used only for [detectType] categorization.
   bool isAllowedType(String fileName, String mimeType) {
-    final extension = p.extension(fileName).toLowerCase();
-
-    // If extension is present, check it
-    if (extension.isNotEmpty) {
-      return allAllowedExtensions.contains(extension);
-    }
-
-    // Fallback: check MIME type prefix
-    final mimePrefix = mimeType.split('/').first;
-    return mimePrefix == 'image' ||
-        mimePrefix == 'video' ||
-        mimePrefix == 'audio' ||
-        mimeType == 'application/pdf' ||
-        mimeType == 'application/zip' ||
-        mimeType == 'text/plain';
+    return true;
   }
 
   /// Check if the file size is within the allowed limit.

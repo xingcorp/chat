@@ -235,6 +235,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     _voiceRecorderService = getIt<VoiceRecorderService>();
     _fileAttachmentBloc = getIt<FileAttachmentBloc>();
     _clipboardDataSource = getIt<ClipboardDataSource>();
+
+    // Register keyboard listener for clipboard image paste (Ctrl+V / Cmd+V).
+    // We use HardwareKeyboard instead of Shortcuts/Actions because
+    // Shortcuts would consume Ctrl+V and prevent normal text paste in TextField.
+    if (isClipboardPasteSupported) {
+      HardwareKeyboard.instance.addHandler(_handleRawKeyForPaste);
+    }
     _messageBloc.add(const FetchFrequentReactions());
     _setActiveConversation();
 
@@ -650,6 +657,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       ),
     );
 
+    if (isClipboardPasteSupported) {
+      HardwareKeyboard.instance.removeHandler(_handleRawKeyForPaste);
+    }
     _messageController.removeListener(_handleControllerChanges);
     _messageController.dispose();
     _messageFocusNode.dispose();
@@ -878,7 +888,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
           shift: true,
         ): const _CopySelectedMessagesShortcutIntent(),
         // Clipboard paste (Ctrl+V / Cmd+V) for image paste
-        ...clipboardPasteShortcuts,
+        // Note: handled via HardwareKeyboard listener, not Shortcuts/Actions,
+        // so that normal text paste in TextField is not blocked.
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -919,13 +930,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
               return null;
             },
           ),
-          PasteImageIntent:
-              CallbackAction<PasteImageIntent>(
-            onInvoke: (_) {
-              _handlePasteImageShortcut();
-              return null;
-            },
-          ),
         },
         child: Focus(
           autofocus: true,
@@ -963,36 +967,28 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     _copySelectedMessages(state.uiMessages);
   }
 
-  void _handlePasteImageShortcut() {
-    handleClipboardPaste().then((handled) {
-      // If an image was pasted, it's already sent to FileAttachmentBloc.
-      // If not (text only), manually paste text into the message field.
-      if (!handled && mounted) {
-        Clipboard.getData(Clipboard.kTextPlain).then((data) {
-          if (data?.text != null && data!.text!.isNotEmpty && mounted) {
-            final text = data.text!;
-            final selection = _messageController.selection;
-            final currentText = _messageController.text;
-            if (selection.isValid) {
-              final newText = currentText.replaceRange(
-                selection.start,
-                selection.end,
-                text,
-              );
-              _messageController.text = newText;
-              _messageController.selection = TextSelection.collapsed(
-                offset: selection.start + text.length,
-              );
-            } else {
-              _messageController.text = currentText + text;
-              _messageController.selection = TextSelection.collapsed(
-                offset: _messageController.text.length,
-              );
-            }
-          }
-        });
-      }
-    });
+  /// HardwareKeyboard handler for clipboard image paste.
+  ///
+  /// Always returns `false` (does NOT consume the event) so that
+  /// the default TextField text-paste continues to work normally.
+  /// If the clipboard contains an image, it is added to FileAttachmentBloc
+  /// as a side-effect (fire-and-forget).
+  bool _handleRawKeyForPaste(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
+    if (!_messageFocusNode.hasFocus) return false;
+
+    final isCtrlV = HardwareKeyboard.instance.isControlPressed &&
+        event.logicalKey == LogicalKeyboardKey.keyV;
+    final isMetaV = HardwareKeyboard.instance.isMetaPressed &&
+        event.logicalKey == LogicalKeyboardKey.keyV;
+
+    if (!isCtrlV && !isMetaV) return false;
+
+    // Fire-and-forget: check clipboard for image data
+    handleClipboardPaste();
+
+    // Always return false — let the TextField handle normal text paste
+    return false;
   }
 
   void _forwardSelectedMessages() {
