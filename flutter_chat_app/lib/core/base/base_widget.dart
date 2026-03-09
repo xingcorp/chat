@@ -103,8 +103,9 @@ abstract class BaseState<T extends BaseStatefulWidget> extends State<T> with Wid
     if (mounted) {
       setState(fn);
     } else {
+      // Widget is not mounted — do NOT call fn() as it may trigger
+      // framework assertions (e.g., markNeedsBuild on defunct element).
       LogUtils.w(_tag, 'Tried to setState but widget is not mounted');
-      fn();
     }
   }
 }
