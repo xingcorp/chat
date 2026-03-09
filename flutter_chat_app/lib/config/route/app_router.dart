@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/services/chat_conversation_selection_service.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/features/auth/presentation/pages/auth/forgot_password_page.dart';
 import 'package:flutter_chat_app/features/auth/presentation/pages/auth/login_page.dart';
@@ -13,6 +15,7 @@ import 'package:flutter_chat_app/presentation/pages/error_page.dart';
 import 'package:flutter_chat_app/presentation/pages/permissions/permissions_onboarding_page.dart';
 import 'package:flutter_chat_app/presentation/pages/splash_page.dart';
 import 'package:flutter_chat_app/presentation/pages/users/user_details_page.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 /// Application router configuration
@@ -22,12 +25,15 @@ class AppRouter {
 
   static final _refreshListenable = _AuthBlocListenable();
 
+  static GlobalKey<NavigatorState> get rootNavigatorKey => _rootNavigatorKey;
+
   /// Router instance.
   ///
   /// [initialLocation] defaults to `/splash`. Pass `/chats` for returning
   /// users whose cached auth flag is set, so they skip the splash animation
   /// and see the chat list (with shimmer) immediately.
-  static GoRouter router(BuildContext context, {String initialLocation = '/splash'}) {
+  static GoRouter router(BuildContext context,
+      {String initialLocation = '/splash'}) {
     final authBloc = BlocProvider.of<AuthBloc>(context);
     _refreshListenable.attach(authBloc);
 
@@ -42,13 +48,13 @@ class AppRouter {
         final isOnboarded = authState.isOnboarded;
         final isAuthResolving = authState is AuthInitial ||
             (authState is AuthLoading && authState.operation == 'check');
-        final isLoggingIn = state.matchedLocation.startsWith('/login') || 
-                          state.matchedLocation.startsWith('/register') ||
-                          state.matchedLocation.startsWith('/forgot-password');
+        final isLoggingIn = state.matchedLocation.startsWith('/login') ||
+            state.matchedLocation.startsWith('/register') ||
+            state.matchedLocation.startsWith('/forgot-password');
         final isSplash = state.matchedLocation == '/splash';
         final isOnboarding = state.matchedLocation.startsWith('/onboarding');
         final isHomeAlias = state.matchedLocation == '/home';
-        
+
         // Splash acts as an auth gate: stay while checking, then route to target
         if (isSplash) {
           if (authState is AuthAuthenticated) {
@@ -70,19 +76,19 @@ class AppRouter {
 
         // Normalize /home to /chats (legacy navigation paths)
         if (isHomeAlias) return '/chats';
-        
+
         // If not logged in and not on login pages, redirect to login
         if (!isLoggedIn && !isLoggingIn) return '/login';
-        
+
         // If logged in but not onboarded, redirect to onboarding
         if (isLoggedIn && !isOnboarded && !isOnboarding) return '/onboarding';
 
         // If already onboarded but still on onboarding, go to home
         if (isLoggedIn && isOnboarded && isOnboarding) return '/chats';
-        
+
         // If logged in and trying to access login pages, redirect to home
         if (isLoggedIn && isOnboarded && isLoggingIn) return '/chats';
-        
+
         return null;
       },
       routes: [
@@ -97,7 +103,7 @@ class AppRouter {
           path: '/home',
           redirect: (context, state) => '/chats',
         ),
-        
+
         // Authentication routes
         GoRoute(
           path: '/login',
@@ -117,7 +123,7 @@ class AppRouter {
           path: '/onboarding',
           builder: (context, state) => const PermissionsOnboardingPage(),
         ),
-        
+
         // Main app shell
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
@@ -140,6 +146,15 @@ class AppRouter {
                   path: ':chatId',
                   builder: (context, state) {
                     final chatId = state.pathParameters['chatId']!;
+                    final isDesktop = MediaQuery.sizeOf(context).width >=
+                        AppDimens.breakpointDesktop;
+                    if (isDesktop &&
+                        GetIt.I
+                            .isRegistered<ChatConversationSelectionService>()) {
+                      GetIt.I<ChatConversationSelectionService>()
+                          .selectConversation(chatId);
+                      return const ChatHomePage();
+                    }
                     return ChatDetailsPage(chatId: chatId);
                   },
                 ),
@@ -153,8 +168,10 @@ class AppRouter {
           builder: (context, state) {
             final userId = state.pathParameters['userId']!;
             final extra = state.extra;
-            final displayName = extra is Map ? extra['displayName'] as String? : null;
-            final avatarUrl = extra is Map ? extra['avatarUrl'] as String? : null;
+            final displayName =
+                extra is Map ? extra['displayName'] as String? : null;
+            final avatarUrl =
+                extra is Map ? extra['avatarUrl'] as String? : null;
             return UserDetailsPage(
               userId: userId,
               displayName: displayName,

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/services/chat_conversation_selection_service.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat_draft/chat_draft_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_list_panel.dart';
@@ -18,15 +21,34 @@ class ChatHomePage extends StatefulWidget {
 class _ChatHomePageState extends State<ChatHomePage> {
   String? _selectedChatId;
   late final ChatDraftBloc _chatDraftBloc;
+  late final ChatConversationSelectionService _conversationSelectionService;
+  StreamSubscription<String?>? _selectedConversationSubscription;
 
   @override
   void initState() {
     super.initState();
     _chatDraftBloc = GetIt.instance<ChatDraftBloc>();
+    _conversationSelectionService =
+        GetIt.instance<ChatConversationSelectionService>();
+    _selectedChatId = _conversationSelectionService.selectedConversationId;
+    _selectedConversationSubscription =
+        _conversationSelectionService.selectedConversationStream.listen(
+      (selectedChatId) {
+        if (!mounted || _selectedChatId == selectedChatId) {
+          return;
+        }
+
+        setState(() {
+          _selectedChatId = selectedChatId;
+        });
+      },
+    );
   }
 
   @override
   void dispose() {
+    _selectedConversationSubscription?.cancel();
+    _conversationSelectionService.clearSelection(_selectedChatId);
     _chatDraftBloc.close();
     super.dispose();
   }
@@ -48,10 +70,7 @@ class _ChatHomePageState extends State<ChatHomePage> {
                   width: 360,
                   child: ChatListPanel(
                     onChatSelected: (chatId) {
-                      if (_selectedChatId == chatId) return;
-                      setState(() {
-                        _selectedChatId = chatId;
-                      });
+                      _conversationSelectionService.selectConversation(chatId);
                     },
                   ),
                 ),

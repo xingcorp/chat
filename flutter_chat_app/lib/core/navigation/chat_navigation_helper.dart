@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:flutter_chat_app/chat_module.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/services/chat_conversation_selection_service.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/create_group_page.dart';
@@ -35,6 +39,32 @@ class ChatNavigationHelper {
   /// Whether the chat module is running in package mode.
   static bool get isPackageMode => ChatModule.isInitialized;
 
+  static bool _isStandaloneDesktop(BuildContext context) {
+    return !isPackageMode &&
+        MediaQuery.sizeOf(context).width >= AppDimens.breakpointDesktop;
+  }
+
+  static void _selectDesktopConversation(String chatId) {
+    if (!GetIt.I.isRegistered<ChatConversationSelectionService>()) {
+      return;
+    }
+
+    GetIt.I<ChatConversationSelectionService>().selectConversation(chatId);
+  }
+
+  static Widget _buildStandaloneChatDetailPage(
+    BuildContext context, {
+    required String chatId,
+    String? receiverId,
+  }) {
+    if (_isStandaloneDesktop(context)) {
+      _selectDesktopConversation(chatId);
+      return const ChatHomePage();
+    }
+
+    return ChatDetailsPage(chatId: chatId, receiverId: receiverId);
+  }
+
   // ===========================================================
   // Navigation Methods
   // ===========================================================
@@ -43,6 +73,14 @@ class ChatNavigationHelper {
   ///
   /// Pushes the chat list page onto the navigator stack.
   static Future<void> navigateToChatList(BuildContext context) {
+    if (_isStandaloneDesktop(context)) {
+      final goRouter = GoRouter.maybeOf(context);
+      if (goRouter != null) {
+        goRouter.go('/chats');
+        return Future<void>.value();
+      }
+    }
+
     if (isPackageMode) {
       return Navigator.push(context, ChatModule.chatListRoute());
     } else {
@@ -65,16 +103,27 @@ class ChatNavigationHelper {
     required String chatId,
     String? receiverId,
   }) {
+    if (_isStandaloneDesktop(context)) {
+      _selectDesktopConversation(chatId);
+      final goRouter = GoRouter.maybeOf(context);
+      if (goRouter != null) {
+        goRouter.go('/chats');
+        return Future<void>.value();
+      }
+    }
+
     if (isPackageMode) {
-      return Navigator.push(
-          context,
-          ChatModule.chatDetailRoute(
-              chatId: chatId, receiverId: receiverId));
+      return Navigator.push(context,
+          ChatModule.chatDetailRoute(chatId: chatId, receiverId: receiverId));
     } else {
       return Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => ChatDetailsPage(chatId: chatId, receiverId: receiverId),
+          builder: (context) => _buildStandaloneChatDetailPage(
+            context,
+            chatId: chatId,
+            receiverId: receiverId,
+          ),
           settings: RouteSettings(name: '/chat/$chatId'),
         ),
       );
@@ -141,12 +190,14 @@ class ChatNavigationHelper {
     String? receiverId,
   }) {
     if (isPackageMode) {
-      return ChatModule.chatDetailRoute(
-          chatId: chatId, receiverId: receiverId);
+      return ChatModule.chatDetailRoute(chatId: chatId, receiverId: receiverId);
     } else {
       return MaterialPageRoute(
-        builder: (_) =>
-            ChatDetailsPage(chatId: chatId, receiverId: receiverId),
+        builder: (context) => _buildStandaloneChatDetailPage(
+          context,
+          chatId: chatId,
+          receiverId: receiverId,
+        ),
         settings: RouteSettings(name: '/chat/$chatId'),
       );
     }
@@ -182,6 +233,14 @@ class ChatNavigationHelper {
 
   /// Replace current route with chat list page.
   static Future<void> replaceToChatList(BuildContext context) {
+    if (_isStandaloneDesktop(context)) {
+      final goRouter = GoRouter.maybeOf(context);
+      if (goRouter != null) {
+        goRouter.go('/chats');
+        return Future<void>.value();
+      }
+    }
+
     if (isPackageMode) {
       return Navigator.pushReplacement(context, ChatModule.chatListRoute());
     } else {
@@ -201,6 +260,15 @@ class ChatNavigationHelper {
     required String chatId,
     String? receiverId,
   }) {
+    if (_isStandaloneDesktop(context)) {
+      _selectDesktopConversation(chatId);
+      final goRouter = GoRouter.maybeOf(context);
+      if (goRouter != null) {
+        goRouter.go('/chats');
+        return Future<void>.value();
+      }
+    }
+
     if (isPackageMode) {
       return Navigator.pushReplacement(
         context,
@@ -210,8 +278,11 @@ class ChatNavigationHelper {
       return Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) =>
-              ChatDetailsPage(chatId: chatId, receiverId: receiverId),
+          builder: (context) => _buildStandaloneChatDetailPage(
+            context,
+            chatId: chatId,
+            receiverId: receiverId,
+          ),
           settings: RouteSettings(name: '/chat/$chatId'),
         ),
       );

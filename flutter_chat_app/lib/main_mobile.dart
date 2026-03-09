@@ -1,23 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/core/config/app_identity.dart';
 import 'package:flutter_chat_app/core/config/flavor_config.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
-import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
-import 'package:uuid/uuid.dart';
 import 'package:flutter_chat_app/main.dart' show MyApp;
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:get_it/get_it.dart';
+import 'package:uuid/uuid.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Load environment variables
   if (!FlavorConfig.isInitialized) {
     FlavorConfig.initializeFromEnvironment();
@@ -25,13 +25,13 @@ Future<void> main() async {
   final envFileName =
       FlavorConfig.instance.isProduction ? '.env.production' : '.env.staging';
   await dotenv.load(fileName: envFileName);
-  
+
   // Configure Enterprise dependencies
   await configureDependencies();
-  
+
   // Initialize services for mobile
   await _initializeMobileServices();
-  
+
   runApp(const MyApp());
 }
 
@@ -75,7 +75,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
         _users = users;
       });
     });
-    
+
     _repository.getChatStream().listen((chats) {
       setState(() {
         _chats = chats;
@@ -149,7 +149,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     try {
       final databaseService = GetIt.I<DatabaseService>();
       await databaseService.clearAllData();
-      
+
       setState(() {
         _messages = [];
         _statusMessage = 'Data cleared successfully';
@@ -169,7 +169,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mobile Chat App'),
+        title: Text(AppIdentity.appName),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: _isLoading
@@ -179,51 +179,54 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Status: $_statusMessage', 
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Status: $_statusMessage',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
-                  
-                  const Text('Users:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  _users.isEmpty
-                      ? const Text('No users yet')
-                      : Column(
-                          children: _users
-                              .map((user) => ListTile(
-                                    title: Text(user.displayName),
-                                    subtitle: Text(user.username),
-                                  ))
-                              .toList(),
-                        ),
+                  const Text('Users:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  if (_users.isEmpty)
+                    const Text('No users yet')
+                  else
+                    Column(
+                      children: _users
+                          .map((user) => ListTile(
+                                title: Text(user.displayName),
+                                subtitle: Text(user.username),
+                              ))
+                          .toList(),
+                    ),
                   const SizedBox(height: 20),
-                  
-                  const Text('Chats:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  _chats.isEmpty
-                      ? const Text('No chats yet')
-                      : Column(
-                          children: _chats
-                              .map((chat) => ListTile(
-                                    title: Text('Chat ${chat.id}'),
-                                    subtitle: Text('Type: ${chat.type.name}'),
-                                  ))
-                              .toList(),
-                        ),
+                  const Text('Chats:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  if (_chats.isEmpty)
+                    const Text('No chats yet')
+                  else
+                    Column(
+                      children: _chats
+                          .map((chat) => ListTile(
+                                title: Text('Chat ${chat.id}'),
+                                subtitle: Text('Type: ${chat.type.name}'),
+                              ))
+                          .toList(),
+                    ),
                   const SizedBox(height: 20),
-                  
-                  const Text('Messages:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  _messages.isEmpty
-                      ? const Text('No messages yet')
-                      : Expanded(
-                          child: ListView.builder(
-                            itemCount: _messages.length,
-                            itemBuilder: (context, index) {
-                              final message = _messages[index];
-                              return ListTile(
-                                title: Text(message.content),
-                                subtitle: Text('Status: ${message.status.name}'),
-                              );
-                            },
-                          ),
-                        ),
+                  const Text('Messages:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  if (_messages.isEmpty)
+                    const Text('No messages yet')
+                  else
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: _messages.length,
+                        itemBuilder: (context, index) {
+                          final message = _messages[index];
+                          return ListTile(
+                            title: Text(message.content),
+                            subtitle: Text('Status: ${message.status.name}'),
+                          );
+                        },
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -246,4 +249,4 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
       ),
     );
   }
-} 
+}

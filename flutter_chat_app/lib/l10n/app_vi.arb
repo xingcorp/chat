@@ -1,7 +1,7 @@
 {
   "@@locale": "vi",
 
-  "appTitle": "Ứng dụng Chat Flutter",
+  "appTitle": "OXII Chat",
   "ok": "OK",
   "cancel": "Hủy",
   "save": "Lưu",
@@ -114,7 +114,7 @@
 
   "settings": "Cài đặt",
   "groups": "Nhóm",
-  "welcomeToChat": "Chào mừng đến với Flutter Chat App",
+  "welcomeToChat": "Chào mừng đến với OXII Chat",
 
   "errorNoInternet": "Không có kết nối internet. Vui lòng kiểm tra mạng của bạn.",
   "errorServer": "Lỗi máy chủ. Vui lòng thử lại sau.",

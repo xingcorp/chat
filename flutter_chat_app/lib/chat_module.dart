@@ -9,6 +9,7 @@ import 'package:flutter_chat_app/core/di/chat_module_injection.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart';
 import 'package:flutter_chat_app/core/services/chat_fcm_handler.dart';
 import 'package:flutter_chat_app/core/services/chat_module_event_bus.dart';
+import 'package:flutter_chat_app/core/services/chat_notification_payload.dart';
 import 'package:flutter_chat_app/core/theme/app_theme.dart';
 import 'package:flutter_chat_app/core/theme/app_theme_extensions.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_details_page.dart';
@@ -158,6 +159,12 @@ class ChatModule {
     return GetIt.instance<ChatModuleEventBus>().newMessageStream;
   }
 
+  /// Stream of built-in local notification taps forwarded by the module.
+  static Stream<ChatNotificationPayload> get notificationTapStream {
+    _ensureInitialized();
+    return GetIt.instance<ChatModuleEventBus>().notificationTapStream;
+  }
+
   /// Convenience method to listen for new messages.
   ///
   /// Returns a [StreamSubscription] that the caller should cancel
@@ -168,6 +175,16 @@ class ChatModule {
     _ensureInitialized();
     return GetIt.instance<ChatModuleEventBus>()
         .newMessageStream
+        .listen(callback);
+  }
+
+  /// Convenience method to listen for built-in notification taps.
+  static StreamSubscription<ChatNotificationPayload> onNotificationTap(
+    void Function(ChatNotificationPayload payload) callback,
+  ) {
+    _ensureInitialized();
+    return GetIt.instance<ChatModuleEventBus>()
+        .notificationTapStream
         .listen(callback);
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/config/route/app_router.dart';
 import 'package:flutter_chat_app/core/app/chat_app_shell.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/config/app_identity.dart';
 import 'package:flutter_chat_app/core/localization/l10n_helper.dart'
     as l10n_helper;
 import 'package:flutter_chat_app/core/theme/app_theme.dart';
@@ -67,7 +68,7 @@ class _AppViewState extends State<_AppView> {
 
             return Portal(
               child: MaterialApp.router(
-                title: 'Flutter Chat App',
+                title: AppIdentity.appName,
                 debugShowCheckedModeBanner: false,
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,

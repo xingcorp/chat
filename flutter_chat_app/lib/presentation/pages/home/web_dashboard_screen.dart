@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
-import 'package:uuid/uuid.dart';
-
+import 'package:flutter_chat_app/core/config/app_identity.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:get_it/get_it.dart';
+import 'package:uuid/uuid.dart';
 
 /// Web-specific dashboard for testing offline-first data operations.
 class WebDashboardScreen extends StatefulWidget {
@@ -128,7 +128,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Web Chat Application'),
+        title: Text('${AppIdentity.appName} Web Dashboard'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
@@ -137,9 +137,10 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('Web App Help'),
-                  content: const Text(
-                      'This is the web version of the chat application.'),
+                  title: Text('${AppIdentity.appName} Web Help'),
+                  content: Text(
+                    'This is the web version of ${AppIdentity.appName}.',
+                  ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
@@ -287,8 +288,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
                                               title: Text('Chat ${chat.id}'),
                                               subtitle: Text(
                                                   'Type: ${chat.type.name}'),
-                                              leading:
-                                                  const Icon(Icons.chat),
+                                              leading: const Icon(Icons.chat),
                                             );
                                           },
                                         ),
@@ -321,8 +321,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
                                                   const EdgeInsets.symmetric(
                                                       vertical: 4.0),
                                               child: ListTile(
-                                                title:
-                                                    Text(message.content),
+                                                title: Text(message.content),
                                                 subtitle: Text(
                                                     'Status: ${message.status.name}'),
                                                 trailing: Text(

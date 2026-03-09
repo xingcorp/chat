@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/config/app_identity.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_brand_logo.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/navigation/app_scaffold.dart';
 import 'package:go_router/go_router.dart';
 
@@ -61,21 +63,20 @@ class _LoginPageState extends State<LoginPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 32),
-                  const Icon(
-                    Icons.chat,
-                    size: 80,
-                    color: Colors.blue,
+                  const AppBrandLogo.wordmark(
+                    width: 260,
+                    height: 72,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   Text(
-                    context.l10n.appTitle,
+                    AppIdentity.appName,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 40),
 
                   TextFormField(
                     controller: _phoneController,

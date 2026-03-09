@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/config/app_identity.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_brand_logo.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:get_it/get_it.dart';
@@ -308,12 +310,12 @@ class _SettingsPageState extends BaseState<SettingsPage> {
     showDialog(
       context: context,
       builder: (context) => AboutDialog(
-        applicationName: 'Chat App',
+        applicationName: AppIdentity.appName,
         applicationVersion: _appVersion,
-        applicationIcon: const FlutterLogo(size: 48),
+        applicationIcon: const AppBrandLogo.icon(size: 48),
         children: [
           const SizedBox(height: AppDimens.spaceMedium),
-          const Text('Enterprise Chat Application'),
+          Text(AppIdentity.description),
         ],
       ),
     );

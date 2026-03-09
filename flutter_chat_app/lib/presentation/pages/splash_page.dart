@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/config/app_identity.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_brand_logo.dart';
 
 /// Splash page
 class SplashPage extends StatefulWidget {
   /// Constructor
-  const SplashPage({Key? key}) : super(key: key);
+  const SplashPage({super.key});
 
   @override
   State<SplashPage> createState() => _SplashPageState();
@@ -51,7 +54,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: AppColors.background,
       body: Center(
         child: AnimatedBuilder(
           animation: _controller,
@@ -63,18 +66,17 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.chat_bubble_outline,
-                      size: 100,
-                      color: Colors.white,
+                    const AppBrandLogo.wordmark(
+                      width: 320,
+                      height: 84,
                     ),
                     const SizedBox(height: 24),
-                    const Text(
-                      'Flutter Chat App',
+                    Text(
+                      AppIdentity.appName,
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -82,12 +84,12 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                       'Kết nối mọi lúc, mọi nơi',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.white70,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 64),
                     const CircularProgressIndicator(
-                      color: Colors.white,
+                      color: AppColors.primary,
                     ),
                   ],
                 ),
@@ -98,4 +100,4 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
       ),
     );
   }
-} 
+}

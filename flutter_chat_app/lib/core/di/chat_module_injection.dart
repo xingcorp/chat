@@ -72,13 +72,19 @@ import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 
 import 'package:flutter_chat_app/core/cache/background_sync_helper.dart';
 import 'package:flutter_chat_app/core/services/chat_module_event_bus.dart';
+import 'package:flutter_chat_app/core/services/chat_active_conversation_tracker.dart';
+import 'package:flutter_chat_app/core/services/chat_notification_orchestrator.dart';
+import 'package:flutter_chat_app/core/services/chat_notification_policy_service.dart';
+import 'package:flutter_chat_app/core/services/chat_conversation_selection_service.dart';
 import 'package:flutter_chat_app/core/services/foreground_sync_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/core/services/local_notification_service.dart';
 import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_local_datasource.dart';
 import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
 
-import 'injection.config.dart';
-import 'modules/core_module.dart';
+import 'package:flutter_chat_app/core/di/injection.config.dart';
+import 'package:flutter_chat_app/core/di/modules/core_module.dart';
+import 'package:flutter_chat_app/core/di/modules/notification_module.dart';
 
 /// Initializes DI for the chat module running in package mode.
 ///
@@ -154,6 +160,9 @@ class ChatModuleInjection {
       _registerConfigOverrides(config);
       lap('Step6: Config overrides');
 
+      registerNotificationModule(_getIt);
+      lap('Step6.5: Notification module');
+
       // Step 7: Set AppConfig overrides for package mode
       AppConfig.setOverrides({
         'API_URL': config.graphqlUrl,
@@ -204,11 +213,20 @@ class ChatModuleInjection {
         if (config.onUnreadCountChanged != null) {
           eventBus.totalUnreadCountStream.listen(config.onUnreadCountChanged!);
         }
+        if (config.onNotificationTap != null) {
+          eventBus.notificationTapStream.listen(config.onNotificationTap!);
+        }
       }
 
       // Step 12: Initialize ForegroundSyncService
       if (_getIt.isRegistered<ForegroundSyncService>()) {
         _getIt<ForegroundSyncService>().initialize();
+      }
+
+      if (_getIt.isRegistered<ChatNotificationOrchestrator>()) {
+        await _getIt<ChatNotificationOrchestrator>().initialize(
+          enableBuiltInNotifications: config.enableBuiltInLocalNotifications,
+        );
       }
 
       stopwatch.stop();
@@ -242,19 +260,34 @@ class ChatModuleInjection {
     try {
       if (_getIt.isRegistered<ForegroundSyncService>()) {
         _getIt<ForegroundSyncService>().dispose();
+        _tryUnregister<ForegroundSyncService>();
       }
     } catch (e) {
       _logger.d(
           '[ChatModuleInjection] Failed to dispose ForegroundSyncService: $e');
     }
     try {
+      if (_getIt.isRegistered<ChatNotificationOrchestrator>()) {
+        await _getIt<ChatNotificationOrchestrator>().dispose();
+        _tryUnregister<ChatNotificationOrchestrator>();
+      }
+    } catch (e) {
+      _logger.d(
+          '[ChatModuleInjection] Failed to dispose ChatNotificationOrchestrator: $e');
+    }
+    try {
       if (_getIt.isRegistered<ChatModuleEventBus>()) {
         _getIt<ChatModuleEventBus>().dispose();
+        _tryUnregister<ChatModuleEventBus>();
       }
     } catch (e) {
       _logger
           .d('[ChatModuleInjection] Failed to dispose ChatModuleEventBus: $e');
     }
+    _tryUnregister<ChatActiveConversationTracker>();
+    _tryUnregister<ChatConversationSelectionService>();
+    _tryUnregister<ChatNotificationPolicyService>();
+    _tryUnregister<LocalNotificationService>();
 
     // 1. Clear local database (Isar) - most important for data isolation
     try {
@@ -318,6 +351,32 @@ class ChatModuleInjection {
   /// dependencies including host app's routes, causing navigation failures.
   static Future<void> dispose() async {
     AppConfig.clearOverrides();
+
+    try {
+      if (_getIt.isRegistered<ForegroundSyncService>()) {
+        _getIt<ForegroundSyncService>().dispose();
+        _tryUnregister<ForegroundSyncService>();
+      }
+    } catch (_) {}
+
+    try {
+      if (_getIt.isRegistered<ChatNotificationOrchestrator>()) {
+        await _getIt<ChatNotificationOrchestrator>().dispose();
+        _tryUnregister<ChatNotificationOrchestrator>();
+      }
+    } catch (_) {}
+
+    try {
+      if (_getIt.isRegistered<ChatModuleEventBus>()) {
+        _getIt<ChatModuleEventBus>().dispose();
+        _tryUnregister<ChatModuleEventBus>();
+      }
+    } catch (_) {}
+
+    _tryUnregister<ChatActiveConversationTracker>();
+    _tryUnregister<ChatConversationSelectionService>();
+    _tryUnregister<ChatNotificationPolicyService>();
+    _tryUnregister<LocalNotificationService>();
 
     // List of instance names registered by chat module
     final instanceNamesToUnregister = <String>[

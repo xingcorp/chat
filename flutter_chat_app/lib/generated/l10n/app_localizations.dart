@@ -67,8 +67,8 @@ abstract class AppLocalizations {
 
   final String localeName;
 
-  static AppLocalizations? of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// The title of the application
   ///
   /// In en, this message translates to:
-  /// **'Flutter Chat App'**
+  /// **'OXII Chat'**
   String get appTitle;
 
   /// OK button text
@@ -761,7 +761,7 @@ abstract class AppLocalizations {
   /// Welcome message on home screen
   ///
   /// In en, this message translates to:
-  /// **'Welcome to Flutter Chat App'**
+  /// **'Welcome to OXII Chat'**
   String get welcomeToChat;
 
   /// Error message when there is no internet connection

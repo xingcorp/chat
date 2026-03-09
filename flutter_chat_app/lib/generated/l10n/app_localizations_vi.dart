@@ -9,7 +9,7 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
-  String get appTitle => 'Ứng dụng Chat Flutter';
+  String get appTitle => 'OXII Chat';
 
   @override
   String get ok => 'OK';
@@ -365,7 +365,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get groups => 'Nhóm';
 
   @override
-  String get welcomeToChat => 'Chào mừng đến với Flutter Chat App';
+  String get welcomeToChat => 'Chào mừng đến với OXII Chat';
 
   @override
   String get errorNoInternet =>

@@ -14,6 +14,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
+import 'package:flutter_chat_app/core/services/chat_active_conversation_tracker.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/services/voice_recorder_service.dart';
@@ -219,6 +220,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
     _voiceRecorderService = getIt<VoiceRecorderService>();
     _messageBloc.add(const FetchFrequentReactions());
+    _setActiveConversation();
 
     _recordingAmplitudeSubscription =
         _voiceRecorderService.amplitudeStream.listen((amplitude) {
@@ -472,6 +474,46 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
   }
 
+  @override
+  void didUpdateWidget(covariant ChatDetailsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.chatId == widget.chatId) {
+      return;
+    }
+
+    final tracker = _chatActiveConversationTracker;
+    tracker?.clearActiveConversation(oldWidget.chatId);
+    _setActiveConversation();
+  }
+
+  @override
+  void onAppResumed() {
+    _chatActiveConversationTracker?.markAppForeground();
+  }
+
+  @override
+  void onAppPaused() {
+    _chatActiveConversationTracker?.markAppBackground();
+  }
+
+  @override
+  void onAppInactive() {
+    _chatActiveConversationTracker?.markAppBackground();
+  }
+
+  ChatActiveConversationTracker? get _chatActiveConversationTracker {
+    if (!getIt.isRegistered<ChatActiveConversationTracker>()) {
+      return null;
+    }
+    return getIt<ChatActiveConversationTracker>();
+  }
+
+  void _setActiveConversation() {
+    final tracker = _chatActiveConversationTracker;
+    tracker?.setActiveConversation(widget.chatId);
+    tracker?.markAppForeground();
+  }
+
   /// Detect load-more and scroll-to-bottom FAB via visible item positions.
   void _onPositionsChanged() {
     final positions = _itemPositionsListener.itemPositions.value;
@@ -557,6 +599,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
   @override
   void dispose() {
+    _chatActiveConversationTracker?.clearActiveConversation(widget.chatId);
     _chatDraftBloc.add(
       ChatDraftFlushRequested(
         conversationId: widget.chatId,

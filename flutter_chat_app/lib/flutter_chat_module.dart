@@ -88,8 +88,13 @@ export 'chat_config.dart' show ChatConfig;
 export 'shared/domain/entities/chat.dart'
     show Chat, ChatType, GroupType, ConversationMember;
 export 'shared/domain/entities/chat_message.dart'
-    show ChatMessage, MessageSender, MessageReaction, MessageAttachment,
-         ContentType, MessageStatus;
+    show
+        ChatMessage,
+        MessageSender,
+        MessageReaction,
+        MessageAttachment,
+        ContentType,
+        MessageStatus;
 export 'shared/domain/entities/user.dart' show User;
 export 'shared/domain/entities/attachment.dart'
     show Attachment, AttachmentType, AttachmentStatus;
@@ -119,5 +124,9 @@ export 'core/monitoring/i_crash_reporter.dart'
 export 'core/monitoring/i_analytics_service.dart'
     show IAnalyticsService, NoOpAnalyticsService, AnalyticsEvent;
 export 'core/localization/error_message_provider.dart'
-    show ErrorMessageProvider, VietnameseErrorMessageProvider,
-         EnglishErrorMessageProvider;
+    show
+        ErrorMessageProvider,
+        VietnameseErrorMessageProvider,
+        EnglishErrorMessageProvider;
+export 'core/services/chat_notification_payload.dart'
+    show ChatNotificationPayload;

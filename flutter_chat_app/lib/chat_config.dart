@@ -3,6 +3,7 @@ import 'package:flutter_chat_app/core/localization/error_message_provider.dart';
 import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
+import 'package:flutter_chat_app/core/services/chat_notification_payload.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 /// Configuration for initializing the chat module as a package.
@@ -110,6 +111,14 @@ class ChatConfig {
   /// Host app can use this to update a badge on the chat tab.
   final void Function(int totalUnreadCount)? onUnreadCountChanged;
 
+  /// Called when a built-in chat notification is tapped in package mode.
+  final void Function(ChatNotificationPayload payload)? onNotificationTap;
+
+  /// Enables the module-owned local notification flow in package mode.
+  ///
+  /// Defaults to false so the host app keeps full control unless it opts in.
+  final bool enableBuiltInLocalNotifications;
+
   const ChatConfig({
     required this.baseUrl,
     required this.graphqlUrl,
@@ -135,6 +144,8 @@ class ChatConfig {
     this.hideBottomNavBar = false,
     this.onNewMessageReceived,
     this.onUnreadCountChanged,
+    this.onNotificationTap,
+    this.enableBuiltInLocalNotifications = false,
   });
 
   /// Creates a copy with the given fields replaced.
@@ -163,6 +174,8 @@ class ChatConfig {
     bool? hideBottomNavBar,
     void Function(ChatMessage)? onNewMessageReceived,
     void Function(int)? onUnreadCountChanged,
+    void Function(ChatNotificationPayload)? onNotificationTap,
+    bool? enableBuiltInLocalNotifications,
   }) {
     return ChatConfig(
       baseUrl: baseUrl ?? this.baseUrl,
@@ -189,6 +202,9 @@ class ChatConfig {
       hideBottomNavBar: hideBottomNavBar ?? this.hideBottomNavBar,
       onNewMessageReceived: onNewMessageReceived ?? this.onNewMessageReceived,
       onUnreadCountChanged: onUnreadCountChanged ?? this.onUnreadCountChanged,
+      onNotificationTap: onNotificationTap ?? this.onNotificationTap,
+      enableBuiltInLocalNotifications: enableBuiltInLocalNotifications ??
+          this.enableBuiltInLocalNotifications,
     );
   }
 }

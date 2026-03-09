@@ -182,6 +182,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/splash/
     - assets/translations/
     - assets/animations/
     - assets/stickers/

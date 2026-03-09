@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/core/config/app_identity.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_brand_logo.dart';
 
 /// Register page
 class RegisterPage extends StatelessWidget {
   /// Constructor
-  const RegisterPage({Key? key}) : super(key: key);
+  const RegisterPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +19,18 @@ class RegisterPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 24),
-            const Icon(
-              Icons.person_add,
-              size: 80,
-              color: Colors.blue,
+            const AppBrandLogo.wordmark(
+              width: 240,
+              height: 68,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              AppIdentity.appName,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -32,8 +41,8 @@ class RegisterPage extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 32),
-            
+            const SizedBox(height: 28),
+
             // Full name field
             TextFormField(
               decoration: const InputDecoration(
@@ -43,7 +52,7 @@ class RegisterPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Username field
             TextFormField(
               decoration: const InputDecoration(
@@ -53,7 +62,7 @@ class RegisterPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Email field
             TextFormField(
               decoration: const InputDecoration(
@@ -64,7 +73,7 @@ class RegisterPage extends StatelessWidget {
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
-            
+
             // Password field
             TextFormField(
               decoration: const InputDecoration(
@@ -75,7 +84,7 @@ class RegisterPage extends StatelessWidget {
               obscureText: true,
             ),
             const SizedBox(height: 16),
-            
+
             // Confirm password field
             TextFormField(
               decoration: const InputDecoration(
@@ -86,7 +95,7 @@ class RegisterPage extends StatelessWidget {
               obscureText: true,
             ),
             const SizedBox(height: 24),
-            
+
             // Register button
             ElevatedButton(
               onPressed: () {},
@@ -102,7 +111,7 @@ class RegisterPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Login link
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -122,4 +131,4 @@ class RegisterPage extends StatelessWidget {
       ),
     );
   }
-} 
+}

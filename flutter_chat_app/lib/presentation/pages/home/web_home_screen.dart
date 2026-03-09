@@ -8,12 +8,15 @@
 /// - Enterprise theme and i18n integration
 /// - Web-optimized navigation
 /// - Performance monitoring
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/config/app_identity.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_brand_logo.dart';
 import 'package:flutter_chat_app/presentation/widgets/settings/enterprise_settings_screen.dart';
 
 /// **WEB HOME SCREEN**
@@ -24,7 +27,7 @@ class WebHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.l10n.appTitle),
+        title: Text(AppIdentity.appName),
         centerTitle: true,
         actions: [
           // Theme Toggle
@@ -41,7 +44,7 @@ class WebHomeScreen extends StatelessWidget {
               );
             },
           ),
-          
+
           // Language Toggle
           BlocBuilder<LocaleCubit, LocaleState>(
             builder: (context, state) {
@@ -54,7 +57,7 @@ class WebHomeScreen extends StatelessWidget {
               );
             },
           ),
-          
+
           // Settings
           IconButton(
             icon: const Icon(Icons.settings),
@@ -101,19 +104,19 @@ class WebHomeBody extends StatelessWidget {
         // Sidebar
         Container(
           width: 300,
-          color: Theme.of(context).colorScheme.surfaceVariant,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           child: _buildSidebar(context),
         ),
-        
+
         // Main content
         Expanded(
           child: _buildMainContent(context),
         ),
-        
+
         // Right panel
         Container(
           width: 250,
-          color: Theme.of(context).colorScheme.surfaceVariant,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           child: _buildRightPanel(context),
         ),
       ],
@@ -126,10 +129,10 @@ class WebHomeBody extends StatelessWidget {
         // Sidebar
         Container(
           width: 250,
-          color: Theme.of(context).colorScheme.surfaceVariant,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           child: _buildSidebar(context),
         ),
-        
+
         // Main content
         Expanded(
           child: _buildMainContent(context),
@@ -163,15 +166,15 @@ class WebHomeBody extends StatelessWidget {
               Text(
                 'Online',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.green,
-                ),
+                      color: Colors.green,
+                    ),
               ),
             ],
           ),
         ),
-        
+
         const Divider(),
-        
+
         // Navigation items
         Expanded(
           child: ListView(
@@ -227,10 +230,9 @@ class WebHomeBody extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.chat_bubble_outline,
-                    size: 120,
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                  const AppBrandLogo.wordmark(
+                    width: 360,
+                    height: 96,
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -240,7 +242,7 @@ class WebHomeBody extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Web version of Flutter Chat App with enterprise features',
+                    'Web version of ${AppIdentity.appName} with enterprise features',
                     style: Theme.of(context).textTheme.bodyLarge,
                     textAlign: TextAlign.center,
                   ),
@@ -306,8 +308,10 @@ class WebHomeBody extends StatelessWidget {
                       children: [
                         Text('Theme: ${state.themeMode.name}'),
                         if (state.lastSwitchDuration != null)
-                          Text('Switch: ${state.lastSwitchDuration!.inMilliseconds}ms'),
-                        Text('Status: ${state.isPerformanceOptimal ? '✅' : '⚠️'}'),
+                          Text(
+                              'Switch: ${state.lastSwitchDuration!.inMilliseconds}ms'),
+                        Text(
+                            'Status: ${state.isPerformanceOptimal ? '✅' : '⚠️'}'),
                       ],
                     );
                   },
@@ -315,9 +319,9 @@ class WebHomeBody extends StatelessWidget {
               ],
             ),
           ),
-          
+
           const Divider(),
-          
+
           // Locale info
           Container(
             padding: const EdgeInsets.all(16),
@@ -334,10 +338,12 @@ class WebHomeBody extends StatelessWidget {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Language: ${state.effectiveLocale.languageCode.toUpperCase()}'),
+                        Text(
+                            'Language: ${state.effectiveLocale.languageCode.toUpperCase()}'),
                         Text('RTL: ${state.isRtl ? 'Yes' : 'No'}'),
                         if (state.lastSwitchDuration != null)
-                          Text('Switch: ${state.lastSwitchDuration!.inMilliseconds}ms'),
+                          Text(
+                              'Switch: ${state.lastSwitchDuration!.inMilliseconds}ms'),
                       ],
                     );
                   },

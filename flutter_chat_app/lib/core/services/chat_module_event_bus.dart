@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_chat_app/core/services/chat_notification_payload.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:injectable/injectable.dart';
 import 'package:rxdart/rxdart.dart';
@@ -13,6 +14,7 @@ import 'package:rxdart/rxdart.dart';
 /// ## Streams
 /// - [totalUnreadCountStream] — total unread badge count across all chats
 /// - [newMessageStream] — broadcasts every incoming real-time message
+/// - [notificationTapStream] — emits local notification tap payloads
 /// - [fcmDataStream] — host app forwards raw FCM data payloads here
 /// - [syncTriggerStream] — host app requests a foreground data sync
 @lazySingleton
@@ -21,8 +23,7 @@ class ChatModuleEventBus {
   // Unread count
   // ---------------------------------------------------------------------------
 
-  final BehaviorSubject<int> _totalUnreadCount =
-      BehaviorSubject<int>.seeded(0);
+  final BehaviorSubject<int> _totalUnreadCount = BehaviorSubject<int>.seeded(0);
 
   /// Stream of total unread message count across all conversations.
   Stream<int> get totalUnreadCountStream => _totalUnreadCount.stream;
@@ -59,6 +60,22 @@ class ChatModuleEventBus {
   /// Emit a new incoming message.
   void emitNewMessage(ChatMessage message) {
     _newMessageController.add(message);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Notification tap
+  // ---------------------------------------------------------------------------
+
+  final StreamController<ChatNotificationPayload> _notificationTapController =
+      StreamController<ChatNotificationPayload>.broadcast();
+
+  /// Stream of local notification taps that the host app may route.
+  Stream<ChatNotificationPayload> get notificationTapStream =>
+      _notificationTapController.stream;
+
+  /// Emit a notification tap payload.
+  void emitNotificationTap(ChatNotificationPayload payload) {
+    _notificationTapController.add(payload);
   }
 
   // ---------------------------------------------------------------------------
@@ -99,6 +116,7 @@ class ChatModuleEventBus {
   void dispose() {
     _totalUnreadCount.close();
     _newMessageController.close();
+    _notificationTapController.close();
     _fcmDataController.close();
     _syncTriggerController.close();
   }

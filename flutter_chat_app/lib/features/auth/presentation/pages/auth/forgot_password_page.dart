@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/core/config/app_identity.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_brand_logo.dart';
 
 /// Forgot password page
 class ForgotPasswordPage extends StatelessWidget {
   /// Constructor
-  const ForgotPasswordPage({Key? key}) : super(key: key);
+  const ForgotPasswordPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,12 +19,20 @@ class ForgotPasswordPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(
-              Icons.lock_reset,
-              size: 80,
-              color: Colors.blue,
+            const AppBrandLogo.wordmark(
+              width: 220,
+              height: 62,
             ),
             const SizedBox(height: 16),
+            Text(
+              AppIdentity.appName,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
             const Text(
               'Đặt lại mật khẩu',
               textAlign: TextAlign.center,
@@ -41,7 +50,7 @@ class ForgotPasswordPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            
+
             // Email field
             TextFormField(
               decoration: const InputDecoration(
@@ -52,7 +61,7 @@ class ForgotPasswordPage extends StatelessWidget {
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 24),
-            
+
             // Reset password button
             ElevatedButton(
               onPressed: () {},
@@ -68,7 +77,7 @@ class ForgotPasswordPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Back to login
             TextButton(
               onPressed: () {
@@ -81,4 +90,4 @@ class ForgotPasswordPage extends StatelessWidget {
       ),
     );
   }
-} 
+}

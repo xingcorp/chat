@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
 
-  "appTitle": "Flutter Chat App",
+  "appTitle": "OXII Chat",
   "@appTitle": {
     "description": "The title of the application"
   },
@@ -602,7 +602,7 @@
     "description": "Groups section title"
   },
 
-  "welcomeToChat": "Welcome to Flutter Chat App",
+  "welcomeToChat": "Welcome to OXII Chat",
   "@welcomeToChat": {
     "description": "Welcome message on home screen"
   },

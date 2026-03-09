@@ -7,13 +7,15 @@ import 'package:flutter/material.dart';
 
 // Third-party package imports
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/config/app_identity.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/app_localizations.dart';
-import 'package:flutter_chat_app/shared/domain/entities/permission_entity.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/permissions/permissions_bloc.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_brand_logo.dart';
 import 'package:flutter_chat_app/presentation/widgets/permissions/permission_card_widget.dart';
+import 'package:flutter_chat_app/shared/domain/entities/permission_entity.dart';
 
 class PermissionsOnboardingPage extends StatefulWidget {
   const PermissionsOnboardingPage({super.key});
@@ -132,18 +134,27 @@ class _PermissionsOnboardingPageState extends State<PermissionsOnboardingPage>
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
+              color: AppColors.cardBackground,
               borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 18,
+                  offset: Offset(0, 10),
+                ),
+              ],
             ),
-            child: const Icon(
-              Icons.security,
-              color: Colors.white,
-              size: 40,
+            child: const Padding(
+              padding: EdgeInsets.all(10),
+              child: AppBrandLogo.icon(
+                size: 60,
+                borderRadius: BorderRadius.all(Radius.circular(14)),
+              ),
             ),
           ),
           const SizedBox(height: 16),
           Text(
-            AppLocalizations.of(context).permissionsOnboardingTitle,
+            '${AppIdentity.appName} • ${AppLocalizations.of(context).permissionsOnboardingTitle}',
             style: AppTextStyles.headlineMedium.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.bold,

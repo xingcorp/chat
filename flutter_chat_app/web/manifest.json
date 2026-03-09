@@ -1,11 +1,11 @@
 {
-    "name": "flutter_chat_app",
-    "short_name": "flutter_chat_app",
+    "name": "OxiiChat",
+    "short_name": "OxiiChat",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F6FCFF",
+    "theme_color": "#00AFD2",
+    "description": "OxiiChat enterprise messaging application.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

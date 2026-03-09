@@ -8,6 +8,7 @@ import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_manager.dart';
 import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
+import 'package:flutter_chat_app/core/services/chat_notification_orchestrator.dart';
 import 'package:flutter_chat_app/core/services/chat_message_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
@@ -109,6 +110,16 @@ class ServiceInitializer {
     } catch (e) {
       logger.e('Platform services initialization failed', error: e);
     }
+
+    try {
+      if (GetIt.I.isRegistered<ChatNotificationOrchestrator>()) {
+        await GetIt.I<ChatNotificationOrchestrator>().initialize(
+          enableBuiltInNotifications: true,
+        );
+      }
+    } catch (e) {
+      logger.e('Chat notification initialization failed', error: e);
+    }
   }
 
   static Future<void> _initializeWebServices() async {
@@ -145,7 +156,8 @@ class ServiceInitializer {
     try {
       if (GetIt.I.isRegistered<OfflineQueueService>()) {
         GetIt.I<OfflineQueueService>();
-        logger.i('OfflineQueueService initialized (connectivity listener active)');
+        logger.i(
+            'OfflineQueueService initialized (connectivity listener active)');
       }
     } catch (e) {
       logger.e('OfflineQueueService initialization failed', error: e);

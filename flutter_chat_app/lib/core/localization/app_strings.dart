@@ -7,6 +7,7 @@
 /// - Consistent terminology across app
 ///
 /// **Architecture:** Clean Architecture + Localization + Multi-language Support
+library;
 
 /// **APPLICATION STRINGS**
 class AppStrings {
@@ -14,15 +15,7 @@ class AppStrings {
   AppStrings._();
 
   /// Current locale (default: Vietnamese)
-  static String _currentLocale = 'vi';
-
-  /// Set current locale
-  static void setLocale(String locale) {
-    _currentLocale = locale;
-  }
-
-  /// Get current locale
-  static String get currentLocale => _currentLocale;
+  static String currentLocale = 'vi';
 
   /// **GENERAL APP STRINGS**
   static String get appName => _getString('app_name');
@@ -145,7 +138,8 @@ class AppStrings {
   static String get lastWeek => _getString('last_week');
   static String get thisMonth => _getString('this_month');
   static String get lastMonth => _getString('last_month');
-  static String minutesAgo(int minutes) => _getStringWithParam('minutes_ago', minutes);
+  static String minutesAgo(int minutes) =>
+      _getStringWithParam('minutes_ago', minutes);
   static String hoursAgo(int hours) => _getStringWithParam('hours_ago', hours);
   static String daysAgo(int days) => _getStringWithParam('days_ago', days);
 
@@ -176,7 +170,8 @@ class AppStrings {
   static String get confirmClearData => _getString('confirm_clear_data');
   static String get deleteConfirmation => _getString('delete_confirmation');
   static String get logoutConfirmation => _getString('logout_confirmation');
-  static String get clearDataConfirmation => _getString('clear_data_confirmation');
+  static String get clearDataConfirmation =>
+      _getString('clear_data_confirmation');
 
   /// **SUCCESS STRINGS**
   static String get operationSuccess => _getString('operation_success');
@@ -190,7 +185,7 @@ class AppStrings {
 
   /// Get string by key for current locale
   static String _getString(String key) {
-    switch (_currentLocale) {
+    switch (currentLocale) {
       case 'vi':
         return _vietnameseStrings[key] ?? _englishStrings[key] ?? key;
       case 'en':
@@ -209,7 +204,7 @@ class AppStrings {
   /// **VIETNAMESE STRINGS**
   static const Map<String, String> _vietnameseStrings = {
     // General
-    'app_name': 'Flutter Chat App',
+    'app_name': 'OXII Chat',
     'app_description': 'Ứng dụng chat hiện đại và bảo mật',
     'loading': 'Đang tải...',
     'retry': 'Thử lại',
@@ -295,7 +290,7 @@ class AppStrings {
   /// **ENGLISH STRINGS**
   static const Map<String, String> _englishStrings = {
     // General
-    'app_name': 'Flutter Chat App',
+    'app_name': 'OXII Chat',
     'app_description': 'Modern and secure chat application',
     'loading': 'Loading...',
     'retry': 'Retry',

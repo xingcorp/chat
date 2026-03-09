@@ -1,0 +1,39 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="168" y1="128" x2="864" y2="896" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00AFD2"/>
+      <stop offset="1" stop-color="#008EBC"/>
+    </linearGradient>
+    <linearGradient id="tail" x1="646" y1="616" x2="784" y2="824" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#083E55" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#083E55" stop-opacity="0.4"/>
+    </linearGradient>
+    <filter id="shadow" x="92" y="108" width="840" height="840" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="26"/>
+      <feGaussianBlur stdDeviation="28"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.0207 0 0 0 0 0.255 0 0 0 0 0.343 0 0 0 0.18 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect x="120" y="120" width="784" height="784" rx="232" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <path
+      d="M512 280C380.556 280 274 386.556 274 518C274 649.444 380.556 756 512 756C570.443 756 623.963 734.933 665.352 699.955L748 744L723.67 652.149C741.376 613.225 750 567.81 750 518C750 386.556 643.444 280 512 280Z"
+      fill="white"
+    />
+    <path
+      d="M512 388C439.098 388 380 447.098 380 520C380 592.902 439.098 652 512 652C543.637 652 572.673 640.874 595.403 622.327L647 649L632.955 591.938C640.562 570.92 644 546.605 644 520C644 447.098 584.902 388 512 388Z"
+      fill="url(#bg)"
+    />
+    <path
+      d="M691 598L748 744L652 689.5L691 598Z"
+      fill="url(#tail)"
+    />
+    <circle cx="470" cy="520" r="28" fill="white"/>
+    <circle cx="552" cy="520" r="28" fill="white"/>
+  </g>
+</svg>

@@ -80,8 +80,9 @@ import 'package:flutter_chat_app/core/monitoring/crash_reporter.dart';
 import 'package:flutter_chat_app/core/monitoring/analytics_service.dart';
 import 'package:flutter_chat_app/core/services/performance_service.dart';
 
-import 'injection.config.dart';
-import 'modules/core_module.dart';
+import 'package:flutter_chat_app/core/di/injection.config.dart';
+import 'package:flutter_chat_app/core/di/modules/core_module.dart';
+import 'package:flutter_chat_app/core/di/modules/notification_module.dart';
 
 /// Global service locator instance
 ///
@@ -127,6 +128,7 @@ Future<void> configureDependencies() async {
 
     // Step 3: Initialize auto-generated dependencies (feature services)
     getIt.init(environment: 'standalone');
+    registerNotificationModule(getIt);
 
     final bool useFirebaseBackedMonitoring =
         FirebaseConfigManager.supportsConfiguredPlatform;

@@ -5,7 +5,7 @@ class AppConfig {
   AppConfig._();
   
   /// Application name
-  static const String appName = 'Flutter Chat App';
+  static const String appName = 'OXII Chat';
   
   /// API base URL
   static String get apiBaseUrl => const String.fromEnvironment(
