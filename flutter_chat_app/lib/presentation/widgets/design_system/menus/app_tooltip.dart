@@ -163,9 +163,13 @@ class _AppTooltipState extends BaseState<AppTooltip> {
 
   @override
   void dispose() {
-    _hideTooltip();
+    // Cancel pending timers FIRST to prevent them firing during teardown
     _showTimer?.cancel();
     _hideTimer?.cancel();
+    // Remove overlay entry directly without calling safeSetState
+    // (widget may already be defunct at this point)
+    _overlayEntry?.remove();
+    _overlayEntry = null;
     super.dispose();
   }
 
