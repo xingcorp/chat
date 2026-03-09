@@ -1023,11 +1023,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     if (!mounted) return false;
 
     if (startResult == VoiceRecordingStartResult.permissionDenied ||
-        startResult ==
-            VoiceRecordingStartResult.permissionPermanentlyDenied) {
+        startResult == VoiceRecordingStartResult.permissionPermanentlyDenied) {
       await _showMicrophonePermissionDialog(
-        isPermanentlyDenied:
-            startResult ==
+        isPermanentlyDenied: startResult ==
             VoiceRecordingStartResult.permissionPermanentlyDenied,
       );
       return false;
@@ -1542,6 +1540,19 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   Future<void> _handleLocationShare() async {
     final locationService = GetIt.I<ILocationService>();
     final navigator = Navigator.of(context);
+    final l10n = context.l10n;
+
+    void showFeedback({
+      required String message,
+      required FeedbackType type,
+    }) {
+      if (!navigator.mounted) return;
+      AppSnackBar.show(
+        context: navigator.context,
+        message: message,
+        type: type,
+      );
+    }
 
     try {
       final hasPermission = await locationService.hasLocationPermission();
@@ -1552,18 +1563,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
         if (!mounted) return;
 
         if (!granted) {
-          AppSnackBar.show(
-            context: context,
-            message: 'Location permission denied',
+          showFeedback(
+            message: l10n.locationPermissionDenied,
             type: FeedbackType.error,
           );
           return;
         }
       }
 
-      AppSnackBar.show(
-        context: context,
-        message: 'Getting your location...',
+      showFeedback(
+        message: l10n.gettingLocation,
         type: FeedbackType.info,
       );
 
@@ -1572,8 +1581,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
 
       result.fold(
         (failure) {
-          AppSnackBar.show(
-            context: context,
+          showFeedback(
             message: failure.message,
             type: FeedbackType.error,
           );
@@ -1588,24 +1596,18 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
             ),
           );
 
-          AppSnackBar.show(
-            context: context,
-            message: 'Location sent successfully',
+          showFeedback(
+            message: l10n.locationSent,
             type: FeedbackType.success,
           );
         },
       );
     } catch (e) {
       if (!mounted) return;
-      AppSnackBar.show(
-        context: context,
-        message: 'Failed to share location: $e',
+      showFeedback(
+        message: l10n.errorOccurred,
         type: FeedbackType.error,
       );
-    } finally {
-      // keep reference used to avoid analyzer complaining about unused capture in some configs
-      // ignore: unused_local_variable
-      final _ = navigator;
     }
   }
 

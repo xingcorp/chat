@@ -57,7 +57,45 @@ class AppLocalizationsVi extends AppLocalizations {
   String get username => 'Tên đăng nhập';
 
   @override
+  String get phoneNumber => 'Số điện thoại';
+
+  @override
   String get password => 'Mật khẩu';
+
+  @override
+  String get orLabel => 'Hoặc';
+
+  @override
+  String get continueWithGoogle => 'Tiếp tục với Google';
+
+  @override
+  String get loginDesktopSupportingText =>
+      'Đăng nhập để tiếp tục cuộc trò chuyện, cập nhật đội nhóm và quy trình làm việc trên desktop trong một không gian tập trung.';
+
+  @override
+  String get loginDesktopFormSubtitle =>
+      'Sử dụng tài khoản công việc của bạn để tiếp tục an toàn trên desktop.';
+
+  @override
+  String get loginDesktopWorkspaceTitle => 'Thiết kế cho môi trường công việc';
+
+  @override
+  String get loginDesktopWorkspaceDescription =>
+      'Giữ phòng ban, thông báo và trò chuyện trực tiếp trong cùng một nơi mà không mất ngữ cảnh.';
+
+  @override
+  String get loginDesktopSyncTitle => 'Đồng bộ theo thời gian thực';
+
+  @override
+  String get loginDesktopSyncDescription =>
+      'Tiếp tục công việc ngay lập tức với tin nhắn, trạng thái chưa đọc và thông báo nhất quán trên các thiết bị.';
+
+  @override
+  String get loginDesktopFocusTitle => 'Tối ưu cho desktop';
+
+  @override
+  String get loginDesktopFocusDescription =>
+      'Bố cục rộng giúp điều hướng, thao tác đăng nhập và trạng thái dễ quan sát hơn chỉ trong một ánh nhìn.';
 
   @override
   String get email => 'Email';

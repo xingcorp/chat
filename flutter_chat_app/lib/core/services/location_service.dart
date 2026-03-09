@@ -112,6 +112,10 @@ class LocationService implements ILocationService {
     this._logger,
   );
 
+  bool get _usesGeolocatorPermissionFlow {
+    return kIsWeb || defaultTargetPlatform == TargetPlatform.macOS;
+  }
+
   @override
   Future<Either<Failure, LocationData>> getCurrentLocation() async {
     try {
@@ -173,6 +177,23 @@ class LocationService implements ILocationService {
     try {
       _logger.info('LocationService: Requesting location permission');
 
+      if (_usesGeolocatorPermissionFlow) {
+        final permission = await Geolocator.requestPermission();
+        final granted = _hasGrantedPermission(permission);
+
+        if (defaultTargetPlatform == TargetPlatform.macOS) {
+          _logger.info(
+            'LocationService: macOS location permission request completed',
+            {
+              'permission': permission.name,
+              'granted': granted,
+            },
+          );
+        }
+
+        return granted;
+      }
+
       if (!kIsWeb) {
         await _permissionsService.initialize();
         final result = await _permissionsService.requestPermission(
@@ -182,8 +203,7 @@ class LocationService implements ILocationService {
         return result.isSuccess && (result.permission?.isGranted ?? false);
       }
 
-      final permission = await Geolocator.requestPermission();
-      return _hasGrantedPermission(permission);
+      return false;
     } catch (e) {
       _logger.error('Failed to request location permission', e);
       return false;
@@ -193,6 +213,23 @@ class LocationService implements ILocationService {
   @override
   Future<bool> hasLocationPermission() async {
     try {
+      if (_usesGeolocatorPermissionFlow) {
+        final permission = await Geolocator.checkPermission();
+        final granted = _hasGrantedPermission(permission);
+
+        if (defaultTargetPlatform == TargetPlatform.macOS) {
+          _logger.info(
+            'LocationService: macOS location permission status checked',
+            {
+              'permission': permission.name,
+              'granted': granted,
+            },
+          );
+        }
+
+        return granted;
+      }
+
       if (!kIsWeb) {
         await _permissionsService.initialize();
         final permission =
@@ -200,8 +237,7 @@ class LocationService implements ILocationService {
         return permission.isGranted;
       }
 
-      final permission = await Geolocator.checkPermission();
-      return _hasGrantedPermission(permission);
+      return false;
     } catch (e) {
       _logger.error('Failed to check location permission', e);
       return false;

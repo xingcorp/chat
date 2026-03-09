@@ -28,6 +28,8 @@
 	<string>$(PRODUCT_COPYRIGHT)</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>OXII Chat cần quyền truy cập microphone để ghi âm và gửi tin nhắn thoại.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>OXII Chat cần quyền truy cập vị trí để chia sẻ vị trí hiện tại trong cuộc trò chuyện.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>

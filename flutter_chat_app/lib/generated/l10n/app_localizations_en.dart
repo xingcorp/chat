@@ -57,7 +57,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get username => 'Username';
 
   @override
+  String get phoneNumber => 'Phone Number';
+
+  @override
   String get password => 'Password';
+
+  @override
+  String get orLabel => 'Or';
+
+  @override
+  String get continueWithGoogle => 'Continue with Google';
+
+  @override
+  String get loginDesktopSupportingText =>
+      'Sign in to continue your conversations, team updates, and desktop workflow in one focused workspace.';
+
+  @override
+  String get loginDesktopFormSubtitle =>
+      'Use your work account to continue securely on desktop.';
+
+  @override
+  String get loginDesktopWorkspaceTitle => 'Built for office teams';
+
+  @override
+  String get loginDesktopWorkspaceDescription =>
+      'Keep departments, announcements, and direct chats in one place without losing context.';
+
+  @override
+  String get loginDesktopSyncTitle => 'Real-time across devices';
+
+  @override
+  String get loginDesktopSyncDescription =>
+      'Pick up work instantly with consistent messages, unread state, and notifications.';
+
+  @override
+  String get loginDesktopFocusTitle => 'Native desktop focus';
+
+  @override
+  String get loginDesktopFocusDescription =>
+      'A wider layout keeps navigation, sign-in actions, and status cues easier to scan at a glance.';
 
   @override
   String get email => 'Email';

@@ -194,11 +194,77 @@ abstract class AppLocalizations {
   /// **'Username'**
   String get username;
 
+  /// Phone number field label
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number'**
+  String get phoneNumber;
+
   /// Password field label
   ///
   /// In en, this message translates to:
   /// **'Password'**
   String get password;
+
+  /// Short separator label
+  ///
+  /// In en, this message translates to:
+  /// **'Or'**
+  String get orLabel;
+
+  /// Button text for Google SSO login
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get continueWithGoogle;
+
+  /// Supporting copy shown on the desktop login hero panel
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to continue your conversations, team updates, and desktop workflow in one focused workspace.'**
+  String get loginDesktopSupportingText;
+
+  /// Subtitle shown above the desktop login form
+  ///
+  /// In en, this message translates to:
+  /// **'Use your work account to continue securely on desktop.'**
+  String get loginDesktopFormSubtitle;
+
+  /// Desktop login feature card title about office workspace
+  ///
+  /// In en, this message translates to:
+  /// **'Built for office teams'**
+  String get loginDesktopWorkspaceTitle;
+
+  /// Desktop login feature card description about office workspace
+  ///
+  /// In en, this message translates to:
+  /// **'Keep departments, announcements, and direct chats in one place without losing context.'**
+  String get loginDesktopWorkspaceDescription;
+
+  /// Desktop login feature card title about realtime sync
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time across devices'**
+  String get loginDesktopSyncTitle;
+
+  /// Desktop login feature card description about realtime sync
+  ///
+  /// In en, this message translates to:
+  /// **'Pick up work instantly with consistent messages, unread state, and notifications.'**
+  String get loginDesktopSyncDescription;
+
+  /// Desktop login feature card title about desktop-focused work
+  ///
+  /// In en, this message translates to:
+  /// **'Native desktop focus'**
+  String get loginDesktopFocusTitle;
+
+  /// Desktop login feature card description about desktop-focused work
+  ///
+  /// In en, this message translates to:
+  /// **'A wider layout keeps navigation, sign-in actions, and status cues easier to scan at a glance.'**
+  String get loginDesktopFocusDescription;
 
   /// Email field label
   ///

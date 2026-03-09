@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/config/app_identity.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_brand_logo.dart';
+import 'package:go_router/go_router.dart';
 
 /// Register page
 class RegisterPage extends StatelessWidget {
@@ -119,7 +120,7 @@ class RegisterPage extends StatelessWidget {
                 const Text('Đã có tài khoản?'),
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context);
+                    context.go('/login');
                   },
                   child: const Text('Đăng nhập'),
                 ),

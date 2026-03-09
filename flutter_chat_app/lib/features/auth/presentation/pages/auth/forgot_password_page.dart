@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/config/app_identity.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_brand_logo.dart';
+import 'package:go_router/go_router.dart';
 
 /// Forgot password page
 class ForgotPasswordPage extends StatelessWidget {
@@ -81,7 +82,7 @@ class ForgotPasswordPage extends StatelessWidget {
             // Back to login
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                context.go('/login');
               },
               child: const Text('Trở về đăng nhập'),
             ),

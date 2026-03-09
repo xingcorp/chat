@@ -81,9 +81,64 @@
     "description": "Username field label"
   },
 
+  "phoneNumber": "Phone Number",
+  "@phoneNumber": {
+    "description": "Phone number field label"
+  },
+
   "password": "Password",
   "@password": {
     "description": "Password field label"
+  },
+
+  "orLabel": "Or",
+  "@orLabel": {
+    "description": "Short separator label"
+  },
+
+  "continueWithGoogle": "Continue with Google",
+  "@continueWithGoogle": {
+    "description": "Button text for Google SSO login"
+  },
+
+  "loginDesktopSupportingText": "Sign in to continue your conversations, team updates, and desktop workflow in one focused workspace.",
+  "@loginDesktopSupportingText": {
+    "description": "Supporting copy shown on the desktop login hero panel"
+  },
+
+  "loginDesktopFormSubtitle": "Use your work account to continue securely on desktop.",
+  "@loginDesktopFormSubtitle": {
+    "description": "Subtitle shown above the desktop login form"
+  },
+
+  "loginDesktopWorkspaceTitle": "Built for office teams",
+  "@loginDesktopWorkspaceTitle": {
+    "description": "Desktop login feature card title about office workspace"
+  },
+
+  "loginDesktopWorkspaceDescription": "Keep departments, announcements, and direct chats in one place without losing context.",
+  "@loginDesktopWorkspaceDescription": {
+    "description": "Desktop login feature card description about office workspace"
+  },
+
+  "loginDesktopSyncTitle": "Real-time across devices",
+  "@loginDesktopSyncTitle": {
+    "description": "Desktop login feature card title about realtime sync"
+  },
+
+  "loginDesktopSyncDescription": "Pick up work instantly with consistent messages, unread state, and notifications.",
+  "@loginDesktopSyncDescription": {
+    "description": "Desktop login feature card description about realtime sync"
+  },
+
+  "loginDesktopFocusTitle": "Native desktop focus",
+  "@loginDesktopFocusTitle": {
+    "description": "Desktop login feature card title about desktop-focused work"
+  },
+
+  "loginDesktopFocusDescription": "A wider layout keeps navigation, sign-in actions, and status cues easier to scan at a glance.",
+  "@loginDesktopFocusDescription": {
+    "description": "Desktop login feature card description about desktop-focused work"
   },
 
   "email": "Email",
