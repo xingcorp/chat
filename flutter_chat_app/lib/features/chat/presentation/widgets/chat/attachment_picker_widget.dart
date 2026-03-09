@@ -160,7 +160,7 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
                     context: context,
                     icon: Icons.videocam_outlined,
                     iconColor: Colors.redAccent,
-                    title: '${l10n.attachmentVideo} (${l10n.gallery})',
+                    title: '${l10n.attachmentVideo}',
                     onTap: () async {
                       Navigator.pop(context);
                       await _pickVideoFromGallery(context);

@@ -438,7 +438,7 @@
   "noRecentEmojis": "Chưa có emoji gần đây",
   "pickAttachment": "Chọn tệp đính kèm",
   "takePhoto": "Chụp ảnh",
-  "chooseFromGallery": "Chọn từ thư viện",
+  "chooseFromGallery": "Chọn ảnh",
   "chooseFile": "Chọn tệp",
   "shareLocation": "Chia sẻ vị trí",
   "compressing": "Đang nén...",
@@ -959,7 +959,7 @@
 
   "attachmentImage": "Hình ảnh",
 
-  "attachmentVideo": "Video",
+  "attachmentVideo": "Chọn video",
 
   "attachmentFile": "Tệp tin",
 

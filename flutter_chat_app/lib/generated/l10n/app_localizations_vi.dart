@@ -1397,7 +1397,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get takePhoto => 'Chụp ảnh';
 
   @override
-  String get chooseFromGallery => 'Chọn từ thư viện';
+  String get chooseFromGallery => 'Chọn ảnh';
 
   @override
   String get chooseFile => 'Chọn tệp';
@@ -1778,7 +1778,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get attachmentImage => 'Hình ảnh';
 
   @override
-  String get attachmentVideo => 'Video';
+  String get attachmentVideo => 'Chọn video';
 
   @override
   String get attachmentFile => 'Tệp tin';

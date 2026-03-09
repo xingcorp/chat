@@ -413,6 +413,40 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         ));
         _cancelEditMode();
         _messageController.clear();
+
+        // If there are pending file attachments, send them as a
+        // separate new message because the backend only supports
+        // text-only edits (no attachment changes).
+        final editAttachmentState = _fileAttachmentBloc.state;
+        if (editAttachmentState.hasFiles) {
+          if (editAttachmentState.hasActiveUploads) {
+            AppSnackBar.show(
+              context: context,
+              message: context.l10n.uploading,
+              type: FeedbackType.warning,
+            );
+          } else {
+            final editAttachmentUrls = <String>[
+              for (final a in editAttachmentState.completedAttachments)
+                if (a.url != null && a.url!.isNotEmpty) a.url!,
+            ];
+            if (editAttachmentUrls.isNotEmpty) {
+              final editContentType = _resolveBackendType(
+                editAttachmentState.completedAttachments,
+              );
+              _messageBloc.add(
+                SendMessage(
+                  content: '',
+                  senderId: _currentUserId,
+                  contentType: editContentType,
+                  attachmentIds: editAttachmentUrls,
+                ),
+              );
+            }
+          }
+          _fileAttachmentBloc.add(const AllFilesCleared());
+        }
+
         _chatDraftBloc.add(
           ChatDraftClearRequested(conversationId: widget.chatId),
         );
