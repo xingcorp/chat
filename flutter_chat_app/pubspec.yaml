@@ -96,6 +96,13 @@ dependencies:
   just_audio: ^0.10.4
   video_player: ^2.8.1
   chewie: ^1.7.4
+
+  # Media Playback - Windows Support (media_kit for video, audioplayers for audio)
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
+  media_kit_libs_windows_video: ^1.0.11
+  audioplayers: ^6.1.0
+
   emoji_picker_flutter: ^3.1.0
   url_launcher: ^6.2.5
   any_link_preview: ^3.0.2

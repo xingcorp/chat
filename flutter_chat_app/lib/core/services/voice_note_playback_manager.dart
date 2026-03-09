@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:flutter_chat_app/core/services/audio/chat_audio_player_factory.dart';
+import 'package:flutter_chat_app/core/services/audio/i_chat_audio_player.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
 
 class VoiceNotePlaybackState {
@@ -51,10 +52,14 @@ class _VoiceNotePlaybackSnapshot {
   final VoiceNotePlaybackState state;
 }
 
+/// Platform-agnostic audio player contract for voice notes.
+///
+/// Uses [ChatPlayerState] instead of package-specific types so that both
+/// `just_audio` and `audioplayers` implementations can satisfy the interface.
 abstract class VoiceNoteAudioPlayer {
   Stream<Duration> get positionStream;
   Stream<Duration?> get durationStream;
-  Stream<PlayerState> get playerStateStream;
+  Stream<ChatPlayerState> get playerStateStream;
 
   Future<Duration?> setUrl(String url);
   Future<void> play();
@@ -64,11 +69,16 @@ abstract class VoiceNoteAudioPlayer {
   Future<void> dispose();
 }
 
-class JustAudioVoiceNotePlayer implements VoiceNoteAudioPlayer {
-  JustAudioVoiceNotePlayer([AudioPlayer? delegate])
-      : _delegate = delegate ?? AudioPlayer();
+/// Default [VoiceNoteAudioPlayer] that delegates to [IChatAudioPlayer] created
+/// by the platform-conditional factory.
+///
+/// This replaces the old `JustAudioVoiceNotePlayer` which imported `just_audio`
+/// directly and did not work on Windows.
+class ChatAudioPlayerVoiceNoteAdapter implements VoiceNoteAudioPlayer {
+  ChatAudioPlayerVoiceNoteAdapter([IChatAudioPlayer? delegate])
+      : _delegate = delegate ?? createChatAudioPlayer();
 
-  final AudioPlayer _delegate;
+  final IChatAudioPlayer _delegate;
 
   @override
   Stream<Duration> get positionStream => _delegate.positionStream;
@@ -77,10 +87,11 @@ class JustAudioVoiceNotePlayer implements VoiceNoteAudioPlayer {
   Stream<Duration?> get durationStream => _delegate.durationStream;
 
   @override
-  Stream<PlayerState> get playerStateStream => _delegate.playerStateStream;
+  Stream<ChatPlayerState> get playerStateStream =>
+      _delegate.playerStateStream;
 
   @override
-  Future<Duration?> setUrl(String url) => _delegate.setUrl(url);
+  Future<Duration?> setUrl(String url) => _delegate.setSource(url);
 
   @override
   Future<void> play() => _delegate.play();
@@ -103,8 +114,8 @@ class VoiceNotePlaybackManager {
     VoiceNoteAudioPlayer? audioPlayer,
     VoiceNoteAudioPlayer? probeAudioPlayer,
     AppLogger? logger,
-  })  : _player = audioPlayer ?? JustAudioVoiceNotePlayer(),
-        _probePlayer = probeAudioPlayer ?? JustAudioVoiceNotePlayer(),
+  })  : _player = audioPlayer ?? ChatAudioPlayerVoiceNoteAdapter(),
+        _probePlayer = probeAudioPlayer ?? ChatAudioPlayerVoiceNoteAdapter(),
         _logger = logger {
     _positionSubscription = _player.positionStream.listen(_onPositionChanged);
     _durationSubscription = _player.durationStream.listen(_onDurationChanged);
@@ -137,7 +148,7 @@ class VoiceNotePlaybackManager {
 
   StreamSubscription<Duration>? _positionSubscription;
   StreamSubscription<Duration?>? _durationSubscription;
-  StreamSubscription<PlayerState>? _playerStateSubscription;
+  StreamSubscription<ChatPlayerState>? _playerStateSubscription;
 
   String? _currentPlayingId;
   String? _currentPlayingUrl;
@@ -356,13 +367,13 @@ class VoiceNotePlaybackManager {
     _emitState(messageId, currentState.copyWith(duration: duration));
   }
 
-  void _onPlayerStateChanged(PlayerState playerState) {
+  void _onPlayerStateChanged(ChatPlayerState playerState) {
     final messageId = _currentPlayingId;
     if (messageId == null) return;
 
     final currentState = _resolveCurrentState(messageId);
 
-    if (playerState.processingState == ProcessingState.completed) {
+    if (playerState.isCompleted) {
       unawaited(_player.seek(Duration.zero));
       unawaited(_player.pause());
       _emitState(
@@ -376,10 +387,10 @@ class VoiceNotePlaybackManager {
       return;
     }
 
-    if (playerState.playing != currentState.isPlaying) {
+    if (playerState.isPlaying != currentState.isPlaying) {
       _emitState(
         messageId,
-        currentState.copyWith(isPlaying: playerState.playing),
+        currentState.copyWith(isPlaying: playerState.isPlaying),
       );
     }
   }

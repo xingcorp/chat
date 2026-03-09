@@ -1,10 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:flutter_chat_app/core/services/audio/chat_audio_player_factory.dart';
+import 'package:flutter_chat_app/core/services/audio/i_chat_audio_player.dart';
 
 /// Inline audio player widget for chat message bubbles.
 ///
-/// Uses `just_audio` for playback.
-/// Shows play/pause, seek slider, and remaining time.
+/// Uses [IChatAudioPlayer] abstraction so the correct backend is selected per
+/// platform: `just_audio` on mobile/macOS/Linux, `audioplayers` on Windows.
 class AudioPlayerWidget extends StatefulWidget {
   final String url;
   final bool isFromCurrentUser;
@@ -20,22 +23,25 @@ class AudioPlayerWidget extends StatefulWidget {
 }
 
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
-  late AudioPlayer _player;
+  late final IChatAudioPlayer _player;
   bool _isLoading = true;
   bool _hasError = false;
+  bool _isPlaying = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
+
+  final List<StreamSubscription<dynamic>> _subs = <StreamSubscription<dynamic>>[];
 
   @override
   void initState() {
     super.initState();
-    _player = AudioPlayer();
+    _player = createChatAudioPlayer();
     _initPlayer();
   }
 
   Future<void> _initPlayer() async {
     try {
-      final duration = await _player.setUrl(widget.url);
+      final duration = await _player.setSource(widget.url);
       if (mounted) {
         setState(() {
           _duration = duration ?? Duration.zero;
@@ -43,16 +49,24 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         });
       }
 
-      _player.positionStream.listen((position) {
+      _subs.add(_player.positionStream.listen((position) {
         if (mounted) setState(() => _position = position);
-      });
+      }));
 
-      _player.playerStateStream.listen((state) {
-        if (state.processingState == ProcessingState.completed) {
+      _subs.add(_player.durationStream.listen((duration) {
+        if (mounted && duration != null && duration > Duration.zero) {
+          setState(() => _duration = duration);
+        }
+      }));
+
+      _subs.add(_player.playerStateStream.listen((state) {
+        if (!mounted) return;
+        setState(() => _isPlaying = state.isPlaying);
+        if (state.isCompleted) {
           _player.seek(Duration.zero);
           _player.pause();
         }
-      });
+      }));
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -65,6 +79,9 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   @override
   void dispose() {
+    for (final sub in _subs) {
+      sub.cancel();
+    }
     _player.dispose();
     super.dispose();
   }
@@ -113,24 +130,18 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     child: CircularProgressIndicator(strokeWidth: 2, color: iconColor),
                   ),
                 )
-              : StreamBuilder<PlayerState>(
-                  stream: _player.playerStateStream,
-                  builder: (context, snapshot) {
-                    final playing = snapshot.data?.playing ?? false;
-                    return IconButton(
-                      icon: Icon(playing ? Icons.pause_circle_filled : Icons.play_circle_filled),
-                      iconSize: 36,
-                      color: iconColor,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () {
-                        if (playing) {
-                          _player.pause();
-                        } else {
-                          _player.play();
-                        }
-                      },
-                    );
+              : IconButton(
+                  icon: Icon(_isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled),
+                  iconSize: 36,
+                  color: iconColor,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () {
+                    if (_isPlaying) {
+                      _player.pause();
+                    } else {
+                      _player.play();
+                    }
                   },
                 ),
           const SizedBox(width: 8),

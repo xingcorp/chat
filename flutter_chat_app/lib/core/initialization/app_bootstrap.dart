@@ -13,6 +13,7 @@ import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/initialization/download_plugin_initializer.dart';
 import 'package:flutter_chat_app/core/initialization/env_validator.dart';
+import 'package:flutter_chat_app/core/initialization/media_kit_initializer.dart';
 import 'package:flutter_chat_app/core/initialization/service_initializer.dart';
 import 'package:flutter_chat_app/app.dart';
 
@@ -34,6 +35,9 @@ Future<void> runMainApp() async {
 
     await initializeDownloadPlugin();
     _logStartupCheckpoint(startupWatch, 'DownloadPlugin');
+
+    await ensureMediaKitInitialized();
+    _logStartupCheckpoint(startupWatch, 'MediaKit');
 
     final envFileName = await EnvValidator.loadDotenvForFlavor();
     EnvValidator.validateDotenvConfiguration(envFileName);

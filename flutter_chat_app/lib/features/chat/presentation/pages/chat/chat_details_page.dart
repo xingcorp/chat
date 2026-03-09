@@ -29,7 +29,10 @@ import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_st
 import 'package:flutter_chat_app/features/chat/presentation/screens/chat/chat_header.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/add_member_panel.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/attachment_picker_widget.dart';
+import 'package:flutter_chat_app/data/datasources/clipboard/clipboard_datasource.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_file_attachment_host.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_message_timeline.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/clipboard_paste_handler.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/mention_text_field.dart';
@@ -42,6 +45,7 @@ import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_bloc.dar
 import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_event.dart';
 import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_state.dart';
+import 'package:flutter_chat_app/presentation/blocs/file_attachment/file_attachment_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
 import 'package:flutter_chat_app/presentation/screens/media/image_preview_screen.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_panel.dart';
@@ -106,7 +110,8 @@ class ChatDetailsPage extends BaseStatefulWidget {
   State<ChatDetailsPage> createState() => _ChatDetailsPageState();
 }
 
-class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
+class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
+    with ClipboardPasteHandler<ChatDetailsPage> {
   final MentionTextEditingController _messageController =
       MentionTextEditingController();
   final FocusNode _messageFocusNode = FocusNode();
@@ -122,8 +127,19 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   late final ChatBloc _chatBloc;
   late final ChatComposerBloc _chatComposerBloc;
   late final ChatDraftBloc _chatDraftBloc;
+  late final FileAttachmentBloc _fileAttachmentBloc;
+  late final ClipboardDataSource _clipboardDataSource;
   bool _ownsChatBloc = false;
   bool _ownsChatDraftBloc = false;
+
+  // ══════════════════════════════════════════
+  // ClipboardPasteHandler mixin overrides
+  // ══════════════════════════════════════════
+  @override
+  FileAttachmentBloc get clipboardFileAttachmentBloc => _fileAttachmentBloc;
+
+  @override
+  ClipboardDataSource get clipboardDataSource => _clipboardDataSource;
 
   Chat? _chat;
   String _currentUserId = '';
@@ -217,6 +233,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       _ownsChatDraftBloc = true;
     }
     _voiceRecorderService = getIt<VoiceRecorderService>();
+    _fileAttachmentBloc = getIt<FileAttachmentBloc>();
+    _clipboardDataSource = getIt<ClipboardDataSource>();
     _messageBloc.add(const FetchFrequentReactions());
     _setActiveConversation();
 
@@ -390,7 +408,15 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
       case ChatComposerSendTextEffect sendEffect:
         final messageText =
             _messageController.toBackendMentionFormat(sendEffect.text).trim();
-        if (messageText.isEmpty) {
+
+        // Collect completed attachment URLs from FileAttachmentBloc
+        final attachmentState = _fileAttachmentBloc.state;
+        final attachmentUrls = <String>[
+          for (final a in attachmentState.completedAttachments)
+            if (a.url != null && a.url!.isNotEmpty) a.url!,
+        ];
+
+        if (messageText.isEmpty && attachmentUrls.isEmpty) {
           AppSnackBar.show(
             context: context,
             message: context.l10n.messageEmpty,
@@ -399,15 +425,31 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           break;
         }
 
+        // If there are active uploads, warn the user
+        if (attachmentState.hasActiveUploads) {
+          AppSnackBar.show(
+            context: context,
+            message: context.l10n.uploading,
+            type: FeedbackType.warning,
+          );
+          break;
+        }
+
         _messageBloc.add(
           SendMessage(
-            content: messageText,
+            content: messageText.isNotEmpty ? messageText : '',
             senderId: _currentUserId,
-            contentType: 'text',
-            attachmentIds: const [],
+            contentType: attachmentUrls.isNotEmpty ? 'file' : 'text',
+            attachmentIds: attachmentUrls,
             replyMessageId: _replyingToMessage?.id,
           ),
         );
+
+        // Clear attachments after send
+        if (attachmentState.hasFiles) {
+          _fileAttachmentBloc.add(const AllFilesCleared());
+        }
+
         _chatDraftBloc.add(
           ChatDraftMessageQueued(
             conversationId: widget.chatId,
@@ -615,6 +657,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     _messageBloc.close();
     _convDetailBloc.close();
     _chatComposerBloc.close();
+    _fileAttachmentBloc.close();
     if (_ownsChatBloc) {
       _chatBloc.close();
     }
@@ -812,28 +855,30 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     }
 
     return Shortcuts(
-      shortcuts: const <ShortcutActivator, Intent>{
-        SingleActivator(LogicalKeyboardKey.enter): _SendMessageShortcutIntent(),
-        SingleActivator(LogicalKeyboardKey.escape):
-            _DismissChatInputShortcutIntent(),
-        SingleActivator(LogicalKeyboardKey.keyF, control: true):
-            _OpenMessageSearchShortcutIntent(),
-        SingleActivator(LogicalKeyboardKey.keyF, meta: true):
-            _OpenMessageSearchShortcutIntent(),
-        SingleActivator(LogicalKeyboardKey.keyK, control: true):
-            _FocusMessageInputShortcutIntent(),
-        SingleActivator(LogicalKeyboardKey.keyK, meta: true):
-            _FocusMessageInputShortcutIntent(),
-        SingleActivator(
+      shortcuts: <ShortcutActivator, Intent>{
+        const SingleActivator(LogicalKeyboardKey.enter): const _SendMessageShortcutIntent(),
+        const SingleActivator(LogicalKeyboardKey.escape):
+            const _DismissChatInputShortcutIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyF, control: true):
+            const _OpenMessageSearchShortcutIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
+            const _OpenMessageSearchShortcutIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true):
+            const _FocusMessageInputShortcutIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyK, meta: true):
+            const _FocusMessageInputShortcutIntent(),
+        const SingleActivator(
           LogicalKeyboardKey.keyC,
           control: true,
           shift: true,
-        ): _CopySelectedMessagesShortcutIntent(),
-        SingleActivator(
+        ): const _CopySelectedMessagesShortcutIntent(),
+        const SingleActivator(
           LogicalKeyboardKey.keyC,
           meta: true,
           shift: true,
-        ): _CopySelectedMessagesShortcutIntent(),
+        ): const _CopySelectedMessagesShortcutIntent(),
+        // Clipboard paste (Ctrl+V / Cmd+V) for image paste
+        ...clipboardPasteShortcuts,
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -874,6 +919,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               return null;
             },
           ),
+          PasteImageIntent:
+              CallbackAction<PasteImageIntent>(
+            onInvoke: (_) {
+              _handlePasteImageShortcut();
+              return null;
+            },
+          ),
         },
         child: Focus(
           autofocus: true,
@@ -887,7 +939,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   void _handleSendMessageShortcut() {
     if (!_messageFocusNode.hasFocus) return;
     if (_isSelectionMode || _isRecordingVoice) return;
-    if (_messageController.text.trim().isEmpty) return;
+    // Allow send when text is present OR attachments are ready
+    final hasText = _messageController.text.trim().isNotEmpty;
+    final hasAttachments = _fileAttachmentBloc.state.hasFiles;
+    if (!hasText && !hasAttachments) return;
     _sendMessage();
   }
 
@@ -906,6 +961,38 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     final state = _messageBloc.state;
     if (state is! MessagesLoaded) return;
     _copySelectedMessages(state.uiMessages);
+  }
+
+  void _handlePasteImageShortcut() {
+    handleClipboardPaste().then((handled) {
+      // If an image was pasted, it's already sent to FileAttachmentBloc.
+      // If not (text only), manually paste text into the message field.
+      if (!handled && mounted) {
+        Clipboard.getData(Clipboard.kTextPlain).then((data) {
+          if (data?.text != null && data!.text!.isNotEmpty && mounted) {
+            final text = data.text!;
+            final selection = _messageController.selection;
+            final currentText = _messageController.text;
+            if (selection.isValid) {
+              final newText = currentText.replaceRange(
+                selection.start,
+                selection.end,
+                text,
+              );
+              _messageController.text = newText;
+              _messageController.selection = TextSelection.collapsed(
+                offset: selection.start + text.length,
+              );
+            } else {
+              _messageController.text = currentText + text;
+              _messageController.selection = TextSelection.collapsed(
+                offset: _messageController.text.length,
+              );
+            }
+          }
+        });
+      }
+    });
   }
 
   void _forwardSelectedMessages() {
@@ -1825,73 +1912,72 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               appBar: _isSelectionMode
                   ? _buildSelectionAppBar()
                   : _buildNormalAppBar(chatTitle),
-              body: Column(
-                children: [
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        BlocConsumer<MessageBloc, MessageState>(
-                          listenWhen: (previous, current) {
-                            // Listener handles side-effects (scroll, mark-read,
-                            // load-more detection) → always listen on type change.
-                            if (previous.runtimeType != current.runtimeType) {
-                              return true;
-                            }
-                            // Within MessagesLoaded ↔ MessagesLoaded: still listen
-                            // whenever the message payload changes (new message,
-                            // load-more completed, etc.) but skip emits that only
-                            // touch metadata like isBackgroundFetching / dataSource.
-                            if (previous is MessagesLoaded &&
-                                current is MessagesLoaded) {
-                              return previous.messages != current.messages ||
-                                  previous.uiMessages != current.uiMessages ||
-                                  previous.hasReachedMax !=
-                                      current.hasReachedMax ||
-                                  previous.paginationError !=
-                                      current.paginationError;
-                            }
-                            return true;
-                          },
-                          listener: _handleBlocStateChanges,
-                          buildWhen: (previous, current) {
-                            // Always rebuild on state-type change
-                            // (initial→loading, loading→loaded, loaded→error).
-                            if (previous.runtimeType != current.runtimeType) {
-                              return true;
-                            }
-                            // Within MessagesLoaded: only rebuild when
-                            // UI-visible fields actually change.
-                            if (previous is MessagesLoaded &&
-                                current is MessagesLoaded) {
-                              return previous.uiMessages !=
-                                      current.uiMessages ||
-                                  previous.hasReachedMax !=
-                                      current.hasReachedMax ||
-                                  previous.paginationError !=
-                                      current.paginationError;
-                            }
-                            return true;
-                          },
-                          builder: _buildMessagesList,
-                        ),
-                        if (_showScrollToBottom)
-                          Positioned(
-                            bottom: 16,
-                            right: 16,
-                            child: Badge(
-                              isLabelVisible: _newMessageCount > 0,
-                              label: Text('$_newMessageCount'),
-                              child: FloatingActionButton.small(
-                                heroTag: 'scrollToBottom',
-                                onPressed: _scrollToBottom,
-                                tooltip: context.l10n.scrollToBottom,
-                                child: const Icon(Icons.keyboard_arrow_down),
-                              ),
-                            ),
-                          ),
-                      ],
+              body: ChatFileAttachmentHost(
+                fileAttachmentBloc: _fileAttachmentBloc,
+                chatBody: Stack(
+                  children: [
+                    BlocConsumer<MessageBloc, MessageState>(
+                      listenWhen: (previous, current) {
+                        // Listener handles side-effects (scroll, mark-read,
+                        // load-more detection) → always listen on type change.
+                        if (previous.runtimeType != current.runtimeType) {
+                          return true;
+                        }
+                        // Within MessagesLoaded ↔ MessagesLoaded: still listen
+                        // whenever the message payload changes (new message,
+                        // load-more completed, etc.) but skip emits that only
+                        // touch metadata like isBackgroundFetching / dataSource.
+                        if (previous is MessagesLoaded &&
+                            current is MessagesLoaded) {
+                          return previous.messages != current.messages ||
+                              previous.uiMessages != current.uiMessages ||
+                              previous.hasReachedMax !=
+                                  current.hasReachedMax ||
+                              previous.paginationError !=
+                                  current.paginationError;
+                        }
+                        return true;
+                      },
+                      listener: _handleBlocStateChanges,
+                      buildWhen: (previous, current) {
+                        // Always rebuild on state-type change
+                        // (initial→loading, loading→loaded, loaded→error).
+                        if (previous.runtimeType != current.runtimeType) {
+                          return true;
+                        }
+                        // Within MessagesLoaded: only rebuild when
+                        // UI-visible fields actually change.
+                        if (previous is MessagesLoaded &&
+                            current is MessagesLoaded) {
+                          return previous.uiMessages !=
+                                  current.uiMessages ||
+                              previous.hasReachedMax !=
+                                  current.hasReachedMax ||
+                              previous.paginationError !=
+                                  current.paginationError;
+                        }
+                        return true;
+                      },
+                      builder: _buildMessagesList,
                     ),
-                  ),
+                    if (_showScrollToBottom)
+                      Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: Badge(
+                          isLabelVisible: _newMessageCount > 0,
+                          label: Text('$_newMessageCount'),
+                          child: FloatingActionButton.small(
+                            heroTag: 'scrollToBottom',
+                            onPressed: _scrollToBottom,
+                            tooltip: context.l10n.scrollToBottom,
+                            child: const Icon(Icons.keyboard_arrow_down),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                betweenWidgets: [
                   TypingIndicatorWithFade(
                     isTyping: _isOtherTyping,
                     displayName: _typingUserName,
@@ -1910,8 +1996,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                       onCancel: _cancelReply,
                     ),
                   if (_isEditMode) _buildEditModeBar(),
-                  _buildMessageInputArea(),
                 ],
+                chatInput: _buildMessageInputArea(),
               ),
             ),
           ),

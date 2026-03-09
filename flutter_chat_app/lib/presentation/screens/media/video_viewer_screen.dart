@@ -1,14 +1,17 @@
-import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/services/video/chat_video_player_factory.dart';
+import 'package:flutter_chat_app/core/services/video/i_chat_video_player.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
-import 'package:video_player/video_player.dart';
 
 /// Fullscreen video viewer shared across the app.
+///
+/// Uses [IChatVideoPlayer] abstraction so that `video_player` + `chewie` are
+/// used on mobile/macOS/Linux and `media_kit` on Windows.
 ///
 /// Pattern: preview in message/list -> open this page for playback.
 class VideoViewerScreen extends StatefulWidget {
@@ -49,8 +52,7 @@ class VideoViewerScreen extends StatefulWidget {
 }
 
 class _VideoViewerScreenState extends State<VideoViewerScreen> {
-  VideoPlayerController? _videoController;
-  ChewieController? _chewieController;
+  IChatVideoPlayer? _player;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -67,44 +69,27 @@ class _VideoViewerScreenState extends State<VideoViewerScreen> {
     });
 
     try {
-      final videoController = VideoPlayerController.networkUrl(
-        Uri.parse(widget.videoUrl),
-      );
-      await videoController.initialize();
-
-      final chewieController = ChewieController(
-        videoPlayerController: videoController,
-        autoPlay: widget.autoPlay,
-        looping: widget.looping,
-        autoInitialize: false,
-        showControls: true,
-        showControlsOnInitialize: true,
-        aspectRatio: _safeAspectRatio(videoController.value.aspectRatio),
-        allowMuting: true,
-        allowPlaybackSpeedChanging: true,
-        customControls: const MaterialControls(),
-        materialProgressColors: ChewieProgressColors(
-          playedColor: AppColors.primary,
-          handleColor: AppColors.primary,
-          bufferedColor: AppColors.primary.withValues(alpha: 0.35),
-          backgroundColor: AppColors.dividerDarkMode,
-        ),
-      );
+      final player = createChatVideoPlayer();
+      await player.initialize(widget.videoUrl);
 
       if (!mounted) {
-        chewieController.dispose();
-        videoController.dispose();
+        player.dispose();
         return;
       }
 
-      _videoController?.dispose();
-      _chewieController?.dispose();
+      await player.setLooping(widget.looping);
+
+      // Dispose any previous player before assigning new one.
+      _player?.dispose();
 
       setState(() {
-        _videoController = videoController;
-        _chewieController = chewieController;
+        _player = player;
         _isLoading = false;
       });
+
+      if (widget.autoPlay) {
+        await player.play();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -114,15 +99,9 @@ class _VideoViewerScreenState extends State<VideoViewerScreen> {
     }
   }
 
-  double _safeAspectRatio(double value) {
-    if (value.isNaN || value.isInfinite || value <= 0) return 16 / 9;
-    return value;
-  }
-
   @override
   void dispose() {
-    _chewieController?.dispose();
-    _videoController?.dispose();
+    _player?.dispose();
     super.dispose();
   }
 
@@ -162,10 +141,9 @@ class _VideoViewerScreenState extends State<VideoViewerScreen> {
   }
 
   Widget _buildPlayer() {
-    final chewieController = _chewieController;
-    final videoController = _videoController;
+    final player = _player;
 
-    if (chewieController == null || videoController == null) {
+    if (player == null || !player.isInitialized) {
       return _buildErrorState();
     }
 
@@ -175,8 +153,8 @@ class _VideoViewerScreenState extends State<VideoViewerScreen> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
           child: AspectRatio(
-            aspectRatio: _safeAspectRatio(videoController.value.aspectRatio),
-            child: Chewie(controller: chewieController),
+            aspectRatio: player.aspectRatio,
+            child: player.buildVideoWidget(showControls: true),
           ),
         ),
       ),

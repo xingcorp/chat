@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/services/video/chat_video_player_factory.dart';
+import 'package:flutter_chat_app/core/services/video/i_chat_video_player.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/screens/media/video_viewer_screen.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_image.dart';
-import 'package:video_player/video_player.dart';
 
 /// Video preview card for chat.
 ///
 /// Pattern: show thumbnail + play button in message bubble.
 /// On tap: open fullscreen video viewer.
+///
+/// Uses [IChatVideoPlayer] abstraction so that `video_player` is used on
+/// mobile/macOS/Linux and `media_kit` on Windows.
 class VideoPlayerWidget extends StatefulWidget {
   final String url;
   final String? thumbnailUrl;
@@ -32,7 +36,7 @@ class VideoPlayerWidget extends StatefulWidget {
 }
 
 class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
-  VideoPlayerController? _previewController;
+  IChatVideoPlayer? _previewPlayer;
   bool _isPreparingPreview = false;
   bool _isOpeningViewer = false;
   double _aspectRatio = 16 / 9;
@@ -59,7 +63,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       return;
     }
 
-    _disposePreviewController();
+    _disposePreviewPlayer();
     _isPreparingPreview = false;
     _isOpeningViewer = false;
     _aspectRatio = 16 / 9;
@@ -67,26 +71,25 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   Future<void> _preparePreviewFrame() async {
-    if (_hasThumbnail || _previewController != null || _isPreparingPreview) {
+    if (_hasThumbnail || _previewPlayer != null || _isPreparingPreview) {
       return;
     }
 
     setState(() => _isPreparingPreview = true);
 
     try {
-      final controller =
-          VideoPlayerController.networkUrl(Uri.parse(widget.url));
-      await controller.initialize();
+      final player = createChatVideoPlayer();
+      await player.initialize(widget.url);
 
       if (!mounted) {
-        controller.dispose();
+        player.dispose();
         return;
       }
 
-      _previewController = controller;
+      _previewPlayer = player;
 
       setState(() {
-        _aspectRatio = _safeAspectRatio(controller.value.aspectRatio);
+        _aspectRatio = _safeAspectRatio(player.aspectRatio);
         _isPreparingPreview = false;
       });
     } catch (_) {
@@ -100,9 +103,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     return value;
   }
 
-  void _disposePreviewController() {
-    _previewController?.dispose();
-    _previewController = null;
+  void _disposePreviewPlayer() {
+    _previewPlayer?.dispose();
+    _previewPlayer = null;
   }
 
   Future<void> _openViewer() async {
@@ -123,7 +126,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   @override
   void dispose() {
-    _disposePreviewController();
+    _disposePreviewPlayer();
     super.dispose();
   }
 
@@ -137,23 +140,18 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       );
     }
 
-    final controller = _previewController;
-    if (controller != null && controller.value.isInitialized) {
-      final size = controller.value.size;
-      if (size.width > 0 && size.height > 0) {
-        return SizedBox.expand(
-          child: FittedBox(
-            fit: BoxFit.cover,
-            child: SizedBox(
-              width: size.width,
-              height: size.height,
-              child: VideoPlayer(controller),
-            ),
+    final player = _previewPlayer;
+    if (player != null && player.isInitialized) {
+      return SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: _aspectRatio * 100,
+            height: 100,
+            child: player.buildVideoWidget(showControls: false),
           ),
-        );
-      }
-
-      return SizedBox.expand(child: VideoPlayer(controller));
+        ),
+      );
     }
 
     return DecoratedBox(

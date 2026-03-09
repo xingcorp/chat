@@ -24,6 +24,7 @@ import 'package:flutter_chat_app/core/utils/logger.dart' show AppLogger;
 import 'package:flutter_chat_app/chat_config.dart';
 import 'package:flutter_chat_app/core/config/app_config.dart';
 import 'package:flutter_chat_app/core/error/retry_config.dart' as app_retry;
+import 'package:flutter_chat_app/core/initialization/media_kit_initializer.dart';
 import 'package:flutter_chat_app/core/localization/error_message_provider.dart';
 import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
 import 'package:flutter_chat_app/core/monitoring/i_crash_reporter.dart';
@@ -130,6 +131,10 @@ class ChatModuleInjection {
       // Step 2: Register core module (manual registration)
       await registerCoreModule(_getIt);
       lap('Step2: Core module');
+
+      // Step 2.1: Initialize platform-specific media libraries (Windows: media_kit)
+      await ensureMediaKitInitialized();
+      lap('Step2.1: MediaKit init');
 
       // Step 2.5: Pre-register monitoring services BEFORE auto-generated deps
       // These are needed by many auto-generated registrations but would normally
