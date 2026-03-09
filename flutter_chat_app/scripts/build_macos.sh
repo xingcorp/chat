@@ -188,10 +188,23 @@ build_flutter_macos() {
     log_step "Building Flutter macOS app (release)..."
     cd "$PROJECT_DIR"
 
+    local target_file='lib/main.dart'
+    case "$FLAVOR" in
+        production)
+            target_file='lib/main_production.dart'
+            ;;
+        staging)
+            if [[ -f "$PROJECT_DIR/lib/main_staging.dart" ]]; then
+                target_file='lib/main_staging.dart'
+            fi
+            ;;
+    esac
+
     flutter pub get
 
     flutter build macos \
         --release \
+        --target "$target_file" \
         --dart-define=FLAVOR="$FLAVOR"
 
     # Verify build
@@ -307,34 +320,34 @@ package_dmg() {
 
     # Remove old DMG if exists
     rm -f "$dmg_path"
+    find "$OUTPUT_DIR" -maxdepth 1 -name "rw.*.$(basename "$dmg_path")" -delete
 
-    # Check for custom background
-    local bg_args=()
     local bg_path="$PROJECT_DIR/installer/macos/dmg_background.png"
-    if [[ -f "$bg_path" ]]; then
-        bg_args=(--background "$bg_path")
-    fi
 
-    # Check for custom volume icon
-    local icon_args=()
     local icon_path="$PROJECT_DIR/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png"
+    local create_dmg_cmd=(
+        create-dmg
+        --volname "$APP_NAME"
+        --volicon "$PROJECT_DIR/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_128.png"
+        --window-pos 200 120
+        --window-size 660 400
+        --icon-size 80
+        --app-drop-link 500 160
+        --hide-extension "$(basename "$APP_PATH")"
+    )
+
     if [[ -f "$icon_path" ]]; then
-        icon_args=(--icon "$APP_NAME" 140 160)
+        create_dmg_cmd+=(--icon "$APP_NAME" 140 160)
     fi
 
-    create-dmg \
-        --volname "$APP_NAME" \
-        --volicon "$PROJECT_DIR/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_128.png" \
-        --window-pos 200 120 \
-        --window-size 660 400 \
-        --icon-size 80 \
-        "${icon_args[@]}" \
-        --app-drop-link 500 160 \
-        --hide-extension "$(basename "$APP_PATH")" \
-        "${bg_args[@]}" \
-        "$dmg_path" \
-        "$APP_PATH" \
-    || true  # create-dmg returns 2 on "no custom icon", which is OK
+    if [[ -f "$bg_path" ]]; then
+        create_dmg_cmd+=(--background "$bg_path")
+    fi
+
+    create_dmg_cmd+=("$dmg_path" "$APP_PATH")
+
+    LC_ALL='en_US.UTF-8' LANG='en_US.UTF-8' LC_CTYPE='en_US.UTF-8' \
+        "${create_dmg_cmd[@]}" || true  # create-dmg returns 2 on "no custom icon", which is OK
 
     if [[ ! -f "$dmg_path" ]]; then
         log_error "DMG creation failed"
