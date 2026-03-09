@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/data/datasources/clipboard/clipboard_datasource.dart';
 import 'package:flutter_chat_app/presentation/blocs/file_attachment/file_attachment_bloc.dart';
 import 'package:mime/mime.dart';
@@ -58,13 +59,22 @@ mixin ClipboardPasteHandler<T extends BaseStatefulWidget> on BaseState<T> {
   ///
   /// Call this from a keyboard shortcut handler for Ctrl+V / Cmd+V.
   Future<bool> handleClipboardPaste() async {
-    if (!isClipboardPasteSupported) return false;
+    LogUtils.d('PASTE_DEBUG', '>>> handleClipboardPaste() called');
+    LogUtils.d('PASTE_DEBUG', '>>> isClipboardPasteSupported=$isClipboardPasteSupported, kIsWeb=$kIsWeb');
+
+    if (!isClipboardPasteSupported) {
+      LogUtils.d('PASTE_DEBUG', '>>> NOT SUPPORTED — returning false');
+      return false;
+    }
 
     try {
       // 1. Try reading file paths first (Ctrl+C from file explorer)
       if (!kIsWeb) {
+        LogUtils.d('PASTE_DEBUG', '>>> Step 1: Trying getFilePathsFromClipboard()...');
         final filePaths =
             await clipboardDataSource.getFilePathsFromClipboard();
+        LogUtils.d('PASTE_DEBUG', '>>> getFilePathsFromClipboard() returned ${filePaths.length} paths: $filePaths');
+
         if (filePaths.isNotEmpty) {
           final pickedFiles = <PickedFileInfo>[];
           for (final filePath in filePaths) {
@@ -73,6 +83,8 @@ mixin ClipboardPasteHandler<T extends BaseStatefulWidget> on BaseState<T> {
             final fileSize = await file.length();
             final mimeType =
                 lookupMimeType(fileName) ?? 'application/octet-stream';
+
+            LogUtils.d('PASTE_DEBUG', '>>> File: $fileName, size=$fileSize, mime=$mimeType');
 
             pickedFiles.add(PickedFileInfo(
               path: filePath,
@@ -83,6 +95,7 @@ mixin ClipboardPasteHandler<T extends BaseStatefulWidget> on BaseState<T> {
           }
 
           if (pickedFiles.isNotEmpty) {
+            LogUtils.d('PASTE_DEBUG', '>>> Dispatching FilesPicked with ${pickedFiles.length} files');
             clipboardFileAttachmentBloc.add(
               FilesPicked(files: pickedFiles),
             );
@@ -92,8 +105,12 @@ mixin ClipboardPasteHandler<T extends BaseStatefulWidget> on BaseState<T> {
       }
 
       // 2. Try reading image bytes (screenshot, image content)
+      LogUtils.d('PASTE_DEBUG', '>>> Step 2: Trying getImageFromClipboard()...');
       final imageData = await clipboardDataSource.getImageFromClipboard();
+      LogUtils.d('PASTE_DEBUG', '>>> getImageFromClipboard() returned: ${imageData != null ? "image(${imageData.bytes.length} bytes)" : "null"}');
+
       if (imageData != null) {
+        LogUtils.d('PASTE_DEBUG', '>>> Dispatching ImagePasted');
         clipboardFileAttachmentBloc.add(
           ImagePasted(
             bytes: imageData.bytes,
@@ -102,10 +119,11 @@ mixin ClipboardPasteHandler<T extends BaseStatefulWidget> on BaseState<T> {
         );
         return true;
       }
-    } catch (_) {
-      // Fall through to normal paste
+    } catch (e, stack) {
+      LogUtils.e('PASTE_DEBUG', '>>> EXCEPTION in handleClipboardPaste: $e\n$stack');
     }
 
+    LogUtils.d('PASTE_DEBUG', '>>> No file/image found — returning false');
     return false;
   }
 

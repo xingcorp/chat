@@ -249,19 +249,23 @@ class ChatModuleInjection {
     }
   }
 
-  /// Logout the current user and clear all user-specific data.
+  /// Logout the current user and clear **ALL** user-specific data.
   ///
-  /// This method:
-  /// 1. Clears the local database (Isar) to remove cached chats/messages
-  /// 2. Unregisters singleton repositories so they get recreated on next login
-  /// 3. Preserves core infrastructure (SharedPreferences, Logger, etc.)
+  /// This method ensures complete data isolation between users:
+  /// 1. Disconnects Socket.IO and realtime connections (stop receiving old user's events)
+  /// 2. Clears tokens from SecureStorage/SharedPreferences (prevent API calls as old user)
+  /// 3. Clears the local database (Isar) to remove cached chats/messages
+  /// 4. Clears GraphQL cache, in-memory caches, and SharedPreferences keys
+  /// 5. Clears CurrentUserProvider and user-specific named instances
+  /// 6. Unregisters singleton repositories so they get recreated on next login
+  /// 7. Preserves core infrastructure (SharedPreferences instance, Logger, DatabaseService)
   ///
   /// Call this when user logs out to ensure the next user doesn't see
   /// the previous user's data.
   static Future<void> logout() async {
-    _logger.d('[ChatModuleInjection] Logging out - clearing user data...');
+    _logger.d('[ChatModuleInjection] Logging out - clearing ALL user data...');
 
-    // 0. Dispose ForegroundSyncService and EventBus
+    // ── Step 0: Dispose services that produce real-time side-effects ──
     try {
       if (_getIt.isRegistered<ForegroundSyncService>()) {
         _getIt<ForegroundSyncService>().dispose();
@@ -294,7 +298,93 @@ class ChatModuleInjection {
     _tryUnregister<ChatNotificationPolicyService>();
     _tryUnregister<LocalNotificationService>();
 
-    // 1. Clear local database (Isar) - most important for data isolation
+    // ── Step 1: Disconnect Socket.IO — HIGH PRIORITY ──
+    // Without this, socket stays connected with old user's token and
+    // the next user receives real-time messages from the old user.
+    try {
+      if (_getIt.isRegistered<socket_mgr.SocketManager>()) {
+        final socketManager = _getIt<socket_mgr.SocketManager>();
+        socketManager.dispose();
+        _logger.d('[ChatModuleInjection] SocketManager disconnected & disposed');
+      }
+    } catch (e) {
+      _logger.d('[ChatModuleInjection] Failed to dispose SocketManager: $e');
+    }
+    _tryUnregister<socket_mgr.SocketManager>();
+
+    // Dispose ConnectionPoolManager (closes all WebSocket pool connections)
+    try {
+      if (_getIt.isRegistered<ConnectionPoolManager>()) {
+        await _getIt<ConnectionPoolManager>().dispose();
+        _logger.d('[ChatModuleInjection] ConnectionPoolManager disposed');
+      }
+    } catch (e) {
+      _logger.d(
+          '[ChatModuleInjection] Failed to dispose ConnectionPoolManager: $e');
+    }
+    _tryUnregister<ConnectionPoolManager>();
+
+    // Dispose EnhancedRealtimeConnectionService
+    try {
+      if (_getIt.isRegistered<EnhancedRealtimeConnectionService>()) {
+        _getIt<EnhancedRealtimeConnectionService>().dispose();
+        _logger.d(
+            '[ChatModuleInjection] EnhancedRealtimeConnectionService disposed');
+      }
+    } catch (e) {
+      _logger.d(
+          '[ChatModuleInjection] Failed to dispose EnhancedRealtimeConnectionService: $e');
+    }
+    _tryUnregister<EnhancedRealtimeConnectionService>();
+    _tryUnregister<realtime.IRealtimeConnectionService>();
+
+    // ── Step 2: Clear tokens from persistent storage — HIGH PRIORITY ──
+    // TokenRepository.clear() removes tokens from SecureStorage AND
+    // SharedPreferences, preventing API calls as the old user.
+    try {
+      if (_getIt.isRegistered<token_module.TokenRepository>()) {
+        await _getIt<token_module.TokenRepository>().clear();
+        _logger.d(
+            '[ChatModuleInjection] TokenRepository cleared (SecureStorage + SharedPrefs)');
+      }
+    } catch (e) {
+      _logger.d('[ChatModuleInjection] Failed to clear TokenRepository: $e');
+    }
+
+    // ── Step 3: Clear SharedPreferences user-specific keys — HIGH PRIORITY ──
+    // These were written in initialize() Step 10 for background isolate sync.
+    // Without clearing, BackgroundSyncHelper reads old user's access token.
+    try {
+      if (_getIt.isRegistered<SharedPreferences>()) {
+        final prefs = _getIt<SharedPreferences>();
+        await Future.wait([
+          prefs.remove(BackgroundSyncHelper.keyBaseUrl),
+          prefs.remove(BackgroundSyncHelper.keyGraphqlUrl),
+          prefs.remove(BackgroundSyncHelper.keyAccessToken),
+          prefs.remove(BackgroundSyncHelper.keyLastBgSyncTime),
+        ]);
+        _logger.d(
+            '[ChatModuleInjection] SharedPreferences background sync keys cleared');
+      }
+    } catch (e) {
+      _logger.d(
+          '[ChatModuleInjection] Failed to clear SharedPreferences keys: $e');
+    }
+
+    // ── Step 4: Clear CurrentUserProvider — MEDIUM PRIORITY ──
+    // Without this, services that inject CurrentUserProvider still return
+    // the old user's ID and profile data.
+    try {
+      if (_getIt.isRegistered<CurrentUserProvider>()) {
+        await _getIt<CurrentUserProvider>().clear();
+        _logger.d('[ChatModuleInjection] CurrentUserProvider cleared');
+      }
+    } catch (e) {
+      _logger.d(
+          '[ChatModuleInjection] Failed to clear CurrentUserProvider: $e');
+    }
+
+    // ── Step 5: Clear local database (Isar) — data isolation ──
     try {
       if (_getIt.isRegistered<DatabaseService>()) {
         final dbService = _getIt<DatabaseService>();
@@ -305,7 +395,7 @@ class ChatModuleInjection {
       _logger.d('[ChatModuleInjection] Failed to clear database: $e');
     }
 
-    // 2. Clear local datasource cache if it has any in-memory state
+    // ── Step 6: Clear local datasource in-memory cache ──
     try {
       if (_getIt.isRegistered<ChatLocalDataSource>()) {
         final localDs = _getIt<ChatLocalDataSource>();
@@ -316,8 +406,8 @@ class ChatModuleInjection {
       _logger.d('[ChatModuleInjection] Failed to clear local datasource: $e');
     }
 
-    // 3. Clear GraphQL cache (HiveStore) - critical for data isolation
-    // Without this, cached queries return old user's data
+    // ── Step 7: Clear GraphQL cache (HiveStore) ──
+    // Without this, cached queries return old user's data.
     try {
       if (_getIt.isRegistered<GraphQLClient>()) {
         final graphqlClient = _getIt<GraphQLClient>();
@@ -328,106 +418,92 @@ class ChatModuleInjection {
       _logger.d('[ChatModuleInjection] Failed to clear GraphQL cache: $e');
     }
 
-    // 4. Unregister singleton repositories so they get recreated fresh
-    // This ensures new instances are created with fresh state on next login
+    // ── Step 8: Unregister singleton repositories ──
+    // These hold stale references; they will be recreated on next init.
     _tryUnregister<IChatRepository>();
     _tryUnregister<ChatLocalDataSource>();
 
-    // 4. Clear config overrides
+    // ── Step 9: Clear AppConfig overrides ──
     AppConfig.clearOverrides();
 
-    // 5. Unregister auth-related singletons (will be recreated on next init)
+    // ── Step 10: Unregister user-specific named instances — MEDIUM PRIORITY ──
+    // These were set in _registerExternalDeps() with the old user's values.
+    // Without clearing, inject by name returns old user's userId/token.
+    _tryUnregisterNamed<String>('currentUserId');
+    _tryUnregisterNamed<String>('authToken');
+    _tryUnregisterNamed<String>('baseUrl');
+    _tryUnregisterNamed<String>('socketUrl');
+    _tryUnregisterNamed<String>('graphQlApiUrl');
+    _tryUnregisterNamed<String>('graphQlWsUrl');
+
+    // Unregister connection pool config named instances
+    _tryUnregisterNamed<int>('connectionPoolMaxPoolSize');
+    _tryUnregisterNamed<int>('connectionPoolMaxConnectionLifetime');
+    _tryUnregisterNamed<int>('connectionPoolMaxIdleTime');
+    _tryUnregisterNamed<int>('connectionPoolCleanupInterval');
+    _tryUnregisterNamed<int>('connectionPoolHealthCheckInterval');
+
+    // Unregister socket options (contains old auth token)
+    _tryUnregister<Map<String, dynamic>>();
+
+    // Unregister RealtimeConnectionConfig (contains old auth token)
+    _tryUnregister<realtime_models.RealtimeConnectionConfig>();
+    _tryUnregister<realtime.RealtimeConfig>();
+    _tryUnregister<ConnectionFactory>();
+
+    // ── Step 11: Unregister auth-related singletons ──
     _tryUnregister<TokenProvider>();
     _tryUnregister<AuthDelegate>();
     _tryUnregister<token_module.TokenRepository>();
+    _tryUnregister<token_module.TokenStorage>();
     _tryUnregister<core_graphql.GraphQLClientWrapperImpl>();
     _tryUnregister<core_graphql.GraphQLClientWrapper>();
+    _tryUnregister<GraphQLClient>();
 
-    _logger.d('[ChatModuleInjection] Logout complete');
+    _logger.d('[ChatModuleInjection] ✅ Logout complete — all user data cleared');
   }
 
   /// Clean up chat module specific resources.
   ///
-  /// Selectively unregisters only the dependencies that were explicitly
-  /// registered by chat module, preserving host app's registrations.
+  /// Performs full cleanup: clears user data (like [logout]) AND unregisters
+  /// all chat module dependencies, preserving host app's registrations.
   ///
   /// NOTE: We do NOT call _getIt.reset() because chat module shares
   /// GetIt instance with host app. Calling reset() would unregister ALL
   /// dependencies including host app's routes, causing navigation failures.
   static Future<void> dispose() async {
-    AppConfig.clearOverrides();
+    // First perform full user-data cleanup (same as logout)
+    await logout();
 
-    try {
-      if (_getIt.isRegistered<ForegroundSyncService>()) {
-        _getIt<ForegroundSyncService>().dispose();
-        _tryUnregister<ForegroundSyncService>();
-      }
-    } catch (_) {}
+    // Then unregister remaining infrastructure singletons that logout preserves
+    _tryUnregister<CurrentUserProvider>();
+    _tryUnregister<DatabaseService>();
+    _tryUnregister<SecureStorage>();
+    _tryUnregister<token_module.TokenStorage>();
 
-    try {
-      if (_getIt.isRegistered<ChatNotificationOrchestrator>()) {
-        await _getIt<ChatNotificationOrchestrator>().dispose();
-        _tryUnregister<ChatNotificationOrchestrator>();
-      }
-    } catch (_) {}
+    // Unregister named instances (in case logout didn't run or was skipped)
+    _tryUnregisterNamed<String>('currentUserId');
+    _tryUnregisterNamed<String>('authToken');
+    _tryUnregisterNamed<String>('baseUrl');
+    _tryUnregisterNamed<String>('socketUrl');
+    _tryUnregisterNamed<String>('graphQlApiUrl');
+    _tryUnregisterNamed<String>('graphQlWsUrl');
+    _tryUnregisterNamed<int>('connectionPoolMaxPoolSize');
+    _tryUnregisterNamed<int>('connectionPoolMaxConnectionLifetime');
+    _tryUnregisterNamed<int>('connectionPoolMaxIdleTime');
+    _tryUnregisterNamed<int>('connectionPoolCleanupInterval');
+    _tryUnregisterNamed<int>('connectionPoolHealthCheckInterval');
 
-    try {
-      if (_getIt.isRegistered<ChatModuleEventBus>()) {
-        _getIt<ChatModuleEventBus>().dispose();
-        _tryUnregister<ChatModuleEventBus>();
-      }
-    } catch (_) {}
-
-    _tryUnregister<ChatActiveConversationTracker>();
-    _tryUnregister<ChatConversationSelectionService>();
-    _tryUnregister<ChatNotificationPolicyService>();
-    _tryUnregister<LocalNotificationService>();
-
-    // List of instance names registered by chat module
-    final instanceNamesToUnregister = <String>[
-      'baseUrl',
-      'socketUrl',
-      'graphQlApiUrl',
-      'graphQlWsUrl',
-      'authToken',
-      'connectionPoolMaxPoolSize',
-      'connectionPoolMaxConnectionLifetime',
-      'connectionPoolMaxIdleTime',
-      'connectionPoolCleanupInterval',
-      'connectionPoolHealthCheckInterval',
-    ];
-
-    // Unregister String instances with specific names
-    for (final name in instanceNamesToUnregister) {
-      try {
-        if (name.startsWith('connectionPool')) {
-          // These are int types
-          if (_getIt.isRegistered<int>(instanceName: name)) {
-            _getIt.unregister<int>(instanceName: name);
-          }
-        } else {
-          // These are String types
-          if (_getIt.isRegistered<String>(instanceName: name)) {
-            _getIt.unregister<String>(instanceName: name);
-          }
-        }
-      } catch (e) {
-        // Ignore errors during cleanup
-      }
-    }
-
-    // Unregister chat-specific singleton types
-    // These are types unique to chat module that host app typically doesn't use
-    _tryUnregister<TokenProvider>();
-    _tryUnregister<AuthDelegate>();
-    _tryUnregister<token_module.TokenRepository>();
-    _tryUnregister<core_graphql.GraphQLClientWrapperImpl>();
-    _tryUnregister<core_graphql.GraphQLClientWrapper>();
     _tryUnregister<socket_mgr.SocketManager>();
     _tryUnregister<ConnectionPoolManager>();
     _tryUnregister<EnhancedRealtimeConnectionService>();
     _tryUnregister<realtime.IRealtimeConnectionService>();
-    _tryUnregister<Map<String, dynamic>>(); // Socket options
+    _tryUnregister<Map<String, dynamic>>();
+    _tryUnregister<realtime_models.RealtimeConnectionConfig>();
+    _tryUnregister<realtime.RealtimeConfig>();
+    _tryUnregister<ConnectionFactory>();
+
+    _logger.d('[ChatModuleInjection] ✅ Dispose complete — all chat deps unregistered');
   }
 
   /// Helper to safely unregister a type if registered.
@@ -438,6 +514,17 @@ class ChatModuleInjection {
       }
     } catch (e) {
       // Ignore - type may not be registered or may have dependencies
+    }
+  }
+
+  /// Helper to safely unregister a named instance if registered.
+  static void _tryUnregisterNamed<T extends Object>(String instanceName) {
+    try {
+      if (_getIt.isRegistered<T>(instanceName: instanceName)) {
+        _getIt.unregister<T>(instanceName: instanceName);
+      }
+    } catch (e) {
+      // Ignore - instance may not be registered
     }
   }
 
