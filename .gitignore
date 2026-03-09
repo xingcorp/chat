@@ -15,6 +15,7 @@ lerna-debug.log*
 *.yaml
 *.bat
 *.sh
+!flutter_chat_app/scripts/*.sh
 *.csv
 soffice-prod.json
 soffice-stag.json
