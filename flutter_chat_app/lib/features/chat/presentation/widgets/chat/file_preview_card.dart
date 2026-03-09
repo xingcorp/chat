@@ -205,6 +205,9 @@ class FilePreviewCard extends BaseStatelessWidget {
   }
 
   Widget _buildProgressOverlay(BuildContext context) {
+    final percentage = (file.uploadProgress * 100).toInt();
+    final showPercentage = file.uploadProgress > 0;
+
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
@@ -212,10 +215,26 @@ class FilePreviewCard extends BaseStatelessWidget {
           color: Colors.black.withValues(alpha: 0.4),
         ),
         child: Center(
-          child: AppProgressIndicator.circular(
-            value: file.uploadProgress > 0 ? file.uploadProgress : null,
-            size: ProgressSize.small,
-            color: Colors.white,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppProgressIndicator.circular(
+                value: showPercentage ? file.uploadProgress : null,
+                size: ProgressSize.small,
+                color: Colors.white,
+              ),
+              if (showPercentage) ...[
+                const SizedBox(height: 2.0),
+                Text(
+                  '$percentage%',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9.0,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),

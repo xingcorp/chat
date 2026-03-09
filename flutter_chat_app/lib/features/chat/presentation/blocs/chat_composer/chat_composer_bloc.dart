@@ -23,11 +23,21 @@ class ChatComposerBloc extends Bloc<ChatComposerEvent, ChatComposerState> {
     Emitter<ChatComposerState> emit,
   ) {
     final normalizedInput = event.rawInput.trim();
-    if (normalizedInput.isEmpty) {
+
+    // Allow empty text if there are file attachments to send
+    if (normalizedInput.isEmpty && !event.hasAttachments) {
       emit(state.copyWith(
         effect: const ChatComposerShowWarningEffect(
             ChatComposerWarning.emptyMessage),
       ));
+      return;
+    }
+
+    // File-only message (no text, but has attachments) — skip slash command
+    // parsing and emit send effect directly with empty text
+    if (normalizedInput.isEmpty && event.hasAttachments) {
+      emit(state.copyWith(
+          effect: const ChatComposerSendTextEffect('')));
       return;
     }
 

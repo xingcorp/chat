@@ -204,10 +204,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
         },
       );
       return data;
-    } on app_exceptions.NoInternetException {
-      stopwatch.stop();
-      rethrow;
-    } on app_exceptions.AuthException {
+    } on app_exceptions.AppException {
       stopwatch.stop();
       rethrow;
     } catch (e) {
@@ -310,10 +307,7 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
         },
       );
       return data;
-    } on app_exceptions.NoInternetException {
-      stopwatch.stop();
-      rethrow;
-    } on app_exceptions.AuthException {
+    } on app_exceptions.AppException {
       stopwatch.stop();
       rethrow;
     } catch (e) {

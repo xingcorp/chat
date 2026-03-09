@@ -58,21 +58,13 @@ class ClipboardDataSource {
   /// Supported on Windows (PowerShell), macOS (osascript), and Linux (xclip).
   /// Not supported on web.
   Future<List<String>> getFilePathsFromClipboard() async {
-    LogUtils.d('PASTE_DEBUG', '>>> getFilePathsFromClipboard() called');
-    LogUtils.d('PASTE_DEBUG', '>>> kIsWeb=$kIsWeb, Platform.isWindows=${!kIsWeb ? Platform.isWindows : "N/A"}, Platform.isMacOS=${!kIsWeb ? Platform.isMacOS : "N/A"}');
-
-    if (kIsWeb) {
-      LogUtils.d('PASTE_DEBUG', '>>> Web platform — returning empty');
-      return [];
-    }
+    if (kIsWeb) return [];
 
     try {
       List<String> paths = [];
 
       if (Platform.isWindows) {
-        LogUtils.d('PASTE_DEBUG', '>>> Calling _getWindowsClipboardFiles()...');
         paths = await _getWindowsClipboardFiles();
-        LogUtils.d('PASTE_DEBUG', '>>> _getWindowsClipboardFiles() returned ${paths.length} raw paths: $paths');
       } else if (Platform.isMacOS) {
         paths = await _getMacOSClipboardFiles();
       } else if (Platform.isLinux) {
@@ -88,16 +80,13 @@ class ClipboardDataSource {
           final file = File(trimmed);
           final exists = await file.exists();
           final isDir = await FileSystemEntity.isDirectory(trimmed);
-          LogUtils.d('PASTE_DEBUG', '>>> Checking path: "$trimmed" → exists=$exists, isDir=$isDir');
           if (exists && !isDir) {
             validPaths.add(trimmed);
           }
-        } catch (e) {
-          LogUtils.d('PASTE_DEBUG', '>>> Path check error for "$trimmed": $e');
+        } catch (_) {
+          // Skip invalid paths
         }
       }
-
-      LogUtils.d('PASTE_DEBUG', '>>> Final validPaths: ${validPaths.length} paths: $validPaths');
 
       if (validPaths.isNotEmpty) {
         _logger.debug('ClipboardDataSource: Read files from clipboard', {
@@ -107,8 +96,7 @@ class ClipboardDataSource {
       }
 
       return validPaths;
-    } catch (e, stack) {
-      LogUtils.e('PASTE_DEBUG', '>>> getFilePathsFromClipboard EXCEPTION: $e\n$stack');
+    } catch (e) {
       _logger.warning(
         'ClipboardDataSource: Failed to read clipboard files',
         {'error': e.toString()},
@@ -151,11 +139,9 @@ class ClipboardDataSource {
   /// instead of the default formatted table output.
   Future<List<String>> _getWindowsClipboardFiles() async {
     try {
-      // (Get-Clipboard -Format FileDropList).FullName returns raw paths,
-      // one per line. Returns nothing (empty) if clipboard has no files.
+      // .FullName extracts raw file paths (one per line) from FileInfo objects.
+      // Returns nothing (empty) if clipboard has no files.
       const command = '(Get-Clipboard -Format FileDropList).FullName';
-
-      LogUtils.d('PASTE_DEBUG', '>>> Running PowerShell: $command');
 
       final result = await Process.run(
         'powershell',
@@ -163,35 +149,18 @@ class ClipboardDataSource {
         stdoutEncoding: const SystemEncoding(),
       );
 
-      LogUtils.d('PASTE_DEBUG', '>>> PowerShell exitCode=${result.exitCode}');
-      LogUtils.d('PASTE_DEBUG', '>>> PowerShell stdout="${result.stdout}"');
-      LogUtils.d('PASTE_DEBUG', '>>> PowerShell stderr="${result.stderr}"');
-
-      if (result.exitCode != 0 || result.stdout == null) {
-        LogUtils.d('PASTE_DEBUG', '>>> PowerShell failed or null stdout');
-        return [];
-      }
+      if (result.exitCode != 0 || result.stdout == null) return [];
 
       final output = result.stdout.toString().trim();
-      LogUtils.d('PASTE_DEBUG', '>>> PowerShell trimmed output="${output}" (length=${output.length})');
-
-      if (output.isEmpty) {
-        LogUtils.d('PASTE_DEBUG', '>>> PowerShell output is empty — no files in clipboard');
-        return [];
-      }
+      if (output.isEmpty) return [];
 
       // PowerShell returns one file path per line
-      final lines = output
+      return output
           .split('\n')
           .map((line) => line.trim())
           .where((line) => line.isNotEmpty)
           .toList();
-
-      LogUtils.d('PASTE_DEBUG', '>>> PowerShell parsed ${lines.length} lines: $lines');
-
-      return lines;
-    } catch (e, stack) {
-      LogUtils.e('PASTE_DEBUG', '>>> PowerShell EXCEPTION: $e\n$stack');
+    } catch (e) {
       _logger.debug('ClipboardDataSource: PowerShell clipboard read failed', {
         'error': e.toString(),
       });

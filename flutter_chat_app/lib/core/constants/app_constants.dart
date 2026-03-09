@@ -64,7 +64,7 @@ class AppConstants {
   // Feature flags and limits
   static const int kMaxMessageLength = 4000;
   static const int kMaxGroupMembers = 100;
-  static const int kMaxAttachmentSize = 25 * 1024 * 1024; // 25 MB
+  static const int kMaxAttachmentSize = 1024 * 1024 * 1024; // 1 GB
   static const int kMaxAttachmentsPerMessage = 10;
   static const int kMaxGroupNameLength = 100;
   static const int kMaxUserNameLength = 50;

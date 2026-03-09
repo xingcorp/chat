@@ -33,7 +33,7 @@ class ValidateFileParams extends Equatable {
 /// Validates a file before adding it to the attachment queue.
 ///
 /// Checks:
-/// - File size does not exceed [AppConstants.kMaxAttachmentSize] (25MB)
+/// - File size does not exceed [AppConstants.kMaxAttachmentSize] (1GB)
 /// - File type is in the allowed list
 /// - Total attachment count does not exceed [AppConstants.kMaxAttachmentsPerMessage] (10)
 /// - File is not empty (0 bytes)
@@ -55,12 +55,15 @@ class ValidateFileUseCase extends UseCase<bool, ValidateFileParams> {
       );
     }
 
-    // Check: file size within limit (25MB)
+    // Check: file size within limit (1GB)
     if (params.fileSize > AppConstants.kMaxAttachmentSize) {
       final maxSizeMB = AppConstants.kMaxAttachmentSize / (1024 * 1024);
+      final displaySize = maxSizeMB >= 1024
+          ? '${(maxSizeMB / 1024).toStringAsFixed(0)}GB'
+          : '${maxSizeMB.toStringAsFixed(0)}MB';
       return Left(
         ValidationFailure(
-          message: 'File exceeds maximum size of ${maxSizeMB.toStringAsFixed(0)}MB',
+          message: 'File exceeds maximum size of $displaySize',
           code: 'file_too_large',
         ),
       );
