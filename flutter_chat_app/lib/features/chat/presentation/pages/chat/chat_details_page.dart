@@ -2253,8 +2253,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       return _buildVoiceRecordingInputArea();
     }
 
-    final canSendText = _messageController.text.trim().isNotEmpty;
-
     return AppCard.outlined(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(AppDimens.paddingSmall),
@@ -2282,53 +2280,70 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             onPressed: _showStickerPicker,
             tooltip: context.l10n.stickers,
           ),
-          if (canSendText)
-            AppIconButton(
-              icon: _isEditMode ? Icons.check : Icons.send,
-              onPressed: _sendMessage,
-              tooltip: _isEditMode ? context.l10n.save : context.l10n.send,
-            )
-          else if (_isEditMode)
-            AppIconButton(
-              icon: Icons.check,
-              onPressed: null,
-              tooltip: context.l10n.save,
-            )
-          else
-            AppTooltip(
-              message: _usesDesktopVoiceRecordingUx
-                  ? context.l10n.recordVoiceMessage
-                  : context.l10n.longPressToRecord,
-              enableHover: _usesDesktopVoiceRecordingUx,
-              enableLongPress: false,
-              child: GestureDetector(
-                onTap: _onVoiceRecordingTap,
-                onLongPressStart: _usesDesktopVoiceRecordingUx
-                    ? null
-                    : _onVoiceRecordingLongPressStart,
-                onLongPressMoveUpdate: _usesDesktopVoiceRecordingUx
-                    ? null
-                    : _onVoiceRecordingLongPressMoveUpdate,
-                onLongPressEnd: _usesDesktopVoiceRecordingUx
-                    ? null
-                    : _onVoiceRecordingLongPressEnd,
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  width: AppDimens.iconButtonSize,
-                  height: AppDimens.iconButtonSize,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.mic_rounded,
-                    color: AppColors.textButton,
-                    size: AppDimens.iconMedium,
-                  ),
-                ),
-              ),
-            ),
+          // Send / Mic button — reacts to both text changes and file attachments
+          BlocBuilder<FileAttachmentBloc, FileAttachmentState>(
+            bloc: _fileAttachmentBloc,
+            buildWhen: (prev, curr) => prev.hasFiles != curr.hasFiles,
+            builder: (context, attachState) {
+              final canSendText =
+                  _messageController.text.trim().isNotEmpty;
+              final canSend = canSendText || attachState.hasFiles;
+
+              if (canSend) {
+                return AppIconButton(
+                  icon: _isEditMode ? Icons.check : Icons.send,
+                  onPressed: _sendMessage,
+                  tooltip:
+                      _isEditMode ? context.l10n.save : context.l10n.send,
+                );
+              }
+              if (_isEditMode) {
+                return AppIconButton(
+                  icon: Icons.check,
+                  onPressed: null,
+                  tooltip: context.l10n.save,
+                );
+              }
+              return _buildMicButton();
+            },
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMicButton() {
+    return AppTooltip(
+      message: _usesDesktopVoiceRecordingUx
+          ? context.l10n.recordVoiceMessage
+          : context.l10n.longPressToRecord,
+      enableHover: _usesDesktopVoiceRecordingUx,
+      enableLongPress: false,
+      child: GestureDetector(
+        onTap: _onVoiceRecordingTap,
+        onLongPressStart: _usesDesktopVoiceRecordingUx
+            ? null
+            : _onVoiceRecordingLongPressStart,
+        onLongPressMoveUpdate: _usesDesktopVoiceRecordingUx
+            ? null
+            : _onVoiceRecordingLongPressMoveUpdate,
+        onLongPressEnd: _usesDesktopVoiceRecordingUx
+            ? null
+            : _onVoiceRecordingLongPressEnd,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: AppDimens.iconButtonSize,
+          height: AppDimens.iconButtonSize,
+          decoration: const BoxDecoration(
+            color: AppColors.primary,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.mic_rounded,
+            color: AppColors.textButton,
+            size: AppDimens.iconMedium,
+          ),
+        ),
       ),
     );
   }

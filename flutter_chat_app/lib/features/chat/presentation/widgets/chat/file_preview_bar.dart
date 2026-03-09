@@ -54,7 +54,7 @@ class FilePreviewBar extends BaseStatelessWidget {
         ),
       ),
       child: SizedBox(
-        height: 96.0,
+        height: 80.0,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(
@@ -87,13 +87,13 @@ class FilePreviewBar extends BaseStatelessWidget {
     return GestureDetector(
       onTap: onAddMore,
       child: SizedBox(
-        width: 64.0,
+        width: 52.0,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 64.0,
-              height: 64.0,
+              width: 52.0,
+              height: 52.0,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
                 border: Border.all(

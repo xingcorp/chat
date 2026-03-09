@@ -40,12 +40,13 @@ class FilePreviewCard extends BaseStatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SizedBox(
-      width: 72.0,
+      width: 64.0,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Thumbnail area with overlay controls
           Stack(
+            clipBehavior: Clip.none,
             children: [
               // Thumbnail or type icon
               _buildThumbnail(context, isDark),
@@ -107,8 +108,8 @@ class FilePreviewCard extends BaseStatelessWidget {
 
   Widget _buildThumbnail(BuildContext context, bool isDark) {
     return Container(
-      width: 64.0,
-      height: 64.0,
+      width: 52.0,
+      height: 52.0,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
         color: isDark ? AppColors.surfaceDarkMode : AppColors.inputBackground,
@@ -129,8 +130,8 @@ class FilePreviewCard extends BaseStatelessWidget {
         return Image.memory(
           file.bytes!,
           fit: BoxFit.cover,
-          width: 64.0,
-          height: 64.0,
+          width: 52.0,
+          height: 52.0,
           errorBuilder: (_, __, ___) => _buildTypeIcon(context),
         );
       }
@@ -138,8 +139,8 @@ class FilePreviewCard extends BaseStatelessWidget {
         return Image.file(
           File(file.localPath!),
           fit: BoxFit.cover,
-          width: 64.0,
-          height: 64.0,
+          width: 52.0,
+          height: 52.0,
           errorBuilder: (_, __, ___) => _buildTypeIcon(context),
         );
       }
