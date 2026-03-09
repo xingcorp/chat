@@ -25,6 +25,8 @@
 	<key>com.apple.security.personal-information.location</key>
 	<true/>
 	<key>keychain-access-groups</key>
-	<array/>
+	<array>
+		<string>$(AppIdentifierPrefix)com.oxii.flutterChatApp</string>
+	</array>
 </dict>
 </plist>

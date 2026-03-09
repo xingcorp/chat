@@ -207,13 +207,15 @@ class AppButton extends BaseStatelessWidget {
 
   /// Get text style based on button size
   TextStyle _getTextStyle(BuildContext context) {
+    final foregroundColor = _getContentColor(context);
+
     switch (size) {
       case ButtonSize.small:
-        return AppTextStyles.buttonSmall();
+        return AppTextStyles.buttonSmall(color: foregroundColor);
       case ButtonSize.medium:
-        return AppTextStyles.buttonMedium();
+        return AppTextStyles.buttonMedium(color: foregroundColor);
       case ButtonSize.large:
-        return AppTextStyles.buttonLarge();
+        return AppTextStyles.buttonLarge(color: foregroundColor);
     }
   }
 
@@ -302,7 +304,7 @@ class AppButton extends BaseStatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: _iconSize),
-          SizedBox(width: AppDimens.spaceSmall),
+          const SizedBox(width: AppDimens.spaceSmall),
           Text(text, style: _getTextStyle(context)),
         ],
       );
@@ -335,7 +337,7 @@ class AppButton extends BaseStatelessWidget {
         return baseStyle.copyWith(
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return AppColors.primary.withOpacity(0.5);
+              return AppColors.primary.withValues(alpha: 0.5);
             }
             return AppColors.primary;
           }),
@@ -355,7 +357,7 @@ class AppButton extends BaseStatelessWidget {
         return baseStyle.copyWith(
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return AppColors.secondary.withOpacity(0.5);
+              return AppColors.secondary.withValues(alpha: 0.5);
             }
             return AppColors.secondary;
           }),
@@ -379,7 +381,7 @@ class AppButton extends BaseStatelessWidget {
               return (isDark
                       ? AppColors.textPrimaryDarkMode
                       : AppColors.textPrimary)
-                  .withOpacity(0.5);
+                  .withValues(alpha: 0.5);
             }
             return AppColors.primary;
           }),
@@ -391,14 +393,14 @@ class AppButton extends BaseStatelessWidget {
           backgroundColor: WidgetStateProperty.all(Colors.transparent),
           foregroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return AppColors.primary.withOpacity(0.5);
+              return AppColors.primary.withValues(alpha: 0.5);
             }
             return AppColors.primary;
           }),
           side: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
               return BorderSide(
-                color: AppColors.primary.withOpacity(0.5),
+                color: AppColors.primary.withValues(alpha: 0.5),
                 width: 1.5,
               );
             }
@@ -414,9 +416,6 @@ class AppButton extends BaseStatelessWidget {
 
   /// Get loading indicator color based on variant
   Color _getLoadingIndicatorColor(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     switch (variant) {
       case ButtonVariant.primary:
       case ButtonVariant.secondary:
@@ -427,16 +426,40 @@ class AppButton extends BaseStatelessWidget {
     }
   }
 
+  Color _getContentColor(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    switch (variant) {
+      case ButtonVariant.primary:
+      case ButtonVariant.secondary:
+        return Colors.white;
+      case ButtonVariant.text:
+        if (_isDisabled) {
+          return (isDark
+                  ? AppColors.textPrimaryDarkMode
+                  : AppColors.textPrimary)
+              .withValues(alpha: 0.5);
+        }
+        return AppColors.primary;
+      case ButtonVariant.outlined:
+        if (_isDisabled) {
+          return AppColors.primary.withValues(alpha: 0.5);
+        }
+        return AppColors.primary;
+    }
+  }
+
   /// Get accessibility label for button
   String _getAccessibilityLabel(BuildContext context) {
     final l10n = context.l10n;
 
     if (isLoading) {
-      return '${text}, ${l10n.buttonLoading}';
+      return '$text, ${l10n.buttonLoading}';
     }
 
     if (_isDisabled) {
-      return '${text}, ${l10n.buttonDisabled}';
+      return '$text, ${l10n.buttonDisabled}';
     }
 
     String variantLabel;
