@@ -2,7 +2,7 @@ import 'package:flutter_chat_app/core/base/base_repository.dart';
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/error/repository_error_mixin.dart';
-import 'package:flutter_chat_app/core/exceptions/exceptions.dart';
+import 'package:flutter_chat_app/core/error/exceptions.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/features/auth/data/datasources/auth/auth_remote_datasource.dart';

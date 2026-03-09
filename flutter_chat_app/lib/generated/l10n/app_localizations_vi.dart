@@ -1908,4 +1908,10 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get pasteImageFromClipboard => 'Dán ảnh từ clipboard';
+
+  @override
+  String get moreActions => 'Thêm hành động';
+
+  @override
+  String get selectMessage => 'Chọn';
 }

@@ -1907,4 +1907,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pasteImageFromClipboard => 'Paste image from clipboard';
+
+  @override
+  String get moreActions => 'More actions';
+
+  @override
+  String get selectMessage => 'Select';
 }

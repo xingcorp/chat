@@ -3377,5 +3377,15 @@
   "pasteImageFromClipboard": "Paste image from clipboard",
   "@pasteImageFromClipboard": {
     "description": "Tooltip for clipboard paste action"
+  },
+
+  "moreActions": "More actions",
+  "@moreActions": {
+    "description": "Tooltip for more actions button on desktop message hover bar"
+  },
+
+  "selectMessage": "Select",
+  "@selectMessage": {
+    "description": "Action to enter selection mode with this message"
   }
 }

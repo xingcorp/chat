@@ -1044,5 +1044,9 @@
 
   "filesAttached": "{count} file đã đính kèm",
 
-  "pasteImageFromClipboard": "Dán ảnh từ clipboard"
+  "pasteImageFromClipboard": "Dán ảnh từ clipboard",
+
+  "moreActions": "Thêm hành động",
+
+  "selectMessage": "Chọn"
 }

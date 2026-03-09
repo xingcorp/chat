@@ -3499,6 +3499,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paste image from clipboard'**
   String get pasteImageFromClipboard;
+
+  /// Tooltip for more actions button on desktop message hover bar
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get moreActions;
+
+  /// Action to enter selection mode with this message
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get selectMessage;
 }
 
 class _AppLocalizationsDelegate

@@ -33,7 +33,9 @@ import 'package:flutter_chat_app/data/datasources/clipboard/clipboard_datasource
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_file_attachment_host.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_message_timeline.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/clipboard_paste_handler.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/desktop_message_hover_wrapper.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_action_callbacks.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/mention_text_field.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
@@ -2568,7 +2570,87 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             children: [
               if (uiState.showDateSeparator)
                 _buildDateSeparator(uiState.dateSeparatorText ?? ''),
-              MessageItem(
+              DesktopMessageHoverWrapper(
+                isDesktop: AppDimens.isDesktop(
+                    MediaQuery.of(context).size.width),
+                isCurrentUser: uiState.isFromCurrentUser,
+                isTextMessage:
+                    uiState.contentType == ContentType.text,
+                enabled: !_isSelectionMode &&
+                    uiState.message != null &&
+                    !uiState.isDeleted,
+                quickReactions:
+                    (_messageBloc.state is MessagesLoaded)
+                        ? (_messageBloc.state as MessagesLoaded)
+                            .frequentReactions
+                        : const <String>[
+                            '\u{1F44D}',
+                            '\u{2764}\u{FE0F}',
+                            '\u{1F602}',
+                            '\u{1F62E}',
+                            '\u{1F622}',
+                            '\u{1F621}'
+                          ],
+                callbacks: MessageActionCallbacks(
+                  onReaction: (emoji) => _messageBloc.add(
+                    ToggleReaction(
+                      messageId: uiState.id,
+                      emojiCode: emoji,
+                    ),
+                  ),
+                  onReply: () {
+                    if (uiState.message != null) {
+                      _startReply(uiState.message!);
+                    }
+                  },
+                  onForward: () {
+                    if (uiState.message != null) {
+                      showForwardMessageSheet(
+                        context,
+                        messages: [uiState.message!],
+                        sourceChatId: widget.chatId,
+                      );
+                    }
+                  },
+                  onCopy: () {
+                    if (uiState.message != null) {
+                      Clipboard.setData(
+                        ClipboardData(
+                            text: uiState.message!.content),
+                      );
+                      AppSnackBar.show(
+                        context: context,
+                        message: context.l10n.messageCopied,
+                        type: FeedbackType.success,
+                      );
+                    }
+                  },
+                  onEdit: () {
+                    if (uiState.message != null) {
+                      _startEditMode(uiState.message!);
+                    }
+                  },
+                  onDelete: () {
+                    if (uiState.message != null) {
+                      _confirmDeleteMessage(uiState.message!);
+                    }
+                  },
+                  onSelect: () =>
+                      _enterSelectionMode(uiState.id),
+                  onOpenEmojiPicker: () {
+                    EmojiPickerBottomSheet.show(
+                      context,
+                      onEmojiSelected: (emoji) =>
+                          _messageBloc.add(
+                        ToggleReaction(
+                          messageId: uiState.id,
+                          emojiCode: emoji,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                child: MessageItem(
                 uiState: uiState,
                 currentUserId: _currentUserId,
                 isSelectionMode: _isSelectionMode,
@@ -2601,6 +2683,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                     ),
                   );
                 },
+              ),
               ),
             ],
           ),
