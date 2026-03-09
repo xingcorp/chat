@@ -17,16 +17,16 @@ class LogUtils {
   /// Platform-aware printer: disable methodCount on web to avoid null stack trace frames
   static final Logger _logger = Logger(
     printer: PrettyPrinter(
-      methodCount: 0,  // Always 0 for simple logging
-      errorMethodCount: kIsWeb ? 0 : 8,  // Web: 0 for safety
+      methodCount: 0, // Always 0 for simple logging
+      errorMethodCount: kIsWeb ? 0 : 8, // Web: 0 for safety
       lineLength: 120,
-      colors: !kIsWeb,  // Web doesn't support ANSI colors
-      printEmojis: !kIsWeb,  // Web may have encoding issues
+      colors: !kIsWeb, // Web doesn't support ANSI colors
+      printEmojis: !kIsWeb, // Web may have encoding issues
       dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
     ),
     level: kDebugMode ? Level.trace : Level.error,
   );
-  
+
   static bool _enabledConsoleLog = kDebugMode;
   static bool _enabledFileLog = false;
 
@@ -98,20 +98,20 @@ class LogUtils {
           break;
       }
     }
-    
+
     // Log sử dụng dart:developer để có thể xem trong DevTools
     developer.log(
       message,
       name: tag,
       level: _getLogLevel(level),
     );
-    
+
     // TODO: Implement file logging if needed
     if (_enabledFileLog) {
       // Write log to file
     }
   }
-  
+
   /// Chuyển đổi LogLevel thành level của dart:developer
   static int _getLogLevel(LogLevel level) {
     switch (level) {
@@ -133,17 +133,17 @@ class LogUtils {
 
 /// Enterprise-grade AppLogger for permissions service
 /// Provides structured logging với performance tracking
-/// 
+///
 /// Registered manually in core_module.dart
 class AppLogger {
   /// Platform-aware printer: disable methodCount on web to avoid null stack trace frames
   static final Logger _logger = Logger(
     printer: PrettyPrinter(
-      methodCount: kIsWeb ? 0 : 1,  // Web: 0 to avoid null stack frames
-      errorMethodCount: kIsWeb ? 0 : 3,  // Web: 0 for safety
+      methodCount: kIsWeb ? 0 : 1, // Web: 0 to avoid null stack frames
+      errorMethodCount: kIsWeb ? 0 : 3, // Web: 0 for safety
       lineLength: 120,
-      colors: !kIsWeb,  // Web doesn't support ANSI colors
-      printEmojis: !kIsWeb,  // Web may have encoding issues
+      colors: !kIsWeb, // Web doesn't support ANSI colors
+      printEmojis: !kIsWeb, // Web may have encoding issues
       dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
     ),
     level: kDebugMode ? Level.trace : Level.error,
@@ -153,7 +153,7 @@ class AppLogger {
   void info(String message, [Map<String, dynamic>? context]) {
     _logWithContext(Level.info, message, context);
   }
-  
+
   /// Log info message (alias for info)
   void i(String message, [Map<String, dynamic>? context]) {
     info(message, context);
@@ -163,7 +163,7 @@ class AppLogger {
   void debug(String message, [Map<String, dynamic>? context]) {
     _logWithContext(Level.debug, message, context);
   }
-  
+
   /// Log debug message (alias for debug)
   void d(String message, [Map<String, dynamic>? context]) {
     debug(message, context);
@@ -182,9 +182,10 @@ class AppLogger {
       _logger.w(message);
     }
   }
-  
+
   /// Log warning message (alias for warning)
-  void w(String message, {dynamic error, StackTrace? stackTrace, Map<String, dynamic>? context}) {
+  void w(String message,
+      {dynamic error, StackTrace? stackTrace, Map<String, dynamic>? context}) {
     if (error != null || stackTrace != null) {
       _logger.w(message, error: error, stackTrace: stackTrace);
     } else if (context != null) {
@@ -202,7 +203,7 @@ class AppLogger {
       _logger.e(message);
     }
   }
-  
+
   /// Log error message (named params for Logger API compat)
   void e(String message, {dynamic error, StackTrace? stackTrace}) {
     if (error != null) {
@@ -241,7 +242,8 @@ class AppLogger {
   }
 
   /// Private method để log với context
-  void _logWithContext(Level level, String message, Map<String, dynamic>? context) {
+  void _logWithContext(
+      Level level, String message, Map<String, dynamic>? context) {
     final contextStr = context != null ? ' | Context: $context' : '';
     final fullMessage = '$message$contextStr';
 
@@ -269,7 +271,6 @@ class AppLogger {
     }
   }
 }
-
 
 /// Global logger instance for convenience
 /// Use this for quick logging without dependency injection

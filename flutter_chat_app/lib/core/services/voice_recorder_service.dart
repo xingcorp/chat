@@ -14,9 +14,16 @@ enum VoiceRecorderPermissionResult {
   permanentlyDenied,
 }
 
+enum VoiceRecordingStartResult {
+  started,
+  permissionDenied,
+  permissionPermanentlyDenied,
+  failed,
+}
+
 abstract class IAudioRecorder {
   Future<bool> isRecording();
-  Future<bool> hasPermission();
+  Future<bool> hasPermission({bool request = true});
   Future<void> start(RecordConfig config, {required String path});
   Future<String?> stop();
   Future<Amplitude> getAmplitude();
@@ -33,7 +40,9 @@ class RecordAudioRecorder implements IAudioRecorder {
   Future<bool> isRecording() => _delegate.isRecording();
 
   @override
-  Future<bool> hasPermission() => _delegate.hasPermission();
+  Future<bool> hasPermission({bool request = true}) {
+    return _delegate.hasPermission(request: request);
+  }
 
   @override
   Future<void> start(RecordConfig config, {required String path}) {
@@ -89,10 +98,27 @@ class VoiceRecorderService {
   Stream<String> get recordingLimitReachedStream =>
       _recordingLimitReachedController.stream;
 
+  bool get _usesRecorderManagedPermissionFlow {
+    if (kIsWeb) return false;
+    return Platform.isMacOS;
+  }
+
   Future<VoiceRecorderPermissionResult> ensurePermission() async {
     if (kIsWeb) {
       final granted = await _recorder.hasPermission();
       return granted
+          ? VoiceRecorderPermissionResult.granted
+          : VoiceRecorderPermissionResult.denied;
+    }
+
+    if (_usesRecorderManagedPermissionFlow) {
+      final currentStatus = await _recorder.hasPermission(request: false);
+      if (currentStatus) {
+        return VoiceRecorderPermissionResult.granted;
+      }
+
+      final requestedStatus = await _recorder.hasPermission(request: true);
+      return requestedStatus
           ? VoiceRecorderPermissionResult.granted
           : VoiceRecorderPermissionResult.denied;
     }
@@ -124,12 +150,26 @@ class VoiceRecorderService {
   }
 
   Future<bool> startRecording() async {
-    if (_isRecording || await _recorder.isRecording()) return false;
+    final result = await startRecordingWithResult();
+    return result == VoiceRecordingStartResult.started;
+  }
 
-    final hasPermission = await requestPermission();
-    if (!hasPermission) {
+  Future<VoiceRecordingStartResult> startRecordingWithResult() async {
+    if (_isRecording || await _recorder.isRecording()) {
+      return VoiceRecordingStartResult.failed;
+    }
+
+    final permissionResult = await ensurePermission();
+    if (permissionResult == VoiceRecorderPermissionResult.denied) {
       _logger.w('VoiceRecorderService.startRecording denied by permission');
-      return false;
+      return VoiceRecordingStartResult.permissionDenied;
+    }
+
+    if (permissionResult == VoiceRecorderPermissionResult.permanentlyDenied) {
+      _logger.w(
+        'VoiceRecorderService.startRecording permanently denied by permission',
+      );
+      return VoiceRecordingStartResult.permissionPermanentlyDenied;
     }
 
     final directory = await _tempDirectoryProvider();
@@ -151,7 +191,7 @@ class VoiceRecorderService {
       _isRecording = true;
       _startAmplitudeMonitoring();
       _startMaxDurationTimer();
-      return true;
+      return VoiceRecordingStartResult.started;
     } catch (error, stackTrace) {
       _logger.e(
         'VoiceRecorderService.startRecording failed',
@@ -162,7 +202,7 @@ class VoiceRecorderService {
       _isRecording = false;
       _recordingFilePath = null;
       await _deleteFileIfExists(filePath);
-      return false;
+      return VoiceRecordingStartResult.failed;
     }
   }
 

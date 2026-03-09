@@ -18,7 +18,7 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/menus/menu_e
 /// - Rich content support (not just text)
 /// - Configurable delay before showing
 /// - Arrow pointer to target
-/// - Dismiss on tap outside
+/// - Non-interactive overlay for stable desktop hover
 /// - Dark mode support
 /// - Accessibility labels
 ///
@@ -137,7 +137,6 @@ class AppTooltip extends BaseStatefulWidget {
     return AppTooltip(
       key: key,
       content: content,
-      child: child,
       position: position,
       showDelay: showDelay,
       hideDelay: hideDelay,
@@ -148,6 +147,7 @@ class AppTooltip extends BaseStatefulWidget {
       maxWidth: maxWidth,
       enableHover: enableHover,
       enableLongPress: enableLongPress,
+      child: child,
     );
   }
 
@@ -206,7 +206,6 @@ class _AppTooltipState extends BaseState<AppTooltip> {
         padding: widget.padding,
         margin: widget.margin,
         maxWidth: widget.maxWidth,
-        onDismiss: _hideTooltip,
       ),
     );
 
@@ -228,7 +227,7 @@ class _AppTooltipState extends BaseState<AppTooltip> {
       onEnter: widget.enableHover ? (_) => _scheduleShow() : null,
       onExit: widget.enableHover ? (_) => _scheduleHide() : null,
       child: GestureDetector(
-        onLongPress: widget.enableLongPress ? _scheduleShow : null,
+        onLongPress: widget.enableLongPress ? () => _scheduleShow() : null,
         onLongPressEnd: widget.enableLongPress ? (_) => _scheduleHide() : null,
         child: widget.child,
       ),
@@ -249,7 +248,6 @@ class _TooltipOverlay extends StatelessWidget {
     this.padding,
     this.margin,
     required this.maxWidth,
-    required this.onDismiss,
   });
 
   final Offset targetPosition;
@@ -263,7 +261,6 @@ class _TooltipOverlay extends StatelessWidget {
   final EdgeInsets? padding;
   final EdgeInsets? margin;
   final double maxWidth;
-  final VoidCallback onDismiss;
 
   static const double _arrowSize = 8.0;
 
@@ -285,64 +282,59 @@ class _TooltipOverlay extends StatelessWidget {
     final bgColor = backgroundColor ??
         (isDark ? AppColors.surfaceDarkMode : AppColors.surface);
 
-    return Stack(
-      children: [
-        // Dismiss barrier
-        Positioned.fill(
-          child: GestureDetector(
-            onTap: onDismiss,
-            behavior: HitTestBehavior.translucent,
-            child: Container(color: Colors.transparent),
-          ),
-        ),
-        // Tooltip content
-        Positioned(
-          left: tooltipPosition.dx,
-          top: tooltipPosition.dy,
-          child: Material(
-            color: Colors.transparent,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (showArrow && actualPosition == TooltipPosition.bottom)
-                  _buildArrow(bgColor, isTop: true),
-                Container(
-                  constraints: BoxConstraints(maxWidth: maxWidth),
-                  padding: padding ??
-                      const EdgeInsets.symmetric(
-                        horizontal: AppDimens.paddingMedium,
-                        vertical: AppDimens.paddingSmall,
-                      ),
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: AppColors.shadow,
-                        blurRadius: AppDimens.elevationMedium,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
+    return IgnorePointer(
+      ignoring: true,
+      child: Stack(
+        children: [
+          Positioned(
+            left: tooltipPosition.dx,
+            top: tooltipPosition.dy,
+            child: Material(
+              color: Colors.transparent,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (showArrow && actualPosition == TooltipPosition.bottom)
+                    _buildArrow(bgColor, isTop: true),
+                  Container(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    padding: padding ??
+                        const EdgeInsets.symmetric(
+                          horizontal: AppDimens.paddingMedium,
+                          vertical: AppDimens.paddingSmall,
+                        ),
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius:
+                          BorderRadius.circular(AppDimens.radiusSmall),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: AppColors.shadow,
+                          blurRadius: AppDimens.elevationMedium,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: content ??
+                        Text(
+                          message!,
+                          style: textStyle ??
+                              AppTextStyles.bodySmall.copyWith(
+                                color: isDark
+                                    ? AppColors.textPrimaryDarkMode
+                                    : AppColors.textPrimary,
+                              ),
+                        ),
                   ),
-                  child: content ??
-                      Text(
-                        message!,
-                        style: textStyle ??
-                            AppTextStyles.bodySmall.copyWith(
-                              color: isDark
-                                  ? AppColors.textPrimaryDarkMode
-                                  : AppColors.textPrimary,
-                            ),
-                      ),
-                ),
-                if (showArrow && actualPosition == TooltipPosition.top)
-                  _buildArrow(bgColor, isTop: false),
-              ],
+                  if (showArrow && actualPosition == TooltipPosition.top)
+                    _buildArrow(bgColor, isTop: false),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -351,9 +343,11 @@ class _TooltipOverlay extends StatelessWidget {
 
     // Auto-detect best position based on available space
     final spaceAbove = targetPosition.dy;
-    final spaceBelow = screenSize.height - (targetPosition.dy + targetSize.height);
+    final spaceBelow =
+        screenSize.height - (targetPosition.dy + targetSize.height);
     final spaceLeft = targetPosition.dx;
-    final spaceRight = screenSize.width - (targetPosition.dx + targetSize.width);
+    final spaceRight =
+        screenSize.width - (targetPosition.dx + targetSize.width);
 
     // Prefer top/bottom over left/right
     if (spaceAbove > spaceBelow && spaceAbove > 100) {
@@ -405,11 +399,15 @@ class _TooltipOverlay extends StatelessWidget {
         break;
       case TooltipPosition.left:
         dx = targetPosition.dx - maxWidth - marginValue.left;
-        dy = targetPosition.dy + (targetSize.height / 2) - 25; // Approximate height
+        dy = targetPosition.dy +
+            (targetSize.height / 2) -
+            25; // Approximate height
         break;
       case TooltipPosition.right:
         dx = targetPosition.dx + targetSize.width + marginValue.right;
-        dy = targetPosition.dy + (targetSize.height / 2) - 25; // Approximate height
+        dy = targetPosition.dy +
+            (targetSize.height / 2) -
+            25; // Approximate height
         break;
       case TooltipPosition.auto:
         // Should not reach here
@@ -419,8 +417,10 @@ class _TooltipOverlay extends StatelessWidget {
     }
 
     // Ensure tooltip stays within screen bounds
-    dx = dx.clamp(AppDimens.paddingSmall, screenSize.width - maxWidth - AppDimens.paddingSmall);
-    dy = dy.clamp(AppDimens.paddingSmall, screenSize.height - 100); // Approximate max height
+    dx = dx.clamp(AppDimens.paddingSmall,
+        screenSize.width - maxWidth - AppDimens.paddingSmall);
+    dy = dy.clamp(AppDimens.paddingSmall,
+        screenSize.height - 100); // Approximate max height
 
     return Offset(dx, dy);
   }

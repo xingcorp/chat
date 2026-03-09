@@ -1,19 +1,23 @@
 import 'dart:async';
+import 'dart:io';
+
+import 'package:app_settings/app_settings.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/services/voice_recorder_service.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
-import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/core/utils/attachment_type.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/core/utils/optimized_repaint_boundary.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_alert_dialog.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_tooltip.dart';
 
 /// Widget input cho chat
 class ChatInput extends BaseStatefulWidget {
@@ -48,8 +52,8 @@ class ChatInput extends BaseStatefulWidget {
   final bool enableVoiceRecording;
 
   /// Constructor
-  ChatInput({
-    Key? key,
+  const ChatInput({
+    super.key,
     required this.onSendText,
     this.onTypingStarted,
     this.onTypingEnded,
@@ -60,7 +64,7 @@ class ChatInput extends BaseStatefulWidget {
     this.hint = 'Nhập tin nhắn...',
     this.enableAttachments = true,
     this.enableVoiceRecording = true,
-  }) : super(key: key);
+  });
 
   @override
   State<ChatInput> createState() => _ChatInputState();
@@ -99,7 +103,11 @@ class _ChatInputState extends BaseState<ChatInput> {
   bool _isTyping = false;
   StreamSubscription<double>? _recordingAmplitudeSubscription;
   StreamSubscription<String>? _recordingLimitReachedSubscription;
-  DateTime? _lastVoiceRecordingHintAt;
+
+  bool get _usesDesktopVoiceRecordingUx {
+    if (kIsWeb) return true;
+    return Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+  }
 
   @override
   void initState() {
@@ -334,20 +342,21 @@ class _ChatInputState extends BaseState<ChatInput> {
     if (!widget.enableVoiceRecording || _isRecording) return;
 
     try {
-      final permissionResult = await _voiceRecorderService.ensurePermission();
+      final startResult = await _voiceRecorderService.startRecordingWithResult();
       if (!mounted) return;
 
-      if (permissionResult != VoiceRecorderPermissionResult.granted) {
+      if (startResult == VoiceRecordingStartResult.permissionDenied ||
+          startResult ==
+              VoiceRecordingStartResult.permissionPermanentlyDenied) {
         await _showMicrophonePermissionDialog(
-          isPermanentlyDenied: permissionResult ==
-              VoiceRecorderPermissionResult.permanentlyDenied,
+          isPermanentlyDenied:
+              startResult ==
+              VoiceRecordingStartResult.permissionPermanentlyDenied,
         );
         return;
       }
 
-      final started = await _voiceRecorderService.startRecording();
-      if (!mounted) return;
-      if (!started) {
+      if (startResult != VoiceRecordingStartResult.started) {
         AppSnackBar.show(
           context: context,
           message: context.l10n.errorOccurred,
@@ -392,22 +401,11 @@ class _ChatInputState extends BaseState<ChatInput> {
     }
   }
 
-  void _onVoiceRecordingTap() {
+  Future<void> _onVoiceRecordingTap() async {
     if (_isRecording || !mounted) return;
+    if (!_usesDesktopVoiceRecordingUx) return;
 
-    final now = DateTime.now();
-    final lastHintAt = _lastVoiceRecordingHintAt;
-    if (lastHintAt != null &&
-        now.difference(lastHintAt) < const Duration(seconds: 2)) {
-      return;
-    }
-
-    _lastVoiceRecordingHintAt = now;
-    AppSnackBar.show(
-      context: context,
-      message: context.l10n.longPressToRecord,
-      type: FeedbackType.info,
-    );
+    await _startRecording();
   }
 
   /// Dừng ghi âm
@@ -501,7 +499,7 @@ class _ChatInputState extends BaseState<ChatInput> {
           text: context.l10n.openSettings,
           onPressed: () async {
             Navigator.of(context, rootNavigator: true).pop();
-            await openAppSettings();
+            await AppSettings.openAppSettings();
           },
         ),
       ],
@@ -578,22 +576,32 @@ class _ChatInputState extends BaseState<ChatInput> {
               ),
             ),
             isTextEmpty && widget.enableVoiceRecording
-                ? GestureDetector(
-                    onTap: _onVoiceRecordingTap,
-                    onLongPress: () {
-                      unawaited(_startRecording());
-                    },
-                    onLongPressEnd: _stopRecording,
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.mic,
-                        color: Colors.white,
+                ? AppTooltip(
+                    message: _usesDesktopVoiceRecordingUx
+                        ? context.l10n.recordVoiceMessage
+                        : context.l10n.longPressToRecord,
+                    enableHover: _usesDesktopVoiceRecordingUx,
+                    enableLongPress: false,
+                    child: GestureDetector(
+                      onTap: _onVoiceRecordingTap,
+                      onLongPress: _usesDesktopVoiceRecordingUx
+                          ? null
+                          : () {
+                              unawaited(_startRecording());
+                            },
+                      onLongPressEnd:
+                          _usesDesktopVoiceRecordingUx ? null : _stopRecording,
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.mic,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   )

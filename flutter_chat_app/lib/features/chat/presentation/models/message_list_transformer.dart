@@ -1,5 +1,3 @@
-import 'package:intl/intl.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/localization/l10n_helper.dart';
 import 'package:flutter_chat_app/domain/entities/reader_info.dart';
@@ -7,7 +5,7 @@ import 'package:flutter_chat_app/domain/utils/read_receipt_calculator.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
-// import 'package:flutter/foundation.dart'; // Commented out - was only used for replyPreview debug logs
+import 'package:intl/intl.dart';
 
 /// Transform danh sách domain entity → danh sách UI state
 ///
@@ -335,20 +333,12 @@ class MessageListTransformer {
     String? originalAvatar,
     List<ConversationMember> members,
   ) {
-    if (members.isEmpty) {
-      debugPrint('[SenderResolve] members=EMPTY senderId=$senderId originalName="$originalName"');
-      return (null, null);
-    }
+    if (members.isEmpty) return (null, null);
 
     final member = members.cast<ConversationMember?>().firstWhere(
           (m) => m!.userId == senderId,
           orElse: () => null,
         );
-
-    debugPrint('[SenderResolve] senderId=$senderId originalName="$originalName" '
-        'memberFound=${member != null} memberName="${member?.fullName}" '
-        'membersCount=${members.length} '
-        'memberIds=[${members.map((m) => m.userId).join(", ")}]');
 
     // Resolve name: prefer member.fullName, fallback to original if not UUID-like
     String? resolvedName;
@@ -358,14 +348,13 @@ class MessageListTransformer {
       resolvedName = member.fullName!.trim();
     } else if (originalName.trim().isNotEmpty &&
         !_looksLikeUUID(originalName.trim())) {
-      resolvedName = null; // original name is good, let getter use message.sender.name
+      resolvedName =
+          null; // original name is good, let getter use message.sender.name
     } else {
       // Original name is empty or looks like UUID, and no member found
       // → return empty string to prevent UUID from showing in UI
       resolvedName = '';
     }
-
-    debugPrint('[SenderResolve] → resolvedName="$resolvedName"');
 
     // Resolve avatar: prefer member.avatarUrl, fallback to original
     String? resolvedAvatar;

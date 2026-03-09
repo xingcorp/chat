@@ -72,6 +72,10 @@ IDI_APP_ICON            ICON                    "resources\\app_icon.ico"
 #define VERSION_AS_STRING "1.0.0"
 #endif
 
+#define APP_DISPLAY_NAME "OXII Chat"
+#define APP_INTERNAL_NAME "oxii_chat"
+#define APP_EXECUTABLE_NAME "oxii_chat.exe"
+
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION VERSION_AS_NUMBER
  PRODUCTVERSION VERSION_AS_NUMBER
@@ -90,12 +94,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.oxii" "\0"
-            VALUE "FileDescription", "flutter_chat_app" "\0"
+            VALUE "FileDescription", APP_DISPLAY_NAME "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "flutter_chat_app" "\0"
+            VALUE "InternalName", APP_INTERNAL_NAME "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.oxii. All rights reserved." "\0"
-            VALUE "OriginalFilename", "flutter_chat_app.exe" "\0"
-            VALUE "ProductName", "flutter_chat_app" "\0"
+            VALUE "OriginalFilename", APP_EXECUTABLE_NAME "\0"
+            VALUE "ProductName", APP_DISPLAY_NAME "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

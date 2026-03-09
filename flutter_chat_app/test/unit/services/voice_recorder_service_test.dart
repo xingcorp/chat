@@ -10,12 +10,13 @@ class _FakeAudioRecorder implements IAudioRecorder {
   bool _isRecording = false;
   String? _lastPath;
   double amplitude = -10;
+  bool permissionGranted = true;
 
   @override
   Future<bool> isRecording() async => _isRecording;
 
   @override
-  Future<bool> hasPermission() async => true;
+  Future<bool> hasPermission({bool request = true}) async => permissionGranted;
 
   @override
   Future<Amplitude> getAmplitude() async {
@@ -79,6 +80,7 @@ void main() {
     });
 
     test('does not start recording when permission is denied', () async {
+      recorder.permissionGranted = false;
       service = VoiceRecorderService(
         logger: AppLogger(),
         recorder: recorder,

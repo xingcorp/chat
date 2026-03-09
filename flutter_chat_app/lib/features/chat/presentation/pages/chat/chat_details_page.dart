@@ -2,15 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
@@ -21,33 +17,34 @@ import 'package:flutter_chat_app/core/services/voice_recorder_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
+import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/domain/entities/sticker.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
-import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat_composer/chat_composer_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat_draft/chat_draft_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/chat_slash_command_engine.dart';
-import 'package:flutter_chat_app/presentation/screens/media/image_preview_screen.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/screens/chat/chat_header.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/add_member_panel.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/attachment_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_message_timeline.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/mention_text_field.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/add_member_panel.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_search_panel.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reply_preview.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/typing_indicator.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_event.dart';
 import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_state.dart';
-import 'package:flutter_chat_app/presentation/blocs/chat_info/chat_info_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
+import 'package:flutter_chat_app/presentation/screens/media/image_preview_screen.dart';
+import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_panel.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/button_enums.dart';
@@ -57,11 +54,13 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_tooltip.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
-import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_panel.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:get_it/get_it.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 // Service locator instance
 final getIt = GetIt.instance;
@@ -193,7 +192,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   double _recordingAmplitude = 0.0;
   Duration _recordingDuration = Duration.zero;
   double? _recordingDragStartDx;
-  DateTime? _lastVoiceRecordingHintAt;
 
   @override
   void initState() {
@@ -806,6 +804,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     return Platform.isMacOS || Platform.isWindows || Platform.isLinux;
   }
 
+  bool get _usesDesktopVoiceRecordingUx => _isDesktopKeyboardPlatform;
+
   Widget _buildShortcutHost(Widget child) {
     if (!_isDesktopKeyboardPlatform) {
       return child;
@@ -992,51 +992,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
   Future<void> _onVoiceRecordingLongPressStart(
     LongPressStartDetails details,
   ) async {
-    if (_isRecordingVoice) return;
-
-    final permissionResult = await _voiceRecorderService.ensurePermission();
-    if (!mounted) return;
-
-    if (permissionResult != VoiceRecorderPermissionResult.granted) {
-      await _showMicrophonePermissionDialog(
-        isPermanentlyDenied:
-            permissionResult == VoiceRecorderPermissionResult.permanentlyDenied,
-      );
-      return;
-    }
-
-    final started = await _voiceRecorderService.startRecording();
-    if (!mounted) return;
-
-    if (!started) {
-      AppSnackBar.show(
-        context: context,
-        message: context.l10n.errorOccurred,
-        type: FeedbackType.error,
-      );
-      return;
-    }
-
-    _recordingTimer?.cancel();
-    safeSetState(() {
-      _isRecordingVoice = true;
-      _isSlidingToCancel = false;
-      _recordingStartedAt = DateTime.now();
-      _recordingDuration = Duration.zero;
-      _recordingAmplitude = 0.0;
-      _recordingDragStartDx = details.globalPosition.dx;
-    });
-
-    _recordingTimer = Timer.periodic(
-      const Duration(milliseconds: 200),
-      (_) {
-        final startedAt = _recordingStartedAt;
-        if (startedAt == null || !mounted) return;
-        safeSetState(() {
-          _recordingDuration = DateTime.now().difference(startedAt);
-        });
-      },
-    );
+    await _beginVoiceRecording(dragStartDx: details.globalPosition.dx);
   }
 
   void _onVoiceRecordingLongPressMoveUpdate(
@@ -1051,22 +1007,63 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
     });
   }
 
-  void _onVoiceRecordingTap() {
+  Future<void> _onVoiceRecordingTap() async {
     if (_isRecordingVoice || !mounted) return;
+    if (!_usesDesktopVoiceRecordingUx) return;
 
-    final now = DateTime.now();
-    final lastHintAt = _lastVoiceRecordingHintAt;
-    if (lastHintAt != null &&
-        now.difference(lastHintAt) < const Duration(seconds: 2)) {
-      return;
+    await _beginVoiceRecording(dragStartDx: null);
+  }
+
+  Future<bool> _beginVoiceRecording({
+    required double? dragStartDx,
+  }) async {
+    if (_isRecordingVoice) return false;
+
+    final startResult = await _voiceRecorderService.startRecordingWithResult();
+    if (!mounted) return false;
+
+    if (startResult == VoiceRecordingStartResult.permissionDenied ||
+        startResult ==
+            VoiceRecordingStartResult.permissionPermanentlyDenied) {
+      await _showMicrophonePermissionDialog(
+        isPermanentlyDenied:
+            startResult ==
+            VoiceRecordingStartResult.permissionPermanentlyDenied,
+      );
+      return false;
     }
 
-    _lastVoiceRecordingHintAt = now;
-    AppSnackBar.show(
-      context: context,
-      message: context.l10n.longPressToRecord,
-      type: FeedbackType.info,
+    if (startResult != VoiceRecordingStartResult.started) {
+      AppSnackBar.show(
+        context: context,
+        message: context.l10n.errorOccurred,
+        type: FeedbackType.error,
+      );
+      return false;
+    }
+
+    _recordingTimer?.cancel();
+    safeSetState(() {
+      _isRecordingVoice = true;
+      _isSlidingToCancel = false;
+      _recordingStartedAt = DateTime.now();
+      _recordingDuration = Duration.zero;
+      _recordingAmplitude = 0.0;
+      _recordingDragStartDx = dragStartDx;
+    });
+
+    _recordingTimer = Timer.periodic(
+      const Duration(milliseconds: 200),
+      (_) {
+        final startedAt = _recordingStartedAt;
+        if (startedAt == null || !mounted) return;
+        safeSetState(() {
+          _recordingDuration = DateTime.now().difference(startedAt);
+        });
+      },
     );
+
+    return true;
   }
 
   Future<void> _onVoiceRecordingLongPressEnd(
@@ -1173,7 +1170,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
           text: context.l10n.openSettings,
           onPressed: () async {
             Navigator.of(context, rootNavigator: true).pop();
-            await openAppSettings();
+            await AppSettings.openAppSettings();
           },
         ),
       ],
@@ -2174,23 +2171,36 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
               tooltip: context.l10n.save,
             )
           else
-            GestureDetector(
-              onTap: _onVoiceRecordingTap,
-              onLongPressStart: _onVoiceRecordingLongPressStart,
-              onLongPressMoveUpdate: _onVoiceRecordingLongPressMoveUpdate,
-              onLongPressEnd: _onVoiceRecordingLongPressEnd,
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                width: AppDimens.iconButtonSize,
-                height: AppDimens.iconButtonSize,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.mic_rounded,
-                  color: AppColors.textButton,
-                  size: AppDimens.iconMedium,
+            AppTooltip(
+              message: _usesDesktopVoiceRecordingUx
+                  ? context.l10n.recordVoiceMessage
+                  : context.l10n.longPressToRecord,
+              enableHover: _usesDesktopVoiceRecordingUx,
+              enableLongPress: false,
+              child: GestureDetector(
+                onTap: _onVoiceRecordingTap,
+                onLongPressStart: _usesDesktopVoiceRecordingUx
+                    ? null
+                    : _onVoiceRecordingLongPressStart,
+                onLongPressMoveUpdate: _usesDesktopVoiceRecordingUx
+                    ? null
+                    : _onVoiceRecordingLongPressMoveUpdate,
+                onLongPressEnd: _usesDesktopVoiceRecordingUx
+                    ? null
+                    : _onVoiceRecordingLongPressEnd,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: AppDimens.iconButtonSize,
+                  height: AppDimens.iconButtonSize,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.mic_rounded,
+                    color: AppColors.textButton,
+                    size: AppDimens.iconMedium,
+                  ),
                 ),
               ),
             ),

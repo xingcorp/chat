@@ -1,4 +1,4 @@
-# Flutter Chat App - Enterprise Production ProGuard Rules
+# OXII Chat - Enterprise Production ProGuard Rules
 # Optimized for messaging app performance and security
 
 # Flutter specific rules
@@ -69,7 +69,7 @@
 }
 
 # Enterprise security - obfuscate sensitive classes
--keep class com.example.flutter_chat_app.MainActivity { *; }
+-keep class com.oxii.chat.MainActivity { *; }
 
 # Crashlytics
 -keepattributes SourceFile,LineNumberTable
