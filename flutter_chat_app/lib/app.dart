@@ -64,7 +64,7 @@ class _AppViewState extends State<_AppView> {
         return BlocBuilder<LocaleCubit, LocaleState>(
           builder: (context, localeState) {
             l10n_helper.L10nHelper.initialize(
-                localeState.locale ?? const Locale('en'));
+                localeState.locale ?? const Locale('vi'));
 
             return Portal(
               child: MaterialApp.router(

@@ -43,7 +43,7 @@ class LocaleState extends Equatable {
 
   /// Get effective locale (system default if null)
   Locale get effectiveLocale {
-    return locale ?? const Locale('en');
+    return locale ?? const Locale('vi');
   }
 
   /// Check if performance is optimal (<50ms)

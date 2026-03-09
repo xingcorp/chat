@@ -22,6 +22,7 @@ import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
 import '../../data/datasources/chat_info/chat_info_remote_datasource.dart'
     as _i933;
+import '../../data/datasources/clipboard/clipboard_datasource.dart' as _i770;
 import '../../data/datasources/media/media_local_datasource.dart' as _i982;
 import '../../data/datasources/media/media_remote_datasource.dart' as _i966;
 import '../../data/datasources/message/message_local_datasource.dart' as _i75;
@@ -47,6 +48,8 @@ import '../../data/repositories/push_notification_repository_impl.dart'
     as _i602;
 import '../../data/repositories/sticker_repository_impl.dart' as _i854;
 import '../../data/repositories/user_repository_impl.dart' as _i790;
+import '../../data/services/file_validation_service.dart' as _i131;
+import '../../data/services/temp_file_service.dart' as _i405;
 import '../../domain/repositories/i_attachment_repository.dart' as _i817;
 import '../../domain/repositories/i_chat_info_repository.dart' as _i282;
 import '../../domain/repositories/i_media_repository.dart' as _i394;
@@ -64,6 +67,8 @@ import '../../domain/usecases/chat_info/report_chat_usecase.dart' as _i34;
 import '../../domain/usecases/chat_info/unblock_user_usecase.dart' as _i776;
 import '../../domain/usecases/chat_info/update_notification_settings_usecase.dart'
     as _i939;
+import '../../domain/usecases/file/upload_attachment_usecase.dart' as _i85;
+import '../../domain/usecases/file/validate_file_usecase.dart' as _i1033;
 import '../../domain/usecases/message/add_reaction_usecase.dart' as _i409;
 import '../../domain/usecases/message/delete_message_usecase.dart' as _i434;
 import '../../domain/usecases/message/edit_message_usecase.dart' as _i203;
@@ -138,6 +143,8 @@ import '../../presentation/blocs/chat_members/chat_members_bloc.dart' as _i1028;
 import '../../presentation/blocs/connection/connection_bloc.dart' as _i81;
 import '../../presentation/blocs/conversation_detail/conversation_detail_bloc.dart'
     as _i101;
+import '../../presentation/blocs/file_attachment/file_attachment_bloc.dart'
+    as _i172;
 import '../../presentation/blocs/locale/locale_cubit.dart' as _i128;
 import '../../presentation/blocs/media/media_bloc.dart' as _i921;
 import '../../presentation/blocs/message/message_bloc.dart' as _i230;
@@ -248,6 +255,7 @@ extension GetItInjectableX on _i174.GetIt {
       environmentFilter,
     );
     final externalModule = _$ExternalModule();
+    gh.factory<_i1033.ValidateFileUseCase>(() => _i1033.ValidateFileUseCase());
     gh.factory<_i383.ChatComposerBloc>(() => _i383.ChatComposerBloc());
     gh.singleton<_i221.AppLogger>(() => externalModule.appLogger);
     gh.lazySingleton<_i514.CacheSyncStrategy>(() => _i514.CacheSyncStrategy());
@@ -275,6 +283,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i982.MediaLocalDataSourceImpl());
     gh.lazySingleton<_i976.SocketIOEventMapper>(
         () => _i976.SocketIOEventMapper());
+    gh.lazySingleton<_i131.FileValidationService>(
+        () => _i131.FileValidationService());
     gh.lazySingleton<_i271.UserRepository>(() => _i790.UserRepositoryImpl(
           localDataSource: gh<_i439.UserLocalDataSource>(),
           remoteDataSource: gh<_i404.UserRemoteDataSource>(),
@@ -314,6 +324,8 @@ extension GetItInjectableX on _i174.GetIt {
         _standalone,
       },
     );
+    gh.lazySingleton<_i85.ITempFileWriter>(
+        () => _i405.TempFileService(logger: gh<_i221.AppLogger>()));
     gh.lazySingleton<_i475.MessageDeliveryTracker>(
         () => _i475.MessageDeliveryTracker(gh<_i610.IPerformanceMonitor>()));
     gh.lazySingleton<_i47.ConnectivityService>(() => _i47.ConnectivityService(
@@ -322,6 +334,8 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i393.MediaCache>(
         () => _i393.MediaCache(logger: gh<_i221.AppLogger>()));
+    gh.lazySingleton<_i770.ClipboardDataSource>(
+        () => _i770.ClipboardDataSource(logger: gh<_i221.AppLogger>()));
     gh.lazySingleton<_i99.StickerLocalDataSource>(
         () => _i99.StickerLocalDataSource(
               gh<_i460.SharedPreferences>(),
@@ -722,6 +736,11 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factoryAsync<_i379.MessageQueueBloc>(() async =>
         _i379.MessageQueueBloc(await getAsync<_i556.MessageQueueService>()));
+    gh.factory<_i85.UploadAttachmentUseCase>(() => _i85.UploadAttachmentUseCase(
+          uploadFileUseCase: gh<_i196.UploadFileUseCase>(),
+          tempFileWriter: gh<_i85.ITempFileWriter>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
     gh.factory<_i313.TypingBloc>(() => _i313.TypingBloc(
           realtimeService: gh<_i301.RealtimeService>(),
           logger: gh<_i221.AppLogger>(),
@@ -810,6 +829,12 @@ extension GetItInjectableX on _i174.GetIt {
               chatRepository: gh<_i81.IChatRepository>(),
               logger: gh<_i221.AppLogger>(),
             ));
+    gh.factory<_i172.FileAttachmentBloc>(() => _i172.FileAttachmentBloc(
+          validateFileUseCase: gh<_i1033.ValidateFileUseCase>(),
+          uploadAttachmentUseCase: gh<_i85.UploadAttachmentUseCase>(),
+          fileValidationService: gh<_i131.FileValidationService>(),
+          logger: gh<_i221.AppLogger>(),
+        ));
     gh.lazySingleton<_i920.ForegroundSyncService>(
         () => _i920.ForegroundSyncService(
               repository: gh<_i81.IChatRepository>(),

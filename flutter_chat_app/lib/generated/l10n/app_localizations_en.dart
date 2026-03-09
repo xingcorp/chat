@@ -1095,7 +1095,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadFailed => 'Download failed';
 
   @override
-  String get uploadFailed => 'Failed to upload file';
+  String get uploadFailed => 'Upload failed';
 
   @override
   String get uploading => 'Uploading...';
@@ -1128,8 +1128,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unsupportedFileType => 'Unsupported file type';
 
   @override
-  String fileTooLarge(String fileName, String maxSize) {
-    return '$fileName is too large. Maximum size is $maxSize';
+  String fileTooLarge(String maxSizeMB) {
+    return 'File exceeds maximum size of ${maxSizeMB}MB';
   }
 
   @override
@@ -1230,9 +1230,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorPickingFiles => 'Error picking files';
 
   @override
-  String fileTypeNotAllowed(String fileName) {
-    return '$fileName file type is not allowed';
-  }
+  String get fileTypeNotAllowed => 'File type not allowed';
 
   @override
   String get remove => 'Remove';
@@ -1872,4 +1870,41 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get slashCommandMuteActionHint =>
       'Open chat info and choose a mute duration';
+
+  @override
+  String get weekdayMon => 'Mon';
+
+  @override
+  String get weekdayTue => 'Tue';
+
+  @override
+  String get weekdayWed => 'Wed';
+
+  @override
+  String get weekdayThu => 'Thu';
+
+  @override
+  String get weekdayFri => 'Fri';
+
+  @override
+  String get weekdaySat => 'Sat';
+
+  @override
+  String get weekdaySun => 'Sun';
+
+  @override
+  String get fileEmpty => 'File is empty';
+
+  @override
+  String maxFilesExceeded(int maxFiles) {
+    return 'Maximum $maxFiles files per message';
+  }
+
+  @override
+  String filesAttached(int count) {
+    return '$count file(s) attached';
+  }
+
+  @override
+  String get pasteImageFromClipboard => 'Paste image from clipboard';
 }

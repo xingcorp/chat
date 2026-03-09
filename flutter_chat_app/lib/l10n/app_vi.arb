@@ -1020,5 +1020,29 @@
 
   "slashCommandMissingArgument": "Lệnh này cần thêm nội dung",
 
-  "slashCommandMuteActionHint": "Mở thông tin chat để chọn thời gian tắt thông báo"
+  "slashCommandMuteActionHint": "Mở thông tin chat để chọn thời gian tắt thông báo",
+
+  "weekdayMon": "Th 2",
+  "weekdayTue": "Th 3",
+  "weekdayWed": "Th 4",
+  "weekdayThu": "Th 5",
+  "weekdayFri": "Th 6",
+  "weekdaySat": "Th 7",
+  "weekdaySun": "CN",
+
+  "dropFilesHere": "Thả file vào đây",
+
+  "fileEmpty": "File trống",
+
+  "fileTooLarge": "File vượt quá kích thước tối đa {maxSizeMB}MB",
+
+  "fileTypeNotAllowed": "Loại file không được hỗ trợ",
+
+  "maxFilesExceeded": "Tối đa {maxFiles} file mỗi tin nhắn",
+
+  "uploadFailed": "Tải lên thất bại",
+
+  "filesAttached": "{count} file đã đính kèm",
+
+  "pasteImageFromClipboard": "Dán ảnh từ clipboard"
 }

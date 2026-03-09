@@ -1097,7 +1097,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get downloadFailed => 'Tải xuống thất bại';
 
   @override
-  String get uploadFailed => 'Tải tệp lên thất bại';
+  String get uploadFailed => 'Tải lên thất bại';
 
   @override
   String get uploading => 'Đang tải lên...';
@@ -1130,8 +1130,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get unsupportedFileType => 'Loại tệp không được hỗ trợ';
 
   @override
-  String fileTooLarge(String fileName, String maxSize) {
-    return '$fileName quá lớn. Kích thước tối đa là $maxSize';
+  String fileTooLarge(String maxSizeMB) {
+    return 'File vượt quá kích thước tối đa ${maxSizeMB}MB';
   }
 
   @override
@@ -1214,7 +1214,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get lastPage => 'Trang cuối';
 
   @override
-  String get dropFilesHere => 'Thả tệp vào đây';
+  String get dropFilesHere => 'Thả file vào đây';
 
   @override
   String get dragDropOrClickToUpload =>
@@ -1232,9 +1232,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get errorPickingFiles => 'Lỗi khi chọn tệp';
 
   @override
-  String fileTypeNotAllowed(String fileName) {
-    return 'Loại tệp $fileName không được phép';
-  }
+  String get fileTypeNotAllowed => 'Loại file không được hỗ trợ';
 
   @override
   String get remove => 'Xóa';
@@ -1873,4 +1871,41 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get slashCommandMuteActionHint =>
       'Mở thông tin chat để chọn thời gian tắt thông báo';
+
+  @override
+  String get weekdayMon => 'Th 2';
+
+  @override
+  String get weekdayTue => 'Th 3';
+
+  @override
+  String get weekdayWed => 'Th 4';
+
+  @override
+  String get weekdayThu => 'Th 5';
+
+  @override
+  String get weekdayFri => 'Th 6';
+
+  @override
+  String get weekdaySat => 'Th 7';
+
+  @override
+  String get weekdaySun => 'CN';
+
+  @override
+  String get fileEmpty => 'File trống';
+
+  @override
+  String maxFilesExceeded(int maxFiles) {
+    return 'Tối đa $maxFiles file mỗi tin nhắn';
+  }
+
+  @override
+  String filesAttached(int count) {
+    return '$count file đã đính kèm';
+  }
+
+  @override
+  String get pasteImageFromClipboard => 'Dán ảnh từ clipboard';
 }

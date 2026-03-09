@@ -2126,10 +2126,10 @@ abstract class AppLocalizations {
   /// **'Download failed'**
   String get downloadFailed;
 
-  /// Error message when file upload fails
+  /// Error shown when a file upload fails
   ///
   /// In en, this message translates to:
-  /// **'Failed to upload file'**
+  /// **'Upload failed'**
   String get uploadFailed;
 
   /// Status text when uploading file
@@ -2192,11 +2192,11 @@ abstract class AppLocalizations {
   /// **'Unsupported file type'**
   String get unsupportedFileType;
 
-  /// Error message when file exceeds size limit
+  /// Error when a file exceeds the upload size limit
   ///
   /// In en, this message translates to:
-  /// **'{fileName} is too large. Maximum size is {maxSize}'**
-  String fileTooLarge(String fileName, String maxSize);
+  /// **'File exceeds maximum size of {maxSizeMB}MB'**
+  String fileTooLarge(String maxSizeMB);
 
   /// Text showing maximum file size
   ///
@@ -2312,7 +2312,7 @@ abstract class AppLocalizations {
   /// **'Last page'**
   String get lastPage;
 
-  /// Text shown when dragging files over upload area
+  /// Overlay text shown when files are dragged over the chat area
   ///
   /// In en, this message translates to:
   /// **'Drop files here'**
@@ -2342,11 +2342,11 @@ abstract class AppLocalizations {
   /// **'Error picking files'**
   String get errorPickingFiles;
 
-  /// Error message when file type is not allowed
+  /// Error when a file extension is not in the allowed list
   ///
   /// In en, this message translates to:
-  /// **'{fileName} file type is not allowed'**
-  String fileTypeNotAllowed(String fileName);
+  /// **'File type not allowed'**
+  String get fileTypeNotAllowed;
 
   /// Remove button text
   ///
@@ -3433,6 +3433,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open chat info and choose a mute duration'**
   String get slashCommandMuteActionHint;
+
+  /// Short weekday name for Monday, used in chat list timestamps
+  ///
+  /// In en, this message translates to:
+  /// **'Mon'**
+  String get weekdayMon;
+
+  /// Short weekday name for Tuesday, used in chat list timestamps
+  ///
+  /// In en, this message translates to:
+  /// **'Tue'**
+  String get weekdayTue;
+
+  /// Short weekday name for Wednesday, used in chat list timestamps
+  ///
+  /// In en, this message translates to:
+  /// **'Wed'**
+  String get weekdayWed;
+
+  /// Short weekday name for Thursday, used in chat list timestamps
+  ///
+  /// In en, this message translates to:
+  /// **'Thu'**
+  String get weekdayThu;
+
+  /// Short weekday name for Friday, used in chat list timestamps
+  ///
+  /// In en, this message translates to:
+  /// **'Fri'**
+  String get weekdayFri;
+
+  /// Short weekday name for Saturday, used in chat list timestamps
+  ///
+  /// In en, this message translates to:
+  /// **'Sat'**
+  String get weekdaySat;
+
+  /// Short weekday name for Sunday, used in chat list timestamps
+  ///
+  /// In en, this message translates to:
+  /// **'Sun'**
+  String get weekdaySun;
+
+  /// Error when user drops/picks an empty file
+  ///
+  /// In en, this message translates to:
+  /// **'File is empty'**
+  String get fileEmpty;
+
+  /// Error when user tries to attach more files than the limit
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum {maxFiles} files per message'**
+  String maxFilesExceeded(int maxFiles);
+
+  /// Status text showing number of files attached
+  ///
+  /// In en, this message translates to:
+  /// **'{count} file(s) attached'**
+  String filesAttached(int count);
+
+  /// Tooltip for clipboard paste action
+  ///
+  /// In en, this message translates to:
+  /// **'Paste image from clipboard'**
+  String get pasteImageFromClipboard;
 }
 
 class _AppLocalizationsDelegate

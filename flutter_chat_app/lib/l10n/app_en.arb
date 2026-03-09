@@ -3287,5 +3287,95 @@
   "slashCommandMuteActionHint": "Open chat info and choose a mute duration",
   "@slashCommandMuteActionHint": {
     "description": "Feedback after executing /mute command"
+  },
+
+  "weekdayMon": "Mon",
+  "@weekdayMon": {
+    "description": "Short weekday name for Monday, used in chat list timestamps"
+  },
+
+  "weekdayTue": "Tue",
+  "@weekdayTue": {
+    "description": "Short weekday name for Tuesday, used in chat list timestamps"
+  },
+
+  "weekdayWed": "Wed",
+  "@weekdayWed": {
+    "description": "Short weekday name for Wednesday, used in chat list timestamps"
+  },
+
+  "weekdayThu": "Thu",
+  "@weekdayThu": {
+    "description": "Short weekday name for Thursday, used in chat list timestamps"
+  },
+
+  "weekdayFri": "Fri",
+  "@weekdayFri": {
+    "description": "Short weekday name for Friday, used in chat list timestamps"
+  },
+
+  "weekdaySat": "Sat",
+  "@weekdaySat": {
+    "description": "Short weekday name for Saturday, used in chat list timestamps"
+  },
+
+  "weekdaySun": "Sun",
+  "@weekdaySun": {
+    "description": "Short weekday name for Sunday, used in chat list timestamps"
+  },
+
+  "dropFilesHere": "Drop files here",
+  "@dropFilesHere": {
+    "description": "Overlay text shown when files are dragged over the chat area"
+  },
+
+  "fileEmpty": "File is empty",
+  "@fileEmpty": {
+    "description": "Error when user drops/picks an empty file"
+  },
+
+  "fileTooLarge": "File exceeds maximum size of {maxSizeMB}MB",
+  "@fileTooLarge": {
+    "description": "Error when a file exceeds the upload size limit",
+    "placeholders": {
+      "maxSizeMB": {
+        "type": "String"
+      }
+    }
+  },
+
+  "fileTypeNotAllowed": "File type not allowed",
+  "@fileTypeNotAllowed": {
+    "description": "Error when a file extension is not in the allowed list"
+  },
+
+  "maxFilesExceeded": "Maximum {maxFiles} files per message",
+  "@maxFilesExceeded": {
+    "description": "Error when user tries to attach more files than the limit",
+    "placeholders": {
+      "maxFiles": {
+        "type": "int"
+      }
+    }
+  },
+
+  "uploadFailed": "Upload failed",
+  "@uploadFailed": {
+    "description": "Error shown when a file upload fails"
+  },
+
+  "filesAttached": "{count} file(s) attached",
+  "@filesAttached": {
+    "description": "Status text showing number of files attached",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "pasteImageFromClipboard": "Paste image from clipboard",
+  "@pasteImageFromClipboard": {
+    "description": "Tooltip for clipboard paste action"
   }
 }

@@ -57,8 +57,13 @@ class LocaleCubit extends Cubit<LocaleState> {
           lastLocaleChange: DateTime.now(),
         ));
       } else {
-        // Use system default
-        emit(state.copyWith(locale: null));
+        // Default to Vietnamese on first launch
+        const defaultLocale = Locale('vi');
+        await _precacheTranslations(defaultLocale);
+        emit(state.copyWith(
+          locale: defaultLocale,
+          lastLocaleChange: DateTime.now(),
+        ));
       }
 
       _performanceStopwatch.stop();

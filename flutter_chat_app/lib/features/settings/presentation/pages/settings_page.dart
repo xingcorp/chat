@@ -8,12 +8,14 @@ import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_brand_logo.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
+import 'package:flutter_chat_app/presentation/widgets/settings/language_selector.dart';
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:get_it/get_it.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -141,13 +143,29 @@ class _SettingsPageState extends BaseState<SettingsPage> {
                 const Divider(height: 1),
 
                 // Language
-                _buildSettingsItem(
-                  context: context,
-                  icon: Icons.language,
-                  title: context.l10n.languageSettings,
-                  subtitle: 'Tiếng Việt',
-                  onTap: () {
-                    // TODO: Navigate to language settings
+                BlocBuilder<LocaleCubit, LocaleState>(
+                  builder: (context, localeState) {
+                    final currentLocale = localeState.locale;
+                    final subtitle = currentLocale != null
+                        ? L10n.getLanguageDisplayName(currentLocale)
+                        : '🌐 ${context.l10n.systemDefault}';
+
+                    return _buildSettingsItem(
+                      context: context,
+                      icon: Icons.language,
+                      title: context.l10n.languageSettings,
+                      subtitle: subtitle,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => BlocProvider.value(
+                              value: context.read<LocaleCubit>(),
+                              child: const LanguageSelectorScreen(),
+                            ),
+                          ),
+                        );
+                      },
+                    );
                   },
                 ),
 
