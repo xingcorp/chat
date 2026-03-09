@@ -1748,17 +1748,26 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     logger.i(
         'Toggling reaction ${event.emojiCode} on message ${event.messageId}');
 
-    // Determine if we're adding or removing
-    final targetMessage = currentState.messages.firstWhere(
+    // Find the target message — abort if not found (don't silently fall back)
+    final targetIndex = currentState.messages.indexWhere(
       (msg) => msg.id == event.messageId,
-      orElse: () => currentState.messages.first, // Fallback
     );
+    if (targetIndex == -1) {
+      logger.w(
+          'ToggleReaction: message ${event.messageId} not found in state, ignoring');
+      return;
+    }
+    final targetMessage = currentState.messages[targetIndex];
 
     final existingReaction = targetMessage.reactions.where(
       (r) => r.code == event.emojiCode && r.userId == _currentUserId,
     );
 
-    final isRemoving = existingReaction.isNotEmpty;
+    // forceAdd=true (from desktop hover bar): always ADD, never remove
+    final isRemoving = !event.forceAdd && existingReaction.isNotEmpty;
+
+    logger.d(
+        'ToggleReaction: isRemoving=$isRemoving, forceAdd=${event.forceAdd}, reactions count=${targetMessage.reactions.length}, userId=$_currentUserId');
 
     // Optimistic update: toggle reaction locally
     final updatedMessages = currentState.messages.map((msg) {
@@ -1783,32 +1792,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         ];
       }
 
-      return ChatMessage(
-        id: msg.id,
-        chatId: msg.chatId,
-        sender: msg.sender,
-        content: msg.content,
-        contentType: msg.contentType,
-        createdAt: msg.createdAt,
-        updatedAt: msg.updatedAt,
-        editedAt: msg.editedAt,
-        deletedAt: msg.deletedAt,
-        urls: msg.urls,
-        fileName: msg.fileName,
-        forwardedFromMessageId: msg.forwardedFromMessageId,
-        replyMessageId: msg.replyMessageId,
-        replyMessage: msg.replyMessage,
-        actionType: msg.actionType,
-        actor: msg.actor,
-        targetUsers: msg.targetUsers,
-        newValue: msg.newValue,
-        oldValue: msg.oldValue,
-        mentionTo: msg.mentionTo,
-        readBy: msg.readBy,
-        deliveredTo: msg.deliveredTo,
-        attachments: msg.attachments,
-        reactions: updatedReactions,
-      );
+      return msg.copyWith(reactions: updatedReactions);
     }).toList();
 
     // Emit optimistic update immediately

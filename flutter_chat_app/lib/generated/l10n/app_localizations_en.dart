@@ -928,6 +928,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removeReaction => 'Remove reaction';
 
   @override
+  String get holdToRemoveReaction => 'Hold to remove reaction';
+
+  @override
   String get reactions => 'Reactions';
 
   @override

@@ -1548,6 +1548,11 @@
     "description": "Button text to remove reaction"
   },
 
+  "holdToRemoveReaction": "Hold to remove reaction",
+  "@holdToRemoveReaction": {
+    "description": "Tooltip shown on reaction badge when current user has reacted"
+  },
+
   "reactions": "Reactions",
   "@reactions": {
     "description": "Reactions label"

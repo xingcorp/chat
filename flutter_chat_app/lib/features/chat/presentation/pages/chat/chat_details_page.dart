@@ -18,6 +18,7 @@ import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
+import 'package:flutter_chat_app/domain/entities/pending_file.dart';
 import 'package:flutter_chat_app/domain/entities/sticker.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
@@ -50,6 +51,8 @@ import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversa
 import 'package:flutter_chat_app/presentation/blocs/file_attachment/file_attachment_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
 import 'package:flutter_chat_app/presentation/screens/media/image_preview_screen.dart';
+import 'package:flutter_chat_app/presentation/screens/media/image_viewer_screen.dart';
+import 'package:flutter_chat_app/presentation/screens/media/video_viewer_screen.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_panel.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_icon_button.dart';
@@ -62,6 +65,7 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_tooltip.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
+import 'package:flutter_chat_app/shared/domain/entities/attachment.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:get_it/get_it.dart';
@@ -444,11 +448,22 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
           break;
         }
 
+        // Determine correct backend type from attachment types
+        // (IMAGE, VIDEO, AUDIO, DOC, TEXT) — matching the gallery picker flow
+        final String resolvedContentType;
+        if (attachmentUrls.isEmpty) {
+          resolvedContentType = 'text';
+        } else {
+          final completedFiles = attachmentState.completedAttachments;
+          resolvedContentType =
+              _resolveBackendType(completedFiles);
+        }
+
         _messageBloc.add(
           SendMessage(
             content: messageText.isNotEmpty ? messageText : '',
             senderId: _currentUserId,
-            contentType: attachmentUrls.isNotEmpty ? 'file' : 'text',
+            contentType: resolvedContentType,
             attachmentIds: attachmentUrls,
             replyMessageId: _replyingToMessage?.id,
           ),
@@ -704,6 +719,77 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         hasAttachments: _fileAttachmentBloc.state.hasFiles,
       ),
     );
+  }
+
+  /// Resolve the backend message type string from completed attachments.
+  ///
+  /// Maps [AttachmentType] to backend type strings matching the gallery
+  /// picker flow: IMAGE, VIDEO, AUDIO, DOC.
+  /// When attachments are mixed types, defaults to DOC.
+  String _resolveBackendType(List<Attachment> attachments) {
+    if (attachments.isEmpty) return 'DOC';
+
+    final firstType = attachments.first.type;
+    final allSameType = attachments.every((a) => a.type == firstType);
+
+    if (!allSameType) return 'DOC';
+
+    switch (firstType) {
+      case AttachmentType.image:
+        return 'IMAGE';
+      case AttachmentType.video:
+        return 'VIDEO';
+      case AttachmentType.audio:
+        return 'AUDIO';
+      case AttachmentType.document:
+      case AttachmentType.other:
+      case AttachmentType.location:
+      case AttachmentType.contact:
+        return 'DOC';
+    }
+  }
+
+  /// Preview a pending file (image or video) in the full-screen viewer.
+  ///
+  /// For images: opens [ImageViewerScreen] with local bytes/file.
+  /// For videos: opens [VideoViewerScreen] with local file path.
+  void _previewPendingFile(PendingFile file) {
+    if (file.isImage) {
+      // Build image URL from local data
+      // For images with bytes (paste/web), we use a memory image approach
+      // For images with local path (desktop), we use file:// URI
+      String? imageUrl;
+      if (!kIsWeb && file.localPath != null) {
+        imageUrl = 'file://${file.localPath}';
+      } else if (file.uploadedUrl != null) {
+        imageUrl = file.uploadedUrl;
+      }
+
+      if (imageUrl != null) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ImageViewerScreen(
+              imageUrl: imageUrl!,
+              heroTag: 'pending_${file.localId}',
+              title: file.fileName,
+            ),
+          ),
+        );
+      }
+    } else if (file.isVideo) {
+      // Video preview: only works with local path or uploaded URL
+      final videoUrl = file.localPath != null && !kIsWeb
+          ? 'file://${file.localPath}'
+          : file.uploadedUrl;
+
+      if (videoUrl != null) {
+        VideoViewerScreen.show(
+          context,
+          videoUrl: videoUrl,
+          title: file.fileName,
+        );
+      }
+    }
   }
 
   void _handleMuteSlashCommandAction() {
@@ -1913,6 +1999,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                   : _buildNormalAppBar(chatTitle),
               body: ChatFileAttachmentHost(
                 fileAttachmentBloc: _fileAttachmentBloc,
+                onFileTap: _previewPendingFile,
                 chatBody: Stack(
                   children: [
                     BlocConsumer<MessageBloc, MessageState>(
@@ -1953,7 +2040,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                               previous.hasReachedMax !=
                                   current.hasReachedMax ||
                               previous.paginationError !=
-                                  current.paginationError;
+                                  current.paginationError ||
+                              previous.frequentReactions !=
+                                  current.frequentReactions;
                         }
                         return true;
                       },
@@ -2596,6 +2685,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                     ToggleReaction(
                       messageId: uiState.id,
                       emojiCode: emoji,
+                      forceAdd: true,
                     ),
                   ),
                   onReply: () {

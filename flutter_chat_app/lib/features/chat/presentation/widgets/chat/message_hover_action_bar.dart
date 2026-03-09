@@ -29,6 +29,10 @@ class MessageHoverActionBar extends BaseStatelessWidget {
   final VoidCallback onMouseExit;
   final GlobalKey moreButtonKey;
 
+  /// Called when the "More" popup is dismissed (barrier tap or action item).
+  /// Allows [DesktopMessageHoverWrapper] to re-evaluate hide logic.
+  final VoidCallback? onMorePopupDismissed;
+
   const MessageHoverActionBar({
     super.key,
     required this.callbacks,
@@ -38,6 +42,7 @@ class MessageHoverActionBar extends BaseStatelessWidget {
     required this.onMouseEnter,
     required this.onMouseExit,
     required this.moreButtonKey,
+    this.onMorePopupDismissed,
   });
 
   @override
@@ -196,6 +201,7 @@ class MessageHoverActionBar extends BaseStatelessWidget {
       onEdit: callbacks.onEdit,
       onDelete: callbacks.onDelete,
       onSelect: callbacks.onSelect,
+      onDismissed: onMorePopupDismissed,
     );
   }
 }
@@ -213,7 +219,17 @@ class MoreActionsPopup {
   static OverlayEntry? _overlayEntry;
   static OverlayEntry? _barrierEntry;
 
+  /// Callback invoked after popup is dismissed (by barrier tap or action item).
+  /// Used by [DesktopMessageHoverWrapper] to re-evaluate hide logic.
+  static VoidCallback? _onDismissedCallback;
+
+  /// Whether the popup is currently visible.
+  static bool get isShowing => _overlayEntry != null;
+
   /// Show the more actions popup anchored below the given position.
+  ///
+  /// [onDismissed] is called after the popup is dismissed for any reason
+  /// (action item tap, barrier tap, or programmatic dismiss).
   static void show(
     BuildContext context, {
     required Offset anchor,
@@ -223,8 +239,10 @@ class MoreActionsPopup {
     required VoidCallback onEdit,
     required VoidCallback onDelete,
     required VoidCallback onSelect,
+    VoidCallback? onDismissed,
   }) {
     dismiss();
+    _onDismissedCallback = onDismissed;
 
     final overlay = Overlay.of(context);
     final screenSize = MediaQuery.of(context).size;
@@ -375,6 +393,9 @@ class MoreActionsPopup {
     _overlayEntry = null;
     _barrierEntry?.remove();
     _barrierEntry = null;
+    final cb = _onDismissedCallback;
+    _onDismissedCallback = null;
+    cb?.call();
   }
 }
 

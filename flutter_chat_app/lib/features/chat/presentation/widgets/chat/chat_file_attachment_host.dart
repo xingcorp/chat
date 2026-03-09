@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/data/services/file_validation_service.dart';
+import 'package:flutter_chat_app/domain/entities/pending_file.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_drop_target.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/file_preview_bar.dart';
 import 'package:flutter_chat_app/presentation/blocs/file_attachment/drag_over_cubit.dart';
@@ -38,12 +39,16 @@ class ChatFileAttachmentHost extends BaseStatefulWidget {
   /// Widgets between the chat body and input (typing indicator, reply bar, etc)
   final List<Widget> betweenWidgets;
 
+  /// Callback when a file card is tapped (for previewing images/videos)
+  final void Function(PendingFile file)? onFileTap;
+
   const ChatFileAttachmentHost({
     super.key,
     required this.fileAttachmentBloc,
     required this.chatBody,
     required this.chatInput,
     this.betweenWidgets = const [],
+    this.onFileTap,
   });
 
   @override
@@ -124,6 +129,7 @@ class _ChatFileAttachmentHostState
                     UploadRetried(localId: localId),
                   );
                 },
+                onFileTap: widget.onFileTap,
               );
             },
           ),

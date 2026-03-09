@@ -1808,6 +1808,12 @@ abstract class AppLocalizations {
   /// **'Remove reaction'**
   String get removeReaction;
 
+  /// Tooltip shown on reaction badge when current user has reacted
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to remove reaction'**
+  String get holdToRemoveReaction;
+
   /// Reactions label
   ///
   /// In en, this message translates to:

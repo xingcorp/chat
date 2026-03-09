@@ -168,10 +168,13 @@ class _DesktopMessageHoverWrapperState
 
   void _scheduleHideIfNeeded() {
     if (_isMouseOnMessage || _isMouseOnBar) return;
+    // Don't hide while the "More" popup is open — it has its own barrier.
+    // When the popup dismisses, _onMorePopupDismissed re-triggers this check.
+    if (MoreActionsPopup.isShowing) return;
 
     _hideTimer?.cancel();
     _hideTimer = Timer(_hideDelay, () {
-      if (!_isMouseOnMessage && !_isMouseOnBar) {
+      if (!_isMouseOnMessage && !_isMouseOnBar && !MoreActionsPopup.isShowing) {
         _dismissOverlay();
       }
     });
@@ -228,6 +231,7 @@ class _DesktopMessageHoverWrapperState
             onMouseEnter: _onBarMouseEnter,
             onMouseExit: _onBarMouseExit,
             moreButtonKey: _moreButtonKey,
+            onMorePopupDismissed: _onMorePopupDismissed,
           ),
         ),
       ),
@@ -284,6 +288,12 @@ class _DesktopMessageHoverWrapperState
     }
   }
 
+  /// Called when the "More" popup is dismissed (barrier tap or action item).
+  /// Re-evaluates whether the action bar should also hide.
+  void _onMorePopupDismissed() {
+    _scheduleHideIfNeeded();
+  }
+
   // ---------------------------------------------------------------------------
   // Right-click Context Menu
   // ---------------------------------------------------------------------------
@@ -298,6 +308,7 @@ class _DesktopMessageHoverWrapperState
       onEdit: widget.callbacks.onEdit,
       onDelete: widget.callbacks.onDelete,
       onSelect: widget.callbacks.onSelect,
+      onDismissed: _onMorePopupDismissed,
     );
   }
 

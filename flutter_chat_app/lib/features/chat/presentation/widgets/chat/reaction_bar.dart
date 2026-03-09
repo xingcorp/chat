@@ -132,6 +132,7 @@ class ReactionBar extends StatelessWidget {
       isReacted: isReacted,
       backgroundColor: backgroundColor,
       borderColor: borderColor,
+      tooltipMessage: isReacted ? context.l10n.holdToRemoveReaction : null,
       // Tap → xem danh sách reactors (như Messenger/WhatsApp)
       onTap: () => onReactionTap?.call(
         reaction.code,
@@ -222,6 +223,9 @@ class _AnimatedReactionChip extends StatefulWidget {
   final VoidCallback? onLongPress;
   final Widget child;
 
+  /// Tooltip message shown when [isReacted] is true (hint to hold-to-remove).
+  final String? tooltipMessage;
+
   const _AnimatedReactionChip({
     required this.isReacted,
     required this.backgroundColor,
@@ -229,6 +233,7 @@ class _AnimatedReactionChip extends StatefulWidget {
     this.onTap,
     this.onLongPress,
     required this.child,
+    this.tooltipMessage,
   });
 
   @override
@@ -275,7 +280,7 @@ class _AnimatedReactionChipState extends State<_AnimatedReactionChip>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return ScaleTransition(
+    Widget chip = ScaleTransition(
       scale: _scaleAnimation,
       child: Material(
         color: Colors.transparent,
@@ -312,6 +317,17 @@ class _AnimatedReactionChipState extends State<_AnimatedReactionChip>
         ),
       ),
     );
+
+    // Show tooltip hint when current user has reacted (hold to remove)
+    if (widget.tooltipMessage != null) {
+      chip = Tooltip(
+        message: widget.tooltipMessage!,
+        preferBelow: false,
+        child: chip,
+      );
+    }
+
+    return chip;
   }
 }
 

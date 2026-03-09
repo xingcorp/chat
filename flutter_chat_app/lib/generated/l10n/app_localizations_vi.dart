@@ -930,6 +930,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get removeReaction => 'Xóa phản ứng';
 
   @override
+  String get holdToRemoveReaction => 'Giữ để bỏ biểu cảm';
+
+  @override
   String get reactions => 'Phản ứng';
 
   @override
