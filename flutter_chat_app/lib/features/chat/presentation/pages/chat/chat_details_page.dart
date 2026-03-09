@@ -6,7 +6,6 @@ import 'package:app_settings/app_settings.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -985,14 +984,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
     if (!isCtrlV && !isMetaV) return false;
 
-    LogUtils.d('PASTE_DEBUG', '>>> Ctrl+V detected! Calling handleClipboardPaste()');
-
     // Fire-and-forget: check clipboard for file/image data
-    handleClipboardPaste().then((result) {
-      LogUtils.d('PASTE_DEBUG', '>>> handleClipboardPaste() returned: $result');
-    }).catchError((e) {
-      LogUtils.e('PASTE_DEBUG', '>>> handleClipboardPaste() ERROR: $e');
-    });
+    handleClipboardPaste();
 
     // Always return false — let the TextField handle normal text paste
     return false;
