@@ -1829,7 +1829,47 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage> {
                     child: Stack(
                       children: [
                         BlocConsumer<MessageBloc, MessageState>(
+                          listenWhen: (previous, current) {
+                            // Listener handles side-effects (scroll, mark-read,
+                            // load-more detection) → always listen on type change.
+                            if (previous.runtimeType != current.runtimeType) {
+                              return true;
+                            }
+                            // Within MessagesLoaded ↔ MessagesLoaded: still listen
+                            // whenever the message payload changes (new message,
+                            // load-more completed, etc.) but skip emits that only
+                            // touch metadata like isBackgroundFetching / dataSource.
+                            if (previous is MessagesLoaded &&
+                                current is MessagesLoaded) {
+                              return previous.messages != current.messages ||
+                                  previous.uiMessages != current.uiMessages ||
+                                  previous.hasReachedMax !=
+                                      current.hasReachedMax ||
+                                  previous.paginationError !=
+                                      current.paginationError;
+                            }
+                            return true;
+                          },
                           listener: _handleBlocStateChanges,
+                          buildWhen: (previous, current) {
+                            // Always rebuild on state-type change
+                            // (initial→loading, loading→loaded, loaded→error).
+                            if (previous.runtimeType != current.runtimeType) {
+                              return true;
+                            }
+                            // Within MessagesLoaded: only rebuild when
+                            // UI-visible fields actually change.
+                            if (previous is MessagesLoaded &&
+                                current is MessagesLoaded) {
+                              return previous.uiMessages !=
+                                      current.uiMessages ||
+                                  previous.hasReachedMax !=
+                                      current.hasReachedMax ||
+                                  previous.paginationError !=
+                                      current.paginationError;
+                            }
+                            return true;
+                          },
                           builder: _buildMessagesList,
                         ),
                         if (_showScrollToBottom)

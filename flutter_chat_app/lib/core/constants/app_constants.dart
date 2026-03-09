@@ -18,7 +18,7 @@ class AppConstants {
   static const String appName = 'OXII Chat';
   static const String appVersion = '1.0.0';
   static const String appBuildNumber = '1';
-  static const String appPackageName = 'com.enterprise.flutter_chat_app';
+  static const String appPackageName = 'com.oxii.chat';
 
   /// **API Configuration**
   static const String apiBaseUrl = 'https://api.enterprise-chat.com';
@@ -106,11 +106,11 @@ class AppConstants {
   static const String kPrefsKeyLanguage = 'app_language';
 
   // Database
-  static const String kDatabaseName = 'flutter_chat_app.db';
+  static const String kDatabaseName = 'oxii_chat.db';
   static const int kDatabaseVersion = 1;
 
   // Firebase Dynamic Links
-  static const String kDeepLinkPrefix = 'https://flutterchatapp.page.link';
+  static const String kDeepLinkPrefix = 'https://oxiichat.page.link';
 
   // Routes
   static const String kRouteHome = '/';

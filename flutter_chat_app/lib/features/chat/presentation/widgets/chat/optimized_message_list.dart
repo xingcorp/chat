@@ -83,11 +83,21 @@ class _OptimizedMessageListState extends State<OptimizedMessageList>
 
   final Set<String> _visibleMessageIds = {};
   late AutoScrollController _scrollController;
-  bool _isScrolling = false;
   Timer? _scrollingTimer;
   bool _hasRequestedLoadMore = false;
   String? _scrollToMessageId;
   bool _isScrollControllerAttached = false;
+
+  // Scroll state — uses ValueNotifier to avoid full rebuild on scroll.
+  final ValueNotifier<bool> _isScrollingNotifier = ValueNotifier<bool>(false);
+
+  // Memoized transform cache — avoids re-running expensive transform on every
+  // rebuild when only scroll-state or isLoadingMore changed.
+  List<MessageUIState>? _cachedUiStates;
+  List<ChatMessage>? _lastMessages;
+  String? _lastCurrentUserId;
+  bool? _lastIsGroupChat;
+  List<ConversationMember>? _lastMembers;
 
   final _performanceMonitor = GetIt.I<IPerformanceMonitor>();
   final _analytics = GetIt.I<IAnalyticsService>();
@@ -138,6 +148,7 @@ class _OptimizedMessageListState extends State<OptimizedMessageList>
   @override
   void dispose() {
     _scrollingTimer?.cancel();
+    _isScrollingNotifier.dispose();
     // Only dispose the controller if we created it
     if (widget.scrollController == null) {
       _scrollController.dispose();
@@ -146,20 +157,16 @@ class _OptimizedMessageListState extends State<OptimizedMessageList>
   }
 
   void _handleScroll() {
-    // Track scrolling state for UI effects
-    if (!_isScrolling) {
-      setState(() {
-        _isScrolling = true;
-      });
+    // Track scrolling state via ValueNotifier (no setState → no rebuild).
+    if (!_isScrollingNotifier.value) {
+      _isScrollingNotifier.value = true;
       widget.onScrollStateChanged?.call(true);
     }
 
     _scrollingTimer?.cancel();
     _scrollingTimer = Timer(const Duration(milliseconds: 150), () {
       if (mounted) {
-        setState(() {
-          _isScrolling = false;
-        });
+        _isScrollingNotifier.value = false;
         widget.onScrollStateChanged?.call(false);
       }
     });
@@ -242,18 +249,42 @@ class _OptimizedMessageListState extends State<OptimizedMessageList>
     }
   }
 
+  /// Return memoized UI states — only re-transform when inputs change.
+  List<MessageUIState> _getUiStates() {
+    final messagesChanged = !identical(_lastMessages, widget.messages);
+    final userChanged = _lastCurrentUserId != widget.currentUserId;
+    final groupChanged = _lastIsGroupChat != widget.isGroupChat;
+    final membersChanged = !identical(_lastMembers, widget.members);
+
+    if (_cachedUiStates != null &&
+        !messagesChanged &&
+        !userChanged &&
+        !groupChanged &&
+        !membersChanged) {
+      return _cachedUiStates!;
+    }
+
+    _lastMessages = widget.messages;
+    _lastCurrentUserId = widget.currentUserId;
+    _lastIsGroupChat = widget.isGroupChat;
+    _lastMembers = widget.members;
+
+    _cachedUiStates = MessageListTransformer.transform(
+      messages: widget.messages,
+      currentUserId: widget.currentUserId,
+      isGroupChat: widget.isGroupChat,
+      members: widget.members,
+    );
+    return _cachedUiStates!;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.messages.isEmpty) {
       return Center(child: Text(context.l10n.noMessages));
     }
 
-    final uiStates = MessageListTransformer.transform(
-      messages: widget.messages,
-      currentUserId: widget.currentUserId,
-      isGroupChat: widget.isGroupChat,
-      members: widget.members,
-    );
+    final uiStates = _getUiStates();
 
     // Performance trace
     _performanceMonitor.startTrace(TraceType.custom,

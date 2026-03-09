@@ -37,8 +37,8 @@ class BackgroundSyncWorker {
   Timer? _periodicTimer;
   
   /// Các hằng số
-  static const String backgroundSyncTask = 'com.flutter_chat_app.BACKGROUND_SYNC';
-  static const String periodicSyncTask = 'com.flutter_chat_app.PERIODIC_SYNC';
+  static const String backgroundSyncTask = 'com.oxii.chat.BACKGROUND_SYNC';
+  static const String periodicSyncTask = 'com.oxii.chat.PERIODIC_SYNC';
   static const Duration minSyncInterval = Duration(minutes: 15);
   static const Duration defaultSyncInterval = Duration(hours: 1);
   static const int maxBackgroundTasks = 3;

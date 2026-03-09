@@ -26,7 +26,7 @@ import '../config/production_config.dart';
 /// 
 /// Registered manually in core_module.dart
 class ProductionLogger {
-  static const String _logFileName = 'flutter_chat_app.log';
+  static const String _logFileName = 'oxii_chat.log';
   static const int _maxLogFileSize = 10 * 1024 * 1024; // 10MB
   static const int _maxLogFiles = 5;
 
@@ -133,7 +133,7 @@ class ProductionLogger {
     try {
       final directory = _logFile!.parent;
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final rotatedFile = File('${directory.path}/flutter_chat_app_$timestamp.log');
+      final rotatedFile = File('${directory.path}/oxii_chat_$timestamp.log');
       
       await _logFile!.rename(rotatedFile.path);
       _logFile = File('${directory.path}/$_logFileName');
@@ -152,7 +152,7 @@ class ProductionLogger {
       final directory = _logFile!.parent;
       final logFiles = await directory
           .list()
-          .where((entity) => entity is File && entity.path.contains('flutter_chat_app_'))
+          .where((entity) => entity is File && entity.path.contains('oxii_chat_'))
           .cast<File>()
           .toList();
 
