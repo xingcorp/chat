@@ -48,62 +48,12 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
           ),
         ),
 
-        SizedBox(height: AppDimens.spaceSmall),
+        const SizedBox(height: AppDimens.spaceSmall),
 
-        // Settings card
-        AppCard.elevated(
-          margin:
-              const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium),
-          padding: const EdgeInsets.all(AppDimens.paddingMedium),
-          child: Column(
-            children: [
-              // Mute/Unmute notifications
-              _buildSettingRow(
-                context: context,
-                icon: isMuted ? Icons.notifications_off : Icons.notifications,
-                title: isMuted
-                    ? context.l10n.muteNotifications
-                    : context.l10n.notifications,
-                subtitle: isMuted
-                    ? context.l10n.notificationsMuted
-                    : context.l10n.notificationsEnabled,
-                onTap: onMuteToggle,
-              ),
+        // Unsupported chat settings are temporarily hidden until backend
+        // support for notification, block and report flows is implemented.
 
-              if (!isGroup) ...[
-                Divider(height: 1),
-
-                // Block/Unblock user
-                _buildSettingRow(
-                  context: context,
-                  icon: isBlocked ? Icons.block : Icons.person,
-                  title: isBlocked
-                      ? context.l10n.unblockUser
-                      : context.l10n.blockUser,
-                  subtitle: isBlocked
-                      ? context.l10n.userBlocked
-                      : context.l10n.blockThisUser,
-                  onTap: onBlockToggle,
-                  isDestructive: !isBlocked,
-                ),
-              ],
-
-              Divider(height: 1),
-
-              // Report chat
-              _buildSettingRow(
-                context: context,
-                icon: Icons.report,
-                title: context.l10n.reportChat,
-                subtitle: context.l10n.reportSpamOrAbuse,
-                onTap: onReport,
-                isDestructive: true,
-              ),
-            ],
-          ),
-        ),
-
-        SizedBox(height: AppDimens.spaceSmall),
+        const SizedBox(height: AppDimens.spaceSmall),
 
         // Danger zone card
         AppCard.elevated(
@@ -122,7 +72,7 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
                   onTap: isActionInProgress ? null : onLeaveGroup,
                   isDestructive: true,
                 ),
-                Divider(height: 1),
+                const Divider(height: 1),
               ],
 
               // Delete chat
@@ -182,7 +132,7 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
               ),
             ),
 
-            SizedBox(width: AppDimens.spaceSmall),
+            const SizedBox(width: AppDimens.spaceSmall),
 
             // Title and subtitle
             Expanded(
@@ -197,7 +147,7 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
                         ),
                   ),
                   if (subtitle.isNotEmpty) ...[
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     AppText(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
