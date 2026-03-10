@@ -179,6 +179,25 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notificationSettings => 'Thông báo';
 
   @override
+  String get enableNotifications => 'Bật thông báo';
+
+  @override
+  String get desktopNotificationsDescription =>
+      'Nhận cảnh báo khi có tin nhắn mới ngay cả khi OXII Chat đang chạy nền.';
+
+  @override
+  String get notificationSettingsFallbackMessage =>
+      'Thông báo đang bị tắt cho OXII Chat. Hãy mở Cài đặt hệ thống > Thông báo và bật OXII Chat để tiếp tục nhận cảnh báo tin nhắn.';
+
+  @override
+  String get notificationSettingsOpenFailed =>
+      'Không thể mở cài đặt thông báo.';
+
+  @override
+  String get desktopNotificationsEnabledMessage =>
+      'Đã bật thông báo trên máy tính.';
+
+  @override
   String get languageSettings => 'Ngôn ngữ';
 
   @override
@@ -1791,6 +1810,14 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get notificationsEnabled => 'Thông báo đang bật';
+
+  @override
+  String get desktopNotificationsDisabledStatus =>
+      'Thông báo trên máy tính đang tắt';
+
+  @override
+  String get desktopNotificationsEnabledStatus =>
+      'Thông báo trên máy tính đang bật';
 
   @override
   String get userBlocked => 'Người dùng đã bị chặn';

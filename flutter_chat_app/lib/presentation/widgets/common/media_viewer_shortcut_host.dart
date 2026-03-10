@@ -12,10 +12,14 @@ class MediaViewerShortcutHost extends BaseStatelessWidget {
     super.key,
     required this.child,
     this.onDismiss,
+    this.onPrevious,
+    this.onNext,
   });
 
   final Widget child;
   final VoidCallback? onDismiss;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
 
   @override
   Widget buildContent(BuildContext context) {
@@ -23,11 +27,23 @@ class MediaViewerShortcutHost extends BaseStatelessWidget {
       return child;
     }
 
+    final shortcuts = <ShortcutActivator, Intent>{
+      const SingleActivator(LogicalKeyboardKey.escape):
+          const _DismissMediaViewerShortcutIntent(),
+    };
+
+    if (onPrevious != null) {
+      shortcuts[const SingleActivator(LogicalKeyboardKey.arrowLeft)] =
+          const _PreviousMediaViewerShortcutIntent();
+    }
+
+    if (onNext != null) {
+      shortcuts[const SingleActivator(LogicalKeyboardKey.arrowRight)] =
+          const _NextMediaViewerShortcutIntent();
+    }
+
     return Shortcuts(
-      shortcuts: const <ShortcutActivator, Intent>{
-        SingleActivator(LogicalKeyboardKey.escape):
-            _DismissMediaViewerShortcutIntent(),
-      },
+      shortcuts: shortcuts,
       child: Actions(
         actions: <Type, Action<Intent>>{
           _DismissMediaViewerShortcutIntent:
@@ -39,6 +55,20 @@ class MediaViewerShortcutHost extends BaseStatelessWidget {
               } else {
                 Navigator.of(context).maybePop();
               }
+              return null;
+            },
+          ),
+          _PreviousMediaViewerShortcutIntent:
+              CallbackAction<_PreviousMediaViewerShortcutIntent>(
+            onInvoke: (_) {
+              onPrevious?.call();
+              return null;
+            },
+          ),
+          _NextMediaViewerShortcutIntent:
+              CallbackAction<_NextMediaViewerShortcutIntent>(
+            onInvoke: (_) {
+              onNext?.call();
               return null;
             },
           ),
@@ -72,4 +102,12 @@ class MediaViewerShortcutHost extends BaseStatelessWidget {
 
 class _DismissMediaViewerShortcutIntent extends Intent {
   const _DismissMediaViewerShortcutIntent();
+}
+
+class _PreviousMediaViewerShortcutIntent extends Intent {
+  const _PreviousMediaViewerShortcutIntent();
+}
+
+class _NextMediaViewerShortcutIntent extends Intent {
+  const _NextMediaViewerShortcutIntent();
 }

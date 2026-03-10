@@ -263,6 +263,31 @@
     "description": "Notification settings option"
   },
 
+  "enableNotifications": "Enable notifications",
+  "@enableNotifications": {
+    "description": "CTA to enable desktop notifications"
+  },
+
+  "desktopNotificationsDescription": "Get alerted when new messages arrive while OXII Chat runs in the background.",
+  "@desktopNotificationsDescription": {
+    "description": "Description for desktop notification CTA"
+  },
+
+  "notificationSettingsFallbackMessage": "Notifications are off for OXII Chat. Open System Settings > Notifications and enable OXII Chat to keep receiving message alerts.",
+  "@notificationSettingsFallbackMessage": {
+    "description": "Fallback message shown when the app needs the user to enable notifications from macOS settings"
+  },
+
+  "notificationSettingsOpenFailed": "Couldn't open notification settings.",
+  "@notificationSettingsOpenFailed": {
+    "description": "Error shown when opening OS notification settings fails"
+  },
+
+  "desktopNotificationsEnabledMessage": "Desktop notifications are enabled.",
+  "@desktopNotificationsEnabledMessage": {
+    "description": "Success message after enabling desktop notifications"
+  },
+
   "languageSettings": "Language",
   "@languageSettings": {
     "description": "Language settings option"
@@ -3147,6 +3172,16 @@
   "notificationsEnabled": "Notifications enabled",
   "@notificationsEnabled": {
     "description": "Subtitle when notifications are enabled"
+  },
+
+  "desktopNotificationsDisabledStatus": "Desktop notifications are off",
+  "@desktopNotificationsDisabledStatus": {
+    "description": "Status shown when desktop notifications are disabled"
+  },
+
+  "desktopNotificationsEnabledStatus": "Desktop notifications are on",
+  "@desktopNotificationsEnabledStatus": {
+    "description": "Status shown when desktop notifications are enabled"
   },
 
   "userBlocked": "User is blocked",

@@ -335,6 +335,8 @@ class _LightboxViewState extends BaseState<_LightboxView> {
   late PageController _pageController;
   late int _currentIndex;
   bool _showControls = true;
+  bool get _canMoveToPreviousImage => _currentIndex > 0;
+  bool get _canMoveToNextImage => _currentIndex < widget.images.length - 1;
 
   @override
   void initState() {
@@ -355,6 +357,11 @@ class _LightboxViewState extends BaseState<_LightboxView> {
     final isDark = theme.brightness == Brightness.dark;
 
     return MediaViewerShortcutHost(
+      onPrevious: _canMoveToPreviousImage
+          ? () => _jumpToImage(_currentIndex - 1)
+          : null,
+      onNext:
+          _canMoveToNextImage ? () => _jumpToImage(_currentIndex + 1) : null,
       child: Scaffold(
         backgroundColor: AppColors.backgroundDarkMode,
         body: GestureDetector(
@@ -419,6 +426,18 @@ class _LightboxViewState extends BaseState<_LightboxView> {
           ),
         ),
       ),
+    );
+  }
+
+  void _jumpToImage(int index) {
+    if (index < 0 || index >= widget.images.length || index == _currentIndex) {
+      return;
+    }
+
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
     );
   }
 

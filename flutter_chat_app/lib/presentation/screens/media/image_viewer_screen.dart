@@ -132,6 +132,8 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
 
   List<ImageViewerItem> get _images => widget.effectiveImages;
   ImageViewerItem get _currentImage => _images[_currentIndex];
+  bool get _canMoveToPreviousImage => _currentIndex > 0;
+  bool get _canMoveToNextImage => _currentIndex < _images.length - 1;
 
   static const double _thumbnailSize = 56.0;
   static const double _thumbnailSpacing = 8.0;
@@ -239,6 +241,11 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
     final hasMessage = widget.message != null;
 
     return MediaViewerShortcutHost(
+      onPrevious: _canMoveToPreviousImage
+          ? () => _jumpToImage(_currentIndex - 1)
+          : null,
+      onNext:
+          _canMoveToNextImage ? () => _jumpToImage(_currentIndex + 1) : null,
       child: Scaffold(
         backgroundColor: Colors.black,
         extendBodyBehindAppBar: true,
@@ -617,12 +624,12 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
     );
   }
 
-  Future<void> _jumpToImage(int index) async {
+  void _jumpToImage(int index) {
     if (index < 0 || index >= _images.length || index == _currentIndex) {
       return;
     }
 
-    await _pageController.animateToPage(
+    _pageController.animateToPage(
       index,
       duration: animationService.config.fastDuration,
       curve: Curves.easeOutCubic,

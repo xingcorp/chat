@@ -392,6 +392,36 @@ abstract class AppLocalizations {
   /// **'Notifications'**
   String get notificationSettings;
 
+  /// CTA to enable desktop notifications
+  ///
+  /// In en, this message translates to:
+  /// **'Enable notifications'**
+  String get enableNotifications;
+
+  /// Description for desktop notification CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Get alerted when new messages arrive while OXII Chat runs in the background.'**
+  String get desktopNotificationsDescription;
+
+  /// Fallback message shown when the app needs the user to enable notifications from macOS settings
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off for OXII Chat. Open System Settings > Notifications and enable OXII Chat to keep receiving message alerts.'**
+  String get notificationSettingsFallbackMessage;
+
+  /// Error shown when opening OS notification settings fails
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open notification settings.'**
+  String get notificationSettingsOpenFailed;
+
+  /// Success message after enabling desktop notifications
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop notifications are enabled.'**
+  String get desktopNotificationsEnabledMessage;
+
   /// Language settings option
   ///
   /// In en, this message translates to:
@@ -3283,6 +3313,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notifications enabled'**
   String get notificationsEnabled;
+
+  /// Status shown when desktop notifications are disabled
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop notifications are off'**
+  String get desktopNotificationsDisabledStatus;
+
+  /// Status shown when desktop notifications are enabled
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop notifications are on'**
+  String get desktopNotificationsEnabledStatus;
 
   /// Subtitle when user is blocked
   ///

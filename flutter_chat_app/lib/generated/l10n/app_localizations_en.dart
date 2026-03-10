@@ -179,6 +179,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationSettings => 'Notifications';
 
   @override
+  String get enableNotifications => 'Enable notifications';
+
+  @override
+  String get desktopNotificationsDescription =>
+      'Get alerted when new messages arrive while OXII Chat runs in the background.';
+
+  @override
+  String get notificationSettingsFallbackMessage =>
+      'Notifications are off for OXII Chat. Open System Settings > Notifications and enable OXII Chat to keep receiving message alerts.';
+
+  @override
+  String get notificationSettingsOpenFailed =>
+      'Couldn\'t open notification settings.';
+
+  @override
+  String get desktopNotificationsEnabledMessage =>
+      'Desktop notifications are enabled.';
+
+  @override
   String get languageSettings => 'Language';
 
   @override
@@ -1789,6 +1808,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationsEnabled => 'Notifications enabled';
+
+  @override
+  String get desktopNotificationsDisabledStatus =>
+      'Desktop notifications are off';
+
+  @override
+  String get desktopNotificationsEnabledStatus =>
+      'Desktop notifications are on';
 
   @override
   String get userBlocked => 'User is blocked';

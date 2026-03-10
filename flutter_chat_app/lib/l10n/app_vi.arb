@@ -50,6 +50,11 @@
   "profileSettings": "Hồ sơ",
   "chatSettings": "Cài đặt trò chuyện",
   "notificationSettings": "Thông báo",
+  "enableNotifications": "Bật thông báo",
+  "desktopNotificationsDescription": "Nhận cảnh báo khi có tin nhắn mới ngay cả khi OXII Chat đang chạy nền.",
+  "notificationSettingsFallbackMessage": "Thông báo đang bị tắt cho OXII Chat. Hãy mở Cài đặt hệ thống > Thông báo và bật OXII Chat để tiếp tục nhận cảnh báo tin nhắn.",
+  "notificationSettingsOpenFailed": "Không thể mở cài đặt thông báo.",
+  "desktopNotificationsEnabledMessage": "Đã bật thông báo trên máy tính.",
   "languageSettings": "Ngôn ngữ",
   "aboutSettings": "Giới thiệu",
   "systemDefault": "Theo hệ thống",
@@ -968,6 +973,10 @@
   "notificationsMuted": "Thông báo đã tắt",
 
   "notificationsEnabled": "Thông báo đang bật",
+
+  "desktopNotificationsDisabledStatus": "Thông báo trên máy tính đang tắt",
+
+  "desktopNotificationsEnabledStatus": "Thông báo trên máy tính đang bật",
 
   "userBlocked": "Người dùng đã bị chặn",
 
