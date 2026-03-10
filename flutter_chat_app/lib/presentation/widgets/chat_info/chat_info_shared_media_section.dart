@@ -36,9 +36,9 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
   @override
   Widget buildContent(BuildContext context) {
     final hasAnyMedia = photos.isNotEmpty ||
-                        videos.isNotEmpty ||
-                        files.isNotEmpty ||
-                        links.isNotEmpty;
+        videos.isNotEmpty ||
+        files.isNotEmpty ||
+        links.isNotEmpty;
 
     if (!hasAnyMedia) {
       return const SizedBox.shrink();
@@ -69,14 +69,15 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
                 AppText(
                   l10n.sharedMedia,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 if (totalMediaCount > 0)
                   TextButton(
                     onPressed: onViewAllPhotos,
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingSmall),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimens.paddingSmall),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -86,8 +87,8 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
                         AppText(
                           '$totalMediaCount ${l10n.items}',
                           style: TextStyle(
-                            color: isDark 
-                                ? AppColors.primaryDarkMode 
+                            color: isDark
+                                ? AppColors.primaryDarkMode
                                 : AppColors.primary,
                             fontSize: 13.0,
                           ),
@@ -96,8 +97,8 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
                         Icon(
                           Icons.chevron_right,
                           size: AppDimens.iconSizeSmall,
-                          color: isDark 
-                              ? AppColors.primaryDarkMode 
+                          color: isDark
+                              ? AppColors.primaryDarkMode
                               : AppColors.primary,
                         ),
                       ],
@@ -109,16 +110,14 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
 
           // Grid 3x2 preview
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium),
-            child: GestureDetector(
-              onTap: onViewAllPhotos,
-              child: _buildMediaGrid(
-                context: context,
-                mediaList: mediaForGrid,
-                totalCount: totalMediaCount,
-                hasMore: hasMore,
-                isDark: isDark,
-              ),
+            padding:
+                const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium),
+            child: _buildMediaGrid(
+              context: context,
+              mediaList: mediaForGrid,
+              totalCount: totalMediaCount,
+              hasMore: hasMore,
+              isDark: isDark,
             ),
           ),
 
@@ -127,7 +126,8 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
 
         // Files and Links rows
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium),
+          padding:
+              const EdgeInsets.symmetric(horizontal: AppDimens.paddingMedium),
           child: Column(
             children: [
               // Files row
@@ -143,7 +143,8 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
 
               // Links row
               if (links.isNotEmpty) ...[
-                if (files.isNotEmpty) const SizedBox(height: AppDimens.spaceSmall),
+                if (files.isNotEmpty)
+                  const SizedBox(height: AppDimens.spaceSmall),
                 _buildCompactRow(
                   context: context,
                   icon: Icons.link_outlined,
@@ -214,7 +215,20 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
     final isVideo = media.type == SharedMediaType.video;
 
     return GestureDetector(
-      onTap: () => onMediaTap?.call(media),
+      onTap: () {
+        final handleMediaTap = onMediaTap;
+        if (handleMediaTap != null) {
+          handleMediaTap(media);
+          return;
+        }
+
+        if (isVideo) {
+          onViewAllVideos();
+          return;
+        }
+
+        onViewAllPhotos();
+      },
       child: Hero(
         tag: 'media_${media.id}',
         child: Stack(
@@ -278,9 +292,7 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
       return Container(
         color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
         child: Icon(
-          media.type == SharedMediaType.video
-              ? Icons.videocam
-              : Icons.image,
+          media.type == SharedMediaType.video ? Icons.videocam : Icons.image,
           color: isDark
               ? AppColors.textSecondaryDarkMode
               : AppColors.textSecondary,
@@ -345,9 +357,8 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
               width: AppDimens.iconSizeLarge,
               height: AppDimens.iconSizeLarge,
               decoration: BoxDecoration(
-                color: (isDark
-                    ? AppColors.primaryDarkMode
-                    : AppColors.primary).withValues(alpha: 0.1),
+                color: (isDark ? AppColors.primaryDarkMode : AppColors.primary)
+                    .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
               ),
               child: Icon(
@@ -364,8 +375,8 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
               child: AppText(
                 '$title ($count)',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
             ),
 

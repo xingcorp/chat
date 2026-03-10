@@ -20,12 +20,14 @@ import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversa
 import 'package:flutter_chat_app/presentation/pages/chat_members_page.dart';
 import 'package:flutter_chat_app/presentation/pages/group_edit_page.dart';
 import 'package:flutter_chat_app/presentation/pages/shared_media_gallery_page.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_confirm_dialog.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
+import 'package:flutter_chat_app/presentation/screens/media/image_viewer_screen.dart';
+import 'package:flutter_chat_app/presentation/screens/media/video_viewer_screen.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_header.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_members_section.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_settings_section.dart';
 import 'package:flutter_chat_app/presentation/widgets/chat_info/chat_info_shared_media_section.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_confirm_dialog.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 
@@ -383,6 +385,7 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
                     _handleViewAllMedia(SharedMediaType.video),
                 onViewAllFiles: () => _handleViewAllMedia(SharedMediaType.file),
                 onViewAllLinks: () => _handleViewAllMedia(SharedMediaType.link),
+                onMediaTap: _handleSharedMediaTap,
               ),
             ),
 
@@ -637,6 +640,61 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
           initialLinks: _links,
           initialTab: type,
           onLoadMore: _loadMoreMedia,
+        ),
+      ),
+    );
+  }
+
+  void _handleSharedMediaTap(SharedMedia media) {
+    switch (media.type) {
+      case SharedMediaType.photo:
+        _openSharedPhotoViewer(media);
+        return;
+      case SharedMediaType.video:
+        VideoViewerScreen.show(
+          context,
+          videoUrl: media.url,
+          title: media.fileName ?? context.l10n.videoMessage,
+          autoPlay: true,
+        );
+        return;
+      case SharedMediaType.file:
+      case SharedMediaType.link:
+        _handleViewAllMedia(media.type);
+        return;
+    }
+  }
+
+  void _openSharedPhotoViewer(SharedMedia media) {
+    final photoItems = _photos;
+    final viewerItems = photoItems
+        .map(
+          (photo) => ImageViewerItem(
+            imageUrl: photo.url,
+            heroTag: 'media_${photo.id}',
+            title: photo.fileName,
+          ),
+        )
+        .toList(growable: false);
+    final selectedIndex =
+        photoItems.indexWhere((photo) => photo.id == media.id);
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ImageViewerScreen.gallery(
+          images: viewerItems.isNotEmpty
+              ? viewerItems
+              : <ImageViewerItem>[
+                  ImageViewerItem(
+                    imageUrl: media.url,
+                    heroTag: 'media_${media.id}',
+                    title: media.fileName,
+                  ),
+                ],
+          initialIndex: selectedIndex >= 0 && selectedIndex < viewerItems.length
+              ? selectedIndex
+              : 0,
+          title: media.fileName,
         ),
       ),
     );
