@@ -375,11 +375,10 @@ Future<void> _registerExternalDependencies(Logger logger) async {
     getIt.registerSingleton<SharedPreferences>(prefs);
   }
 
-  // Start Hive init early — it has zero dependencies and is the heaviest part
-  // of GraphQL client creation (~100-200ms). Running it in parallel with token
-  // setup saves that time. initHiveForFlutter() is idempotent, so the later
-  // call inside createClient() will be a no-op.
-  final hiveFuture = initHiveForFlutter();
+  // NOTE: Hive init for GraphQL cache is now handled inside
+  // GraphQLClientWrapperImpl.createClient() → _openHiveStore(), which places
+  // the store in getApplicationSupportDirectory() (outside OneDrive).
+  // No need to call initHiveForFlutter() here.
 
   if (!getIt.isRegistered<SecureStorage>()) {
     final useSharedPrefsSecureStorage =
@@ -413,11 +412,8 @@ Future<void> _registerExternalDependencies(Logger logger) async {
     );
   }
 
-  // Token init and Hive init run in parallel — await both
-  await Future.wait([
-    getIt<token_module.TokenRepository>().initialize(),
-    hiveFuture,
-  ]);
+  // Token init — Hive is now initialized lazily inside createClient()
+  await getIt<token_module.TokenRepository>().initialize();
 
   // Register TokenProvider pointing to TokenRepository (same instance)
   if (!getIt.isRegistered<TokenProvider>()) {

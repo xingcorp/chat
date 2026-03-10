@@ -82,15 +82,22 @@ class ChatNotificationPayload {
     final isEvent = message.contentType == ContentType.event;
     final senderName = message.sender.name;
 
+    // ── Resolve mentions in content ([@userId] → @DisplayName) ──
+    final String resolvedContent = _resolveMentions(
+      message.content.trim(),
+      mentionTo: message.mentionTo,
+      members: chat.members,
+    );
+
     // ── Resolve content body ──
     final String? contentTypeLabel = NotificationLocalizer.getContentTypeLabel(
       message.contentType,
       fileName: message.fileName ?? _extractFileNameFromUrls(message.urls),
     );
-    // For text and event types, use actual message content; otherwise label.
+    // For text and event types, use resolved message content; otherwise label.
     final String contentBody = contentTypeLabel ??
-        (message.content.trim().isNotEmpty
-            ? message.content.trim()
+        (resolvedContent.isNotEmpty
+            ? resolvedContent
             : getContentTypeName(message.contentType));
 
     // ── Build title ──
@@ -102,8 +109,8 @@ class ChatNotificationPayload {
     final String body;
     if (isEvent) {
       // System events: show event text, no sender prefix.
-      body = message.content.trim().isNotEmpty
-          ? message.content.trim()
+      body = resolvedContent.isNotEmpty
+          ? resolvedContent
           : getContentTypeName(message.contentType);
     } else if (isGroup && isMention) {
       body = NotificationLocalizer.formatGroupMentionBody(
@@ -147,14 +154,18 @@ class ChatNotificationPayload {
 
   /// Legacy factory — used as fallback when [Chat] metadata is unavailable.
   factory ChatNotificationPayload.fromChatMessage(ChatMessage message) {
-    final trimmedContent = message.content.trim();
+    // Resolve mentions in content ([@userId] → @DisplayName).
+    final String resolvedContent = _resolveMentions(
+      message.content.trim(),
+      mentionTo: message.mentionTo,
+    );
     final String? contentTypeLabel = NotificationLocalizer.getContentTypeLabel(
       message.contentType,
       fileName: message.fileName ?? _extractFileNameFromUrls(message.urls),
     );
     final fallbackBody = contentTypeLabel ??
-        (trimmedContent.isNotEmpty
-            ? trimmedContent
+        (resolvedContent.isNotEmpty
+            ? resolvedContent
             : getContentTypeName(message.contentType));
 
     return ChatNotificationPayload(
@@ -220,5 +231,88 @@ class ChatNotificationPayload {
     final uri = Uri.tryParse(urls.first);
     if (uri == null || uri.pathSegments.isEmpty) return null;
     return uri.pathSegments.last;
+  }
+
+  /// Resolves raw mention syntax in [content] to human-readable display names.
+  ///
+  /// Replaces `[@userId]` and `@<uuid>` patterns with `@DisplayName` using
+  /// the mention list from the message and the conversation member list.
+  ///
+  /// This mirrors the logic from `StringExtension.formatChatMessage()` in
+  /// `extensions.dart`, but without requiring Flutter imports — suitable for
+  /// the notification payload layer.
+  static String _resolveMentions(
+    String content, {
+    required List<MessageSender> mentionTo,
+    List<ConversationMember> members = const [],
+  }) {
+    if (content.isEmpty) return content;
+
+    // Build id → name mapping from mentionTo + chat members.
+    final Map<String, String> nameById = <String, String>{};
+
+    // Members first (lower priority — can be overridden by mentionTo).
+    for (final ConversationMember m in members) {
+      final String uid = m.userId.trim();
+      final String name = m.fullName?.trim() ?? '';
+      if (uid.isNotEmpty && name.isNotEmpty) {
+        nameById[uid] = name;
+      }
+    }
+
+    // MentionTo second (higher priority — direct from message metadata).
+    for (final MessageSender m in mentionTo) {
+      final String id = m.id.trim();
+      final String name = m.name.trim();
+      if (id.isNotEmpty && name.isNotEmpty) {
+        nameById[id] = name;
+      }
+    }
+
+    if (nameById.isEmpty) return content;
+
+    var result = content;
+
+    // Pattern 1: [@userId] format.
+    final RegExp mentionPattern = RegExp(r'\[@([^\]]+)\]');
+    result = result.replaceAllMapped(mentionPattern, (Match match) {
+      final String id = match.group(1) ?? '';
+      if (id.isEmpty) return '@';
+      final String? name = nameById[id];
+      if (name != null && name.isNotEmpty) {
+        return '@$name';
+      }
+      // Check mentionTo list directly as fallback.
+      final Iterable<MessageSender> found =
+          mentionTo.where((MessageSender m) => m.id == id);
+      if (found.isNotEmpty && found.first.name.trim().isNotEmpty) {
+        return '@${found.first.name.trim()}';
+      }
+      return match.group(0) ?? '@$id';
+    });
+
+    // Pattern 2: @<uuid> format (bare UUID without brackets).
+    final RegExp uuidPattern = RegExp(
+      r'@([0-9a-fA-F]{8}-'
+      r'[0-9a-fA-F]{4}-'
+      r'[0-9a-fA-F]{4}-'
+      r'[0-9a-fA-F]{4}-'
+      r'[0-9a-fA-F]{12})',
+    );
+    result = result.replaceAllMapped(uuidPattern, (Match match) {
+      final String id = match.group(1) ?? '';
+      final String? name = nameById[id];
+      if (name != null && name.isNotEmpty) {
+        return '@$name';
+      }
+      final Iterable<MessageSender> found =
+          mentionTo.where((MessageSender m) => m.id == id);
+      if (found.isNotEmpty && found.first.name.trim().isNotEmpty) {
+        return '@${found.first.name.trim()}';
+      }
+      return match.group(0) ?? '@$id';
+    });
+
+    return result;
   }
 }
