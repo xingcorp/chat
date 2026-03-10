@@ -74,8 +74,8 @@ Source: "{#BuildDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 ; All DLLs
 Source: "{#BuildDir}\*.dll"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
-; Data folder (Flutter assets)
-Source: "{#BuildDir}\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Data folder (Flutter assets) — exclude JIT kernel (debug-only, not needed in release)
+Source: "{#BuildDir}\data\*"; DestDir: "{app}\data"; Excludes: "kernel_blob.bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

@@ -204,6 +204,13 @@ function Invoke-FlutterBuild {
     }
 
     Write-Ok "Build complete: $exePath"
+
+    # Clean up JIT artifacts that shouldn't be in release builds
+    $kernelBlob = Join-Path $BUILD_DIR 'data\flutter_assets\kernel_blob.bin'
+    if (Test-Path $kernelBlob) {
+        Remove-Item $kernelBlob -Force
+        Write-Info 'Removed kernel_blob.bin (JIT-only, not needed in release)'
+    }
 }
 
 # ─── Method 1: ZIP ───────────────────────────────────────────────────────────

@@ -43,7 +43,16 @@ class ChatNotificationPolicyService {
     final currentUserId = _currentUserProvider.currentUserId;
 
     // 1. ALWAYS skip self-sent messages — no exception, even for mentions.
-    if (currentUserId.isNotEmpty && message.sender.id == currentUserId) {
+    //    Fail-closed: if currentUserId is unknown (empty), suppress rather
+    //    than risk showing the user a notification for their own message.
+    if (currentUserId.isEmpty) {
+      _logger.w(
+        'Cannot determine current user — suppressing notification',
+        context: <String, dynamic>{'messageId': message.id},
+      );
+      return false;
+    }
+    if (message.sender.id == currentUserId) {
       _logger.d(
         'Skipping local notification for self-sent message',
         <String, dynamic>{'messageId': message.id},
