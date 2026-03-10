@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
+import 'package:flutter_chat_app/core/services/emoji_shortcode_service.dart';
+import 'package:flutter_chat_app/core/services/emoticon_parser_service.dart';
 import 'package:flutter_chat_app/core/services/voice_recorder_service.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/attachment_type.dart';
@@ -18,6 +20,7 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_tooltip.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/shortcode_autocomplete_overlay.dart';
 
 /// Widget input cho chat
 class ChatInput extends BaseStatefulWidget {
@@ -104,6 +107,19 @@ class _ChatInputState extends BaseState<ChatInput> {
   StreamSubscription<double>? _recordingAmplitudeSubscription;
   StreamSubscription<String>? _recordingLimitReachedSubscription;
 
+  // ── Shortcode autocomplete state ──
+  /// Query hiện tại cho shortcode autocomplete (phần sau `:`)
+  String? _shortcodeQuery;
+
+  /// Vị trí của dấu `:` bắt đầu shortcode trong text
+  int _shortcodeStartIndex = -1;
+
+  /// LayerLink để anchor overlay vào input
+  final LayerLink _shortcodeLayerLink = LayerLink();
+
+  /// OverlayEntry cho shortcode popup
+  OverlayEntry? _shortcodeOverlayEntry;
+
   bool get _usesDesktopVoiceRecordingUx {
     if (kIsWeb) return true;
     return Platform.isMacOS || Platform.isWindows || Platform.isLinux;
@@ -142,6 +158,7 @@ class _ChatInputState extends BaseState<ChatInput> {
     _typingThrottleTimer?.cancel();
     _recordingAmplitudeSubscription?.cancel();
     _recordingLimitReachedSubscription?.cancel();
+    _dismissShortcodeOverlay();
     if (_isRecording) {
       unawaited(_voiceRecorderService.cancelRecording());
     }
@@ -151,6 +168,9 @@ class _ChatInputState extends BaseState<ChatInput> {
   /// Xử lý khi text thay đổi
   void _handleTextChanged() {
     final text = _textController.text;
+
+    // Detect shortcode autocomplete (:smile, :heart, ...)
+    _detectShortcodeQuery();
 
     // Nếu văn bản thay đổi, báo đang gõ
     if (text.isNotEmpty && !_isTyping) {
@@ -190,17 +210,162 @@ class _ChatInputState extends BaseState<ChatInput> {
       _typingThrottleTimer?.cancel();
       widget.onTypingEnded?.call();
     }
+    // Dismiss shortcode overlay khi mất focus
+    if (!_focusNode.hasFocus) {
+      _dismissShortcodeOverlay();
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // Shortcode Autocomplete
+  // ══════════════════════════════════════════
+
+  /// Detect shortcode typing pattern `:query` trong text tại vị trí cursor
+  ///
+  /// Pattern: Discord/Telegram/Slack
+  /// - User gõ `:` → bắt đầu track
+  /// - Tiếp tục gõ 2+ ký tự → show overlay
+  /// - Space, Enter, hoặc xóa `:` → dismiss
+  void _detectShortcodeQuery() {
+    final text = _textController.text;
+    final selection = _textController.selection;
+
+    // Cần có cursor position hợp lệ
+    if (!selection.isValid || selection.baseOffset != selection.extentOffset) {
+      _dismissShortcodeOverlay();
+      return;
+    }
+
+    final cursorPos = selection.baseOffset;
+    if (cursorPos <= 0) {
+      _dismissShortcodeOverlay();
+      return;
+    }
+
+    // Tìm dấu `:` gần nhất phía trước cursor
+    final textBeforeCursor = text.substring(0, cursorPos);
+    final lastColonIndex = textBeforeCursor.lastIndexOf(':');
+
+    if (lastColonIndex < 0) {
+      _dismissShortcodeOverlay();
+      return;
+    }
+
+    // Kiểm tra `:` phải ở đầu text hoặc sau whitespace
+    if (lastColonIndex > 0 && textBeforeCursor[lastColonIndex - 1] != ' ') {
+      _dismissShortcodeOverlay();
+      return;
+    }
+
+    // Lấy query (phần giữa `:` và cursor)
+    final query = textBeforeCursor.substring(lastColonIndex + 1);
+
+    // Query không được chứa space (nếu có space → không phải shortcode)
+    if (query.contains(' ') || query.contains('\n')) {
+      _dismissShortcodeOverlay();
+      return;
+    }
+
+    // Cần ít nhất 2 ký tự để bắt đầu search (Discord/Slack standard)
+    if (query.length < 2) {
+      _dismissShortcodeOverlay();
+      return;
+    }
+
+    // Kiểm tra có kết quả không
+    final results = EmojiShortcodeService.search(query, limit: 6);
+    if (results.isEmpty) {
+      _dismissShortcodeOverlay();
+      return;
+    }
+
+    // Update state và show overlay
+    _shortcodeQuery = query;
+    _shortcodeStartIndex = lastColonIndex;
+    _showShortcodeOverlay();
+  }
+
+  /// Hiển thị shortcode autocomplete overlay phía trên input
+  void _showShortcodeOverlay() {
+    // Remove existing overlay trước
+    _shortcodeOverlayEntry?.remove();
+
+    final overlay = Overlay.of(context);
+
+    _shortcodeOverlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        width: 260,
+        child: CompositedTransformFollower(
+          link: _shortcodeLayerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(0, -8),
+          followerAnchor: Alignment.bottomLeft,
+          targetAnchor: Alignment.topLeft,
+          child: ShortcodeAutocompleteOverlay(
+            query: _shortcodeQuery ?? '',
+            onSelect: _onShortcodeSelected,
+            onDismiss: _dismissShortcodeOverlay,
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(_shortcodeOverlayEntry!);
+  }
+
+  /// User chọn emoji từ shortcode autocomplete
+  void _onShortcodeSelected(String emoji, String shortcode) {
+    final text = _textController.text;
+    final startIndex = _shortcodeStartIndex;
+
+    if (startIndex < 0 || startIndex >= text.length) {
+      _dismissShortcodeOverlay();
+      return;
+    }
+
+    // Replace `:query` bằng emoji character
+    final cursorPos = _textController.selection.baseOffset;
+    final before = text.substring(0, startIndex);
+    final after = cursorPos < text.length ? text.substring(cursorPos) : '';
+    final newText = '$before$emoji $after';
+
+    _textController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(
+        offset: startIndex + emoji.length + 1,
+      ),
+    );
+
+    _dismissShortcodeOverlay();
+  }
+
+  /// Dismiss và cleanup shortcode overlay
+  void _dismissShortcodeOverlay() {
+    _shortcodeOverlayEntry?.remove();
+    _shortcodeOverlayEntry = null;
+    _shortcodeQuery = null;
+    _shortcodeStartIndex = -1;
   }
 
   /// Gửi tin nhắn
   void _handleSendMessage() {
-    final text = _textController.text.trim();
-    if (text.isNotEmpty) {
+    final rawText = _textController.text.trim();
+    if (rawText.isNotEmpty) {
+      // Convert emoticons thành emoji trước khi gửi
+      // Pattern: Zalo/Messenger/WhatsApp — convert on send
+      // 1. Shortcodes: :smile: → 😊, :heart: → ❤️
+      // 2. Emoticons: :) → 😊, :v → ✌️
+      final withShortcodes = EmojiShortcodeService.convert(rawText);
+      final text = EmoticonParserService.convert(withShortcodes);
+
       // Gửi tin nhắn
       widget.onSendText(text);
 
       // Xóa văn bản
       _textController.clear();
+
+      // Dismiss shortcode overlay nếu đang hiện
+      _dismissShortcodeOverlay();
 
       // Đặt lại trạng thái typing
       _isTyping = false;
@@ -540,38 +705,41 @@ class _ChatInputState extends BaseState<ChatInput> {
                 onPressed: _showAttachmentMenu,
               ),
             Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[800]
-                      : Colors.grey[200],
-                  borderRadius:
-                      BorderRadius.circular(AppConstants.kDefaultBorderRadius),
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppConstants.kSmallPadding,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _textController,
-                        focusNode: _focusNode,
-                        minLines: 1,
-                        maxLines: 5,
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: widget.hint,
-                          hintStyle: TextStyle(
-                            color: Colors.grey[500],
+              child: CompositedTransformTarget(
+                link: _shortcodeLayerLink,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[800]
+                        : Colors.grey[200],
+                    borderRadius:
+                        BorderRadius.circular(AppConstants.kDefaultBorderRadius),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppConstants.kSmallPadding,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _textController,
+                          focusNode: _focusNode,
+                          minLines: 1,
+                          maxLines: 5,
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: widget.hint,
+                            hintStyle: TextStyle(
+                              color: Colors.grey[500],
+                            ),
                           ),
+                          onSubmitted: (_) {
+                            _handleSendMessage();
+                          },
                         ),
-                        onSubmitted: (_) {
-                          _handleSendMessage();
-                        },
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

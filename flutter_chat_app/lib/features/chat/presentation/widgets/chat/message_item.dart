@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/extensions/emoji_extensions.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/extensions/text_span_builder.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -113,18 +114,22 @@ class _MessageItemState extends State<MessageItem>
     final raw = widget.uiState.content;
     final normalized = raw.formatChatMessage(mentionNameById: mentionNameById);
 
+    // Emoji-only detection: 1-3 emoji → font size lớn (pattern WhatsApp/Telegram)
+    final isEmojiOnly = normalized.isOnlyEmoji;
+    final fontSize = isEmojiOnly ? 42.0 : 16.0;
+
     final spans = TextSpanBuilder.buildSpans(
       rawContent: raw,
       normalizedContent: normalized,
       textStyle: TextStyle(
         color: textColor,
-        fontSize: 16.0,
+        fontSize: fontSize,
       ),
       linkStyle: TextStyle(
         color: widget.uiState.isFromCurrentUser
             ? textColor
             : theme.colorScheme.primary,
-        fontSize: 16.0,
+        fontSize: fontSize,
         fontWeight: FontWeight.w600,
         decoration: TextDecoration.underline,
       ),
@@ -134,12 +139,12 @@ class _MessageItemState extends State<MessageItem>
         color: widget.uiState.isFromCurrentUser
             ? theme.colorScheme.onPrimary
             : theme.colorScheme.primary,
-        fontSize: 16.0,
+        fontSize: fontSize,
         fontWeight: FontWeight.w600,
       ),
-      highlightedMentionStyle: const TextStyle(
+      highlightedMentionStyle: TextStyle(
         color: AppColors.error,
-        fontSize: 16.0,
+        fontSize: fontSize,
         fontWeight: FontWeight.w600,
       ),
       mentionNameById: mentionNameById,
@@ -158,6 +163,19 @@ class _MessageItemState extends State<MessageItem>
       },
       context: context,
     );
+
+    // Emoji-only: render trực tiếp (không cần expand/collapse)
+    if (isEmojiOnly) {
+      return RichText(
+        text: TextSpan(
+          children: spans,
+          style: TextStyle(
+            color: textColor,
+            fontSize: fontSize,
+          ),
+        ),
+      );
+    }
 
     return ExpandableRichText(
       spans: spans,

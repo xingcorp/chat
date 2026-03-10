@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_chat_app/core/services/emoji_shortcode_service.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/chat_slash_command_engine.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
@@ -21,6 +22,7 @@ class _AllConversationMember extends ConversationMember {
 enum _SuggestionMode {
   mention,
   slashCommand,
+  shortcode,
 }
 
 class MentionTextEditingController extends TextEditingController {
@@ -126,6 +128,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
   _SuggestionMode? _suggestionMode;
   List<ConversationMember> _filteredMembers = [];
   List<SlashCommandOption> _filteredSlashCommands = [];
+  List<EmojiShortcodeMatch> _filteredShortcodes = [];
   int _selectedMentionIndex = 0;
 
   @override
@@ -183,6 +186,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
 
     if (_checkForMentionSuggestions(text, cursorPos)) return;
     if (_checkForSlashCommandSuggestions(text, cursorPos)) return;
+    if (_checkForShortcodeSuggestions(text, cursorPos)) return;
     _hideSuggestions();
   }
 
@@ -294,6 +298,50 @@ class _MentionTextFieldState extends State<MentionTextField> {
     return MapEntry<int, String>(segmentStart + slashOffset, query);
   }
 
+  /// Check if user is typing a shortcode (:smile, :heart, ...)
+  /// Pattern: Discord/Telegram/Slack — `:` + 2 chars → show emoji suggestions
+  bool _checkForShortcodeSuggestions(String text, int cursorPos) {
+    if (cursorPos <= 0) return false;
+
+    // Tìm dấu `:` gần nhất phía trước cursor
+    final textBeforeCursor = text.substring(0, cursorPos);
+    final lastColonIndex = textBeforeCursor.lastIndexOf(':');
+
+    if (lastColonIndex < 0) return false;
+
+    // `:` phải ở đầu text hoặc sau whitespace (tránh match trong URL, time)
+    if (lastColonIndex > 0 &&
+        textBeforeCursor[lastColonIndex - 1] != ' ' &&
+        textBeforeCursor[lastColonIndex - 1] != '\n') {
+      return false;
+    }
+
+    // Lấy query (phần giữa `:` và cursor)
+    final query = textBeforeCursor.substring(lastColonIndex + 1);
+
+    // Không chứa space/newline (nếu có → không phải shortcode)
+    if (query.contains(' ') || query.contains('\n')) return false;
+
+    // Cần ít nhất 2 ký tự để search (Discord/Slack standard)
+    if (query.length < 2) return false;
+
+    final results = EmojiShortcodeService.search(query, limit: 6);
+    if (results.isEmpty) return false;
+
+    setState(() {
+      _showMentionList = true;
+      _suggestionMode = _SuggestionMode.shortcode;
+      _mentionStartIndex = lastColonIndex;
+      _mentionEndIndex = cursorPos;
+      _currentMentionQuery = query;
+      _filteredMembers = const <ConversationMember>[];
+      _filteredSlashCommands = const <SlashCommandOption>[];
+      _filteredShortcodes = results;
+      _selectedMentionIndex = 0;
+    });
+    return true;
+  }
+
   void _hideSuggestions() {
     if (!_showMentionList) return;
     setState(() {
@@ -304,6 +352,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
       _currentMentionQuery = '';
       _filteredMembers = const <ConversationMember>[];
       _filteredSlashCommands = const <SlashCommandOption>[];
+      _filteredShortcodes = const <EmojiShortcodeMatch>[];
       _selectedMentionIndex = 0;
     });
   }
@@ -400,14 +449,57 @@ class _MentionTextFieldState extends State<MentionTextField> {
     }
   }
 
+  /// Insert selected emoji shortcode into text
+  /// Replace `:query` with emoji character + space
+  void _insertShortcode(EmojiShortcodeMatch match) {
+    final text = widget.controller.text;
+    var cursorPos = widget.controller.selection.baseOffset;
+    if (cursorPos < 0 || cursorPos > text.length) {
+      cursorPos = _mentionEndIndex;
+    }
+
+    final colonStart = _mentionStartIndex;
+    if (colonStart < 0 || colonStart > text.length) return;
+    if (cursorPos < colonStart || cursorPos > text.length) {
+      cursorPos = text.length;
+    }
+
+    // Replace `:query` bằng emoji character + space
+    final before = text.substring(0, colonStart);
+    final after = text.substring(cursorPos);
+    final emojiText = '${match.emoji} ';
+    final newText = before + emojiText + after;
+    final caretOffset = before.length + emojiText.length;
+
+    widget.controller.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: caretOffset),
+    );
+
+    _hideSuggestions();
+
+    final focusNode = widget.focusNode;
+    if (focusNode != null) {
+      FocusScope.of(context).requestFocus(focusNode);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!focusNode.hasFocus) FocusScope.of(context).requestFocus(focusNode);
+        widget.controller.selection =
+            TextSelection.collapsed(offset: caretOffset);
+      });
+    }
+  }
+
   KeyEventResult _handleSuggestionKeyEvent(FocusNode _, KeyEvent event) {
     if (!_showMentionList || event is! KeyDownEvent) {
       return KeyEventResult.ignored;
     }
 
-    final isMentionMode = _suggestionMode == _SuggestionMode.mention;
-    final totalItems =
-        isMentionMode ? _filteredMembers.length : _filteredSlashCommands.length;
+    final totalItems = switch (_suggestionMode) {
+      _SuggestionMode.mention => _filteredMembers.length,
+      _SuggestionMode.slashCommand => _filteredSlashCommands.length,
+      _SuggestionMode.shortcode => _filteredShortcodes.length,
+      null => 0,
+    };
     if (totalItems == 0) {
       return KeyEventResult.ignored;
     }
@@ -434,10 +526,15 @@ class _MentionTextFieldState extends State<MentionTextField> {
 
     if (event.logicalKey == LogicalKeyboardKey.enter &&
         !HardwareKeyboard.instance.isShiftPressed) {
-      if (isMentionMode) {
-        _insertMention(_filteredMembers[_selectedMentionIndex]);
-      } else {
-        _insertSlashCommand(_filteredSlashCommands[_selectedMentionIndex]);
+      switch (_suggestionMode) {
+        case _SuggestionMode.mention:
+          _insertMention(_filteredMembers[_selectedMentionIndex]);
+        case _SuggestionMode.slashCommand:
+          _insertSlashCommand(_filteredSlashCommands[_selectedMentionIndex]);
+        case _SuggestionMode.shortcode:
+          _insertShortcode(_filteredShortcodes[_selectedMentionIndex]);
+        case null:
+          break;
       }
       return KeyEventResult.handled;
     }
@@ -468,13 +565,20 @@ class _MentionTextFieldState extends State<MentionTextField> {
         code.contains(query);
   }
 
+  static const double _kShortcodeTileHeight = 48;
+
   Widget _buildSuggestionsPanel() {
-    final isMentionMode = _suggestionMode == _SuggestionMode.mention;
-    final itemCount =
-        isMentionMode ? _filteredMembers.length : _filteredSlashCommands.length;
+    final isShortcodeMode = _suggestionMode == _SuggestionMode.shortcode;
+    final itemCount = switch (_suggestionMode) {
+      _SuggestionMode.mention => _filteredMembers.length,
+      _SuggestionMode.slashCommand => _filteredSlashCommands.length,
+      _SuggestionMode.shortcode => _filteredShortcodes.length,
+      null => 0,
+    };
+    final tileHeight = isShortcodeMode ? _kShortcodeTileHeight : _kTileHeight;
     final double preferredHeight = math.min(
       _kOverlayMaxHeight,
-      itemCount * _kTileHeight,
+      itemCount * tileHeight,
     );
 
     return TextFieldTapRegion(
@@ -487,11 +591,16 @@ class _MentionTextFieldState extends State<MentionTextField> {
           height: preferredHeight,
           child: ListView.builder(
             padding: EdgeInsets.zero,
-            itemExtent: _kTileHeight,
+            itemExtent: tileHeight,
             itemCount: itemCount,
-            itemBuilder: (context, index) => isMentionMode
-                ? _buildMentionSuggestionTile(index)
-                : _buildSlashCommandSuggestionTile(index),
+            itemBuilder: (context, index) => switch (_suggestionMode) {
+              _SuggestionMode.mention => _buildMentionSuggestionTile(index),
+              _SuggestionMode.slashCommand =>
+                _buildSlashCommandSuggestionTile(index),
+              _SuggestionMode.shortcode =>
+                _buildShortcodeSuggestionTile(index),
+              null => const SizedBox.shrink(),
+            },
           ),
         ),
       ),
@@ -621,6 +730,44 @@ class _MentionTextFieldState extends State<MentionTextField> {
     );
   }
 
+  Widget _buildShortcodeSuggestionTile(int index) {
+    final match = _filteredShortcodes[index];
+    final isSelected = index == _selectedMentionIndex;
+    final theme = Theme.of(context);
+
+    return InkWell(
+      onTap: () => _insertShortcode(match),
+      child: Container(
+        color: isSelected
+            ? theme.colorScheme.primary.withValues(alpha: 0.08)
+            : null,
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        child: Row(
+          children: [
+            Text(
+              match.emoji,
+              style: const TextStyle(fontSize: 24.0),
+            ),
+            const SizedBox(width: 10.0),
+            Expanded(
+              child: Text(
+                ':${match.shortcode}:',
+                style: TextStyle(
+                  fontSize: 14.0,
+                  fontWeight:
+                      isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: theme.textTheme.bodyMedium?.color
+                      ?.withValues(alpha: 0.7),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   IconData _commandIconFor(String commandName) {
     switch (commandName.trim().toLowerCase()) {
       case ChatSlashCommandEngine.shrugCommand:
@@ -692,9 +839,12 @@ class _MentionTextFieldState extends State<MentionTextField> {
 
   @override
   Widget build(BuildContext context) {
-    final isMentionMode = _suggestionMode == _SuggestionMode.mention;
-    final itemCount =
-        isMentionMode ? _filteredMembers.length : _filteredSlashCommands.length;
+    final itemCount = switch (_suggestionMode) {
+      _SuggestionMode.mention => _filteredMembers.length,
+      _SuggestionMode.slashCommand => _filteredSlashCommands.length,
+      _SuggestionMode.shortcode => _filteredShortcodes.length,
+      null => 0,
+    };
     final shouldShow = _showMentionList && itemCount > 0;
 
     return PortalTarget(
