@@ -17,6 +17,7 @@ import 'package:flutter_chat_app/core/services/voice_recorder_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
+import 'package:flutter_chat_app/data/datasources/clipboard/clipboard_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/domain/entities/pending_file.dart';
 import 'package:flutter_chat_app/domain/entities/sticker.dart';
@@ -26,17 +27,16 @@ import 'package:flutter_chat_app/features/chat/presentation/blocs/chat_composer/
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat_draft/chat_draft_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/chat_slash_command_engine.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/message_action_callbacks.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/screens/chat/chat_header.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/add_member_panel.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/attachment_picker_widget.dart';
-import 'package:flutter_chat_app/data/datasources/clipboard/clipboard_datasource.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_file_attachment_host.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_message_timeline.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/clipboard_paste_handler.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/desktop_message_hover_wrapper.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
-import 'package:flutter_chat_app/features/chat/presentation/models/message_action_callbacks.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/mention_text_field.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
@@ -50,6 +50,7 @@ import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversa
 import 'package:flutter_chat_app/presentation/blocs/conversation_detail/conversation_detail_state.dart';
 import 'package:flutter_chat_app/presentation/blocs/file_attachment/file_attachment_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/message/message_bloc.dart';
+import 'package:flutter_chat_app/presentation/pages/chat_members_page.dart';
 import 'package:flutter_chat_app/presentation/screens/media/image_preview_screen.dart';
 import 'package:flutter_chat_app/presentation/screens/media/image_viewer_screen.dart';
 import 'package:flutter_chat_app/presentation/screens/media/video_viewer_screen.dart';
@@ -455,8 +456,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
           resolvedContentType = 'text';
         } else {
           final completedFiles = attachmentState.completedAttachments;
-          resolvedContentType =
-              _resolveBackendType(completedFiles);
+          resolvedContentType = _resolveBackendType(completedFiles);
         }
 
         _messageBloc.add(
@@ -955,7 +955,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
     return Shortcuts(
       shortcuts: <ShortcutActivator, Intent>{
-        const SingleActivator(LogicalKeyboardKey.enter): const _SendMessageShortcutIntent(),
+        const SingleActivator(LogicalKeyboardKey.enter):
+            const _SendMessageShortcutIntent(),
         const SingleActivator(LogicalKeyboardKey.escape):
             const _DismissChatInputShortcutIntent(),
         const SingleActivator(LogicalKeyboardKey.keyF, control: true):
@@ -1382,6 +1383,31 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       if (_chat != null) {
         _convDetailBloc.add(LoadConversationDetail(chatId: _chat!.id));
       }
+    });
+  }
+
+  void _showChatMembers() {
+    final chat = _chat;
+    if (chat == null || chat.type != ChatType.group) {
+      return;
+    }
+
+    final chatId = chat.id;
+    Navigator.of(context)
+        .push(
+      MaterialPageRoute(
+        builder: (_) => ChatMembersPage(
+          chat: chat,
+          currentUserId:
+              _currentUserId.trim().isNotEmpty ? _currentUserId : null,
+        ),
+      ),
+    )
+        .then((_) {
+      if (!mounted) {
+        return;
+      }
+      _convDetailBloc.add(LoadConversationDetail(chatId: chatId));
     });
   }
 
@@ -2017,8 +2043,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                             current is MessagesLoaded) {
                           return previous.messages != current.messages ||
                               previous.uiMessages != current.uiMessages ||
-                              previous.hasReachedMax !=
-                                  current.hasReachedMax ||
+                              previous.hasReachedMax != current.hasReachedMax ||
                               previous.paginationError !=
                                   current.paginationError;
                         }
@@ -2035,10 +2060,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                         // UI-visible fields actually change.
                         if (previous is MessagesLoaded &&
                             current is MessagesLoaded) {
-                          return previous.uiMessages !=
-                                  current.uiMessages ||
-                              previous.hasReachedMax !=
-                                  current.hasReachedMax ||
+                          return previous.uiMessages != current.uiMessages ||
+                              previous.hasReachedMax != current.hasReachedMax ||
                               previous.paginationError !=
                                   current.paginationError ||
                               previous.frequentReactions !=
@@ -2387,16 +2410,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             bloc: _fileAttachmentBloc,
             buildWhen: (prev, curr) => prev.hasFiles != curr.hasFiles,
             builder: (context, attachState) {
-              final canSendText =
-                  _messageController.text.trim().isNotEmpty;
+              final canSendText = _messageController.text.trim().isNotEmpty;
               final canSend = canSendText || attachState.hasFiles;
 
               if (canSend) {
                 return AppIconButton(
                   icon: _isEditMode ? Icons.check : Icons.send,
                   onPressed: _sendMessage,
-                  tooltip:
-                      _isEditMode ? context.l10n.save : context.l10n.send,
+                  tooltip: _isEditMode ? context.l10n.save : context.l10n.send,
                 );
               }
               if (_isEditMode) {
@@ -2429,9 +2450,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         onLongPressMoveUpdate: _usesDesktopVoiceRecordingUx
             ? null
             : _onVoiceRecordingLongPressMoveUpdate,
-        onLongPressEnd: _usesDesktopVoiceRecordingUx
-            ? null
-            : _onVoiceRecordingLongPressEnd,
+        onLongPressEnd:
+            _usesDesktopVoiceRecordingUx ? null : _onVoiceRecordingLongPressEnd,
         behavior: HitTestBehavior.opaque,
         child: Container(
           width: AppDimens.iconButtonSize,
@@ -2586,6 +2606,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         showBackButton: showBackButton,
         onBackPressed:
             showBackButton ? () => Navigator.of(context).maybePop() : null,
+        onAvatarTap: _showChatInfo,
+        onMembersPressed: _showChatMembers,
         onInfoPressed: _showChatInfo,
         onAddMemberPressed:
             _chat!.type == ChatType.group ? _showAddMember : null,
@@ -2670,26 +2692,23 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
               if (uiState.showDateSeparator)
                 _buildDateSeparator(uiState.dateSeparatorText ?? ''),
               DesktopMessageHoverWrapper(
-                isDesktop: AppDimens.isDesktop(
-                    MediaQuery.of(context).size.width),
+                isDesktop:
+                    AppDimens.isDesktop(MediaQuery.of(context).size.width),
                 isCurrentUser: uiState.isFromCurrentUser,
-                isTextMessage:
-                    uiState.contentType == ContentType.text,
+                isTextMessage: uiState.contentType == ContentType.text,
                 enabled: !_isSelectionMode &&
                     uiState.message != null &&
                     !uiState.isDeleted,
-                quickReactions:
-                    (_messageBloc.state is MessagesLoaded)
-                        ? (_messageBloc.state as MessagesLoaded)
-                            .frequentReactions
-                        : const <String>[
-                            '\u{1F44D}',
-                            '\u{2764}\u{FE0F}',
-                            '\u{1F602}',
-                            '\u{1F62E}',
-                            '\u{1F622}',
-                            '\u{1F621}'
-                          ],
+                quickReactions: (_messageBloc.state is MessagesLoaded)
+                    ? (_messageBloc.state as MessagesLoaded).frequentReactions
+                    : const <String>[
+                        '\u{1F44D}',
+                        '\u{2764}\u{FE0F}',
+                        '\u{1F602}',
+                        '\u{1F62E}',
+                        '\u{1F622}',
+                        '\u{1F621}'
+                      ],
                 callbacks: MessageActionCallbacks(
                   onReaction: (emoji) => _messageBloc.add(
                     ToggleReaction(
@@ -2715,8 +2734,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                   onCopy: () {
                     if (uiState.message != null) {
                       Clipboard.setData(
-                        ClipboardData(
-                            text: uiState.message!.content),
+                        ClipboardData(text: uiState.message!.content),
                       );
                       AppSnackBar.show(
                         context: context,
@@ -2735,13 +2753,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                       _confirmDeleteMessage(uiState.message!);
                     }
                   },
-                  onSelect: () =>
-                      _enterSelectionMode(uiState.id),
+                  onSelect: () => _enterSelectionMode(uiState.id),
                   onOpenEmojiPicker: () {
                     EmojiPickerBottomSheet.show(
                       context,
-                      onEmojiSelected: (emoji) =>
-                          _messageBloc.add(
+                      onEmojiSelected: (emoji) => _messageBloc.add(
                         ToggleReaction(
                           messageId: uiState.id,
                           emojiCode: emoji,
@@ -2751,39 +2767,39 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                   },
                 ),
                 child: MessageItem(
-                uiState: uiState,
-                currentUserId: _currentUserId,
-                isSelectionMode: _isSelectionMode,
-                isSelected: _selectedMessageIds.contains(uiState.id),
-                onSelectionChanged: (_) => _toggleSelection(uiState.id),
-                onSwipeReply: () {
-                  if (uiState.message != null) _startReply(uiState.message!);
-                },
-                onReplyPreviewTap: () =>
-                    _scrollToMessage(uiState.replyMessage?.id, allMessages),
-                isGroupChat: _chat?.type == ChatType.group,
-                onLongPress: () {
-                  if (!_isSelectionMode && uiState.message != null)
-                    _showMessageOptions(
-                        context, uiState.message!, uiState.isFromCurrentUser);
-                },
-                onTap: () {
-                  if (_isSelectionMode) _toggleSelection(uiState.id);
-                },
-                onEditedImageSend: (bytes, fileName) {
-                  debugPrint(
-                      '[ChatDetailsPage] onEditedImageSend called, bytes=${bytes.length}, fileName=$fileName');
-                  _messageBloc.add(
-                    SendMessageWithAttachments(
-                      content: '',
-                      senderId: _currentUserId,
-                      localFilePaths: const [],
-                      fileBytes: [bytes],
-                      fileNames: [fileName],
-                    ),
-                  );
-                },
-              ),
+                  uiState: uiState,
+                  currentUserId: _currentUserId,
+                  isSelectionMode: _isSelectionMode,
+                  isSelected: _selectedMessageIds.contains(uiState.id),
+                  onSelectionChanged: (_) => _toggleSelection(uiState.id),
+                  onSwipeReply: () {
+                    if (uiState.message != null) _startReply(uiState.message!);
+                  },
+                  onReplyPreviewTap: () =>
+                      _scrollToMessage(uiState.replyMessage?.id, allMessages),
+                  isGroupChat: _chat?.type == ChatType.group,
+                  onLongPress: () {
+                    if (!_isSelectionMode && uiState.message != null)
+                      _showMessageOptions(
+                          context, uiState.message!, uiState.isFromCurrentUser);
+                  },
+                  onTap: () {
+                    if (_isSelectionMode) _toggleSelection(uiState.id);
+                  },
+                  onEditedImageSend: (bytes, fileName) {
+                    debugPrint(
+                        '[ChatDetailsPage] onEditedImageSend called, bytes=${bytes.length}, fileName=$fileName');
+                    _messageBloc.add(
+                      SendMessageWithAttachments(
+                        content: '',
+                        senderId: _currentUserId,
+                        localFilePaths: const [],
+                        fileBytes: [bytes],
+                        fileNames: [fileName],
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ),

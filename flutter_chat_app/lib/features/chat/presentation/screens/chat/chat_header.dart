@@ -17,6 +17,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
   final bool showBackButton;
   final VoidCallback? onBackPressed;
   final VoidCallback? onAvatarTap;
+  final VoidCallback? onMembersPressed;
   final VoidCallback? onInfoPressed;
   final VoidCallback? onAddMemberPressed;
   final VoidCallback? onSearchPressed;
@@ -27,6 +28,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
     this.showBackButton = true,
     this.onBackPressed,
     this.onAvatarTap,
+    this.onMembersPressed,
     this.onInfoPressed,
     this.onAddMemberPressed,
     this.onSearchPressed,
@@ -49,7 +51,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
       title: Row(
         children: <Widget>[
           GestureDetector(
-            onTap: onAvatarTap,
+            onTap: onAvatarTap ?? onInfoPressed,
             child: _buildAvatar(directPresence),
           ),
           const SizedBox(width: 12),
@@ -149,9 +151,26 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
         ? AppColors.textSecondaryDarkMode
         : AppColors.textSecondary;
 
-    return AppText(
+    return _buildMembersText(context, secondaryColor);
+  }
+
+  Widget _buildMembersText(BuildContext context, Color secondaryColor) {
+    final child = AppText(
       context.l10n.membersCount(chat.members.length),
       style: AppTextStyles.bodySmall.copyWith(color: secondaryColor),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+
+    final onTap = onMembersPressed;
+    if (onTap == null) {
+      return child;
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: child,
     );
   }
 
