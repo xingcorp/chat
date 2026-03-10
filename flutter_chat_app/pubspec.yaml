@@ -2,7 +2,7 @@ name: flutter_chat_app
 description: A modern Flutter chat application with offline-first capability
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.86+86
 
 executables:
   setup: setup

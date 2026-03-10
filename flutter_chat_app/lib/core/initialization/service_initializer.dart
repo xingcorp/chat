@@ -159,11 +159,24 @@ class ServiceInitializer {
       logger.e('WindowManager initialization failed', error: e);
     }
 
-    final databaseService = GetIt.I<DatabaseService>();
-    await databaseService.initialize();
+    try {
+      final databaseService = GetIt.I<DatabaseService>();
+      await databaseService.initialize();
+      logger.i('DatabaseService initialized');
+    } catch (e) {
+      logger.e('DatabaseService initialization failed', error: e);
+    }
 
-    final chatMessageService = GetIt.I<ChatMessageService>();
-    await chatMessageService.initialize();
+    try {
+      if (GetIt.I.isRegistered<ChatMessageService>()) {
+        final chatMessageService =
+            await GetIt.I.getAsync<ChatMessageService>();
+        await chatMessageService.initialize();
+        logger.i('ChatMessageService initialized');
+      }
+    } catch (e) {
+      logger.e('ChatMessageService initialization failed', error: e);
+    }
 
     // Initialize desktop taskbar/dock badge (Windows + macOS).
     try {
