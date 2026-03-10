@@ -44,12 +44,16 @@ class ChatNavigationHelper {
         MediaQuery.sizeOf(context).width >= AppDimens.breakpointDesktop;
   }
 
-  static void _selectDesktopConversation(String chatId) {
+  static void _selectDesktopConversation(
+    String chatId, {
+    String? receiverId,
+  }) {
     if (!GetIt.I.isRegistered<ChatConversationSelectionService>()) {
       return;
     }
 
-    GetIt.I<ChatConversationSelectionService>().selectConversation(chatId);
+    GetIt.I<ChatConversationSelectionService>()
+        .selectConversation(chatId, receiverId: receiverId);
   }
 
   static Widget _buildStandaloneChatDetailPage(
@@ -58,7 +62,7 @@ class ChatNavigationHelper {
     String? receiverId,
   }) {
     if (_isStandaloneDesktop(context)) {
-      _selectDesktopConversation(chatId);
+      _selectDesktopConversation(chatId, receiverId: receiverId);
       return const ChatHomePage();
     }
 
@@ -104,7 +108,7 @@ class ChatNavigationHelper {
     String? receiverId,
   }) {
     if (_isStandaloneDesktop(context)) {
-      _selectDesktopConversation(chatId);
+      _selectDesktopConversation(chatId, receiverId: receiverId);
       final goRouter = GoRouter.maybeOf(context);
       if (goRouter != null) {
         goRouter.go('/chats');
@@ -261,7 +265,7 @@ class ChatNavigationHelper {
     String? receiverId,
   }) {
     if (_isStandaloneDesktop(context)) {
-      _selectDesktopConversation(chatId);
+      _selectDesktopConversation(chatId, receiverId: receiverId);
       final goRouter = GoRouter.maybeOf(context);
       if (goRouter != null) {
         goRouter.go('/chats');

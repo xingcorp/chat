@@ -21,6 +21,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_chat_app/core/utils/logger.dart' show AppLogger;
 
+import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/chat_config.dart';
 import 'package:flutter_chat_app/core/config/app_config.dart';
 import 'package:flutter_chat_app/core/error/retry_config.dart' as app_retry;
@@ -420,6 +421,32 @@ class ChatModuleInjection {
       }
     } catch (e) {
       _logger.d('[ChatModuleInjection] Failed to clear local datasource: $e');
+    }
+
+    // ── Step 6.1: Clear UserLocalDataSource (SharedPrefs current_user) ──
+    // Without this, getCurrentUser() still returns old user's avatar/name
+    // from SharedPreferences even after Isar is cleared.
+    try {
+      if (_getIt.isRegistered<user_local_ds.UserLocalDataSource>()) {
+        await _getIt<user_local_ds.UserLocalDataSource>().clearCurrentUser();
+        _logger.d('[ChatModuleInjection] UserLocalDataSource current user cleared');
+      }
+    } catch (e) {
+      _logger.d(
+          '[ChatModuleInjection] Failed to clear UserLocalDataSource: $e');
+    }
+
+    // ── Step 6.2: Clear AppCacheManager (memory + Hive + media/thumbnail) ──
+    // Without this, cached API responses, user avatars, and media files
+    // from old user persist and leak into new user's session.
+    try {
+      final cacheManager = AppCacheManager();
+      if (cacheManager.isInitialized) {
+        await cacheManager.clearAllCache();
+        _logger.d('[ChatModuleInjection] AppCacheManager cleared');
+      }
+    } catch (e) {
+      _logger.d('[ChatModuleInjection] Failed to clear AppCacheManager: $e');
     }
 
     // ── Step 7: Clear GraphQL cache (HiveStore) ──

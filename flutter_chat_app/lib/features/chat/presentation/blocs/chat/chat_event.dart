@@ -117,4 +117,12 @@ class ChatEvent with _$ChatEvent {
   const factory ChatEvent.changeConversationTypeFilter({
     required ConversationTypeFilter filter,
   }) = _ChangeConversationTypeFilter;
+
+  /// A pending direct chat (local-only, temp ID) has been resolved to a real
+  /// server conversation after the first message was sent.
+  /// Removes the temp chat from the pending list and refreshes from server.
+  const factory ChatEvent.pendingDirectResolved({
+    required String tempChatId,
+    required String serverChatId,
+  }) = _PendingDirectResolved;
 }

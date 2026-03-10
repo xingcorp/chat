@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/domain/entities/user_presence.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/presence_indicator.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
@@ -14,6 +15,11 @@ import 'package:get_it/get_it.dart';
 /// Header cho màn hình chi tiết chat.
 class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
   final Chat chat;
+
+  /// For pending direct chats (no server conversation yet).
+  /// Used to show the receiver's presence status before the first message.
+  final String? receiverId;
+
   final bool showBackButton;
   final VoidCallback? onBackPressed;
   final VoidCallback? onAvatarTap;
@@ -25,6 +31,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
   const ChatHeader({
     super.key,
     required this.chat,
+    this.receiverId,
     this.showBackButton = true,
     this.onBackPressed,
     this.onAvatarTap,
@@ -175,31 +182,111 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
   }
 
   _DirectChatPresence? _resolveDirectChatPresence() {
-    if (chat.type != ChatType.direct || chat.members.isEmpty) {
+    final logger = GetIt.instance<AppLogger>();
+
+    if (chat.type != ChatType.direct) {
       return null;
     }
 
-    final currentUserId = GetIt.instance<CurrentUserProvider>().currentUserId;
-    final otherMember = chat.members.firstWhere(
-      (member) => member.userId != currentUserId,
-      orElse: () => chat.members.first,
-    );
+    // Normal direct chat with members loaded from server
+    if (chat.members.isNotEmpty) {
+      final currentUserId =
+          GetIt.instance<CurrentUserProvider>().currentUserId;
+      final otherMember = chat.members.firstWhere(
+        (member) => member.userId != currentUserId,
+        orElse: () => chat.members.first,
+      );
 
-    final otherUserId = otherMember.userId.trim().isNotEmpty
-        ? otherMember.userId.trim()
-        : otherMember.id.trim();
-    if (otherUserId.isEmpty) {
-      return null;
-    }
+      final otherUserId = otherMember.userId.trim().isNotEmpty
+          ? otherMember.userId.trim()
+          : otherMember.id.trim();
+      if (otherUserId.isEmpty) {
+        logger.w('[ChatHeader] Direct chat has members but otherUserId is empty');
+        return null;
+      }
 
-    return _DirectChatPresence(
-      userId: otherUserId,
-      fallbackPresence: UserPresence(
+      return _DirectChatPresence(
         userId: otherUserId,
-        isOnline: otherMember.isConnected,
-        lastSeen: otherMember.viewMessagesFrom,
-      ),
-    );
+        fallbackPresence: UserPresence(
+          userId: otherUserId,
+          isOnline: otherMember.isConnected,
+          lastSeen: otherMember.viewMessagesFrom,
+        ),
+      );
+    }
+
+    // Pending direct chat — no members yet (conversation not created on server).
+    // Try receiverId first, then fall back to chat.participantIds (the
+    // optimistic chat stores receiverId in participantIds when created locally).
+    final effectiveReceiverId = _resolveEffectiveReceiverId();
+
+    logger.d('[ChatHeader] Pending direct chat resolution', {
+      'chatId': chat.id,
+      'receiverId': receiverId,
+      'participantIds': chat.participantIds,
+      'effectiveReceiverId': effectiveReceiverId,
+      'membersCount': chat.members.length,
+    });
+
+    if (effectiveReceiverId != null && effectiveReceiverId.trim().isNotEmpty) {
+      return _DirectChatPresence(
+        userId: effectiveReceiverId,
+        fallbackPresence: UserPresence(
+          userId: effectiveReceiverId,
+          isOnline: false,
+          lastSeen: null,
+        ),
+      );
+    }
+
+    logger.w('[ChatHeader] Direct chat with empty members and no receiverId', context: {
+      'chatId': chat.id,
+      'chatType': chat.type.name,
+      'receiverId': receiverId,
+      'participantIds': chat.participantIds,
+    });
+    return null;
+  }
+
+  /// Resolve the effective receiverId from multiple sources:
+  /// 1. Explicit receiverId passed from ChatDetailsPage (highest priority)
+  /// 2. chat.participantIds — the optimistic local chat stores
+  ///    [receiverId] in participantIds when created by createDirectChat()
+  String? _resolveEffectiveReceiverId() {
+    // 1. Explicit receiverId from widget parameter
+    if (receiverId != null && receiverId!.trim().isNotEmpty) {
+      return receiverId;
+    }
+
+    // 2. Fall back to participantIds — the optimistic chat stores the
+    //    receiver's userId here during createChat() in ChatRepository.
+    //    Filter out the current user's ID to get the receiver.
+    if (chat.participantIds.isNotEmpty) {
+      try {
+        final currentUserId =
+            GetIt.instance<CurrentUserProvider>().currentUserId;
+        // Find the participant that is NOT the current user
+        final otherParticipant = chat.participantIds
+            .where((id) => id.trim().isNotEmpty && id != currentUserId)
+            .firstOrNull;
+        if (otherParticipant != null) {
+          return otherParticipant;
+        }
+        // If all participants are current user (shouldn't happen), use first
+        final firstParticipant = chat.participantIds.firstOrNull;
+        if (firstParticipant != null && firstParticipant.trim().isNotEmpty) {
+          return firstParticipant;
+        }
+      } catch (_) {
+        // CurrentUserProvider not available — use first participantId
+        final firstParticipant = chat.participantIds.firstOrNull;
+        if (firstParticipant != null && firstParticipant.trim().isNotEmpty) {
+          return firstParticipant;
+        }
+      }
+    }
+
+    return null;
   }
 
   @override

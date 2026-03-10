@@ -90,6 +90,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   DateTime? _lastOnlineRefreshTriggerAt;
   static const _onlineRefreshTriggerCooldown = Duration(seconds: 2);
 
+  /// Pending direct chats that exist only locally (not yet on server).
+  /// Key: temp chat ID (timestamp), Value: the optimistic Chat object.
+  /// These are preserved across `_onLoadChats` server refreshes until
+  /// the first message resolves them to a real server conversation ID.
+  final Map<String, Chat> _pendingDirectChats = {};
+
   /// Constructor with UseCases injection
   ChatBloc(
     this._getConversations,
@@ -124,6 +130,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     on<_SearchChats>(_onSearchChats);
     on<_ClearSearch>(_onClearSearch);
     on<_ChangeConversationTypeFilter>(_onChangeConversationTypeFilter);
+    on<_PendingDirectResolved>(_onPendingDirectResolved);
 
     // When network restores but socket is dead (Socket.IO exhausted its
     // auto-reconnect attempts), trigger reconnection + data reload.
@@ -294,24 +301,29 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
         _prefetchAvatars(chats);
         _subscribeToRealTimeUpdates();
 
-        cachedLists[activeFilter] = chats;
+        // Merge pending direct chats (local-only) back into the list.
+        // Server doesn't know about these yet — they only exist locally
+        // until the first message is sent (like Angular frontend pattern).
+        final mergedChats = _mergePendingDirectChats(chats, activeFilter);
+
+        cachedLists[activeFilter] = mergedChats;
         filterPages[activeFilter] = 0;
         filterHasMore[activeFilter] = effectiveHasMore;
 
         // Update total unread count on event bus for host app badge
         int totalUnread = 0;
-        for (final c in chats) {
+        for (final c in mergedChats) {
           totalUnread += c.unreadCount;
         }
         _eventBus.updateTotalUnreadCount(totalUnread);
 
         emit(ChatState.loaded(
-          chats: chats,
+          chats: mergedChats,
           hasMore: effectiveHasMore,
           isLoadingMore: false,
           page: 0,
           pageSize: pageSize,
-          total: chats.length,
+          total: mergedChats.length,
           activeFilter: activeFilter,
           cachedLists: cachedLists,
           filterPages: filterPages,
@@ -742,11 +754,102 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   ) async {
     logger.d('Chat updated: ${event.chat.id}');
 
+    // Track pending direct chats (local-only, temp timestamp ID, no members).
+    // These survive server refreshes until resolved by first message send.
+    final chat = event.chat;
+    if (_isPendingDirectChat(chat)) {
+      _pendingDirectChats[chat.id] = chat;
+      logger.i(
+          '[ChatBloc] Tracked pending direct chat: ${chat.id} '
+          '(participantIds=${chat.participantIds})');
+    }
+
     if (state is _Loaded) {
       final currentState = state as _Loaded;
       emit(_upsertChatIntoLoadedState(currentState, event.chat));
       logger.i('Chat list upserted with latest data');
     }
+  }
+
+  /// A pending direct chat resolved to a real server conversation.
+  /// Remove the temp chat from tracking and refresh from server.
+  Future<void> _onPendingDirectResolved(
+    _PendingDirectResolved event,
+    Emitter<ChatState> emit,
+  ) async {
+    logger.i(
+        '[ChatBloc] Pending direct resolved: '
+        'temp=${event.tempChatId} → server=${event.serverChatId}');
+
+    // Remove temp chat from pending tracking
+    _pendingDirectChats.remove(event.tempChatId);
+
+    // Also remove the temp chat from the current loaded state immediately
+    // so it doesn't show as a duplicate while server refresh is in progress.
+    if (state is _Loaded) {
+      final currentState = state as _Loaded;
+      final filteredChats = currentState.chats
+          .where((c) => c.id != event.tempChatId)
+          .toList();
+      if (filteredChats.length != currentState.chats.length) {
+        emit(_preserveLoaded(currentState, chats: filteredChats));
+      }
+    }
+
+    // Refresh from server — the real conversation now exists
+    add(const ChatEvent.loadChats(forceRefresh: true));
+  }
+
+  /// Check if a chat is a pending direct chat (local-only, not yet on server).
+  /// Pending direct chats have: direct type, empty members, numeric temp ID.
+  bool _isPendingDirectChat(Chat chat) {
+    return chat.type == ChatType.direct &&
+        chat.members.isEmpty &&
+        chat.participantIds.isNotEmpty &&
+        RegExp(r'^\d{10,}$').hasMatch(chat.id);
+  }
+
+  /// Merge pending direct chats into the server-fetched chat list.
+  /// This ensures local-only pending chats survive server refreshes
+  /// (the Angular frontend does the same: temp conversations stay in
+  /// the local array until resolved by first message).
+  List<Chat> _mergePendingDirectChats(
+    List<Chat> serverChats,
+    ConversationTypeFilter activeFilter,
+  ) {
+    if (_pendingDirectChats.isEmpty) {
+      return serverChats;
+    }
+
+    // Only merge chats that match the active filter
+    final pendingToMerge = _pendingDirectChats.values.where((pending) {
+      return _chatMatchesFilter(pending, activeFilter);
+    }).toList();
+
+    if (pendingToMerge.isEmpty) {
+      return serverChats;
+    }
+
+    // Don't add pending chats that already exist in server list
+    // (the server might have created the conversation by now)
+    final serverIds = serverChats.map((c) => c.id).toSet();
+    final toAdd = pendingToMerge
+        .where((pending) => !serverIds.contains(pending.id))
+        .toList();
+
+    if (toAdd.isEmpty) {
+      // All pending chats already resolved on server — clean up tracking
+      for (final chat in pendingToMerge) {
+        _pendingDirectChats.remove(chat.id);
+      }
+      return serverChats;
+    }
+
+    logger.d(
+        '[ChatBloc] Merging ${toAdd.length} pending direct chats into list');
+    final merged = [...serverChats, ...toAdd];
+    _sortChatsByRecency(merged);
+    return merged;
   }
 
   /// **Search conversations using SearchConversationsUseCase**
@@ -992,6 +1095,27 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
 
     final idx = currentState.chats.indexWhere((c) => c.id == message.chatId);
     if (idx < 0) {
+      // Chat not in current list — this can happen when:
+      // 1. A new conversation was created on the server (receiver's side)
+      // 2. A pending direct chat was resolved to a real server ID
+      // Fetch the conversation detail from server and add it to the list
+      // (same pattern as Angular frontend: fetch chatConversationDetail).
+      logger.i(
+          '[ChatBloc] Received message for unknown chat ${message.chatId}, '
+          'fetching conversation detail...');
+      final result = await _getConversationDetail(message.chatId);
+      result.fold(
+        (failure) {
+          logger.w(
+              '[ChatBloc] Failed to fetch unknown chat ${message.chatId}: '
+              '${failure.message}');
+        },
+        (chat) {
+          if (chat != null) {
+            add(ChatEvent.chatUpdated(chat: chat));
+          }
+        },
+      );
       return;
     }
 
@@ -1053,6 +1177,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       if (previousUnread > 0) {
         _eventBus.decrementUnreadCount(previousUnread);
       }
+    }
+
+    // Skip remote call for pending direct chats — temp numeric IDs are not
+    // valid UUIDs and will cause backend errors.
+    if (!event.chatId.contains('-')) {
+      logger.d('[ChatBloc] Skipping markAsRead for pending direct: ${event.chatId}');
+      return;
     }
 
     final result =

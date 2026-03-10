@@ -10,7 +10,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
+import 'package:flutter_chat_app/core/services/emoji_shortcode_service.dart';
+import 'package:flutter_chat_app/core/services/emoticon_parser_service.dart';
 import 'package:flutter_chat_app/core/services/chat_active_conversation_tracker.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/services/voice_recorder_service.dart';
@@ -203,6 +206,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
   bool _hasMarkedAsReadOnOpen = false;
 
   // ══════════════════════════════════════════
+  // Pending direct chat → real conversation ID resolution
+  // ══════════════════════════════════════════
+  bool _hasPendingDirectResolved = false;
+
+  // ══════════════════════════════════════════
   // Voice recording state
   // ══════════════════════════════════════════
   late final VoiceRecorderService _voiceRecorderService;
@@ -266,17 +274,30 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
     _itemPositionsListener.itemPositions.addListener(_onPositionsChanged);
 
+    // Auto-resolve receiverId for pending direct chats when not explicitly
+    // passed (e.g. desktop mode where ChatHomePage previously lost receiverId).
+    // A temp chatId is a numeric timestamp (no hyphens), while real UUIDs have
+    // hyphens. We look up the chat in ChatBloc state and extract receiverId
+    // from participantIds.
+    final effectiveReceiverId = widget.receiverId ?? _resolveReceiverIdFromChatBloc();
+
     // Initial load
     _messageBloc.add(
       LoadMessages(
         chatId: widget.chatId,
         limit: _pageSize,
         forceRefresh: false,
-        receiverId: widget.receiverId,
+        receiverId: effectiveReceiverId,
       ),
     );
 
-    _convDetailBloc.add(LoadConversationDetail(chatId: widget.chatId));
+    // For pending direct chats (temp numeric ID), skip remote conversation
+    // detail query — it will fail with "invalid input syntax for type uuid".
+    // After first message is sent, _handleBlocStateChanges detects the real
+    // conversationId and dispatches a fresh LoadConversationDetail.
+    if (widget.chatId.contains('-')) {
+      _convDetailBloc.add(LoadConversationDetail(chatId: widget.chatId));
+    }
     _setupRealtimeSubscriptions();
     _chatDraftBloc.add(
       ChatDraftConversationOpened(conversationId: widget.chatId),
@@ -284,6 +305,42 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
     // Single listener for efficiency
     _messageController.addListener(_handleControllerChanges);
+  }
+
+  /// Fallback: resolve receiverId from ChatBloc state when [widget.receiverId]
+  /// is null but chatId looks like a pending direct chat (numeric temp ID).
+  ///
+  /// This handles cases where the navigation path didn't propagate receiverId
+  /// (e.g. desktop split-view, deep links, or other edge cases).
+  String? _resolveReceiverIdFromChatBloc() {
+    // Only attempt for temp IDs (numeric, no hyphens = not a UUID)
+    if (widget.chatId.contains('-')) return null;
+
+    final chatState = _chatBloc.state;
+    // Use maybeMap to safely access chats from Loaded state
+    final chats = chatState.maybeMap(
+      loaded: (loaded) => loaded.chats,
+      orElse: () => <Chat>[],
+    );
+
+    final chat = chats
+        .cast<Chat?>()
+        .firstWhere((c) => c?.id == widget.chatId, orElse: () => null);
+    if (chat == null || chat.type != ChatType.direct) return null;
+
+    // Extract the other user's ID from participantIds
+    if (chat.participantIds.isEmpty) return null;
+
+    try {
+      final currentUserId =
+          getIt<CurrentUserProvider>().currentUserId;
+      final otherId = chat.participantIds
+          .where((id) => id.trim().isNotEmpty && id != currentUserId)
+          .firstOrNull;
+      return otherId ?? chat.participantIds.firstOrNull;
+    } catch (_) {
+      return chat.participantIds.firstOrNull;
+    }
   }
 
   void _handleControllerChanges() {
@@ -302,6 +359,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
   }
 
   void _handleTypingIndicator() {
+    // Skip typing indicator for pending direct chats — temp numeric IDs
+    // are not valid conversation IDs on the server.
+    if (!widget.chatId.contains('-')) return;
+
     if (!getIt.isRegistered<RealtimeService>()) return;
     final realtimeService = getIt<RealtimeService>();
 
@@ -397,8 +458,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         break;
 
       case ChatComposerEditTextEffect editEffect:
+        // Convert emoticons & shortcodes → emoji khi edit message
+        final editWithShortcodes =
+            EmojiShortcodeService.convert(editEffect.text);
+        final editWithEmoji =
+            EmoticonParserService.convert(editWithShortcodes);
         final editedText =
-            _messageController.toBackendMentionFormat(editEffect.text).trim();
+            _messageController.toBackendMentionFormat(editWithEmoji).trim();
         if (editedText.isEmpty) {
           AppSnackBar.show(
             context: context,
@@ -420,8 +486,15 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         break;
 
       case ChatComposerSendTextEffect sendEffect:
+        // Convert emoticons & shortcodes → emoji trước khi format mentions
+        // Pattern: Zalo/Messenger/WhatsApp — convert on send
+        // 1. Shortcodes: :smile: → 😊, :heart: → ❤️
+        // 2. Emoticons: :) → 😊, :v → ✌️, <3 → ❤️
+        final withShortcodes =
+            EmojiShortcodeService.convert(sendEffect.text);
+        final withEmoji = EmoticonParserService.convert(withShortcodes);
         final messageText =
-            _messageController.toBackendMentionFormat(sendEffect.text).trim();
+            _messageController.toBackendMentionFormat(withEmoji).trim();
 
         // Collect completed attachment URLs from FileAttachmentBloc
         final attachmentState = _fileAttachmentBloc.state;
@@ -2138,6 +2211,27 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
   void _handleBlocStateChanges(BuildContext context, MessageState state) {
     if (state is MessagesLoaded) {
+      // ── Pending direct chat → real conversation ID resolution ──
+      // When the first message is sent in a pending direct chat, MessageBloc
+      // detects wasPendingDirect and updates state.chatId to the real server
+      // conversation ID (clearing receiverId). Reload conversation detail with
+      // the real ID so the header gets full member info and presence.
+      if (!_hasPendingDirectResolved &&
+          widget.receiverId != null &&
+          state.receiverId == null &&
+          state.chatId != widget.chatId) {
+        _hasPendingDirectResolved = true;
+        _convDetailBloc.add(LoadConversationDetail(chatId: state.chatId));
+
+        // Notify ChatBloc that the pending direct chat has been resolved
+        // to a real server conversation. This removes the temp chat from
+        // the pending tracking list and triggers a server refresh.
+        _chatBloc.add(ChatEvent.pendingDirectResolved(
+          tempChatId: widget.chatId,
+          serverChatId: state.chatId,
+        ));
+      }
+
       final didAutoScrollForOwnMessage =
           _maybeAutoScrollToBottomForOwnMessage(state);
 
@@ -2603,6 +2697,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     if (_chat != null) {
       return ChatHeader(
         chat: _chat!,
+        receiverId: widget.receiverId,
         showBackButton: showBackButton,
         onBackPressed:
             showBackButton ? () => Navigator.of(context).maybePop() : null,

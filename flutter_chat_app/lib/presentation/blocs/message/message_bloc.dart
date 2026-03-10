@@ -920,6 +920,14 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   /// Logs errors silently — never shows error to user (non-critical).
   Future<void> _onMarkChatAsRead(
       MarkChatAsRead event, Emitter<MessageState> emit) async {
+    // Skip for pending direct chats — temp numeric IDs are not valid UUIDs
+    // and will cause backend errors. Mark-as-read will be called with the
+    // real conversationId after the first message resolves the conversation.
+    if (!event.chatId.contains('-')) {
+      logger.d('[markChatAsRead] Skipping for pending direct chat: ${event.chatId}');
+      return;
+    }
+
     // logger.i('MarkChatAsRead received: ${event.chatId} (debouncing 500ms)');
 
     // Cancel any existing debounce timer — use latest event data

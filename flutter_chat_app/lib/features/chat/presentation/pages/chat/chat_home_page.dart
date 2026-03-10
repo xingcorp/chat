@@ -19,10 +19,10 @@ class ChatHomePage extends StatefulWidget {
 }
 
 class _ChatHomePageState extends State<ChatHomePage> {
-  String? _selectedChatId;
+  SelectedConversation? _selectedConversation;
   late final ChatDraftBloc _chatDraftBloc;
   late final ChatConversationSelectionService _conversationSelectionService;
-  StreamSubscription<String?>? _selectedConversationSubscription;
+  StreamSubscription<SelectedConversation?>? _selectedConversationSubscription;
 
   @override
   void initState() {
@@ -30,16 +30,16 @@ class _ChatHomePageState extends State<ChatHomePage> {
     _chatDraftBloc = GetIt.instance<ChatDraftBloc>();
     _conversationSelectionService =
         GetIt.instance<ChatConversationSelectionService>();
-    _selectedChatId = _conversationSelectionService.selectedConversationId;
+    _selectedConversation = _conversationSelectionService.selectedConversation;
     _selectedConversationSubscription =
         _conversationSelectionService.selectedConversationStream.listen(
-      (selectedChatId) {
-        if (!mounted || _selectedChatId == selectedChatId) {
+      (selection) {
+        if (!mounted || _selectedConversation == selection) {
           return;
         }
 
         setState(() {
-          _selectedChatId = selectedChatId;
+          _selectedConversation = selection;
         });
       },
     );
@@ -48,7 +48,8 @@ class _ChatHomePageState extends State<ChatHomePage> {
   @override
   void dispose() {
     _selectedConversationSubscription?.cancel();
-    _conversationSelectionService.clearSelection(_selectedChatId);
+    _conversationSelectionService
+        .clearSelection(_selectedConversation?.conversationId);
     _chatDraftBloc.close();
     super.dispose();
   }
@@ -70,16 +71,27 @@ class _ChatHomePageState extends State<ChatHomePage> {
                   width: 360,
                   child: ChatListPanel(
                     onChatSelected: (chatId) {
-                      _conversationSelectionService.selectConversation(chatId);
+                      // ChatListPanel already calls
+                      // _selectConversationWithReceiverId() which sets both
+                      // chatId AND receiverId on the selection service. Only
+                      // fall back to selectConversation() here if the service
+                      // wasn't updated (e.g. race condition or older caller).
+                      if (_conversationSelectionService.selectedConversationId !=
+                          chatId) {
+                        _conversationSelectionService
+                            .selectConversation(chatId);
+                      }
                     },
                   ),
                 ),
                 Expanded(
-                  child: _selectedChatId == null
+                  child: _selectedConversation == null
                       ? const _DesktopEmptyChatPane()
                       : ChatDetailsPage(
-                          key: ValueKey(_selectedChatId),
-                          chatId: _selectedChatId!,
+                          key: ValueKey(
+                              _selectedConversation!.conversationId),
+                          chatId: _selectedConversation!.conversationId,
+                          receiverId: _selectedConversation!.receiverId,
                         ),
                 ),
               ],

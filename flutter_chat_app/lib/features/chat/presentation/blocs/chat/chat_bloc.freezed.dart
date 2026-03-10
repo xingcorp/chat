@@ -63,6 +63,8 @@ mixin _$ChatEvent {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -109,6 +111,8 @@ mixin _$ChatEvent {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -155,6 +159,8 @@ mixin _$ChatEvent {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -182,6 +188,8 @@ mixin _$ChatEvent {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -208,6 +216,7 @@ mixin _$ChatEvent {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -234,6 +243,7 @@ mixin _$ChatEvent {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -367,6 +377,8 @@ class _$LoadChatsImpl implements _LoadChats {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return loadChats(forceRefresh);
   }
@@ -416,6 +428,8 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return loadChats?.call(forceRefresh);
   }
@@ -465,6 +479,8 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (loadChats != null) {
@@ -498,6 +514,8 @@ class _$LoadChatsImpl implements _LoadChats {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return loadChats(this);
   }
@@ -527,6 +545,7 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return loadChats?.call(this);
   }
@@ -556,6 +575,7 @@ class _$LoadChatsImpl implements _LoadChats {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (loadChats != null) {
@@ -657,6 +677,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return loadMoreChats();
   }
@@ -706,6 +728,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return loadMoreChats?.call();
   }
@@ -755,6 +779,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (loadMoreChats != null) {
@@ -788,6 +814,8 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return loadMoreChats(this);
   }
@@ -817,6 +845,7 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return loadMoreChats?.call(this);
   }
@@ -846,6 +875,7 @@ class _$LoadMoreChatsImpl implements _LoadMoreChats {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (loadMoreChats != null) {
@@ -969,6 +999,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return loadChatDetails(chatId);
   }
@@ -1018,6 +1050,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return loadChatDetails?.call(chatId);
   }
@@ -1067,6 +1101,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (loadChatDetails != null) {
@@ -1100,6 +1136,8 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return loadChatDetails(this);
   }
@@ -1129,6 +1167,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return loadChatDetails?.call(this);
   }
@@ -1158,6 +1197,7 @@ class _$LoadChatDetailsImpl implements _LoadChatDetails {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (loadChatDetails != null) {
@@ -1305,6 +1345,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return loadMessages(chatId, limit, offset);
   }
@@ -1354,6 +1396,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return loadMessages?.call(chatId, limit, offset);
   }
@@ -1403,6 +1447,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (loadMessages != null) {
@@ -1436,6 +1482,8 @@ class _$LoadMessagesImpl implements _LoadMessages {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return loadMessages(this);
   }
@@ -1465,6 +1513,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return loadMessages?.call(this);
   }
@@ -1494,6 +1543,7 @@ class _$LoadMessagesImpl implements _LoadMessages {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (loadMessages != null) {
@@ -1668,6 +1718,8 @@ class _$SendMessageImpl implements _SendMessage {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return sendMessage(chatId, content, contentType, attachmentIds);
   }
@@ -1717,6 +1769,8 @@ class _$SendMessageImpl implements _SendMessage {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return sendMessage?.call(chatId, content, contentType, attachmentIds);
   }
@@ -1766,6 +1820,8 @@ class _$SendMessageImpl implements _SendMessage {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (sendMessage != null) {
@@ -1799,6 +1855,8 @@ class _$SendMessageImpl implements _SendMessage {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return sendMessage(this);
   }
@@ -1828,6 +1886,7 @@ class _$SendMessageImpl implements _SendMessage {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return sendMessage?.call(this);
   }
@@ -1857,6 +1916,7 @@ class _$SendMessageImpl implements _SendMessage {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (sendMessage != null) {
@@ -2086,6 +2146,8 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return createChat(type, name, description, groupType, participantIds,
         avatarBytes, avatarFileName, avatarFilePath);
@@ -2136,6 +2198,8 @@ class _$CreateChatImpl implements _CreateChat {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return createChat?.call(type, name, description, groupType, participantIds,
         avatarBytes, avatarFileName, avatarFilePath);
@@ -2186,6 +2250,8 @@ class _$CreateChatImpl implements _CreateChat {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (createChat != null) {
@@ -2220,6 +2286,8 @@ class _$CreateChatImpl implements _CreateChat {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return createChat(this);
   }
@@ -2249,6 +2317,7 @@ class _$CreateChatImpl implements _CreateChat {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return createChat?.call(this);
   }
@@ -2278,6 +2347,7 @@ class _$CreateChatImpl implements _CreateChat {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (createChat != null) {
@@ -2510,6 +2580,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return updateChat(
         chatId, name, description, avatar, groupType, memberIds, adminIds);
@@ -2560,6 +2632,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return updateChat?.call(
         chatId, name, description, avatar, groupType, memberIds, adminIds);
@@ -2610,6 +2684,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (updateChat != null) {
@@ -2644,6 +2720,8 @@ class _$UpdateChatImpl implements _UpdateChat {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return updateChat(this);
   }
@@ -2673,6 +2751,7 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return updateChat?.call(this);
   }
@@ -2702,6 +2781,7 @@ class _$UpdateChatImpl implements _UpdateChat {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (updateChat != null) {
@@ -2842,6 +2922,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return leaveChat(chatId);
   }
@@ -2891,6 +2973,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return leaveChat?.call(chatId);
   }
@@ -2940,6 +3024,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (leaveChat != null) {
@@ -2973,6 +3059,8 @@ class _$LeaveChatImpl implements _LeaveChat {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return leaveChat(this);
   }
@@ -3002,6 +3090,7 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return leaveChat?.call(this);
   }
@@ -3031,6 +3120,7 @@ class _$LeaveChatImpl implements _LeaveChat {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (leaveChat != null) {
@@ -3158,6 +3248,8 @@ class _$DeleteChatImpl implements _DeleteChat {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return deleteChat(chatId);
   }
@@ -3207,6 +3299,8 @@ class _$DeleteChatImpl implements _DeleteChat {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return deleteChat?.call(chatId);
   }
@@ -3256,6 +3350,8 @@ class _$DeleteChatImpl implements _DeleteChat {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (deleteChat != null) {
@@ -3289,6 +3385,8 @@ class _$DeleteChatImpl implements _DeleteChat {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return deleteChat(this);
   }
@@ -3318,6 +3416,7 @@ class _$DeleteChatImpl implements _DeleteChat {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return deleteChat?.call(this);
   }
@@ -3347,6 +3446,7 @@ class _$DeleteChatImpl implements _DeleteChat {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (deleteChat != null) {
@@ -3491,6 +3591,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return addUsersToChat(chatId, userIds);
   }
@@ -3540,6 +3642,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return addUsersToChat?.call(chatId, userIds);
   }
@@ -3589,6 +3693,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (addUsersToChat != null) {
@@ -3622,6 +3728,8 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return addUsersToChat(this);
   }
@@ -3651,6 +3759,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return addUsersToChat?.call(this);
   }
@@ -3680,6 +3789,7 @@ class _$AddUsersToChatImpl implements _AddUsersToChat {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (addUsersToChat != null) {
@@ -3827,6 +3937,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return removeUsersFromChat(chatId, userIds);
   }
@@ -3876,6 +3988,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return removeUsersFromChat?.call(chatId, userIds);
   }
@@ -3925,6 +4039,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (removeUsersFromChat != null) {
@@ -3958,6 +4074,8 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return removeUsersFromChat(this);
   }
@@ -3987,6 +4105,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return removeUsersFromChat?.call(this);
   }
@@ -4016,6 +4135,7 @@ class _$RemoveUsersFromChatImpl implements _RemoveUsersFromChat {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (removeUsersFromChat != null) {
@@ -4164,6 +4284,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return markMessagesAsRead(chatId, messageIds);
   }
@@ -4213,6 +4335,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return markMessagesAsRead?.call(chatId, messageIds);
   }
@@ -4262,6 +4386,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (markMessagesAsRead != null) {
@@ -4295,6 +4421,8 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return markMessagesAsRead(this);
   }
@@ -4324,6 +4452,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return markMessagesAsRead?.call(this);
   }
@@ -4353,6 +4482,7 @@ class _$MarkMessagesAsReadImpl implements _MarkMessagesAsRead {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (markMessagesAsRead != null) {
@@ -4457,6 +4587,8 @@ class _$SyncChatsImpl implements _SyncChats {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return syncChats();
   }
@@ -4506,6 +4638,8 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return syncChats?.call();
   }
@@ -4555,6 +4689,8 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (syncChats != null) {
@@ -4588,6 +4724,8 @@ class _$SyncChatsImpl implements _SyncChats {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return syncChats(this);
   }
@@ -4617,6 +4755,7 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return syncChats?.call(this);
   }
@@ -4646,6 +4785,7 @@ class _$SyncChatsImpl implements _SyncChats {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (syncChats != null) {
@@ -4768,6 +4908,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return syncMessages(chatId);
   }
@@ -4817,6 +4959,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return syncMessages?.call(chatId);
   }
@@ -4866,6 +5010,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (syncMessages != null) {
@@ -4899,6 +5045,8 @@ class _$SyncMessagesImpl implements _SyncMessages {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return syncMessages(this);
   }
@@ -4928,6 +5076,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return syncMessages?.call(this);
   }
@@ -4957,6 +5106,7 @@ class _$SyncMessagesImpl implements _SyncMessages {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (syncMessages != null) {
@@ -5086,6 +5236,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return newMessageReceived(message);
   }
@@ -5135,6 +5287,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return newMessageReceived?.call(message);
   }
@@ -5184,6 +5338,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (newMessageReceived != null) {
@@ -5217,6 +5373,8 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return newMessageReceived(this);
   }
@@ -5246,6 +5404,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return newMessageReceived?.call(this);
   }
@@ -5275,6 +5434,7 @@ class _$NewMessageReceivedImpl implements _NewMessageReceived {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (newMessageReceived != null) {
@@ -5405,6 +5565,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return connectivityChanged(isConnected);
   }
@@ -5454,6 +5616,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return connectivityChanged?.call(isConnected);
   }
@@ -5503,6 +5667,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (connectivityChanged != null) {
@@ -5536,6 +5702,8 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return connectivityChanged(this);
   }
@@ -5565,6 +5733,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return connectivityChanged?.call(this);
   }
@@ -5594,6 +5763,7 @@ class _$ConnectivityChangedImpl implements _ConnectivityChanged {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (connectivityChanged != null) {
@@ -5724,6 +5894,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return messageStatusUpdated(message);
   }
@@ -5773,6 +5945,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return messageStatusUpdated?.call(message);
   }
@@ -5822,6 +5996,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (messageStatusUpdated != null) {
@@ -5855,6 +6031,8 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return messageStatusUpdated(this);
   }
@@ -5884,6 +6062,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return messageStatusUpdated?.call(this);
   }
@@ -5913,6 +6092,7 @@ class _$MessageStatusUpdatedImpl implements _MessageStatusUpdated {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (messageStatusUpdated != null) {
@@ -6041,6 +6221,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return chatUpdated(chat);
   }
@@ -6090,6 +6272,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return chatUpdated?.call(chat);
   }
@@ -6139,6 +6323,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (chatUpdated != null) {
@@ -6172,6 +6358,8 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return chatUpdated(this);
   }
@@ -6201,6 +6389,7 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return chatUpdated?.call(this);
   }
@@ -6230,6 +6419,7 @@ class _$ChatUpdatedImpl implements _ChatUpdated {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (chatUpdated != null) {
@@ -6357,6 +6547,8 @@ class _$SearchChatsImpl implements _SearchChats {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return searchChats(keyword);
   }
@@ -6406,6 +6598,8 @@ class _$SearchChatsImpl implements _SearchChats {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return searchChats?.call(keyword);
   }
@@ -6455,6 +6649,8 @@ class _$SearchChatsImpl implements _SearchChats {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (searchChats != null) {
@@ -6488,6 +6684,8 @@ class _$SearchChatsImpl implements _SearchChats {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return searchChats(this);
   }
@@ -6517,6 +6715,7 @@ class _$SearchChatsImpl implements _SearchChats {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return searchChats?.call(this);
   }
@@ -6546,6 +6745,7 @@ class _$SearchChatsImpl implements _SearchChats {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (searchChats != null) {
@@ -6648,6 +6848,8 @@ class _$ClearSearchImpl implements _ClearSearch {
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return clearSearch();
   }
@@ -6697,6 +6899,8 @@ class _$ClearSearchImpl implements _ClearSearch {
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return clearSearch?.call();
   }
@@ -6746,6 +6950,8 @@ class _$ClearSearchImpl implements _ClearSearch {
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (clearSearch != null) {
@@ -6779,6 +6985,8 @@ class _$ClearSearchImpl implements _ClearSearch {
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return clearSearch(this);
   }
@@ -6808,6 +7016,7 @@ class _$ClearSearchImpl implements _ClearSearch {
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return clearSearch?.call(this);
   }
@@ -6837,6 +7046,7 @@ class _$ClearSearchImpl implements _ClearSearch {
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (clearSearch != null) {
@@ -6964,6 +7174,8 @@ class _$ChangeConversationTypeFilterImpl
     required TResult Function() clearSearch,
     required TResult Function(ConversationTypeFilter filter)
         changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
   }) {
     return changeConversationTypeFilter(filter);
   }
@@ -7013,6 +7225,8 @@ class _$ChangeConversationTypeFilterImpl
     TResult? Function()? clearSearch,
     TResult? Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
   }) {
     return changeConversationTypeFilter?.call(filter);
   }
@@ -7062,6 +7276,8 @@ class _$ChangeConversationTypeFilterImpl
     TResult Function()? clearSearch,
     TResult Function(ConversationTypeFilter filter)?
         changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (changeConversationTypeFilter != null) {
@@ -7095,6 +7311,8 @@ class _$ChangeConversationTypeFilterImpl
     required TResult Function(_ClearSearch value) clearSearch,
     required TResult Function(_ChangeConversationTypeFilter value)
         changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
   }) {
     return changeConversationTypeFilter(this);
   }
@@ -7124,6 +7342,7 @@ class _$ChangeConversationTypeFilterImpl
     TResult? Function(_ClearSearch value)? clearSearch,
     TResult? Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
   }) {
     return changeConversationTypeFilter?.call(this);
   }
@@ -7153,6 +7372,7 @@ class _$ChangeConversationTypeFilterImpl
     TResult Function(_ClearSearch value)? clearSearch,
     TResult Function(_ChangeConversationTypeFilter value)?
         changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
     required TResult orElse(),
   }) {
     if (changeConversationTypeFilter != null) {
@@ -7171,6 +7391,348 @@ abstract class _ChangeConversationTypeFilter implements ChatEvent {
   @JsonKey(ignore: true)
   _$$ChangeConversationTypeFilterImplCopyWith<
           _$ChangeConversationTypeFilterImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$PendingDirectResolvedImplCopyWith<$Res> {
+  factory _$$PendingDirectResolvedImplCopyWith(
+          _$PendingDirectResolvedImpl value,
+          $Res Function(_$PendingDirectResolvedImpl) then) =
+      __$$PendingDirectResolvedImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({String tempChatId, String serverChatId});
+}
+
+/// @nodoc
+class __$$PendingDirectResolvedImplCopyWithImpl<$Res>
+    extends _$ChatEventCopyWithImpl<$Res, _$PendingDirectResolvedImpl>
+    implements _$$PendingDirectResolvedImplCopyWith<$Res> {
+  __$$PendingDirectResolvedImplCopyWithImpl(_$PendingDirectResolvedImpl _value,
+      $Res Function(_$PendingDirectResolvedImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? tempChatId = null,
+    Object? serverChatId = null,
+  }) {
+    return _then(_$PendingDirectResolvedImpl(
+      tempChatId: null == tempChatId
+          ? _value.tempChatId
+          : tempChatId // ignore: cast_nullable_to_non_nullable
+              as String,
+      serverChatId: null == serverChatId
+          ? _value.serverChatId
+          : serverChatId // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$PendingDirectResolvedImpl implements _PendingDirectResolved {
+  const _$PendingDirectResolvedImpl(
+      {required this.tempChatId, required this.serverChatId});
+
+  @override
+  final String tempChatId;
+  @override
+  final String serverChatId;
+
+  @override
+  String toString() {
+    return 'ChatEvent.pendingDirectResolved(tempChatId: $tempChatId, serverChatId: $serverChatId)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$PendingDirectResolvedImpl &&
+            (identical(other.tempChatId, tempChatId) ||
+                other.tempChatId == tempChatId) &&
+            (identical(other.serverChatId, serverChatId) ||
+                other.serverChatId == serverChatId));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, tempChatId, serverChatId);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$PendingDirectResolvedImplCopyWith<_$PendingDirectResolvedImpl>
+      get copyWith => __$$PendingDirectResolvedImplCopyWithImpl<
+          _$PendingDirectResolvedImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(bool forceRefresh) loadChats,
+    required TResult Function() loadMoreChats,
+    required TResult Function(String chatId) loadChatDetails,
+    required TResult Function(String chatId, int limit, int offset)
+        loadMessages,
+    required TResult Function(String chatId, String content,
+            ContentType contentType, List<String> attachmentIds)
+        sendMessage,
+    required TResult Function(
+            ChatType type,
+            String? name,
+            String? description,
+            GroupType groupType,
+            List<String> participantIds,
+            Uint8List? avatarBytes,
+            String? avatarFileName,
+            String? avatarFilePath)
+        createChat,
+    required TResult Function(
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)
+        updateChat,
+    required TResult Function(String chatId) leaveChat,
+    required TResult Function(String chatId) deleteChat,
+    required TResult Function(String chatId, List<String> userIds)
+        addUsersToChat,
+    required TResult Function(String chatId, List<String> userIds)
+        removeUsersFromChat,
+    required TResult Function(String chatId, List<String> messageIds)
+        markMessagesAsRead,
+    required TResult Function() syncChats,
+    required TResult Function(String chatId) syncMessages,
+    required TResult Function(ChatMessage message) newMessageReceived,
+    required TResult Function(bool isConnected) connectivityChanged,
+    required TResult Function(QueuedMessage message) messageStatusUpdated,
+    required TResult Function(Chat chat) chatUpdated,
+    required TResult Function(String keyword) searchChats,
+    required TResult Function() clearSearch,
+    required TResult Function(ConversationTypeFilter filter)
+        changeConversationTypeFilter,
+    required TResult Function(String tempChatId, String serverChatId)
+        pendingDirectResolved,
+  }) {
+    return pendingDirectResolved(tempChatId, serverChatId);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(bool forceRefresh)? loadChats,
+    TResult? Function()? loadMoreChats,
+    TResult? Function(String chatId)? loadChatDetails,
+    TResult? Function(String chatId, int limit, int offset)? loadMessages,
+    TResult? Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult? Function(
+            ChatType type,
+            String? name,
+            String? description,
+            GroupType groupType,
+            List<String> participantIds,
+            Uint8List? avatarBytes,
+            String? avatarFileName,
+            String? avatarFilePath)?
+        createChat,
+    TResult? Function(
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
+        updateChat,
+    TResult? Function(String chatId)? leaveChat,
+    TResult? Function(String chatId)? deleteChat,
+    TResult? Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult? Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult? Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult? Function()? syncChats,
+    TResult? Function(String chatId)? syncMessages,
+    TResult? Function(ChatMessage message)? newMessageReceived,
+    TResult? Function(bool isConnected)? connectivityChanged,
+    TResult? Function(QueuedMessage message)? messageStatusUpdated,
+    TResult? Function(Chat chat)? chatUpdated,
+    TResult? Function(String keyword)? searchChats,
+    TResult? Function()? clearSearch,
+    TResult? Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
+    TResult? Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
+  }) {
+    return pendingDirectResolved?.call(tempChatId, serverChatId);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(bool forceRefresh)? loadChats,
+    TResult Function()? loadMoreChats,
+    TResult Function(String chatId)? loadChatDetails,
+    TResult Function(String chatId, int limit, int offset)? loadMessages,
+    TResult Function(String chatId, String content, ContentType contentType,
+            List<String> attachmentIds)?
+        sendMessage,
+    TResult Function(
+            ChatType type,
+            String? name,
+            String? description,
+            GroupType groupType,
+            List<String> participantIds,
+            Uint8List? avatarBytes,
+            String? avatarFileName,
+            String? avatarFilePath)?
+        createChat,
+    TResult Function(
+            String chatId,
+            String? name,
+            String? description,
+            String? avatar,
+            GroupType? groupType,
+            List<String>? memberIds,
+            List<String>? adminIds)?
+        updateChat,
+    TResult Function(String chatId)? leaveChat,
+    TResult Function(String chatId)? deleteChat,
+    TResult Function(String chatId, List<String> userIds)? addUsersToChat,
+    TResult Function(String chatId, List<String> userIds)? removeUsersFromChat,
+    TResult Function(String chatId, List<String> messageIds)?
+        markMessagesAsRead,
+    TResult Function()? syncChats,
+    TResult Function(String chatId)? syncMessages,
+    TResult Function(ChatMessage message)? newMessageReceived,
+    TResult Function(bool isConnected)? connectivityChanged,
+    TResult Function(QueuedMessage message)? messageStatusUpdated,
+    TResult Function(Chat chat)? chatUpdated,
+    TResult Function(String keyword)? searchChats,
+    TResult Function()? clearSearch,
+    TResult Function(ConversationTypeFilter filter)?
+        changeConversationTypeFilter,
+    TResult Function(String tempChatId, String serverChatId)?
+        pendingDirectResolved,
+    required TResult orElse(),
+  }) {
+    if (pendingDirectResolved != null) {
+      return pendingDirectResolved(tempChatId, serverChatId);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_LoadChats value) loadChats,
+    required TResult Function(_LoadMoreChats value) loadMoreChats,
+    required TResult Function(_LoadChatDetails value) loadChatDetails,
+    required TResult Function(_LoadMessages value) loadMessages,
+    required TResult Function(_SendMessage value) sendMessage,
+    required TResult Function(_CreateChat value) createChat,
+    required TResult Function(_UpdateChat value) updateChat,
+    required TResult Function(_LeaveChat value) leaveChat,
+    required TResult Function(_DeleteChat value) deleteChat,
+    required TResult Function(_AddUsersToChat value) addUsersToChat,
+    required TResult Function(_RemoveUsersFromChat value) removeUsersFromChat,
+    required TResult Function(_MarkMessagesAsRead value) markMessagesAsRead,
+    required TResult Function(_SyncChats value) syncChats,
+    required TResult Function(_SyncMessages value) syncMessages,
+    required TResult Function(_NewMessageReceived value) newMessageReceived,
+    required TResult Function(_ConnectivityChanged value) connectivityChanged,
+    required TResult Function(_MessageStatusUpdated value) messageStatusUpdated,
+    required TResult Function(_ChatUpdated value) chatUpdated,
+    required TResult Function(_SearchChats value) searchChats,
+    required TResult Function(_ClearSearch value) clearSearch,
+    required TResult Function(_ChangeConversationTypeFilter value)
+        changeConversationTypeFilter,
+    required TResult Function(_PendingDirectResolved value)
+        pendingDirectResolved,
+  }) {
+    return pendingDirectResolved(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_LoadChats value)? loadChats,
+    TResult? Function(_LoadMoreChats value)? loadMoreChats,
+    TResult? Function(_LoadChatDetails value)? loadChatDetails,
+    TResult? Function(_LoadMessages value)? loadMessages,
+    TResult? Function(_SendMessage value)? sendMessage,
+    TResult? Function(_CreateChat value)? createChat,
+    TResult? Function(_UpdateChat value)? updateChat,
+    TResult? Function(_LeaveChat value)? leaveChat,
+    TResult? Function(_DeleteChat value)? deleteChat,
+    TResult? Function(_AddUsersToChat value)? addUsersToChat,
+    TResult? Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult? Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult? Function(_SyncChats value)? syncChats,
+    TResult? Function(_SyncMessages value)? syncMessages,
+    TResult? Function(_NewMessageReceived value)? newMessageReceived,
+    TResult? Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult? Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult? Function(_ChatUpdated value)? chatUpdated,
+    TResult? Function(_SearchChats value)? searchChats,
+    TResult? Function(_ClearSearch value)? clearSearch,
+    TResult? Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
+    TResult? Function(_PendingDirectResolved value)? pendingDirectResolved,
+  }) {
+    return pendingDirectResolved?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_LoadChats value)? loadChats,
+    TResult Function(_LoadMoreChats value)? loadMoreChats,
+    TResult Function(_LoadChatDetails value)? loadChatDetails,
+    TResult Function(_LoadMessages value)? loadMessages,
+    TResult Function(_SendMessage value)? sendMessage,
+    TResult Function(_CreateChat value)? createChat,
+    TResult Function(_UpdateChat value)? updateChat,
+    TResult Function(_LeaveChat value)? leaveChat,
+    TResult Function(_DeleteChat value)? deleteChat,
+    TResult Function(_AddUsersToChat value)? addUsersToChat,
+    TResult Function(_RemoveUsersFromChat value)? removeUsersFromChat,
+    TResult Function(_MarkMessagesAsRead value)? markMessagesAsRead,
+    TResult Function(_SyncChats value)? syncChats,
+    TResult Function(_SyncMessages value)? syncMessages,
+    TResult Function(_NewMessageReceived value)? newMessageReceived,
+    TResult Function(_ConnectivityChanged value)? connectivityChanged,
+    TResult Function(_MessageStatusUpdated value)? messageStatusUpdated,
+    TResult Function(_ChatUpdated value)? chatUpdated,
+    TResult Function(_SearchChats value)? searchChats,
+    TResult Function(_ClearSearch value)? clearSearch,
+    TResult Function(_ChangeConversationTypeFilter value)?
+        changeConversationTypeFilter,
+    TResult Function(_PendingDirectResolved value)? pendingDirectResolved,
+    required TResult orElse(),
+  }) {
+    if (pendingDirectResolved != null) {
+      return pendingDirectResolved(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _PendingDirectResolved implements ChatEvent {
+  const factory _PendingDirectResolved(
+      {required final String tempChatId,
+      required final String serverChatId}) = _$PendingDirectResolvedImpl;
+
+  String get tempChatId;
+  String get serverChatId;
+  @JsonKey(ignore: true)
+  _$$PendingDirectResolvedImplCopyWith<_$PendingDirectResolvedImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
 

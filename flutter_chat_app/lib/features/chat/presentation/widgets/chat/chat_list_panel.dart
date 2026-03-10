@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
+import 'package:flutter_chat_app/core/services/chat_conversation_selection_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/presence_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -144,6 +145,10 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
 
     final onChatSelected = widget.onChatSelected;
     if (onChatSelected != null) {
+      _selectConversationWithReceiverId(
+        createdChatId,
+        receiverId: _extractReceiverIdIfPending(chat),
+      );
       onChatSelected(createdChatId);
       return;
     }
@@ -206,6 +211,20 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
       context,
       chatId: createdChatId,
     );
+  }
+
+  /// On desktop, set receiverId on the selection service so ChatHomePage can
+  /// forward it to ChatDetailsPage. This is needed because the [onChatSelected]
+  /// callback only carries a chatId string.
+  void _selectConversationWithReceiverId(
+    String chatId, {
+    String? receiverId,
+  }) {
+    if (!getIt.isRegistered<ChatConversationSelectionService>()) {
+      return;
+    }
+    getIt<ChatConversationSelectionService>()
+        .selectConversation(chatId, receiverId: receiverId);
   }
 
   /// Extract receiverId for pending direct chats (temp numeric ID, no members).
@@ -525,6 +544,10 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
 
         final onChatSelected = widget.onChatSelected;
         if (onChatSelected != null) {
+          _selectConversationWithReceiverId(
+            chat.id,
+            receiverId: _extractReceiverIdIfPending(chat),
+          );
           onChatSelected(chat.id);
           return;
         }
