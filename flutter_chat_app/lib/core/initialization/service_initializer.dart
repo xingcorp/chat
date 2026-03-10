@@ -16,6 +16,7 @@ import 'package:flutter_chat_app/core/services/desktop_badge_service.dart';
 import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
 import 'package:flutter_chat_app/core/services/offline_queue_service.dart';
 import 'package:flutter_chat_app/core/services/performance_service.dart';
+import 'package:window_manager/window_manager.dart';
 
 /// Initializes non-critical and platform-specific services after the app has
 /// rendered its first frame.
@@ -149,6 +150,14 @@ class ServiceInitializer {
 
   static Future<void> _initializeDesktopServices() async {
     final logger = GetIt.I<Logger>();
+
+    // Initialize window_manager for bringing app to foreground on notification tap.
+    try {
+      await windowManager.ensureInitialized();
+      logger.i('WindowManager initialized');
+    } catch (e) {
+      logger.e('WindowManager initialization failed', error: e);
+    }
 
     final databaseService = GetIt.I<DatabaseService>();
     await databaseService.initialize();

@@ -18,6 +18,7 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:internet_connection_checker/internet_connection_checker.dart'
     as _i973;
 import 'package:isar/isar.dart' as _i338;
+import 'package:logger/logger.dart' as _i974;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
 import '../../data/datasources/chat_info/chat_info_remote_datasource.dart'
@@ -202,6 +203,7 @@ import '../services/connectivity_service.dart' as _i47;
 import '../services/cross_platform_file_service.dart' as _i590;
 import '../services/current_user_provider.dart' as _i113;
 import '../services/database_service.dart' as _i665;
+import '../services/desktop_badge_service.dart' as _i528;
 import '../services/device_capability_service.dart' as _i98;
 import '../services/foreground_sync_service.dart' as _i920;
 import '../services/frequent_reaction_service.dart' as _i537;
@@ -538,6 +540,10 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i99.StickerLocalDataSource>(),
               gh<_i221.AppLogger>(),
             ));
+    gh.lazySingleton<_i528.DesktopBadgeService>(() => _i528.DesktopBadgeService(
+          gh<_i1030.ChatModuleEventBus>(),
+          gh<_i974.Logger>(),
+        ));
     gh.lazySingleton<_i394.IMediaRepository>(() => _i872.MediaRepositoryImpl(
           remoteDataSource: gh<_i966.IMediaRemoteDataSource>(),
           localDataSource: gh<_i982.IMediaLocalDataSource>(),

@@ -111,6 +111,9 @@ dependencies:
   gal: ^2.3.2
   flutter_downloader: ^1.12.0
 
+  # Desktop Window Management (bring to foreground on notification tap)
+  window_manager: ^0.4.3
+
   # Desktop Drag & Drop + Clipboard Paste (Web + Desktop)
   desktop_drop: ^0.4.4
   pasteboard: ^0.2.0
