@@ -51,10 +51,16 @@ class DesktopBadgeService {
 
   /// Start listening to unread count changes and forward to native.
   void initialize() {
-    if (!_isSupported) return;
+    if (!_isSupported) {
+      _logger.i('DesktopBadgeService: platform not supported, skipping');
+      return;
+    }
 
     _unreadSubscription = _eventBus.totalUnreadCountStream.listen(
-      (count) => _updateBadge(count),
+      (count) {
+        _logger.d('DesktopBadgeService: stream emitted count=$count');
+        _updateBadge(count);
+      },
       onError: (Object error) {
         _logger.w('DesktopBadgeService: stream error: $error');
       },
@@ -114,13 +120,15 @@ class DesktopBadgeService {
   Future<void> _updateDesktopBadge(int count) async {
     try {
       if (count <= 0) {
+        _logger.d('DesktopBadgeService: calling clearBadge');
         await _channel.invokeMethod<void>('clearBadge');
       } else {
+        _logger.d('DesktopBadgeService: calling updateBadge($count)');
         await _channel.invokeMethod<void>('updateBadge', {'count': count});
       }
+      _logger.d('DesktopBadgeService: native call succeeded');
     } on MissingPluginException {
-      // Native handler not registered — expected on unsupported platforms
-      // or during hot-restart.
+      _logger.w('DesktopBadgeService: MissingPluginException — native handler not registered');
     } catch (e) {
       _logger.w('DesktopBadgeService: desktop native call failed: $e');
     }

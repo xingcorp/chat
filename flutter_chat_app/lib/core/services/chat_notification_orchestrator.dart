@@ -187,14 +187,21 @@ class ChatNotificationOrchestrator {
     // 6. Download avatar for notification icon (non-blocking, 3s timeout).
     //    For group chats: use group avatar if available, else sender avatar.
     //    For direct chats: use sender avatar.
+    //    Fallback: generate initials-based avatar if download fails or no URL.
     final String? avatarUrl = (chat != null &&
             (chat!.type == ChatType.group || chat!.type == ChatType.channel) &&
             chat!.avatarUrl != null &&
             chat!.avatarUrl!.isNotEmpty)
         ? chat!.avatarUrl
         : message.sender.avatar;
-    final String? avatarFilePath =
+    String? avatarFilePath =
         await _notificationAvatarService.getAvatarFilePath(avatarUrl);
+
+    // Fallback: generate initials avatar matching the conversation list style.
+    if (avatarFilePath == null && message.sender.name.isNotEmpty) {
+      avatarFilePath = await _notificationAvatarService
+          .generateInitialsAvatar(message.sender.name);
+    }
 
     // 7. Show local notification with avatar.
     await _localNotificationService.showChatMessageNotification(

@@ -16,6 +16,7 @@ import 'package:flutter_chat_app/core/services/desktop_badge_service.dart';
 import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
 import 'package:flutter_chat_app/core/services/offline_queue_service.dart';
 import 'package:flutter_chat_app/core/services/performance_service.dart';
+import 'package:window_manager/window_manager.dart';
 
 /// Initializes non-critical and platform-specific services after the app has
 /// rendered its first frame.
@@ -150,11 +151,32 @@ class ServiceInitializer {
   static Future<void> _initializeDesktopServices() async {
     final logger = GetIt.I<Logger>();
 
-    final databaseService = GetIt.I<DatabaseService>();
-    await databaseService.initialize();
+    // Initialize window_manager for bringing app to foreground on notification tap.
+    try {
+      await windowManager.ensureInitialized();
+      logger.i('WindowManager initialized');
+    } catch (e) {
+      logger.e('WindowManager initialization failed', error: e);
+    }
 
-    final chatMessageService = GetIt.I<ChatMessageService>();
-    await chatMessageService.initialize();
+    try {
+      final databaseService = GetIt.I<DatabaseService>();
+      await databaseService.initialize();
+      logger.i('DatabaseService initialized');
+    } catch (e) {
+      logger.e('DatabaseService initialization failed', error: e);
+    }
+
+    try {
+      if (GetIt.I.isRegistered<ChatMessageService>()) {
+        final chatMessageService =
+            await GetIt.I.getAsync<ChatMessageService>();
+        await chatMessageService.initialize();
+        logger.i('ChatMessageService initialized');
+      }
+    } catch (e) {
+      logger.e('ChatMessageService initialization failed', error: e);
+    }
 
     // Initialize desktop taskbar/dock badge (Windows + macOS).
     try {

@@ -2,7 +2,7 @@ name: flutter_chat_app
 description: A modern Flutter chat application with offline-first capability
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.86+86
 
 executables:
   setup: setup
@@ -110,6 +110,9 @@ dependencies:
   pro_image_editor: ^11.3.0
   gal: ^2.3.2
   flutter_downloader: ^1.12.0
+
+  # Desktop Window Management (bring to foreground on notification tap)
+  window_manager: ^0.4.3
 
   # Desktop Drag & Drop + Clipboard Paste (Web + Desktop)
   desktop_drop: ^0.4.4

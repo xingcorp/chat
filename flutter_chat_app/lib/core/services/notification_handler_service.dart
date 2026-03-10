@@ -8,11 +8,14 @@
 // **Architecture:** Service Layer + Firebase Messaging Integration
 
 import 'dart:async';
+import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'package:flutter_chat_app/config/route/app_router.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
@@ -73,6 +76,9 @@ class NotificationHandlerService {
       _logger.w('Notification tap received in package mode without event bus');
       return;
     }
+
+    // Bring desktop window to foreground so the user can see the app.
+    await _bringWindowToForeground();
 
     final BuildContext? context = AppRouter.rootNavigatorKey.currentContext;
     if (context == null) {
@@ -159,6 +165,29 @@ class NotificationHandlerService {
     } catch (e) {
       _logger.e('Failed to parse notification data', error: e);
       return null;
+    }
+  }
+
+  /// Brings the app window to the foreground on desktop platforms.
+  ///
+  /// On mobile or web this is a no-op. Failures are swallowed because
+  /// window activation is best-effort — the notification tap still navigates
+  /// to the correct conversation even if the window can't be focused.
+  Future<void> _bringWindowToForeground() async {
+    if (kIsWeb) return;
+
+    if (!Platform.isWindows && !Platform.isMacOS && !Platform.isLinux) {
+      return;
+    }
+
+    try {
+      await windowManager.show();
+      await windowManager.focus();
+    } catch (error) {
+      _logger.d(
+        'Failed to bring window to foreground',
+        <String, dynamic>{'error': error.toString()},
+      );
     }
   }
 }
