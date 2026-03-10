@@ -6,7 +6,6 @@ import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:get_it/get_it.dart';
-import 'package:flutter_chat_app/core/services/animation_service.dart';
 
 /// Widget hiển thị một mục chat trong danh sách
 class ChatListItem extends StatelessWidget {
@@ -29,7 +28,6 @@ class ChatListItem extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    final animationService = GetIt.I<AnimationService>();
     final theme = Theme.of(context);
     
     // Format thời gian hiển thị
@@ -117,21 +115,13 @@ class ChatListItem extends StatelessWidget {
                         // Số tin nhắn chưa đọc
                         if (chat.unreadCount > 0) ...[
                           const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              chat.unreadCount.toString(),
-                              style: TextStyle(
-                                color: theme.colorScheme.onPrimary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                          chat.isMuted
+                              ? AppBadge.muted(count: chat.unreadCount)
+                              : AppBadge.notification(
+                                  count: chat.unreadCount,
+                                  color: theme.colorScheme.primary,
+                                  textColor: theme.colorScheme.onPrimary,
+                                ),
                         ],
                       ],
                     ),

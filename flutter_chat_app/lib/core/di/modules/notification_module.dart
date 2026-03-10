@@ -6,6 +6,7 @@ import 'package:flutter_chat_app/core/services/chat_notification_policy_service.
 import 'package:flutter_chat_app/core/services/chat_conversation_selection_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/local_notification_service.dart';
+import 'package:flutter_chat_app/core/services/notification_avatar_service.dart';
 import 'package:flutter_chat_app/core/services/notification_handler_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
@@ -33,6 +34,14 @@ void registerNotificationModule(GetIt getIt) {
     );
   }
 
+  if (!getIt.isRegistered<NotificationAvatarService>()) {
+    getIt.registerLazySingleton<NotificationAvatarService>(
+      () => NotificationAvatarService(
+        logger: getIt<AppLogger>(),
+      ),
+    );
+  }
+
   if (!getIt.isRegistered<ChatNotificationPolicyService>()) {
     getIt.registerLazySingleton<ChatNotificationPolicyService>(
       () => ChatNotificationPolicyService(
@@ -52,6 +61,7 @@ void registerNotificationModule(GetIt getIt) {
         notificationHandlerService: getIt<NotificationHandlerService>(),
         chatRepository: getIt<IChatRepository>(),
         currentUserProvider: getIt<CurrentUserProvider>(),
+        notificationAvatarService: getIt<NotificationAvatarService>(),
         logger: getIt<AppLogger>(),
       ),
     );

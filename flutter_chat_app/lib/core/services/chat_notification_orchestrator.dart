@@ -5,6 +5,7 @@ import 'package:flutter_chat_app/core/services/chat_notification_payload.dart';
 import 'package:flutter_chat_app/core/services/chat_notification_policy_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/local_notification_service.dart';
+import 'package:flutter_chat_app/core/services/notification_avatar_service.dart';
 import 'package:flutter_chat_app/core/services/notification_handler_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
@@ -30,6 +31,7 @@ class ChatNotificationOrchestrator {
     required NotificationHandlerService notificationHandlerService,
     required IChatRepository chatRepository,
     required CurrentUserProvider currentUserProvider,
+    required NotificationAvatarService notificationAvatarService,
     required AppLogger logger,
   })  : _realtimeService = realtimeService,
         _notificationPolicy = notificationPolicy,
@@ -37,6 +39,7 @@ class ChatNotificationOrchestrator {
         _notificationHandlerService = notificationHandlerService,
         _chatRepository = chatRepository,
         _currentUserProvider = currentUserProvider,
+        _notificationAvatarService = notificationAvatarService,
         _logger = logger;
 
   static const int _maxRecentMessageIds = 100;
@@ -47,6 +50,7 @@ class ChatNotificationOrchestrator {
   final NotificationHandlerService _notificationHandlerService;
   final IChatRepository _chatRepository;
   final CurrentUserProvider _currentUserProvider;
+  final NotificationAvatarService _notificationAvatarService;
   final AppLogger _logger;
 
   final ListQueue<String> _recentMessageIds = ListQueue<String>();
@@ -180,8 +184,23 @@ class ChatNotificationOrchestrator {
       payload = ChatNotificationPayload.fromChatMessage(message);
     }
 
-    // 6. Show local notification.
-    await _localNotificationService.showChatMessageNotification(payload);
+    // 6. Download avatar for notification icon (non-blocking, 3s timeout).
+    //    For group chats: use group avatar if available, else sender avatar.
+    //    For direct chats: use sender avatar.
+    final String? avatarUrl = (chat != null &&
+            (chat!.type == ChatType.group || chat!.type == ChatType.channel) &&
+            chat!.avatarUrl != null &&
+            chat!.avatarUrl!.isNotEmpty)
+        ? chat!.avatarUrl
+        : message.sender.avatar;
+    final String? avatarFilePath =
+        await _notificationAvatarService.getAvatarFilePath(avatarUrl);
+
+    // 7. Show local notification with avatar.
+    await _localNotificationService.showChatMessageNotification(
+      payload,
+      avatarFilePath: avatarFilePath,
+    );
   }
 
   bool _rememberMessageId(String messageId) {

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/badges/badge_enums.dart';
 
 /// A customizable badge component.
 ///
 /// Features:
-/// - Notification badges for counts
+/// - Notification badges for counts (primary color)
+/// - Muted notification badges (gray) for silenced chats
 /// - Status indicators
 /// - Dot badges
 /// - Customizable colors and sizes
@@ -15,8 +17,11 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/badges/badge
 ///
 /// Example:
 /// ```dart
-/// // Notification badge
+/// // Notification badge (primary color)
 /// AppBadge.notification(count: 5)
+///
+/// // Muted notification badge (gray)
+/// AppBadge.muted(count: 3)
 ///
 /// // Status badge
 /// AppBadge.status(color: Colors.green)
@@ -32,6 +37,7 @@ class AppBadge extends BaseStatelessWidget {
     this.color,
     this.textColor,
     this.size,
+    this.isMuted = false,
     super.key,
   });
 
@@ -48,6 +54,26 @@ class AppBadge extends BaseStatelessWidget {
           color: color,
           textColor: textColor,
           size: size,
+          isMuted: false,
+          key: key,
+        );
+
+  /// Creates a muted notification badge with a gray background.
+  ///
+  /// Used for muted/silenced chats where notifications are suppressed.
+  /// Displays the same count text but with a subdued gray background
+  /// to visually distinguish muted conversations from active ones.
+  const AppBadge.muted({
+    required int count,
+    Color? textColor,
+    double? size,
+    Key? key,
+  }) : this(
+          count: count,
+          type: BadgeType.notification,
+          textColor: textColor,
+          size: size,
+          isMuted: true,
           key: key,
         );
 
@@ -66,10 +92,12 @@ class AppBadge extends BaseStatelessWidget {
   /// Creates a dot badge.
   const AppBadge.dot({
     Color? color,
+    double? size,
     Key? key,
   }) : this(
           type: BadgeType.dot,
           color: color,
+          size: size,
           key: key,
         );
 
@@ -79,7 +107,8 @@ class AppBadge extends BaseStatelessWidget {
   /// The type of badge.
   final BadgeType type;
 
-  /// The background color.
+  /// The background color. When [isMuted] is true and [color] is null,
+  /// defaults to a gray color instead of the theme error color.
   final Color? color;
 
   /// The text color.
@@ -88,10 +117,28 @@ class AppBadge extends BaseStatelessWidget {
   /// The size of the badge.
   final double? size;
 
+  /// Whether the badge represents a muted/silenced chat.
+  /// When true, the badge uses a gray background color by default.
+  final bool isMuted;
+
   @override
   Widget buildContent(BuildContext context) {
     final theme = Theme.of(context);
-    final badgeColor = color ?? theme.colorScheme.error;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Resolve badge background color:
+    // 1. Explicit color param takes priority
+    // 2. Muted → gray
+    // 3. Default → theme error (red)
+    final Color badgeColor;
+    if (color != null) {
+      badgeColor = color!;
+    } else if (isMuted) {
+      badgeColor = isDark ? AppColors.greyDark : AppColors.textSecondary;
+    } else {
+      badgeColor = theme.colorScheme.error;
+    }
+
     final badgeTextColor = textColor ?? theme.colorScheme.onError;
 
     switch (type) {
@@ -152,9 +199,11 @@ class AppBadge extends BaseStatelessWidget {
   }
 
   Widget _buildDotBadge(Color color) {
+    final badgeSize = size ?? AppDimens.iconXSmall;
+
     return Container(
-      width: AppDimens.iconXSmall,
-      height: AppDimens.iconXSmall,
+      width: badgeSize,
+      height: badgeSize,
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,

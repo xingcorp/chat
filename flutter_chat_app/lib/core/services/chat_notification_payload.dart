@@ -18,6 +18,7 @@ class ChatNotificationPayload {
     this.isMention = false,
     this.contentType = ContentType.text,
     this.macosSubtitle,
+    this.avatarFilePath,
   });
 
   final String conversationId;
@@ -34,7 +35,7 @@ class ChatNotificationPayload {
   /// Display name of the conversation (group name or sender name for direct).
   final String conversationName;
 
-  /// Sender avatar URL (for potential future rich notification support).
+  /// Sender avatar URL (for downloading avatar for notification icon).
   final String? senderAvatarUrl;
 
   /// Whether the current user was @mentioned in this message.
@@ -48,6 +49,15 @@ class ChatNotificationPayload {
   /// - Group chat: sender name (title already shows group name).
   /// - Direct chat: `null` (title already shows sender name).
   final String? macosSubtitle;
+
+  /// Local file path of the downloaded avatar image.
+  ///
+  /// Used by:
+  /// - Windows: `WindowsImage` with `appLogoOverride` + `circle` crop
+  /// - macOS: `DarwinNotificationAttachment`
+  ///
+  /// `null` if download failed/timed out — notification falls back to app icon.
+  final String? avatarFilePath;
 
   int get notificationId {
     final id = messageId.hashCode & 0x7fffffff;

@@ -134,6 +134,16 @@ class ServiceInitializer {
     final databaseService = GetIt.I<DatabaseService>();
     await databaseService.initialize();
 
+    // Initialize app icon badge (Android + iOS).
+    try {
+      if (GetIt.I.isRegistered<DesktopBadgeService>()) {
+        GetIt.I<DesktopBadgeService>().initialize();
+        logger.i('DesktopBadgeService initialized (mobile badge active)');
+      }
+    } catch (e) {
+      logger.e('DesktopBadgeService initialization failed', error: e);
+    }
+
     _initializeOfflineQueueService(logger);
   }
 

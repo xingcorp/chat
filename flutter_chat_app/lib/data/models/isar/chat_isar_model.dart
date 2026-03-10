@@ -91,7 +91,7 @@ class ChatIsarModel {
       ..createdAt = DateTime.now()
       ..updatedAt = DateTime.now()
       ..isArchived = false
-      ..isMuted = false;
+      ..isMuted = chat.isMuted;
   }
 
   /// **Convert from Isar model to domain entity**
@@ -105,6 +105,7 @@ class ChatIsarModel {
       unreadCount: unreadCount,
       lastMessageTime: lastMessageTime,
       lastMessagePreview: lastMessagePreview,
+      isMuted: isMuted,
     );
   }
 

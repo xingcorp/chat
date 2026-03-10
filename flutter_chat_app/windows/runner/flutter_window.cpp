@@ -29,7 +29,10 @@ bool FlutterWindow::OnCreate() {
 
   // Register the desktop badge overlay plugin (taskbar unread count).
   DesktopBadgePlugin::RegisterWithRegistrar(
-      flutter_controller_->engine()->GetRegistrar<flutter::PluginRegistrarWindows>());
+      flutter::PluginRegistrarManager::GetInstance()
+          ->GetRegistrar<flutter::PluginRegistrarWindows>(
+              flutter_controller_->engine()->GetRegistrarForPlugin(
+                  "DesktopBadgePlugin")));
 
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 

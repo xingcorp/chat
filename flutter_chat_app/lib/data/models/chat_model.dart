@@ -431,6 +431,7 @@ class ChatModel {
       unreadCount: unreadCount,
       type: type,
       participantIds: participantIds,
+      isMuted: isMuted,
     );
   }
 

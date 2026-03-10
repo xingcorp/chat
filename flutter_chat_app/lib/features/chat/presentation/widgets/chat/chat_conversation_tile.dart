@@ -63,16 +63,30 @@ class ChatConversationTile extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: AppText(
-                          chat.name ?? context.l10n.unknownUser,
-                          style: AppTextStyles.titleMedium.copyWith(
-                            fontWeight:
-                                hasUnread ? FontWeight.bold : FontWeight.w500,
-                            color: primaryTextColor,
-                            fontSize: 16,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: AppText(
+                                chat.name ?? context.l10n.unknownUser,
+                                style: AppTextStyles.titleMedium.copyWith(
+                                  fontWeight:
+                                      hasUnread ? FontWeight.bold : FontWeight.w500,
+                                  color: primaryTextColor,
+                                  fontSize: 16,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (chat.isMuted) ...[
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.notifications_off_outlined,
+                                size: 14,
+                                color: secondaryTextColor,
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -121,7 +135,10 @@ class ChatConversationTile extends StatelessWidget {
                       ),
                       if (hasUnread) ...[
                         const SizedBox(width: 8),
-                        _UnreadBadge(count: chat.unreadCount),
+                        _UnreadBadge(
+                          count: chat.unreadCount,
+                          isMuted: chat.isMuted,
+                        ),
                       ],
                     ],
                   ),
@@ -201,8 +218,9 @@ class ChatConversationTile extends StatelessWidget {
 
 class _UnreadBadge extends StatefulWidget {
   final int count;
+  final bool isMuted;
 
-  const _UnreadBadge({required this.count});
+  const _UnreadBadge({required this.count, this.isMuted = false});
 
   @override
   State<_UnreadBadge> createState() => _UnreadBadgeState();
@@ -278,28 +296,13 @@ class _UnreadBadgeState extends State<_UnreadBadge>
 
   @override
   Widget build(BuildContext context) {
-    final display = widget.count > 99 ? '99+' : widget.count.toString();
-
-    final badge = Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 6,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      constraints: const BoxConstraints(minWidth: 20),
-      child: AppText(
-        display,
-        style: AppTextStyles.labelSmall.copyWith(
-          color: AppColors.textButton,
-          fontWeight: FontWeight.bold,
-          fontSize: 11,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
+    final badge = widget.isMuted
+        ? AppBadge.muted(count: widget.count)
+        : AppBadge.notification(
+            count: widget.count,
+            color: AppColors.primary,
+            textColor: AppColors.textButton,
+          );
 
     if (!_useMicroAnimations) {
       return badge;

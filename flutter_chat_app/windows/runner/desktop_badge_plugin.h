@@ -16,7 +16,7 @@
 //
 // Uses ITaskbarList3::SetOverlayIcon to render a small red badge with the
 // count number on the app's taskbar button.
-class DesktopBadgePlugin {
+class DesktopBadgePlugin : public flutter::Plugin {
  public:
   // Register the plugin on the given registrar.
   static void RegisterWithRegistrar(flutter::PluginRegistrarWindows* registrar);
