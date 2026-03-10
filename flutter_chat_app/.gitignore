@@ -110,6 +110,7 @@ app.*.map.json
 **/ios/Flutter/Flutter.framework
 **/ios/Flutter/Generated.xcconfig
 **/ios/Flutter/ephemeral
+**/ios/Podfile.lock
 **/ios/Flutter/app.flx
 **/ios/Flutter/app.zip
 **/ios/Flutter/flutter_assets/
@@ -120,6 +121,7 @@ app.*.map.json
 # macOS
 **/macos/Flutter/GeneratedPluginRegistrant.swift
 **/macos/Flutter/ephemeral
+**/macos/Podfile.lock
 
 # Windows
 **/windows/flutter/generated_plugin_registrant.cc

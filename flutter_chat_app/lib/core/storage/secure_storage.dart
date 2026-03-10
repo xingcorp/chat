@@ -2,33 +2,34 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Abstract interface for secure storage operations
 abstract class SecureStorage {
   /// Sets a string value
   Future<void> setString(String key, String value);
-  
+
   /// Gets a string value
   Future<String?> getString(String key);
-  
+
   /// Sets an object value by encoding it to JSON
   Future<void> setObject(String key, Map<String, dynamic> value);
-  
+
   /// Gets an object value by decoding it from JSON
   Future<Map<String, dynamic>?> getObject(String key);
-  
+
   /// Checks if the key exists
   Future<bool> containsKey(String key);
-  
+
   /// Removes a value
   Future<void> remove(String key);
-  
+
   /// Clears all values
   Future<void> clear();
-  
+
   /// Gets all keys
   Future<List<String>> getKeys();
-  
+
   /// Gets all values
   Future<Map<String, String>> getAll();
 }
@@ -86,6 +87,117 @@ class InMemorySecureStorage implements SecureStorage {
   @override
   Future<Map<String, String>> getAll() async {
     return Map<String, String>.from(_data);
+  }
+}
+
+/// SharedPreferences-backed storage for platforms where keychain access can
+/// block startup or require additional entitlements during standalone boot.
+class SharedPreferencesSecureStorage implements SecureStorage {
+  final Future<SharedPreferences> Function() _prefsFactory;
+  final Map<String, String?> _cache = {};
+  bool _allLoaded = false;
+
+  SharedPreferencesSecureStorage({
+    Future<SharedPreferences> Function()? prefsFactory,
+  }) : _prefsFactory = prefsFactory ?? SharedPreferences.getInstance;
+
+  Future<SharedPreferences> get _prefs async => _prefsFactory();
+
+  @override
+  Future<void> setString(String key, String value) async {
+    _cache[key] = value;
+    final prefs = await _prefs;
+    await prefs.setString(key, value);
+  }
+
+  @override
+  Future<String?> getString(String key) async {
+    if (_cache.containsKey(key)) {
+      return _cache[key];
+    }
+    final prefs = await _prefs;
+    final value = prefs.getString(key);
+    _cache[key] = value;
+    return value;
+  }
+
+  @override
+  Future<void> setObject(String key, Map<String, dynamic> value) async {
+    await setString(key, json.encode(value));
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getObject(String key) async {
+    final jsonString = await getString(key);
+    if (jsonString == null) return null;
+
+    try {
+      return json.decode(jsonString) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<bool> containsKey(String key) async {
+    if (_cache.containsKey(key)) {
+      return _cache[key] != null;
+    }
+    final prefs = await _prefs;
+    return prefs.containsKey(key);
+  }
+
+  @override
+  Future<void> remove(String key) async {
+    _cache[key] = null;
+    final prefs = await _prefs;
+    await prefs.remove(key);
+  }
+
+  @override
+  Future<void> clear() async {
+    final keys = await getKeys();
+    final prefs = await _prefs;
+    for (final key in keys) {
+      await prefs.remove(key);
+    }
+    _cache.clear();
+    _allLoaded = false;
+  }
+
+  @override
+  Future<List<String>> getKeys() async {
+    if (_allLoaded) {
+      return _cache.entries
+          .where((entry) => entry.value != null)
+          .map((entry) => entry.key)
+          .toList();
+    }
+    final allValues = await getAll();
+    return allValues.keys.toList();
+  }
+
+  @override
+  Future<Map<String, String>> getAll() async {
+    if (_allLoaded) {
+      return Map<String, String>.fromEntries(
+        _cache.entries
+            .where((entry) => entry.value != null)
+            .map((entry) => MapEntry(entry.key, entry.value!)),
+      );
+    }
+
+    final prefs = await _prefs;
+    final values = <String, String>{};
+    for (final key in prefs.getKeys()) {
+      final value = prefs.getString(key);
+      if (value != null) {
+        values[key] = value;
+      }
+    }
+    _cache.addAll(values);
+    _allLoaded = true;
+    return values;
   }
 }
 
@@ -193,4 +305,4 @@ class SecureStorageImpl implements SecureStorage {
     _allLoaded = true;
     return allValues;
   }
-} 
+}

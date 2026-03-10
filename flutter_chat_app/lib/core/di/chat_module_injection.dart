@@ -305,7 +305,8 @@ class ChatModuleInjection {
       if (_getIt.isRegistered<socket_mgr.SocketManager>()) {
         final socketManager = _getIt<socket_mgr.SocketManager>();
         socketManager.dispose();
-        _logger.d('[ChatModuleInjection] SocketManager disconnected & disposed');
+        _logger
+            .d('[ChatModuleInjection] SocketManager disconnected & disposed');
       }
     } catch (e) {
       _logger.d('[ChatModuleInjection] Failed to dispose SocketManager: $e');
@@ -380,8 +381,8 @@ class ChatModuleInjection {
         _logger.d('[ChatModuleInjection] CurrentUserProvider cleared');
       }
     } catch (e) {
-      _logger.d(
-          '[ChatModuleInjection] Failed to clear CurrentUserProvider: $e');
+      _logger
+          .d('[ChatModuleInjection] Failed to clear CurrentUserProvider: $e');
     }
 
     // ── Step 5: Clear local database (Isar) — data isolation ──
@@ -460,7 +461,8 @@ class ChatModuleInjection {
     _tryUnregister<core_graphql.GraphQLClientWrapper>();
     _tryUnregister<GraphQLClient>();
 
-    _logger.d('[ChatModuleInjection] ✅ Logout complete — all user data cleared');
+    _logger
+        .d('[ChatModuleInjection] ✅ Logout complete — all user data cleared');
   }
 
   /// Clean up chat module specific resources.
@@ -503,7 +505,8 @@ class ChatModuleInjection {
     _tryUnregister<realtime.RealtimeConfig>();
     _tryUnregister<ConnectionFactory>();
 
-    _logger.d('[ChatModuleInjection] ✅ Dispose complete — all chat deps unregistered');
+    _logger.d(
+        '[ChatModuleInjection] ✅ Dispose complete — all chat deps unregistered');
   }
 
   /// Helper to safely unregister a type if registered.
@@ -549,8 +552,14 @@ class ChatModuleInjection {
 
     // SecureStorage
     if (!_getIt.isRegistered<SecureStorage>()) {
+      final useSharedPrefsSecureStorage =
+          !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
       _getIt.registerSingleton<SecureStorage>(
-        kIsWeb ? InMemorySecureStorage() : SecureStorageImpl(),
+        kIsWeb
+            ? InMemorySecureStorage()
+            : useSharedPrefsSecureStorage
+                ? SharedPreferencesSecureStorage()
+                : SecureStorageImpl(),
       );
     }
 

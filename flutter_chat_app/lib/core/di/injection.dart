@@ -382,8 +382,14 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   final hiveFuture = initHiveForFlutter();
 
   if (!getIt.isRegistered<SecureStorage>()) {
+    final useSharedPrefsSecureStorage =
+        !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
     getIt.registerSingleton<SecureStorage>(
-      kIsWeb ? InMemorySecureStorage() : SecureStorageImpl(),
+      kIsWeb
+          ? InMemorySecureStorage()
+          : useSharedPrefsSecureStorage
+              ? SharedPreferencesSecureStorage()
+              : SecureStorageImpl(),
     );
   }
 

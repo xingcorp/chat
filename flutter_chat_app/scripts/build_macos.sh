@@ -19,6 +19,8 @@
 #   ./scripts/build_macos.sh                         # Build .app (staging)
 #   ./scripts/build_macos.sh -f production -m dmg    # Build DMG (production)
 #   ./scripts/build_macos.sh -m all -s               # Build all formats, signed
+#   ./scripts/build_macos.sh -f production -m dmg -s -n
+#                                                   # Build unsigned -> sign -> notarize
 #   ./scripts/build_macos.sh -m zip                  # Build portable ZIP
 #
 # Prerequisites:
@@ -30,6 +32,11 @@
 # =============================================================================
 
 set -euo pipefail
+
+# CocoaPods and create-dmg expect a UTF-8 locale.
+export LANG='en_US.UTF-8'
+export LC_ALL='en_US.UTF-8'
+export LC_CTYPE='en_US.UTF-8'
 
 # ─── Colors ───────────────────────────────────────────────────────────────────
 RED='\033[0;31m'
@@ -60,9 +67,11 @@ DEVELOPER_ID="${DEVELOPER_ID:-}"              # e.g. "Developer ID Application: 
 INSTALLER_ID="${INSTALLER_ID:-}"              # e.g. "Developer ID Installer: OXII Co (TEAMID)"
 APPLE_ID="${APPLE_ID:-}"                      # Apple ID email
 APPLE_TEAM_ID="${APPLE_TEAM_ID:-}"            # Team ID
+APPLE_APP_SPECIFIC_PASSWORD="${APPLE_APP_SPECIFIC_PASSWORD:-}"
 NOTARY_KEY_ID="${NOTARY_KEY_ID:-}"            # App Store Connect API Key ID
 NOTARY_ISSUER="${NOTARY_ISSUER:-}"            # App Store Connect Issuer ID
 NOTARY_KEY_PATH="${NOTARY_KEY_PATH:-}"        # Path to .p8 key file
+NOTARY_PROFILE="${NOTARY_PROFILE:-}"          # notarytool keychain profile
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
 log_info()    { echo -e "${BLUE}[INFO]${NC}    $1"; }
@@ -202,10 +211,34 @@ build_flutter_macos() {
 
     flutter pub get
 
-    flutter build macos \
-        --release \
-        --target "$target_file" \
+    local flutter_build_args=(
+        --release
+        --target "$target_file"
         --dart-define=FLAVOR="$FLAVOR"
+    )
+
+    if flutter build macos -h | grep -q -- '--no-codesign'; then
+        log_info "Compiling release app without Xcode code signing"
+        flutter build macos "${flutter_build_args[@]}" --no-codesign
+    else
+        log_info "Local Flutter SDK does not support --no-codesign for macOS"
+        log_info "Generating Flutter config, then building with xcodebuild and signing disabled"
+
+        flutter build macos "${flutter_build_args[@]}" --config-only
+
+        xcodebuild \
+            -workspace macos/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            -derivedDataPath "$PROJECT_DIR/build/macos" \
+            "CODE_SIGNING_ALLOWED=NO" \
+            "CODE_SIGNING_REQUIRED=NO" \
+            "CODE_SIGN_IDENTITY=" \
+            "DEVELOPMENT_TEAM=" \
+            "PROVISIONING_PROFILE_SPECIFIER=" \
+            build
+    fi
 
     # Verify build
     local app_path="$BUILD_DIR/${APP_BUNDLE_NAME}.app"
@@ -227,10 +260,12 @@ build_flutter_macos() {
 sign_app() {
     if [[ "$SIGN" != true ]]; then
         log_warning "Skipping code signing (use -s to enable)"
+        log_warning "Unsigned macOS apps will be blocked by Gatekeeper on other machines"
         return
     fi
 
     log_step "Code signing with: $DEVELOPER_ID"
+    log_info "Applying Developer ID signature after Flutter build"
 
     # Sign all frameworks and dylibs first
     find "$APP_PATH" -name "*.framework" -o -name "*.dylib" | while read -r item; do
@@ -248,7 +283,7 @@ sign_app() {
         "$APP_PATH"
 
     # Verify
-    codesign --verify --verbose=2 "$APP_PATH"
+    codesign --verify --verbose=4 --strict "$APP_PATH"
     log_success "Code signing verified"
 }
 
@@ -270,21 +305,35 @@ notarize_file() {
             --key-id "$NOTARY_KEY_ID" \
             --issuer "$NOTARY_ISSUER" \
             --wait
-    elif [[ -n "$APPLE_ID" && -n "$APPLE_TEAM_ID" ]]; then
+    elif [[ -n "$NOTARY_PROFILE" ]]; then
+        # Keychain profile created with: xcrun notarytool store-credentials
+        xcrun notarytool submit "$file_path" \
+            --keychain-profile "$NOTARY_PROFILE" \
+            --wait
+    elif [[ -n "$APPLE_ID" && -n "$APPLE_TEAM_ID" && -n "$APPLE_APP_SPECIFIC_PASSWORD" ]]; then
         # Apple ID method (legacy)
         xcrun notarytool submit "$file_path" \
             --apple-id "$APPLE_ID" \
             --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
             --wait
     else
         log_error "Notarization requires either:"
         log_info "  1. NOTARY_KEY_ID + NOTARY_ISSUER + NOTARY_KEY_PATH (API Key)"
-        log_info "  2. APPLE_ID + APPLE_TEAM_ID (Apple ID)"
+        log_info "  2. NOTARY_PROFILE (xcrun notarytool keychain profile)"
+        log_info "  3. APPLE_ID + APPLE_TEAM_ID + APPLE_APP_SPECIFIC_PASSWORD"
         exit 1
     fi
 
-    # Staple the notarization ticket
-    xcrun stapler staple "$file_path"
+    # Stapling only works for supported bundle/container types.
+    case "$file_path" in
+        *.app|*.dmg|*.pkg)
+            xcrun stapler staple "$file_path"
+            ;;
+        *)
+            log_info "Stapling is not supported for $(basename "$file_path"); skipping."
+            ;;
+    esac
     log_success "Notarization complete"
 }
 
@@ -356,7 +405,7 @@ package_dmg() {
 
     # Sign DMG
     if [[ "$SIGN" == true ]]; then
-        codesign --force --sign "$DEVELOPER_ID" "$dmg_path"
+        codesign --force --timestamp --sign "$DEVELOPER_ID" "$dmg_path"
     fi
 
     notarize_file "$dmg_path"
