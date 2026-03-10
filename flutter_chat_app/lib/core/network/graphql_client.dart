@@ -380,56 +380,106 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     });
   }
 
+  /// Maps a GraphQL [OperationException] to the appropriate [AppException]
+  /// subtype based on the backend error code from `extensions.code`.
+  ///
+  /// **Design**: The backend returns user-friendly Vietnamese messages in
+  /// `error.message` and structured codes in `error.extensions.code`
+  /// (e.g. `Office.AccountNotExisted`). We preserve both WITHOUT adding
+  /// prefixes, so they flow cleanly to the UI.
   void _handleGraphQLException(OperationException exception) {
+    // 1. Link-level errors (network, serialization, etc.)
     if (exception.linkException != null) {
-      throw app_exceptions.ServerException(
-        message: 'Network error: ${exception.linkException}',
+      throw app_exceptions.NetworkException(
+        message: 'Network error',
+        code: 'LINK_ERROR',
+        details: exception.linkException.toString(),
       );
     }
 
-    if (exception.graphqlErrors.isNotEmpty) {
-      final messages = exception.graphqlErrors
-          .map((error) => error.message)
-          .join(', ');
-          
-      // Check for authentication errors
-      final authErrors = exception.graphqlErrors
-          .where((error) => error.extensions?['code'] == 'UNAUTHENTICATED' ||
-                           error.extensions?['code'] == 'FORBIDDEN')
-          .toList();
-                           
-      if (authErrors.isNotEmpty) {
-        throw app_exceptions.AuthException(
-          message: 'Authentication error: $messages',
-          code: authErrors.first.extensions?['code'],
-          details: exception.graphqlErrors,
-        );
-      }
-
-      // Check for validation errors
-      final validationErrors = exception.graphqlErrors
-          .where((error) => error.extensions?['code'] == 'BAD_USER_INPUT')
-          .toList();
-                           
-      if (validationErrors.isNotEmpty) {
-        throw app_exceptions.ValidationException(
-          message: 'Validation error: $messages',
-          code: validationErrors.first.extensions?['code'],
-          details: exception.graphqlErrors,
-        );
-      }
-
-      // Generic GraphQL error
-      throw app_exceptions.ServerException(
-        message: 'GraphQL error: $messages',
-        details: exception.graphqlErrors,
+    if (exception.graphqlErrors.isEmpty) {
+      throw app_exceptions.UnknownException(
+        message: 'Unknown GraphQL error',
+        details: exception,
       );
     }
 
-    throw app_exceptions.UnknownException(
-      message: 'Unknown GraphQL error',
-      details: exception,
+    // 2. Extract the primary error — keep message as-is (no prefix wrapping)
+    final primaryError = exception.graphqlErrors.first;
+    final backendCode = (primaryError.extensions?['code'] as String?) ?? '';
+    final backendMessage = primaryError.message;
+
+    // 3. Route to the correct exception type based on backend error code
+    if (_isAuthError(backendCode)) {
+      throw app_exceptions.AuthException(
+        message: backendMessage,
+        code: backendCode,
+      );
+    }
+
+    if (_isPermissionError(backendCode)) {
+      throw app_exceptions.PermissionDeniedException(
+        message: backendMessage,
+        code: backendCode,
+      );
+    }
+
+    if (_isValidationError(backendCode)) {
+      throw app_exceptions.ValidationException(
+        message: backendMessage,
+        code: backendCode,
+      );
+    }
+
+    if (_isNotFoundError(backendCode)) {
+      throw app_exceptions.NotFoundException(
+        message: backendMessage,
+        code: backendCode,
+      );
+    }
+
+    // 4. Default: ServerException for all other backend business errors
+    throw app_exceptions.ServerException(
+      message: backendMessage,
+      code: backendCode.isNotEmpty ? backendCode : 'SERVER_ERROR',
     );
+  }
+
+  /// Authentication-related backend error codes
+  bool _isAuthError(String code) {
+    return code == 'UNAUTHENTICATED' ||
+        code == 'Office.UserNotLogin' ||
+        code == 'Office.TokenNotFound' ||
+        code == 'Office.AccountNotExisted' ||
+        code == 'Office.InactivedAccount' ||
+        code == 'Office.RoleHasNotBeenApproved' ||
+        code == '401';
+  }
+
+  /// Permission / authorization error codes
+  bool _isPermissionError(String code) {
+    return code == 'FORBIDDEN' ||
+        code == '403' ||
+        code == 'Office.FunctionPermissionDenied' ||
+        code == 'Office.ChatNotAdmin' ||
+        code == 'Office.ActionNotAllowed';
+  }
+
+  /// Input validation error codes
+  bool _isValidationError(String code) {
+    return code == 'BAD_USER_INPUT' ||
+        code.startsWith('Office.WrongFormat') ||
+        code.startsWith('Office.Required') ||
+        code.startsWith('Office.MaxLength') ||
+        code.startsWith('Office.MinLength');
+  }
+
+  /// Resource not found error codes
+  bool _isNotFoundError(String code) {
+    return code == 'Office.NotFound' ||
+        code == '404' ||
+        code.contains('NotExist') ||
+        code.contains('NotFound');
   }
 
   Map<String, dynamic> _redactVariables(Map<String, dynamic> input) {

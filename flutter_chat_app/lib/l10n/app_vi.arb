@@ -438,7 +438,7 @@
   "noRecentEmojis": "Chưa có emoji gần đây",
   "pickAttachment": "Chọn tệp đính kèm",
   "takePhoto": "Chụp ảnh",
-  "chooseFromGallery": "Chọn từ thư viện",
+  "chooseFromGallery": "Chọn ảnh",
   "chooseFile": "Chọn tệp",
   "shareLocation": "Chia sẻ vị trí",
   "compressing": "Đang nén...",
@@ -481,6 +481,7 @@
   "contact": "Liên hệ",
   "addReaction": "Thêm phản ứng",
   "removeReaction": "Xóa phản ứng",
+  "holdToRemoveReaction": "Giữ để bỏ biểu cảm",
   "reactions": "Phản ứng",
   "recentlyUsed": "Gần đây",
   "searchEmoji": "Tìm kiếm emoji",
@@ -958,7 +959,7 @@
 
   "attachmentImage": "Hình ảnh",
 
-  "attachmentVideo": "Video",
+  "attachmentVideo": "Chọn video",
 
   "attachmentFile": "Tệp tin",
 
@@ -1044,5 +1045,20 @@
 
   "filesAttached": "{count} file đã đính kèm",
 
-  "pasteImageFromClipboard": "Dán ảnh từ clipboard"
+  "pasteImageFromClipboard": "Dán ảnh từ clipboard",
+
+  "moreActions": "Thêm hành động",
+
+  "selectMessage": "Chọn",
+
+  "notificationContentImage": "📷 Hình ảnh",
+  "notificationContentVideo": "🎬 Video",
+  "notificationContentAudio": "🎵 Tin nhắn thoại",
+  "notificationContentFile": "📎 Tệp: {fileName}",
+  "notificationContentSticker": "😀 Sticker",
+  "notificationContentLocation": "📍 Vị trí",
+  "notificationContentLink": "🔗 Liên kết",
+  "notificationGroupBody": "{senderName}: {content}",
+  "notificationMentionPrefix": "@Bạn {content}",
+  "notificationGroupMentionBody": "{senderName}: @Bạn {content}"
 }

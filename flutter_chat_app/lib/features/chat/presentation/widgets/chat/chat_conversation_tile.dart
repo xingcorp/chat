@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/formatters/relative_time_formatter.dart';
+import 'package:flutter_chat_app/core/services/animation_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/presence_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -62,16 +63,30 @@ class ChatConversationTile extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: AppText(
-                          chat.name ?? context.l10n.unknownUser,
-                          style: AppTextStyles.titleMedium.copyWith(
-                            fontWeight:
-                                hasUnread ? FontWeight.bold : FontWeight.w500,
-                            color: primaryTextColor,
-                            fontSize: 16,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: AppText(
+                                chat.name ?? context.l10n.unknownUser,
+                                style: AppTextStyles.titleMedium.copyWith(
+                                  fontWeight:
+                                      hasUnread ? FontWeight.bold : FontWeight.w500,
+                                  color: primaryTextColor,
+                                  fontSize: 16,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (chat.isMuted) ...[
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.notifications_off_outlined,
+                                size: 14,
+                                color: secondaryTextColor,
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -120,7 +135,10 @@ class ChatConversationTile extends StatelessWidget {
                       ),
                       if (hasUnread) ...[
                         const SizedBox(width: 8),
-                        _UnreadBadge(count: chat.unreadCount),
+                        _UnreadBadge(
+                          count: chat.unreadCount,
+                          isMuted: chat.isMuted,
+                        ),
                       ],
                     ],
                   ),
@@ -198,33 +216,103 @@ class ChatConversationTile extends StatelessWidget {
   }
 }
 
-class _UnreadBadge extends StatelessWidget {
+class _UnreadBadge extends StatefulWidget {
   final int count;
+  final bool isMuted;
 
-  const _UnreadBadge({required this.count});
+  const _UnreadBadge({required this.count, this.isMuted = false});
+
+  @override
+  State<_UnreadBadge> createState() => _UnreadBadgeState();
+}
+
+class _UnreadBadgeState extends State<_UnreadBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+  late final Animation<double> _opacityAnimation;
+
+  /// Whether device supports micro-animations.
+  bool _useMicroAnimations = true;
+
+  /// Whether this is the first build (for appear animation).
+  bool _isFirstBuild = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Resolve animation config from AnimationService (device-aware)
+    final animService = GetIt.instance.isRegistered<AnimationService>()
+        ? GetIt.instance<AnimationService>()
+        : null;
+    _useMicroAnimations = animService?.config.useMicroAnimations ?? true;
+    final duration =
+        animService?.config.fastDuration ?? const Duration(milliseconds: 200);
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: duration,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
+      ),
+    );
+
+    // Play appear animation on first build
+    if (_useMicroAnimations) {
+      _controller.forward();
+    } else {
+      _controller.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _UnreadBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!_useMicroAnimations) return;
+
+    // Bounce when count increases
+    if (widget.count > oldWidget.count && !_isFirstBuild) {
+      _controller.forward(from: 0.6);
+    }
+
+    _isFirstBuild = false;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final display = count > 99 ? '99+' : count.toString();
+    final badge = widget.isMuted
+        ? AppBadge.muted(count: widget.count)
+        : AppBadge.notification(
+            count: widget.count,
+            color: AppColors.primary,
+            textColor: AppColors.textButton,
+          );
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 6,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      constraints: const BoxConstraints(minWidth: 20),
-      child: AppText(
-        display,
-        style: AppTextStyles.labelSmall.copyWith(
-          color: AppColors.textButton,
-          fontWeight: FontWeight.bold,
-          fontSize: 11,
-        ),
-        textAlign: TextAlign.center,
+    if (!_useMicroAnimations) {
+      return badge;
+    }
+
+    return FadeTransition(
+      opacity: _opacityAnimation,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: badge,
       ),
     );
   }

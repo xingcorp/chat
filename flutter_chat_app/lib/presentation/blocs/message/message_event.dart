@@ -249,18 +249,26 @@ class ClearMessages extends MessageEvent {
   const ClearMessages();
 }
 
-/// Sự kiện toggle reaction trên tin nhắn
+/// Sự kiện toggle reaction trên tin nhắn.
+///
+/// When [forceAdd] is true, always sends ADD to the server (never removes).
+/// Used by desktop hover action bar where each tap should add the reaction.
 class ToggleReaction extends MessageEvent {
   final String messageId;
   final String emojiCode;
 
+  /// When true, always ADD the reaction (skip toggle logic).
+  /// Desktop hover bar uses this — each tap = send ADD.
+  final bool forceAdd;
+
   const ToggleReaction({
     required this.messageId,
     required this.emojiCode,
+    this.forceAdd = false,
   });
 
   @override
-  List<Object?> get props => [messageId, emojiCode];
+  List<Object?> get props => [messageId, emojiCode, forceAdd];
 }
 
 // === Phase 2 + 3 Events ===

@@ -930,6 +930,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get removeReaction => 'Xóa phản ứng';
 
   @override
+  String get holdToRemoveReaction => 'Giữ để bỏ biểu cảm';
+
+  @override
   String get reactions => 'Phản ứng';
 
   @override
@@ -1394,7 +1397,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get takePhoto => 'Chụp ảnh';
 
   @override
-  String get chooseFromGallery => 'Chọn từ thư viện';
+  String get chooseFromGallery => 'Chọn ảnh';
 
   @override
   String get chooseFile => 'Chọn tệp';
@@ -1775,7 +1778,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get attachmentImage => 'Hình ảnh';
 
   @override
-  String get attachmentVideo => 'Video';
+  String get attachmentVideo => 'Chọn video';
 
   @override
   String get attachmentFile => 'Tệp tin';
@@ -1908,4 +1911,48 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get pasteImageFromClipboard => 'Dán ảnh từ clipboard';
+
+  @override
+  String get moreActions => 'Thêm hành động';
+
+  @override
+  String get selectMessage => 'Chọn';
+
+  @override
+  String get notificationContentImage => '📷 Hình ảnh';
+
+  @override
+  String get notificationContentVideo => '🎬 Video';
+
+  @override
+  String get notificationContentAudio => '🎵 Tin nhắn thoại';
+
+  @override
+  String notificationContentFile(String fileName) {
+    return '📎 Tệp: $fileName';
+  }
+
+  @override
+  String get notificationContentSticker => '😀 Sticker';
+
+  @override
+  String get notificationContentLocation => '📍 Vị trí';
+
+  @override
+  String get notificationContentLink => '🔗 Liên kết';
+
+  @override
+  String notificationGroupBody(String senderName, String content) {
+    return '$senderName: $content';
+  }
+
+  @override
+  String notificationMentionPrefix(String content) {
+    return '@Bạn $content';
+  }
+
+  @override
+  String notificationGroupMentionBody(String senderName, String content) {
+    return '$senderName: @Bạn $content';
+  }
 }

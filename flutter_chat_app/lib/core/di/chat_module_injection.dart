@@ -77,6 +77,7 @@ import 'package:flutter_chat_app/core/services/chat_active_conversation_tracker.
 import 'package:flutter_chat_app/core/services/chat_notification_orchestrator.dart';
 import 'package:flutter_chat_app/core/services/chat_notification_policy_service.dart';
 import 'package:flutter_chat_app/core/services/chat_conversation_selection_service.dart';
+import 'package:flutter_chat_app/core/services/desktop_badge_service.dart';
 import 'package:flutter_chat_app/core/services/foreground_sync_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/local_notification_service.dart';
@@ -228,6 +229,11 @@ class ChatModuleInjection {
         _getIt<ForegroundSyncService>().initialize();
       }
 
+      // Step 12.1: Initialize desktop taskbar/dock badge (Windows + macOS)
+      if (_getIt.isRegistered<DesktopBadgeService>()) {
+        _getIt<DesktopBadgeService>().initialize();
+      }
+
       if (_getIt.isRegistered<ChatNotificationOrchestrator>()) {
         await _getIt<ChatNotificationOrchestrator>().initialize(
           enableBuiltInNotifications: config.enableBuiltInLocalNotifications,
@@ -266,6 +272,15 @@ class ChatModuleInjection {
     _logger.d('[ChatModuleInjection] Logging out - clearing ALL user data...');
 
     // ── Step 0: Dispose services that produce real-time side-effects ──
+    try {
+      if (_getIt.isRegistered<DesktopBadgeService>()) {
+        await _getIt<DesktopBadgeService>().dispose();
+        _tryUnregister<DesktopBadgeService>();
+      }
+    } catch (e) {
+      _logger.d(
+          '[ChatModuleInjection] Failed to dispose DesktopBadgeService: $e');
+    }
     try {
       if (_getIt.isRegistered<ForegroundSyncService>()) {
         _getIt<ForegroundSyncService>().dispose();

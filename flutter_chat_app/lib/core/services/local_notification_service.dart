@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show File, Platform;
 import 'dart:ui' show Color;
 
 import 'package:flutter/foundation.dart';
@@ -80,9 +81,17 @@ class LocalNotificationService {
     }
   }
 
+  /// Shows a chat message notification with optional avatar.
+  ///
+  /// [avatarFilePath] — local file path of the downloaded avatar image.
+  /// If provided and the file exists:
+  /// - **Windows**: replaces the app logo with the avatar (circle crop)
+  /// - **macOS**: shows the avatar as a notification attachment thumbnail
+  /// If `null` or file doesn't exist, the notification uses the default app icon.
   Future<void> showChatMessageNotification(
-    ChatNotificationPayload payload,
-  ) async {
+    ChatNotificationPayload payload, {
+    String? avatarFilePath,
+  }) async {
     if (kIsWeb) {
       return;
     }
@@ -90,6 +99,10 @@ class LocalNotificationService {
     if (!_initialized) {
       await initialize();
     }
+
+    final bool hasAvatar = avatarFilePath != null &&
+        !kIsWeb &&
+        File(avatarFilePath).existsSync();
 
     final NotificationDetails details = NotificationDetails(
       android: AndroidNotificationDetails(
@@ -107,8 +120,13 @@ class LocalNotificationService {
         ),
       ),
       iOS: DarwinNotificationDetails(
-        subtitle: payload.senderName,
+        subtitle: payload.macosSubtitle,
         threadIdentifier: payload.conversationId,
+        attachments: hasAvatar && _isDarwin
+            ? <DarwinNotificationAttachment>[
+                DarwinNotificationAttachment(avatarFilePath),
+              ]
+            : null,
         presentAlert: true,
         presentBanner: true,
         presentBadge: true,
@@ -116,15 +134,31 @@ class LocalNotificationService {
         presentSound: true,
       ),
       macOS: DarwinNotificationDetails(
-        subtitle: payload.senderName,
+        subtitle: payload.macosSubtitle,
         threadIdentifier: payload.conversationId,
+        attachments: hasAvatar && _isDarwin
+            ? <DarwinNotificationAttachment>[
+                DarwinNotificationAttachment(avatarFilePath),
+              ]
+            : null,
         presentAlert: true,
         presentBanner: true,
         presentBadge: true,
         presentList: true,
         presentSound: true,
       ),
-      windows: const WindowsNotificationDetails(),
+      windows: WindowsNotificationDetails(
+        images: hasAvatar && _isWindows
+            ? <WindowsImage>[
+                WindowsImage(
+                  Uri.file(avatarFilePath, windows: true),
+                  altText: payload.senderName,
+                  placement: WindowsImagePlacement.appLogoOverride,
+                  crop: WindowsImageCrop.circle,
+                ),
+              ]
+            : const <WindowsImage>[],
+      ),
     );
 
     await _plugin.show(
@@ -231,4 +265,11 @@ class LocalNotificationService {
 
     return _windowsProductionIconAssetPath;
   }
+
+  /// Platform checks — safe for conditional notification details.
+  static bool get _isWindows =>
+      !kIsWeb && Platform.isWindows;
+
+  static bool get _isDarwin =>
+      !kIsWeb && (Platform.isMacOS || Platform.isIOS);
 }

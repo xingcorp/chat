@@ -3,24 +3,43 @@ import 'dart:collection';
 
 import 'package:flutter_chat_app/core/services/chat_notification_payload.dart';
 import 'package:flutter_chat_app/core/services/chat_notification_policy_service.dart';
+import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/local_notification_service.dart';
+import 'package:flutter_chat_app/core/services/notification_avatar_service.dart';
 import 'package:flutter_chat_app/core/services/notification_handler_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
+import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 
 /// Orchestrates socket -> local notification -> tap handling.
+///
+/// Flow:
+/// 1. Receive message from [RealtimeService.messageStream]
+/// 2. Deduplication check (recent 100 message IDs)
+/// 3. Look up [Chat] entity for metadata (type, name, mute status)
+/// 4. Detect @mention of current user
+/// 5. Policy check (self-sent, active conversation, muted, mention override)
+/// 6. Build rich [ChatNotificationPayload] (group vs direct format)
+/// 7. Show local notification via [LocalNotificationService]
 class ChatNotificationOrchestrator {
   ChatNotificationOrchestrator({
     required RealtimeService realtimeService,
     required ChatNotificationPolicyService notificationPolicy,
     required LocalNotificationService localNotificationService,
     required NotificationHandlerService notificationHandlerService,
+    required IChatRepository chatRepository,
+    required CurrentUserProvider currentUserProvider,
+    required NotificationAvatarService notificationAvatarService,
     required AppLogger logger,
   })  : _realtimeService = realtimeService,
         _notificationPolicy = notificationPolicy,
         _localNotificationService = localNotificationService,
         _notificationHandlerService = notificationHandlerService,
+        _chatRepository = chatRepository,
+        _currentUserProvider = currentUserProvider,
+        _notificationAvatarService = notificationAvatarService,
         _logger = logger;
 
   static const int _maxRecentMessageIds = 100;
@@ -29,6 +48,9 @@ class ChatNotificationOrchestrator {
   final ChatNotificationPolicyService _notificationPolicy;
   final LocalNotificationService _localNotificationService;
   final NotificationHandlerService _notificationHandlerService;
+  final IChatRepository _chatRepository;
+  final CurrentUserProvider _currentUserProvider;
+  final NotificationAvatarService _notificationAvatarService;
   final AppLogger _logger;
 
   final ListQueue<String> _recentMessageIds = ListQueue<String>();
@@ -98,6 +120,7 @@ class ChatNotificationOrchestrator {
       return;
     }
 
+    // 1. Deduplication check.
     if (!_rememberMessageId(message.id)) {
       _logger.d(
         'Skipping duplicate local notification candidate',
@@ -106,12 +129,78 @@ class ChatNotificationOrchestrator {
       return;
     }
 
-    if (!_notificationPolicy.shouldNotify(message)) {
+    // 2. Detect if the current user is @mentioned.
+    final String currentUserId = _currentUserProvider.currentUserId;
+    final bool isMention = currentUserId.isNotEmpty &&
+        message.mentionTo.any(
+          (MessageSender s) => s.id == currentUserId,
+        );
+
+    // 3. Look up Chat entity for metadata (type, name, mute status).
+    Chat? chat;
+    try {
+      final chatResult = await _chatRepository.getChatById(message.chatId);
+      chatResult.fold(
+        (failure) {
+          _logger.w(
+            'Failed to look up chat for notification — falling back to direct format',
+            context: <String, dynamic>{
+              'conversationId': message.chatId,
+              'failure': failure.message,
+            },
+          );
+        },
+        (foundChat) {
+          chat = foundChat;
+        },
+      );
+    } catch (error, stackTrace) {
+      _logger.e(
+        'Unexpected error looking up chat for notification',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    // 4. Policy check (self-sent, active conversation, muted, mention override).
+    if (!_notificationPolicy.shouldNotify(
+      message: message,
+      chat: chat,
+      isMention: isMention,
+    )) {
       return;
     }
 
-    final payload = ChatNotificationPayload.fromChatMessage(message);
-    await _localNotificationService.showChatMessageNotification(payload);
+    // 5. Build rich payload.
+    final ChatNotificationPayload payload;
+    if (chat != null) {
+      payload = ChatNotificationPayload.fromMessageWithChat(
+        message: message,
+        chat: chat!,
+        isMention: isMention,
+      );
+    } else {
+      // Fallback: no Chat metadata available — use legacy format.
+      payload = ChatNotificationPayload.fromChatMessage(message);
+    }
+
+    // 6. Download avatar for notification icon (non-blocking, 3s timeout).
+    //    For group chats: use group avatar if available, else sender avatar.
+    //    For direct chats: use sender avatar.
+    final String? avatarUrl = (chat != null &&
+            (chat!.type == ChatType.group || chat!.type == ChatType.channel) &&
+            chat!.avatarUrl != null &&
+            chat!.avatarUrl!.isNotEmpty)
+        ? chat!.avatarUrl
+        : message.sender.avatar;
+    final String? avatarFilePath =
+        await _notificationAvatarService.getAvatarFilePath(avatarUrl);
+
+    // 7. Show local notification with avatar.
+    await _localNotificationService.showChatMessageNotification(
+      payload,
+      avatarFilePath: avatarFilePath,
+    );
   }
 
   bool _rememberMessageId(String messageId) {

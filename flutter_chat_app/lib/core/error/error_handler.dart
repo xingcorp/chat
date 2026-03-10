@@ -313,137 +313,101 @@ class ErrorHandler {
 
   /// **Map App Exception to Failure**
   ///
-  /// Specialized mapping for application-specific exceptions (GraphQL errors, etc.)
-  /// Preserves the original API error message for display to users.
+  /// Maps application-specific exceptions (from GraphQL client, datasources)
+  /// to domain Failure types. Preserves the original backend message as
+  /// `apiMessage` in details so Failure.userMessage can display it directly.
   static Failure _mapAppException(
     app_exceptions.AppException exception,
     String? context,
     Map<String, dynamic>? additionalDetails,
   ) {
-    final originalMessage = _extractCleanMessage(exception.message);
+    final apiMessage = exception.message;
     final code = exception.code;
+    final baseDetails = <String, dynamic>{
+      'context': context,
+      'apiMessage': apiMessage,
+      'backendCode': code,
+      ...?additionalDetails,
+    };
 
     // Authentication exceptions
     if (exception is app_exceptions.AuthException) {
       return AuthenticationFailure(
-        message: exception.message,
+        message: apiMessage,
         code: code ?? 'auth_error',
-        details: {
-          'context': context,
-          'originalMessage': originalMessage,
-          ...?additionalDetails,
-        },
+        details: baseDetails,
       );
     }
 
     // Validation exceptions
     if (exception is app_exceptions.ValidationException) {
       return ValidationFailure(
-        message: exception.message,
+        message: apiMessage,
         code: code ?? 'validation_error',
-        details: {
-          'context': context,
-          'originalMessage': originalMessage,
-          ...?additionalDetails,
-        },
+        details: baseDetails,
       );
     }
 
     // No internet exceptions
     if (exception is app_exceptions.NoInternetException) {
       return ConnectionFailure(
-        message: exception.message,
+        message: apiMessage,
         code: code ?? 'no_internet',
-        details: {
-          'context': context,
-          ...?additionalDetails,
-        },
+        details: baseDetails,
       );
     }
 
     // Cache exceptions
     if (exception is app_exceptions.CacheException) {
       return CacheFailure(
-        message: exception.message,
+        message: apiMessage,
         code: code ?? 'cache_error',
-        details: {
-          'context': context,
-          ...?additionalDetails,
-        },
+        details: baseDetails,
       );
     }
 
     // Timeout exceptions
     if (exception is app_exceptions.TimeoutException) {
       return TimeoutFailure(
-        message: exception.message,
+        message: apiMessage,
         code: code ?? 'timeout',
-        details: {
-          'context': context,
-          ...?additionalDetails,
-        },
+        details: baseDetails,
       );
     }
 
     // Permission exceptions
     if (exception is app_exceptions.PermissionDeniedException) {
       return PermissionFailure(
-        message: exception.message,
+        message: apiMessage,
         code: code ?? 'permission_denied',
-        details: {
-          'context': context,
-          ...?additionalDetails,
-        },
+        details: baseDetails,
+      );
+    }
+
+    // Not found exceptions
+    if (exception is app_exceptions.NotFoundException) {
+      return ServerFailure(
+        message: apiMessage,
+        code: code ?? 'not_found',
+        details: baseDetails,
       );
     }
 
     // Network exceptions
     if (exception is app_exceptions.NetworkException) {
       return NetworkFailure(
-        message: exception.message,
+        message: apiMessage,
         code: code ?? 'network_error',
-        details: {
-          'context': context,
-          ...?additionalDetails,
-        },
+        details: baseDetails,
       );
     }
 
     // ServerException and any other AppException subtypes
-    // Use ServerFailure with 'graphql_error' code to preserve the API message
     return ServerFailure(
-      message: exception.message,
-      code: code ?? 'graphql_error',
-      details: {
-        'context': context,
-        'originalMessage': originalMessage,
-        ...?additionalDetails,
-      },
+      message: apiMessage,
+      code: code ?? 'server_error',
+      details: baseDetails,
     );
-  }
-
-  /// **Extract Clean Message**
-  ///
-  /// Strips prefixes like "GraphQL error: " or "Validation error: "
-  /// to get the original API message for user display.
-  static String _extractCleanMessage(String message) {
-    const prefixes = [
-      'GraphQL error: ',
-      'Validation error: ',
-      'Authentication error: ',
-      'Network error: ',
-      'Login failed: ',
-    ];
-    var cleaned = message;
-    for (final prefix in prefixes) {
-      if (cleaned.startsWith(prefix)) {
-        cleaned = cleaned.substring(prefix.length);
-      }
-    }
-    // Also strip nested AppException toString wrappers
-    final appExRegex = RegExp(r'AppException:\s*\[.*?\]\s*');
-    cleaned = cleaned.replaceAll(appExRegex, '');
-    return cleaned.trim();
   }
 
   /// **Get Recovery Strategy**
@@ -492,6 +456,9 @@ enum RecoveryStrategy {
 }
 
 /// **Timeout Exception**
+///
+/// Used for generic timeout handling (e.g. dart:async.TimeoutException).
+/// Note: App-level timeouts use app_exceptions.TimeoutException instead.
 class TimeoutException implements Exception {
   final String? message;
   final Duration? duration;

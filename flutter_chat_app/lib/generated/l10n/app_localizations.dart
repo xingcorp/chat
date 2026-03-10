@@ -1808,6 +1808,12 @@ abstract class AppLocalizations {
   /// **'Remove reaction'**
   String get removeReaction;
 
+  /// Tooltip shown on reaction badge when current user has reacted
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to remove reaction'**
+  String get holdToRemoveReaction;
+
   /// Reactions label
   ///
   /// In en, this message translates to:
@@ -3499,6 +3505,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paste image from clipboard'**
   String get pasteImageFromClipboard;
+
+  /// Tooltip for more actions button on desktop message hover bar
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get moreActions;
+
+  /// Action to enter selection mode with this message
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get selectMessage;
+
+  /// Notification body for image messages
+  ///
+  /// In en, this message translates to:
+  /// **'📷 Image'**
+  String get notificationContentImage;
+
+  /// Notification body for video messages
+  ///
+  /// In en, this message translates to:
+  /// **'🎬 Video'**
+  String get notificationContentVideo;
+
+  /// Notification body for audio messages
+  ///
+  /// In en, this message translates to:
+  /// **'🎵 Voice message'**
+  String get notificationContentAudio;
+
+  /// Notification body for file messages
+  ///
+  /// In en, this message translates to:
+  /// **'📎 File: {fileName}'**
+  String notificationContentFile(String fileName);
+
+  /// Notification body for sticker messages
+  ///
+  /// In en, this message translates to:
+  /// **'😀 Sticker'**
+  String get notificationContentSticker;
+
+  /// Notification body for location messages
+  ///
+  /// In en, this message translates to:
+  /// **'📍 Location'**
+  String get notificationContentLocation;
+
+  /// Notification body for link messages
+  ///
+  /// In en, this message translates to:
+  /// **'🔗 Link'**
+  String get notificationContentLink;
+
+  /// Notification body format for group chat messages
+  ///
+  /// In en, this message translates to:
+  /// **'{senderName}: {content}'**
+  String notificationGroupBody(String senderName, String content);
+
+  /// Notification body prefix when current user is mentioned in direct chat
+  ///
+  /// In en, this message translates to:
+  /// **'@You {content}'**
+  String notificationMentionPrefix(String content);
+
+  /// Notification body format when current user is mentioned in group chat
+  ///
+  /// In en, this message translates to:
+  /// **'{senderName}: @You {content}'**
+  String notificationGroupMentionBody(String senderName, String content);
 }
 
 class _AppLocalizationsDelegate

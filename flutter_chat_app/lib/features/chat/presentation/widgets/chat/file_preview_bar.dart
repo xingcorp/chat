@@ -28,6 +28,9 @@ class FilePreviewBar extends BaseStatelessWidget {
   /// Callback to open the file picker for adding more files
   final VoidCallback? onAddMore;
 
+  /// Callback when a file card is tapped (for previewing images/videos)
+  final void Function(PendingFile file)? onFileTap;
+
   /// Remaining attachment slots available
   final int remainingSlots;
 
@@ -38,6 +41,7 @@ class FilePreviewBar extends BaseStatelessWidget {
     required this.onRemove,
     required this.onRetry,
     this.onAddMore,
+    this.onFileTap,
     this.remainingSlots = 0,
   });
 
@@ -81,6 +85,9 @@ class FilePreviewBar extends BaseStatelessWidget {
               fileValidationService: fileValidationService,
               onRemove: () => onRemove(file.localId),
               onRetry: () => onRetry(file.localId),
+              onTap: (file.isImage || file.isVideo) && onFileTap != null
+                  ? () => onFileTap!(file)
+                  : null,
             );
           },
         ),

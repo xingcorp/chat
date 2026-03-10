@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_chat_app/core/error/error_handler.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
@@ -75,9 +76,10 @@ abstract class BaseRepository {
         try {
           final localData = await localDataSource();
           return Right(localData);
-        } catch (e) {
-          LogUtils.e('Repository', 'Local data source error: $e');
-          return Left(CacheFailure(message: e.toString()));
+        } catch (localError) {
+          LogUtils.e('Repository', 'Local data source error: $localError');
+          // Use ErrorHandler to properly map the original remote exception
+          return Left(ErrorHandler.mapExceptionToFailure(e, context: 'executeOnlineFirst'));
         }
       }
     } else {
@@ -151,7 +153,7 @@ abstract class BaseRepository {
           return Right(remoteData);
         } catch (e) {
           LogUtils.e('Repository', 'Remote data source error: $e');
-          return Left(ServerFailure(message: e.toString()));
+          return Left(ErrorHandler.mapExceptionToFailure(e, context: 'executeOfflineFirst'));
         }
       } else {
         return const Left(ConnectionFailure(message: 'No internet connection and no cached data'));
@@ -213,7 +215,7 @@ abstract class BaseRepository {
         return Right(remoteData);
       } catch (e) {
         logger.e('Remote data source error: $e');
-        return Left(ServerFailure(message: e.toString()));
+        return Left(ErrorHandler.mapExceptionToFailure(e, context: 'executeRemoteOnly'));
       }
     } else {
       return const Left(ConnectionFailure(message: 'No internet connection'));
@@ -247,7 +249,7 @@ abstract class BaseRepository {
       return Right(localData);
     } catch (e) {
       logger.e('Local data source error: $e');
-      return Left(CacheFailure(message: 'Local data source error: ${e.toString()}'));
+      return Left(ErrorHandler.mapExceptionToFailure(e, context: 'executeLocalOnly'));
     }
   }
 
@@ -278,7 +280,7 @@ abstract class BaseRepository {
       return const Right(null);
     } catch (e) {
       logger.e('Sync operation error: $e');
-      return Left(ServerFailure(message: 'Sync operation failed: ${e.toString()}'));
+      return Left(ErrorHandler.mapExceptionToFailure(e, context: 'executeSyncStrategy'));
     }
   }
 
@@ -347,8 +349,9 @@ abstract class BaseRepository {
         value: e.toString(),
       );
 
-      return Left(UnexpectedFailure(
-        message: 'Unexpected error in $operationName: ${e.toString()}',
+      return Left(ErrorHandler.mapExceptionToFailure(
+        e,
+        context: operationName,
       ));
     } finally {
       // Stop performance trace

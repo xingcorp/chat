@@ -60,17 +60,13 @@ class ServerFailure extends Failure {
 
   @override
   String get userMessage {
-    // GraphQL business errors: show the original API message directly
-    // These are meaningful messages from backend like "Người dùng không tồn tại"
-    if (code == 'graphql_error') {
-      final originalMessage = details?['originalMessage'] as String?;
-      if (originalMessage != null && originalMessage.isNotEmpty) {
-        return originalMessage;
-      }
-      // Fallback: strip known prefixes from technical message
-      return _stripPrefixes(message);
+    // Priority 1: Backend API message (already user-friendly Vietnamese)
+    final apiMessage = details?['apiMessage'] as String?;
+    if (apiMessage != null && apiMessage.isNotEmpty) {
+      return apiMessage;
     }
 
+    // Priority 2: Map by error code
     switch (code) {
       case '500':
         return ErrorMessages.getMessage('server_error');
@@ -83,27 +79,6 @@ class ServerFailure extends Failure {
       default:
         return ErrorMessages.getMessage('server_error');
     }
-  }
-
-  /// Strip known technical prefixes to get clean user-facing message
-  static String _stripPrefixes(String msg) {
-    var cleaned = msg;
-    const prefixes = [
-      'GraphQL error: ',
-      'Server error: ',
-      'HTTP error: ',
-    ];
-    for (final prefix in prefixes) {
-      if (cleaned.startsWith(prefix)) {
-        cleaned = cleaned.substring(prefix.length);
-      }
-    }
-    // Strip nested AppException wrappers
-    final appExRegex = RegExp(r'AppException:\s*\[.*?\]\s*');
-    cleaned = cleaned.replaceAll(appExRegex, '');
-    return cleaned.trim().isEmpty
-        ? ErrorMessages.getMessage('server_error')
-        : cleaned.trim();
   }
 
   @override
@@ -179,6 +154,13 @@ class AuthenticationFailure extends Failure {
 
   @override
   String get userMessage {
+    // Priority 1: Backend API message (already user-friendly Vietnamese)
+    final apiMessage = details?['apiMessage'] as String?;
+    if (apiMessage != null && apiMessage.isNotEmpty) {
+      return apiMessage;
+    }
+
+    // Priority 2: Map by error code
     switch (code) {
       case 'invalid_credentials':
         return ErrorMessages.getMessage('invalid_credentials');
@@ -193,12 +175,6 @@ class AuthenticationFailure extends Failure {
       case 'account_disabled':
         return ErrorMessages.getMessage('account_disabled');
       default:
-        // For backend error codes (e.g. AUTH_ERROR, Office.AccountNotExisted),
-        // show the original API message if available
-        final originalMessage = details?['originalMessage'] as String?;
-        if (originalMessage != null && originalMessage.isNotEmpty) {
-          return originalMessage;
-        }
         return ErrorMessages.getMessage('login_failed');
     }
   }
@@ -221,6 +197,13 @@ class PermissionFailure extends Failure {
 
   @override
   String get userMessage {
+    // Priority 1: Backend API message
+    final apiMessage = details?['apiMessage'] as String?;
+    if (apiMessage != null && apiMessage.isNotEmpty) {
+      return apiMessage;
+    }
+
+    // Priority 2: Map by error code
     switch (code) {
       case 'access_denied':
         return ErrorMessages.getMessage('access_denied');
@@ -253,6 +236,7 @@ class CacheFailure extends Failure {
 
   @override
   String get userMessage {
+    // Cache failures are local — no backend API message needed
     switch (code) {
       case 'storage_full':
         return ErrorMessages.getMessage('storage_full');
@@ -286,10 +270,18 @@ class ValidationFailure extends Failure {
 
   @override
   String get userMessage {
+    // Priority 1: Backend API message
+    final apiMessage = details?['apiMessage'] as String?;
+    if (apiMessage != null && apiMessage.isNotEmpty) {
+      return apiMessage;
+    }
+
+    // Priority 2: Field-level errors (from local validation)
     if (fieldErrors != null && fieldErrors!.isNotEmpty) {
       return fieldErrors!.values.first;
     }
 
+    // Priority 3: Map by error code
     switch (code) {
       case 'invalid_email':
         return ErrorMessages.getMessage('invalid_email');

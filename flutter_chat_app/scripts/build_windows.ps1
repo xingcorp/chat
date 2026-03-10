@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     OXII Chat — Windows Build & Distribution Script
 

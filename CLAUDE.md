@@ -161,6 +161,13 @@ BLoC:       result.fold((failure) => emitError(...), (data) => emit(SuccessState
 - Real-time events only 40% implemented — missing reactions, edit, delete
 - See `.kiro/PROJECT_STATUS_ANALYSIS.md` for full gap analysis
 
+## Windows Build Notes
+
+- **Bash tool + PowerShell**: Bash tool strips `$` from inline PowerShell. Always write `.ps1` script files and run with `powershell -ExecutionPolicy Bypass -File <path>`. Clean up temp scripts after.
+- **PowerShell + Unicode**: Scripts containing Unicode (box-drawing ╔║═, em dash —) require **UTF-8 BOM** encoding or PowerShell will fail to parse.
+- **Firebase C++ SDK**: The SDK zip (~913MB) can get corrupted during extraction. If `cmake -E tar: error: ZIP decompression failed (-5)` appears, delete `build/windows/x64/extracted/` and re-extract using .NET `ZipFile::ExtractToDirectory`.
+- **Inno Setup 6**: Already installed at `C:\Program Files (x86)\Inno Setup 6\ISCC.exe` on the dev machine.
+
 ## Protected Areas
 
 > Never modify files in `src/models/entities/` or backend database schemas unless explicitly asked.

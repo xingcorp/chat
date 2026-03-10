@@ -32,12 +32,16 @@ class FilePreviewCard extends BaseStatelessWidget {
   /// Callback when the retry button is tapped (for failed uploads)
   final VoidCallback? onRetry;
 
+  /// Callback when the card is tapped (for previewing images/videos)
+  final VoidCallback? onTap;
+
   const FilePreviewCard({
     super.key,
     required this.file,
     required this.fileValidationService,
     this.onRemove,
     this.onRetry,
+    this.onTap,
   });
 
   /// Responsive thumbnail size: mobile 48, tablet 52, desktop 60.
@@ -95,7 +99,9 @@ class FilePreviewCard extends BaseStatelessWidget {
   }
 
   Widget _buildThumbnail(BuildContext context, bool isDark, double size) {
-    return Container(
+    final canPreview = onTap != null && !file.isUploading && !file.hasFailed;
+
+    final thumbnail = Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
@@ -108,6 +114,13 @@ class FilePreviewCard extends BaseStatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: _buildThumbnailContent(context, size),
+    );
+
+    if (!canPreview) return thumbnail;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: thumbnail,
     );
   }
 
@@ -133,6 +146,30 @@ class FilePreviewCard extends BaseStatelessWidget {
         );
       }
     }
+
+    // Video thumbnail: show type icon with play overlay
+    if (file.isVideo) {
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          _buildTypeIcon(context),
+          Container(
+            width: 24.0,
+            height: 24.0,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.black.withValues(alpha: 0.5),
+            ),
+            child: const Icon(
+              Icons.play_arrow,
+              size: 16.0,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      );
+    }
+
     return _buildTypeIcon(context);
   }
 
