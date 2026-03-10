@@ -1,5 +1,6 @@
 import 'package:flutter_chat_app/core/network/graphql_client.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:injectable/injectable.dart';
 
 /// Interface for remote user data operations
@@ -68,10 +69,47 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
           phone
           email
           avatar { location }
+          officeUser {
+            id
+            code
+            hrCode
+            major
+            onboardingOn
+            officalWorkingOn
+            fullname
+            phone
+            relativePhone
+            seniority
+            status
+            imageUrls
+            email
+            personalEmail
+            dateOfBirth
+            age
+            officalWorkingOn
+            lastWorkingOn
+            leaveOn
+            address {
+                id
+                province
+                district
+                ward
+                provinceId
+                districtId
+                wardId
+                address
+                latitude
+                longitude
+            }
+            leader{
+              fullname
+            }
+          }
         }
       }
       ''',
       operationName: 'IdentityProfile',
+      fetchPolicy: FetchPolicy.networkOnly,
     );
 
     final profile = result['identityProfile'] as Map<String, dynamic>?;
@@ -79,32 +117,19 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       throw Exception('Failed to get current user profile');
     }
 
-    final userId = (profile['id'] ?? '').toString().trim();
-    if (userId.isEmpty) {
-      return UserModel.fromMap(profile);
-    }
+    // Lấy avatar và name từ officeUser (nguồn chính xác nhất).
+    final officeUser = profile['officeUser'] as Map<String, dynamic>?;
 
-    // Identity profile đang không map đúng avatar/fullname cho OfficeUser,
-    // nên lấy chuẩn từ managementGetEmployee (OfficeUser).
-    Map<String, dynamic>? officeProfile;
-    try {
-      officeProfile = await _fetchOfficeUserProfile(userId);
-    } catch (_) {
-      return UserModel.fromMap(profile);
-    }
-    if (officeProfile == null) {
-      return UserModel.fromMap(profile);
-    }
-
-    final officeFullName = (officeProfile['fullname'] as String?)?.trim();
-    final officeImageUrls = officeProfile['imageUrls'];
+    final officeFullName = (officeUser?['fullname'] as String?)?.trim();
+    final officeImageUrls = officeUser?['imageUrls'];
     final hasOfficeImageUrls =
         officeImageUrls is List && officeImageUrls.isNotEmpty;
 
     final mergedProfile = <String, dynamic>{
       ...profile,
-      ...officeProfile,
-      'id': userId,
+      if (officeUser != null) ...officeUser,
+      // Giữ id gốc từ identityProfile (là officeUser.id đã được backend map).
+      'id': (profile['id'] ?? '').toString().trim(),
       if (officeFullName != null && officeFullName.isNotEmpty) ...{
         'fullname': officeFullName,
         'name': officeFullName,

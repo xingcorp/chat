@@ -1,10 +1,13 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/error/exceptions.dart' as app_exceptions;
 import 'package:flutter_chat_app/core/network/auth/auth_delegate.dart';
 import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
 import 'package:flutter_chat_app/core/network/network_info.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// Abstract interface for GraphQL client operations
 abstract class GraphQLClientWrapper {
@@ -122,14 +125,15 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
       authLink.concat(httpLink),
     );
 
-    // Initialize Hive for caching
-    await initHiveForFlutter();
+    // Initialize Hive for caching — use AppSupport directory to avoid
+    // OneDrive/cloud-sync locking the file on Windows.
+    final store = await _openHiveStore();
 
     // Create GraphQL client
     final client = GraphQLClient(
       link: link,
       cache: GraphQLCache(
-        store: HiveStore(),
+        store: store,
       ),
       defaultPolicies: DefaultPolicies(
         query: Policies(
@@ -226,7 +230,23 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     QueryOptions options, {
     bool didRetry = false,
   }) async {
-    final result = await _client.query(options);
+    QueryResult result;
+    try {
+      result = await _client.query(options);
+    } on FileSystemException catch (e) {
+      // Hive cache file closed/locked (e.g. OneDrive sync) — retry with
+      // networkOnly to bypass the broken cache and avoid cascade crashes.
+      _logger.warning(
+        'Hive cache error during query, retrying networkOnly',
+        {'operation': options.operationName, 'error': e.message},
+      );
+      result = await _client.query(QueryOptions(
+        document: options.document,
+        variables: options.variables,
+        fetchPolicy: FetchPolicy.networkOnly,
+        operationName: options.operationName,
+      ));
+    }
 
     if (result.hasException) {
       _logOperationException(
@@ -329,7 +349,23 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
     MutationOptions options, {
     bool didRetry = false,
   }) async {
-    final result = await _client.mutate(options);
+    QueryResult result;
+    try {
+      result = await _client.mutate(options);
+    } on FileSystemException catch (e) {
+      // Hive cache file closed/locked — retry with networkOnly to bypass
+      // the broken cache and avoid cascade crashes.
+      _logger.warning(
+        'Hive cache error during mutation, retrying networkOnly',
+        {'operation': options.operationName, 'error': e.message},
+      );
+      result = await _client.mutate(MutationOptions(
+        document: options.document,
+        variables: options.variables,
+        fetchPolicy: FetchPolicy.networkOnly,
+        operationName: options.operationName,
+      ));
+    }
 
     if (result.hasException) {
       _logOperationException(
@@ -537,6 +573,38 @@ class GraphQLClientWrapperImpl implements GraphQLClientWrapper {
         'variables': _redactVariables(variables),
       },
     );
+  }
+
+  /// Opens HiveStore in a safe directory that won't be cloud-synced.
+  ///
+  /// On desktop (Windows/macOS/Linux), [getApplicationSupportDirectory] returns
+  /// a path outside OneDrive/iCloud/Dropbox (e.g. `%APPDATA%` on Windows).
+  /// This prevents OneDrive from locking the Hive file during sync, which
+  /// was causing repeated `FileSystemException: File closed` errors.
+  ///
+  /// Falls back to the default [initHiveForFlutter] + [HiveStore()] on web
+  /// or if the directory lookup fails.
+  static Future<Store> _openHiveStore() async {
+    if (!kIsWeb) {
+      try {
+        final appSupportDir = await getApplicationSupportDirectory();
+        final hivePath = '${appSupportDir.path}${Platform.pathSeparator}graphql_cache';
+
+        // Ensure directory exists
+        final dir = Directory(hivePath);
+        if (!dir.existsSync()) {
+          dir.createSync(recursive: true);
+        }
+
+        return await HiveStore.open(path: hivePath);
+      } catch (_) {
+        // Fall through to default
+      }
+    }
+
+    // Web or fallback: use default Hive location
+    await initHiveForFlutter();
+    return HiveStore();
   }
 
   /// Safely read env value — returns empty string if not available.

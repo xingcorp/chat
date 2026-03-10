@@ -2122,6 +2122,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       if (!_hasMarkedAsReadOnOpen && state.messages.isNotEmpty) {
         _hasMarkedAsReadOnOpen = true;
         _messageBloc.add(MarkChatAsRead(widget.chatId));
+        // Also notify ChatBloc so the event bus updates the taskbar badge
+        _chatBloc.add(ChatEvent.markMessagesAsRead(
+          chatId: widget.chatId,
+          messageIds: const <String>[],
+        ));
       }
 
       // Mark as read when new real-time messages arrive and user is at bottom
@@ -2129,6 +2134,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
           !_showScrollToBottom &&
           state.messages.isNotEmpty) {
         _messageBloc.add(MarkChatAsRead(widget.chatId));
+        // Also notify ChatBloc so the event bus updates the taskbar badge
+        _chatBloc.add(ChatEvent.markMessagesAsRead(
+          chatId: widget.chatId,
+          messageIds: const <String>[],
+        ));
       }
 
       _chatDraftBloc.add(
