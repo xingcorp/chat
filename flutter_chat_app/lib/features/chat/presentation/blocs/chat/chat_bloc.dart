@@ -1120,7 +1120,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     }
 
     final existingChat = currentState.chats[idx];
-    final isIncoming = message.sender.id != _currentUserProvider.currentUserId;
+    final currentUserId = _currentUserProvider.currentUserId;
+    final isIncoming =
+        currentUserId.isNotEmpty && message.sender.id != currentUserId;
+
+    if (!isIncoming) {
+      logger.d(
+          '[ChatBloc] Skipping unread increment for own message: '
+          'sender=${message.sender.id}, currentUserId=$currentUserId');
+    }
 
     final preview = _formatMessagePreview(message, existingChat.members);
 
@@ -1139,15 +1147,19 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
 
     emit(_preserveLoaded(currentState, chats: updatedChats));
 
-    // Fire-and-forget: persist to local cache (Isar)
-    unawaited(
-      _persistIncomingMessage(PersistIncomingMessageParams(
-        message: message,
-        updatedChat: updatedChat,
-      )).then((_) {}, onError: (Object e) {
-        logger.w('Failed to persist incoming message: $e');
-      }),
-    );
+    // Fire-and-forget: persist to local cache (Isar).
+    // Only persist incoming messages — self-sent echoes from the socket are
+    // already persisted by the send flow (MessageRepositoryImpl.sendMessage).
+    if (isIncoming) {
+      unawaited(
+        _persistIncomingMessage(PersistIncomingMessageParams(
+          message: message,
+          updatedChat: updatedChat,
+        )).then((_) {}, onError: (Object e) {
+          logger.w('Failed to persist incoming message: $e');
+        }),
+      );
+    }
 
     // Notify event bus for host app
     if (isIncoming) {
@@ -1250,7 +1262,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   void _applyReadReceipt(MessageReadReceipt receipt) {
     if (state is! _Loaded) return;
 
-    if (receipt.readerId != _currentUserProvider.currentUserId) {
+    final currentUserId = _currentUserProvider.currentUserId;
+    if (currentUserId.isEmpty ||
+        receipt.readerId != currentUserId) {
       return;
     }
 

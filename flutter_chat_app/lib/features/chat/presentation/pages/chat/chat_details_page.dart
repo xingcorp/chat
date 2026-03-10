@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
+import 'package:flutter_chat_app/core/services/chat_conversation_selection_service.dart';
 import 'package:flutter_chat_app/core/services/emoji_shortcode_service.dart';
 import 'package:flutter_chat_app/core/services/emoticon_parser_service.dart';
 import 'package:flutter_chat_app/core/services/chat_active_conversation_tracker.dart';
@@ -297,6 +298,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     // conversationId and dispatches a fresh LoadConversationDetail.
     if (widget.chatId.contains('-')) {
       _convDetailBloc.add(LoadConversationDetail(chatId: widget.chatId));
+    } else {
+      // Bootstrap _chat from ChatBloc state so the header shows the contact
+      // name and presence immediately, instead of generic "Trò chuyện".
+      _bootstrapChatForPendingDirect();
     }
     _setupRealtimeSubscriptions();
     _chatDraftBloc.add(
@@ -341,6 +346,36 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     } catch (_) {
       return chat.participantIds.firstOrNull;
     }
+  }
+
+  /// Bootstrap [_chat] from [ChatBloc] state for pending direct chats so the
+  /// header shows the contact name and presence right away, rather than the
+  /// generic "Trò chuyện" fallback.
+  ///
+  /// The Chat object was already added to ChatBloc via
+  /// `ChatEvent.chatUpdated(chat:)` when the pending direct chat was created.
+  void _bootstrapChatForPendingDirect() {
+    // Only for temp IDs (numeric, no hyphens)
+    if (widget.chatId.contains('-')) return;
+
+    final chatState = _chatBloc.state;
+    final chats = chatState.maybeMap(
+      loaded: (loaded) => loaded.chats,
+      orElse: () => <Chat>[],
+    );
+
+    final chat = chats
+        .cast<Chat?>()
+        .firstWhere((c) => c?.id == widget.chatId, orElse: () => null);
+    if (chat == null) return;
+
+    _chat = chat;
+    _messageBloc.setTransformContext(
+      currentUserId: _currentUserId,
+      isGroupChat: chat.type == ChatType.group,
+      conversationName: chat.name,
+    );
+    _messageBloc.add(UpdateConversationMembers(chat.members));
   }
 
   void _handleControllerChanges() {
@@ -2216,12 +2251,31 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       // detects wasPendingDirect and updates state.chatId to the real server
       // conversation ID (clearing receiverId). Reload conversation detail with
       // the real ID so the header gets full member info and presence.
+      //
+      // Use temp-ID detection (!contains('-')) instead of widget.receiverId
+      // because receiverId may have been resolved from ChatBloc state rather
+      // than passed via the widget parameter.
+      final wasTempId = !widget.chatId.contains('-');
       if (!_hasPendingDirectResolved &&
-          widget.receiverId != null &&
-          state.receiverId == null &&
-          state.chatId != widget.chatId) {
+          wasTempId &&
+          state.chatId != widget.chatId &&
+          state.chatId.contains('-')) {
         _hasPendingDirectResolved = true;
         _convDetailBloc.add(LoadConversationDetail(chatId: state.chatId));
+
+        // Update active conversation tracker to the REAL chatId so
+        // notifications for this conversation are properly suppressed.
+        // Without this, the tracker still holds the temp numeric ID while
+        // socket echoes arrive with the real UUID → notification fires.
+        _chatActiveConversationTracker
+            ?.setActiveConversation(state.chatId);
+
+        // Update the desktop selection service so ChatHomePage can re-key
+        // the detail pane with the real conversationId.
+        if (getIt.isRegistered<ChatConversationSelectionService>()) {
+          getIt<ChatConversationSelectionService>()
+              .selectConversation(state.chatId);
+        }
 
         // Notify ChatBloc that the pending direct chat has been resolved
         // to a real server conversation. This removes the temp chat from
