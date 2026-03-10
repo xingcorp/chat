@@ -1917,4 +1917,42 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get selectMessage => 'Chọn';
+
+  @override
+  String get notificationContentImage => '📷 Hình ảnh';
+
+  @override
+  String get notificationContentVideo => '🎬 Video';
+
+  @override
+  String get notificationContentAudio => '🎵 Tin nhắn thoại';
+
+  @override
+  String notificationContentFile(String fileName) {
+    return '📎 Tệp: $fileName';
+  }
+
+  @override
+  String get notificationContentSticker => '😀 Sticker';
+
+  @override
+  String get notificationContentLocation => '📍 Vị trí';
+
+  @override
+  String get notificationContentLink => '🔗 Liên kết';
+
+  @override
+  String notificationGroupBody(String senderName, String content) {
+    return '$senderName: $content';
+  }
+
+  @override
+  String notificationMentionPrefix(String content) {
+    return '@Bạn $content';
+  }
+
+  @override
+  String notificationGroupMentionBody(String senderName, String content) {
+    return '$senderName: @Bạn $content';
+  }
 }

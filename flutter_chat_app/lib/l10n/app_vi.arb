@@ -1049,5 +1049,16 @@
 
   "moreActions": "Thêm hành động",
 
-  "selectMessage": "Chọn"
+  "selectMessage": "Chọn",
+
+  "notificationContentImage": "📷 Hình ảnh",
+  "notificationContentVideo": "🎬 Video",
+  "notificationContentAudio": "🎵 Tin nhắn thoại",
+  "notificationContentFile": "📎 Tệp: {fileName}",
+  "notificationContentSticker": "😀 Sticker",
+  "notificationContentLocation": "📍 Vị trí",
+  "notificationContentLink": "🔗 Liên kết",
+  "notificationGroupBody": "{senderName}: {content}",
+  "notificationMentionPrefix": "@Bạn {content}",
+  "notificationGroupMentionBody": "{senderName}: @Bạn {content}"
 }

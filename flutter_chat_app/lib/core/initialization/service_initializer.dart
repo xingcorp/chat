@@ -12,6 +12,7 @@ import 'package:flutter_chat_app/core/services/chat_notification_orchestrator.da
 import 'package:flutter_chat_app/core/services/chat_message_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/core/services/desktop_badge_service.dart';
 import 'package:flutter_chat_app/core/services/firebase_service_manager.dart';
 import 'package:flutter_chat_app/core/services/offline_queue_service.dart';
 import 'package:flutter_chat_app/core/services/performance_service.dart';
@@ -144,6 +145,16 @@ class ServiceInitializer {
 
     final chatMessageService = GetIt.I<ChatMessageService>();
     await chatMessageService.initialize();
+
+    // Initialize desktop taskbar/dock badge (Windows + macOS).
+    try {
+      if (GetIt.I.isRegistered<DesktopBadgeService>()) {
+        GetIt.I<DesktopBadgeService>().initialize();
+        logger.i('DesktopBadgeService initialized');
+      }
+    } catch (e) {
+      logger.e('DesktopBadgeService initialization failed', error: e);
+    }
 
     _initializeOfflineQueueService(logger);
   }

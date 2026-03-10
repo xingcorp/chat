@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include "desktop_badge_plugin.h"
 #include "flutter/generated_plugin_registrant.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
@@ -25,6 +26,11 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+
+  // Register the desktop badge overlay plugin (taskbar unread count).
+  DesktopBadgePlugin::RegisterWithRegistrar(
+      flutter_controller_->engine()->GetRegistrar<flutter::PluginRegistrarWindows>());
+
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {

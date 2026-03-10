@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/formatters/relative_time_formatter.dart';
+import 'package:flutter_chat_app/core/services/animation_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/presence_service.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -198,16 +199,88 @@ class ChatConversationTile extends StatelessWidget {
   }
 }
 
-class _UnreadBadge extends StatelessWidget {
+class _UnreadBadge extends StatefulWidget {
   final int count;
 
   const _UnreadBadge({required this.count});
 
   @override
-  Widget build(BuildContext context) {
-    final display = count > 99 ? '99+' : count.toString();
+  State<_UnreadBadge> createState() => _UnreadBadgeState();
+}
 
-    return Container(
+class _UnreadBadgeState extends State<_UnreadBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+  late final Animation<double> _opacityAnimation;
+
+  /// Whether device supports micro-animations.
+  bool _useMicroAnimations = true;
+
+  /// Whether this is the first build (for appear animation).
+  bool _isFirstBuild = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Resolve animation config from AnimationService (device-aware)
+    final animService = GetIt.instance.isRegistered<AnimationService>()
+        ? GetIt.instance<AnimationService>()
+        : null;
+    _useMicroAnimations = animService?.config.useMicroAnimations ?? true;
+    final duration =
+        animService?.config.fastDuration ?? const Duration(milliseconds: 200);
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: duration,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
+      ),
+    );
+
+    // Play appear animation on first build
+    if (_useMicroAnimations) {
+      _controller.forward();
+    } else {
+      _controller.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _UnreadBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!_useMicroAnimations) return;
+
+    // Bounce when count increases
+    if (widget.count > oldWidget.count && !_isFirstBuild) {
+      _controller.forward(from: 0.6);
+    }
+
+    _isFirstBuild = false;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final display = widget.count > 99 ? '99+' : widget.count.toString();
+
+    final badge = Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 6,
         vertical: 2,
@@ -225,6 +298,18 @@ class _UnreadBadge extends StatelessWidget {
           fontSize: 11,
         ),
         textAlign: TextAlign.center,
+      ),
+    );
+
+    if (!_useMicroAnimations) {
+      return badge;
+    }
+
+    return FadeTransition(
+      opacity: _opacityAnimation,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: badge,
       ),
     );
   }

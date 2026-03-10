@@ -9,6 +9,7 @@ import 'package:flutter_chat_app/core/services/local_notification_service.dart';
 import 'package:flutter_chat_app/core/services/notification_handler_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
 
 /// Registers notification infrastructure after auto-generated DI is ready.
 void registerNotificationModule(GetIt getIt) {
@@ -49,6 +50,8 @@ void registerNotificationModule(GetIt getIt) {
         notificationPolicy: getIt<ChatNotificationPolicyService>(),
         localNotificationService: getIt<LocalNotificationService>(),
         notificationHandlerService: getIt<NotificationHandlerService>(),
+        chatRepository: getIt<IChatRepository>(),
+        currentUserProvider: getIt<CurrentUserProvider>(),
         logger: getIt<AppLogger>(),
       ),
     );

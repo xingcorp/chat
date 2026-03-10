@@ -3392,5 +3392,78 @@
   "selectMessage": "Select",
   "@selectMessage": {
     "description": "Action to enter selection mode with this message"
+  },
+
+  "notificationContentImage": "📷 Image",
+  "@notificationContentImage": {
+    "description": "Notification body for image messages"
+  },
+  "notificationContentVideo": "🎬 Video",
+  "@notificationContentVideo": {
+    "description": "Notification body for video messages"
+  },
+  "notificationContentAudio": "🎵 Voice message",
+  "@notificationContentAudio": {
+    "description": "Notification body for audio messages"
+  },
+  "notificationContentFile": "📎 File: {fileName}",
+  "@notificationContentFile": {
+    "description": "Notification body for file messages",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "report.pdf"
+      }
+    }
+  },
+  "notificationContentSticker": "😀 Sticker",
+  "@notificationContentSticker": {
+    "description": "Notification body for sticker messages"
+  },
+  "notificationContentLocation": "📍 Location",
+  "@notificationContentLocation": {
+    "description": "Notification body for location messages"
+  },
+  "notificationContentLink": "🔗 Link",
+  "@notificationContentLink": {
+    "description": "Notification body for link messages"
+  },
+  "notificationGroupBody": "{senderName}: {content}",
+  "@notificationGroupBody": {
+    "description": "Notification body format for group chat messages",
+    "placeholders": {
+      "senderName": {
+        "type": "String",
+        "example": "Nguyen Van A"
+      },
+      "content": {
+        "type": "String",
+        "example": "Hello everyone"
+      }
+    }
+  },
+  "notificationMentionPrefix": "@You {content}",
+  "@notificationMentionPrefix": {
+    "description": "Notification body prefix when current user is mentioned in direct chat",
+    "placeholders": {
+      "content": {
+        "type": "String",
+        "example": "please check this"
+      }
+    }
+  },
+  "notificationGroupMentionBody": "{senderName}: @You {content}",
+  "@notificationGroupMentionBody": {
+    "description": "Notification body format when current user is mentioned in group chat",
+    "placeholders": {
+      "senderName": {
+        "type": "String",
+        "example": "Nguyen Van A"
+      },
+      "content": {
+        "type": "String",
+        "example": "please review this PR"
+      }
+    }
   }
 }

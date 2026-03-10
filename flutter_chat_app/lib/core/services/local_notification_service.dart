@@ -107,7 +107,7 @@ class LocalNotificationService {
         ),
       ),
       iOS: DarwinNotificationDetails(
-        subtitle: payload.senderName,
+        subtitle: payload.macosSubtitle,
         threadIdentifier: payload.conversationId,
         presentAlert: true,
         presentBanner: true,
@@ -116,7 +116,7 @@ class LocalNotificationService {
         presentSound: true,
       ),
       macOS: DarwinNotificationDetails(
-        subtitle: payload.senderName,
+        subtitle: payload.macosSubtitle,
         threadIdentifier: payload.conversationId,
         presentAlert: true,
         presentBanner: true,

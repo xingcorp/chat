@@ -1916,4 +1916,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectMessage => 'Select';
+
+  @override
+  String get notificationContentImage => '📷 Image';
+
+  @override
+  String get notificationContentVideo => '🎬 Video';
+
+  @override
+  String get notificationContentAudio => '🎵 Voice message';
+
+  @override
+  String notificationContentFile(String fileName) {
+    return '📎 File: $fileName';
+  }
+
+  @override
+  String get notificationContentSticker => '😀 Sticker';
+
+  @override
+  String get notificationContentLocation => '📍 Location';
+
+  @override
+  String get notificationContentLink => '🔗 Link';
+
+  @override
+  String notificationGroupBody(String senderName, String content) {
+    return '$senderName: $content';
+  }
+
+  @override
+  String notificationMentionPrefix(String content) {
+    return '@You $content';
+  }
+
+  @override
+  String notificationGroupMentionBody(String senderName, String content) {
+    return '$senderName: @You $content';
+  }
 }
