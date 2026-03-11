@@ -27,12 +27,12 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, production]
     paths:
       - 'flutter_chat_app/**'
       - '.github/workflows/**'
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, production]
     paths:
       - 'flutter_chat_app/**'
   workflow_dispatch:
