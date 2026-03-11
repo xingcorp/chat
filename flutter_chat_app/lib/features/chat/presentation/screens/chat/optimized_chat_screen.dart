@@ -13,6 +13,7 @@ import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_st
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter_chat_app/core/services/user_cache_service.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 
 /// Extension for backward compatibility with MessagesLoaded state checks
@@ -373,8 +374,11 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
       currentUserId: currentUserId,
       isGroupChat: isGroupChat,
       members: chatForCurrentConversation?.members ?? const [],
+      userCache: GetIt.instance.isRegistered<UserCacheService>()
+          ? GetIt.instance<UserCacheService>()
+          : null,
     );
-    
+
     final widgets = List<Widget>.generate(messages.length, (index) {
       final message = messages[index];
       final uiState = uiStates[index];
@@ -630,6 +634,9 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                   isGroupChat: isGroupChat,
                   members:
                       chatForCurrentConversation?.members ?? const [],
+                  userCache: GetIt.instance.isRegistered<UserCacheService>()
+                      ? GetIt.instance<UserCacheService>()
+                      : null,
                 );
 
                 // Use ListView.builder with key-based items and AutoScrollController

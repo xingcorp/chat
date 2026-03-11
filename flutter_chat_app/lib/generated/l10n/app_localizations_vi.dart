@@ -1946,6 +1946,12 @@ class AppLocalizationsVi extends AppLocalizations {
   String get selectMessage => 'Chọn';
 
   @override
+  String get frequentlyUsed => 'Hay dùng';
+
+  @override
+  String get defaultEmojis => 'Biểu cảm';
+
+  @override
   String get notificationContentImage => '📷 Hình ảnh';
 
   @override

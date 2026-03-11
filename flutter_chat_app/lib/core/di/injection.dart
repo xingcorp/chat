@@ -28,6 +28,7 @@ import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_chat_app/core/utils/logger.dart';
+import 'package:flutter_chat_app/core/services/user_cache_service.dart';
 
 import 'package:flutter_chat_app/core/network/connectivity/connectivity_service.dart'
     as net_connectivity;
@@ -129,6 +130,11 @@ Future<void> configureDependencies() async {
     // Step 3: Initialize auto-generated dependencies (feature services)
     getIt.init(environment: 'standalone');
     registerNotificationModule(getIt);
+
+    // Step 3.1: Register UserCacheService (global in-memory user name cache)
+    if (!getIt.isRegistered<UserCacheService>()) {
+      getIt.registerLazySingleton<UserCacheService>(() => UserCacheService());
+    }
 
     final bool useFirebaseBackedMonitoring =
         FirebaseConfigManager.supportsConfiguredPlatform;

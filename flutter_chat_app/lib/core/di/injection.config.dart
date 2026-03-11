@@ -207,6 +207,7 @@ import '../services/desktop_badge_service.dart' as _i528;
 import '../services/device_capability_service.dart' as _i98;
 import '../services/foreground_sync_service.dart' as _i920;
 import '../services/frequent_reaction_service.dart' as _i537;
+import '../services/user_cache_service.dart' as _i999;
 import '../services/graphql_subscription_service.dart' as _i98;
 import '../services/image_editor_service.dart' as _i930;
 import '../services/integration_service.dart' as _i808;
@@ -777,6 +778,8 @@ extension GetItInjectableX on _i174.GetIt {
           addReaction: gh<_i409.AddReactionUseCase>(),
           removeReaction: gh<_i539.RemoveReactionUseCase>(),
           attachmentRepository: gh<_i817.IAttachmentRepository>(),
+          messageRepository: gh<_i572.IMessageRepository>(),
+          userCacheService: gh<_i999.UserCacheService>(),
           cacheSyncStrategy: gh<_i514.CacheSyncStrategy>(),
           realtimeService: gh<_i301.RealtimeService>(),
           locationService: gh<_i669.ILocationService>(),

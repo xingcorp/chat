@@ -81,6 +81,7 @@ import 'package:flutter_chat_app/core/services/chat_conversation_selection_servi
 import 'package:flutter_chat_app/core/services/desktop_badge_service.dart';
 import 'package:flutter_chat_app/core/services/foreground_sync_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/core/services/user_cache_service.dart';
 import 'package:flutter_chat_app/core/services/local_notification_service.dart';
 import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_local_datasource.dart';
 import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
@@ -169,6 +170,12 @@ class ChatModuleInjection {
 
       registerNotificationModule(_getIt);
       lap('Step6.5: Notification module');
+
+      // Step 6.6: Register UserCacheService (global in-memory user name cache)
+      if (!_getIt.isRegistered<UserCacheService>()) {
+        _getIt.registerLazySingleton<UserCacheService>(() => UserCacheService());
+      }
+      lap('Step6.6: UserCacheService');
 
       // Step 7: Set AppConfig overrides for package mode
       AppConfig.setOverrides({
@@ -436,7 +443,17 @@ class ChatModuleInjection {
           '[ChatModuleInjection] Failed to clear UserLocalDataSource: $e');
     }
 
-    // ── Step 6.2: Clear AppCacheManager (memory + Hive + media/thumbnail) ──
+    // ── Step 6.2: Clear UserCacheService (in-memory user name cache) ──
+    try {
+      if (_getIt.isRegistered<UserCacheService>()) {
+        _getIt<UserCacheService>().clear();
+        _logger.d('[ChatModuleInjection] UserCacheService cleared');
+      }
+    } catch (e) {
+      _logger.d('[ChatModuleInjection] Failed to clear UserCacheService: $e');
+    }
+
+    // ── Step 6.3: Clear AppCacheManager (memory + Hive + media/thumbnail) ──
     // Without this, cached API responses, user avatars, and media files
     // from old user persist and leak into new user's session.
     try {

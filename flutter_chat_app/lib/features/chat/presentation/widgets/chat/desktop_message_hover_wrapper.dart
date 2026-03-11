@@ -6,11 +6,12 @@ import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_action_callbacks.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_hover_action_bar.dart';
 
-/// **DESKTOP MESSAGE HOVER WRAPPER**
+/// **DESKTOP MESSAGE HOVER WRAPPER** (Lark-style)
 ///
 /// Wraps a [MessageItem] to add desktop hover action bar support.
-/// On desktop, hovering over a message shows a floating toolbar above
-/// the message bubble with quick reactions and action buttons.
+/// On desktop, hovering over a message shows a compact floating toolbar
+/// **beside** the message bubble — to the right for other users' messages,
+/// and to the left for the current user's messages.
 ///
 /// On mobile (or when [isDesktop] is false), this widget is a transparent
 /// pass-through with zero overhead — it simply returns [child] directly.
@@ -18,6 +19,7 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message
 /// **Key behaviors**:
 /// - Uses [MouseRegion] for hover detection
 /// - Uses [OverlayEntry] to render the action bar above the scroll container
+/// - Uses [bubbleKey] to measure the actual bubble position for precise placement
 /// - 200ms hide delay prevents flicker when cursor moves between message and bar
 /// - Only one action bar is visible at a time (singleton pattern)
 /// - Scroll events dismiss the action bar immediately
@@ -31,8 +33,9 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message
 ///   isTextMessage: uiState.contentType == ContentType.text,
 ///   enabled: !_isSelectionMode && uiState.message != null,
 ///   quickReactions: ['👍', '❤️', '😂', '😮', '😢', '😡'],
+///   bubbleKey: bubbleKey,
 ///   callbacks: MessageActionCallbacks(...),
-///   child: MessageItem(...),
+///   child: MessageItem(bubbleKey: bubbleKey, ...),
 /// )
 /// ```
 class DesktopMessageHoverWrapper extends BaseStatefulWidget {
@@ -51,11 +54,16 @@ class DesktopMessageHoverWrapper extends BaseStatefulWidget {
   /// Whether the current screen width is desktop size
   final bool isDesktop;
 
-  /// Quick reaction emojis to show in the action bar
+  /// Quick reaction emojis to show in the emoji quick-picker popup
   final List<String> quickReactions;
 
   /// Whether hover actions are enabled (false in selection mode, deleted msgs)
   final bool enabled;
+
+  /// Key attached to the message bubble [RepaintBoundary] inside [MessageItem].
+  /// Used to measure the bubble's exact position for side-placement.
+  /// When null, falls back to legacy above/below positioning.
+  final GlobalKey? bubbleKey;
 
   const DesktopMessageHoverWrapper({
     super.key,
@@ -66,6 +74,7 @@ class DesktopMessageHoverWrapper extends BaseStatefulWidget {
     required this.isDesktop,
     required this.quickReactions,
     this.enabled = true,
+    this.bubbleKey,
   });
 
   @override
@@ -90,8 +99,11 @@ class _DesktopMessageHoverWrapperState
   bool _isMouseOnBar = false;
   final GlobalKey _moreButtonKey = GlobalKey();
 
-  /// Height of the action bar (estimated for positioning)
-  static const double _barHeight = 40.0;
+  /// Compact bar estimated height (4 icon buttons + padding).
+  static const double _barHeight = 36.0;
+
+  /// Compact bar estimated width (like + divider + 3 icons + padding).
+  static const double _barWidth = 150.0;
 
   /// Gap between action bar and message bubble
   static const double _barGap = 4.0;
@@ -201,11 +213,12 @@ class _DesktopMessageHoverWrapperState
     final messageSize = renderBox.size;
     final screenSize = MediaQuery.of(context).size;
 
-    // Calculate position
+    // Calculate position — prefer beside the bubble (Lark-style)
     final positionData = _calculateBarPosition(
       messagePosition: messagePosition,
       messageSize: messageSize,
       screenSize: screenSize,
+      overlayRenderBox: overlayRenderBox,
     );
 
     _overlayEntry = OverlayEntry(
@@ -219,11 +232,19 @@ class _DesktopMessageHoverWrapperState
           builder: (context, value, child) => Opacity(
             opacity: value,
             child: Transform.translate(
-              offset: Offset(0, (1 - value) * 4),
+              // Slide in from the side (right for others, left for mine)
+              offset: positionData.isBesideBubble
+                  ? Offset(
+                      widget.isCurrentUser
+                          ? -(1 - value) * 4
+                          : (1 - value) * 4,
+                      0,
+                    )
+                  : Offset(0, (1 - value) * 4), // fallback: slide down
               child: child,
             ),
           ),
-          child: MessageHoverActionBar(
+          child: CompactActionBar(
             callbacks: widget.callbacks,
             isCurrentUser: widget.isCurrentUser,
             isTextMessage: widget.isTextMessage,
@@ -244,33 +265,84 @@ class _DesktopMessageHoverWrapperState
     required Offset messagePosition,
     required Size messageSize,
     required Size screenSize,
+    required RenderBox overlayRenderBox,
   }) {
-    // Horizontal: align with the message bubble edge
+    // -----------------------------------------------------------------------
+    // STRATEGY 1: Use bubbleKey to position BESIDE the bubble (Lark-style)
+    // -----------------------------------------------------------------------
+    RenderBox? bubbleRenderBox;
+    if (widget.bubbleKey?.currentContext != null) {
+      final renderObj = widget.bubbleKey!.currentContext!.findRenderObject();
+      if (renderObj is RenderBox && renderObj.hasSize) {
+        bubbleRenderBox = renderObj;
+      }
+    }
+
+    if (bubbleRenderBox != null) {
+      final bubblePos = bubbleRenderBox.localToGlobal(
+        Offset.zero,
+        ancestor: overlayRenderBox,
+      );
+      final bubbleSize = bubbleRenderBox.size;
+
+      double dx;
+      double dy = bubblePos.dy - _barGap; // Align top, slight offset up
+      bool isBeside = true;
+
+      if (!widget.isCurrentUser) {
+        // Others' messages: place bar to the RIGHT of the bubble
+        dx = bubblePos.dx + bubbleSize.width + _barGap;
+
+        // If not enough space on the right → fallback ABOVE
+        if (dx + _barWidth > screenSize.width - AppDimens.paddingSmall) {
+          dx = bubblePos.dx;
+          dy = bubblePos.dy - _barHeight - _barGap;
+          isBeside = false;
+        }
+      } else {
+        // My messages: place bar to the LEFT of the bubble
+        dx = bubblePos.dx - _barWidth - _barGap;
+
+        // If not enough space on the left → fallback ABOVE
+        if (dx < AppDimens.paddingSmall) {
+          dx = bubblePos.dx + bubbleSize.width - _barWidth;
+          dy = bubblePos.dy - _barHeight - _barGap;
+          isBeside = false;
+        }
+      }
+
+      // Clamp to screen edges
+      dx = dx.clamp(
+        AppDimens.paddingSmall,
+        screenSize.width - _barWidth - AppDimens.paddingSmall,
+      );
+      dy = dy.clamp(
+        AppDimens.paddingSmall,
+        screenSize.height - _barHeight - AppDimens.paddingSmall,
+      );
+
+      return _BarPosition(dx, dy, isBesideBubble: isBeside);
+    }
+
+    // -----------------------------------------------------------------------
+    // STRATEGY 2: Fallback — legacy above/below positioning (no bubbleKey)
+    // -----------------------------------------------------------------------
     double dx;
     if (widget.isCurrentUser) {
-      // Own messages: right-align the bar with the message right edge
-      // Estimate bar width (~360px for 6 emojis + 3 action buttons)
-      const estimatedBarWidth = 360.0;
-      dx = messagePosition.dx + messageSize.width - estimatedBarWidth;
-      // Clamp to screen
+      dx = messagePosition.dx + messageSize.width - _barWidth;
       if (dx < AppDimens.paddingSmall) {
         dx = AppDimens.paddingSmall;
       }
     } else {
-      // Others' messages: left-align with avatar slot offset
       dx = messagePosition.dx + AppDimens.paddingSmall;
     }
 
-    // Clamp right edge
-    const estimatedBarWidth = 360.0;
-    if (dx + estimatedBarWidth > screenSize.width - AppDimens.paddingSmall) {
-      dx = screenSize.width - estimatedBarWidth - AppDimens.paddingSmall;
+    if (dx + _barWidth > screenSize.width - AppDimens.paddingSmall) {
+      dx = screenSize.width - _barWidth - AppDimens.paddingSmall;
     }
 
     // Vertical: prefer above the message
     double dy = messagePosition.dy - _barHeight - _barGap;
-
-    // If not enough space above, place below
     if (dy < AppDimens.paddingSmall) {
       dy = messagePosition.dy + messageSize.height + _barGap;
     }
@@ -343,10 +415,14 @@ class _DesktopMessageHoverWrapperState
   }
 }
 
-/// Simple position data class for the action bar overlay.
+/// Position data class for the action bar overlay.
 class _BarPosition {
   final double dx;
   final double dy;
 
-  const _BarPosition(this.dx, this.dy);
+  /// Whether the bar is placed beside the bubble (Lark-style) or above/below
+  /// (legacy fallback). Controls animation direction.
+  final bool isBesideBubble;
+
+  const _BarPosition(this.dx, this.dy, {this.isBesideBubble = false});
 }

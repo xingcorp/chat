@@ -1945,6 +1945,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectMessage => 'Select';
 
   @override
+  String get frequentlyUsed => 'Frequently Used';
+
+  @override
+  String get defaultEmojis => 'All Emojis';
+
+  @override
   String get notificationContentImage => '📷 Image';
 
   @override

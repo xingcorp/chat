@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 /// Groups all action callbacks for desktop message hover actions.
 ///
-/// Passed from `ChatDetailsPage` → `DesktopMessageHoverWrapper` → `MessageHoverActionBar`.
+/// Passed from `ChatDetailsPage` → `DesktopMessageHoverWrapper` → `CompactActionBar`.
 /// Avoids passing 8+ individual function parameters through the widget tree.
 ///
 /// **Usage**:

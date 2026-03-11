@@ -62,6 +62,11 @@ class MessageItem extends StatefulWidget {
       onEditedImageSend;
   final String currentUserId;
 
+  /// Key assigned to the bubble RepaintBoundary so that
+  /// [DesktopMessageHoverWrapper] can measure the bubble's position
+  /// and place the hover action bar beside it (Lark-style).
+  final GlobalKey? bubbleKey;
+
   const MessageItem({
     Key? key,
     required this.uiState,
@@ -75,6 +80,7 @@ class MessageItem extends StatefulWidget {
     this.isGroupChat = false,
     this.onEditedImageSend,
     this.currentUserId = '',
+    this.bubbleKey,
   }) : super(key: key);
 
   @override
@@ -332,6 +338,7 @@ class _MessageItemState extends State<MessageItem>
         AppDimens.getChatMessageAvatarSlotWidth(screenWidth);
 
     final messageBubble = RepaintBoundary(
+      key: widget.bubbleKey,
       child: _buildMessageBubble(context, isCurrentUser),
     );
 

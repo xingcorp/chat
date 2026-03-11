@@ -9,6 +9,7 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_list_transformer.dart';
 import 'package:flutter_chat_app/core/monitoring/i_analytics_service.dart';
+import 'package:flutter_chat_app/core/services/user_cache_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:flutter_chat_app/core/monitoring/i_performance_monitor.dart';
@@ -274,6 +275,9 @@ class _OptimizedMessageListState extends State<OptimizedMessageList>
       currentUserId: widget.currentUserId,
       isGroupChat: widget.isGroupChat,
       members: widget.members,
+      userCache: GetIt.instance.isRegistered<UserCacheService>()
+          ? GetIt.instance<UserCacheService>()
+          : null,
     );
     return _cachedUiStates!;
   }

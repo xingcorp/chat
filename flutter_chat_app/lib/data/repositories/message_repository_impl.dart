@@ -1033,4 +1033,22 @@ class MessageRepositoryImpl extends BaseRepository
       logger.w('Error prefetching thumbnails: $e');
     }
   }
+
+  /// Persist a socket-received message to local Isar storage.
+  ///
+  /// Converts the domain [ChatMessage] to a [MessageModel] and upserts it.
+  /// This ensures real-time messages are cached immediately (Signal/Telegram
+  /// offline-first pattern) so Phase 1 reads always have full sender metadata.
+  @override
+  Future<Either<Failure, void>> persistSocketMessage(
+      ChatMessage message) async {
+    try {
+      final model = MessageMapper.fromDomain(message);
+      await _localDataSource.saveMessage(model);
+      return const Right(null);
+    } catch (e) {
+      logger.w('[persistSocketMessage] Error saving socket message: $e');
+      return Left(CacheFailure(message: e.toString()));
+    }
+  }
 }

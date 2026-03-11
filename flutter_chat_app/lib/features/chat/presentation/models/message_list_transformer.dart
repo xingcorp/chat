@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/localization/l10n_helper.dart';
+import 'package:flutter_chat_app/core/services/user_cache_service.dart';
 import 'package:flutter_chat_app/domain/entities/reader_info.dart';
 import 'package:flutter_chat_app/domain/utils/read_receipt_calculator.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
@@ -70,6 +72,7 @@ class MessageListTransformer {
     String? highlightedMessageId,
     bool isGroupChat = false,
     List<ConversationMember> members = const [],
+    UserCacheService? userCache,
   }) {
     if (messages.isEmpty) return const [];
 
@@ -104,7 +107,7 @@ class MessageListTransformer {
       if (current.contentType == ContentType.event) {
         result.add(MessageUIState.systemEvent(
           message: current,
-          eventInfo: _buildSystemEventInfo(current, members),
+          eventInfo: _buildSystemEventInfo(current, members, userCache),
         ));
         continue;
       }
@@ -158,6 +161,7 @@ class MessageListTransformer {
         current.sender.name,
         current.sender.avatar,
         members,
+        userCache,
       );
 
       result.add(MessageUIState(
@@ -332,20 +336,47 @@ class MessageListTransformer {
     String originalName,
     String? originalAvatar,
     List<ConversationMember> members,
+    UserCacheService? userCache,
   ) {
-    if (members.isEmpty) return (null, null);
+    if (members.isEmpty) {
+      // Fallback to global user cache when no members available
+      if (userCache != null && senderId.isNotEmpty) {
+        final cached = userCache.getUser(senderId);
+        if (cached != null) {
+          return (cached.name, cached.avatar);
+        }
+      }
+      if (kDebugMode && _looksLikeUUID(originalName)) {
+        debugPrint(
+          '[SenderDebug][Resolve] members EMPTY, sender=$senderId '
+          'originalName=$originalName (UUID!) → cannot resolve',
+        );
+      }
+      return (null, null);
+    }
 
     final member = members.cast<ConversationMember?>().firstWhere(
           (m) => m!.userId == senderId,
           orElse: () => null,
         );
 
-    // Resolve name: prefer member.fullName, fallback to original if not UUID-like
+    // Resolve name: prefer member.fullName, fallback to userCache, then original
     String? resolvedName;
     if (member != null &&
         member.fullName != null &&
         member.fullName!.trim().isNotEmpty) {
       resolvedName = member.fullName!.trim();
+    } else if (userCache != null && senderId.isNotEmpty) {
+      // Member not found or has no name — try global user cache
+      final cachedName = userCache.getUserName(senderId);
+      if (cachedName != null) {
+        resolvedName = cachedName;
+      } else if (originalName.trim().isNotEmpty &&
+          !_looksLikeUUID(originalName.trim())) {
+        resolvedName = null; // original name is good
+      } else {
+        resolvedName = '';
+      }
     } else if (originalName.trim().isNotEmpty &&
         !_looksLikeUUID(originalName.trim())) {
       resolvedName =
@@ -674,6 +705,7 @@ class MessageListTransformer {
   static SystemEventInfo _buildSystemEventInfo(
     ChatMessage message,
     List<ConversationMember> members,
+    UserCacheService? userCache,
   ) {
     final actionType = message.actionType ?? 'UNKNOWN';
 
@@ -685,17 +717,55 @@ class MessageListTransformer {
     };
 
     // Resolve actor name: prefer message data, fallback to members lookup
+    // CRITICAL: Never show UUID as actor name — use _looksLikeUUID() guard
+    final l10n = L10nHelper.current;
     final rawActorName = message.sender.name;
-    final actorName = (rawActorName.isNotEmpty && rawActorName != 'Unknown')
-        ? rawActorName
-        : memberNameById[message.sender.id] ?? rawActorName;
+    String actorName;
+    if (rawActorName.isNotEmpty &&
+        rawActorName != 'Unknown' &&
+        !_looksLikeUUID(rawActorName)) {
+      actorName = rawActorName;
+    } else {
+      // Try members lookup
+      actorName = memberNameById[message.sender.id]
+          // Try actor object (socket events may have separate actor)
+          ?? ((message.actor?.name != null &&
+                  message.actor!.name.isNotEmpty &&
+                  message.actor!.name != 'Unknown' &&
+                  !_looksLikeUUID(message.actor!.name))
+              ? message.actor!.name
+              : null)
+          // Try global user cache as last resort
+          ?? userCache?.getUserName(message.sender.id)
+          ?? l10n.eventSomeone;
+    }
+
+    // ─── DEBUG: System event name resolution ───
+    final actorIsUUID = _looksLikeUUID(actorName);
+    if (kDebugMode && (actorIsUUID || rawActorName == 'Unknown')) {
+      debugPrint(
+        '[SenderDebug][SystemEvent] msgId=${message.id} actionType=$actionType\n'
+        '  rawActorName=$rawActorName → resolved=$actorName (isUUID=$actorIsUUID)\n'
+        '  sender.id=${message.sender.id}\n'
+        '  actor?.id=${message.actor?.id} actor?.name=${message.actor?.name}\n'
+        '  members_count=${members.length} memberLookup=${memberNameById[message.sender.id]}\n'
+        '  targetUsers=${message.targetUsers.map((u) => '${u.id}:${u.name}').toList()}\n'
+        '  content=${message.content.length > 80 ? message.content.substring(0, 80) : message.content}',
+      );
+    }
 
     // Resolve target user names: prefer message data, fallback to members lookup
-    // Also check message.actor for additional name source (socket events
-    // may carry actor object with full name, separate from sender)
+    // CRITICAL: Never show UUID as target name — use _looksLikeUUID() guard
     final targetNames = message.targetUsers.map((u) {
-      if (u.name.isNotEmpty && u.name != 'Unknown') return u.name;
-      return memberNameById[u.id] ?? u.name;
+      if (u.name.isNotEmpty &&
+          u.name != 'Unknown' &&
+          !_looksLikeUUID(u.name)) {
+        return u.name;
+      }
+      // Members lookup, then global user cache, then raw name
+      return memberNameById[u.id]
+          ?? userCache?.getUserName(u.id)
+          ?? u.name;
     }).toList();
 
     // If all target names are still 'Unknown' after resolution, and we have
@@ -704,7 +774,8 @@ class MessageListTransformer {
     // and where the target user may no longer be in the members list
     // (e.g., REMOVE_MEMBER removes them before the system message is rendered).
     final bool allTargetsUnknown = targetNames.isNotEmpty &&
-        targetNames.every((n) => n == 'Unknown' || n.trim().isEmpty);
+        targetNames.every(
+            (n) => n == 'Unknown' || n.trim().isEmpty || _looksLikeUUID(n));
     final bool hasFallbackContent =
         message.content.isNotEmpty && message.content != 'Unknown';
 

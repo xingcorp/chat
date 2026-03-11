@@ -3560,6 +3560,18 @@ abstract class AppLocalizations {
   /// **'Select'**
   String get selectMessage;
 
+  /// Section header for frequently used emoji reactions in quick picker
+  ///
+  /// In en, this message translates to:
+  /// **'Frequently Used'**
+  String get frequentlyUsed;
+
+  /// Section header for default emoji reactions in quick picker
+  ///
+  /// In en, this message translates to:
+  /// **'All Emojis'**
+  String get defaultEmojis;
+
   /// Notification body for image messages
   ///
   /// In en, this message translates to:

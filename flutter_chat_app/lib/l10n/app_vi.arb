@@ -1060,6 +1060,9 @@
 
   "selectMessage": "Chọn",
 
+  "frequentlyUsed": "Hay dùng",
+  "defaultEmojis": "Biểu cảm",
+
   "notificationContentImage": "📷 Hình ảnh",
   "notificationContentVideo": "🎬 Video",
   "notificationContentAudio": "🎵 Tin nhắn thoại",

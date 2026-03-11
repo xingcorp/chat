@@ -25,6 +25,8 @@ import 'package:flutter_chat_app/core/utils/logger.dart';
 import 'package:flutter_chat_app/data/managers/sync_metadata_manager.dart';
 import 'package:flutter_chat_app/data/strategies/gap_detection_logic.dart';
 import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
+import 'package:flutter_chat_app/domain/repositories/i_message_repository.dart';
+import 'package:flutter_chat_app/core/services/user_cache_service.dart';
 import 'package:flutter_chat_app/domain/usecases/message/add_reaction_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/delete_message_usecase.dart';
 import 'package:flutter_chat_app/domain/usecases/message/edit_message_usecase.dart';
@@ -68,6 +70,10 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
   // Repositories
   final IAttachmentRepository _attachmentRepository;
+  final IMessageRepository _messageRepository;
+
+  // Caches
+  final UserCacheService _userCacheService;
 
   // Services
   final CacheSyncStrategy _cacheSyncStrategy;
@@ -152,6 +158,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       highlightedMessageId: _highlightedMessageId,
       isGroupChat: _isGroupChat,
       members: members,
+      userCache: _userCacheService,
     );
   }
 
@@ -175,6 +182,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     required AddReactionUseCase addReaction,
     required RemoveReactionUseCase removeReaction,
     required IAttachmentRepository attachmentRepository,
+    required IMessageRepository messageRepository,
+    required UserCacheService userCacheService,
     required CacheSyncStrategy cacheSyncStrategy,
     required RealtimeService realtimeService,
     required ILocationService locationService,
@@ -192,6 +201,8 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
         _addReaction = addReaction,
         _removeReaction = removeReaction,
         _attachmentRepository = attachmentRepository,
+        _messageRepository = messageRepository,
+        _userCacheService = userCacheService,
         _cacheSyncStrategy = cacheSyncStrategy,
         _realtimeService = realtimeService,
         _locationService = locationService,
@@ -1080,7 +1091,22 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     // Only process messages for current chat
     if (event.message.chatId != currentState.chatId) return;
 
-    logger.d('Received real-time message via socket: ${event.message.id}');
+    // ─── DEBUG: Inspect socket message data completeness ───
+    final msg = event.message;
+    logger.i(
+      '[SenderDebug] Socket message received:\n'
+      '  id=${msg.id}\n'
+      '  contentType=${msg.contentType}\n'
+      '  sender.id=${msg.sender.id}\n'
+      '  sender.name=${msg.sender.name}\n'
+      '  sender.name_isUUID=${RegExp(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$").hasMatch(msg.sender.name)}\n'
+      '  actionType=${msg.actionType}\n'
+      '  actor?.id=${msg.actor?.id}\n'
+      '  actor?.name=${msg.actor?.name}\n'
+      '  targetUsers=${msg.targetUsers.map((u) => '${u.id}:${u.name}').toList()}\n'
+      '  mentionTo=${msg.mentionTo.map((m) => '${m.id}:${m.name}').toList()}\n'
+      '  members_count=${currentState.conversationMembers.length}',
+    );
 
     // Check if message already exists in list (exact server ID match)
     final messageExists =
@@ -1112,6 +1138,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     }
 
     // Add new message (from other users or self from another device)
+    // Populate global user cache from socket message sender data
+    _userCacheService.populateFromSender(event.message.sender);
+
     // For system events (ADD_MEMBER, REMOVE_MEMBER, etc.), socket only sends
     // targetUserIds without names. Enrich with names from current members list.
     final enrichedMessage = _enrichSystemEventTargetNames(
@@ -1123,6 +1152,18 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
       messages: allMessages,
       uiMessages: _transformMessages(allMessages),
     ));
+
+    // Persist socket message to Isar immediately (Signal/Telegram pattern).
+    // This ensures Phase 1 (Isar read) always has full sender metadata,
+    // preventing UUID display on re-entry.
+    _messageRepository.persistSocketMessage(enrichedMessage).then((result) {
+      result.fold(
+        (failure) => logger.w(
+            '[SocketPersist] Failed to save message ${enrichedMessage.id}: $failure'),
+        (_) => logger.d(
+            '[SocketPersist] Saved message ${enrichedMessage.id} to Isar'),
+      );
+    });
 
     // Mark message list as dirty
     _cacheSyncStrategy.markChatMessagesDirty(currentState.chatId);
@@ -1305,6 +1346,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
     final finalMessages = [...missingOptimistic, ...filteredMerged];
     finalMessages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    // Populate global user cache from server messages (best-quality sender data)
+    _userCacheService.populateFromMessages(finalMessages);
 
     // Update sync metadata
     unawaited(_syncMetadataManager.updateFromMessages(event.chatId, finalMessages));
@@ -2656,6 +2700,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     UpdateConversationMembers event,
     Emitter<MessageState> emit,
   ) {
+    // Populate global user cache from member names (WhatsApp/Telegram pattern)
+    _userCacheService.populateFromMembers(event.members);
+
     if (state is MessagesLoaded) {
       final loadedState = state as MessagesLoaded;
       // Update members first, then re-transform so system events resolve names

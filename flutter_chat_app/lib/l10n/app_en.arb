@@ -3429,6 +3429,15 @@
     "description": "Action to enter selection mode with this message"
   },
 
+  "frequentlyUsed": "Frequently Used",
+  "@frequentlyUsed": {
+    "description": "Section header for frequently used emoji reactions in quick picker"
+  },
+  "defaultEmojis": "All Emojis",
+  "@defaultEmojis": {
+    "description": "Section header for default emoji reactions in quick picker"
+  },
+
   "notificationContentImage": "📷 Image",
   "@notificationContentImage": {
     "description": "Notification body for image messages"

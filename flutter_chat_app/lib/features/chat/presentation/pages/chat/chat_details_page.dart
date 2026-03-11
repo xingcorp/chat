@@ -203,6 +203,15 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
   String? _highlightedMessageId;
 
   // ══════════════════════════════════════════
+  // Bubble keys for desktop hover positioning
+  // ══════════════════════════════════════════
+  final Map<String, GlobalKey> _bubbleKeys = {};
+
+  GlobalKey _getBubbleKey(String messageId) {
+    return _bubbleKeys.putIfAbsent(messageId, () => GlobalKey());
+  }
+
+  // ══════════════════════════════════════════
   // Mark-as-read state
   // ══════════════════════════════════════════
   bool _hasMarkedAsReadOnOpen = false;
@@ -2859,6 +2868,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                         '\u{1F622}',
                         '\u{1F621}'
                       ],
+                bubbleKey: _getBubbleKey(uiState.id),
                 callbacks: MessageActionCallbacks(
                   onReaction: (emoji) => _messageBloc.add(
                     ToggleReaction(
@@ -2925,6 +2935,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                 child: MessageItem(
                   uiState: uiState,
                   currentUserId: _currentUserId,
+                  bubbleKey: _getBubbleKey(uiState.id),
                   isSelectionMode: _isSelectionMode,
                   isSelected: _selectedMessageIds.contains(uiState.id),
                   onSelectionChanged: (_) => _toggleSelection(uiState.id),

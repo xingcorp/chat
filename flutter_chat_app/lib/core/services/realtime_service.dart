@@ -395,11 +395,51 @@ class RealtimeService {
         return;
       }
 
+      // ─── DEBUG: Raw socket data inspection ───
+      _logger.i(
+        '[SocketDebug] Raw message:sent data keys=${messageData.keys.toList()}\n'
+        '  senderId=${messageData['senderId']}\n'
+        '  sender=${messageData['sender']}\n'
+        '  type=${messageData['type']}\n'
+        '  actionType=${messageData['actionType']}\n'
+        '  actorId=${messageData['actorId']}\n'
+        '  actor=${messageData['actor']}\n'
+        '  targetUserIds=${messageData['targetUserIds']}\n'
+        '  targetUsers=${messageData['targetUsers']}\n'
+        '  mentionTo=${messageData['mentionTo']}\n'
+        '  message(content)=${(messageData['message'] as String?)?.length ?? 0} chars',
+      );
+
       // Parse using MessageDto
       final messageDto = MessageDto.fromJson(messageData);
 
+      // ─── DEBUG: Parsed DTO inspection ───
+      _logger.i(
+        '[SocketDebug] Parsed DTO:\n'
+        '  dto.senderId=${messageDto.senderId}\n'
+        '  dto.sender?.fullName=${messageDto.sender?.fullName}\n'
+        '  dto.sender?.id=${messageDto.sender?.id}\n'
+        '  dto.actionType=${messageDto.actionType}\n'
+        '  dto.actorId=${messageDto.actorId}\n'
+        '  dto.actor?.fullName=${messageDto.actor?.fullName}\n'
+        '  dto.targetUserIds=${messageDto.targetUserIds}\n'
+        '  dto.targetUsers=${messageDto.targetUsers.map((u) => '${u.id}:${u.fullName}').toList()}\n'
+        '  dto.mentionTo=${messageDto.mentionTo.map((m) => '${m.id}:${m.fullName}').toList()}',
+      );
+
       // Convert to domain entity using extension method
       final chatMessage = messageDto.toDomain();
+
+      // ─── DEBUG: Domain entity inspection ───
+      _logger.i(
+        '[SocketDebug] Domain entity:\n'
+        '  sender.id=${chatMessage.sender.id}\n'
+        '  sender.name=${chatMessage.sender.name}\n'
+        '  actor?.name=${chatMessage.actor?.name}\n'
+        '  targetUsers=${chatMessage.targetUsers.map((u) => '${u.id}:${u.name}').toList()}\n'
+        '  mentionTo=${chatMessage.mentionTo.map((m) => '${m.id}:${m.name}').toList()}\n'
+        '  contentType=${chatMessage.contentType}',
+      );
 
       // Emit to stream
       _messageController.add(chatMessage);

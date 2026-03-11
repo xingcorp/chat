@@ -154,4 +154,14 @@ abstract class IMessageRepository {
   /// **Use Case**: Connectivity restored (global sync)
   /// **Returns**: Số messages đã retry thành công
   Future<Either<Failure, int>> retryAllPendingMessages();
+
+  /// **Persist a socket-received message to local storage (Isar)**
+  ///
+  /// Used by real-time handler to ensure all incoming messages are cached
+  /// immediately, following the Signal/Telegram offline-first pattern.
+  /// This prevents stale/incomplete data when the UI re-reads from Isar.
+  ///
+  /// **Parameters**: [message] - The domain ChatMessage entity from socket
+  /// **Returns**: Right(void) on success, Left(Failure) on error
+  Future<Either<Failure, void>> persistSocketMessage(ChatMessage message);
 }

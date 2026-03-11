@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:isar/isar.dart';
 
@@ -573,6 +574,12 @@ class MessageModel {
     }
   }
 
+  /// Check if a string looks like a UUID (should not be displayed as a name)
+  static final _uuidRegex = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+  );
+  static bool _looksLikeUUID(String s) => _uuidRegex.hasMatch(s);
+
   /// Convert MessageModel to domain ChatMessage entity
   ChatMessage toDomain() {
     Map<String, dynamic> metadataMap = {};
@@ -707,7 +714,7 @@ class MessageModel {
     } else {
       final actorId = metadataMap['actorId'] as String?;
       if (actorId != null && actorId.trim().isNotEmpty) {
-        actor = MessageSender(id: actorId.trim(), name: actorId.trim());
+        actor = MessageSender(id: actorId.trim(), name: '');
       }
     }
 
@@ -740,7 +747,7 @@ class MessageModel {
       if (ids is List) {
         for (final id in ids) {
           if (id is String && id.trim().isNotEmpty) {
-            targetUsers.add(MessageSender(id: id.trim(), name: id.trim()));
+            targetUsers.add(MessageSender(id: id.trim(), name: ''));
           }
         }
       }
@@ -754,18 +761,44 @@ class MessageModel {
     // }
 
     // Create MessageSender from senderId (prefer metadata sender for name/avatar)
+    final senderNameIsUUID = senderName == null ||
+        senderName.isEmpty ||
+        RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+            .hasMatch(senderName);
+    if (kDebugMode && senderNameIsUUID) {
+      debugPrint(
+        '[SenderDebug][Isar→Domain] msgId=${serverId ?? localId} '
+        'senderId=$senderId senderName=$senderName '
+        'senderMeta=${metadataMap['sender']} '
+        'type=$type contentType=$contentType actionType=$actionType',
+      );
+    }
+    // Prevent UUID from being used as display name
+    final senderNameSafe = (senderName != null &&
+            senderName.isNotEmpty &&
+            !_looksLikeUUID(senderName))
+        ? senderName
+        : '';
     final sender = MessageSender(
       id: senderId,
-      name:
-          (senderName != null && senderName.isNotEmpty) ? senderName : senderId,
+      name: senderNameSafe,
       avatar: senderAvatar,
     );
 
     // Parse mentionTo from JSON
     final mentionedUsers = mentionToList.map((m) {
+      final mName = m['name'] as String? ?? 'Unknown';
+      final mId = m['id'] as String? ?? '';
+      if (kDebugMode && (mName == 'Unknown' || mName.isEmpty || mName == mId)) {
+        debugPrint(
+          '[SenderDebug][Isar→Domain] Mention missing name: '
+          'msgId=${serverId ?? localId} mentionId=$mId mentionName=$mName '
+          'rawMentionData=$m',
+        );
+      }
       return MessageSender(
-        id: m['id'] as String? ?? '',
-        name: m['name'] as String? ?? 'Unknown',
+        id: mId,
+        name: mName,
         avatar: m['avatar'] as String?,
       );
     }).toList();
