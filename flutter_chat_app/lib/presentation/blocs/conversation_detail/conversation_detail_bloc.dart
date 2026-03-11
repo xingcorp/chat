@@ -37,7 +37,10 @@ class ConversationDetailBloc
   ) async {
     // _logger.i('[ConvDetail] Loading conversation detail: chatId=${event.chatId}');
 
-    final result = await _getConversationDetail(event.chatId);
+    final result = await _getConversationDetail(
+      event.chatId,
+      forceRemote: event.forceRemote,
+    );
 
     result.fold(
       (failure) {

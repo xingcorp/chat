@@ -1147,6 +1147,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
 
     emit(_preserveLoaded(currentState, chats: updatedChats));
 
+    // When membership changes (ADD_MEMBER, REMOVE_MEMBER, LEAVE_CONVERSATION),
+    // the local Isar cache has stale member list. Re-fetch from server so the
+    // chat header shows the correct member count (e.g. "10 thành viên" instead
+    // of cached "8 thành viên").
+    _refreshMembersIfNeeded(message);
+
     // Fire-and-forget: persist to local cache (Isar).
     // Only persist incoming messages — self-sent echoes from the socket are
     // already persisted by the send flow (MessageRepositoryImpl.sendMessage).
@@ -1166,6 +1172,52 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
       _eventBus.emitNewMessage(message);
       _eventBus.incrementUnreadCount();
     }
+  }
+
+  /// Membership-changing action types that require refreshing the conversation
+  /// detail from the server to get an updated members list.
+  static const _membershipActions = {
+    'ADD_MEMBER',
+    'REMOVE_MEMBER',
+    'LEAVE_CONVERSATION',
+  };
+
+  /// When a system event changes membership (ADD_MEMBER, REMOVE_MEMBER,
+  /// LEAVE_CONVERSATION), re-fetch the conversation detail from the server
+  /// so the local Isar cache and in-memory chat list have the correct member
+  /// count and names.
+  ///
+  /// This is fire-and-forget: we emit an updated state asynchronously when the
+  /// server responds, so the chat header updates without blocking the message
+  /// flow.
+  void _refreshMembersIfNeeded(ChatMessage message) {
+    final action = message.actionType;
+    if (action == null || !_membershipActions.contains(action)) return;
+
+    logger.i(
+      '[ChatBloc] Membership change ($action) detected in '
+      '${message.chatId}, refreshing conversation detail...',
+    );
+
+    // Fire-and-forget: fetch fresh conversation detail from server
+    unawaited(
+      _getConversationDetail(message.chatId, forceRemote: true).then((result) {
+        result.fold(
+          (failure) {
+            logger.w(
+              '[ChatBloc] Failed to refresh members after $action: '
+              '${failure.message}',
+            );
+          },
+          (chat) {
+            if (chat != null) {
+              // Push updated chat (with fresh members) into the list
+              add(ChatEvent.chatUpdated(chat: chat));
+            }
+          },
+        );
+      }),
+    );
   }
 
   Future<void> _onMarkMessagesAsRead(

@@ -218,8 +218,12 @@ class ChatRepositoryImpl implements IChatRepository {
   /// **Get Chat by ID**
   ///
   /// Ultra-fast chat lookup with O(log n) performance using unique index.
+  /// Set [forceRemote] to bypass local cache (e.g. after membership changes).
   @override
-  Future<Either<Failure, Chat?>> getChatById(String id) async {
+  Future<Either<Failure, Chat?>> getChatById(
+    String id, {
+    bool forceRemote = false,
+  }) async {
     return _executeWithMonitoring('get_chat_by_id', () async {
       try {
         // _logger.d('Getting chat by ID: $id');
@@ -227,8 +231,11 @@ class ChatRepositoryImpl implements IChatRepository {
         // Try local first for instant response
         final localChat = await _localDataSource.getChatById(id);
 
-        // If local chat exists AND has member list with creator info, use it directly.
-        if (localChat != null && localChat.members.isNotEmpty) {
+        // If local chat exists AND has member list with creator info, use it
+        // directly — UNLESS forceRemote is set (membership just changed).
+        if (!forceRemote &&
+            localChat != null &&
+            localChat.members.isNotEmpty) {
           final hasCreateInfo =
               (localChat.creatorName?.trim().isNotEmpty ?? false) ||
                   localChat.createdAt != null;

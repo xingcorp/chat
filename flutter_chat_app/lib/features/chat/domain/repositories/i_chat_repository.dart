@@ -27,7 +27,14 @@ abstract class IChatRepository {
       {String? typeFilter});
 
   /// Get chat details by ID with online-first strategy (fresh data)
-  Future<Either<Failure, Chat?>> getChatById(String chatId);
+  ///
+  /// Set [forceRemote] to bypass local cache and always fetch from server.
+  /// Useful after membership changes (ADD_MEMBER, REMOVE_MEMBER) when the
+  /// local cache has stale member lists.
+  Future<Either<Failure, Chat?>> getChatById(
+    String chatId, {
+    bool forceRemote = false,
+  });
 
   /// Get chat list from local storage (local-only strategy)
   Future<Either<Failure, List<Chat>>> getChatsFromLocalStorage();

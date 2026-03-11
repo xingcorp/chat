@@ -25,17 +25,24 @@ class GetConversationDetailUseCase {
   /// Execute use case to get conversation detail
   ///
   /// [conversationId] - ID of the conversation to retrieve
+  /// [forceRemote] - bypass local cache (after membership changes)
   ///
   /// Returns Either<Failure, Chat?>
   /// - Left: Failure (NetworkFailure, ServerFailure, etc.)
   /// - Right: Chat entity or null if not found
-  Future<Either<Failure, Chat?>> call(String conversationId) async {
+  Future<Either<Failure, Chat?>> call(
+    String conversationId, {
+    bool forceRemote = false,
+  }) async {
     // _logger.info('GetConversationDetailUseCase: Starting operation', {
     //   'conversationId': conversationId,
     // });
 
     try {
-      final result = await _repository.getChatById(conversationId);
+      final result = await _repository.getChatById(
+        conversationId,
+        forceRemote: forceRemote,
+      );
 
       return result.fold(
         (failure) {

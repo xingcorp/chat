@@ -9,13 +9,19 @@ abstract class ConversationDetailEvent extends Equatable {
 }
 
 /// Load conversation detail (members, name, avatar, type...)
+///
+/// Set [forceRemote] to bypass local cache (e.g. after membership changes).
 class LoadConversationDetail extends ConversationDetailEvent {
   final String chatId;
+  final bool forceRemote;
 
-  const LoadConversationDetail({required this.chatId});
+  const LoadConversationDetail({
+    required this.chatId,
+    this.forceRemote = false,
+  });
 
   @override
-  List<Object?> get props => [chatId];
+  List<Object?> get props => [chatId, forceRemote];
 }
 
 /// Add members to group conversation
