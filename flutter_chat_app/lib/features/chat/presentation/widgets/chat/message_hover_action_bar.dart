@@ -113,11 +113,22 @@ class _CompactActionBarState extends BaseState<CompactActionBar> {
   void _onEmojiPopupMouseEnter() {
     _isMouseOnEmojiPopup = true;
     _emojiHideTimer?.cancel();
+    // CRITICAL: Tell the parent wrapper (DesktopMessageHoverWrapper) that the
+    // mouse is still logically "on the bar". The emoji popup is a separate
+    // OverlayEntry outside CompactActionBar's widget tree, so moving the mouse
+    // onto it causes CompactActionBar's MouseRegion to fire onExit — which
+    // would make the wrapper dismiss everything after its 200 ms hide timer.
+    // By calling onMouseEnter here we keep the wrapper alive.
+    widget.onMouseEnter();
   }
 
   void _onEmojiPopupMouseExit() {
     _isMouseOnEmojiPopup = false;
     _scheduleEmojiHideIfNeeded();
+    // Mirror: let the parent wrapper know the mouse left the emoji popup.
+    // If the mouse isn't back on the CompactActionBar's MouseRegion, the
+    // wrapper will start its own hide timer.
+    widget.onMouseExit();
   }
 
   void _scheduleEmojiHideIfNeeded() {

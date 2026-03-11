@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter_chat_app/core/error/exceptions.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/utils/isar_id.dart';
+import 'package:flutter_chat_app/data/mappers/message_mapper.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
-import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart' as domain;
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
@@ -282,22 +282,15 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
   Future<void> saveMessage(String chatId, ChatMessage message,
       {bool needsSync = false}) async {
     try {
-      // Convert ChatMessage domain entity to MessageModel
-      final messageModel = MessageModel(
-        serverId: message.id,
-        localId: message.id,
-        chatId: chatId,
-        senderId: message.sender.id,
-        content: message.content,
-        type: _mapToDataMessageType(message.contentType),
-        status: _mapToDataMessageStatus(message.status),
-        createdAt: message.createdAt,
-        updatedAt: message.updatedAt,
-        readBy: message.readBy,
-      );
+      // Use MessageMapper.fromDomain() to preserve ALL metadata:
+      // sender name/avatar, actor, targetUsers, actionType, mentionTo, urls, etc.
+      // Previously used manual MessageModel() which stripped all metadata,
+      // causing UUID display on Phase 1 reads (sender name was lost).
+      final messageModel =
+          MessageMapper.fromDomain(message).copyWith(chatId: chatId);
 
-      // Save updated message using database service
-      await _databaseService.saveMessage(messageModel);
+      // Use upsert to prevent duplicates (dedup by serverId → localId)
+      _databaseService.saveMessageUpsert(messageModel);
 
       // Update last message in chat
       final chat = await getChatById(chatId);
@@ -316,54 +309,15 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
     }
   }
 
-  /// Map domain ContentType to data MessageType
-  MessageType _mapToDataMessageType(ContentType contentType) {
-    switch (contentType) {
-      case ContentType.text:
-        return MessageType.text;
-      case ContentType.image:
-        return MessageType.image;
-      case ContentType.video:
-        return MessageType.video;
-      case ContentType.audio:
-        return MessageType.audio;
-      case ContentType.file:
-        return MessageType.file;
-      case ContentType.location:
-        return MessageType.location;
-      case ContentType.link:
-        return MessageType.contact;
-      case ContentType.event:
-        return MessageType.system;
-      case ContentType.sticker:
-        return MessageType.sticker;
-    }
-  }
-
-  /// Map domain MessageStatus to data MessageStatus
-  MessageStatus _mapToDataMessageStatus(MessageStatus domainStatus) {
-    // Both enums have the same values, so we can just return it
-    return domainStatus;
-  }
-
   @override
   Future<void> saveMessages(String chatId, List<ChatMessage> messages) async {
     try {
-      // Save each message using database service
+      // Use MessageMapper.fromDomain() to preserve ALL metadata
+      // (same fix as saveMessage — manual MessageModel() stripped metadata)
       for (final message in messages) {
-        final messageModel = MessageModel(
-          serverId: message.id,
-          localId: message.id,
-          chatId: chatId,
-          senderId: message.sender.id,
-          content: message.content,
-          type: _mapToDataMessageType(message.contentType),
-          status: _mapToDataMessageStatus(message.status),
-          createdAt: message.createdAt,
-          updatedAt: message.updatedAt,
-          readBy: message.readBy,
-        );
-        await _databaseService.saveMessage(messageModel);
+        final messageModel =
+            MessageMapper.fromDomain(message).copyWith(chatId: chatId);
+        _databaseService.saveMessageUpsert(messageModel);
       }
 
       // Update last message in chat
