@@ -1844,6 +1844,12 @@ abstract class AppLocalizations {
   /// **'Hold to remove reaction'**
   String get holdToRemoveReaction;
 
+  /// Shown in reaction hover tooltip when more than 5 people reacted
+  ///
+  /// In en, this message translates to:
+  /// **'+ {count} others'**
+  String andNOthers(int count);
+
   /// Reactions label
   ///
   /// In en, this message translates to:
@@ -2144,7 +2150,7 @@ abstract class AppLocalizations {
   /// **'Tap to download'**
   String get tapToDownload;
 
-  /// Downloading status
+  /// Text shown while downloading update
   ///
   /// In en, this message translates to:
   /// **'Downloading...'**
@@ -3631,6 +3637,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{senderName}: @You {content}'**
   String notificationGroupMentionBody(String senderName, String content);
+
+  /// Banner text when a new version is available
+  ///
+  /// In en, this message translates to:
+  /// **'Update available: v{version}'**
+  String updateAvailableVersion(String version);
+
+  /// Button text to start downloading update
+  ///
+  /// In en, this message translates to:
+  /// **'Update Now'**
+  String get updateNow;
+
+  /// Banner text when update is ready to install
+  ///
+  /// In en, this message translates to:
+  /// **'Update downloaded — restart to apply'**
+  String get restartToUpdate;
+
+  /// Button text to restart app and install update
+  ///
+  /// In en, this message translates to:
+  /// **'Restart Now'**
+  String get restartNow;
+
+  /// Dialog title for update available
+  ///
+  /// In en, this message translates to:
+  /// **'New Version Available'**
+  String get newVersionAvailable;
+
+  /// Section header for release notes
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s New'**
+  String get whatsNew;
+
+  /// Placeholder when release notes are empty
+  ///
+  /// In en, this message translates to:
+  /// **'No release notes available.'**
+  String get noReleaseNotes;
+
+  /// Warning text for forced updates
+  ///
+  /// In en, this message translates to:
+  /// **'This update is required. Please update to continue using the app.'**
+  String get mandatoryUpdate;
+
+  /// Button text to skip a specific update version
+  ///
+  /// In en, this message translates to:
+  /// **'Skip This Version'**
+  String get skipThisVersion;
+
+  /// Button text to snooze update notification
+  ///
+  /// In en, this message translates to:
+  /// **'Remind Me Later'**
+  String get remindMeLater;
+
+  /// Button text to start downloading in dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Download Update'**
+  String get downloadUpdate;
+
+  /// Dialog title during download
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading Update...'**
+  String get downloadingUpdate;
+
+  /// Dialog title when update is ready to install
+  ///
+  /// In en, this message translates to:
+  /// **'Update Ready!'**
+  String get updateReady;
+
+  /// Dialog body text for restart prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} has been downloaded. Restart the app to apply the update.'**
+  String restartToApplyUpdate(String version);
+
+  /// Button text to dismiss and do later
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get later;
+
+  /// Settings menu item text
+  ///
+  /// In en, this message translates to:
+  /// **'Check for Updates'**
+  String get checkForUpdates;
+
+  /// Status text while checking for updates
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates...'**
+  String get checkingForUpdates;
+
+  /// Text when no update is available
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re up to date!'**
+  String get upToDate;
+
+  /// Display current app version
+  ///
+  /// In en, this message translates to:
+  /// **'Current version: {version}'**
+  String currentVersion(String version);
+
+  /// Text when update check fails in settings
+  ///
+  /// In en, this message translates to:
+  /// **'Update check failed. Tap to retry.'**
+  String get updateCheckFailed;
 }
 
 class _AppLocalizationsDelegate

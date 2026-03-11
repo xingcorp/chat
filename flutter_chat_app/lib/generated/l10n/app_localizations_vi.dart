@@ -952,6 +952,11 @@ class AppLocalizationsVi extends AppLocalizations {
   String get holdToRemoveReaction => 'Giữ để bỏ biểu cảm';
 
   @override
+  String andNOthers(int count) {
+    return '+ $count người khác';
+  }
+
+  @override
   String get reactions => 'Phản ứng';
 
   @override
@@ -1110,7 +1115,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get tapToDownload => 'Nhấn để tải xuống';
 
   @override
-  String get downloading => 'Đang tải xuống...';
+  String get downloading => 'Đang tải...';
 
   @override
   String get downloaded => 'Đã tải xuống';
@@ -1988,4 +1993,72 @@ class AppLocalizationsVi extends AppLocalizations {
   String notificationGroupMentionBody(String senderName, String content) {
     return '$senderName: @Bạn $content';
   }
+
+  @override
+  String updateAvailableVersion(String version) {
+    return 'Có bản cập nhật: v$version';
+  }
+
+  @override
+  String get updateNow => 'Cập nhật ngay';
+
+  @override
+  String get restartToUpdate => 'Đã tải xong — khởi động lại để cập nhật';
+
+  @override
+  String get restartNow => 'Khởi động lại';
+
+  @override
+  String get newVersionAvailable => 'Phiên bản mới';
+
+  @override
+  String get whatsNew => 'Có gì mới';
+
+  @override
+  String get noReleaseNotes => 'Không có ghi chú phát hành.';
+
+  @override
+  String get mandatoryUpdate =>
+      'Bản cập nhật này là bắt buộc. Vui lòng cập nhật để tiếp tục sử dụng.';
+
+  @override
+  String get skipThisVersion => 'Bỏ qua phiên bản này';
+
+  @override
+  String get remindMeLater => 'Nhắc lại sau';
+
+  @override
+  String get downloadUpdate => 'Tải cập nhật';
+
+  @override
+  String get downloadingUpdate => 'Đang tải cập nhật...';
+
+  @override
+  String get updateReady => 'Sẵn sàng cập nhật!';
+
+  @override
+  String restartToApplyUpdate(String version) {
+    return 'Phiên bản $version đã được tải. Khởi động lại ứng dụng để áp dụng cập nhật.';
+  }
+
+  @override
+  String get later => 'Để sau';
+
+  @override
+  String get checkForUpdates => 'Kiểm tra cập nhật';
+
+  @override
+  String get checkingForUpdates => 'Đang kiểm tra cập nhật...';
+
+  @override
+  String get upToDate => 'Bạn đang dùng phiên bản mới nhất!';
+
+  @override
+  String currentVersion(String version) {
+    return 'Phiên bản hiện tại: $version';
+  }
+
+  @override
+  String get updateCheckFailed =>
+      'Kiểm tra cập nhật thất bại. Nhấn để thử lại.';
 }

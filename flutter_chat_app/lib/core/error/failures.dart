@@ -505,3 +505,41 @@ class UnexpectedFailure extends Failure {
   @override
   bool get isRecoverable => false;
 }
+
+// **UPDATE FAILURES**
+
+/// **Update Failure**
+/// Lỗi liên quan đến kiểm tra, tải, xác minh hoặc cài đặt bản cập nhật
+class UpdateFailure extends Failure {
+  const UpdateFailure({
+    required super.message,
+    super.code,
+    super.details,
+  });
+
+  @override
+  String get userMessage {
+    switch (code) {
+      case 'check_failed':
+        return ErrorMessages.getMessage('update_check_failed');
+      case 'download_failed':
+        return ErrorMessages.getMessage('update_download_failed');
+      case 'verification_failed':
+        return ErrorMessages.getMessage('update_verification_failed');
+      case 'install_failed':
+        return ErrorMessages.getMessage('update_install_failed');
+      case 'cancelled':
+        return ErrorMessages.getMessage('update_cancelled');
+      case 'no_asset':
+        return ErrorMessages.getMessage('update_no_asset');
+      default:
+        return ErrorMessages.getMessage('update_error');
+    }
+  }
+
+  @override
+  String get category => 'update';
+
+  @override
+  bool get isRecoverable => code != 'verification_failed';
+}

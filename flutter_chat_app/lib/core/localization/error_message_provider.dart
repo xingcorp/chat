@@ -225,6 +225,15 @@ class _ErrorMessagesVi {
     'operation_cancelled': 'Thao tác đã bị hủy.',
     'feature_not_available': 'Tính năng này hiện không khả dụng.',
     'maintenance_mode': 'Ứng dụng đang bảo trì. Vui lòng thử lại sau.',
+
+    // ── Update Errors ──
+    'update_check_failed': 'Không thể kiểm tra bản cập nhật. Vui lòng thử lại sau.',
+    'update_download_failed': 'Không thể tải xuống bản cập nhật. Vui lòng thử lại.',
+    'update_verification_failed': 'File cập nhật bị lỗi. Vui lòng tải lại.',
+    'update_install_failed': 'Không thể cài đặt bản cập nhật. Vui lòng thử lại.',
+    'update_cancelled': 'Đã hủy tải bản cập nhật.',
+    'update_no_asset': 'Không tìm thấy file cài đặt cho nền tảng này.',
+    'update_error': 'Có lỗi khi cập nhật. Vui lòng thử lại.',
   };
 
   static const Map<String, List<String>> _recoveryGuidance = {
@@ -378,6 +387,15 @@ class _ErrorMessagesEn {
     'operation_cancelled': 'Operation cancelled.',
     'feature_not_available': 'This feature is currently unavailable.',
     'maintenance_mode': 'App is under maintenance. Please try again later.',
+
+    // ── Update Errors ──
+    'update_check_failed': 'Unable to check for updates. Please try again later.',
+    'update_download_failed': 'Unable to download the update. Please try again.',
+    'update_verification_failed': 'Update file is corrupted. Please download again.',
+    'update_install_failed': 'Unable to install the update. Please try again.',
+    'update_cancelled': 'Update download cancelled.',
+    'update_no_asset': 'No installer found for this platform.',
+    'update_error': 'An error occurred while updating. Please try again.',
   };
 
   static const Map<String, List<String>> _recoveryGuidance = {

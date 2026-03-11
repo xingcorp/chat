@@ -133,6 +133,7 @@ class ReactionBar extends StatelessWidget {
       backgroundColor: backgroundColor,
       borderColor: borderColor,
       tooltipMessage: isReacted ? context.l10n.holdToRemoveReaction : null,
+      reaction: reaction,
       // Tap → xem danh sách reactors (như Messenger/WhatsApp)
       onTap: () => onReactionTap?.call(
         reaction.code,
@@ -215,6 +216,7 @@ class ReactionBar extends StatelessWidget {
 }
 
 /// Animated wrapper cho reaction chip với scale effect khi tap
+/// và hover tooltip hiển thị danh sách người react (giống Zalo)
 class _AnimatedReactionChip extends StatefulWidget {
   final bool isReacted;
   final Color backgroundColor;
@@ -226,6 +228,9 @@ class _AnimatedReactionChip extends StatefulWidget {
   /// Tooltip message shown when [isReacted] is true (hint to hold-to-remove).
   final String? tooltipMessage;
 
+  /// Reaction group data để build hover tooltip danh sách người react
+  final ReactionGroup? reaction;
+
   const _AnimatedReactionChip({
     required this.isReacted,
     required this.backgroundColor,
@@ -234,6 +239,7 @@ class _AnimatedReactionChip extends StatefulWidget {
     this.onLongPress,
     required this.child,
     this.tooltipMessage,
+    this.reaction,
   });
 
   @override
@@ -244,6 +250,12 @@ class _AnimatedReactionChipState extends State<_AnimatedReactionChip>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
+
+  OverlayEntry? _overlayEntry;
+  final LayerLink _layerLink = LayerLink();
+
+  /// Max số tên hiển thị trong tooltip trước khi gom thành "+ n người khác"
+  static const int _maxVisibleReactors = 5;
 
   @override
   void initState() {
@@ -259,6 +271,7 @@ class _AnimatedReactionChipState extends State<_AnimatedReactionChip>
 
   @override
   void dispose() {
+    _removeOverlay();
     _controller.dispose();
     super.dispose();
   }
@@ -276,58 +289,196 @@ class _AnimatedReactionChipState extends State<_AnimatedReactionChip>
     _controller.reverse();
   }
 
+  // ---------------------------------------------------------------------------
+  // Hover tooltip (Overlay) — hiển thị danh sách người react giống Zalo
+  // ---------------------------------------------------------------------------
+
+  void _showReactorTooltip() {
+    final reaction = widget.reaction;
+    if (reaction == null || reaction.reactorIds.isEmpty) return;
+
+    _removeOverlay();
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        return _ReactorTooltipOverlay(
+          link: _layerLink,
+          reaction: reaction,
+          maxVisible: _maxVisibleReactors,
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry?.dispose();
+    _overlayEntry = null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    Widget chip = ScaleTransition(
-      scale: _scaleAnimation,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTapDown: _handleTapDown,
-          onTapUp: _handleTapUp,
-          onTapCancel: _handleTapCancel,
-          onLongPress: widget.onLongPress,
-          borderRadius: BorderRadius.circular(16.0),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-            decoration: BoxDecoration(
-              color: widget.backgroundColor,
-              border: Border.all(
-                color: widget.borderColor,
-                width: widget.isReacted ? 1.5 : 1.0,
-              ),
+    Widget chip = CompositedTransformTarget(
+      link: _layerLink,
+      child: MouseRegion(
+        onEnter: (_) => _showReactorTooltip(),
+        onExit: (_) => _removeOverlay(),
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTapDown: _handleTapDown,
+              onTapUp: _handleTapUp,
+              onTapCancel: _handleTapCancel,
+              onLongPress: widget.onLongPress,
               borderRadius: BorderRadius.circular(16.0),
-              boxShadow: widget.isReacted
-                  ? [
-                      BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ]
-                  : null,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                decoration: BoxDecoration(
+                  color: widget.backgroundColor,
+                  border: Border.all(
+                    color: widget.borderColor,
+                    width: widget.isReacted ? 1.5 : 1.0,
+                  ),
+                  borderRadius: BorderRadius.circular(16.0),
+                  boxShadow: widget.isReacted
+                      ? [
+                          BoxShadow(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: widget.child,
+              ),
             ),
-            child: widget.child,
           ),
         ),
       ),
     );
 
-    // Show tooltip hint when current user has reacted (hold to remove)
-    if (widget.tooltipMessage != null) {
-      chip = Tooltip(
-        message: widget.tooltipMessage!,
-        preferBelow: false,
-        child: chip,
-      );
+    return chip;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Tooltip overlay widget hiển thị danh sách người react
+// Giống Zalo: hiện tối đa 5 tên, dòng cuối "+ (n) người khác"
+// -----------------------------------------------------------------------------
+class _ReactorTooltipOverlay extends StatelessWidget {
+  final LayerLink link;
+  final ReactionGroup reaction;
+  final int maxVisible;
+
+  const _ReactorTooltipOverlay({
+    required this.link,
+    required this.reaction,
+    required this.maxVisible,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+
+    final names = <String>[];
+    for (final userId in reaction.reactorIds) {
+      final name = reaction.reactorNameById[userId]?.trim();
+      if (name != null && name.isNotEmpty) {
+        names.add(name);
+      } else {
+        names.add(l10n.unknownUser);
+      }
     }
 
-    return chip;
+    final visibleNames = names.take(maxVisible).toList();
+    final remaining = names.length - maxVisible;
+
+    return Positioned(
+      width: 200,
+      child: CompositedTransformFollower(
+        link: link,
+        targetAnchor: Alignment.topCenter,
+        followerAnchor: Alignment.bottomCenter,
+        offset: const Offset(0, -6),
+        child: IgnorePointer(
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              decoration: BoxDecoration(
+                color: theme.brightness == Brightness.dark
+                    ? const Color(0xFF2C2C2C)
+                    : const Color(0xFF303030),
+                borderRadius: BorderRadius.circular(8.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Emoji header
+                  Text(
+                    reaction.code,
+                    style: const TextStyle(fontSize: 20.0),
+                  ),
+                  const SizedBox(height: 4.0),
+
+                  // Danh sách tên
+                  for (final name in visibleNames)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 1.0),
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13.0,
+                          height: 1.4,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+
+                  // "+ n người khác"
+                  if (remaining > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2.0),
+                      child: Text(
+                        l10n.andNOthers(remaining),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 12.0,
+                          fontStyle: FontStyle.italic,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
