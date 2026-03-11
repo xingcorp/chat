@@ -7,6 +7,7 @@ import 'package:flutter_chat_app/core/extensions/emoji_extensions.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/extensions/text_span_builder.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/utils/platform_utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
@@ -165,16 +166,20 @@ class _MessageItemState extends State<MessageItem>
     );
 
     // Emoji-only: render trực tiếp (không cần expand/collapse)
+    // Desktop/Web: SelectableText.rich → user drag-to-select + Ctrl+C
+    // Mobile: RichText (giữ nguyên) → copy qua long-press action sheet
     if (isEmojiOnly) {
-      return RichText(
-        text: TextSpan(
-          children: spans,
-          style: TextStyle(
-            color: textColor,
-            fontSize: fontSize,
-          ),
+      final emojiTextSpan = TextSpan(
+        children: spans,
+        style: TextStyle(
+          color: textColor,
+          fontSize: fontSize,
         ),
       );
+      if (PlatformUtils.isDesktopDeviceOrWeb) {
+        return SelectableText.rich(emojiTextSpan);
+      }
+      return RichText(text: emojiTextSpan);
     }
 
     return ExpandableRichText(
@@ -184,6 +189,7 @@ class _MessageItemState extends State<MessageItem>
         color: textColor,
         fontSize: 16.0,
       ),
+      selectable: PlatformUtils.isDesktopDeviceOrWeb,
     );
   }
 

@@ -9,6 +9,17 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 /// - "Show less" button để collapse
 ///
 /// Hỗ trợ cả plain text và rich text (mentions, URLs, HTML formatting)
+///
+/// ## Text Selection (Desktop/Web)
+///
+/// Khi [selectable] = true (desktop/web):
+/// - Expanded / short messages: render [SelectableText.rich] → user drag-to-select + Ctrl+C
+/// - Collapsed (truncated) state: vẫn dùng [RichText] (non-selectable) vì text bị cắt
+///
+/// Khi [selectable] = false (mobile, default):
+/// - Mọi state đều dùng [RichText] như cũ → behavior 100% backward compatible
+///
+/// Pattern tham khảo: Stream Chat Flutter — `MarkdownBody(selectable: isDesktopDeviceOrWeb)`
 class ExpandableRichText extends StatefulWidget {
   /// InlineSpan content to display (supports rich text)
   final List<InlineSpan> spans;
@@ -28,6 +39,16 @@ class ExpandableRichText extends StatefulWidget {
   /// Callback when message is expanded/collapsed
   final void Function(bool isExpanded)? onToggle;
 
+  /// Bật text selection (Desktop/Web).
+  ///
+  /// - `true`: dùng [SelectableText.rich] cho expanded / non-truncated state
+  /// - `false` (default): dùng [RichText] cho mọi state (backward compatible)
+  ///
+  /// Chỉ ảnh hưởng expanded state & short messages. Collapsed (truncated)
+  /// state luôn dùng [RichText] vì [SelectableText] không hỗ trợ
+  /// [TextOverflow.ellipsis].
+  final bool selectable;
+
   const ExpandableRichText({
     super.key,
     required this.spans,
@@ -36,6 +57,7 @@ class ExpandableRichText extends StatefulWidget {
     this.maxChars = 500,
     this.style,
     this.onToggle,
+    this.selectable = false,
   });
 
   @override
@@ -84,9 +106,7 @@ class _ExpandableRichTextState extends State<ExpandableRichText> {
   Widget build(BuildContext context) {
     // If no expansion needed, show full rich text
     if (!_needsExpansion) {
-      return RichText(
-        text: TextSpan(children: widget.spans, style: widget.style),
-      );
+      return _buildRichContent(widget.spans);
     }
 
     // If expanded, show full text with "Show less" button
@@ -95,9 +115,7 @@ class _ExpandableRichTextState extends State<ExpandableRichText> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          RichText(
-            text: TextSpan(children: widget.spans, style: widget.style),
-          ),
+          _buildRichContent(widget.spans),
           GestureDetector(
             onTap: _toggleExpansion,
             child: Padding(
@@ -120,7 +138,8 @@ class _ExpandableRichTextState extends State<ExpandableRichText> {
     }
 
     // Collapsed: show truncated text with "Read more" button
-    // Calculate truncated spans based on character count
+    // LUÔN dùng RichText ở collapsed state — SelectableText không hỗ trợ
+    // TextOverflow.ellipsis, và text bị cắt nên select cũng không ý nghĩa
     final truncatedSpans = _truncateSpans(widget.spans, widget.maxChars);
 
     return Column(
@@ -150,6 +169,22 @@ class _ExpandableRichTextState extends State<ExpandableRichText> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Render rich text content — selectable trên desktop, RichText trên mobile.
+  ///
+  /// Khi [selectable] = true: dùng [SelectableText.rich] để user
+  /// có thể drag-to-select text và copy (Ctrl+C / Cmd+C).
+  /// Khi [selectable] = false: dùng [RichText] (behavior cũ, zero overhead).
+  Widget _buildRichContent(List<InlineSpan> spans) {
+    if (widget.selectable) {
+      return SelectableText.rich(
+        TextSpan(children: spans, style: widget.style),
+      );
+    }
+    return RichText(
+      text: TextSpan(children: spans, style: widget.style),
     );
   }
 

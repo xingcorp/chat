@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
+import 'package:flutter_chat_app/core/utils/message_utils.dart';
 import 'package:flutter_chat_app/core/services/chat_conversation_selection_service.dart';
 import 'package:flutter_chat_app/core/services/emoji_shortcode_service.dart';
 import 'package:flutter_chat_app/core/services/emoticon_parser_service.dart';
@@ -2882,8 +2883,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                   },
                   onCopy: () {
                     if (uiState.message != null) {
+                      final mentionMap =
+                          _buildMentionNameById(uiState.message!);
+                      final plainText = MessageUtils.extractCopyableText(
+                        uiState.message!.content,
+                        mentionNameById: mentionMap,
+                      );
                       Clipboard.setData(
-                        ClipboardData(text: uiState.message!.content),
+                        ClipboardData(text: plainText),
                       );
                       AppSnackBar.show(
                         context: context,

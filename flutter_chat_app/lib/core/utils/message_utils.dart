@@ -116,6 +116,95 @@ class MessageUtils {
     }
   }
   
+  // ══════════════════════════════════════════
+  // Clipboard / Copy Utilities
+  // ══════════════════════════════════════════
+
+  /// Regex patterns (reuse from TextSpanBuilder)
+  static final RegExp _mentionBracketRegex = RegExp(r'\[@([^\]]+)\]');
+  static final RegExp _uuidMentionRegex = RegExp(
+    r'@([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})',
+  );
+  static final RegExp _brRegex = RegExp(r'<br\s*/?>', caseSensitive: false);
+  static final RegExp _anchorRegex = RegExp(
+    r'<a\s+[^>]*href=["\x27]([^"\x27]+)["\x27][^>]*>([^<]*)</a>',
+    caseSensitive: false,
+  );
+  static final RegExp _boldRegex =
+      RegExp(r'<b>([^<]*)</b>', caseSensitive: false);
+  static final RegExp _italicRegex =
+      RegExp(r'<i>([^<]*)</i>', caseSensitive: false);
+  static final RegExp _underlineRegex =
+      RegExp(r'<u>([^<]*)</u>', caseSensitive: false);
+
+  /// Trích xuất plain text từ raw message content cho clipboard.
+  ///
+  /// Tương đương Stream Chat Flutter `Message.replaceMentions(linkify: false)`:
+  /// - `[@userId]` -> `@DisplayName` (hoặc `@userId` nếu không tìm thấy)
+  /// - `@<uuid>` -> `@DisplayName`
+  /// - `<br>`, `<br/>` -> newline
+  /// - `<a href="url">text</a>` -> `text`
+  /// - `<b>text</b>` -> `text`
+  /// - `<i>text</i>` -> `text`
+  /// - `<u>text</u>` -> `text`
+  /// - URLs, phone numbers, emails giữ nguyên
+  ///
+  /// [rawContent] nội dung gốc từ message (chứa markup)
+  /// [mentionNameById] map userId -> displayName cho mentions
+  static String extractCopyableText(
+    String rawContent, {
+    Map<String, String> mentionNameById = const {},
+  }) {
+    var result = rawContent;
+
+    // 1. Replace HTML <br> -> newline
+    result = result.replaceAll(_brRegex, '\n');
+
+    // 2. Replace HTML <a> -> display text only
+    result = result.replaceAllMapped(
+      _anchorRegex,
+      (match) => match.group(2) ?? match.group(1) ?? '',
+    );
+
+    // 3. Strip HTML formatting tags, keep text content
+    result = result.replaceAllMapped(
+      _boldRegex,
+      (match) => match.group(1) ?? '',
+    );
+    result = result.replaceAllMapped(
+      _italicRegex,
+      (match) => match.group(1) ?? '',
+    );
+    result = result.replaceAllMapped(
+      _underlineRegex,
+      (match) => match.group(1) ?? '',
+    );
+
+    // 4. Replace [@id] mentions -> @DisplayName
+    result = result.replaceAllMapped(_mentionBracketRegex, (match) {
+      final id = match.group(1) ?? '';
+      if (id.isEmpty) return '@';
+      final name = mentionNameById[id];
+      if (name != null && name.trim().isNotEmpty) {
+        return '@${name.trim()}';
+      }
+      return '@$id';
+    });
+
+    // 5. Replace @uuid mentions -> @DisplayName
+    result = result.replaceAllMapped(_uuidMentionRegex, (match) {
+      final id = match.group(1) ?? '';
+      final name = mentionNameById[id];
+      if (name != null && name.trim().isNotEmpty) {
+        return '@${name.trim()}';
+      }
+      // Giữ nguyên nếu không resolve được
+      return match.group(0) ?? '@$id';
+    });
+
+    return result;
+  }
+
   /// Trả về tin nhắn ngắn gọn cho thông báo
   static String getNotificationPreview(ChatMessage message) {
     final contentType = message.contentType.toString().toLowerCase();
