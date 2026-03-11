@@ -55,7 +55,9 @@ class UpdateBloc extends Bloc<UpdateEvent, UpdateState> {
   ) async {
     emit(UpdateChecking(isManual: event.isManual));
 
-    final result = await _updateRepository.checkForUpdate();
+    final result = await _updateRepository.checkForUpdate(
+      isManual: event.isManual,
+    );
 
     result.fold(
       (failure) {

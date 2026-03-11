@@ -36,7 +36,9 @@ class UpdateRepositoryImpl implements IUpdateRepository {
   final SharedPreferences _prefs;
 
   @override
-  Future<Either<Failure, AppUpdateInfo?>> checkForUpdate() async {
+  Future<Either<Failure, AppUpdateInfo?>> checkForUpdate({
+    bool isManual = false,
+  }) async {
     try {
       // 1. Get current app version
       final packageInfo = await PackageInfo.fromPlatform();
@@ -73,16 +75,16 @@ class UpdateRepositoryImpl implements IUpdateRepository {
         return const Right(null);
       }
 
-      // 4. Check if version is skipped
+      // 4. Check if version is skipped (bypass for manual check)
       final skippedVersion = _prefs.getString(UpdateConstants.prefSkippedVersion);
-      if (skippedVersion == updateInfo.version && !updateInfo.isForceUpdate) {
+      if (!isManual && skippedVersion == updateInfo.version && !updateInfo.isForceUpdate) {
         LogUtils.i('UpdateRepository', 'Version ${updateInfo.version} is skipped by user');
         return const Right(null);
       }
 
-      // 5. Check 'remind me later'
+      // 5. Check 'remind me later' (bypass for manual check)
       final remindLaterTs = _prefs.getInt(UpdateConstants.prefRemindLaterTimestamp);
-      if (remindLaterTs != null && !updateInfo.isForceUpdate) {
+      if (!isManual && remindLaterTs != null && !updateInfo.isForceUpdate) {
         final remindLaterTime = DateTime.fromMillisecondsSinceEpoch(remindLaterTs);
         if (DateTime.now().isBefore(remindLaterTime)) {
           LogUtils.i('UpdateRepository', 'Remind later active until $remindLaterTime');

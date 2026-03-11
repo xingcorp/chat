@@ -9,7 +9,13 @@ import 'package:flutter_chat_app/domain/entities/app_update_info.dart';
 abstract class IUpdateRepository {
   /// Check if a newer version is available.
   /// Returns Right(AppUpdateInfo) if update available, Right(null) if up-to-date.
-  Future<Either<Failure, AppUpdateInfo?>> checkForUpdate();
+  ///
+  /// When [isManual] is true (user explicitly clicked "Check for Updates"),
+  /// skip/remind-later preferences are bypassed so the user always gets
+  /// accurate feedback.
+  Future<Either<Failure, AppUpdateInfo?>> checkForUpdate({
+    bool isManual = false,
+  });
 
   /// Download the update installer to a temp directory.
   /// [onProgress] is called with (received, total) bytes.

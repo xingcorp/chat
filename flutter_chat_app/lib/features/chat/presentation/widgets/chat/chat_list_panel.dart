@@ -21,6 +21,8 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_co
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/conversation_type_tab_bar.dart';
 import 'package:flutter_chat_app/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/blocs/update/update_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/update/update_state.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/dismiss_keyboard_on_tap.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
@@ -283,21 +285,61 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
         : user.username.trim();
     final fallbackName = displayName.isNotEmpty ? displayName : user.id;
 
+    final avatar = hasAvatar
+        ? AppAvatar.network(
+            imageUrl: avatarUrl,
+            size: AvatarSize.small,
+            onTap: _openSettingsPage,
+          )
+        : AppAvatar.initials(
+            name: fallbackName,
+            size: AvatarSize.small,
+            onTap: _openSettingsPage,
+          );
+
+    // Wrap with update badge on desktop
+    final bool hasUpdateBadge = getIt.isRegistered<UpdateBloc>();
+
     return Padding(
       padding: const EdgeInsets.only(left: 6),
       child: Tooltip(
         message: context.l10n.settingsTitle,
-        child: hasAvatar
-            ? AppAvatar.network(
-                imageUrl: avatarUrl,
-                size: AvatarSize.small,
-                onTap: _openSettingsPage,
+        child: hasUpdateBadge
+            ? BlocBuilder<UpdateBloc, UpdateState>(
+                bloc: getIt<UpdateBloc>(),
+                builder: (context, updateState) {
+                  final showBadge = updateState is UpdateAvailable ||
+                      updateState is UpdateReadyToInstall;
+
+                  if (!showBadge) return avatar;
+
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      avatar,
+                      Positioned(
+                        top: -2,
+                        right: -2,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: updateState is UpdateReadyToInstall
+                                ? AppColors.success
+                                : AppColors.error,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).scaffoldBackgroundColor,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               )
-            : AppAvatar.initials(
-                name: fallbackName,
-                size: AvatarSize.small,
-                onTap: _openSettingsPage,
-              ),
+            : avatar,
       ),
     );
   }

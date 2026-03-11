@@ -20,6 +20,9 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_av
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_brand_logo.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 import 'package:flutter_chat_app/presentation/widgets/settings/language_selector.dart';
+import 'package:flutter_chat_app/presentation/widgets/update/update_available_dialog.dart';
+import 'package:flutter_chat_app/presentation/widgets/update/update_progress_dialog.dart';
+import 'package:flutter_chat_app/presentation/widgets/update/update_ready_dialog.dart';
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:get_it/get_it.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -177,7 +180,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
 
                 // Check for Updates (desktop only)
                 if (PlatformUtils.isDesktopDevice)
-                  _buildUpdateSection(context, isDark),
+                  _buildUpdateSectionWithListener(context, isDark),
 
                 if (PlatformUtils.isDesktopDevice)
                   const Divider(height: 1),
@@ -350,7 +353,56 @@ class _SettingsPageState extends BaseState<SettingsPage> {
     );
   }
 
-  Widget _buildUpdateSection(BuildContext context, bool isDark) {
+  /// Update section wrapped with [BlocListener] to show dialogs
+  /// when state transitions occur (available → dialog, downloading → progress,
+  /// ready → install dialog, not available → snackbar).
+  Widget _buildUpdateSectionWithListener(BuildContext context, bool isDark) {
+    return BlocListener<UpdateBloc, UpdateState>(
+      listener: (context, state) {
+        if (state is UpdateAvailable) {
+          // Auto-show dialog when update is detected via manual check
+          UpdateAvailableDialog.show(context, state.updateInfo);
+        } else if (state is UpdateDownloading && state.progress == 0) {
+          // Show progress dialog when download starts
+          UpdateProgressDialog.show(context);
+        } else if (state is UpdateReadyToInstall) {
+          // Show install dialog when download completes
+          UpdateReadyDialog.show(
+            context,
+            updateInfo: state.updateInfo,
+            installerPath: state.installerPath,
+          );
+        } else if (state is UpdateNotAvailable) {
+          // Show snackbar for manual "already up to date"
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: AppText(
+                context.l10n.upToDate,
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        } else if (state is UpdateError) {
+          // Show error snackbar
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: AppText(
+                state.message,
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      },
+      child: _buildUpdateTile(context, isDark),
+    );
+  }
+
+  Widget _buildUpdateTile(BuildContext context, bool isDark) {
     return BlocBuilder<UpdateBloc, UpdateState>(
       builder: (context, state) {
         String subtitle;
@@ -375,9 +427,8 @@ class _SettingsPageState extends BaseState<SettingsPage> {
               shape: BoxShape.circle,
             ),
           );
-          onTap = () => context.read<UpdateBloc>().add(
-                const CheckForUpdateRequested(),
-              );
+          // FIX: Show update dialog instead of re-checking
+          onTap = () => UpdateAvailableDialog.show(context, state.updateInfo);
         } else if (state is UpdateDownloading) {
           final pct = (state.progress * 100).toInt();
           subtitle = '${context.l10n.downloading}... $pct%';
@@ -389,7 +440,8 @@ class _SettingsPageState extends BaseState<SettingsPage> {
               strokeWidth: 2,
             ),
           );
-          onTap = () {};
+          // Show progress dialog when tapping during download
+          onTap = () => UpdateProgressDialog.show(context);
         } else if (state is UpdateReadyToInstall) {
           subtitle = context.l10n.restartToUpdate;
           trailing = Icon(
@@ -397,18 +449,22 @@ class _SettingsPageState extends BaseState<SettingsPage> {
             color: AppColors.success,
             size: AppDimens.iconMedium,
           );
-          onTap = () => context.read<UpdateBloc>().add(
-                InstallUpdateRequested(installerPath: state.installerPath),
+          onTap = () => UpdateReadyDialog.show(
+                context,
+                updateInfo: state.updateInfo,
+                installerPath: state.installerPath,
               );
         } else if (state is UpdateError) {
           subtitle = context.l10n.updateCheckFailed;
+          // FIX: Pass isManual: true for retry
           onTap = () => context.read<UpdateBloc>().add(
-                const CheckForUpdateRequested(),
+                const CheckForUpdateRequested(isManual: true),
               );
         } else {
           subtitle = context.l10n.upToDate;
+          // FIX: Pass isManual: true so user gets feedback
           onTap = () => context.read<UpdateBloc>().add(
-                const CheckForUpdateRequested(),
+                const CheckForUpdateRequested(isManual: true),
               );
         }
 
