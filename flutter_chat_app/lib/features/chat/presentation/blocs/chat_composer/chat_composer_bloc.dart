@@ -56,6 +56,7 @@ class ChatComposerBloc extends Bloc<ChatComposerEvent, ChatComposerState> {
         effect: ChatComposerEditTextEffect(
           messageId: editingMessageId,
           text: normalizedInput,
+          contentDelta: event.contentDelta,
         ),
       ));
       return;
@@ -92,12 +93,21 @@ class ChatComposerBloc extends Bloc<ChatComposerEvent, ChatComposerState> {
           ));
           return;
         }
-        emit(state.copyWith(effect: ChatComposerSendTextEffect(text)));
+        emit(state.copyWith(
+          effect: ChatComposerSendTextEffect(
+            text,
+            contentDelta: event.contentDelta,
+          ),
+        ));
         return;
 
       case ChatSlashCommandOutcome.none:
         emit(state.copyWith(
-            effect: ChatComposerSendTextEffect(normalizedInput)));
+          effect: ChatComposerSendTextEffect(
+            normalizedInput,
+            contentDelta: event.contentDelta,
+          ),
+        ));
         return;
     }
   }

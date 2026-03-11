@@ -14,6 +14,7 @@ class ChatComposerSendRequested extends ChatComposerEvent {
     required this.isEditMode,
     required this.editingMessageId,
     this.hasAttachments = false,
+    this.contentDelta,
   });
 
   final String rawInput;
@@ -25,6 +26,10 @@ class ChatComposerSendRequested extends ChatComposerEvent {
   /// When true, allows sending even if rawInput is empty (file-only message).
   final bool hasAttachments;
 
+  /// Quill Delta JSON string for rich text content.
+  /// Null when the message is plain text only.
+  final String? contentDelta;
+
   @override
   List<Object?> get props => <Object?>[
         rawInput,
@@ -32,6 +37,7 @@ class ChatComposerSendRequested extends ChatComposerEvent {
         isEditMode,
         editingMessageId,
         hasAttachments,
+        contentDelta,
       ];
 }
 

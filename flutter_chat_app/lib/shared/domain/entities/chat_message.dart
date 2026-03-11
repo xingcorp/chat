@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:flutter_chat_app/shared/domain/entities/content_format.dart';
+
 /// Loại nội dung của tin nhắn
 enum ContentType {
   /// Văn bản
@@ -396,6 +398,20 @@ class ChatMessage {
   /// null for messages received from server/WebSocket
   final String? clientId;
 
+  /// Rich text content as Quill Delta JSON string.
+  ///
+  /// Null for plain text messages or messages received from the server
+  /// that don't have local rich text data. The Delta JSON is persisted
+  /// to Isar only — the server receives [content] (plain text) via the
+  /// existing `message` field.
+  final String? contentDelta;
+
+  /// Format of the content.
+  ///
+  /// Defaults to [ContentFormat.plainText] for backward compatibility.
+  /// When [contentDelta] is non-null, this is [ContentFormat.deltaJson].
+  final ContentFormat contentFormat;
+
   /// Constructor
   ChatMessage({
     required this.id,
@@ -425,6 +441,8 @@ class ChatMessage {
     this.reactions = const [],
     this.localStatus,
     this.clientId,
+    this.contentDelta,
+    this.contentFormat = ContentFormat.plainText,
   });
 
   /// Create a copy with updated fields
@@ -458,6 +476,9 @@ class ChatMessage {
     bool clearLocalStatus = false,
     String? clientId,
     bool clearClientId = false,
+    String? contentDelta,
+    bool clearContentDelta = false,
+    ContentFormat? contentFormat,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -487,6 +508,8 @@ class ChatMessage {
       reactions: reactions ?? this.reactions,
       localStatus: clearLocalStatus ? null : (localStatus ?? this.localStatus),
       clientId: clearClientId ? null : (clientId ?? this.clientId),
+      contentDelta: clearContentDelta ? null : (contentDelta ?? this.contentDelta),
+      contentFormat: contentFormat ?? this.contentFormat,
     );
   }
   
@@ -546,9 +569,13 @@ class ChatMessage {
       reactions: (json['reactions'] as List?)
           ?.map((e) => MessageReaction.fromJson(e as Map<String, dynamic>))
           .toList() ?? [],
+      contentDelta: json['contentDelta'] as String?,
+      contentFormat: json['contentFormat'] == 'deltaJson'
+          ? ContentFormat.deltaJson
+          : ContentFormat.plainText,
     );
   }
-  
+
   /// Chuyển đổi thành JSON
   Map<String, dynamic> toJson() {
     return {
@@ -577,6 +604,9 @@ class ChatMessage {
       'deliveredTo': deliveredTo,
       'attachments': attachments.map((a) => a.toJson()).toList(),
       'reactions': reactions.map((r) => r.toJson()).toList(),
+      if (contentDelta != null) 'contentDelta': contentDelta,
+      if (contentFormat != ContentFormat.plainText)
+        'contentFormat': contentFormat.name,
     };
   }
   
@@ -631,7 +661,9 @@ class ChatMessage {
       _listEquals(other.deliveredTo, deliveredTo) &&
       _listEquals(other.attachments, attachments) &&
       _listEquals(other.reactions, reactions) &&
-      other.localStatus == localStatus;
+      other.localStatus == localStatus &&
+      other.contentDelta == contentDelta &&
+      other.contentFormat == contentFormat;
   }
 
   @override
@@ -659,7 +691,9 @@ class ChatMessage {
       deliveredTo.hashCode ^
       attachments.hashCode ^
       reactions.hashCode ^
-      (localStatus?.hashCode ?? 0);
+      (localStatus?.hashCode ?? 0) ^
+      (contentDelta?.hashCode ?? 0) ^
+      contentFormat.hashCode;
   }
   
   /// Trạng thái hiện tại của tin nhắn

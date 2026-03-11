@@ -14,6 +14,7 @@ class ChatDraftModel {
     required this.text,
     required this.updatedAt,
     required this.mentionNameByIdJson,
+    this.contentDelta,
   });
 
   @Id()
@@ -29,6 +30,12 @@ class ChatDraftModel {
 
   final String mentionNameByIdJson;
 
+  /// Rich text content as Quill Delta JSON string.
+  ///
+  /// Null for plain text drafts. Nullable String in Isar does not
+  /// require a schema migration.
+  final String? contentDelta;
+
   factory ChatDraftModel.fromEntity(ChatDraftEntity entity) {
     final normalizedConversationId = entity.conversationId.trim();
 
@@ -38,6 +45,7 @@ class ChatDraftModel {
       text: entity.text,
       updatedAt: entity.updatedAt,
       mentionNameByIdJson: _encodeMentions(entity.mentionNameById),
+      contentDelta: entity.contentDelta,
     );
   }
 
@@ -47,6 +55,7 @@ class ChatDraftModel {
       text: text,
       updatedAt: updatedAt,
       mentionNameById: _decodeMentions(mentionNameByIdJson),
+      contentDelta: contentDelta,
     );
   }
 

@@ -45,6 +45,7 @@ class ChatDraftInputChanged extends ChatDraftEvent {
     required this.mentionNameById,
     required this.isEditMode,
     required this.isRecordingVoice,
+    this.contentDelta,
   });
 
   final String conversationId;
@@ -53,6 +54,9 @@ class ChatDraftInputChanged extends ChatDraftEvent {
   final bool isEditMode;
   final bool isRecordingVoice;
 
+  /// Quill Delta JSON string for rich text draft content.
+  final String? contentDelta;
+
   @override
   List<Object?> get props => <Object?>[
         conversationId,
@@ -60,6 +64,7 @@ class ChatDraftInputChanged extends ChatDraftEvent {
         mentionNameById,
         isEditMode,
         isRecordingVoice,
+        contentDelta,
       ];
 }
 
@@ -70,6 +75,7 @@ class ChatDraftPersistNowRequested extends ChatDraftEvent {
     required this.mentionNameById,
     required this.isEditMode,
     required this.isRecordingVoice,
+    this.contentDelta,
   });
 
   final String conversationId;
@@ -78,6 +84,9 @@ class ChatDraftPersistNowRequested extends ChatDraftEvent {
   final bool isEditMode;
   final bool isRecordingVoice;
 
+  /// Quill Delta JSON string for rich text draft content.
+  final String? contentDelta;
+
   @override
   List<Object?> get props => <Object?>[
         conversationId,
@@ -85,6 +94,7 @@ class ChatDraftPersistNowRequested extends ChatDraftEvent {
         mentionNameById,
         isEditMode,
         isRecordingVoice,
+        contentDelta,
       ];
 }
 
@@ -141,6 +151,7 @@ class ChatDraftFlushRequested extends ChatDraftEvent {
     required this.mentionNameById,
     required this.isEditMode,
     required this.isRecordingVoice,
+    this.contentDelta,
   });
 
   final String conversationId;
@@ -149,6 +160,9 @@ class ChatDraftFlushRequested extends ChatDraftEvent {
   final bool isEditMode;
   final bool isRecordingVoice;
 
+  /// Quill Delta JSON string for rich text draft content.
+  final String? contentDelta;
+
   @override
   List<Object?> get props => <Object?>[
         conversationId,
@@ -156,6 +170,7 @@ class ChatDraftFlushRequested extends ChatDraftEvent {
         mentionNameById,
         isEditMode,
         isRecordingVoice,
+        contentDelta,
       ];
 }
 

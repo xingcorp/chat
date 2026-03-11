@@ -82,6 +82,9 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   quiver: ^3.2.2
   
+  # Rich Text Editor
+  flutter_quill: ^11.5.0
+
   # Offline Database - Latest Dev Version as Required
   isar: ^4.0.0-dev.14
   isar_flutter_libs: ^4.0.0-dev.14

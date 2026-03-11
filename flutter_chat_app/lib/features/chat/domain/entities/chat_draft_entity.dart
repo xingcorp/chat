@@ -8,6 +8,7 @@ class ChatDraftEntity extends Equatable {
     required this.text,
     required this.updatedAt,
     this.mentionNameById = const <String, String>{},
+    this.contentDelta,
   });
 
   final String conversationId;
@@ -15,19 +16,27 @@ class ChatDraftEntity extends Equatable {
   final DateTime updatedAt;
   final Map<String, String> mentionNameById;
 
-  bool get hasContent => text.trim().isNotEmpty;
+  /// Rich text content as Quill Delta JSON string.
+  ///
+  /// Null when the draft contains only plain text (backward compatible).
+  final String? contentDelta;
+
+  bool get hasContent => text.trim().isNotEmpty || (contentDelta != null && contentDelta!.trim().isNotEmpty);
 
   ChatDraftEntity copyWith({
     String? conversationId,
     String? text,
     DateTime? updatedAt,
     Map<String, String>? mentionNameById,
+    String? contentDelta,
+    bool clearContentDelta = false,
   }) {
     return ChatDraftEntity(
       conversationId: conversationId ?? this.conversationId,
       text: text ?? this.text,
       updatedAt: updatedAt ?? this.updatedAt,
       mentionNameById: mentionNameById ?? this.mentionNameById,
+      contentDelta: clearContentDelta ? null : (contentDelta ?? this.contentDelta),
     );
   }
 
@@ -37,5 +46,6 @@ class ChatDraftEntity extends Equatable {
         text,
         updatedAt,
         mentionNameById,
+        contentDelta,
       ];
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
+import 'package:flutter_chat_app/shared/domain/entities/content_format.dart';
 import 'package:isar/isar.dart';
 
 part 'message_model.g.dart';
@@ -117,6 +118,13 @@ class MessageModel {
   /// Error message if sending failed
   final String? errorMessage;
 
+  /// Rich text content as Quill Delta JSON string.
+  ///
+  /// Null for plain text messages. Stored locally only — the server
+  /// receives plain text via [content]. Nullable String in Isar does
+  /// not require a schema migration.
+  final String? contentDelta;
+
   /// Default constructor
   MessageModel({
     this.id = 0,
@@ -142,6 +150,7 @@ class MessageModel {
     this.isPinned = false,
     this.retryCount = 0,
     this.errorMessage,
+    this.contentDelta,
   });
 
   /// Create a message from a map (legacy format)
@@ -185,6 +194,7 @@ class MessageModel {
       isPinned: map['isPinned'] as bool? ?? false,
       retryCount: map['retryCount'] as int? ?? 0,
       errorMessage: map['errorMessage'] as String?,
+      contentDelta: map['contentDelta'] as String?,
     );
   }
 
@@ -213,6 +223,7 @@ class MessageModel {
       'isPinned': isPinned,
       'retryCount': retryCount,
       'errorMessage': errorMessage,
+      if (contentDelta != null) 'contentDelta': contentDelta,
     };
   }
 
@@ -241,6 +252,8 @@ class MessageModel {
     bool? isPinned,
     int? retryCount,
     String? errorMessage,
+    String? contentDelta,
+    bool clearContentDelta = false,
   }) {
     return MessageModel(
       id: id ?? this.id,
@@ -267,6 +280,7 @@ class MessageModel {
       isPinned: isPinned ?? this.isPinned,
       retryCount: retryCount ?? this.retryCount,
       errorMessage: errorMessage ?? this.errorMessage,
+      contentDelta: clearContentDelta ? null : (contentDelta ?? this.contentDelta),
     );
   }
 
@@ -996,6 +1010,10 @@ class MessageModel {
               : [],
       attachments: attachments,
       reactions: reactions,
+      contentDelta: contentDelta,
+      contentFormat: contentDelta != null
+          ? ContentFormat.deltaJson
+          : ContentFormat.plainText,
     );
   }
 

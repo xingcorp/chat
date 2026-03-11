@@ -311,6 +311,9 @@ class MessageUIState {
       message?.attachments ?? const [];
   List<MessageSender> get mentionTo => message?.mentionTo ?? const [];
 
+  /// Quill Delta JSON string for rich text content (local-only).
+  String? get contentDelta => message?.contentDelta;
+
   const MessageUIState({
     this.message,
     this.resolvedSenderName,

@@ -68,6 +68,8 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
   final Map<String, Map<String, String>>
       _lastPersistedMentionNameByIdByConversationId =
       <String, Map<String, String>>{};
+  final Map<String, String?> _lastPersistedContentDeltaByConversationId =
+      <String, String?>{};
   final Set<String> _restoringConversationIds = <String>{};
   final Set<String> _skipOneEmptyPersistConversationIds = <String>{};
   final Map<String, _PendingDraftClear> _pendingDraftClearByConversationId =
@@ -111,6 +113,16 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
         (entry) => MapEntry<String, Map<String, String>>(
           entry.key,
           Map<String, String>.from(entry.value.mentionNameById),
+        ),
+      ));
+
+    _lastPersistedContentDeltaByConversationId
+      ..removeWhere((conversationId, _) =>
+          !event.draftsByConversationId.containsKey(conversationId))
+      ..addEntries(event.draftsByConversationId.entries.map(
+        (entry) => MapEntry<String, String?>(
+          entry.key,
+          entry.value.contentDelta,
         ),
       ));
 
@@ -217,7 +229,7 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
         Map<String, ChatDraftEntity>.from(state.draftsByConversationId);
     final existingDraft = currentDrafts[conversationId];
 
-    if (normalizedText.trim().isEmpty) {
+    if (normalizedText.trim().isEmpty && event.contentDelta == null) {
       if (existingDraft != null) {
         currentDrafts.remove(conversationId);
         emit(state.copyWith(
@@ -229,6 +241,7 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
     } else {
       final isSameAsCurrent = existingDraft != null &&
           existingDraft.text == normalizedText &&
+          existingDraft.contentDelta == event.contentDelta &&
           mapEquals(existingDraft.mentionNameById, normalizedMentionNameById);
 
       if (!isSameAsCurrent) {
@@ -237,6 +250,7 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
           text: normalizedText,
           updatedAt: DateTime.now(),
           mentionNameById: normalizedMentionNameById,
+          contentDelta: event.contentDelta,
         );
         emit(state.copyWith(
           draftsByConversationId:
@@ -252,6 +266,7 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
       mentionNameById: normalizedMentionNameById,
       isEditMode: event.isEditMode,
       isRecordingVoice: event.isRecordingVoice,
+      contentDelta: event.contentDelta,
     );
   }
 
@@ -284,8 +299,11 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
     final lastPersistedMentionNameById =
         _lastPersistedMentionNameByIdByConversationId[conversationId] ??
             const <String, String>{};
+    final lastPersistedContentDelta =
+        _lastPersistedContentDeltaByConversationId[conversationId];
 
     if (normalizedText == lastPersistedText &&
+        event.contentDelta == lastPersistedContentDelta &&
         mapEquals(normalizedMentionNameById, lastPersistedMentionNameById)) {
       return;
     }
@@ -293,6 +311,8 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
     _lastPersistedTextByConversationId[conversationId] = normalizedText;
     _lastPersistedMentionNameByIdByConversationId[conversationId] =
         Map<String, String>.from(normalizedMentionNameById);
+    _lastPersistedContentDeltaByConversationId[conversationId] =
+        event.contentDelta;
 
     final result = await _saveChatDraft(
       ChatDraftEntity(
@@ -300,6 +320,7 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
         text: normalizedText,
         updatedAt: DateTime.now(),
         mentionNameById: normalizedMentionNameById,
+        contentDelta: event.contentDelta,
       ),
     );
 
@@ -329,6 +350,7 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
     _lastPersistedTextByConversationId[conversationId] = '';
     _lastPersistedMentionNameByIdByConversationId[conversationId] =
         const <String, String>{};
+    _lastPersistedContentDeltaByConversationId.remove(conversationId);
 
     final result = await _removeChatDraft(conversationId);
     result.fold(
@@ -439,6 +461,7 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
       mentionNameById: event.mentionNameById,
       isEditMode: event.isEditMode,
       isRecordingVoice: event.isRecordingVoice,
+      contentDelta: event.contentDelta,
     ));
   }
 
@@ -457,6 +480,7 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
     required Map<String, String> mentionNameById,
     required bool isEditMode,
     required bool isRecordingVoice,
+    String? contentDelta,
   }) {
     final normalizedConversationId = conversationId.trim();
     if (normalizedConversationId.isEmpty) {
@@ -483,6 +507,7 @@ class ChatDraftBloc extends Bloc<ChatDraftEvent, ChatDraftState> {
           mentionNameById: Map<String, String>.from(mentionNameById),
           isEditMode: isEditMode,
           isRecordingVoice: isRecordingVoice,
+          contentDelta: contentDelta,
         ));
       },
     );

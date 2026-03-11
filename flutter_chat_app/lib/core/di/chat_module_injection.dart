@@ -83,6 +83,7 @@ import 'package:flutter_chat_app/core/services/foreground_sync_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/services/user_cache_service.dart';
 import 'package:flutter_chat_app/core/services/local_notification_service.dart';
+import 'package:flutter_chat_app/features/chat/data/adapters/quill_delta_adapter.dart';
 import 'package:flutter_chat_app/features/chat/data/datasources/chat/chat_local_datasource.dart';
 import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_repository.dart';
 
@@ -555,6 +556,7 @@ class ChatModuleInjection {
     _tryUnregisterNamed<int>('connectionPoolCleanupInterval');
     _tryUnregisterNamed<int>('connectionPoolHealthCheckInterval');
 
+    _tryUnregister<IQuillDeltaAdapter>();
     _tryUnregister<socket_mgr.SocketManager>();
     _tryUnregister<ConnectionPoolManager>();
     _tryUnregister<EnhancedRealtimeConnectionService>();
@@ -894,6 +896,12 @@ class ChatModuleInjection {
           gallerySaver: _getIt<IMediaGallerySaver>(),
           logger: _getIt<AppLogger>(),
         ),
+      );
+    }
+
+    if (!_getIt.isRegistered<IQuillDeltaAdapter>()) {
+      _getIt.registerLazySingleton<IQuillDeltaAdapter>(
+        () => QuillDeltaAdapter(),
       );
     }
   }

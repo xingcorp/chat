@@ -51,25 +51,32 @@ class ChatComposerShowWarningEffect extends ChatComposerEffect {
 }
 
 class ChatComposerSendTextEffect extends ChatComposerEffect {
-  const ChatComposerSendTextEffect(this.text);
+  const ChatComposerSendTextEffect(this.text, {this.contentDelta});
 
   final String text;
 
+  /// Quill Delta JSON string. Null for plain text messages.
+  final String? contentDelta;
+
   @override
-  List<Object?> get props => <Object?>[text];
+  List<Object?> get props => <Object?>[text, contentDelta];
 }
 
 class ChatComposerEditTextEffect extends ChatComposerEffect {
   const ChatComposerEditTextEffect({
     required this.messageId,
     required this.text,
+    this.contentDelta,
   });
 
   final String messageId;
   final String text;
 
+  /// Quill Delta JSON string. Null for plain text messages.
+  final String? contentDelta;
+
   @override
-  List<Object?> get props => <Object?>[messageId, text];
+  List<Object?> get props => <Object?>[messageId, text, contentDelta];
 }
 
 class ChatComposerMuteActionEffect extends ChatComposerEffect {

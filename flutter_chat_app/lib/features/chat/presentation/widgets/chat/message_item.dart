@@ -17,6 +17,7 @@ import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_st
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/audio_player_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/expandable_rich_text.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/rich_text_bubble.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_preview.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/link_preview_card.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/location_message_card.dart';
@@ -106,6 +107,20 @@ class _MessageItemState extends State<MessageItem>
     required ThemeData theme,
     required Color textColor,
   }) {
+    // Rich text rendering: khi có Delta JSON, dùng RichTextBubble
+    if (widget.uiState.contentDelta != null &&
+        widget.uiState.contentDelta!.trim().isNotEmpty) {
+      return RichTextBubble(
+        plainText: widget.uiState.content,
+        isSender: widget.uiState.isFromCurrentUser,
+        deltaJson: widget.uiState.contentDelta,
+        textStyle: TextStyle(
+          color: textColor,
+          fontSize: 16.0,
+        ),
+      );
+    }
+
     final mentionNameById = <String, String>{
       for (final m in widget.uiState.mentionTo)
         if (m.id.isNotEmpty && m.name.trim().isNotEmpty) m.id: m.name.trim(),
