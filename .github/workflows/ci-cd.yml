@@ -1,0 +1,563 @@
+# =============================================================================
+# OXII Chat - CI/CD Pipeline
+# =============================================================================
+# Multi-environment, multi-platform build and deployment workflow
+#
+# Triggers:
+#   - Push to main/develop branches
+#   - Pull requests to main/develop
+#   - Manual workflow dispatch
+#
+# Environments:
+#   - Staging: common-stag (Firebase)
+#   - Production: common-18e05 (Firebase)
+#
+# Jobs:
+#   1. Analyze & Test
+#   2. Build Android (APK + AAB)
+#   3. Build iOS
+#   4. Build Web
+#   5. Build Windows (ZIP + Inno Setup + MSIX)
+#   6. Build macOS (DMG + ZIP)
+#   7. Deploy Staging (Firebase App Distribution)
+#   8. Deploy Production (Firebase App Distribution)
+# =============================================================================
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'flutter_chat_app/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'flutter_chat_app/**'
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: 'Build flavor'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+          - both
+      platform:
+        description: 'Target platform'
+        required: true
+        default: 'android'
+        type: choice
+        options:
+          - android
+          - ios
+          - web
+          - windows
+          - macos
+          - desktop
+          - all
+      deploy:
+        description: 'Deploy after build'
+        required: false
+        default: false
+        type: boolean
+      windows_method:
+        description: 'Windows packaging method'
+        required: false
+        default: 'inno'
+        type: choice
+        options:
+          - zip
+          - inno
+          - msix
+          - all
+      macos_method:
+        description: 'macOS packaging method'
+        required: false
+        default: 'dmg'
+        type: choice
+        options:
+          - app
+          - dmg
+          - zip
+          - all
+
+env:
+  FLUTTER_VERSION: '3.24.0'
+  JAVA_VERSION: '17'
+  WORKING_DIRECTORY: 'flutter_chat_app'
+
+jobs:
+  # ===========================================================================
+  # Job 1: Analyze and Test
+  # ===========================================================================
+  analyze:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --set-exit-if-changed lib/
+
+      - name: Analyze code
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        run: flutter test --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ${{ env.WORKING_DIRECTORY }}/coverage/lcov.info
+          flags: flutter
+          fail_ci_if_error: false
+
+  # ===========================================================================
+  # Job 2: Build Android
+  # ===========================================================================
+  build-android:
+    name: Build Android (${{ matrix.flavor }})
+    runs-on: ubuntu-latest
+    needs: analyze
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all')
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    strategy:
+      matrix:
+        flavor: ${{ github.event.inputs.flavor == 'both' && fromJSON('["staging", "production"]') || fromJSON(format('["{0}"]', github.event.inputs.flavor || 'staging')) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build APK (${{ matrix.flavor }})
+        run: |
+          flutter build apk \
+            --flavor ${{ matrix.flavor }} \
+            --release \
+            --dart-define=FLAVOR=${{ matrix.flavor }}
+
+      - name: Build App Bundle (${{ matrix.flavor }})
+        if: matrix.flavor == 'production'
+        run: |
+          flutter build appbundle \
+            --flavor ${{ matrix.flavor }} \
+            --release \
+            --dart-define=FLAVOR=${{ matrix.flavor }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ matrix.flavor }}-apk
+          path: ${{ env.WORKING_DIRECTORY }}/build/app/outputs/flutter-apk/app-${{ matrix.flavor }}-release.apk
+          retention-days: 7
+
+      - name: Upload AAB artifact
+        if: matrix.flavor == 'production'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ matrix.flavor }}-aab
+          path: ${{ env.WORKING_DIRECTORY }}/build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab
+          retention-days: 7
+
+  # ===========================================================================
+  # Job 3: Build iOS
+  # ===========================================================================
+  build-ios:
+    name: Build iOS (${{ matrix.flavor }})
+    runs-on: macos-latest
+    needs: analyze
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'all')
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    strategy:
+      matrix:
+        flavor: ${{ github.event.inputs.flavor == 'both' && fromJSON('["staging", "production"]') || fromJSON(format('["{0}"]', github.event.inputs.flavor || 'staging')) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Setup Firebase config
+        run: |
+          cp ios/config/${{ matrix.flavor }}/GoogleService-Info.plist \
+             ios/Runner/GoogleService-Info.plist
+
+      - name: Build iOS (${{ matrix.flavor }})
+        run: |
+          flutter build ios \
+            --flavor ${{ matrix.flavor }} \
+            --release \
+            --no-codesign \
+            --dart-define=FLAVOR=${{ matrix.flavor }}
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-${{ matrix.flavor }}-build
+          path: ${{ env.WORKING_DIRECTORY }}/build/ios/iphoneos/
+          retention-days: 7
+
+  # ===========================================================================
+  # Job 4: Build Web
+  # ===========================================================================
+  build-web:
+    name: Build Web (${{ matrix.flavor }})
+    runs-on: ubuntu-latest
+    needs: analyze
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.platform == 'web' || github.event.inputs.platform == 'all')
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    strategy:
+      matrix:
+        flavor: ${{ github.event.inputs.flavor == 'both' && fromJSON('["staging", "production"]') || fromJSON(format('["{0}"]', github.event.inputs.flavor || 'staging')) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Web (${{ matrix.flavor }})
+        run: |
+          flutter build web \
+            --release \
+            --dart-define=FLAVOR=${{ matrix.flavor }}
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-${{ matrix.flavor }}-build
+          path: ${{ env.WORKING_DIRECTORY }}/build/web/
+          retention-days: 7
+
+  # ===========================================================================
+  # Job 5: Build Windows
+  # ===========================================================================
+  build-windows:
+    name: Build Windows (${{ matrix.flavor }})
+    runs-on: windows-latest
+    needs: analyze
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.platform == 'windows' ||
+       github.event.inputs.platform == 'desktop' ||
+       github.event.inputs.platform == 'all')
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    strategy:
+      matrix:
+        flavor: ${{ github.event.inputs.flavor == 'both' && fromJSON('["staging", "production"]') || fromJSON(format('["{0}"]', github.event.inputs.flavor || 'staging')) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Windows (${{ matrix.flavor }})
+        run: flutter build windows --release --dart-define=FLAVOR=${{ matrix.flavor }}
+
+      - name: Remove JIT artifacts
+        shell: pwsh
+        run: |
+          $kernelBlob = 'build\windows\x64\runner\Release\data\flutter_assets\kernel_blob.bin'
+          if (Test-Path $kernelBlob) {
+            Remove-Item $kernelBlob -Force
+            Write-Host "Removed kernel_blob.bin (JIT-only)"
+          }
+
+      - name: Package ZIP
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path pubspec.yaml -Pattern 'version:\s*(\d+\.\d+\.\d+)').Matches.Groups[1].Value
+          $outputDir = 'build\distribution\windows'
+          New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+          $zipName = "OxiiChat_v${version}_${{ matrix.flavor }}_Windows.zip"
+          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "$outputDir\$zipName"
+
+      - name: Package MSIX
+        if: github.event.inputs.windows_method == 'msix' || github.event.inputs.windows_method == 'all'
+        run: dart run msix:create
+
+      - name: Install Inno Setup
+        if: github.event.inputs.windows_method == 'inno' || github.event.inputs.windows_method == 'all'
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Build Inno Setup Installer
+        if: github.event.inputs.windows_method == 'inno' || github.event.inputs.windows_method == 'all'
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\oxii_chat_setup.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup build failed" }
+
+      - name: Collect installer to distribution folder
+        if: github.event.inputs.windows_method == 'inno' || github.event.inputs.windows_method == 'all'
+        shell: pwsh
+        run: |
+          $outputDir = 'build\distribution\windows'
+          New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+          $setupExe = Get-ChildItem 'build\installer' -Filter '*.exe' -ErrorAction SilentlyContinue |
+                      Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if ($setupExe) {
+            Copy-Item $setupExe.FullName "$outputDir\$($setupExe.Name)" -Force
+          }
+
+      - name: Generate SHA-256 checksums
+        shell: pwsh
+        run: |
+          $outputDir = 'build\distribution\windows'
+          if (Test-Path $outputDir) {
+            Get-ChildItem $outputDir -File | Where-Object { $_.Extension -ne '.sha256' } | ForEach-Object {
+              $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLower()
+              Set-Content -Path "$($_.FullName).sha256" -Value "$hash  $($_.Name)" -NoNewline
+              Write-Host "$($_.Name): $hash"
+            }
+          }
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.flavor }}-build
+          path: |
+            ${{ env.WORKING_DIRECTORY }}/build/distribution/windows/*
+          retention-days: 14
+
+      - name: Upload Windows MSIX
+        if: github.event.inputs.windows_method == 'msix' || github.event.inputs.windows_method == 'all'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.flavor }}-msix
+          path: ${{ env.WORKING_DIRECTORY }}/build/**/*.msix
+          retention-days: 14
+
+  # ===========================================================================
+  # Job 6: Build macOS
+  # ===========================================================================
+  build-macos:
+    name: Build macOS (${{ matrix.flavor }})
+    runs-on: macos-latest
+    needs: analyze
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.platform == 'macos' ||
+       github.event.inputs.platform == 'desktop' ||
+       github.event.inputs.platform == 'all')
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    strategy:
+      matrix:
+        flavor: ${{ github.event.inputs.flavor == 'both' && fromJSON('["staging", "production"]') || fromJSON(format('["{0}"]', github.event.inputs.flavor || 'staging')) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build macOS (${{ matrix.flavor }})
+        run: flutter build macos --release --dart-define=FLAVOR=${{ matrix.flavor }}
+
+      - name: Package ZIP
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+          APP_PATH=$(find build/macos/Build/Products/Release -name "*.app" -maxdepth 1 | head -1)
+          mkdir -p build/distribution/macos
+          cd "$(dirname "$APP_PATH")"
+          ditto -c -k --sequesterRsrc --keepParent "$(basename "$APP_PATH")" \
+            "$GITHUB_WORKSPACE/${{ env.WORKING_DIRECTORY }}/build/distribution/macos/OxiiChat_v${VERSION}_${{ matrix.flavor }}_macOS.zip"
+
+      - name: Install create-dmg
+        if: github.event.inputs.macos_method == 'dmg' || github.event.inputs.macos_method == 'all'
+        run: brew install create-dmg
+
+      - name: Package DMG
+        if: github.event.inputs.macos_method == 'dmg' || github.event.inputs.macos_method == 'all'
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+          APP_PATH=$(find build/macos/Build/Products/Release -name "*.app" -maxdepth 1 | head -1)
+          create-dmg \
+            --volname "OXII Chat" \
+            --window-pos 200 120 \
+            --window-size 660 400 \
+            --icon-size 80 \
+            --app-drop-link 500 160 \
+            "build/distribution/macos/OxiiChat_v${VERSION}_${{ matrix.flavor }}_macOS.dmg" \
+            "$APP_PATH" \
+          || true
+
+      - name: Generate SHA-256 checksums
+        run: |
+          cd build/distribution/macos
+          for file in *.dmg *.zip; do
+            if [ -f "$file" ]; then
+              HASH=$(shasum -a 256 "$file" | awk '{print $1}')
+              echo "$HASH  $file" > "${file}.sha256"
+              echo "$file: $HASH"
+            fi
+          done
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.flavor }}-build
+          path: |
+            ${{ env.WORKING_DIRECTORY }}/build/distribution/macos/*
+          retention-days: 14
+
+  # ===========================================================================
+  # Job 7: Deploy to Firebase App Distribution (Staging)
+  # ===========================================================================
+  deploy-staging:
+    name: Deploy Staging to Firebase
+    runs-on: ubuntu-latest
+    needs: build-android
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.deploy == 'true' &&
+      (github.event.inputs.flavor == 'staging' || github.event.inputs.flavor == 'both')
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-staging-apk
+          path: ./artifacts/
+
+      - name: Deploy to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_STAGING_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: internal-testers
+          file: ./artifacts/app-staging-release.apk
+          releaseNotes: |
+            Build: ${{ github.run_number }}
+            Commit: ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
+
+  # ===========================================================================
+  # Job 8: Deploy to Firebase App Distribution (Production)
+  # ===========================================================================
+  deploy-production:
+    name: Deploy Production to Firebase
+    runs-on: ubuntu-latest
+    needs: build-android
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.deploy == 'true' &&
+      (github.event.inputs.flavor == 'production' || github.event.inputs.flavor == 'both')
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-production-apk
+          path: ./artifacts/
+
+      - name: Deploy to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_PRODUCTION_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: beta-testers
+          file: ./artifacts/app-production-release.apk
+          releaseNotes: |
+            Build: ${{ github.run_number }}
+            Commit: ${{ github.sha }}
+            Branch: ${{ github.ref_name }}

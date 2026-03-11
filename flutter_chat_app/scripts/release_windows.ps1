@@ -7,6 +7,8 @@
     1. Bump version in pubspec.yaml (+ msix_config)
     2. Build Flutter Windows release
     3. Package with chosen method (zip / inno / msix / all)
+    4. Generate SHA-256 checksums
+    5. (Optional) Create GitHub Release and upload assets
 
 .PARAMETER Version
     New version string, e.g. "1.2.0"
@@ -23,9 +25,22 @@
 .PARAMETER SkipBuild
     Skip Flutter build (use existing build output)
 
+.PARAMETER NoConfirm
+    Skip interactive confirmation prompt (for CI/automation)
+
+.PARAMETER Publish
+    Create GitHub Release and upload assets after build.
+    Requires: gh CLI installed and authenticated (gh auth login)
+
+.PARAMETER Draft
+    Mark the GitHub Release as a draft (only with -Publish)
+
+.PARAMETER ReleaseNotes
+    Custom release notes (markdown). If omitted, a default template is used.
+
 .EXAMPLE
     .\scripts\release_windows.ps1 -Bump patch
-    # 1.0.0 → 1.0.1, build all formats
+    # 1.0.0 -> 1.0.1, build all formats
 
 .EXAMPLE
     .\scripts\release_windows.ps1 -Version 2.0.0 -Method inno
@@ -33,7 +48,15 @@
 
 .EXAMPLE
     .\scripts\release_windows.ps1 -Bump minor -Flavor staging
-    # 1.0.0 → 1.1.0, staging build
+    # 1.0.0 -> 1.1.0, staging build
+
+.EXAMPLE
+    .\scripts\release_windows.ps1 -Bump patch -Method inno -Publish -NoConfirm
+    # Non-interactive: bump, build, publish to GitHub
+
+.EXAMPLE
+    .\scripts\release_windows.ps1 -Bump patch -Publish -Draft
+    # Build and publish as draft release
 #>
 
 [CmdletBinding()]
@@ -49,7 +72,15 @@ param(
     [ValidateSet('staging', 'production')]
     [string]$Flavor = 'production',
 
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+
+    [switch]$NoConfirm,
+
+    [switch]$Publish,
+
+    [switch]$Draft,
+
+    [string]$ReleaseNotes = ''
 )
 
 Set-StrictMode -Version Latest
@@ -58,6 +89,11 @@ $ErrorActionPreference = 'Stop'
 $SCRIPT_DIR  = Split-Path -Parent $MyInvocation.MyCommand.Path
 $PROJECT_DIR = Split-Path -Parent $SCRIPT_DIR
 $PUBSPEC     = Join-Path $PROJECT_DIR 'pubspec.yaml'
+$OUTPUT_DIR  = Join-Path $PROJECT_DIR 'build\distribution\windows'
+
+# ─── GitHub Config ─────────────────────────────────────────────────────────
+$GH_OWNER = 'xingcorp'
+$GH_REPO  = 'chat'
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
 function Write-Info    { param([string]$Msg) Write-Host "[INFO]    $Msg" -ForegroundColor Cyan }
@@ -167,27 +203,150 @@ function Invoke-BuildAndPackage {
     & $buildScript @params
 }
 
+# ─── Find GitHub CLI ────────────────────────────────────────────────────────
+function Find-GhCli {
+    # Try PATH first
+    $found = Get-Command 'gh' -ErrorAction SilentlyContinue
+    if ($found) { return $found.Source }
+
+    $found = Get-Command 'gh.exe' -ErrorAction SilentlyContinue
+    if ($found) { return $found.Source }
+
+    # Common install locations
+    $candidates = @(
+        "$env:ProgramFiles\GitHub CLI\gh.exe",
+        "${env:ProgramFiles(x86)}\GitHub CLI\gh.exe",
+        "$env:LOCALAPPDATA\Programs\GitHub CLI\gh.exe",
+        "$env:USERPROFILE\scoop\shims\gh.exe"
+    )
+
+    foreach ($path in $candidates) {
+        if (Test-Path $path) { return $path }
+    }
+
+    return $null
+}
+
+# ─── Publish GitHub Release ─────────────────────────────────────────────────
+function Publish-GitHubRelease {
+    param($NewVer)
+
+    if (-not $Publish) { return }
+
+    Write-Step 'Publishing GitHub Release'
+
+    $ghExe = Find-GhCli
+    if (-not $ghExe) {
+        Write-Err 'gh CLI not found. Install from: https://cli.github.com'
+        Write-Err 'Then run: gh auth login'
+        return
+    }
+
+    Write-Info "gh CLI: $ghExe"
+
+    # Check auth
+    $authCheck = & $ghExe auth status 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Err 'gh CLI not authenticated. Run: gh auth login'
+        Write-Err $authCheck
+        return
+    }
+
+    $versionFull = "$($NewVer.Full)+$($NewVer.Build)"
+    $tag = "v$versionFull"
+
+    # Collect distribution assets (installers + checksums)
+    $assets = @()
+    if (Test-Path $OUTPUT_DIR) {
+        Get-ChildItem $OUTPUT_DIR -File | Where-Object {
+            $_.Name -match [regex]::Escape($versionFull) -or
+            $_.Name -match [regex]::Escape($NewVer.Full)
+        } | ForEach-Object {
+            $assets += $_.FullName
+        }
+    }
+
+    if ($assets.Count -eq 0) {
+        Write-Warn 'No distribution files found to upload'
+        return
+    }
+
+    Write-Info "Tag: $tag"
+    Write-Info "Assets: $($assets.Count) file(s)"
+    foreach ($a in $assets) {
+        Write-Info "  $(Split-Path $a -Leaf)"
+    }
+
+    # Build release notes
+    $notes = $ReleaseNotes
+    if (-not $notes) {
+        $notes = @"
+## What's New in v$($NewVer.Full)
+
+- [Describe changes here]
+
+### Download
+- **Windows**: Download the .exe installer and run it
+
+<!-- force_update: false -->
+<!-- min_supported_version: 1.8.0 -->
+"@
+    }
+
+    # Build gh release create command args
+    $ghArgs = @('release', 'create', $tag)
+    $ghArgs += '--repo'
+    $ghArgs += "$GH_OWNER/$GH_REPO"
+    $ghArgs += '--title'
+    $ghArgs += "OXII Chat v$($NewVer.Full)"
+    $ghArgs += '--notes'
+    $ghArgs += $notes
+
+    if ($Draft) {
+        $ghArgs += '--draft'
+    }
+
+    # Add asset files
+    foreach ($a in $assets) {
+        $ghArgs += $a
+    }
+
+    Write-Info 'Creating release...'
+    $output = & $ghExe @ghArgs 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Ok "GitHub Release created: $output"
+    } else {
+        Write-Err "Failed to create GitHub Release"
+        Write-Err ($output | Out-String)
+    }
+}
+
 # ─── Main ─────────────────────────────────────────────────────────────────────
 function Main {
     $current = Get-CurrentVersion
     $new     = Get-NewVersion
 
     Write-Host ''
-    Write-Host '╔══════════════════════════════════════════════╗' -ForegroundColor White
-    Write-Host '║       OXII Chat — Release Script             ║' -ForegroundColor White
-    Write-Host '╠══════════════════════════════════════════════╣' -ForegroundColor White
-    Write-Host "║  Current: $($current.Raw)"                       -ForegroundColor Yellow
-    Write-Host "║  New:     $($new.Full)+$($new.Build)"            -ForegroundColor Green
-    Write-Host "║  Flavor:  $Flavor"                               -ForegroundColor Cyan
-    Write-Host "║  Method:  $Method"                               -ForegroundColor Cyan
-    Write-Host '╚══════════════════════════════════════════════╝' -ForegroundColor White
+    Write-Host '================================================' -ForegroundColor White
+    Write-Host '       OXII Chat - Release Script               ' -ForegroundColor White
+    Write-Host '================================================' -ForegroundColor White
+    Write-Host "  Current: $($current.Raw)"                        -ForegroundColor Yellow
+    Write-Host "  New:     $($new.Full)+$($new.Build)"             -ForegroundColor Green
+    Write-Host "  Flavor:  $Flavor"                                -ForegroundColor Cyan
+    Write-Host "  Method:  $Method"                                -ForegroundColor Cyan
+    Write-Host "  Publish: $Publish"                               -ForegroundColor Cyan
+    Write-Host '================================================' -ForegroundColor White
     Write-Host ''
 
-    # Confirm
-    $confirm = Read-Host "Proceed with version bump $($current.Full) -> $($new.Full)? (y/N)"
-    if ($confirm -ne 'y' -and $confirm -ne 'Y') {
-        Write-Info 'Cancelled.'
-        return
+    # Confirm (skip with -NoConfirm)
+    if (-not $NoConfirm) {
+        $confirm = Read-Host "Proceed with version bump $($current.Full) -> $($new.Full)? (y/N)"
+        if ($confirm -ne 'y' -and $confirm -ne 'Y') {
+            Write-Info 'Cancelled.'
+            return
+        }
+    } else {
+        Write-Info "NoConfirm: skipping interactive prompt"
     }
 
     # 1. Bump version
@@ -196,19 +355,27 @@ function Main {
     # 2. Build & Package
     Invoke-BuildAndPackage
 
-    # 3. Summary
+    # 3. Publish to GitHub (if -Publish)
+    Publish-GitHubRelease -NewVer $new
+
+    # 4. Summary
     Write-Host ''
-    Write-Host '════════════════════════════════════════════════' -ForegroundColor Green
-    Write-Host "  Release $($new.Full) ready!"                     -ForegroundColor Green
-    Write-Host '════════════════════════════════════════════════' -ForegroundColor Green
+    Write-Host '================================================' -ForegroundColor Green
+    Write-Host "  Release $($new.Full)+$($new.Build) ready!"       -ForegroundColor Green
+    Write-Host '================================================' -ForegroundColor Green
     Write-Host ''
     Write-Host '  Next steps:' -ForegroundColor White
     Write-Host "  1. Test the installer from build\distribution\windows\" -ForegroundColor White
-    Write-Host "  2. Send to customer" -ForegroundColor White
-    Write-Host "  3. Git commit & tag:" -ForegroundColor White
+    if (-not $Publish) {
+        Write-Host "  2. Publish to GitHub:" -ForegroundColor White
+        Write-Host "     .\scripts\release_windows.ps1 -Bump patch -Publish -SkipBuild" -ForegroundColor DarkGray
+        Write-Host "  3. Git commit & tag:" -ForegroundColor White
+    } else {
+        Write-Host "  2. Git commit & tag:" -ForegroundColor White
+    }
     Write-Host "     git add pubspec.yaml" -ForegroundColor DarkGray
     Write-Host "     git commit -m 'release: v$($new.Full)'" -ForegroundColor DarkGray
-    Write-Host "     git tag v$($new.Full)" -ForegroundColor DarkGray
+    Write-Host "     git tag v$($new.Full)+$($new.Build)" -ForegroundColor DarkGray
     Write-Host ''
 }
 

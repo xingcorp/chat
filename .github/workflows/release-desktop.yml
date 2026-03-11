@@ -1,0 +1,413 @@
+# =============================================================================
+# OXII Chat - Desktop Release & GitHub Release Workflow
+# =============================================================================
+# Builds Windows + macOS desktop apps and publishes GitHub Releases.
+# Used by the auto-update system: clients check releases/latest for new versions.
+#
+# Triggers:
+#   - Push version tags (v*)
+#   - Manual workflow dispatch (with version bump options)
+#
+# Convention (for auto-update detection):
+#   Tag:             v{MAJOR}.{MINOR}.{PATCH}+{BUILD}  (e.g., v2.0.1+89)
+#   Title:           OXII Chat v{MAJOR}.{MINOR}.{PATCH} (e.g., OXII Chat v2.0.1)
+#   Windows asset:   OxiiChat_Setup_v{VERSION}.exe
+#   macOS asset:     OxiiChat_v{VERSION}_macOS.dmg
+#   Checksum:        {asset_name}.sha256
+# =============================================================================
+
+name: Release Desktop
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 2.0.1). Leave empty to read from pubspec.yaml'
+        required: false
+        default: ''
+        type: string
+      flavor:
+        description: 'Build flavor'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      platforms:
+        description: 'Target platforms'
+        required: true
+        default: 'windows'
+        type: choice
+        options:
+          - windows
+          - macos
+          - both
+      draft:
+        description: 'Create as draft release'
+        required: false
+        default: true
+        type: boolean
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: '3.24.0'
+  WORKING_DIRECTORY: 'flutter_chat_app'
+
+jobs:
+  # ===========================================================================
+  # Prepare: Extract version info
+  # ===========================================================================
+  prepare:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_full: ${{ steps.version.outputs.version_full }}
+      build_number: ${{ steps.version.outputs.build_number }}
+      tag: ${{ steps.version.outputs.tag }}
+      build_windows: ${{ steps.platforms.outputs.windows }}
+      build_macos: ${{ steps.platforms.outputs.macos }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            # From tag: v2.0.1+89 -> version=2.0.1, build=89
+            TAG="${GITHUB_REF#refs/tags/}"
+            VERSION=$(echo "$TAG" | sed 's/^v//' | cut -d'+' -f1)
+            BUILD=$(echo "$TAG" | cut -d'+' -f2)
+            if [[ "$BUILD" == "$VERSION" ]]; then BUILD="0"; fi
+          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+            # Read build number from pubspec and increment
+            BUILD=$(grep '^version:' ${{ env.WORKING_DIRECTORY }}/pubspec.yaml | sed 's/.*+//')
+            BUILD=$((BUILD + 1))
+          else
+            # Read from pubspec.yaml
+            FULL=$(grep '^version:' ${{ env.WORKING_DIRECTORY }}/pubspec.yaml | awk '{print $2}')
+            VERSION=$(echo "$FULL" | cut -d'+' -f1)
+            BUILD=$(echo "$FULL" | cut -d'+' -f2)
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_full=${VERSION}+${BUILD}" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD" >> $GITHUB_OUTPUT
+          echo "tag=v${VERSION}+${BUILD}" >> $GITHUB_OUTPUT
+
+          echo "Version: $VERSION"
+          echo "Full: ${VERSION}+${BUILD}"
+          echo "Tag: v${VERSION}+${BUILD}"
+
+      - name: Determine platforms
+        id: platforms
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "windows=true" >> $GITHUB_OUTPUT
+            echo "macos=true" >> $GITHUB_OUTPUT
+          else
+            PLATFORM="${{ github.event.inputs.platforms }}"
+            if [[ "$PLATFORM" == "windows" || "$PLATFORM" == "both" ]]; then
+              echo "windows=true" >> $GITHUB_OUTPUT
+            else
+              echo "windows=false" >> $GITHUB_OUTPUT
+            fi
+            if [[ "$PLATFORM" == "macos" || "$PLATFORM" == "both" ]]; then
+              echo "macos=true" >> $GITHUB_OUTPUT
+            else
+              echo "macos=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  # ===========================================================================
+  # Build Windows
+  # ===========================================================================
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    needs: prepare
+    if: needs.prepare.outputs.build_windows == 'true'
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Windows (release)
+        run: |
+          flutter build windows --release --dart-define=FLAVOR=${{ github.event.inputs.flavor || 'production' }}
+
+      - name: Remove JIT artifacts
+        shell: pwsh
+        run: |
+          $kernelBlob = 'build\windows\x64\runner\Release\data\flutter_assets\kernel_blob.bin'
+          if (Test-Path $kernelBlob) {
+            Remove-Item $kernelBlob -Force
+            Write-Host "Removed kernel_blob.bin (JIT-only)"
+          }
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Build Inno Setup Installer
+        shell: pwsh
+        run: |
+          $version = '${{ needs.prepare.outputs.version_full }}'
+          Write-Host "Building installer for version: $version"
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\oxii_chat_setup.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup build failed" }
+
+      - name: Create ZIP package
+        shell: pwsh
+        run: |
+          $version = '${{ needs.prepare.outputs.version }}'
+          $versionFull = '${{ needs.prepare.outputs.version_full }}'
+          $buildDir = 'build\windows\x64\runner\Release'
+          $outputDir = 'build\distribution\windows'
+          New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+
+          $zipName = "OxiiChat_v${versionFull}_Windows.zip"
+          $zipPath = Join-Path $outputDir $zipName
+          Compress-Archive -Path "$buildDir\*" -DestinationPath $zipPath -Force
+          Write-Host "ZIP: $zipPath"
+
+      - name: Collect and rename installer
+        shell: pwsh
+        run: |
+          $versionFull = '${{ needs.prepare.outputs.version_full }}'
+          $outputDir = 'build\distribution\windows'
+          New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+
+          # Find Inno Setup output
+          $setupExe = Get-ChildItem 'build\installer' -Filter '*.exe' -ErrorAction SilentlyContinue |
+                      Sort-Object LastWriteTime -Descending |
+                      Select-Object -First 1
+          if ($setupExe) {
+            $destName = "OxiiChat_Setup_v${versionFull}.exe"
+            $destPath = Join-Path $outputDir $destName
+            Copy-Item $setupExe.FullName $destPath -Force
+            Write-Host "Installer: $destPath"
+          } else {
+            Write-Host "WARNING: No Inno Setup output found"
+          }
+
+      - name: Generate SHA-256 checksums
+        shell: pwsh
+        run: |
+          $outputDir = 'build\distribution\windows'
+          Get-ChildItem $outputDir -File | Where-Object { $_.Extension -ne '.sha256' } | ForEach-Object {
+            $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLower()
+            $checksumFile = "$($_.FullName).sha256"
+            Set-Content -Path $checksumFile -Value "$hash  $($_.Name)" -NoNewline
+            Write-Host "$($_.Name): $hash"
+          }
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            ${{ env.WORKING_DIRECTORY }}/build/distribution/windows/*.exe
+            ${{ env.WORKING_DIRECTORY }}/build/distribution/windows/*.zip
+            ${{ env.WORKING_DIRECTORY }}/build/distribution/windows/*.sha256
+          retention-days: 30
+
+  # ===========================================================================
+  # Build macOS
+  # ===========================================================================
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    needs: prepare
+    if: needs.prepare.outputs.build_macos == 'true'
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build macOS (release)
+        run: |
+          flutter build macos --release --dart-define=FLAVOR=${{ github.event.inputs.flavor || 'production' }}
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Package DMG
+        run: |
+          VERSION="${{ needs.prepare.outputs.version_full }}"
+          APP_PATH=$(find build/macos/Build/Products/Release -name "*.app" -maxdepth 1 | head -1)
+          mkdir -p build/distribution/macos
+
+          if [ -n "$APP_PATH" ]; then
+            DMG_NAME="OxiiChat_v${VERSION}_macOS.dmg"
+            create-dmg \
+              --volname "OXII Chat" \
+              --window-pos 200 120 \
+              --window-size 660 400 \
+              --icon-size 80 \
+              --app-drop-link 500 160 \
+              "build/distribution/macos/$DMG_NAME" \
+              "$APP_PATH" \
+            || true
+            echo "DMG: build/distribution/macos/$DMG_NAME"
+          fi
+
+      - name: Package ZIP
+        run: |
+          VERSION="${{ needs.prepare.outputs.version_full }}"
+          APP_PATH=$(find build/macos/Build/Products/Release -name "*.app" -maxdepth 1 | head -1)
+          mkdir -p build/distribution/macos
+
+          if [ -n "$APP_PATH" ]; then
+            ZIP_NAME="OxiiChat_v${VERSION}_macOS.zip"
+            cd "$(dirname "$APP_PATH")"
+            ditto -c -k --sequesterRsrc --keepParent "$(basename "$APP_PATH")" \
+              "$GITHUB_WORKSPACE/${{ env.WORKING_DIRECTORY }}/build/distribution/macos/$ZIP_NAME"
+            echo "ZIP: build/distribution/macos/$ZIP_NAME"
+          fi
+
+      - name: Generate SHA-256 checksums
+        run: |
+          cd build/distribution/macos
+          for file in *.dmg *.zip; do
+            if [ -f "$file" ]; then
+              HASH=$(shasum -a 256 "$file" | awk '{print $1}')
+              echo "$HASH  $file" > "${file}.sha256"
+              echo "$file: $HASH"
+            fi
+          done
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: |
+            ${{ env.WORKING_DIRECTORY }}/build/distribution/macos/*.dmg
+            ${{ env.WORKING_DIRECTORY }}/build/distribution/macos/*.zip
+            ${{ env.WORKING_DIRECTORY }}/build/distribution/macos/*.sha256
+          retention-days: 30
+
+  # ===========================================================================
+  # Create GitHub Release
+  # ===========================================================================
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [prepare, build-windows, build-macos]
+    # Run if at least one build job succeeded (use always() to handle skipped jobs)
+    if: |
+      always() &&
+      (needs.build-windows.result == 'success' || needs.build-macos.result == 'success')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Windows artifacts
+        if: needs.build-windows.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: ./release-assets/
+
+      - name: Download macOS artifacts
+        if: needs.build-macos.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-release
+          path: ./release-assets/
+
+      - name: List release assets
+        run: |
+          echo "=== Release Assets ==="
+          find ./release-assets -type f | sort
+          echo "======================"
+
+      - name: Flatten release assets
+        run: |
+          mkdir -p ./assets
+          find ./release-assets -type f -exec cp {} ./assets/ \;
+          echo "=== Flattened Assets ==="
+          ls -la ./assets/
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          VERSION_FULL="${{ needs.prepare.outputs.version_full }}"
+
+          cat > release_notes.md << 'NOTES_EOF'
+          ## What's New in v${{ needs.prepare.outputs.version }}
+
+          - [Describe changes here]
+
+          ### Downloads
+
+          **Windows:**
+          - `OxiiChat_Setup_v${{ needs.prepare.outputs.version_full }}.exe` - Installer (recommended)
+          - `OxiiChat_v${{ needs.prepare.outputs.version_full }}_Windows.zip` - Portable ZIP
+
+          **macOS:**
+          - `OxiiChat_v${{ needs.prepare.outputs.version_full }}_macOS.dmg` - DMG installer
+          - `OxiiChat_v${{ needs.prepare.outputs.version_full }}_macOS.zip` - ZIP archive
+
+          ### Checksums
+          SHA-256 checksums are provided as `.sha256` files for each download.
+
+          <!-- force_update: false -->
+          <!-- min_supported_version: 1.8.0 -->
+          NOTES_EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: "OXII Chat v${{ needs.prepare.outputs.version }}"
+          body_path: release_notes.md
+          draft: ${{ github.event.inputs.draft || 'true' }}
+          prerelease: ${{ github.event.inputs.prerelease || 'false' }}
+          files: ./assets/*
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
