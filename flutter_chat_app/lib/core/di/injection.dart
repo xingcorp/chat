@@ -84,6 +84,13 @@ import 'package:flutter_chat_app/core/services/performance_service.dart';
 import 'package:flutter_chat_app/core/di/injection.config.dart';
 import 'package:flutter_chat_app/core/di/modules/core_module.dart';
 import 'package:flutter_chat_app/core/di/modules/notification_module.dart';
+import 'package:flutter_chat_app/core/services/update_installer_service.dart';
+import 'package:flutter_chat_app/core/utils/platform_utils.dart';
+import 'package:flutter_chat_app/data/datasources/update/update_remote_data_source.dart';
+import 'package:flutter_chat_app/data/datasources/update/update_remote_data_source_impl.dart';
+import 'package:flutter_chat_app/data/repositories/update_repository_impl.dart';
+import 'package:flutter_chat_app/domain/repositories/i_update_repository.dart';
+import 'package:flutter_chat_app/presentation/blocs/update/update_bloc.dart';
 
 /// Global service locator instance
 ///
@@ -135,6 +142,9 @@ Future<void> configureDependencies() async {
     if (!getIt.isRegistered<UserCacheService>()) {
       getIt.registerLazySingleton<UserCacheService>(() => UserCacheService());
     }
+
+    // Step 3.2: Register App Update service (desktop auto-update via GitHub Releases)
+    _registerUpdateService(getIt);
 
     final bool useFirebaseBackedMonitoring =
         FirebaseConfigManager.supportsConfiguredPlatform;
@@ -656,4 +666,48 @@ Future<void> _registerExternalDependencies(Logger logger) async {
 @visibleForTesting
 Future<void> resetDependencies() async {
   await getIt.reset();
+}
+
+/// Register app update service (desktop only).
+///
+/// Creates the full update pipeline:
+/// DataSource → Repository → BLoC
+///
+/// On non-desktop platforms this is a no-op — mobile uses store updates.
+void _registerUpdateService(GetIt getIt) {
+  if (!PlatformUtils.isDesktopDevice) return;
+
+  // DataSource
+  if (!getIt.isRegistered<UpdateRemoteDataSource>()) {
+    getIt.registerLazySingleton<UpdateRemoteDataSource>(
+      () => UpdateRemoteDataSourceImpl(),
+    );
+  }
+
+  // Installer service
+  if (!getIt.isRegistered<UpdateInstallerService>()) {
+    getIt.registerLazySingleton<UpdateInstallerService>(
+      () => UpdateInstallerService(),
+    );
+  }
+
+  // Repository
+  if (!getIt.isRegistered<IUpdateRepository>()) {
+    getIt.registerLazySingleton<IUpdateRepository>(
+      () => UpdateRepositoryImpl(
+        remoteDataSource: getIt<UpdateRemoteDataSource>(),
+        installerService: getIt<UpdateInstallerService>(),
+        prefs: getIt<SharedPreferences>(),
+      ),
+    );
+  }
+
+  // BLoC (singleton — shared across app)
+  if (!getIt.isRegistered<UpdateBloc>()) {
+    getIt.registerLazySingleton<UpdateBloc>(
+      () => UpdateBloc(
+        updateRepository: getIt<IUpdateRepository>(),
+      ),
+    );
+  }
 }
