@@ -167,6 +167,11 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Create .env files from secrets
+        run: |
+          echo "${{ secrets.ENV_STAGING }}" > .env.staging
+          echo "${{ secrets.ENV_PRODUCTION }}" > .env.production
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -229,6 +234,11 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Create .env files from secrets
+        run: |
+          echo "${{ secrets.ENV_STAGING }}" > .env.staging
+          echo "${{ secrets.ENV_PRODUCTION }}" > .env.production
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -281,6 +291,11 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Create .env files from secrets
+        run: |
+          echo "${{ secrets.ENV_STAGING }}" > .env.staging
+          echo "${{ secrets.ENV_PRODUCTION }}" > .env.production
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -327,6 +342,12 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
+
+      - name: Create .env files from secrets
+        shell: pwsh
+        run: |
+          Set-Content -Path ".env.staging" -Value "${{ secrets.ENV_STAGING }}"
+          Set-Content -Path ".env.production" -Value "${{ secrets.ENV_PRODUCTION }}"
 
       - name: Get dependencies
         run: flutter pub get
@@ -438,6 +459,11 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
+
+      - name: Create .env files from secrets
+        run: |
+          echo "${{ secrets.ENV_STAGING }}" > .env.staging
+          echo "${{ secrets.ENV_PRODUCTION }}" > .env.production
 
       - name: Get dependencies
         run: flutter pub get
