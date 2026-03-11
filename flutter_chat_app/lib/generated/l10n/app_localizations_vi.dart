@@ -952,6 +952,11 @@ class AppLocalizationsVi extends AppLocalizations {
   String get holdToRemoveReaction => 'Giữ để bỏ biểu cảm';
 
   @override
+  String andNOthers(int count) {
+    return '+ $count người khác';
+  }
+
+  @override
   String get reactions => 'Phản ứng';
 
   @override

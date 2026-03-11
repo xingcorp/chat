@@ -25,6 +25,8 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
 
   final Dio _dio;
   CancelToken? _downloadCancelToken;
+  DateTime? _downloadStartTime;
+  int _lastLoggedPercent = -1;
 
   @override
   Future<GitHubReleaseDto> getLatestGitHubRelease() async {
@@ -72,6 +74,8 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
     required void Function(int received, int total) onProgress,
   }) async {
     _downloadCancelToken = CancelToken();
+    _downloadStartTime = DateTime.now();
+    _lastLoggedPercent = -1;
 
     // Ensure download directory exists
     final dir = Directory(savePath).parent;
@@ -85,12 +89,50 @@ class UpdateRemoteDataSourceImpl implements UpdateRemoteDataSource {
       url,
       savePath,
       cancelToken: _downloadCancelToken,
+      // Override receiveTimeout for large file downloads — the default 30s
+      // timeout applies to gaps between data packets, which is too short
+      // for slow connections downloading large installers.
+      options: Options(
+        receiveTimeout: const Duration(minutes: 10),
+      ),
       onReceiveProgress: (received, total) {
+        // Log progress every 10% or when total is unknown
+        if (total > 0) {
+          final percent = (received * 100 ~/ total);
+          if (percent ~/ 10 > _lastLoggedPercent ~/ 10) {
+            _lastLoggedPercent = percent;
+            final elapsed = DateTime.now().difference(_downloadStartTime!);
+            final speedMBps = elapsed.inMilliseconds > 0
+                ? (received / 1024 / 1024) / (elapsed.inMilliseconds / 1000)
+                : 0.0;
+            final receivedMB = (received / (1024 * 1024)).toStringAsFixed(1);
+            final totalMB = (total / (1024 * 1024)).toStringAsFixed(1);
+            LogUtils.d('UpdateRemoteDataSource',
+                'Download progress: $percent% ($receivedMB/$totalMB MB) '
+                'speed: ${speedMBps.toStringAsFixed(2)} MB/s '
+                'elapsed: ${elapsed.inSeconds}s');
+          }
+        } else {
+          // Total unknown — log every 5MB
+          final receivedMB = received ~/ (1024 * 1024);
+          if (receivedMB > 0 && receivedMB % 5 == 0) {
+            LogUtils.d('UpdateRemoteDataSource',
+                'Download progress: ${receivedMB}MB received (total unknown)');
+          }
+        }
         onProgress(received, total);
       },
     );
 
+    final fileSize = File(savePath).lengthSync();
+    final totalElapsed = DateTime.now().difference(_downloadStartTime!);
+    LogUtils.i('UpdateRemoteDataSource',
+        'Download complete: ${(fileSize / (1024 * 1024)).toStringAsFixed(1)} MB '
+        'in ${totalElapsed.inSeconds}s');
+
     _downloadCancelToken = null;
+    _downloadStartTime = null;
+    _lastLoggedPercent = -1;
     return savePath;
   }
 

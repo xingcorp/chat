@@ -113,52 +113,50 @@ class UpdateBloc extends Bloc<UpdateEvent, UpdateState> {
       },
     );
 
-    result.fold(
-      (failure) {
-        if (failure.code == 'cancelled') {
-          emit(UpdateAvailable(updateInfo: event.updateInfo));
-        } else {
-          emit(UpdateError(message: failure.userMessage));
-        }
-      },
-      (filePath) async {
-        // Verify checksum if available
-        if (event.updateInfo.sha256Checksum.isNotEmpty) {
-          final verifyResult = await _updateRepository.verifyDownload(
-            filePath: filePath,
-            expectedChecksum: event.updateInfo.sha256Checksum,
-          );
+    // IMPORTANT: Do NOT use fold with async callbacks — fold does not await
+    // async closures, causing emit to be called after the handler completes.
+    if (result.isLeft) {
+      final failure = result.left;
+      if (failure.code == 'cancelled') {
+        emit(UpdateAvailable(updateInfo: event.updateInfo));
+      } else {
+        emit(UpdateError(message: failure.userMessage));
+      }
+      return;
+    }
 
-          verifyResult.fold(
-            (failure) {
-              emit(UpdateError(
-                message: failure.userMessage,
-                canRetry: true,
-              ));
-            },
-            (isValid) {
-              if (isValid) {
-                emit(UpdateReadyToInstall(
-                  updateInfo: event.updateInfo,
-                  installerPath: filePath,
-                ));
-              } else {
-                emit(const UpdateError(
-                  message: 'File verification failed. Please try again.',
-                  canRetry: true,
-                ));
-              }
-            },
-          );
-        } else {
-          // No checksum — skip verification
-          emit(UpdateReadyToInstall(
-            updateInfo: event.updateInfo,
-            installerPath: filePath,
-          ));
-        }
-      },
-    );
+    final filePath = result.right;
+
+    // Verify checksum if available
+    if (event.updateInfo.sha256Checksum.isNotEmpty) {
+      final verifyResult = await _updateRepository.verifyDownload(
+        filePath: filePath,
+        expectedChecksum: event.updateInfo.sha256Checksum,
+      );
+
+      if (verifyResult.isLeft) {
+        emit(UpdateError(
+          message: verifyResult.left.userMessage,
+          canRetry: true,
+        ));
+      } else if (verifyResult.right) {
+        emit(UpdateReadyToInstall(
+          updateInfo: event.updateInfo,
+          installerPath: filePath,
+        ));
+      } else {
+        emit(const UpdateError(
+          message: 'File verification failed. Please try again.',
+          canRetry: true,
+        ));
+      }
+    } else {
+      // No checksum — skip verification
+      emit(UpdateReadyToInstall(
+        updateInfo: event.updateInfo,
+        installerPath: filePath,
+      ));
+    }
   }
 
   void _onDownloadProgress(

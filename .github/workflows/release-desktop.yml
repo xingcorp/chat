@@ -22,6 +22,10 @@ on:
   push:
     tags:
       - 'v*'
+  pull_request:
+    branches: [main, develop, production]
+    paths:
+      - 'flutter_chat_app/**'
   workflow_dispatch:
     inputs:
       version:
@@ -61,7 +65,7 @@ permissions:
   contents: write
 
 env:
-  FLUTTER_VERSION: '3.24.0'
+  FLUTTER_VERSION: '3.32.7'
   WORKING_DIRECTORY: 'flutter_chat_app'
 
 jobs:
