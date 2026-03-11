@@ -2,7 +2,7 @@ name: flutter_chat_app
 description: A modern Flutter chat application with offline-first capability
 publish_to: 'none'
 
-version: 1.1.0+87
+version: 2.0.0+88
 
 executables:
   setup: setup
@@ -223,7 +223,7 @@ msix_config:
   display_name: OXII Chat
   publisher_display_name: OXII
   identity_name: com.oxii.chat
-  msix_version: 1.1.0.0
+  msix_version: 2.0.0.0
   logo_path: windows\runner\resources\app_icon.ico
   capabilities: internetClient, microphone, webcam
   install_certificate: false

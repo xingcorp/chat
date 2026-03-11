@@ -292,12 +292,19 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
       // Use upsert to prevent duplicates (dedup by serverId → localId)
       _databaseService.saveMessageUpsert(messageModel);
 
-      // Update last message in chat
+      // Update last message in chat preview.
+      // Only update lastMessagePreview if content is non-empty.
+      // System events (ADD_MEMBER, etc.) have empty content — the actual
+      // preview text ('⚙ Thông báo hệ thống') is computed by ChatBloc's
+      // _formatMessagePreview() and persisted via PersistIncomingMessageUseCase.
+      // Writing empty content here would wipe the correct preview.
       final chat = await getChatById(chatId);
       if (chat != null) {
+        final contentPreview = message.content.trim();
         final updatedChat = chat.copyWith(
           lastMessageTime: message.createdAt,
-          lastMessagePreview: message.content,
+          lastMessagePreview:
+              contentPreview.isNotEmpty ? contentPreview : chat.lastMessagePreview,
         );
         await saveChat(updatedChat);
       }
@@ -320,7 +327,7 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
         _databaseService.saveMessageUpsert(messageModel);
       }
 
-      // Update last message in chat
+      // Update last message in chat preview (same guard as saveMessage)
       if (messages.isNotEmpty) {
         final chat = await getChatById(chatId);
         if (chat != null) {
@@ -331,9 +338,11 @@ class ChatLocalDataSourceImpl implements ChatLocalDataSource {
                 : message,
           );
 
+          final contentPreview = latestMessage.content.trim();
           final updatedChat = chat.copyWith(
             lastMessageTime: latestMessage.createdAt,
-            lastMessagePreview: latestMessage.content,
+            lastMessagePreview:
+                contentPreview.isNotEmpty ? contentPreview : chat.lastMessagePreview,
           );
           await saveChat(updatedChat);
         }
