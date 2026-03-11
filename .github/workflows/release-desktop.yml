@@ -121,7 +121,7 @@ jobs:
       - name: Determine platforms
         id: platforms
         run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
+          if [[ "${{ github.event_name }}" == "push" || "${{ github.event_name }}" == "pull_request" ]]; then
             echo "windows=true" >> $GITHUB_OUTPUT
             echo "macos=true" >> $GITHUB_OUTPUT
           else
