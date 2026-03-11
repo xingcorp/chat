@@ -20,11 +20,7 @@ name: Release Desktop
 
 on:
   push:
-    tags:
-      - 'v*'
     branches: [production]
-    paths:
-      - 'flutter_chat_app/**'
   pull_request:
     branches: [main, develop, production]
     paths:
@@ -94,13 +90,7 @@ jobs:
         id: version
         shell: bash
         run: |
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
-            # From tag: v2.0.1+89 -> version=2.0.1, build=89
-            TAG="${GITHUB_REF#refs/tags/}"
-            VERSION=$(echo "$TAG" | sed 's/^v//' | cut -d'+' -f1)
-            BUILD=$(echo "$TAG" | cut -d'+' -f2)
-            if [[ "$BUILD" == "$VERSION" ]]; then BUILD="0"; fi
-          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
+          if [[ -n "${{ github.event.inputs.version }}" ]]; then
             VERSION="${{ github.event.inputs.version }}"
             # Read build number from pubspec and increment
             BUILD=$(grep '^version:' ${{ env.WORKING_DIRECTORY }}/pubspec.yaml | sed 's/.*+//')
