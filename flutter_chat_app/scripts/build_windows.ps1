@@ -5,6 +5,7 @@
 .DESCRIPTION
     Builds Flutter Windows app and packages for distribution.
     Supports 3 packaging methods: ZIP, Inno Setup (.exe installer), MSIX.
+    Generates SHA-256 checksums for all output files (for auto-update verification).
 
 .PARAMETER Flavor
     Build flavor: staging | production (default: staging)
@@ -14,6 +15,9 @@
 
 .PARAMETER Clean
     Clean build before building
+
+.PARAMETER SkipChecksum
+    Skip SHA-256 checksum generation
 
 .PARAMETER InnoSetupPath
     Custom path to Inno Setup ISCC.exe
@@ -44,6 +48,8 @@ param(
     [string]$Method = 'zip',
 
     [switch]$Clean,
+
+    [switch]$SkipChecksum,
 
     [string]$InnoSetupPath = ''
 )
@@ -84,6 +90,29 @@ function Get-FileSize {
     if ($size -ge 1GB) { return '{0:N1} GB' -f ($size / 1GB) }
     if ($size -ge 1MB) { return '{0:N1} MB' -f ($size / 1MB) }
     return '{0:N0} KB' -f ($size / 1KB)
+}
+
+function Get-AppVersionFull {
+    $pubspec = Get-Content (Join-Path $PROJECT_DIR 'pubspec.yaml') -Raw
+    if ($pubspec -match 'version:\s*(\d+\.\d+\.\d+\+\d+)') {
+        return $Matches[1]
+    }
+    return (Get-AppVersion) + '+0'
+}
+
+function New-Checksum {
+    param([string]$FilePath)
+
+    if ($SkipChecksum) { return $null }
+
+    $checksumPath = "$FilePath.sha256"
+    $hash = (Get-FileHash -Path $FilePath -Algorithm SHA256).Hash.ToLower()
+    $fileName = Split-Path $FilePath -Leaf
+    Set-Content -Path $checksumPath -Value "$hash  $fileName" -NoNewline
+
+    Write-Info "SHA-256: $hash"
+    Write-Ok "Checksum: $checksumPath"
+    return $checksumPath
 }
 
 function Find-InnoSetup {
@@ -232,6 +261,9 @@ function Build-Zip {
     Write-Ok "ZIP created: $zipPath ($size)"
     Write-Info 'Customer: Extract ZIP and run oxii_chat.exe'
 
+    # Generate SHA-256 checksum
+    New-Checksum -FilePath $zipPath
+
     return $zipPath
 }
 
@@ -277,6 +309,9 @@ function Build-InnoSetup {
         Write-Ok "Inno Setup installer: $destPath ($size)"
         Write-Info 'Customer: Run the .exe installer wizard'
 
+        # Generate SHA-256 checksum
+        New-Checksum -FilePath $destPath
+
         return $destPath
     }
 
@@ -317,6 +352,9 @@ function Build-Msix {
         $size = Get-FileSize $destPath
         Write-Ok "MSIX package: $destPath ($size)"
         Write-Info 'Customer: Double-click .msix to install'
+
+        # Generate SHA-256 checksum
+        New-Checksum -FilePath $destPath
 
         return $destPath
     }
@@ -364,6 +402,12 @@ function Show-Summary {
                 $size = Get-FileSize $file
                 $name = Split-Path $file -Leaf
                 Write-Host "║    $name ($size)" -ForegroundColor White
+                # Show checksum file if exists
+                $checksumFile = "$file.sha256"
+                if (Test-Path $checksumFile) {
+                    $csName = Split-Path $checksumFile -Leaf
+                    Write-Host "║    $csName" -ForegroundColor DarkGray
+                }
             }
         }
     } else {

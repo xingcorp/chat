@@ -10,6 +10,7 @@ import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 import 'package:flutter_chat_app/presentation/blocs/permissions/permissions_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/realtime_connection/realtime_connection_bloc.dart';
 import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
+import 'package:flutter_chat_app/presentation/blocs/update/update_bloc.dart';
 import 'package:flutter_chat_app/shared/domain/entities/user.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get_it/get_it.dart';
@@ -127,6 +128,11 @@ class ChatAppShell extends StatelessWidget {
           BlocProvider<ChatBloc>(
             create: (_) => getIt<ChatBloc>(),
           ),
+        // UpdateBloc (desktop auto-update — registered only on desktop)
+        if (getIt.isRegistered<UpdateBloc>())
+          BlocProvider<UpdateBloc>(
+            create: (_) => getIt<UpdateBloc>(),
+          ),
       ];
     } else {
       // Package mode: Minimal blocs with PackageModeAuthRepository
@@ -185,6 +191,11 @@ class ChatAppShell extends StatelessWidget {
         if (getIt.isRegistered<RealtimeConnectionBloc>())
           BlocProvider<RealtimeConnectionBloc>(
             create: (_) => getIt<RealtimeConnectionBloc>(),
+          ),
+        // UpdateBloc (desktop auto-update — registered only on desktop)
+        if (getIt.isRegistered<UpdateBloc>())
+          BlocProvider<UpdateBloc>(
+            create: (_) => getIt<UpdateBloc>(),
           ),
       ];
     }

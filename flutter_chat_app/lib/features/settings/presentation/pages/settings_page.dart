@@ -5,11 +5,15 @@ import 'package:flutter_chat_app/core/config/app_identity.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+import 'package:flutter_chat_app/core/utils/platform_utils.dart';
 import 'package:flutter_chat_app/domain/repositories/user_repository.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
+import 'package:flutter_chat_app/presentation/blocs/update/update_bloc.dart';
+import 'package:flutter_chat_app/presentation/blocs/update/update_event.dart';
+import 'package:flutter_chat_app/presentation/blocs/update/update_state.dart';
 import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
@@ -170,6 +174,13 @@ class _SettingsPageState extends BaseState<SettingsPage> {
                 ),
 
                 const Divider(height: 1),
+
+                // Check for Updates (desktop only)
+                if (PlatformUtils.isDesktopDevice)
+                  _buildUpdateSection(context, isDark),
+
+                if (PlatformUtils.isDesktopDevice)
+                  const Divider(height: 1),
 
                 // About
                 _buildSettingsItem(
@@ -336,6 +347,98 @@ class _SettingsPageState extends BaseState<SettingsPage> {
           Text(AppIdentity.description),
         ],
       ),
+    );
+  }
+
+  Widget _buildUpdateSection(BuildContext context, bool isDark) {
+    return BlocBuilder<UpdateBloc, UpdateState>(
+      builder: (context, state) {
+        String subtitle;
+        Widget? trailing;
+        VoidCallback onTap;
+
+        if (state is UpdateChecking) {
+          subtitle = context.l10n.checkingForUpdates;
+          trailing = const SizedBox(
+            width: AppDimens.iconSmall,
+            height: AppDimens.iconSmall,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          );
+          onTap = () {};
+        } else if (state is UpdateAvailable) {
+          subtitle = '${context.l10n.newVersionAvailable}: ${state.updateInfo.version}';
+          trailing = Container(
+            width: AppDimens.iconSmall,
+            height: AppDimens.iconSmall,
+            decoration: const BoxDecoration(
+              color: AppColors.error,
+              shape: BoxShape.circle,
+            ),
+          );
+          onTap = () => context.read<UpdateBloc>().add(
+                const CheckForUpdateRequested(),
+              );
+        } else if (state is UpdateDownloading) {
+          final pct = (state.progress * 100).toInt();
+          subtitle = '${context.l10n.downloading}... $pct%';
+          trailing = SizedBox(
+            width: AppDimens.iconSmall,
+            height: AppDimens.iconSmall,
+            child: CircularProgressIndicator(
+              value: state.progress,
+              strokeWidth: 2,
+            ),
+          );
+          onTap = () {};
+        } else if (state is UpdateReadyToInstall) {
+          subtitle = context.l10n.restartToUpdate;
+          trailing = Icon(
+            Icons.restart_alt,
+            color: AppColors.success,
+            size: AppDimens.iconMedium,
+          );
+          onTap = () => context.read<UpdateBloc>().add(
+                InstallUpdateRequested(installerPath: state.installerPath),
+              );
+        } else if (state is UpdateError) {
+          subtitle = context.l10n.updateCheckFailed;
+          onTap = () => context.read<UpdateBloc>().add(
+                const CheckForUpdateRequested(),
+              );
+        } else {
+          subtitle = context.l10n.upToDate;
+          onTap = () => context.read<UpdateBloc>().add(
+                const CheckForUpdateRequested(),
+              );
+        }
+
+        final secondaryTextColor =
+            isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
+
+        return ListTile(
+          leading: Icon(
+            Icons.system_update_outlined,
+            color: isDark ? AppColors.primaryDarkMode : AppColors.primary,
+          ),
+          title: AppText(
+            context.l10n.checkForUpdates,
+            style: AppTextStyles.titleMedium.copyWith(
+              color: isDark
+                  ? AppColors.textPrimaryDarkMode
+                  : AppColors.textPrimary,
+            ),
+          ),
+          subtitle: AppText(
+            subtitle,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: secondaryTextColor,
+            ),
+          ),
+          trailing: trailing ??
+              Icon(Icons.chevron_right, color: secondaryTextColor),
+          onTap: onTap,
+        );
+      },
     );
   }
 

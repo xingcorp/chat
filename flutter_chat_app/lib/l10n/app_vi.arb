@@ -1072,5 +1072,27 @@
   "notificationContentLink": "🔗 Liên kết",
   "notificationGroupBody": "{senderName}: {content}",
   "notificationMentionPrefix": "@Bạn {content}",
-  "notificationGroupMentionBody": "{senderName}: @Bạn {content}"
+  "notificationGroupMentionBody": "{senderName}: @Bạn {content}",
+
+  "updateAvailableVersion": "Có bản cập nhật: v{version}",
+  "updateNow": "Cập nhật ngay",
+  "downloading": "Đang tải...",
+  "restartToUpdate": "Đã tải xong — khởi động lại để cập nhật",
+  "restartNow": "Khởi động lại",
+  "newVersionAvailable": "Phiên bản mới",
+  "whatsNew": "Có gì mới",
+  "noReleaseNotes": "Không có ghi chú phát hành.",
+  "mandatoryUpdate": "Bản cập nhật này là bắt buộc. Vui lòng cập nhật để tiếp tục sử dụng.",
+  "skipThisVersion": "Bỏ qua phiên bản này",
+  "remindMeLater": "Nhắc lại sau",
+  "downloadUpdate": "Tải cập nhật",
+  "downloadingUpdate": "Đang tải cập nhật...",
+  "updateReady": "Sẵn sàng cập nhật!",
+  "restartToApplyUpdate": "Phiên bản {version} đã được tải. Khởi động lại ứng dụng để áp dụng cập nhật.",
+  "later": "Để sau",
+  "checkForUpdates": "Kiểm tra cập nhật",
+  "checkingForUpdates": "Đang kiểm tra cập nhật...",
+  "upToDate": "Bạn đang dùng phiên bản mới nhất!",
+  "currentVersion": "Phiên bản hiện tại: {version}",
+  "updateCheckFailed": "Kiểm tra cập nhật thất bại. Nhấn để thử lại."
 }

@@ -1987,4 +1987,71 @@ class AppLocalizationsEn extends AppLocalizations {
   String notificationGroupMentionBody(String senderName, String content) {
     return '$senderName: @You $content';
   }
+
+  @override
+  String updateAvailableVersion(String version) {
+    return 'Update available: v$version';
+  }
+
+  @override
+  String get updateNow => 'Update Now';
+
+  @override
+  String get restartToUpdate => 'Update downloaded — restart to apply';
+
+  @override
+  String get restartNow => 'Restart Now';
+
+  @override
+  String get newVersionAvailable => 'New Version Available';
+
+  @override
+  String get whatsNew => 'What\'s New';
+
+  @override
+  String get noReleaseNotes => 'No release notes available.';
+
+  @override
+  String get mandatoryUpdate =>
+      'This update is required. Please update to continue using the app.';
+
+  @override
+  String get skipThisVersion => 'Skip This Version';
+
+  @override
+  String get remindMeLater => 'Remind Me Later';
+
+  @override
+  String get downloadUpdate => 'Download Update';
+
+  @override
+  String get downloadingUpdate => 'Downloading Update...';
+
+  @override
+  String get updateReady => 'Update Ready!';
+
+  @override
+  String restartToApplyUpdate(String version) {
+    return 'Version $version has been downloaded. Restart the app to apply the update.';
+  }
+
+  @override
+  String get later => 'Later';
+
+  @override
+  String get checkForUpdates => 'Check for Updates';
+
+  @override
+  String get checkingForUpdates => 'Checking for updates...';
+
+  @override
+  String get upToDate => 'You\'re up to date!';
+
+  @override
+  String currentVersion(String version) {
+    return 'Current version: $version';
+  }
+
+  @override
+  String get updateCheckFailed => 'Update check failed. Tap to retry.';
 }

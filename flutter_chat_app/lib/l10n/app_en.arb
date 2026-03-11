@@ -3509,5 +3509,128 @@
         "example": "please review this PR"
       }
     }
+  },
+
+  "updateAvailableVersion": "Update available: v{version}",
+  "@updateAvailableVersion": {
+    "description": "Banner text when a new version is available",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "2.1.0"
+      }
+    }
+  },
+
+  "updateNow": "Update Now",
+  "@updateNow": {
+    "description": "Button text to start downloading update"
+  },
+
+  "downloading": "Downloading...",
+  "@downloading": {
+    "description": "Text shown while downloading update"
+  },
+
+  "restartToUpdate": "Update downloaded — restart to apply",
+  "@restartToUpdate": {
+    "description": "Banner text when update is ready to install"
+  },
+
+  "restartNow": "Restart Now",
+  "@restartNow": {
+    "description": "Button text to restart app and install update"
+  },
+
+  "newVersionAvailable": "New Version Available",
+  "@newVersionAvailable": {
+    "description": "Dialog title for update available"
+  },
+
+  "whatsNew": "What's New",
+  "@whatsNew": {
+    "description": "Section header for release notes"
+  },
+
+  "noReleaseNotes": "No release notes available.",
+  "@noReleaseNotes": {
+    "description": "Placeholder when release notes are empty"
+  },
+
+  "mandatoryUpdate": "This update is required. Please update to continue using the app.",
+  "@mandatoryUpdate": {
+    "description": "Warning text for forced updates"
+  },
+
+  "skipThisVersion": "Skip This Version",
+  "@skipThisVersion": {
+    "description": "Button text to skip a specific update version"
+  },
+
+  "remindMeLater": "Remind Me Later",
+  "@remindMeLater": {
+    "description": "Button text to snooze update notification"
+  },
+
+  "downloadUpdate": "Download Update",
+  "@downloadUpdate": {
+    "description": "Button text to start downloading in dialog"
+  },
+
+  "downloadingUpdate": "Downloading Update...",
+  "@downloadingUpdate": {
+    "description": "Dialog title during download"
+  },
+
+  "updateReady": "Update Ready!",
+  "@updateReady": {
+    "description": "Dialog title when update is ready to install"
+  },
+
+  "restartToApplyUpdate": "Version {version} has been downloaded. Restart the app to apply the update.",
+  "@restartToApplyUpdate": {
+    "description": "Dialog body text for restart prompt",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "2.1.0"
+      }
+    }
+  },
+
+  "later": "Later",
+  "@later": {
+    "description": "Button text to dismiss and do later"
+  },
+
+  "checkForUpdates": "Check for Updates",
+  "@checkForUpdates": {
+    "description": "Settings menu item text"
+  },
+
+  "checkingForUpdates": "Checking for updates...",
+  "@checkingForUpdates": {
+    "description": "Status text while checking for updates"
+  },
+
+  "upToDate": "You're up to date!",
+  "@upToDate": {
+    "description": "Text when no update is available"
+  },
+
+  "currentVersion": "Current version: {version}",
+  "@currentVersion": {
+    "description": "Display current app version",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "2.0.0"
+      }
+    }
+  },
+
+  "updateCheckFailed": "Update check failed. Tap to retry.",
+  "@updateCheckFailed": {
+    "description": "Text when update check fails in settings"
   }
 }

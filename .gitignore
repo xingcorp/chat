@@ -13,6 +13,7 @@ lerna-debug.log*
 *.env
 *.yml
 *.yaml
+!.github/workflows/*.yml
 *.bat
 *.sh
 !flutter_chat_app/scripts/*.sh
