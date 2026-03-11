@@ -22,6 +22,9 @@ on:
   push:
     tags:
       - 'v*'
+    branches: [production]
+    paths:
+      - 'flutter_chat_app/**'
   pull_request:
     branches: [main, develop, production]
     paths:
@@ -91,7 +94,7 @@ jobs:
         id: version
         shell: bash
         run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
             # From tag: v2.0.1+89 -> version=2.0.1, build=89
             TAG="${GITHUB_REF#refs/tags/}"
             VERSION=$(echo "$TAG" | sed 's/^v//' | cut -d'+' -f1)
@@ -122,6 +125,7 @@ jobs:
         id: platforms
         run: |
           if [[ "${{ github.event_name }}" == "push" || "${{ github.event_name }}" == "pull_request" ]]; then
+            # Tag push, branch push, or PR: build both platforms
             echo "windows=true" >> $GITHUB_OUTPUT
             echo "macos=true" >> $GITHUB_OUTPUT
           else
