@@ -1844,6 +1844,12 @@ abstract class AppLocalizations {
   /// **'Hold to remove reaction'**
   String get holdToRemoveReaction;
 
+  /// Shown in reaction hover tooltip when more than 5 people reacted
+  ///
+  /// In en, this message translates to:
+  /// **'+ {count} others'**
+  String andNOthers(int count);
+
   /// Reactions label
   ///
   /// In en, this message translates to:

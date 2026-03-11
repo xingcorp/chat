@@ -163,7 +163,10 @@ class UpdateAvailableDialog extends StatelessWidget {
             ],
 
             // Action buttons
-            Row(
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: AppDimens.spaceSmall,
+              runSpacing: AppDimens.spaceSmall,
               children: [
                 if (!updateInfo.isForceUpdate) ...[
                   TextButton(
@@ -175,7 +178,6 @@ class UpdateAvailableDialog extends StatelessWidget {
                     },
                     child: Text(context.l10n.skipThisVersion),
                   ),
-                  const Spacer(),
                   TextButton(
                     onPressed: () {
                       context.read<UpdateBloc>().add(
@@ -185,9 +187,7 @@ class UpdateAvailableDialog extends StatelessWidget {
                     },
                     child: Text(context.l10n.remindMeLater),
                   ),
-                  const SizedBox(width: AppDimens.spaceSmall),
                 ],
-                if (updateInfo.isForceUpdate) const Spacer(),
                 AppButton.primary(
                   text: context.l10n.downloadUpdate,
                   onPressed: () {

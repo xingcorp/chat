@@ -487,6 +487,7 @@
   "addReaction": "Thêm phản ứng",
   "removeReaction": "Xóa phản ứng",
   "holdToRemoveReaction": "Giữ để bỏ biểu cảm",
+  "andNOthers": "+ {count} người khác",
   "reactions": "Phản ứng",
   "recentlyUsed": "Gần đây",
   "searchEmoji": "Tìm kiếm emoji",

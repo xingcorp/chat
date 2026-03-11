@@ -1578,6 +1578,16 @@
     "description": "Tooltip shown on reaction badge when current user has reacted"
   },
 
+  "andNOthers": "+ {count} others",
+  "@andNOthers": {
+    "description": "Shown in reaction hover tooltip when more than 5 people reacted",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
   "reactions": "Reactions",
   "@reactions": {
     "description": "Reactions label"

@@ -950,6 +950,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get holdToRemoveReaction => 'Hold to remove reaction';
 
   @override
+  String andNOthers(int count) {
+    return '+ $count others';
+  }
+
+  @override
   String get reactions => 'Reactions';
 
   @override
