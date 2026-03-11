@@ -101,6 +101,9 @@ class TextSpanBuilder {
   /// [highlightMentionIds] Danh sách mention id cần tô nổi bật
   /// [onTapMention] Callback khi tap mention
   /// [context] BuildContext để show action sheets
+  /// [selectable] Khi true, mention dùng TextSpan + TapGestureRecognizer thay vì
+  ///   WidgetSpan + GestureDetector. Điều này đảm bảo SelectableText.rich() copy
+  ///   mention text chính xác (WidgetSpan tạo ra U+FFFC khi copy).
   static List<InlineSpan> buildSpans({
     required String rawContent,
     required String normalizedContent,
@@ -112,6 +115,7 @@ class TextSpanBuilder {
     Set<String> highlightMentionIds = const <String>{},
     required void Function(String userId) onTapMention,
     required BuildContext context,
+    bool selectable = false,
   }) {
     // Nếu không có entity nào, return text thường
     if (!_hasAnyEntities(rawContent)) {
@@ -144,7 +148,8 @@ class TextSpanBuilder {
           mentionNameById,
           highlightMentionIds,
           onTapMention,
-          context));
+          context,
+          selectable));
 
       lastIndex = entity.end;
     }
@@ -300,6 +305,7 @@ class TextSpanBuilder {
     Set<String> highlightMentionIds,
     void Function(String userId) onTapMention,
     BuildContext context,
+    bool selectable,
   ) {
     switch (entity.type) {
       case EntityType.mention:
@@ -310,6 +316,7 @@ class TextSpanBuilder {
           mentionNameById,
           highlightMentionIds,
           onTapMention,
+          selectable: selectable,
         );
 
       case EntityType.url:
@@ -348,14 +355,22 @@ class TextSpanBuilder {
   }
 
   /// Build span cho mention
+  ///
+  /// Khi [selectable] = true (desktop/web): dùng [TextSpan] + [TapGestureRecognizer]
+  /// để text mention được bao gồm khi copy (Ctrl+C). WidgetSpan tạo ra U+FFFC
+  /// (Object Replacement Character) khi SelectableText.rich() copy → gây lỗi.
+  ///
+  /// Khi [selectable] = false (mobile, default): dùng [WidgetSpan] + [GestureDetector]
+  /// như cũ → behavior 100% backward compatible.
   static InlineSpan _buildMentionSpan(
     TextEntity entity,
     TextStyle mentionStyle,
     TextStyle? highlightedMentionStyle,
     Map<String, String> mentionNameById,
     Set<String> highlightMentionIds,
-    void Function(String userId) onTapMention,
-  ) {
+    void Function(String userId) onTapMention, {
+    bool selectable = false,
+  }) {
     final id = entity.value;
     final displayName = mentionNameById[id];
     final shouldHighlight = highlightMentionIds.contains(id);
@@ -369,6 +384,20 @@ class TextSpanBuilder {
     }
 
     final text = '@${displayName.trim()}';
+
+    // Desktop/Web (selectable): dùng TextSpan + TapGestureRecognizer
+    // → text được bao gồm khi user select + copy (Ctrl+C)
+    if (selectable) {
+      return TextSpan(
+        text: text,
+        style: effectiveStyle,
+        recognizer: TapGestureRecognizer()
+          ..onTap = () => onTapMention(id),
+      );
+    }
+
+    // Mobile (default): dùng WidgetSpan + GestureDetector
+    // → giữ nguyên behavior cũ, tránh conflict gesture với scroll
     return WidgetSpan(
       alignment: PlaceholderAlignment.baseline,
       baseline: TextBaseline.alphabetic,

@@ -49,6 +49,14 @@ class ExpandableRichText extends StatefulWidget {
   /// [TextOverflow.ellipsis].
   final bool selectable;
 
+  /// Màu highlight khi user drag-to-select text.
+  ///
+  /// Cần thiết cho bubble tin nhắn của mình (background primary/blue):
+  /// default selection color bị trùng với background → không thấy được.
+  /// Truyền `Colors.white.withValues(alpha: 0.3)` cho own messages.
+  /// Nếu null, dùng default từ theme.
+  final Color? selectionColor;
+
   const ExpandableRichText({
     super.key,
     required this.spans,
@@ -58,6 +66,7 @@ class ExpandableRichText extends StatefulWidget {
     this.style,
     this.onToggle,
     this.selectable = false,
+    this.selectionColor,
   });
 
   @override
@@ -179,9 +188,20 @@ class _ExpandableRichTextState extends State<ExpandableRichText> {
   /// Khi [selectable] = false: dùng [RichText] (behavior cũ, zero overhead).
   Widget _buildRichContent(List<InlineSpan> spans) {
     if (widget.selectable) {
-      return SelectableText.rich(
+      Widget selectableWidget = SelectableText.rich(
         TextSpan(children: spans, style: widget.style),
       );
+      // Wrap với TextSelectionTheme nếu cần custom selection color
+      // (ví dụ: own message bubble xanh cần selection highlight trắng)
+      if (widget.selectionColor != null) {
+        selectableWidget = TextSelectionTheme(
+          data: TextSelectionThemeData(
+            selectionColor: widget.selectionColor,
+          ),
+          child: selectableWidget,
+        );
+      }
+      return selectableWidget;
     }
     return RichText(
       text: TextSpan(children: spans, style: widget.style),

@@ -163,6 +163,7 @@ class _MessageItemState extends State<MessageItem>
         );
       },
       context: context,
+      selectable: PlatformUtils.isDesktopDeviceOrWeb,
     );
 
     // Emoji-only: render trực tiếp (không cần expand/collapse)
@@ -177,10 +178,27 @@ class _MessageItemState extends State<MessageItem>
         ),
       );
       if (PlatformUtils.isDesktopDeviceOrWeb) {
-        return SelectableText.rich(emojiTextSpan);
+        // Own message (blue bubble): selection highlight trắng để nhìn thấy
+        final isOwn = widget.uiState.isFromCurrentUser;
+        Widget selectable = SelectableText.rich(emojiTextSpan);
+        if (isOwn) {
+          selectable = TextSelectionTheme(
+            data: TextSelectionThemeData(
+              selectionColor: Colors.white.withValues(alpha: 0.3),
+            ),
+            child: selectable,
+          );
+        }
+        return selectable;
       }
       return RichText(text: emojiTextSpan);
     }
+
+    // Selection color: own message bubble (primary/blue) cần highlight trắng
+    final isDesktop = PlatformUtils.isDesktopDeviceOrWeb;
+    final selectionColor = isDesktop && widget.uiState.isFromCurrentUser
+        ? Colors.white.withValues(alpha: 0.3)
+        : null;
 
     return ExpandableRichText(
       spans: spans,
@@ -189,7 +207,8 @@ class _MessageItemState extends State<MessageItem>
         color: textColor,
         fontSize: 16.0,
       ),
-      selectable: PlatformUtils.isDesktopDeviceOrWeb,
+      selectable: isDesktop,
+      selectionColor: selectionColor,
     );
   }
 
