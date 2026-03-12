@@ -11,7 +11,7 @@ import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
 import 'package:flutter_chat_app/main.dart' show MyApp;
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_chat_app/core/initialization/env_validator.dart';
 import 'package:get_it/get_it.dart';
 import 'package:uuid/uuid.dart';
 
@@ -22,9 +22,7 @@ Future<void> main() async {
   if (!FlavorConfig.isInitialized) {
     FlavorConfig.initializeFromEnvironment();
   }
-  final envFileName =
-      FlavorConfig.instance.isProduction ? '.env.production' : '.env.staging';
-  await dotenv.load(fileName: envFileName);
+  await EnvValidator.loadDotenvForFlavor();
 
   // Configure Enterprise dependencies
   await configureDependencies();

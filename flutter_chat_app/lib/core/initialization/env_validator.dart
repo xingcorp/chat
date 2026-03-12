@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kReleaseMode;
+import 'dart:io';
+
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb, kReleaseMode;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter_chat_app/core/config/flavor_config.dart';
@@ -9,12 +11,36 @@ class EnvValidator {
 
   /// Loads the `.env` file matching the current flavor.
   ///
+  /// Tries loading from the filesystem first (standalone mode).
+  /// Falls back to asset bundle if file not found.
+  /// Silently succeeds with empty env if neither source exists
+  /// (package mode provides config via [ChatConfig]).
+  ///
   /// Returns the file name that was loaded (e.g. `.env.staging`).
   static Future<String> loadDotenvForFlavor() async {
     final fileName = FlavorConfig.instance.isProduction
         ? '.env.production'
         : '.env.staging';
-    await dotenv.load(fileName: fileName);
+    try {
+      if (!kIsWeb) {
+        final file = File(fileName);
+        if (file.existsSync()) {
+          dotenv.testLoad(fileInput: file.readAsStringSync());
+          return fileName;
+        }
+      }
+      // Try loading from asset bundle (works when listed in pubspec.yaml assets)
+      await dotenv.load(fileName: fileName);
+    } catch (e) {
+      // In package mode, .env files are not bundled — config comes from
+      // ChatConfig. Silently continue with empty env.
+      if (kDebugMode) {
+        debugPrint(
+          'EnvValidator: Could not load $fileName ($e). '
+          'This is expected in package mode.',
+        );
+      }
+    }
     return fileName;
   }
 

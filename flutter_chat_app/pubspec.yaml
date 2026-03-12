@@ -205,8 +205,6 @@ flutter:
     - assets/translations/
     - assets/animations/
     - assets/stickers/
-    - .env.staging
-    - .env.production
 
   # Production-optimized fonts (temporarily disabled)
   # fonts:
