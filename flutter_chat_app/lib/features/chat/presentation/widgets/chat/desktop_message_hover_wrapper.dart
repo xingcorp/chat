@@ -101,6 +101,17 @@ class _DesktopMessageHoverWrapperState
   /// onHover clears suppress → bar shows.
   static bool _suppressUntilMouseMove = false;
 
+  /// Timestamp of the most recent scroll event. Used by [_onMessageMouseMove]
+  /// to avoid clearing the suppress flag during active scrolling — touchpad
+  /// gestures can cause micro cursor movements (wobble) that trigger onHover
+  /// even though the user is still scrolling. Creating and immediately
+  /// destroying an OverlayEntry during scroll causes a visible hitch.
+  static DateTime _lastScrollEventAt = DateTime(0);
+
+  /// Minimum time after last scroll event before allowing suppress to clear.
+  static const Duration _scrollSettleThreshold =
+      Duration(milliseconds: 150);
+
   OverlayEntry? _overlayEntry;
   Timer? _hideTimer;
 
@@ -187,6 +198,14 @@ class _DesktopMessageHoverWrapperState
   /// suppress flag and re-enable hover action bar.
   void _onMessageMouseMove() {
     if (!_suppressUntilMouseMove) return;
+
+    // Don't clear suppress while scroll events are still arriving.
+    // Touchpad scrolling can cause micro cursor movements (wobble) that
+    // trigger onHover — creating+destroying an OverlayEntry mid-scroll
+    // causes a visible hitch.
+    final timeSinceScroll = DateTime.now().difference(_lastScrollEventAt);
+    if (timeSinceScroll < _scrollSettleThreshold) return;
+
     _suppressUntilMouseMove = false;
 
     // Mouse actually moved — safe to show the action bar now.
@@ -424,6 +443,7 @@ class _DesktopMessageHoverWrapperState
     _isMouseOnBar = false;
     _showTimer?.cancel();
     _suppressUntilMouseMove = true;
+    _lastScrollEventAt = DateTime.now();
   }
 
   /// Called when the "More" popup is dismissed (barrier tap or action item).
@@ -462,15 +482,17 @@ class _DesktopMessageHoverWrapperState
     }
 
     return Listener(
-      // Also dismiss when scrolling on the MESSAGE area (not just the bar).
-      // This handles the case where the bar is visible but the user scrolls
-      // on the message content — the bar should dismiss immediately.
+      // Track scroll events for settle detection + dismiss overlay if showing.
       onPointerSignal: (event) {
-        if (event is PointerScrollEvent && _overlayEntry != null) {
-          _dismissOverlayOnScroll();
+        if (event is PointerScrollEvent) {
+          _lastScrollEventAt = DateTime.now();
+          if (_overlayEntry != null) {
+            _dismissOverlayOnScroll();
+          }
         }
       },
       onPointerPanZoomStart: (_) {
+        _lastScrollEventAt = DateTime.now();
         if (_overlayEntry != null) {
           _dismissOverlayOnScroll();
         }
