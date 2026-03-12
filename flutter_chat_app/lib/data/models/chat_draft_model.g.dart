@@ -36,6 +36,10 @@ const ChatDraftModelSchema = IsarGeneratedSchema(
         name: 'mentionNameByIdJson',
         type: IsarType.string,
       ),
+      IsarPropertySchema(
+        name: 'contentDelta',
+        type: IsarType.string,
+      ),
     ],
     indexes: [
       IsarIndexSchema(
@@ -71,6 +75,14 @@ int serializeChatDraftModel(IsarWriter writer, ChatDraftModel object) {
   IsarCore.writeLong(
       writer, 3, object.updatedAt.toUtc().microsecondsSinceEpoch);
   IsarCore.writeString(writer, 4, object.mentionNameByIdJson);
+  {
+    final value = object.contentDelta;
+    if (value == null) {
+      IsarCore.writeNull(writer, 5);
+    } else {
+      IsarCore.writeString(writer, 5, value);
+    }
+  }
   return object.id;
 }
 
@@ -95,12 +107,15 @@ ChatDraftModel deserializeChatDraftModel(IsarReader reader) {
   }
   final String _mentionNameByIdJson;
   _mentionNameByIdJson = IsarCore.readString(reader, 4) ?? '';
+  final String? _contentDelta;
+  _contentDelta = IsarCore.readString(reader, 5);
   final object = ChatDraftModel(
     id: _id,
     conversationId: _conversationId,
     text: _text,
     updatedAt: _updatedAt,
     mentionNameByIdJson: _mentionNameByIdJson,
+    contentDelta: _contentDelta,
   );
   return object;
 }
@@ -126,6 +141,8 @@ dynamic deserializeChatDraftModelProp(IsarReader reader, int property) {
       }
     case 4:
       return IsarCore.readString(reader, 4) ?? '';
+    case 5:
+      return IsarCore.readString(reader, 5);
     default:
       throw ArgumentError('Unknown property: $property');
   }
@@ -138,6 +155,7 @@ sealed class _ChatDraftModelUpdate {
     String? text,
     DateTime? updatedAt,
     String? mentionNameByIdJson,
+    String? contentDelta,
   });
 }
 
@@ -153,6 +171,7 @@ class _ChatDraftModelUpdateImpl implements _ChatDraftModelUpdate {
     Object? text = ignore,
     Object? updatedAt = ignore,
     Object? mentionNameByIdJson = ignore,
+    Object? contentDelta = ignore,
   }) {
     return collection.updateProperties([
           id
@@ -161,6 +180,7 @@ class _ChatDraftModelUpdateImpl implements _ChatDraftModelUpdate {
           if (text != ignore) 2: text as String?,
           if (updatedAt != ignore) 3: updatedAt as DateTime?,
           if (mentionNameByIdJson != ignore) 4: mentionNameByIdJson as String?,
+          if (contentDelta != ignore) 5: contentDelta as String?,
         }) >
         0;
   }
@@ -173,6 +193,7 @@ sealed class _ChatDraftModelUpdateAll {
     String? text,
     DateTime? updatedAt,
     String? mentionNameByIdJson,
+    String? contentDelta,
   });
 }
 
@@ -188,12 +209,14 @@ class _ChatDraftModelUpdateAllImpl implements _ChatDraftModelUpdateAll {
     Object? text = ignore,
     Object? updatedAt = ignore,
     Object? mentionNameByIdJson = ignore,
+    Object? contentDelta = ignore,
   }) {
     return collection.updateProperties(id, {
       if (conversationId != ignore) 1: conversationId as String?,
       if (text != ignore) 2: text as String?,
       if (updatedAt != ignore) 3: updatedAt as DateTime?,
       if (mentionNameByIdJson != ignore) 4: mentionNameByIdJson as String?,
+      if (contentDelta != ignore) 5: contentDelta as String?,
     });
   }
 }
@@ -210,6 +233,7 @@ sealed class _ChatDraftModelQueryUpdate {
     String? text,
     DateTime? updatedAt,
     String? mentionNameByIdJson,
+    String? contentDelta,
   });
 }
 
@@ -225,12 +249,14 @@ class _ChatDraftModelQueryUpdateImpl implements _ChatDraftModelQueryUpdate {
     Object? text = ignore,
     Object? updatedAt = ignore,
     Object? mentionNameByIdJson = ignore,
+    Object? contentDelta = ignore,
   }) {
     return query.updateProperties(limit: limit, {
       if (conversationId != ignore) 1: conversationId as String?,
       if (text != ignore) 2: text as String?,
       if (updatedAt != ignore) 3: updatedAt as DateTime?,
       if (mentionNameByIdJson != ignore) 4: mentionNameByIdJson as String?,
+      if (contentDelta != ignore) 5: contentDelta as String?,
     });
   }
 }
@@ -256,6 +282,7 @@ class _ChatDraftModelQueryBuilderUpdateImpl
     Object? text = ignore,
     Object? updatedAt = ignore,
     Object? mentionNameByIdJson = ignore,
+    Object? contentDelta = ignore,
   }) {
     final q = query.build();
     try {
@@ -264,6 +291,7 @@ class _ChatDraftModelQueryBuilderUpdateImpl
         if (text != ignore) 2: text as String?,
         if (updatedAt != ignore) 3: updatedAt as DateTime?,
         if (mentionNameByIdJson != ignore) 4: mentionNameByIdJson as String?,
+        if (contentDelta != ignore) 5: contentDelta as String?,
       });
     } finally {
       q.close();
@@ -991,6 +1019,200 @@ extension ChatDraftModelQueryFilter
       );
     });
   }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 5));
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaIsNotNull() {
+    return QueryBuilder.apply(not(), (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 5));
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaGreaterThan(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaGreaterThanOrEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaLessThan(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaLessThanOrEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaBetween(
+    String? lower,
+    String? upper, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 5,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        StartsWithCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EndsWithCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        ContainsCondition(
+          property: 5,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        MatchesCondition(
+          property: 5,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const EqualCondition(
+          property: 5,
+          value: '',
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterFilterCondition>
+      contentDeltaIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const GreaterCondition(
+          property: 5,
+          value: '',
+        ),
+      );
+    });
+  }
 }
 
 extension ChatDraftModelQueryObject
@@ -1085,6 +1307,27 @@ extension ChatDraftModelQuerySortBy
       );
     });
   }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterSortBy> sortByContentDelta(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(
+        5,
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterSortBy>
+      sortByContentDeltaDesc({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(
+        5,
+        sort: Sort.desc,
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
 }
 
 extension ChatDraftModelQuerySortThenBy
@@ -1155,6 +1398,20 @@ extension ChatDraftModelQuerySortThenBy
       return query.addSortBy(4, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterSortBy> thenByContentDelta(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(5, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterSortBy>
+      thenByContentDeltaDesc({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(5, sort: Sort.desc, caseSensitive: caseSensitive);
+    });
+  }
 }
 
 extension ChatDraftModelQueryWhereDistinct
@@ -1184,6 +1441,13 @@ extension ChatDraftModelQueryWhereDistinct
       distinctByMentionNameByIdJson({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(4, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, ChatDraftModel, QAfterDistinct>
+      distinctByContentDelta({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(5, caseSensitive: caseSensitive);
     });
   }
 }
@@ -1219,6 +1483,12 @@ extension ChatDraftModelQueryProperty1
       mentionNameByIdJsonProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(4);
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, String?, QAfterProperty> contentDeltaProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(5);
     });
   }
 }
@@ -1257,6 +1527,13 @@ extension ChatDraftModelQueryProperty2<R>
       return query.addProperty(4);
     });
   }
+
+  QueryBuilder<ChatDraftModel, (R, String?), QAfterProperty>
+      contentDeltaProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(5);
+    });
+  }
 }
 
 extension ChatDraftModelQueryProperty3<R1, R2>
@@ -1291,6 +1568,13 @@ extension ChatDraftModelQueryProperty3<R1, R2>
       mentionNameByIdJsonProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(4);
+    });
+  }
+
+  QueryBuilder<ChatDraftModel, (R1, R2, String?), QOperations>
+      contentDeltaProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(5);
     });
   }
 }

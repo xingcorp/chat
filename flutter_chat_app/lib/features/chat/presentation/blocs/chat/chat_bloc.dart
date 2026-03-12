@@ -24,7 +24,6 @@ import 'package:flutter_chat_app/core/network/models/socket_connection_state.dar
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/core/pagination/page_request.dart';
-import 'package:flutter_chat_app/domain/usecases/message/mark_as_read_usecase.dart';
 import 'package:flutter_chat_app/domain/repositories/i_attachment_repository.dart';
 import 'package:flutter_chat_app/core/utils/either.dart';
 import 'package:flutter_chat_app/features/chat/domain/usecases/chat/get_conversations_usecase.dart';
@@ -69,7 +68,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
   final CacheSyncStrategy _cacheSyncStrategy;
   final MediaCacheManager _mediaCacheManager;
   final RealtimeService _realtimeService;
-  final MarkAsReadUseCase _markAsRead;
   final CurrentUserProvider _currentUserProvider;
   final PersistIncomingMessageUseCase _persistIncomingMessage;
   final ChatModuleEventBus _eventBus;
@@ -110,7 +108,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     this._cacheSyncStrategy,
     this._mediaCacheManager,
     this._realtimeService,
-    this._markAsRead,
     this._currentUserProvider,
     this._persistIncomingMessage,
     this._eventBus,
@@ -1220,44 +1217,45 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> with BlocErrorMixin {
     );
   }
 
-  Future<void> _onMarkMessagesAsRead(
+  /// Handles mark-as-read for **local UI state + event bus only**.
+  ///
+  /// Architecture decision (P0 — matches Telegram/Slack pattern):
+  /// - ChatBloc is responsible for **optimistic UI** (unreadCount = 0) and
+  ///   **host app event bus** (badge decrement).
+  /// - MessageBloc is the **sole owner** of the remote API call
+  ///   (`chatMessageUpdateRead` mutation) with its own 500 ms debounce +
+  ///   2× retry logic.
+  ///
+  /// Previously, both BLoCs independently called the same GraphQL mutation,
+  /// resulting in **duplicate API calls** for every mark-as-read trigger.
+  /// Now ChatBloc never touches the network — eliminating the redundancy.
+  void _onMarkMessagesAsRead(
     _MarkMessagesAsRead event,
     Emitter<ChatState> emit,
-  ) async {
-    if (state is _Loaded) {
-      final currentState = state as _Loaded;
-      final chat = currentState.chats.firstWhere(
-        (c) => c.id == event.chatId,
-        orElse: () => currentState.chats.first,
-      );
-      final previousUnread = chat.id == event.chatId ? chat.unreadCount : 0;
+  ) {
+    if (state is! _Loaded) return;
 
-      final updatedChats = currentState.chats
-          .map((c) => c.id == event.chatId ? c.copyWith(unreadCount: 0) : c)
-          .toList();
-      emit(_preserveLoaded(currentState, chats: updatedChats));
-
-      // Update event bus for host app badge
-      if (previousUnread > 0) {
-        _eventBus.decrementUnreadCount(previousUnread);
-      }
-    }
-
-    // Skip remote call for pending direct chats — temp numeric IDs are not
-    // valid UUIDs and will cause backend errors.
-    if (!event.chatId.contains('-')) {
-      logger.d('[ChatBloc] Skipping markAsRead for pending direct: ${event.chatId}');
-      return;
-    }
-
-    final result =
-        await _markAsRead(MarkAsReadParams(conversationId: event.chatId));
-    result.fold(
-      (failure) {
-        logger.w('Failed to mark messages as read: ${failure.message}');
-      },
-      (_) {},
+    final currentState = state as _Loaded;
+    final chat = currentState.chats.firstWhere(
+      (c) => c.id == event.chatId,
+      orElse: () => currentState.chats.first,
     );
+    final previousUnread = chat.id == event.chatId ? chat.unreadCount : 0;
+
+    // Optimistic UI: immediately clear badge for this conversation
+    final updatedChats = currentState.chats
+        .map((c) => c.id == event.chatId ? c.copyWith(unreadCount: 0) : c)
+        .toList();
+    emit(_preserveLoaded(currentState, chats: updatedChats));
+
+    // Notify host app event bus so taskbar badge decrements
+    if (previousUnread > 0) {
+      _eventBus.decrementUnreadCount(previousUnread);
+    }
+
+    // NOTE: NO remote API call here.
+    // MessageBloc._onMarkChatAsRead() is the single source of truth for
+    // the chatMessageUpdateRead mutation (500 ms debounce + 2× retry).
   }
 
   void _applyTypingIndicator(TypingIndicator indicator) {

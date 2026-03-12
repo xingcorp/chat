@@ -5,7 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:async/async.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show ValueNotifier, kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -109,6 +109,26 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   DateTime? _lastVoiceDurationPrefetchAt;
   static const Duration _voiceDurationPrefetchThrottle =
       Duration(milliseconds: 220);
+
+  // ══════════════════════════════════════════
+  // Attachment upload progress — side channel
+  // ══════════════════════════════════════════
+  //
+  // Upload progress is delivered via a [ValueNotifier] instead of BLoC state
+  // emissions. This avoids rebuilding the entire message list (and triggering
+  // BlocConsumer listeners like markAsRead) 30+ times per file upload.
+  //
+  // Key: attachment ID (e.g. "local_<clientId>_<index>")
+  // Value: progress 0.0 … 1.0
+  //
+  // UI widgets read this via [ValueListenableBuilder] — only the small
+  // progress overlay rebuilds, not the whole message list.
+  final ValueNotifier<Map<String, double>> uploadProgressNotifier =
+      ValueNotifier<Map<String, double>>({});
+
+  // Internal throttle tracking (prevents ValueNotifier spam from HTTP callbacks)
+  final Map<String, double> _lastEmittedProgress = {};
+  DateTime? _lastProgressEmitAt;
 
   // UI transform context
   String _currentUserId = '';
@@ -2526,7 +2546,18 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     }
   }
 
-  /// Update attachment upload progress (matched by clientId)
+  /// Update attachment upload progress via [uploadProgressNotifier] side channel.
+  ///
+  /// **Architecture (proper fix):** Progress updates are delivered through a
+  /// [ValueNotifier] instead of emitting full BLoC state. This means:
+  /// - The entire message list does NOT rebuild on every progress tick.
+  /// - Only the small [ValueListenableBuilder] overlay (progress circle)
+  ///   rebuilds — O(1) widget rebuild vs O(n) message list rebuild.
+  /// - [BlocConsumer.listener] callbacks (markAsRead, etc.) are NOT triggered.
+  ///
+  /// Still lightly throttled (2% jump AND 50ms gate) to avoid excessive
+  /// ValueNotifier updates from HTTP callbacks (~100/file → ~40-50/file).
+  /// Smooth enough for WhatsApp/Telegram-like progress feel.
   void _updateAttachmentProgress({
     required Emitter<MessageState> emit,
     required String clientId,
@@ -2535,24 +2566,45 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
   }) {
     if (state is! MessagesLoaded) return;
 
-    final currentState = state as MessagesLoaded;
-    final messages = currentState.messages.map((message) {
-      // Match by clientId for accurate tracking with rapid sends
-      if (message.clientId != clientId) return message;
+    // Progress key matches the attachment ID pattern from _onSendMessageWithAttachments
+    final attachmentId = 'local_${clientId}_$attachmentIndex';
 
-      final updatedAttachments =
-          message.attachments.asMap().entries.map((entry) {
-        if (entry.key != attachmentIndex) return entry.value;
-        return entry.value.copyWith(uploadProgress: progress);
-      }).toList();
+    // --- Throttle gate ---
+    final lastProgress = _lastEmittedProgress[attachmentId] ?? 0.0;
+    final now = DateTime.now();
+    final elapsed = _lastProgressEmitAt != null
+        ? now.difference(_lastProgressEmitAt!)
+        : const Duration(milliseconds: 999);
 
-      return message.copyWith(attachments: updatedAttachments);
-    }).toList();
+    // Always notify at 0% (start) and 100% (done); otherwise throttle.
+    final isStart = lastProgress == 0.0 && progress > 0.0;
+    final isDone = progress >= 1.0;
+    // ValueNotifier rebuild cost is near-zero (only the tiny overlay widget),
+    // so we use a much finer grain than the old BLoC-emit path:
+    //   ≥2% change AND ≥50ms elapsed → ~smooth like WhatsApp/Telegram.
+    final bigEnoughJump = (progress - lastProgress).abs() >= 0.02;
+    final enoughTimePassed = elapsed >= const Duration(milliseconds: 50);
 
-    emit(currentState.copyWith(
-      messages: messages,
-      uiMessages: _transformMessages(messages),
-    ));
+    if (!isStart && !isDone && !(bigEnoughJump && enoughTimePassed)) {
+      return; // skip this tick — not significant enough
+    }
+
+    _lastEmittedProgress[attachmentId] = progress;
+    _lastProgressEmitAt = now;
+
+    // Clean up tracking when upload completes
+    if (isDone) {
+      _lastEmittedProgress.remove(attachmentId);
+    }
+
+    // --- Update side channel (ValueNotifier) — NO BLoC emit ---
+    final current = Map<String, double>.from(uploadProgressNotifier.value);
+    if (isDone) {
+      current.remove(attachmentId);
+    } else {
+      current[attachmentId] = progress;
+    }
+    uploadProgressNotifier.value = current;
   }
 
   /// Mark a draft message as failed (matched by clientId)
@@ -2796,6 +2848,9 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
 
   @override
   Future<void> close() async {
+    // Dispose upload progress side channel
+    uploadProgressNotifier.dispose();
+
     // Cancel debounce timer
     _markAsReadDebouncer?.cancel();
 

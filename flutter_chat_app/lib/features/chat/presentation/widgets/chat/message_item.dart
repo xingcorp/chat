@@ -1233,6 +1233,16 @@ class _MessageItemState extends State<MessageItem>
     // MediaGallery now handles upload progress overlay internally
     // for each attachment with percentage display
     // Pass message and chatId for reaction/forward support in fullscreen view
+    //
+    // progressNotifier — side-channel from MessageBloc so that upload-progress
+    // ticks only rebuild the tiny overlay widget, not the entire message list.
+    MessageBloc? messageBloc;
+    try {
+      messageBloc = context.read<MessageBloc>();
+    } catch (_) {
+      messageBloc = null;
+    }
+
     return MediaGallery(
       attachments: attachments,
       layout: MediaGalleryLayout.grid,
@@ -1241,6 +1251,7 @@ class _MessageItemState extends State<MessageItem>
       isFromCurrentUser: isFromCurrentUser,
       isOnPrimaryBackground: isOnPrimaryBackground,
       onEditedImageSend: widget.onEditedImageSend,
+      progressNotifier: messageBloc?.uploadProgressNotifier,
     );
   }
 

@@ -87,6 +87,7 @@ import '../../features/auth/data/repositories/auth_repository_impl.dart'
     as _i153;
 import '../../features/auth/domain/repositories/auth_repository.dart' as _i787;
 import '../../features/auth/presentation/blocs/auth/auth_bloc.dart' as _i331;
+import '../../features/chat/data/adapters/quill_delta_adapter.dart' as _i150;
 import '../../features/chat/data/datasources/chat/chat_local_datasource.dart'
     as _i1011;
 import '../../features/chat/data/datasources/chat/chat_remote_datasource.dart'
@@ -207,7 +208,6 @@ import '../services/desktop_badge_service.dart' as _i528;
 import '../services/device_capability_service.dart' as _i98;
 import '../services/foreground_sync_service.dart' as _i920;
 import '../services/frequent_reaction_service.dart' as _i537;
-import '../services/user_cache_service.dart' as _i999;
 import '../services/graphql_subscription_service.dart' as _i98;
 import '../services/image_editor_service.dart' as _i930;
 import '../services/integration_service.dart' as _i808;
@@ -231,6 +231,7 @@ import '../services/realtime_service.dart' as _i301;
 import '../services/resource_manager_service.dart' as _i558;
 import '../services/sso_auth_service.dart' as _i349;
 import '../services/state_persistence_service.dart' as _i797;
+import '../services/user_cache_service.dart' as _i979;
 import '../services/voice_note_playback_manager.dart' as _i46;
 import '../storage/local_storage.dart' as _i329;
 import '../storage/tombstone_store.dart' as _i677;
@@ -306,6 +307,7 @@ extension GetItInjectableX on _i174.GetIt {
               httpClient: gh<_i519.Client>(),
               baseUrl: gh<String>(instanceName: 'baseUrl'),
             ));
+    gh.lazySingleton<_i150.IQuillDeltaAdapter>(() => _i150.QuillDeltaAdapter());
     gh.factory<_i656.PermissionsDataSource>(
         () => _i656.MobilePermissionsDataSource());
     gh.lazySingleton<_i410.ConnectionInfo>(() => _i410.ConnectionInfo(
@@ -779,7 +781,7 @@ extension GetItInjectableX on _i174.GetIt {
           removeReaction: gh<_i539.RemoveReactionUseCase>(),
           attachmentRepository: gh<_i817.IAttachmentRepository>(),
           messageRepository: gh<_i572.IMessageRepository>(),
-          userCacheService: gh<_i999.UserCacheService>(),
+          userCacheService: gh<_i979.UserCacheService>(),
           cacheSyncStrategy: gh<_i514.CacheSyncStrategy>(),
           realtimeService: gh<_i301.RealtimeService>(),
           locationService: gh<_i669.ILocationService>(),
@@ -844,6 +846,24 @@ extension GetItInjectableX on _i174.GetIt {
           fileValidationService: gh<_i131.FileValidationService>(),
           logger: gh<_i221.AppLogger>(),
         ));
+    gh.factory<_i863.ChatBloc>(() => _i863.ChatBloc(
+          gh<_i787.GetConversationsUseCase>(),
+          gh<_i163.GetLocalConversationsUseCase>(),
+          gh<_i899.GetConversationDetailUseCase>(),
+          gh<_i224.CreateGroupUseCase>(),
+          gh<_i277.UpdateGroupUseCase>(),
+          gh<_i462.LeaveConversationUseCase>(),
+          gh<_i585.DeleteConversationUseCase>(),
+          gh<_i130.SearchConversationsUseCase>(),
+          gh<_i47.ConnectivityService>(),
+          gh<_i514.CacheSyncStrategy>(),
+          gh<_i163.MediaCacheManager>(),
+          gh<_i301.RealtimeService>(),
+          gh<_i113.CurrentUserProvider>(),
+          gh<_i962.PersistIncomingMessageUseCase>(),
+          gh<_i1030.ChatModuleEventBus>(),
+          gh<_i817.IAttachmentRepository>(),
+        ));
     gh.lazySingleton<_i920.ForegroundSyncService>(
         () => _i920.ForegroundSyncService(
               repository: gh<_i81.IChatRepository>(),
@@ -861,25 +881,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i704.MessageSearchBloc>(() => _i704.MessageSearchBloc(
           searchMessages: gh<_i56.SearchMessagesUseCase>(),
           logger: gh<_i221.AppLogger>(),
-        ));
-    gh.factory<_i863.ChatBloc>(() => _i863.ChatBloc(
-          gh<_i787.GetConversationsUseCase>(),
-          gh<_i163.GetLocalConversationsUseCase>(),
-          gh<_i899.GetConversationDetailUseCase>(),
-          gh<_i224.CreateGroupUseCase>(),
-          gh<_i277.UpdateGroupUseCase>(),
-          gh<_i462.LeaveConversationUseCase>(),
-          gh<_i585.DeleteConversationUseCase>(),
-          gh<_i130.SearchConversationsUseCase>(),
-          gh<_i47.ConnectivityService>(),
-          gh<_i514.CacheSyncStrategy>(),
-          gh<_i163.MediaCacheManager>(),
-          gh<_i301.RealtimeService>(),
-          gh<_i848.MarkAsReadUseCase>(),
-          gh<_i113.CurrentUserProvider>(),
-          gh<_i962.PersistIncomingMessageUseCase>(),
-          gh<_i1030.ChatModuleEventBus>(),
-          gh<_i817.IAttachmentRepository>(),
         ));
     gh.factory<_i1028.ChatMembersBloc>(() => _i1028.ChatMembersBloc(
           logger: gh<_i221.AppLogger>(),

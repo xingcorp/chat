@@ -66,12 +66,18 @@ class AppChatImageGallery extends BaseStatelessWidget {
     this.spacing = AppDimens.spaceXSmall,
     this.borderRadius =
         const BorderRadius.all(Radius.circular(AppDimens.radiusSmall)),
+    this.progressNotifier,
   });
 
   final List<AppChatImageGalleryItem> images;
   final ValueChanged<int> onImageTap;
   final double spacing;
   final BorderRadius borderRadius;
+
+  /// Side-channel progress notifier from [MessageBloc.uploadProgressNotifier].
+  /// When non-null, [_UploadingOverlay] uses [ValueListenableBuilder] to
+  /// rebuild only the overlay sub-tree on each progress tick.
+  final ValueNotifier<Map<String, double>>? progressNotifier;
 
   @override
   Widget buildContent(BuildContext context) {
@@ -84,6 +90,7 @@ class AppChatImageGallery extends BaseStatelessWidget {
         image: images.first,
         borderRadius: borderRadius,
         onTap: () => onImageTap(0),
+        progressNotifier: progressNotifier,
       );
     }
 
@@ -412,12 +419,35 @@ class AppChatImageGallery extends BaseStatelessWidget {
             _GalleryImageContent(image: image),
             if (image.isUploading)
               Positioned.fill(
-                child: _UploadingOverlay(progress: image.uploadProgress),
+                child: _buildLiveUploadOverlay(
+                  imageId: image.id,
+                  fallbackProgress: image.uploadProgress,
+                ),
               ),
             if (overlay != null) Positioned.fill(child: overlay),
           ],
         ),
       ),
+    );
+  }
+
+  /// Builds the upload overlay using [progressNotifier] when available,
+  /// so only the overlay sub-tree rebuilds on progress ticks.
+  Widget _buildLiveUploadOverlay({
+    required String imageId,
+    required double fallbackProgress,
+  }) {
+    final notifier = progressNotifier;
+    if (notifier == null) {
+      return _UploadingOverlay(progress: fallbackProgress);
+    }
+
+    return ValueListenableBuilder<Map<String, double>>(
+      valueListenable: notifier,
+      builder: (_, progressMap, __) {
+        final liveProgress = progressMap[imageId] ?? fallbackProgress;
+        return _UploadingOverlay(progress: liveProgress);
+      },
     );
   }
 }
@@ -426,11 +456,13 @@ class _SmartSingleImageTile extends StatefulWidget {
   final AppChatImageGalleryItem image;
   final BorderRadius borderRadius;
   final VoidCallback onTap;
+  final ValueNotifier<Map<String, double>>? progressNotifier;
 
   const _SmartSingleImageTile({
     required this.image,
     required this.borderRadius,
     required this.onTap,
+    this.progressNotifier,
   });
 
   @override
@@ -542,7 +574,6 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
   @override
   Widget build(BuildContext context) {
     final isUploading = widget.image.isUploading;
-    final uploadProgress = widget.image.uploadProgress;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -573,7 +604,7 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
                     _GalleryImageContent(image: widget.image),
                     if (isUploading)
                       Positioned.fill(
-                        child: _UploadingOverlay(progress: uploadProgress),
+                        child: _buildLiveUploadOverlay(),
                       ),
                   ],
                 ),
@@ -581,6 +612,25 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
             ),
           ),
         );
+      },
+    );
+  }
+
+  /// Builds the upload overlay using [progressNotifier] when available.
+  Widget _buildLiveUploadOverlay() {
+    final notifier = widget.progressNotifier;
+    final imageId = widget.image.id;
+    final fallback = widget.image.uploadProgress;
+
+    if (notifier == null) {
+      return _UploadingOverlay(progress: fallback);
+    }
+
+    return ValueListenableBuilder<Map<String, double>>(
+      valueListenable: notifier,
+      builder: (_, progressMap, __) {
+        final liveProgress = progressMap[imageId] ?? fallback;
+        return _UploadingOverlay(progress: liveProgress);
       },
     );
   }

@@ -83,6 +83,8 @@ import 'package:get_it/get_it.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
+import '../../../../../presentation/widgets/design_system/feedback/app_toast.dart';
+
 // Service locator instance
 final getIt = GetIt.instance;
 
@@ -220,6 +222,17 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
   // Mark-as-read state
   // ══════════════════════════════════════════
   bool _hasMarkedAsReadOnOpen = false;
+  Timer? _markAsReadChatBlocDebouncer;
+
+  /// High-water mark: ID of the newest message we already marked as read.
+  ///
+  /// Prevents redundant markAsRead calls when [_handleBlocStateChanges] fires
+  /// on state emissions that don't contain genuinely new messages (e.g.
+  /// attachment progress ticks, reaction updates, typing indicators).
+  ///
+  /// Follows the same "high-water mark" pattern used by Telegram
+  /// (`readHistory(maxId)`) and Slack (`conversations.mark(ts)`).
+  String? _lastSeenMessageId;
 
   // ══════════════════════════════════════════
   // Pending direct chat → real conversation ID resolution
@@ -760,10 +773,39 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       // When user scrolls back to bottom (newest messages visible),
       // mark chat as read for any unread messages (Req 5.2).
       // The BLoC's 500ms debounce handles rapid scroll events.
+      // Also update high-water mark so _handleBlocStateChanges won't
+      // re-trigger for the same messages.
       if (!showFab) {
+        final state = _messageBloc.state;
+        if (state is MessagesLoaded && state.messages.isNotEmpty) {
+          _lastSeenMessageId = state.messages.first.id;
+        }
         _messageBloc.add(MarkChatAsRead(widget.chatId));
+        _debouncedMarkAsReadViaChatBloc();
       }
     }
+  }
+
+  /// Debounced wrapper for ChatBloc mark-as-read to avoid flooding the network.
+  ///
+  /// During attachment upload, [_handleBlocStateChanges] fires on every
+  /// progress-tick state emission (50-100×/file). Without debounce, each
+  /// emission dispatches a ChatBloc API call that bypasses MessageBloc's
+  /// built-in 500 ms debounce — saturating the connection and causing
+  /// image/video uploads to timeout.
+  ///
+  /// Uses a coalescing pattern: only the LAST call within the 500 ms window
+  /// actually fires, matching MessageBloc's own debounce cadence.
+  void _debouncedMarkAsReadViaChatBloc() {
+    _markAsReadChatBlocDebouncer?.cancel();
+    _markAsReadChatBlocDebouncer =
+        Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      _chatBloc.add(ChatEvent.markMessagesAsRead(
+        chatId: widget.chatId,
+        messageIds: const <String>[],
+      ));
+    });
   }
 
   void _loadMore() {
@@ -831,6 +873,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     }
     _typingSubscription?.cancel();
     _typingDebounceTimer?.cancel();
+    _markAsReadChatBlocDebouncer?.cancel();
     _loadMoreSafetyTimer?.cancel();
     _recordingAmplitudeSubscription?.cancel();
     _recordingLimitReachedSubscription?.cancel();
@@ -1338,7 +1381,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
   Future<void> _onVoiceRecordingTap() async {
     if (_isRecordingVoice || !mounted) return;
-    if (!_usesDesktopVoiceRecordingUx) return;
+    if (!_usesDesktopVoiceRecordingUx) {
+      AppToast.info(
+        context: context,
+        message: context.l10n.longPressToRecord,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
 
     await _beginVoiceRecording(dragStartDx: null);
   }
@@ -2425,27 +2475,36 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       final didAutoScrollForOwnMessage =
           _maybeAutoScrollToBottomForOwnMessage(state);
 
+      // ── High-water mark check ──
+      // Only fire markAsRead when the newest message ID has ACTUALLY changed.
+      // This prevents redundant API calls during attachment progress ticks,
+      // reaction updates, or any state emission that doesn't introduce new
+      // messages.  Matches Telegram's `readHistory(maxId)` pattern.
+      final newestMessageId =
+          state.messages.isNotEmpty ? state.messages.first.id : null;
+      final hasNewMessages = newestMessageId != null &&
+          newestMessageId != _lastSeenMessageId;
+
       // Mark chat as read when first loaded with unread messages (Req 5.1)
       if (!_hasMarkedAsReadOnOpen && state.messages.isNotEmpty) {
         _hasMarkedAsReadOnOpen = true;
+        _lastSeenMessageId = newestMessageId;
         _messageBloc.add(MarkChatAsRead(widget.chatId));
         // Also notify ChatBloc so the event bus updates the taskbar badge
-        _chatBloc.add(ChatEvent.markMessagesAsRead(
-          chatId: widget.chatId,
-          messageIds: const <String>[],
-        ));
+        _debouncedMarkAsReadViaChatBloc();
       }
 
-      // Mark as read when new real-time messages arrive and user is at bottom
+      // Mark as read when new real-time messages arrive and user is at bottom.
+      // Only trigger when the newest message ID differs from our high-water
+      // mark — attachment progress ticks, reaction updates, and other state
+      // emissions that don't add new messages are now filtered out.
       if (_hasMarkedAsReadOnOpen &&
-          !_showScrollToBottom &&
-          state.messages.isNotEmpty) {
+          hasNewMessages &&
+          !_showScrollToBottom) {
+        _lastSeenMessageId = newestMessageId;
         _messageBloc.add(MarkChatAsRead(widget.chatId));
         // Also notify ChatBloc so the event bus updates the taskbar badge
-        _chatBloc.add(ChatEvent.markMessagesAsRead(
-          chatId: widget.chatId,
-          messageIds: const <String>[],
-        ));
+        _debouncedMarkAsReadViaChatBloc();
       }
 
       _chatDraftBloc.add(

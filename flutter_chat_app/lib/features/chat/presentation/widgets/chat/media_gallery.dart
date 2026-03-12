@@ -49,6 +49,13 @@ class MediaGallery extends StatelessWidget {
   final void Function(Uint8List editedBytes, String fileName)?
       onEditedImageSend;
 
+  /// Side-channel progress notifier from [MessageBloc.uploadProgressNotifier].
+  /// Key: attachment ID (e.g. "local_<clientId>_<index>"), Value: 0.0…1.0.
+  /// When non-null, progress overlays use [ValueListenableBuilder] on this
+  /// notifier instead of the static [MessageAttachment.uploadProgress] field,
+  /// avoiding full BLoC state rebuilds on every progress tick.
+  final ValueNotifier<Map<String, double>>? progressNotifier;
+
   const MediaGallery({
     Key? key,
     required this.attachments,
@@ -58,6 +65,7 @@ class MediaGallery extends StatelessWidget {
     this.isFromCurrentUser = false,
     this.isOnPrimaryBackground = false,
     this.onEditedImageSend,
+    this.progressNotifier,
   }) : super(key: key);
 
   @override
@@ -128,6 +136,7 @@ class MediaGallery extends StatelessWidget {
         attachments: images,
         initialIndex: index,
       ),
+      progressNotifier: progressNotifier,
     );
   }
 
@@ -169,6 +178,31 @@ class MediaGallery extends StatelessWidget {
     );
   }
 
+  /// Builds a widget that reads live upload progress from [progressNotifier].
+  ///
+  /// If [progressNotifier] is available, wraps [builder] in a
+  /// [ValueListenableBuilder] so only this tiny sub-tree rebuilds on every
+  /// progress tick — the rest of the message list stays untouched.
+  /// Falls back to the static [fallbackProgress] from the BLoC snapshot.
+  Widget _buildLiveUploadProgress({
+    required String attachmentId,
+    required double fallbackProgress,
+    required Widget Function(double progress) builder,
+  }) {
+    final notifier = progressNotifier;
+    if (notifier == null) {
+      return builder(fallbackProgress);
+    }
+
+    return ValueListenableBuilder<Map<String, double>>(
+      valueListenable: notifier,
+      builder: (_, progressMap, __) {
+        final liveProgress = progressMap[attachmentId] ?? fallbackProgress;
+        return builder(liveProgress);
+      },
+    );
+  }
+
   /// Build video list
   Widget _buildVideoList(BuildContext context, List<MessageAttachment> videos) {
     return Column(
@@ -185,7 +219,6 @@ class MediaGallery extends StatelessWidget {
   /// Build single video tile
   Widget _buildVideoTile(BuildContext context, MessageAttachment video) {
     final isUploading = video.isUploading;
-    final uploadProgress = video.uploadProgress ?? 0.0;
 
     if (!isUploading) {
       return VideoPlayerWidget(
@@ -217,7 +250,11 @@ class MediaGallery extends StatelessWidget {
             child: Container(
               color: Colors.black.withValues(alpha: 0.4),
               child: Center(
-                child: _buildUploadProgressIndicator(uploadProgress),
+                child: _buildLiveUploadProgress(
+                  attachmentId: video.id,
+                  fallbackProgress: video.uploadProgress ?? 0.0,
+                  builder: _buildUploadProgressIndicator,
+                ),
               ),
             ),
           ),
@@ -274,7 +311,6 @@ class MediaGallery extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
     final isUploading = file.isUploading;
-    final uploadProgress = file.uploadProgress ?? 0.0;
     final isDownloading = downloadState.isInProgress;
     final isDownloaded = downloadState.status == FileDownloadStatus.completed;
     final isDownloadFailed = downloadState.status == FileDownloadStatus.failed;
@@ -321,7 +357,11 @@ class MediaGallery extends StatelessWidget {
           children: [
             // File icon or upload progress indicator
             if (isUploading)
-              _buildFileUploadProgressIndicator(uploadProgress)
+              _buildLiveUploadProgress(
+                attachmentId: file.id,
+                fallbackProgress: file.uploadProgress ?? 0.0,
+                builder: _buildFileUploadProgressIndicator,
+              )
             else if (isDownloading)
               _buildFileDownloadProgressIndicator(
                 progress: downloadState.progress,
@@ -359,11 +399,15 @@ class MediaGallery extends StatelessWidget {
                   ),
                   const SizedBox(height: 2.0),
                   if (isUploading)
-                    // Show upload progress text
-                    Text(
-                      'Uploading... ${(uploadProgress * 100).toInt()}%',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: primaryIconColor,
+                    // Show upload progress text (live from notifier)
+                    _buildLiveUploadProgress(
+                      attachmentId: file.id,
+                      fallbackProgress: file.uploadProgress ?? 0.0,
+                      builder: (progress) => Text(
+                        'Uploading... ${(progress * 100).toInt()}%',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: primaryIconColor,
+                        ),
                       ),
                     )
                   else if (isDownloading)

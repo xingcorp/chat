@@ -18,6 +18,7 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_button.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_alert_dialog.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_toast.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_tooltip.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/shortcode_autocomplete_overlay.dart';
@@ -567,10 +568,68 @@ class _ChatInputState extends BaseState<ChatInput> {
   }
 
   Future<void> _onVoiceRecordingTap() async {
-    if (_isRecording || !mounted) return;
-    if (!_usesDesktopVoiceRecordingUx) return;
+    debugPrint('[ChatInput] _onVoiceRecordingTap called!');
+    debugPrint('[ChatInput] _isRecording=$_isRecording, mounted=$mounted');
+    debugPrint('[ChatInput] _usesDesktopVoiceRecordingUx=$_usesDesktopVoiceRecordingUx');
+    if (_isRecording || !mounted) {
+      debugPrint('[ChatInput] BLOCKED: _isRecording=$_isRecording, mounted=$mounted');
+      return;
+    }
 
-    await _startRecording();
+    if (_usesDesktopVoiceRecordingUx) {
+      debugPrint('[ChatInput] Desktop mode -> _startRecording()');
+      await _startRecording();
+    } else {
+      debugPrint('[ChatInput] Mobile mode -> showing AppToast.info');
+      // Mobile: show toast hint
+      AppToast.info(
+        context: context,
+        message: context.l10n.longPressToRecord,
+        duration: const Duration(seconds: 2),
+      );
+      debugPrint('[ChatInput] AppToast.info called successfully');
+    }
+  }
+
+  Widget _buildVoiceRecordingButton(BuildContext context) {
+    debugPrint('[ChatInput] _buildVoiceRecordingButton: _usesDesktopVoiceRecordingUx=$_usesDesktopVoiceRecordingUx');
+    final micButton = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        debugPrint('[ChatInput] GestureDetector.onTap FIRED!');
+        _onVoiceRecordingTap();
+      },
+      onLongPress: _usesDesktopVoiceRecordingUx
+          ? null
+          : () {
+              unawaited(_startRecording());
+            },
+      onLongPressEnd:
+          _usesDesktopVoiceRecordingUx ? null : _stopRecording,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.mic,
+          color: Colors.white,
+        ),
+      ),
+    );
+
+    // Desktop: wrap with AppTooltip for hover hint
+    if (_usesDesktopVoiceRecordingUx) {
+      return AppTooltip(
+        message: context.l10n.recordVoiceMessage,
+        child: micButton,
+      );
+    }
+
+    // Mobile: no tooltip wrapper, toast is shown on tap
+    return micButton;
   }
 
   /// Dừng ghi âm
@@ -674,6 +733,7 @@ class _ChatInputState extends BaseState<ChatInput> {
   @override
   Widget build(BuildContext context) {
     final bool isTextEmpty = _textController.text.isEmpty;
+    debugPrint('[ChatInput] build: isTextEmpty=$isTextEmpty, enableVoiceRecording=${widget.enableVoiceRecording}, _isRecording=$_isRecording');
 
     // Kiểm tra nếu đang ghi âm
     if (_isRecording) {
@@ -744,35 +804,7 @@ class _ChatInputState extends BaseState<ChatInput> {
               ),
             ),
             isTextEmpty && widget.enableVoiceRecording
-                ? AppTooltip(
-                    message: _usesDesktopVoiceRecordingUx
-                        ? context.l10n.recordVoiceMessage
-                        : context.l10n.longPressToRecord,
-                    enableHover: _usesDesktopVoiceRecordingUx,
-                    enableLongPress: false,
-                    child: GestureDetector(
-                      onTap: _onVoiceRecordingTap,
-                      onLongPress: _usesDesktopVoiceRecordingUx
-                          ? null
-                          : () {
-                              unawaited(_startRecording());
-                            },
-                      onLongPressEnd:
-                          _usesDesktopVoiceRecordingUx ? null : _stopRecording,
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.mic,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  )
+                ? _buildVoiceRecordingButton(context)
                 : IconButton(
                     icon: Icon(
                       Icons.send,
