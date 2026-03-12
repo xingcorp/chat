@@ -88,17 +88,18 @@ class _DesktopMessageHoverWrapperState
   /// Currently active instance — ensures only one bar is visible at a time
   static _DesktopMessageHoverWrapperState? _activeInstance;
 
-  /// Scroll cooldown: after dismissing due to scroll, suppress re-showing
-  /// the bar for a short period. This prevents the overlay from immediately
-  /// reappearing when scrolling causes a new message to slide under the cursor
-  /// (which triggers MouseRegion.onEnter on the new message).
-  static bool _scrollCooldown = false;
-  static Timer? _scrollCooldownTimer;
-
-  /// Duration to suppress re-showing after scroll-triggered dismiss.
-  /// Must be long enough for scroll inertia to settle.
-  static const Duration _scrollCooldownDuration =
-      Duration(milliseconds: 400);
+  /// After a scroll-triggered dismiss, suppress re-showing until the user
+  /// actually moves the mouse cursor. This matches Slack/Discord/Lark behavior.
+  ///
+  /// Why this works: `MouseRegion.onEnter` fires both when the user moves the
+  /// cursor INTO a message AND when content scrolls causing a message to slide
+  /// under a stationary cursor. These are indistinguishable from `onEnter` alone.
+  /// But `MouseRegion.onHover` (PointerHoverEvent) ONLY fires on actual cursor
+  /// movement — NOT when content scrolls under a stationary cursor.
+  ///
+  /// Flow: scroll → dismiss + suppress → onEnter blocked → user moves mouse →
+  /// onHover clears suppress → bar shows.
+  static bool _suppressUntilMouseMove = false;
 
   OverlayEntry? _overlayEntry;
   Timer? _hideTimer;
@@ -157,10 +158,42 @@ class _DesktopMessageHoverWrapperState
     _hideTimer?.cancel();
     _showTimer?.cancel();
 
+    // After scroll dismiss, wait for actual mouse movement before showing.
+    // This prevents flicker when content scrolls under a stationary cursor.
+    if (_suppressUntilMouseMove) return;
+
     // If there's already an active bar from a different message,
     // DON'T immediately steal focus. Delay to allow cursor to pass
     // through intermediate messages on the way to the active bar.
     if (_activeInstance != null && _activeInstance != this) {
+      _showTimer = Timer(_showDelay, () {
+        if (_isMouseOnMessage && mounted) {
+          _activeInstance?._dismissOverlay();
+          _showActionBar();
+          _activeInstance = this;
+        }
+      });
+      return;
+    }
+
+    _showActionBar();
+    _activeInstance = this;
+  }
+
+  /// Called on actual mouse cursor movement ([PointerHoverEvent]).
+  ///
+  /// This ONLY fires when the user physically moves the cursor — NOT when
+  /// content scrolls under a stationary cursor. Used to clear the scroll
+  /// suppress flag and re-enable hover action bar.
+  void _onMessageMouseMove() {
+    if (!_suppressUntilMouseMove) return;
+    _suppressUntilMouseMove = false;
+
+    // Mouse actually moved — safe to show the action bar now.
+    if (!_isMouseOnMessage || !mounted || _overlayEntry != null) return;
+
+    if (_activeInstance != null && _activeInstance != this) {
+      _showTimer?.cancel();
       _showTimer = Timer(_showDelay, () {
         if (_isMouseOnMessage && mounted) {
           _activeInstance?._dismissOverlay();
@@ -241,11 +274,11 @@ class _DesktopMessageHoverWrapperState
           // Dismiss on mouse-wheel scroll (traditional mouse)
           onPointerSignal: (event) {
             if (event is PointerScrollEvent) {
-              _dismissOverlay();
+              _dismissOverlayOnScroll();
             }
           },
           // Dismiss on precision touchpad scroll (Windows/Mac trackpad)
-          onPointerPanZoomStart: (_) => _dismissOverlay(),
+          onPointerPanZoomStart: (_) => _dismissOverlayOnScroll(),
           behavior: HitTestBehavior.translucent,
           child: TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
@@ -383,6 +416,16 @@ class _DesktopMessageHoverWrapperState
     }
   }
 
+  /// Dismiss due to scroll event — activates suppress flag so the bar won't
+  /// reappear until the user actually moves the mouse cursor.
+  void _dismissOverlayOnScroll() {
+    _dismissOverlay();
+    _isMouseOnMessage = false;
+    _isMouseOnBar = false;
+    _showTimer?.cancel();
+    _suppressUntilMouseMove = true;
+  }
+
   /// Called when the "More" popup is dismissed (barrier tap or action item).
   /// Re-evaluates whether the action bar should also hide.
   void _onMorePopupDismissed() {
@@ -418,12 +461,28 @@ class _DesktopMessageHoverWrapperState
       return widget.child;
     }
 
-    return MouseRegion(
-      onEnter: (_) => _onMessageMouseEnter(),
-      onExit: (_) => _onMessageMouseExit(),
-      child: GestureDetector(
-        onSecondaryTapUp: _onSecondaryTap,
-        child: widget.child,
+    return Listener(
+      // Also dismiss when scrolling on the MESSAGE area (not just the bar).
+      // This handles the case where the bar is visible but the user scrolls
+      // on the message content — the bar should dismiss immediately.
+      onPointerSignal: (event) {
+        if (event is PointerScrollEvent && _overlayEntry != null) {
+          _dismissOverlayOnScroll();
+        }
+      },
+      onPointerPanZoomStart: (_) {
+        if (_overlayEntry != null) {
+          _dismissOverlayOnScroll();
+        }
+      },
+      child: MouseRegion(
+        onEnter: (_) => _onMessageMouseEnter(),
+        onExit: (_) => _onMessageMouseExit(),
+        onHover: (_) => _onMessageMouseMove(),
+        child: GestureDetector(
+          onSecondaryTapUp: _onSecondaryTap,
+          child: widget.child,
+        ),
       ),
     );
   }

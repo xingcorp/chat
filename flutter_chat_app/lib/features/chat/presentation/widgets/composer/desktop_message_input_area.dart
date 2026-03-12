@@ -120,6 +120,7 @@ class _DesktopMessageInputAreaState extends State<DesktopMessageInputArea> {
             firstChild: const SizedBox.shrink(),
             secondChild: FormattingPanel(
               controller: widget.composerController.quillController,
+              editorFocusNode: widget.messageFocusNode,
               onInsertLink: () {},
             ),
             crossFadeState: _isFormattingExpanded

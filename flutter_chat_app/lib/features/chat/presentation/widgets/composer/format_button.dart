@@ -69,6 +69,7 @@ class FormatButton extends StatelessWidget {
         borderRadius:
             BorderRadius.circular(ComposerConstants.formatButtonRadius),
         child: InkWell(
+          canRequestFocus: false,
           onTap: isEnabled ? onPressed : null,
           borderRadius:
               BorderRadius.circular(ComposerConstants.formatButtonRadius),

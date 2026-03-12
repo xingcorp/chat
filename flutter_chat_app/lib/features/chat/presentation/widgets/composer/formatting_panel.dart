@@ -17,6 +17,7 @@ class FormattingPanel extends StatelessWidget {
   const FormattingPanel({
     required this.controller,
     required this.onInsertLink,
+    this.editorFocusNode,
     super.key,
   });
 
@@ -26,6 +27,10 @@ class FormattingPanel extends StatelessWidget {
   /// Callback when the "insert link" button is pressed.
   /// The parent is responsible for showing a dialog.
   final VoidCallback onInsertLink;
+
+  /// Optional focus node of the editor — used to restore focus after
+  /// formatting button taps so that `toggledStyle` is not lost.
+  final FocusNode? editorFocusNode;
 
   // ─────────────────── Build ───────────────────
 
@@ -145,6 +150,7 @@ class FormattingPanel extends StatelessWidget {
 
   void _toggleInline(Attribute attribute) {
     controller.formatSelection(attribute);
+    _restoreEditorFocus();
   }
 
   void _toggleBlock(Attribute attribute) {
@@ -157,6 +163,7 @@ class FormattingPanel extends StatelessWidget {
     } else {
       controller.formatSelection(attribute);
     }
+    _restoreEditorFocus();
   }
 
   void _clearFormatting() {
@@ -174,6 +181,16 @@ class FormattingPanel extends StatelessWidget {
     ];
     for (final key in keysToRemove) {
       controller.formatSelection(Attribute.fromKeyValue(key, null));
+    }
+    _restoreEditorFocus();
+  }
+
+  /// Re-focus the editor so that `toggledStyle` (pending format for
+  /// the next typed character) is not cleared by a focus change.
+  void _restoreEditorFocus() {
+    final node = editorFocusNode;
+    if (node != null && !node.hasFocus) {
+      node.requestFocus();
     }
   }
 
