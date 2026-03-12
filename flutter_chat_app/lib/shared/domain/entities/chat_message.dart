@@ -212,6 +212,12 @@ class MessageAttachment {
   /// Tên tệp
   final String name;
 
+  /// Chiều rộng gốc của ảnh/video (pixels, null nếu không biết)
+  final int? originalWidth;
+
+  /// Chiều cao gốc của ảnh/video (pixels, null nếu không biết)
+  final int? originalHeight;
+
   /// Đường dẫn cục bộ (for displaying local file during upload - mobile only)
   final String? localPath;
 
@@ -224,6 +230,15 @@ class MessageAttachment {
   /// Whether file is currently uploading
   bool get isUploading => uploadProgress != null && uploadProgress! < 1.0;
 
+  /// Aspect ratio tính sẵn (null nếu không biết kích thước)
+  double? get aspectRatio {
+    if (originalWidth != null && originalHeight != null &&
+        originalWidth! > 0 && originalHeight! > 0) {
+      return originalWidth! / originalHeight!;
+    }
+    return null;
+  }
+
   /// Constructor
   MessageAttachment({
     required this.id,
@@ -231,6 +246,8 @@ class MessageAttachment {
     required this.type,
     required this.size,
     required this.name,
+    this.originalWidth,
+    this.originalHeight,
     this.localPath,
     this.localBytes,
     this.uploadProgress,
@@ -243,6 +260,8 @@ class MessageAttachment {
     String? type,
     int? size,
     String? name,
+    int? originalWidth,
+    int? originalHeight,
     String? localPath,
     Uint8List? localBytes,
     double? uploadProgress,
@@ -253,6 +272,8 @@ class MessageAttachment {
       type: type ?? this.type,
       size: size ?? this.size,
       name: name ?? this.name,
+      originalWidth: originalWidth ?? this.originalWidth,
+      originalHeight: originalHeight ?? this.originalHeight,
       localPath: localPath ?? this.localPath,
       localBytes: localBytes ?? this.localBytes,
       uploadProgress: uploadProgress ?? this.uploadProgress,
@@ -267,6 +288,8 @@ class MessageAttachment {
       type: json['type'] as String,
       size: json['size'] as int,
       name: json['name'] as String,
+      originalWidth: json['originalWidth'] as int?,
+      originalHeight: json['originalHeight'] as int?,
       localPath: json['localPath'] as String?,
       uploadProgress: json['uploadProgress'] as double?,
     );
@@ -280,6 +303,8 @@ class MessageAttachment {
       'type': type,
       'size': size,
       'name': name,
+      if (originalWidth != null) 'originalWidth': originalWidth,
+      if (originalHeight != null) 'originalHeight': originalHeight,
       if (localPath != null) 'localPath': localPath,
       if (uploadProgress != null) 'uploadProgress': uploadProgress,
     };
@@ -295,12 +320,14 @@ class MessageAttachment {
            other.type == type &&
            other.size == size &&
            other.name == name &&
+           other.originalWidth == originalWidth &&
+           other.originalHeight == originalHeight &&
            other.localPath == localPath &&
            other.uploadProgress == uploadProgress;
   }
 
   @override
-  int get hashCode => id.hashCode ^ url.hashCode ^ type.hashCode ^ size.hashCode ^ name.hashCode ^ localPath.hashCode ^ uploadProgress.hashCode;
+  int get hashCode => Object.hash(id, url, type, size, name, originalWidth, originalHeight, localPath, uploadProgress);
 }
 
 /// Class đại diện cho một tin nhắn chat

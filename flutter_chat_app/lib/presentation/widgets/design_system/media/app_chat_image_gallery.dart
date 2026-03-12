@@ -22,6 +22,10 @@ class AppChatImageGalleryItem {
   final bool isUploading;
   final double uploadProgress;
 
+  /// Kích thước gốc của ảnh (null nếu chưa biết)
+  final int? originalWidth;
+  final int? originalHeight;
+
   const AppChatImageGalleryItem({
     required this.id,
     required this.url,
@@ -29,11 +33,22 @@ class AppChatImageGalleryItem {
     this.localBytes,
     this.isUploading = false,
     this.uploadProgress = 0.0,
+    this.originalWidth,
+    this.originalHeight,
   });
 
   bool get hasLocalPath => localPath != null && localPath!.isNotEmpty;
   bool get hasLocalBytes => localBytes != null && localBytes!.isNotEmpty;
   bool get hasUrl => url.trim().isNotEmpty;
+
+  /// Aspect ratio tính sẵn từ kích thước gốc (null nếu chưa biết)
+  double? get knownAspectRatio {
+    if (originalWidth != null && originalHeight != null &&
+        originalWidth! > 0 && originalHeight! > 0) {
+      return originalWidth! / originalHeight!;
+    }
+    return null;
+  }
 }
 
 /// Shared chat image gallery pattern used by message bubbles.
@@ -96,85 +111,18 @@ class AppChatImageGallery extends BaseStatelessWidget {
             : clamp((width - spacing) * 0.30, 120, 190);
 
         if (images.length == 2) {
-          return SizedBox(
+          return _buildTwoImageLayout(
+            context,
+            width: width,
             height: twoImageHeight,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildTile(
-                    context,
-                    images[0],
-                    index: 0,
-                    borderRadius: BorderRadius.only(
-                      topLeft: borderRadius.topLeft,
-                      bottomLeft: borderRadius.bottomLeft,
-                    ),
-                  ),
-                ),
-                SizedBox(width: spacing),
-                Expanded(
-                  child: _buildTile(
-                    context,
-                    images[1],
-                    index: 1,
-                    borderRadius: BorderRadius.only(
-                      topRight: borderRadius.topRight,
-                      bottomRight: borderRadius.bottomRight,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           );
         }
 
         if (images.length == 3) {
-          return SizedBox(
+          return _buildThreeImageLayout(
+            context,
+            width: width,
             height: threeImageHeight,
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _buildTile(
-                    context,
-                    images[0],
-                    index: 0,
-                    borderRadius: BorderRadius.only(
-                      topLeft: borderRadius.topLeft,
-                      bottomLeft: borderRadius.bottomLeft,
-                    ),
-                  ),
-                ),
-                SizedBox(width: spacing),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: _buildTile(
-                          context,
-                          images[1],
-                          index: 1,
-                          borderRadius: BorderRadius.only(
-                            topRight: borderRadius.topRight,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: spacing),
-                      Expanded(
-                        child: _buildTile(
-                          context,
-                          images[2],
-                          index: 2,
-                          borderRadius: BorderRadius.only(
-                            bottomRight: borderRadius.bottomRight,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
           );
         }
 
@@ -268,6 +216,184 @@ class AppChatImageGallery extends BaseStatelessWidget {
     );
   }
 
+  /// 2 ảnh: adapt layout theo orientation (theo stream-chat pattern)
+  /// - Cả 2 landscape → xếp dọc (trên/dưới)
+  /// - Cả 2 portrait → xếp ngang (trái/phải)
+  /// - Mixed → xếp ngang, ảnh landscape chiếm nhiều hơn
+  Widget _buildTwoImageLayout(
+    BuildContext context, {
+    required double width,
+    required double height,
+  }) {
+    final ar1 = images[0].knownAspectRatio;
+    final ar2 = images[1].knownAspectRatio;
+    final isLandscape1 = ar1 != null && ar1 > 1;
+    final isLandscape2 = ar2 != null && ar2 > 1;
+
+    // Cả 2 landscape → xếp dọc
+    if (isLandscape1 && isLandscape2) {
+      final halfHeight = (height - spacing) / 2;
+      return SizedBox(
+        height: height,
+        child: Column(
+          children: [
+            SizedBox(
+              height: halfHeight,
+              width: width,
+              child: _buildTile(context, images[0], index: 0,
+                borderRadius: BorderRadius.only(
+                  topLeft: borderRadius.topLeft,
+                  topRight: borderRadius.topRight,
+                ),
+              ),
+            ),
+            SizedBox(height: spacing),
+            SizedBox(
+              height: halfHeight,
+              width: width,
+              child: _buildTile(context, images[1], index: 1,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: borderRadius.bottomLeft,
+                  bottomRight: borderRadius.bottomRight,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Mixed: landscape chiếm flex 2, portrait chiếm flex 1
+    final flex1 = isLandscape1 && !isLandscape2 ? 2 : 1;
+    final flex2 = isLandscape2 && !isLandscape1 ? 2 : 1;
+
+    // Default + cả 2 portrait → xếp ngang
+    return SizedBox(
+      height: height,
+      child: Row(
+        children: [
+          Expanded(
+            flex: flex1,
+            child: _buildTile(context, images[0], index: 0,
+              borderRadius: BorderRadius.only(
+                topLeft: borderRadius.topLeft,
+                bottomLeft: borderRadius.bottomLeft,
+              ),
+            ),
+          ),
+          SizedBox(width: spacing),
+          Expanded(
+            flex: flex2,
+            child: _buildTile(context, images[1], index: 1,
+              borderRadius: BorderRadius.only(
+                topRight: borderRadius.topRight,
+                bottomRight: borderRadius.bottomRight,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 3 ảnh: adapt layout theo orientation ảnh đầu tiên (theo stream-chat)
+  /// - Ảnh 1 landscape → ảnh 1 trên, 2+3 dưới
+  /// - Ảnh 1 portrait → ảnh 1 bên trái, 2+3 xếp dọc bên phải
+  Widget _buildThreeImageLayout(
+    BuildContext context, {
+    required double width,
+    required double height,
+  }) {
+    final ar1 = images[0].knownAspectRatio;
+    final isLandscape1 = ar1 != null && ar1 > 1;
+
+    if (isLandscape1) {
+      // Ảnh 1 landscape → ảnh 1 trên full width, 2+3 dưới chia đôi
+      final topHeight = height * 0.55;
+      final bottomHeight = height - topHeight - spacing;
+      return SizedBox(
+        height: height,
+        child: Column(
+          children: [
+            SizedBox(
+              height: topHeight,
+              width: width,
+              child: _buildTile(context, images[0], index: 0,
+                borderRadius: BorderRadius.only(
+                  topLeft: borderRadius.topLeft,
+                  topRight: borderRadius.topRight,
+                ),
+              ),
+            ),
+            SizedBox(height: spacing),
+            SizedBox(
+              height: bottomHeight,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildTile(context, images[1], index: 1,
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: borderRadius.bottomLeft,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: spacing),
+                  Expanded(
+                    child: _buildTile(context, images[2], index: 2,
+                      borderRadius: BorderRadius.only(
+                        bottomRight: borderRadius.bottomRight,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Default / portrait → ảnh 1 bên trái lớn, 2+3 xếp dọc bên phải
+    return SizedBox(
+      height: height,
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: _buildTile(context, images[0], index: 0,
+              borderRadius: BorderRadius.only(
+                topLeft: borderRadius.topLeft,
+                bottomLeft: borderRadius.bottomLeft,
+              ),
+            ),
+          ),
+          SizedBox(width: spacing),
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: _buildTile(context, images[1], index: 1,
+                    borderRadius: BorderRadius.only(
+                      topRight: borderRadius.topRight,
+                    ),
+                  ),
+                ),
+                SizedBox(height: spacing),
+                Expanded(
+                  child: _buildTile(context, images[2], index: 2,
+                    borderRadius: BorderRadius.only(
+                      bottomRight: borderRadius.bottomRight,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTile(
     BuildContext context,
     AppChatImageGalleryItem image, {
@@ -332,6 +458,20 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
   }
 
   void _resolveAspectRatio() {
+    // 1. Ưu tiên dùng kích thước gốc từ server/local metadata (instant, no layout shift)
+    final knownRatio = widget.image.knownAspectRatio;
+    if (knownRatio != null) {
+      final key = _buildCacheKey(widget.image);
+      if (key.isNotEmpty) {
+        _chatImageAspectRatioCache[key] = knownRatio;
+      }
+      if (mounted) {
+        setState(() => _aspectRatio = knownRatio);
+      }
+      return;
+    }
+
+    // 2. Fallback: check cache
     final key = _buildCacheKey(widget.image);
     if (key.isEmpty) {
       return;
@@ -345,6 +485,7 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
       return;
     }
 
+    // 3. Last resort: load image to detect dimensions (causes layout shift)
     final provider = _resolveImageProvider(widget.image);
     if (provider == null) {
       return;
@@ -411,7 +552,7 @@ class _SmartSingleImageTileState extends State<_SmartSingleImageTile> {
         final isDesktop = availableWidth >= AppDimens.breakpointDesktop;
         final minWidth = isDesktop ? 220.0 : 150.0;
         final maxHeight = isDesktop ? 440.0 : 360.0;
-        final clampedAspectRatio = (_aspectRatio ?? 1.0).clamp(0.72, 1.35);
+        final clampedAspectRatio = (_aspectRatio ?? 1.0).clamp(0.4, 2.5);
 
         return GestureDetector(
           key: const ValueKey('chat_image_tile_0'),

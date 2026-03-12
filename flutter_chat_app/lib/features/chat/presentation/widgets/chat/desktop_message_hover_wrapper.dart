@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -225,34 +226,42 @@ class _DesktopMessageHoverWrapperState
       builder: (_) => Positioned(
         left: positionData.dx,
         top: positionData.dy,
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.0, end: 1.0),
-          duration: const Duration(milliseconds: AppDimens.durationFast),
-          curve: Curves.easeOut,
-          builder: (context, value, child) => Opacity(
-            opacity: value,
-            child: Transform.translate(
-              // Slide in from the side (right for others, left for mine)
-              offset: positionData.isBesideBubble
-                  ? Offset(
-                      widget.isCurrentUser
-                          ? -(1 - value) * 4
-                          : (1 - value) * 4,
-                      0,
-                    )
-                  : Offset(0, (1 - value) * 4), // fallback: slide down
-              child: child,
+        child: Listener(
+          onPointerSignal: (event) {
+            if (event is PointerScrollEvent) {
+              _dismissOverlay();
+            }
+          },
+          behavior: HitTestBehavior.translucent,
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: AppDimens.durationFast),
+            curve: Curves.easeOut,
+            builder: (context, value, child) => Opacity(
+              opacity: value,
+              child: Transform.translate(
+                // Slide in from the side (right for others, left for mine)
+                offset: positionData.isBesideBubble
+                    ? Offset(
+                        widget.isCurrentUser
+                            ? -(1 - value) * 4
+                            : (1 - value) * 4,
+                        0,
+                      )
+                    : Offset(0, (1 - value) * 4), // fallback: slide down
+                child: child,
+              ),
             ),
-          ),
-          child: CompactActionBar(
-            callbacks: widget.callbacks,
-            isCurrentUser: widget.isCurrentUser,
-            isTextMessage: widget.isTextMessage,
-            quickReactions: widget.quickReactions,
-            onMouseEnter: _onBarMouseEnter,
-            onMouseExit: _onBarMouseExit,
-            moreButtonKey: _moreButtonKey,
-            onMorePopupDismissed: _onMorePopupDismissed,
+            child: CompactActionBar(
+              callbacks: widget.callbacks,
+              isCurrentUser: widget.isCurrentUser,
+              isTextMessage: widget.isTextMessage,
+              quickReactions: widget.quickReactions,
+              onMouseEnter: _onBarMouseEnter,
+              onMouseExit: _onBarMouseExit,
+              moreButtonKey: _moreButtonKey,
+              onMorePopupDismissed: _onMorePopupDismissed,
+            ),
           ),
         ),
       ),

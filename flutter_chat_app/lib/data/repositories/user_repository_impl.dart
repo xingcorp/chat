@@ -184,14 +184,14 @@ class UserRepositoryImpl extends BaseRepository implements UserRepository {
 
   @override
   Future<Either<Failure, User?>> getCurrentUser() async {
-    return executeOfflineFirst<User?>(
-      localDataSource: () async {
-        final currentUser = await _localDataSource.getCurrentUser();
-        return currentUser?.toDomain();
-      },
+    return executeOnlineFirst<User?>(
       remoteDataSource: () async {
         final remoteUser = await _remoteDataSource.getCurrentUserProfile();
         return remoteUser.toDomain();
+      },
+      localDataSource: () async {
+        final currentUser = await _localDataSource.getCurrentUser();
+        return currentUser?.toDomain();
       },
       cacheData: (user) async {
         if (user != null) {

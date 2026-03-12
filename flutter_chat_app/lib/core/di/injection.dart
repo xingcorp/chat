@@ -84,6 +84,7 @@ import 'package:flutter_chat_app/core/services/performance_service.dart';
 import 'package:flutter_chat_app/core/di/injection.config.dart';
 import 'package:flutter_chat_app/core/di/modules/core_module.dart';
 import 'package:flutter_chat_app/core/di/modules/notification_module.dart';
+import 'package:flutter_chat_app/features/chat/data/adapters/quill_delta_adapter.dart';
 import 'package:flutter_chat_app/core/services/update_installer_service.dart';
 import 'package:flutter_chat_app/core/utils/platform_utils.dart';
 import 'package:flutter_chat_app/data/datasources/update/update_remote_data_source.dart';
@@ -141,6 +142,13 @@ Future<void> configureDependencies() async {
     // Step 3.1: Register UserCacheService (global in-memory user name cache)
     if (!getIt.isRegistered<UserCacheService>()) {
       getIt.registerLazySingleton<UserCacheService>(() => UserCacheService());
+    }
+
+    // Step 3.1b: Register QuillDeltaAdapter (rich text Delta ↔ plainText)
+    if (!getIt.isRegistered<IQuillDeltaAdapter>()) {
+      getIt.registerLazySingleton<IQuillDeltaAdapter>(
+        () => QuillDeltaAdapter(),
+      );
     }
 
     // Step 3.2: Register App Update service (desktop auto-update via GitHub Releases)

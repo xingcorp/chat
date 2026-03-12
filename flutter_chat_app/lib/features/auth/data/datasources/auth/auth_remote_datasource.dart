@@ -68,13 +68,20 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         (user['displayName'] as String?) ??
         username;
     String? avatarUrl = user['avatarUrl'] as String?;
-    if (avatarUrl == null) {
+    if (avatarUrl == null || avatarUrl.isEmpty) {
       final avatarRaw = user['avatar'];
       if (avatarRaw is String) {
         avatarUrl = avatarRaw;
       } else if (avatarRaw is Map) {
         final location = avatarRaw['location'];
         avatarUrl = location is String ? location : location?.toString();
+      }
+    }
+    // Ưu tiên imageUrls từ officeUser nếu có
+    if (avatarUrl == null || avatarUrl.isEmpty) {
+      final imageUrls = user['imageUrls'];
+      if (imageUrls is List && imageUrls.isNotEmpty) {
+        avatarUrl = imageUrls.first?.toString();
       }
     }
     final isOnline = user['isOnline'] as bool? ?? false;
@@ -154,9 +161,23 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         ),
       );
 
+      // Login response chỉ có avatar { location } (IAM), không có officeUser.
+      // Gọi identityProfile để lấy full profile với officeUser (avatar + name chính xác).
       final userData = loginData['user'] as Map<String, dynamic>?;
       if (userData == null) {
         throw ServerException(message: 'Login failed');
+      }
+      final userId = (userData['id'] ?? '').toString().trim();
+
+      if (userId.isNotEmpty) {
+        try {
+          final fullProfile = await refreshUser(userId);
+          if (fullProfile != null) {
+            return fullProfile;
+          }
+        } catch (_) {
+          // Fallback to login response nếu refresh thất bại
+        }
       }
 
       return _mapApiUserToUserModel(userData);
@@ -342,30 +363,55 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       final result = await _client.query(
         '''
-        query GetUser(\$id: ID!) {
-          user(id: \$id) {
+        query IdentityProfile {
+          identityProfile {
             id
-            email
             name
-            avatar
-            status
-            createdAt
-            updatedAt
+            phone
+            email
+            avatar { location }
+            officeUser {
+              id
+              fullname
+              phone
+              email
+              imageUrls
+              status
+            }
           }
         }
         ''',
-        variables: {
-          'id': userId,
-        },
-        operationName: 'GetUser',
+        operationName: 'IdentityProfile',
       );
 
-      final userData = result['user'] as Map<String, dynamic>?;
-      if (userData == null) {
+      final profile = result['identityProfile'] as Map<String, dynamic>?;
+      if (profile == null) {
         return null;
       }
 
-      return _mapApiUserToUserModel(userData);
+      // Lấy avatar và name từ officeUser (nguồn chính xác nhất).
+      final officeUser = profile['officeUser'] as Map<String, dynamic>?;
+      final officeFullName = (officeUser?['fullname'] as String?)?.trim();
+      final officeImageUrls = officeUser?['imageUrls'];
+      final hasOfficeImageUrls =
+          officeImageUrls is List && officeImageUrls.isNotEmpty;
+
+      final mergedProfile = <String, dynamic>{
+        ...profile,
+        if (officeUser != null) ...officeUser,
+        'id': (profile['id'] ?? '').toString().trim(),
+        if (officeFullName != null && officeFullName.isNotEmpty) ...{
+          'fullname': officeFullName,
+          'name': officeFullName,
+        },
+        if (hasOfficeImageUrls) ...{
+          'imageUrls': officeImageUrls,
+          'avatar': null,
+          'avatarUrl': null,
+        },
+      };
+
+      return UserModel.fromMap(mergedProfile);
     } catch (e) {
       if (e is AppException) rethrow;
       throw ServerException(message: 'Failed to refresh user: $e');

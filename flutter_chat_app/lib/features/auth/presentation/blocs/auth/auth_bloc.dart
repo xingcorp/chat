@@ -140,6 +140,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with BlocErrorMixin {
             isOnboarded: isOnboarded,
           ),
         );
+
+        // Refresh user từ server để cập nhật avatar/name mới nhất từ officeUser.
+        // Emit lại state nếu có thay đổi.
+        try {
+          final refreshResult = await _authRepository.refreshUser(user.id);
+          if (emit.isDone) return;
+          if (refreshResult.isRight && refreshResult.right != null) {
+            final refreshedUser = refreshResult.right!;
+            if (refreshedUser.avatar != user.avatar ||
+                refreshedUser.fullName != user.fullName) {
+              emit(
+                AuthAuthenticated(
+                  user: refreshedUser,
+                  isOnboarded: isOnboarded,
+                ),
+              );
+            }
+          }
+        } catch (_) {
+          // Giữ nguyên cached user nếu refresh thất bại
+        }
       } else {
         emit(const AuthUnauthenticated());
       }

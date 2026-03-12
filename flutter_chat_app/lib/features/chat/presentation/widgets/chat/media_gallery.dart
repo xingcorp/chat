@@ -118,6 +118,8 @@ class MediaGallery extends StatelessWidget {
               localBytes: image.localBytes,
               isUploading: image.isUploading,
               uploadProgress: image.uploadProgress ?? 0.0,
+              originalWidth: image.originalWidth,
+              originalHeight: image.originalHeight,
             ),
           )
           .toList(growable: false),

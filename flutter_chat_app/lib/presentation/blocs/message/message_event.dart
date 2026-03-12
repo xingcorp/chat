@@ -49,17 +49,21 @@ class SendMessage extends MessageEvent {
   final List<String> attachmentIds;
   final String? replyMessageId;
 
+  /// Quill Delta JSON string for rich text content (local-only).
+  final String? contentDelta;
+
   const SendMessage({
     required this.content,
     required this.senderId,
     required this.contentType,
     this.attachmentIds = const [],
     this.replyMessageId,
+    this.contentDelta,
   });
 
   @override
   List<Object?> get props =>
-      [content, senderId, contentType, attachmentIds, replyMessageId];
+      [content, senderId, contentType, attachmentIds, replyMessageId, contentDelta];
 }
 
 /// Sự kiện gửi sticker
@@ -187,13 +191,17 @@ class EditMessage extends MessageEvent {
   final String messageId;
   final String content;
 
+  /// Quill Delta JSON string for rich text content (local-only).
+  final String? contentDelta;
+
   const EditMessage({
     required this.messageId,
     required this.content,
+    this.contentDelta,
   });
 
   @override
-  List<Object?> get props => [messageId, content];
+  List<Object?> get props => [messageId, content, contentDelta];
 }
 
 /// Sự kiện xóa tin nhắn

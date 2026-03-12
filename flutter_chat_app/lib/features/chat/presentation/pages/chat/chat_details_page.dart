@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:app_settings/app_settings.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,6 +41,7 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/attachm
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_file_attachment_host.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/chat_message_timeline.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/clipboard_paste_handler.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/desktop_message_input_area.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/desktop_message_hover_wrapper.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
@@ -522,6 +524,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         _messageBloc.add(EditMessage(
           messageId: editEffect.messageId,
           content: editedText,
+          contentDelta: editEffect.contentDelta,
         ));
         _cancelEditMode();
         _messageController.clear();
@@ -584,6 +587,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             contentType: resolvedContentType,
             attachmentIds: attachmentUrls,
             replyMessageId: _replyingToMessage?.id,
+            contentDelta: sendEffect.contentDelta,
           ),
         );
 
@@ -835,6 +839,21 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         isEditMode: _isEditMode,
         editingMessageId: _editingMessageId,
         hasAttachments: _fileAttachmentBloc.state.hasFiles,
+      ),
+    );
+  }
+
+  /// Send a quick 👍 like (Zalo-style: tap Like when input is empty).
+  void _sendDesktopLike() {
+    _chatComposerBloc.add(
+      ChatComposerSendRequested(
+        rawInput: '\u{1F44D}',
+        actorDisplayName: _currentUserDisplayName.isNotEmpty
+            ? _currentUserDisplayName
+            : context.l10n.you,
+        isEditMode: false,
+        editingMessageId: null,
+        hasAttachments: false,
       ),
     );
   }
@@ -1713,6 +1732,94 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     );
   }
 
+  // ── Desktop toolbar direct-pick helpers ──
+  // These bypass the bottom sheet and directly invoke the picker.
+
+  Future<void> _pickImageFromGalleryDirect() async {
+    try {
+      final picker = ImagePicker();
+      final images = await picker.pickMultiImage(
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 85,
+      );
+      if (images.isEmpty) return;
+      final selections = <GalleryImageSelection>[];
+      for (final xFile in images) {
+        Uint8List? bytes;
+        if (kIsWeb) bytes = await xFile.readAsBytes();
+        selections.add(GalleryImageSelection(
+          file: File(xFile.path),
+          bytes: bytes,
+          name: xFile.name,
+          size: await xFile.length(),
+        ));
+      }
+      if (selections.length == 1) {
+        final s = selections.first;
+        _handleImageFromGallery(s.file, bytes: s.bytes, name: s.name, size: s.size);
+      } else {
+        _handleImagesFromGallery(selections);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _pickCameraDirect() async {
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 85,
+      );
+      if (image == null) return;
+      Uint8List? bytes;
+      if (kIsWeb) bytes = await image.readAsBytes();
+      _handleImageFromCamera(
+        File(image.path),
+        bytes: bytes,
+        name: image.name,
+        size: await image.length(),
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _pickVideoDirect() async {
+    try {
+      final picker = ImagePicker();
+      final video = await picker.pickVideo(source: ImageSource.gallery);
+      if (video == null) return;
+      Uint8List? bytes;
+      if (kIsWeb) bytes = await video.readAsBytes();
+      _handleVideoFromGallery(
+        File(video.path),
+        bytes: bytes,
+        name: video.name,
+        size: await video.length(),
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _pickFileDirect() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+        withData: kIsWeb,
+      );
+      if (result == null || result.files.isEmpty) return;
+      final file = result.files.first;
+      if (kIsWeb) {
+        if (file.bytes != null) {
+          _handleFileSelected(File(''), bytes: file.bytes, name: file.name, size: file.size);
+        }
+      } else if (file.path != null) {
+        _handleFileSelected(File(file.path!), name: file.name, size: file.size);
+      }
+    } catch (_) {}
+  }
+
   void _handleImageFromCamera(File imageFile,
           {Uint8List? bytes, String? name, int? size}) =>
       _processAndSendImage(imageFile, bytes: bytes, name: name, size: size);
@@ -2536,6 +2643,37 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       return _buildVoiceRecordingInputArea();
     }
 
+    // Desktop: Zalo-style stacked layout (toolbar → formatting → input)
+    if (_isDesktopKeyboardPlatform) {
+      return DesktopMessageInputArea(
+        messageController: _messageController,
+        messageFocusNode: _messageFocusNode,
+        members: _chat?.members ?? const <ConversationMember>[],
+        currentUserId: _currentUserId,
+        onSendMessage: _sendMessage,
+        onSendLike: _sendDesktopLike,
+        onImagePressed: _pickImageFromGalleryDirect,
+        onCameraPressed: _pickCameraDirect,
+        onVideoPressed: _pickVideoDirect,
+        onFilePressed: _pickFileDirect,
+        onLocationPressed: _handleLocationShare,
+        onStickerPressed: _showStickerPicker,
+        onEmojiPressed: () {
+          EmojiPickerBottomSheet.show(
+            context,
+            onEmojiSelected: (emoji) {
+              _messageController.text += emoji;
+            },
+            textController: _messageController,
+          );
+        },
+        fileAttachmentBloc: _fileAttachmentBloc,
+        slashCommands: _buildSlashCommandOptions(context),
+        isEditMode: _isEditMode,
+      );
+    }
+
+    // Mobile: single-row layout
     return AppCard.outlined(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(AppDimens.paddingSmall),

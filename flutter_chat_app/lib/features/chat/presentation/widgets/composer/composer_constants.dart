@@ -76,6 +76,21 @@ class ComposerConstants {
   /// Curve for toolbar animations.
   static const String toolbarCurveName = 'easeInOut';
 
+  // ───────────────────── Desktop ─────────────────────
+
+  /// Minimum height of the editor on desktop (starts as single line,
+  /// expands as user types — Zalo-style).
+  static const double desktopEditorMinHeight = 48.0;
+
+  /// Maximum height of the editor on desktop before scrolling.
+  static const double desktopEditorMaxHeight = 300.0;
+
+  /// Height of the desktop action toolbar row.
+  static const double desktopToolbarHeight = 40.0;
+
+  /// Icon size in the desktop toolbar.
+  static const double desktopToolbarIconSize = AppDimens.iconSmall;
+
   // ───────────────────── Limits ─────────────────────
 
   /// Maximum number of lines before the editor scrolls internally.

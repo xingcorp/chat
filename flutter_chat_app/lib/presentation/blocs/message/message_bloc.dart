@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:async/async.dart';
 import 'package:equatable/equatable.dart';
@@ -572,15 +573,20 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
           return;
         }
 
+        // Attach local-only contentDelta (server doesn't return it)
+        final messageWithDelta = event.contentDelta != null
+            ? newMessage.copyWith(contentDelta: event.contentDelta)
+            : newMessage;
+
         // For pending direct chats: after first message, the server returns
         // the real conversationId. Update chatId and clear receiverId.
-        final serverChatId = newMessage.chatId;
+        final serverChatId = messageWithDelta.chatId;
         final wasPendingDirect = freshState.receiverId != null &&
             serverChatId.isNotEmpty &&
             serverChatId != freshState.chatId;
 
         // Add new message to the beginning of the list
-        final allMessages = [newMessage, ...freshState.messages];
+        final allMessages = [messageWithDelta, ...freshState.messages];
         emit(freshState.copyWith(
           chatId: wasPendingDirect ? serverChatId : freshState.chatId,
           messages: allMessages,
@@ -756,6 +762,7 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
               deliveredTo: msg.deliveredTo,
               attachments: msg.attachments,
               reactions: msg.reactions,
+              contentDelta: event.contentDelta ?? msg.contentDelta,
             );
           }
           return msg;
@@ -1949,9 +1956,12 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     // Create attachments with local paths (for immediate display)
     // Cross-platform: use event data on web or when fileBytes provided, File operations on mobile
     final List<MessageAttachment> localAttachments;
+    final isImageType = messageType == 'IMAGE';
+
     if (useFileBytes) {
       // fileBytes mode: create attachments from bytes (works on any platform)
-      localAttachments = List.generate(event.fileBytes!.length, (index) {
+      localAttachments = await Future.wait(
+        List.generate(event.fileBytes!.length, (index) async {
         final fileName =
             event.fileNames != null && index < event.fileNames!.length
                 ? event.fileNames![index]
@@ -1962,17 +1972,30 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
                 ? event.fileSizes![index]
                 : fileBytes.length;
 
+        // Detect image dimensions for instant aspect ratio
+        int? imgWidth;
+        int? imgHeight;
+        if (isImageType) {
+          final dims = await _detectImageDimensions(fileBytes);
+          if (dims != null) {
+            imgWidth = dims.$1;
+            imgHeight = dims.$2;
+          }
+        }
+
         return MessageAttachment(
           id: 'local_${clientId}_$index',
           url: '',
           type: messageType.toLowerCase(),
           size: fileSize,
           name: fileName,
+          originalWidth: imgWidth,
+          originalHeight: imgHeight,
           localPath: '',
           localBytes: fileBytes,
           uploadProgress: 0.0,
         );
-      });
+      }));
     } else {
       localAttachments = await Future.wait(
         event.localFilePaths.asMap().entries.map((entry) async {
@@ -2006,12 +2029,33 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
             fileBytes = Uint8List.fromList(event.fileBytes![index]);
           }
 
+          // Detect image dimensions for instant aspect ratio
+          int? imgWidth;
+          int? imgHeight;
+          if (isImageType) {
+            if (fileBytes != null) {
+              final dims = await _detectImageDimensions(fileBytes);
+              if (dims != null) {
+                imgWidth = dims.$1;
+                imgHeight = dims.$2;
+              }
+            } else {
+              final dims = await _detectImageDimensionsFromFile(path);
+              if (dims != null) {
+                imgWidth = dims.$1;
+                imgHeight = dims.$2;
+              }
+            }
+          }
+
           return MessageAttachment(
             id: 'local_${clientId}_$index',
             url: '', // Empty - will be filled after upload
             type: messageType.toLowerCase(),
             size: fileSize,
             name: fileName,
+            originalWidth: imgWidth,
+            originalHeight: imgHeight,
             localPath: path,
             localBytes: fileBytes, // Web: bytes for display
             uploadProgress: 0.0, // Starting upload
@@ -2649,6 +2693,38 @@ class MessageBloc extends BaseBloc<MessageEvent, MessageState> {
     } catch (e, stackTrace) {
       logger.e('Error sending location message',
           error: e, stackTrace: stackTrace);
+    }
+  }
+
+  /// Helper: Detect image dimensions from bytes
+  /// Returns (width, height) or null if not an image or detection fails
+  Future<(int, int)?> _detectImageDimensions(Uint8List bytes) async {
+    try {
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final width = frame.image.width;
+      final height = frame.image.height;
+      frame.image.dispose();
+      codec.dispose();
+      if (width > 0 && height > 0) {
+        return (width, height);
+      }
+    } catch (_) {
+      // Not an image or corrupt — ignore
+    }
+    return null;
+  }
+
+  /// Helper: Detect image dimensions from file path (mobile only)
+  Future<(int, int)?> _detectImageDimensionsFromFile(String path) async {
+    if (kIsWeb) return null;
+    try {
+      final file = File(path);
+      if (!await file.exists()) return null;
+      final bytes = await file.readAsBytes();
+      return _detectImageDimensions(bytes);
+    } catch (_) {
+      return null;
     }
   }
 
