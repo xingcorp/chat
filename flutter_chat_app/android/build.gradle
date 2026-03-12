@@ -24,6 +24,28 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Fix for old plugins that don't declare a namespace (required by AGP 8+).
+// Reads the package attribute from AndroidManifest.xml and sets it as the namespace.
+subprojects {
+    def setNamespace = { proj ->
+        if (proj.hasProperty('android') && proj.android.namespace == null) {
+            def manifest = proj.file("src/main/AndroidManifest.xml")
+            if (manifest.exists()) {
+                def packageName = new XmlParser().parse(manifest).@package
+                if (packageName) {
+                    proj.android.namespace = packageName
+                }
+            }
+        }
+    }
+
+    if (project.state.executed) {
+        setNamespace(project)
+    } else {
+        afterEvaluate { setNamespace(project) }
+    }
+}
+
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }

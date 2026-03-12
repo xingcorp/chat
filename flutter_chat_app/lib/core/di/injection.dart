@@ -38,6 +38,7 @@ import 'package:flutter_chat_app/core/network/auth/token_provider.dart';
 import 'package:flutter_chat_app/core/network/auth/token_repository.dart'
     as token_module;
 import 'package:flutter_chat_app/core/config/firebase_config.dart';
+import 'package:flutter_chat_app/core/config/flavor_config.dart';
 import 'package:flutter_chat_app/core/network/graphql_client.dart'
     as core_graphql;
 import 'package:flutter_chat_app/core/network/network_info.dart';
@@ -467,32 +468,40 @@ Future<void> _registerExternalDependencies(Logger logger) async {
     getIt.registerLazySingleton<http.Client>(() => http.Client());
   }
 
+  // ---------------------------------------------------------------------------
+  // Resolve environment URLs: dotenv (if loaded) → FlavorConfig fallback
+  // ---------------------------------------------------------------------------
+  final bool hasDotenv = dotenv.isInitialized;
+  final flavorEnv = FlavorConfig.instance.environment;
+
+  String _envOrFlavor(String dotenvKey, String flavorFallback) {
+    if (hasDotenv) {
+      final value = (dotenv.env[dotenvKey] ?? '').trim();
+      if (value.isNotEmpty) return value;
+    }
+    return flavorFallback;
+  }
+
   // Base URL - required for API endpoints
   if (!getIt.isRegistered<String>(instanceName: 'baseUrl')) {
-    final apiBaseUrlRaw = (dotenv.env['API_BASE_URL'] ?? '').trim();
-    if (apiBaseUrlRaw.isEmpty) {
-      throw StateError('Missing required environment key: API_BASE_URL');
-    }
-
+    final apiBaseUrlRaw =
+        _envOrFlavor('API_BASE_URL', flavorEnv.apiBaseUrl);
     final baseUrl = apiBaseUrlRaw.replaceFirst(RegExp(r'/+$'), '');
     getIt.registerSingleton<String>(baseUrl, instanceName: 'baseUrl');
   }
 
-  final graphQlApiUrlRaw = (dotenv.env['GRAPHQL_API_URL'] ?? '').trim();
-  final graphQlWsUrlRaw = (dotenv.env['GRAPHQL_WS_URL'] ?? '').trim();
-  final socketUrlRaw =
-      (dotenv.env['SOCKET_URL'] ?? dotenv.env['WEBSOCKET_URL'] ?? '').trim();
-
-  if (graphQlApiUrlRaw.isEmpty) {
-    throw StateError('Missing required environment key: GRAPHQL_API_URL');
-  }
-  if (graphQlWsUrlRaw.isEmpty) {
-    throw StateError('Missing required environment key: GRAPHQL_WS_URL');
-  }
-  if (socketUrlRaw.isEmpty) {
-    throw StateError(
-        'Missing required environment key: SOCKET_URL (or WEBSOCKET_URL)');
-  }
+  final graphQlApiUrlRaw =
+      _envOrFlavor('GRAPHQL_API_URL', '${flavorEnv.apiBaseUrl}/graphql');
+  final graphQlWsUrlRaw =
+      _envOrFlavor('GRAPHQL_WS_URL', '${flavorEnv.websocketUrl}/graphql');
+  final socketUrlRaw = _envOrFlavor(
+    'SOCKET_URL',
+    hasDotenv
+        ? (dotenv.env['WEBSOCKET_URL'] ?? '').trim().isNotEmpty
+            ? dotenv.env['WEBSOCKET_URL']!.trim()
+            : flavorEnv.websocketUrl
+        : flavorEnv.websocketUrl,
+  );
 
   final graphQlApiUrl = graphQlApiUrlRaw;
   final graphQlWsUrl = graphQlWsUrlRaw;
@@ -629,7 +638,7 @@ Future<void> _registerExternalDependencies(Logger logger) async {
   if (!getIt.isRegistered<GraphQLClient>()) {
     // Pre-populate env cache for GraphQLClientWrapperImpl.createClient fallback
     core_graphql.GraphQLClientWrapperImpl.setEnvCache(
-        Map<String, String>.from(dotenv.env));
+        hasDotenv ? Map<String, String>.from(dotenv.env) : <String, String>{});
 
     // Create a GraphQL client with the current token and explicit URLs
     final client = await core_graphql.GraphQLClientWrapperImpl.createClient(

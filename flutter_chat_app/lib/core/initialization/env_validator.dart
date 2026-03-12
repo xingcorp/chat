@@ -48,7 +48,21 @@ class EnvValidator {
   ///
   /// In release mode, throws [StateError] on failure.
   /// In debug mode, prints a warning instead.
+  /// Silently returns if dotenv was never loaded (e.g. no .env file bundled;
+  /// the DI layer will fall back to [FlavorConfig] URLs).
   static void validateDotenvConfiguration(String envFileName) {
+    // If dotenv failed to load (missing .env file), skip validation.
+    // The DI layer in injection.dart will fall back to FlavorConfig URLs.
+    if (!dotenv.isInitialized) {
+      if (kDebugMode) {
+        debugPrint(
+          'EnvValidator: dotenv not initialized, skipping validation. '
+          'DI will use FlavorConfig URLs as fallback.',
+        );
+      }
+      return;
+    }
+
     final requiredKeys = <String>[
       'GRAPHQL_API_URL',
       'GRAPHQL_WS_URL',

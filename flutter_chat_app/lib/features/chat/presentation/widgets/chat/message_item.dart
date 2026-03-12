@@ -37,7 +37,6 @@ import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart'
     as domain;
 import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 import 'package:get_it/get_it.dart';
-import 'package:go_router/go_router.dart';
 
 class MessageItem extends StatefulWidget {
   final MessageUIState uiState;
@@ -176,11 +175,10 @@ class _MessageItemState extends State<MessageItem>
         'all',
       },
       onTapMention: (userId) {
-        context.push(
-          '/users/$userId',
-          extra: {
-            'displayName': mentionNameById[userId],
-          },
+        ChatNavigationHelper.navigateToUserProfile(
+          context,
+          userId: userId,
+          displayName: mentionNameById[userId],
         );
       },
       context: context,
@@ -1142,12 +1140,11 @@ class _MessageItemState extends State<MessageItem>
       if (value == null) return;
       switch (value) {
         case 'profile':
-          context.push(
-            '/users/$userId',
-            extra: {
-              'displayName': displayName,
-              'avatarUrl': avatarUrl,
-            },
+          ChatNavigationHelper.navigateToUserProfile(
+            context,
+            userId: userId,
+            displayName: displayName,
+            avatarUrl: avatarUrl,
           );
           break;
         case 'message':

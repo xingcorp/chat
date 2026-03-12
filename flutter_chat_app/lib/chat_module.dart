@@ -16,6 +16,7 @@ import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_deta
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/chat_home_page.dart';
 import 'package:flutter_chat_app/features/chat/presentation/pages/chat/create_group_page.dart';
 import 'package:flutter_chat_app/features/contacts/presentation/pages/contacts_page.dart';
+import 'package:flutter_chat_app/presentation/pages/users/user_details_page.dart';
 import 'package:flutter_chat_app/presentation/widgets/connection/global_connection_banner.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_portal/flutter_portal.dart';
@@ -329,6 +330,29 @@ class ChatModule {
         child: ContactsPage(selectionMode: selectionMode),
       ),
       settings: const RouteSettings(name: '/chat/contacts'),
+    );
+  }
+
+  /// Returns a [MaterialPageRoute] to the user profile page.
+  ///
+  /// ```dart
+  /// Navigator.push(context, ChatModule.userProfileRoute(userId: 'user123'));
+  /// ```
+  static Route<dynamic> userProfileRoute({
+    required String userId,
+    String? displayName,
+    String? avatarUrl,
+  }) {
+    _ensureInitialized();
+    return MaterialPageRoute<dynamic>(
+      builder: (_) => _ChatPackageWrapper(
+        child: UserDetailsPage(
+          userId: userId,
+          displayName: displayName,
+          avatarUrl: avatarUrl,
+        ),
+      ),
+      settings: RouteSettings(name: '/users/$userId'),
     );
   }
 
