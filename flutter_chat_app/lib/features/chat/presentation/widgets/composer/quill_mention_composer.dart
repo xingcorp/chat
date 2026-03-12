@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -83,8 +81,6 @@ class QuillMentionComposer extends StatefulWidget {
 class _QuillMentionComposerState extends State<QuillMentionComposer> {
   final _triggerDetector = const SuggestionTriggerDetector();
 
-  StreamSubscription<void>? _changeSub;
-
   // Suggestion state
   bool _showSuggestions = false;
   SuggestionTriggerResult? _currentTrigger;
@@ -92,6 +88,9 @@ class _QuillMentionComposerState extends State<QuillMentionComposer> {
   List<SlashCommandOption> _filteredSlashCommands = [];
   List<EmojiShortcodeMatch> _filteredShortcodes = [];
   int _selectedIndex = 0;
+
+  /// Whether a trigger check is already scheduled for the next frame.
+  bool _triggerCheckScheduled = false;
 
   QuillController get _quillController =>
       widget.composerController.quillController;
@@ -105,31 +104,45 @@ class _QuillMentionComposerState extends State<QuillMentionComposer> {
   @override
   void initState() {
     super.initState();
-    _changeSub = widget.composerController.onDocumentChanged.listen((_) {
-      _onContentChanged();
-    });
+    // Listen via ChangeNotifier (fires AFTER both document AND selection
+    // are updated, unlike document.changes which fires mid-update).
+    _quillController.addListener(_onQuillControllerChanged);
   }
 
   @override
   void didUpdateWidget(covariant QuillMentionComposer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.composerController != widget.composerController) {
-      _changeSub?.cancel();
-      _changeSub = widget.composerController.onDocumentChanged.listen((_) {
-        _onContentChanged();
-      });
+      oldWidget.composerController.quillController
+          .removeListener(_onQuillControllerChanged);
+      _quillController.addListener(_onQuillControllerChanged);
     }
   }
 
   @override
   void dispose() {
-    _changeSub?.cancel();
+    _quillController.removeListener(_onQuillControllerChanged);
     super.dispose();
   }
 
-  void _onContentChanged() {
+  /// Called when QuillController notifies (document change, selection change,
+  /// formatting change). This fires AFTER the complete update cycle, so both
+  /// document content and cursor position are consistent.
+  void _onQuillControllerChanged() {
     widget.onChanged?.call();
-    _checkForTriggers();
+
+    // Schedule trigger check for the next frame to guarantee all internal
+    // Quill state (selection, composition) has settled.
+    if (!_triggerCheckScheduled) {
+      _triggerCheckScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _triggerCheckScheduled = false;
+        if (mounted) {
+          _checkForTriggers();
+        }
+      });
+    }
+
     // Trigger rebuild for parent widgets that depend on isEmpty.
     if (mounted) setState(() {});
   }

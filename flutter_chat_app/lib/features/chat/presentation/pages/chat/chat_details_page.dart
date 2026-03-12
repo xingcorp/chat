@@ -179,7 +179,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
   ChatMessage? _replyingToMessage;
   bool _isEditMode = false;
   String? _editingMessageId;
-  StreamSubscription<void>? _composerChangeSub;
 
   // ══════════════════════════════════════════
   // Selection mode state
@@ -324,10 +323,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       ChatDraftConversationOpened(conversationId: widget.chatId),
     );
 
-    // Single listener for efficiency
-    _composerChangeSub = _composerController.onDocumentChanged.listen((_) {
-      _handleControllerChanges();
-    });
+    // Single listener for efficiency — use ChangeNotifier (fires after
+    // both document AND selection updates are complete).
+    _composerController.quillController.addListener(_handleControllerChanges);
   }
 
   /// Fallback: resolve receiverId from ChatBloc state when [widget.receiverId]
@@ -817,7 +815,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     if (isClipboardPasteSupported) {
       HardwareKeyboard.instance.removeHandler(_handleRawKeyForPaste);
     }
-    _composerChangeSub?.cancel();
+    _composerController.quillController.removeListener(_handleControllerChanges);
     _composerController.dispose();
     _messageFocusNode.dispose();
     _itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);

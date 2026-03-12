@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -191,14 +189,11 @@ class _DesktopInputRow extends StatefulWidget {
 
 class _DesktopInputRowState extends State<_DesktopInputRow> {
   bool _hasText = false;
-  StreamSubscription<void>? _changeSub;
 
   @override
   void initState() {
     super.initState();
-    _changeSub = widget.composerController.onDocumentChanged.listen((_) {
-      _onTextChanged();
-    });
+    widget.composerController.quillController.addListener(_onTextChanged);
     _hasText = !widget.composerController.isEmpty;
   }
 
@@ -206,16 +201,15 @@ class _DesktopInputRowState extends State<_DesktopInputRow> {
   void didUpdateWidget(covariant _DesktopInputRow oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.composerController != widget.composerController) {
-      _changeSub?.cancel();
-      _changeSub = widget.composerController.onDocumentChanged.listen((_) {
-        _onTextChanged();
-      });
+      oldWidget.composerController.quillController
+          .removeListener(_onTextChanged);
+      widget.composerController.quillController.addListener(_onTextChanged);
     }
   }
 
   @override
   void dispose() {
-    _changeSub?.cancel();
+    widget.composerController.quillController.removeListener(_onTextChanged);
     super.dispose();
   }
 
