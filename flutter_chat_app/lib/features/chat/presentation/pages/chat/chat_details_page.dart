@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -45,7 +45,10 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/des
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/desktop_message_hover_wrapper.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_message_sheet.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/mention_text_field.dart';
+import 'package:flutter_chat_app/features/chat/presentation/models/mention_tracker.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/composer_constants.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/quill_composer_controller.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/quill_mention_composer.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_item.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message_search_panel.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/reply_preview.dart';
@@ -126,8 +129,8 @@ class ChatDetailsPage extends BaseStatefulWidget {
 
 class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     with ClipboardPasteHandler<ChatDetailsPage> {
-  final MentionTextEditingController _messageController =
-      MentionTextEditingController();
+  final QuillComposerController _composerController = QuillComposerController();
+  final MentionTracker _mentionTracker = MentionTracker();
   final FocusNode _messageFocusNode = FocusNode();
   final ItemScrollController _itemScrollController = ItemScrollController();
   final ItemPositionsListener _itemPositionsListener =
@@ -176,6 +179,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
   ChatMessage? _replyingToMessage;
   bool _isEditMode = false;
   String? _editingMessageId;
+  StreamSubscription<void>? _composerChangeSub;
 
   // ══════════════════════════════════════════
   // Selection mode state
@@ -321,7 +325,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     );
 
     // Single listener for efficiency
-    _messageController.addListener(_handleControllerChanges);
+    _composerChangeSub = _composerController.onDocumentChanged.listen((_) {
+      _handleControllerChanges();
+    });
   }
 
   /// Fallback: resolve receiverId from ChatBloc state when [widget.receiverId]
@@ -397,8 +403,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     _chatDraftBloc.add(
       ChatDraftInputChanged(
         conversationId: widget.chatId,
-        text: _messageController.text,
-        mentionNameById: _messageController.mentionNameById,
+        text: _composerController.plainText,
+        mentionNameById: _mentionTracker.mentionNameById,
+        contentDelta: _composerController.hasFormatting
+            ? _composerController.deltaJson
+            : null,
         isEditMode: _isEditMode,
         isRecordingVoice: _isRecordingVoice,
       ),
@@ -415,7 +424,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
     _typingDebounceTimer?.cancel();
 
-    if (_messageController.text.isNotEmpty) {
+    if (!_composerController.isEmpty) {
       unawaited(realtimeService.sendTypingIndicator(
         chatId: widget.chatId,
         isTyping: true,
@@ -453,12 +462,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     if (state.restoreConversationId == widget.chatId &&
         draft != null &&
         draft.hasContent) {
-      if (_messageController.text.trim().isEmpty) {
-        _messageController.updateMentions(draft.mentionNameById);
-        _messageController.value = TextEditingValue(
-          text: draft.text,
-          selection: TextSelection.collapsed(offset: draft.text.length),
-        );
+      if (_composerController.isEmpty) {
+        _mentionTracker.updateMentions(draft.mentionNameById);
+        if (draft.contentDelta != null &&
+            draft.contentDelta!.trim().isNotEmpty) {
+          _composerController.loadDeltaJson(draft.contentDelta!);
+        } else {
+          _composerController.loadPlainText(draft.text);
+        }
       }
       _chatDraftBloc.add(
         ChatDraftRestoreHandled(conversationId: widget.chatId),
@@ -511,7 +522,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         final editWithEmoji =
             EmoticonParserService.convert(editWithShortcodes);
         final editedText =
-            _messageController.toBackendMentionFormat(editWithEmoji).trim();
+            _mentionTracker.toBackendMentionFormat(editWithEmoji).trim();
         if (editedText.isEmpty) {
           AppSnackBar.show(
             context: context,
@@ -527,7 +538,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
           contentDelta: editEffect.contentDelta,
         ));
         _cancelEditMode();
-        _messageController.clear();
+        _composerController.clear();
+        _mentionTracker.clear();
         _chatDraftBloc.add(
           ChatDraftClearRequested(conversationId: widget.chatId),
         );
@@ -542,7 +554,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             EmojiShortcodeService.convert(sendEffect.text);
         final withEmoji = EmoticonParserService.convert(withShortcodes);
         final messageText =
-            _messageController.toBackendMentionFormat(withEmoji).trim();
+            _mentionTracker.toBackendMentionFormat(withEmoji).trim();
 
         // Collect completed attachment URLs from FileAttachmentBloc
         final attachmentState = _fileAttachmentBloc.state;
@@ -604,11 +616,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
           ),
         );
         _cancelReply();
-        _messageController.clear();
+        _composerController.clear();
+        _mentionTracker.clear();
         break;
 
       case ChatComposerMuteActionEffect _:
-        _messageController.clear();
+        _composerController.clear();
+        _mentionTracker.clear();
         _chatDraftBloc.add(
           ChatDraftClearRequested(conversationId: widget.chatId),
         );
@@ -623,7 +637,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             break;
           case ChatComposerDismissAction.cancelEditAndClear:
             _cancelEditMode();
-            _messageController.clear();
+            _composerController.clear();
+            _mentionTracker.clear();
             _chatDraftBloc.add(
               ChatDraftClearRequested(conversationId: widget.chatId),
             );
@@ -789,8 +804,11 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     _chatDraftBloc.add(
       ChatDraftFlushRequested(
         conversationId: widget.chatId,
-        text: _messageController.text,
-        mentionNameById: _messageController.mentionNameById,
+        text: _composerController.plainText,
+        mentionNameById: _mentionTracker.mentionNameById,
+        contentDelta: _composerController.hasFormatting
+            ? _composerController.deltaJson
+            : null,
         isEditMode: _isEditMode,
         isRecordingVoice: _isRecordingVoice,
       ),
@@ -799,8 +817,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     if (isClipboardPasteSupported) {
       HardwareKeyboard.instance.removeHandler(_handleRawKeyForPaste);
     }
-    _messageController.removeListener(_handleControllerChanges);
-    _messageController.dispose();
+    _composerChangeSub?.cancel();
+    _composerController.dispose();
     _messageFocusNode.dispose();
     _itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);
     _messageBloc.close();
@@ -832,13 +850,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
   void _sendMessage() {
     _chatComposerBloc.add(
       ChatComposerSendRequested(
-        rawInput: _messageController.text,
+        rawInput: _composerController.plainText,
         actorDisplayName: _currentUserDisplayName.isNotEmpty
             ? _currentUserDisplayName
             : context.l10n.you,
         isEditMode: _isEditMode,
         editingMessageId: _editingMessageId,
         hasAttachments: _fileAttachmentBloc.state.hasFiles,
+        contentDelta: _composerController.hasFormatting
+            ? _composerController.deltaJson
+            : null,
       ),
     );
   }
@@ -958,7 +979,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       _editingMessageId = message.id;
       _replyingToMessage = null;
     });
-    _messageController.text = message.content;
+    _composerController.loadPlainText(message.content);
   }
 
   void _cancelEditMode() {
@@ -1171,7 +1192,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     if (!_messageFocusNode.hasFocus) return;
     if (_isSelectionMode || _isRecordingVoice) return;
     // Allow send when text is present OR attachments are ready
-    final hasText = _messageController.text.trim().isNotEmpty;
+    final hasText = !_composerController.isEmpty;
     final hasAttachments = _fileAttachmentBloc.state.hasFiles;
     if (!hasText && !hasAttachments) return;
     _sendMessage();
@@ -2433,7 +2454,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         ChatDraftMessageDeliveryChecked(
           conversationId: widget.chatId,
           currentUserId: _currentUserId,
-          currentInputText: _messageController.text,
+          currentInputText: _composerController.plainText,
           messages: state.messages,
         ),
       );
@@ -2628,7 +2649,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             icon: const Icon(Icons.close, size: 20),
             onPressed: () {
               _cancelEditMode();
-              _messageController.clear();
+              _composerController.clear();
+              _mentionTracker.clear();
             },
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
@@ -2646,7 +2668,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     // Desktop: Zalo-style stacked layout (toolbar → formatting → input)
     if (_isDesktopKeyboardPlatform) {
       return DesktopMessageInputArea(
-        messageController: _messageController,
+        composerController: _composerController,
+        mentionTracker: _mentionTracker,
         messageFocusNode: _messageFocusNode,
         members: _chat?.members ?? const <ConversationMember>[],
         currentUserId: _currentUserId,
@@ -2662,9 +2685,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
           EmojiPickerBottomSheet.show(
             context,
             onEmojiSelected: (emoji) {
-              _messageController.text += emoji;
+              _composerController.insertText(emoji);
             },
-            textController: _messageController,
           );
         },
         fileAttachmentBloc: _fileAttachmentBloc,
@@ -2673,11 +2695,12 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       );
     }
 
-    // Mobile: single-row layout
+    // Mobile: single-row layout with QuillMentionComposer
     return AppCard.outlined(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(AppDimens.paddingSmall),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           AppIconButton(
             icon: Icons.add_circle_outline,
@@ -2685,15 +2708,16 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             tooltip: context.l10n.attachments,
           ),
           Expanded(
-            child: MentionTextField(
-              controller: _messageController,
+            child: QuillMentionComposer(
+              composerController: _composerController,
+              mentionTracker: _mentionTracker,
               focusNode: _messageFocusNode,
               members: _chat?.members ?? const <ConversationMember>[],
               currentUserId: _currentUserId,
-              hint: context.l10n.typeMessage,
-              minLines: 1,
-              maxLines: 5,
               slashCommands: _buildSlashCommandOptions(context),
+              placeholder: context.l10n.typeMessage,
+              minHeight: ComposerConstants.mobileEditorMinHeight,
+              maxHeight: ComposerConstants.mobileEditorMaxHeight,
             ),
           ),
           AppIconButton(
@@ -2706,7 +2730,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             bloc: _fileAttachmentBloc,
             buildWhen: (prev, curr) => prev.hasFiles != curr.hasFiles,
             builder: (context, attachState) {
-              final canSendText = _messageController.text.trim().isNotEmpty;
+              final canSendText = !_composerController.isEmpty;
               final canSend = canSendText || attachState.hasFiles;
 
               if (canSend) {
@@ -3111,6 +3135,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         );
     }
   }
+
 
   Widget _buildDateSeparator(String text) {
     return Padding(

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -11,16 +12,46 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 // Default emoji grid shown in the "All Emojis" section of the quick picker.
 // ---------------------------------------------------------------------------
 const List<String> _kDefaultEmojis = [
-  '\u{1F44D}', '\u{1F44E}', '\u{2764}\u{FE0F}', '\u{1F525}',
-  '\u{1F389}', '\u{1F602}', '\u{1F62E}', '\u{1F622}',
-  '\u{1F621}', '\u{1F970}', '\u{1F923}', '\u{1F60D}',
-  '\u{1F618}', '\u{1F917}', '\u{1F929}', '\u{1F60E}',
-  '\u{1F60F}', '\u{1F644}', '\u{1F634}', '\u{1F92E}',
-  '\u{1F624}', '\u{1F62D}', '\u{1F631}', '\u{1F92F}',
-  '\u{1F633}', '\u{1F97A}', '\u{1F64F}', '\u{1F4AA}',
-  '\u{270C}\u{FE0F}', '\u{1F91D}', '\u{1F44A}', '\u{1F4AF}',
-  '\u{1FAE1}', '\u{1F3AF}', '\u{1F4A1}', '\u{2B50}',
-  '\u{1F31F}', '\u{1F496}', '\u{1F494}', '\u{1F44F}',
+  '\u{1F44D}',
+  '\u{1F44E}',
+  '\u{2764}\u{FE0F}',
+  '\u{1F525}',
+  '\u{1F389}',
+  '\u{1F602}',
+  '\u{1F62E}',
+  '\u{1F622}',
+  '\u{1F621}',
+  '\u{1F970}',
+  '\u{1F923}',
+  '\u{1F60D}',
+  '\u{1F618}',
+  '\u{1F917}',
+  '\u{1F929}',
+  '\u{1F60E}',
+  '\u{1F60F}',
+  '\u{1F644}',
+  '\u{1F634}',
+  '\u{1F92E}',
+  '\u{1F624}',
+  '\u{1F62D}',
+  '\u{1F631}',
+  '\u{1F92F}',
+  '\u{1F633}',
+  '\u{1F97A}',
+  '\u{1F64F}',
+  '\u{1F4AA}',
+  '\u{270C}\u{FE0F}',
+  '\u{1F91D}',
+  '\u{1F44A}',
+  '\u{1F4AF}',
+  '\u{1FAE1}',
+  '\u{1F3AF}',
+  '\u{1F4A1}',
+  '\u{2B50}',
+  '\u{1F31F}',
+  '\u{1F496}',
+  '\u{1F494}',
+  '\u{1F44F}',
 ];
 
 /// Like emoji used for the quick-like button.
@@ -154,8 +185,7 @@ class _CompactActionBarState extends BaseState<CompactActionBar> {
     if (likeRenderBox == null || !likeRenderBox.hasSize) return;
 
     final overlay = Overlay.of(context);
-    final overlayRenderBox =
-        overlay.context.findRenderObject() as RenderBox?;
+    final overlayRenderBox = overlay.context.findRenderObject() as RenderBox?;
     if (overlayRenderBox == null) return;
 
     final btnPos =
@@ -189,32 +219,42 @@ class _CompactActionBarState extends BaseState<CompactActionBar> {
       builder: (_) => Positioned(
         left: dx,
         top: dy,
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.0, end: 1.0),
-          duration: const Duration(milliseconds: AppDimens.durationFast),
-          curve: Curves.easeOut,
-          builder: (context, value, child) => Opacity(
-            opacity: value,
-            child: Transform.translate(
-              offset: Offset(0, showAbove ? (1 - value) * 6 : -(1 - value) * 6),
-              child: child,
+        // Dismiss emoji popup on any scroll event (mouse wheel or touchpad).
+        child: Listener(
+          onPointerSignal: (event) {
+            if (event is PointerScrollEvent) {
+              _dismissEmojiPopup();
+            }
+          },
+          onPointerPanZoomStart: (_) => _dismissEmojiPopup(),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: AppDimens.durationFast),
+            curve: Curves.easeOut,
+            builder: (context, value, child) => Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset:
+                    Offset(0, showAbove ? (1 - value) * 6 : -(1 - value) * 6),
+                child: child,
+              ),
             ),
-          ),
-          child: _EmojiQuickPickerContent(
-            frequentEmojis: widget.quickReactions,
-            defaultEmojis: _kDefaultEmojis,
-            onEmojiSelected: (emoji) {
-              widget.callbacks.onReaction(emoji);
-              _dismissEmojiPopup();
-            },
-            onAddReaction: () {
-              _dismissEmojiPopup();
-              widget.callbacks.onOpenEmojiPicker();
-            },
-            onMouseEnter: _onEmojiPopupMouseEnter,
-            onMouseExit: _onEmojiPopupMouseExit,
-            theme: theme,
-            l10n: l10n,
+            child: _EmojiQuickPickerContent(
+              frequentEmojis: widget.quickReactions,
+              defaultEmojis: _kDefaultEmojis,
+              onEmojiSelected: (emoji) {
+                widget.callbacks.onReaction(emoji);
+                _dismissEmojiPopup();
+              },
+              onAddReaction: () {
+                _dismissEmojiPopup();
+                widget.callbacks.onOpenEmojiPicker();
+              },
+              onMouseEnter: _onEmojiPopupMouseEnter,
+              onMouseExit: _onEmojiPopupMouseExit,
+              theme: theme,
+              l10n: l10n,
+            ),
           ),
         ),
       ),
@@ -674,78 +714,94 @@ class MoreActionsPopup {
     );
     final dy = anchor.dy + AppDimens.paddingXSmall;
 
-    // Dismiss barrier
+    // Dismiss barrier — also dismisses on scroll (matches Slack/Discord UX)
     _barrierEntry = OverlayEntry(
-      builder: (_) => GestureDetector(
-        onTap: dismiss,
-        behavior: HitTestBehavior.opaque,
-        child: const SizedBox.expand(),
+      builder: (_) => Listener(
+        onPointerSignal: (event) {
+          if (event is PointerScrollEvent) {
+            dismiss();
+          }
+        },
+        onPointerPanZoomStart: (_) => dismiss(),
+        child: GestureDetector(
+          onTap: dismiss,
+          behavior: HitTestBehavior.opaque,
+          child: const SizedBox.expand(),
+        ),
       ),
     );
 
-    // Popup content
+    // Popup content — scroll on popup area also dismisses
     _overlayEntry = OverlayEntry(
       builder: (_) => Positioned(
         left: dx,
         top: dy,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            width: popupWidth,
-            decoration: BoxDecoration(
-              color: theme.brightness == Brightness.dark
-                  ? AppColors.surfaceDarkMode
-                  : AppColors.surface,
-              borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-              border: Border.all(
-                color: theme.dividerColor.withValues(alpha: 0.3),
-                width: AppDimens.dividerThin,
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.shadow,
-                  blurRadius: AppDimens.elevationMedium,
-                  offset: Offset(0, 2),
+        child: Listener(
+          onPointerSignal: (event) {
+            if (event is PointerScrollEvent) {
+              dismiss();
+            }
+          },
+          onPointerPanZoomStart: (_) => dismiss(),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: popupWidth,
+              decoration: BoxDecoration(
+                color: theme.brightness == Brightness.dark
+                    ? AppColors.surfaceDarkMode
+                    : AppColors.surface,
+                borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+                border: Border.all(
+                  color: theme.dividerColor.withValues(alpha: 0.3),
+                  width: AppDimens.dividerThin,
                 ),
-              ],
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: items.map((item) {
-                return InkWell(
-                  onTap: item.onTap,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimens.paddingSmall * 1.5,
-                      vertical: AppDimens.paddingSmall,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          item.icon,
-                          size: AppDimens.iconSmall,
-                          color: item.isDestructive
-                              ? Colors.red
-                              : theme.iconTheme.color,
-                        ),
-                        const SizedBox(width: AppDimens.spaceSmall),
-                        Expanded(
-                          child: Text(
-                            item.label,
-                            style: TextStyle(
-                              fontSize: 14.0,
-                              color: item.isDestructive
-                                  ? Colors.red
-                                  : theme.textTheme.bodyMedium?.color,
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.shadow,
+                    blurRadius: AppDimens.elevationMedium,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: items.map((item) {
+                  return InkWell(
+                    onTap: item.onTap,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimens.paddingSmall * 1.5,
+                        vertical: AppDimens.paddingSmall,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            item.icon,
+                            size: AppDimens.iconSmall,
+                            color: item.isDestructive
+                                ? Colors.red
+                                : theme.iconTheme.color,
+                          ),
+                          const SizedBox(width: AppDimens.spaceSmall),
+                          Expanded(
+                            child: Text(
+                              item.label,
+                              style: TextStyle(
+                                fontSize: 14.0,
+                                color: item.isDestructive
+                                    ? Colors.red
+                                    : theme.textTheme.bodyMedium?.color,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ),

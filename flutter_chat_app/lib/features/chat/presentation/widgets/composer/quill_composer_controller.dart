@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 
@@ -115,6 +116,20 @@ class QuillComposerController {
   void clear() {
     _quillController.document = Document()..insert(0, '');
     _quillController.moveCursorToStart();
+  }
+
+  /// Insert plain text at the current cursor position.
+  ///
+  /// Used for inserting emoji or other text fragments from external pickers.
+  void insertText(String text) {
+    if (text.isEmpty) return;
+    final index = _quillController.selection.baseOffset;
+    final insertAt = index < 0 ? _quillController.document.length - 1 : index;
+    _quillController.document.insert(insertAt, text);
+    _quillController.updateSelection(
+      TextSelection.collapsed(offset: insertAt + text.length),
+      ChangeSource.local,
+    );
   }
 
   /// Release all resources.

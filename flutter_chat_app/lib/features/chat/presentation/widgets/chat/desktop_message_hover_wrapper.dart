@@ -23,7 +23,7 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message
 /// - Uses [bubbleKey] to measure the actual bubble position for precise placement
 /// - 200ms hide delay prevents flicker when cursor moves between message and bar
 /// - Only one action bar is visible at a time (singleton pattern)
-/// - Scroll events dismiss the action bar immediately
+/// - Scroll events (both mouse wheel and precision touchpad) dismiss the bar
 /// - Right-click opens the "More" actions popup directly
 ///
 /// **Usage**:
@@ -87,6 +87,18 @@ class _DesktopMessageHoverWrapperState
     extends BaseState<DesktopMessageHoverWrapper> {
   /// Currently active instance — ensures only one bar is visible at a time
   static _DesktopMessageHoverWrapperState? _activeInstance;
+
+  /// Scroll cooldown: after dismissing due to scroll, suppress re-showing
+  /// the bar for a short period. This prevents the overlay from immediately
+  /// reappearing when scrolling causes a new message to slide under the cursor
+  /// (which triggers MouseRegion.onEnter on the new message).
+  static bool _scrollCooldown = false;
+  static Timer? _scrollCooldownTimer;
+
+  /// Duration to suppress re-showing after scroll-triggered dismiss.
+  /// Must be long enough for scroll inertia to settle.
+  static const Duration _scrollCooldownDuration =
+      Duration(milliseconds: 400);
 
   OverlayEntry? _overlayEntry;
   Timer? _hideTimer;
@@ -205,8 +217,7 @@ class _DesktopMessageHoverWrapperState
     if (renderBox == null) return;
 
     final overlay = Overlay.of(context);
-    final overlayRenderBox =
-        overlay.context.findRenderObject() as RenderBox?;
+    final overlayRenderBox = overlay.context.findRenderObject() as RenderBox?;
     if (overlayRenderBox == null) return;
 
     final messagePosition =
@@ -227,11 +238,14 @@ class _DesktopMessageHoverWrapperState
         left: positionData.dx,
         top: positionData.dy,
         child: Listener(
+          // Dismiss on mouse-wheel scroll (traditional mouse)
           onPointerSignal: (event) {
             if (event is PointerScrollEvent) {
               _dismissOverlay();
             }
           },
+          // Dismiss on precision touchpad scroll (Windows/Mac trackpad)
+          onPointerPanZoomStart: (_) => _dismissOverlay(),
           behavior: HitTestBehavior.translucent,
           child: TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
@@ -404,21 +418,12 @@ class _DesktopMessageHoverWrapperState
       return widget.child;
     }
 
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        // Dismiss action bar on any scroll
-        if (_overlayEntry != null) {
-          _dismissOverlay();
-        }
-        return false; // Don't consume the notification
-      },
-      child: MouseRegion(
-        onEnter: (_) => _onMessageMouseEnter(),
-        onExit: (_) => _onMessageMouseExit(),
-        child: GestureDetector(
-          onSecondaryTapUp: _onSecondaryTap,
-          child: widget.child,
-        ),
+    return MouseRegion(
+      onEnter: (_) => _onMessageMouseEnter(),
+      onExit: (_) => _onMessageMouseExit(),
+      child: GestureDetector(
+        onSecondaryTapUp: _onSecondaryTap,
+        child: widget.child,
       ),
     );
   }

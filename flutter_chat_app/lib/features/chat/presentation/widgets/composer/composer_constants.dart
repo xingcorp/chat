@@ -91,6 +91,14 @@ class ComposerConstants {
   /// Icon size in the desktop toolbar.
   static const double desktopToolbarIconSize = AppDimens.iconSmall;
 
+  // ───────────────────── Mobile ─────────────────────
+
+  /// Minimum height of the editor on mobile (compact single line).
+  static const double mobileEditorMinHeight = 36.0;
+
+  /// Maximum height of the editor on mobile before scrolling.
+  static const double mobileEditorMaxHeight = 150.0;
+
   // ───────────────────── Limits ─────────────────────
 
   /// Maximum number of lines before the editor scrolls internally.
