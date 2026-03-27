@@ -134,8 +134,13 @@ class _ChatFileAttachmentHostState
             },
           ),
 
-          // Chat input
-          widget.chatInput,
+          // Chat input — wrapped in SafeArea to prevent system navigation bar
+          // overlap on devices with opaque bottom bars (e.g. Samsung One UI
+          // with 3-button navigation).
+          SafeArea(
+            top: false,
+            child: widget.chatInput,
+          ),
         ],
       ),
     );

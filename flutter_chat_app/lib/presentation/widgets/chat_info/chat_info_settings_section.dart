@@ -75,15 +75,15 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
                 const Divider(height: 1),
               ],
 
-              // Delete chat
-              _buildSettingRow(
-                context: context,
-                icon: Icons.delete,
-                title: context.l10n.deleteChat,
-                subtitle: context.l10n.deleteThisConversation,
-                onTap: isActionInProgress ? null : onDeleteChat,
-                isDestructive: true,
-              ),
+              // // Delete chat
+              // _buildSettingRow(
+              //   context: context,
+              //   icon: Icons.delete,
+              //   title: context.l10n.deleteChat,
+              //   subtitle: context.l10n.deleteThisConversation,
+              //   onTap: isActionInProgress ? null : onDeleteChat,
+              //   isDestructive: true,
+              // ),
             ],
           ),
         ),
