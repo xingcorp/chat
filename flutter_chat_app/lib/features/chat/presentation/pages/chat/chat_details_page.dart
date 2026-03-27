@@ -303,6 +303,12 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
     _itemPositionsListener.itemPositions.addListener(_onPositionsChanged);
 
+    // Recover images lost when Android kills Activity during Photo Picker.
+    // This is critical for Pixel/stock Android 13+ devices.
+    if (!kIsWeb) {
+      _recoverLostPickerData();
+    }
+
     // Auto-resolve receiverId for pending direct chats when not explicitly
     // passed (e.g. desktop mode where ChatHomePage previously lost receiverId).
     // A temp chatId is a numeric timestamp (no hyphens), while real UUIDs have
@@ -1789,6 +1795,55 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
     _cancelReply();
   }
 
+  /// Recovers image data lost when Android kills the Activity while the
+  /// system Photo Picker is in the foreground (common on Pixel / stock
+  /// Android 13+). The image_picker plugin caches picked paths in
+  /// savedInstanceState; this method retrieves them after Activity recreation.
+  Future<void> _recoverLostPickerData() async {
+    try {
+      final response = await ImagePicker().retrieveLostData();
+      if (response.isEmpty) return;
+
+      if (response.exception != null) {
+        debugPrint(
+          'ImagePicker lost data exception: ${response.exception}',
+        );
+        return;
+      }
+
+      final files = response.files;
+      if (files != null && files.isNotEmpty) {
+        if (files.length == 1) {
+          final file = files.first;
+          _handleImageFromGallery(
+            File(file.path),
+            name: file.name,
+            size: await file.length(),
+          );
+        } else {
+          final selections = <GalleryImageSelection>[];
+          for (final file in files) {
+            selections.add(GalleryImageSelection(
+              file: File(file.path),
+              name: file.name,
+              size: await file.length(),
+            ));
+          }
+          _handleImagesFromGallery(selections);
+        }
+      } else if (response.file != null) {
+        final file = response.file!;
+        _handleImageFromGallery(
+          File(file.path),
+          name: file.name,
+          size: await file.length(),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error recovering lost picker data: $e');
+    }
+  }
+
   void _showAttachmentPicker() {
     AttachmentPickerBottomSheet.show(
       context,
@@ -1830,7 +1885,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       } else {
         _handleImagesFromGallery(selections);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Error picking gallery images: $e');
+    }
   }
 
   Future<void> _pickCameraDirect() async {
@@ -1851,7 +1908,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         name: image.name,
         size: await image.length(),
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Error picking camera image: $e');
+    }
   }
 
   Future<void> _pickVideoDirect() async {
@@ -1867,7 +1926,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         name: video.name,
         size: await video.length(),
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Error picking video: $e');
+    }
   }
 
   Future<void> _pickFileDirect() async {
@@ -1886,7 +1947,9 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       } else if (file.path != null) {
         _handleFileSelected(File(file.path!), name: file.name, size: file.size);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Error picking file: $e');
+    }
   }
 
   void _handleImageFromCamera(File imageFile,

@@ -36,6 +36,11 @@ class GalleryImageSelection {
 class AttachmentPickerBottomSheet extends StatelessWidget {
   static const int _maxGallerySelection = 20;
 
+  /// Guard to prevent re-opening a picker while one is already active.
+  /// On devices where Android kills the Activity during Photo Picker
+  /// (Pixel / stock Android 13+), the picker can otherwise be launched twice.
+  static bool _isPickerActive = false;
+
   /// Callback when image is selected from camera
   /// On web: bytes and name are provided
   final void Function(File imageFile,
@@ -234,6 +239,8 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
   }
 
   Future<void> _pickFromCamera(BuildContext context) async {
+    if (_isPickerActive) return;
+    _isPickerActive = true;
     try {
       final picker = ImagePicker();
       final XFile? image = await picker.pickImage(
@@ -261,48 +268,46 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
       if (context.mounted) {
         _showError(context, 'Failed to take photo');
       }
+    } finally {
+      _isPickerActive = false;
     }
   }
 
   Future<void> _pickFromGallery(BuildContext context) async {
+    if (_isPickerActive) return;
+    _isPickerActive = true;
     try {
       final picker = ImagePicker();
 
-      // Use image-only APIs so "Choose from gallery" opens photo library
-      // instead of Android Documents picker.
-      try {
-        final imageFiles = await picker.pickMultiImage(
-          maxWidth: 1920,
-          maxHeight: 1920,
-          imageQuality: 85,
-          limit: _maxGallerySelection,
-        );
-        if (imageFiles.isNotEmpty) {
-          await _dispatchPickedGalleryMediaItems(imageFiles);
-          return;
-        }
-      } catch (_) {
-        // Some platforms may not support multi-image picker consistently.
-      }
-
-      final imageFile = await picker.pickImage(
-        source: ImageSource.gallery,
+      // Use pickMultiImage to open photo library (not Documents picker).
+      // IMPORTANT: Do NOT fall back to pickImage() on failure — on devices
+      // where Android kills the Activity during the Photo Picker intent
+      // (common on Pixel/stock Android 13+), pickMultiImage may return
+      // empty or throw. A fallback to pickImage would re-open the picker,
+      // confusing the user. Lost picks are recovered via retrieveLostData()
+      // in ChatDetailsPage.
+      final imageFiles = await picker.pickMultiImage(
         maxWidth: 1920,
         maxHeight: 1920,
         imageQuality: 85,
+        limit: _maxGallerySelection,
       );
-      if (imageFile != null) {
-        await _dispatchPickedGalleryMediaItems([imageFile]);
+      if (imageFiles.isNotEmpty) {
+        await _dispatchPickedGalleryMediaItems(imageFiles);
       }
     } catch (e) {
       debugPrint('Error picking from gallery: $e');
       if (context.mounted) {
         _showError(context, 'Failed to choose media');
       }
+    } finally {
+      _isPickerActive = false;
     }
   }
 
   Future<void> _pickVideoFromGallery(BuildContext context) async {
+    if (_isPickerActive) return;
+    _isPickerActive = true;
     try {
       final picker = ImagePicker();
       final XFile? video = await picker.pickVideo(
@@ -327,6 +332,8 @@ class AttachmentPickerBottomSheet extends StatelessWidget {
       if (context.mounted) {
         _showError(context, 'Failed to choose video');
       }
+    } finally {
+      _isPickerActive = false;
     }
   }
 

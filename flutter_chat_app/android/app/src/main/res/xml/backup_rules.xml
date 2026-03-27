@@ -3,7 +3,4 @@
 <full-backup-content>
     <include domain="sharedpref" path="." />
     <exclude domain="sharedpref" path="FlutterSecureStorage" />
-    <exclude domain="database" path="." />
-    <exclude domain="external" path="." />
-    <exclude domain="root" path="cache" />
 </full-backup-content>

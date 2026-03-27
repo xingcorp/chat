@@ -95,7 +95,13 @@ class FirebaseConfigManager {
       final config = FlavorConfig.instance;
 
       // Validate env vars before attempting initialization
-      _validateEnvironmentVariables();
+      if (!_validateEnvironmentVariables()) {
+        _logger.info(
+          'Skipping Firebase initialization — missing --dart-define variables. '
+          'App will continue without Firebase services.',
+        );
+        return;
+      }
 
       final firebaseOptions = _getFirebaseOptions(config.flavor);
 
@@ -130,17 +136,19 @@ class FirebaseConfigManager {
       // Try fallback initialization for development
       if (kDebugMode) {
         await _initializeFallback();
-      } else {
-        rethrow;
       }
+      // In release mode, continue without Firebase rather than crashing.
+      // Firebase is non-critical — push notifications & analytics degrade
+      // gracefully, but the app remains fully functional for chat.
     }
   }
 
   /// Validate that required `--dart-define` environment variables are set.
   ///
-  /// Throws [StateError] in release mode if keys are missing.
-  /// Logs warning in debug mode to allow development without Firebase.
-  static void _validateEnvironmentVariables() {
+  /// Returns `true` if all required variables are present.
+  /// Returns `false` if variables are missing — caller should skip Firebase init.
+  /// Logs a warning in all modes so the issue is visible via `adb logcat`.
+  static bool _validateEnvironmentVariables() {
     final missingVars = <String>[];
 
     // Check common required vars
@@ -168,16 +176,16 @@ class FirebaseConfigManager {
           '${missingVars.join(', ')}. '
           'See FIREBASE_SETUP.md for configuration instructions.';
 
+      _logger.warning(message);
       if (kDebugMode) {
-        _logger.warning(message);
         _logger.warning(
           'Firebase may not work correctly. '
           'Run with: flutter run --dart-define-from-file=.env.staging',
         );
-      } else {
-        throw StateError(message);
       }
+      return false;
     }
+    return true;
   }
 
   /// Read a `--dart-define` variable value at compile time.
@@ -323,9 +331,8 @@ class FirebaseConfigManager {
       _logger.info('Firebase connection verified: $actualProjectId');
     } catch (e, stackTrace) {
       _logger.error('Firebase connection verification failed', e, stackTrace);
-      if (!kDebugMode) {
-        throw StateError('Firebase verification failed: $e');
-      }
+      // Log but do not crash — Firebase verification is non-critical.
+      // App can still function without verified Firebase connection.
     }
   }
 

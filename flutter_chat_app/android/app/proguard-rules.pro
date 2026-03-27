@@ -75,6 +75,9 @@
 -keepattributes SourceFile,LineNumberTable
 -keep public class * extends java.lang.Exception
 
+# Google Play Core (referenced by Flutter engine for deferred components)
+-dontwarn com.google.android.play.core.**
+
 # General Android optimizations
 -dontwarn javax.annotation.**
 -dontwarn javax.inject.**

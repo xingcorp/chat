@@ -5,7 +5,6 @@
     <domain-config cleartextTrafficPermitted="false">
         <!-- Production API endpoints -->
         <domain includeSubdomains="true">oxii-office-api.oxiitek.com</domain>
-        <domain includeSubdomains="true">oxii-office-api.oxiitek.com</domain>
         <domain includeSubdomains="true">cdn.oxii.chat</domain>
         
         <!-- Firebase services -->

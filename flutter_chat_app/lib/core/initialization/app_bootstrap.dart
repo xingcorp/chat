@@ -99,7 +99,11 @@ Future<void> runMainApp() async {
       GetIt.I<Logger>()
           .e('Unhandled error', error: error, stackTrace: stackTrace);
     } else {
-      debugPrint('Unhandled error: $error\n$stackTrace');
+      // Use print() instead of debugPrint() so errors are visible even in
+      // release mode (via `flutter logs` / `adb logcat`). debugPrint() is
+      // compiled out in release builds, silently swallowing fatal errors.
+      // ignore: avoid_print
+      print('Unhandled error: $error\n$stackTrace');
     }
   });
 }

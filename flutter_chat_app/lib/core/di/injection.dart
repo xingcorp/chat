@@ -156,7 +156,8 @@ Future<void> configureDependencies() async {
     _registerUpdateService(getIt);
 
     final bool useFirebaseBackedMonitoring =
-        FirebaseConfigManager.supportsConfiguredPlatform;
+        FirebaseConfigManager.supportsConfiguredPlatform &&
+        FirebaseConfigManager.isInitialized;
 
     // Step 4: Override monitoring with Firebase-backed implementations
     // (standalone mode only — package mode uses NoOp defaults from core_module
@@ -545,7 +546,11 @@ Future<void> _registerExternalDependencies(Logger logger) async {
 
   // Firebase already initialized in parallel block above when the platform
   // has configured standalone Firebase support.
-  if (shouldInitializeFirebase) {
+  // IMPORTANT: Also check isInitialized — Firebase.initialize() may have
+  // skipped gracefully (e.g. missing --dart-define variables). Registering
+  // FirebasePerformance/Analytics/Crashlytics without an active Firebase app
+  // will crash at resolve time with "No Firebase App '[DEFAULT]'".
+  if (shouldInitializeFirebase && FirebaseConfigManager.isInitialized) {
     if (!getIt.isRegistered<FirebasePerformance>()) {
       getIt.registerLazySingleton<FirebasePerformance>(
           () => FirebasePerformance.instance);

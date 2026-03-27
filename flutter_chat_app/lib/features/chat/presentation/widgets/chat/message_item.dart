@@ -228,6 +228,7 @@ class _MessageItemState extends State<MessageItem>
       ),
       selectable: isDesktop,
       selectionColor: selectionColor,
+      toggleColor: widget.uiState.isFromCurrentUser ? Colors.white : null,
     );
   }
 

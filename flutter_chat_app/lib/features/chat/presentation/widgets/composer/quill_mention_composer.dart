@@ -443,7 +443,7 @@ class _QuillMentionComposerState extends State<QuillMentionComposer> {
               expands: false,
               padding: const EdgeInsets.symmetric(
                 horizontal: 12.0,
-                vertical: 8.0,
+                vertical: 14.0,
               ),
               customStyles: ComposerTheme.composerStyles(context),
             ),

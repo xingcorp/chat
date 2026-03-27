@@ -57,6 +57,14 @@ class ExpandableRichText extends StatefulWidget {
   /// Nếu null, dùng default từ theme.
   final Color? selectionColor;
 
+  /// Màu cho nút "Xem thêm" / "Thu gọn".
+  ///
+  /// Khi bubble tin nhắn gửi đi có nền primary (xanh), mặc định
+  /// `colorScheme.primary` bị trùng → không nhìn thấy.
+  /// Truyền `Colors.white` cho own messages.
+  /// Nếu null, dùng `colorScheme.primary`.
+  final Color? toggleColor;
+
   const ExpandableRichText({
     super.key,
     required this.spans,
@@ -67,6 +75,7 @@ class ExpandableRichText extends StatefulWidget {
     this.onToggle,
     this.selectable = false,
     this.selectionColor,
+    this.toggleColor,
   });
 
   @override
@@ -113,6 +122,9 @@ class _ExpandableRichTextState extends State<ExpandableRichText> {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveToggleColor =
+        widget.toggleColor ?? Theme.of(context).colorScheme.primary;
+
     // If no expansion needed, show full rich text
     if (!_needsExpansion) {
       return _buildRichContent(widget.spans);
@@ -132,11 +144,11 @@ class _ExpandableRichTextState extends State<ExpandableRichText> {
               child: Text(
                 context.l10n.showLess,
                 style: widget.style?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: effectiveToggleColor,
                       fontWeight: FontWeight.w500,
                     ) ??
                     TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: effectiveToggleColor,
                       fontWeight: FontWeight.w500,
                     ),
               ),
@@ -167,11 +179,11 @@ class _ExpandableRichTextState extends State<ExpandableRichText> {
             child: Text(
               context.l10n.readMore,
               style: widget.style?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: effectiveToggleColor,
                     fontWeight: FontWeight.w500,
                   ) ??
                   TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: effectiveToggleColor,
                     fontWeight: FontWeight.w500,
                   ),
             ),
