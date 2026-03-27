@@ -1234,9 +1234,18 @@ Future<dynamic> _processImage(Map<String, dynamic> args) async {
 
     reportProgress?.call(0.3, 'Decoding image');
 
+    // Xác định extension để cung cấp thông tin rõ hơn khi lỗi
+    final filePath = data is String ? data : null;
+    final fileExt = filePath != null
+        ? filePath.split('.').last.toLowerCase()
+        : 'unknown';
+
     final image = img.decodeImage(imageBytes);
     if (image == null) {
-      return {'error': 'Failed to decode image - unsupported format'};
+      return {
+        'error': 'Failed to decode image - unsupported format (.$fileExt). '
+            'Supported: jpg, png, webp, gif, bmp, tga, ico, pvr, exr',
+      };
     }
 
     // Step 3: Process image based on operation (70%)

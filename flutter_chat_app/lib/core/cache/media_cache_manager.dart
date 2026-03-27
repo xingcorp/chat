@@ -138,6 +138,12 @@ class MediaCacheManager {
           height: height,
         );
 
+        // Nếu không optimize được (format không hỗ trợ), trả về ảnh gốc
+        if (optimizedBytes == null) {
+          _logger.w('Không optimize được ảnh, trả về ảnh gốc: $url');
+          return originalFile;
+        }
+
         // Lưu vào file tạm
         final tempDir = await getTemporaryDirectory();
         final tempFile = File('${tempDir.path}/${path.basename(cacheKey)}');
@@ -163,16 +169,30 @@ class MediaCacheManager {
       }
     } catch (e) {
       _logger.e('Lỗi khi lấy hình ảnh tối ưu: $e');
-      rethrow;
+      // Fallback: trả về ảnh gốc thay vì crash
+      try {
+        return await _cacheManager.getMediaFile(url);
+      } catch (_) {
+        rethrow;
+      }
     }
   }
   
   /// Xử lý ảnh trong isolate
-  Future<Uint8List> _processImageInIsolate(
+  ///
+  /// Trả về `null` nếu định dạng ảnh không được hỗ trợ hoặc xử lý thất bại.
+  Future<Uint8List?> _processImageInIsolate(
     String imagePath, {
     int? width,
     int? height,
   }) async {
+    // Kiểm tra định dạng trước khi xử lý
+    if (!_isSupportedImageFormat(imagePath)) {
+      final ext = path.extension(imagePath).toLowerCase();
+      _logger.w('Bỏ qua optimize ảnh - định dạng không hỗ trợ: $ext ($imagePath)');
+      return null;
+    }
+
     // Tạo một task ID duy nhất
     final taskId = 'img_optimize_${DateTime.now().millisecondsSinceEpoch}';
 
@@ -194,7 +214,8 @@ class MediaCacheManager {
     );
 
     if (result.error != null) {
-      throw Exception('Lỗi khi xử lý ảnh trong isolate: ${result.error}');
+      _logger.w('Lỗi khi xử lý ảnh trong isolate: ${result.error}');
+      return null;
     }
 
     // Handle different result types
@@ -202,11 +223,14 @@ class MediaCacheManager {
     if (resultData is Uint8List) {
       return resultData;
     } else if (resultData is Map && resultData.containsKey('error')) {
-      throw Exception('Lỗi xử lý ảnh: ${resultData['error']}');
+      _logger.w('Không thể xử lý ảnh: ${resultData['error']} ($imagePath)');
+      return null;
     } else if (resultData is Map && resultData.containsKey('cancelled')) {
-      throw Exception('Xử lý ảnh bị hủy');
+      _logger.w('Xử lý ảnh bị hủy: $imagePath');
+      return null;
     } else {
-      throw Exception('Kết quả xử lý ảnh không hợp lệ: ${resultData.runtimeType}');
+      _logger.w('Kết quả xử lý ảnh không hợp lệ: ${resultData.runtimeType} ($imagePath)');
+      return null;
     }
   }
   
@@ -232,11 +256,17 @@ class MediaCacheManager {
       final originalFile = await _cacheManager.getMediaFile(imageUrl);
       
       if (useIsolate) {
-        // Xử lý trong isolate 
+        // Xử lý trong isolate
         final thumbnailBytes = await _generateThumbnailInIsolate(
           originalFile.path,
           size: size,
         );
+
+        // Nếu không tạo được thumbnail (format không hỗ trợ), trả về ảnh gốc
+        if (thumbnailBytes == null) {
+          _logger.w('Không tạo được thumbnail, trả về ảnh gốc: $imageUrl');
+          return originalFile;
+        }
 
         // Lưu vào file tạm
         final tempDir = await getTemporaryDirectory();
@@ -250,24 +280,58 @@ class MediaCacheManager {
       } else {
         // Xử lý trong main thread
         final thumbnailFile = await _generateImageThumbnail(originalFile.path, size);
-        
+
+        // Nếu không tạo được thumbnail (format không hỗ trợ), trả về ảnh gốc
+        if (thumbnailFile == null) {
+          _logger.w('Không tạo được thumbnail (main thread), trả về ảnh gốc: $imageUrl');
+          return originalFile;
+        }
+
         // Lưu thumbnail vào cache
         final thumbnailBytes = await thumbnailFile.readAsBytes();
         await _cacheManager.cacheFile(thumbnailCacheKey, thumbnailBytes, thumbnail: true);
-        
+
         return thumbnailFile;
       }
     } catch (e) {
       _logger.e('Lỗi khi tạo thumbnail hình ảnh: $e');
-      rethrow;
+      // Fallback: trả về ảnh gốc thay vì crash
+      try {
+        return await _cacheManager.getMediaFile(imageUrl);
+      } catch (_) {
+        rethrow;
+      }
     }
   }
   
+  /// Các định dạng ảnh được hỗ trợ để tạo thumbnail
+  static const _supportedImageExtensions = {
+    '.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp',
+  };
+
+  /// Kiểm tra định dạng ảnh có được hỗ trợ để decode không
+  bool _isSupportedImageFormat(String filePath) {
+    final ext = path.extension(filePath).toLowerCase();
+    // Nếu không có extension (ví dụ URL không rõ), cho phép thử decode
+    if (ext.isEmpty) return true;
+    return _supportedImageExtensions.contains(ext);
+  }
+
   /// Tạo thumbnail trong isolate
-  Future<Uint8List> _generateThumbnailInIsolate(
+  ///
+  /// Trả về `null` nếu định dạng ảnh không được hỗ trợ hoặc decode thất bại,
+  /// thay vì throw exception để tránh crash.
+  Future<Uint8List?> _generateThumbnailInIsolate(
     String imagePath, {
     required int size,
   }) async {
+    // Kiểm tra định dạng trước khi xử lý
+    if (!_isSupportedImageFormat(imagePath)) {
+      final ext = path.extension(imagePath).toLowerCase();
+      _logger.w('Bỏ qua tạo thumbnail - định dạng không hỗ trợ: $ext ($imagePath)');
+      return null;
+    }
+
     // Tạo task ID duy nhất
     final taskId = 'thumb_gen_${DateTime.now().millisecondsSinceEpoch}';
 
@@ -288,7 +352,8 @@ class MediaCacheManager {
     );
 
     if (result.error != null) {
-      throw Exception('Lỗi khi tạo thumbnail trong isolate: ${result.error}');
+      _logger.w('Lỗi khi tạo thumbnail trong isolate: ${result.error}');
+      return null;
     }
 
     // Handle different result types
@@ -296,11 +361,16 @@ class MediaCacheManager {
     if (resultData is Uint8List) {
       return resultData;
     } else if (resultData is Map && resultData.containsKey('error')) {
-      throw Exception('Lỗi tạo thumbnail: ${resultData['error']}');
+      // Graceful fallback: log warning thay vì throw exception
+      // Lỗi phổ biến: "Failed to decode image - unsupported format" (HEIC, TIFF, SVG...)
+      _logger.w('Không thể tạo thumbnail: ${resultData['error']} ($imagePath)');
+      return null;
     } else if (resultData is Map && resultData.containsKey('cancelled')) {
-      throw Exception('Tạo thumbnail bị hủy');
+      _logger.w('Tạo thumbnail bị hủy: $imagePath');
+      return null;
     } else {
-      throw Exception('Kết quả tạo thumbnail không hợp lệ: ${resultData.runtimeType}');
+      _logger.w('Kết quả tạo thumbnail không hợp lệ: ${resultData.runtimeType} ($imagePath)');
+      return null;
     }
   }
   
@@ -638,10 +708,20 @@ class MediaCacheManager {
     }
   }
   
-  /// Tạo thumbnail cho hình ảnh
-  Future<File> _generateImageThumbnail(String imagePath, int size) async {
+  /// Tạo thumbnail cho hình ảnh trên main thread
+  ///
+  /// Trả về `null` nếu định dạng ảnh không được hỗ trợ hoặc compress thất bại,
+  /// thay vì throw exception để tránh crash.
+  Future<File?> _generateImageThumbnail(String imagePath, int size) async {
+    // Kiểm tra định dạng trước khi xử lý
+    if (!_isSupportedImageFormat(imagePath)) {
+      final ext = path.extension(imagePath).toLowerCase();
+      _logger.w('Bỏ qua tạo thumbnail (main thread) - định dạng không hỗ trợ: $ext ($imagePath)');
+      return null;
+    }
+
     final targetPath = await _getTemporaryFilePath('.jpg');
-    
+
     try {
       final result = await FlutterImageCompress.compressAndGetFile(
         imagePath,
@@ -650,15 +730,16 @@ class MediaCacheManager {
         minWidth: size,
         minHeight: size,
       );
-      
+
       if (result == null) {
-        throw Exception('Không thể tạo thumbnail cho hình ảnh');
+        _logger.w('FlutterImageCompress trả về null cho: $imagePath');
+        return null;
       }
-      
+
       return File(result.path);
     } catch (e) {
-      _logger.e('Lỗi khi tạo thumbnail hình ảnh: $e');
-      rethrow;
+      _logger.w('Lỗi khi tạo thumbnail hình ảnh (main thread): $e');
+      return null;
     }
   }
 }
