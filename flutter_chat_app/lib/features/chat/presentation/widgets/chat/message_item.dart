@@ -7,7 +7,10 @@ import 'package:flutter_chat_app/core/extensions/emoji_extensions.dart';
 import 'package:flutter_chat_app/core/extensions/extensions.dart';
 import 'package:flutter_chat_app/core/extensions/text_span_builder.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/utils/message_utils.dart';
 import 'package:flutter_chat_app/core/utils/platform_utils.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_html_content.dart';
+import 'package:flutter_html/flutter_html.dart' show Style, FontSize;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/navigation/chat_navigation_helper.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
@@ -133,6 +136,19 @@ class _MessageItemState extends State<MessageItem>
     }
 
     final raw = widget.uiState.content;
+
+    // ── Block-level HTML rendering ──────────────────────────
+    // Khi message chứa block HTML (h1, h2, ol, ul, li, code, pre, blockquote…)
+    // → dùng AppHtmlContent (flutter_html) thay vì TextSpanBuilder (regex inline)
+    if (MessageUtils.containsBlockHtml(raw)) {
+      return _buildBlockHtmlMessage(
+        raw: raw,
+        mentionNameById: mentionNameById,
+        textColor: textColor,
+        theme: theme,
+      );
+    }
+
     final normalized = raw.formatChatMessage(mentionNameById: mentionNameById);
 
     // Emoji-only detection: 1-3 emoji → font size lớn (pattern WhatsApp/Telegram)
@@ -229,6 +245,106 @@ class _MessageItemState extends State<MessageItem>
       selectable: isDesktop,
       selectionColor: selectionColor,
       toggleColor: widget.uiState.isFromCurrentUser ? Colors.white : null,
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // Block-level HTML message rendering (flutter_html)
+  // ══════════════════════════════════════════════════════════
+
+  /// Regex thay thế `[@id]` → `<b>@DisplayName</b>` trong HTML content.
+  static final RegExp _mentionBracketRegex = RegExp(r'\[@([^\]]+)\]');
+
+  /// Regex thay thế `@<uuid>` → `<b>@DisplayName</b>` trong HTML content.
+  static final RegExp _uuidMentionRegex = RegExp(
+    r'@([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})',
+  );
+
+  /// Render message chứa block-level HTML bằng [AppHtmlContent].
+  ///
+  /// Pre-process:
+  /// 1. Thay `[@id]` / `@uuid` mentions → `<b>@DisplayName</b>`
+  /// 2. Override `em` style (italic thay vì search-highlight)
+  /// 3. Điều chỉnh màu cho own message bubble (text trắng, code background tối hơn)
+  Widget _buildBlockHtmlMessage({
+    required String raw,
+    required Map<String, String> mentionNameById,
+    required Color textColor,
+    required ThemeData theme,
+  }) {
+    var htmlContent = raw;
+
+    // 1. Replace [@id] mentions → <b>@DisplayName</b>
+    htmlContent = htmlContent.replaceAllMapped(
+      _mentionBracketRegex,
+      (match) {
+        final id = match.group(1) ?? '';
+        if (id.isEmpty) return '@';
+        final name = mentionNameById[id];
+        if (name != null && name.trim().isNotEmpty) {
+          return '<b>@${name.trim()}</b>';
+        }
+        return '@$id';
+      },
+    );
+
+    // 2. Replace @uuid mentions → <b>@DisplayName</b>
+    htmlContent = htmlContent.replaceAllMapped(
+      _uuidMentionRegex,
+      (match) {
+        final id = match.group(1) ?? '';
+        final name = mentionNameById[id];
+        if (name != null && name.trim().isNotEmpty) {
+          return '<b>@${name.trim()}</b>';
+        }
+        return match.group(0) ?? '@$id';
+      },
+    );
+
+    // 3. Style overrides cho message context
+    // - em: italic (không dùng search-highlight background)
+    // - own message: điều chỉnh code/pre background cho bubble xanh
+    final isOwn = widget.uiState.isFromCurrentUser;
+    final styleOverrides = <String, Style>{
+      'em': Style(
+        fontStyle: FontStyle.italic,
+        fontWeight: FontWeight.normal,
+        color: textColor,
+      ),
+      'body': Style(
+        color: textColor,
+        fontSize: FontSize(16),
+      ),
+      if (isOwn) ...{
+        'code': Style(
+          fontFamily: 'monospace',
+          backgroundColor: Colors.white.withValues(alpha: 0.15),
+        ),
+        'pre': Style(
+          fontFamily: 'monospace',
+          backgroundColor: Colors.white.withValues(alpha: 0.15),
+        ),
+        'blockquote': Style(
+          border: const Border(
+            left: BorderSide(color: Colors.white, width: 3),
+          ),
+          fontStyle: FontStyle.italic,
+        ),
+        'a': Style(
+          color: Colors.white,
+          textDecoration: TextDecoration.underline,
+        ),
+      },
+    };
+
+    return AppHtmlContent(
+      data: htmlContent,
+      baseStyle: TextStyle(
+        color: textColor,
+        fontSize: 16.0,
+      ),
+      shrinkWrap: true,
+      styleOverrides: styleOverrides,
     );
   }
 

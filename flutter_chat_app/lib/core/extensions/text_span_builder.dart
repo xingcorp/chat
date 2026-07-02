@@ -85,6 +85,18 @@ class TextSpanBuilder {
   static final RegExp _underlineRegex =
       RegExp(r'<u>([^<]*)</u>', caseSensitive: false);
 
+  /// Regex cho HTML strong tag (alias of bold)
+  static final RegExp _strongRegex =
+      RegExp(r'<strong>([^<]*)</strong>', caseSensitive: false);
+
+  /// Regex cho HTML em tag (emphasis / italic)
+  static final RegExp _emRegex =
+      RegExp(r'<em>([^<]*)</em>', caseSensitive: false);
+
+  /// Regex cho HTML strikethrough tags (<s> and <del>)
+  static final RegExp _strikethroughRegex =
+      RegExp(r'<(?:s|del)>([^<]*)</(?:s|del)>', caseSensitive: false);
+
   // ══════════════════════════════════════════
   // Main Build Method
   // ══════════════════════════════════════════
@@ -177,7 +189,10 @@ class TextSpanBuilder {
         _anchorRegex.hasMatch(text) ||
         _boldRegex.hasMatch(text) ||
         _italicRegex.hasMatch(text) ||
-        _underlineRegex.hasMatch(text);
+        _underlineRegex.hasMatch(text) ||
+        _strongRegex.hasMatch(text) ||
+        _emRegex.hasMatch(text) ||
+        _strikethroughRegex.hasMatch(text);
   }
 
   /// Parse tất cả entities từ text
@@ -287,6 +302,39 @@ class TextSpanBuilder {
       ));
     }
 
+    // Parse HTML <strong> tags
+    for (final match in _strongRegex.allMatches(text)) {
+      entities.add(TextEntity(
+        type: EntityType.htmlStrong,
+        text: match.group(0)!,
+        start: match.start,
+        end: match.end,
+        value: match.group(1)!,
+      ));
+    }
+
+    // Parse HTML <em> tags
+    for (final match in _emRegex.allMatches(text)) {
+      entities.add(TextEntity(
+        type: EntityType.htmlEm,
+        text: match.group(0)!,
+        start: match.start,
+        end: match.end,
+        value: match.group(1)!,
+      ));
+    }
+
+    // Parse HTML <s> / <del> tags
+    for (final match in _strikethroughRegex.allMatches(text)) {
+      entities.add(TextEntity(
+        type: EntityType.htmlStrikethrough,
+        text: match.group(0)!,
+        start: match.start,
+        end: match.end,
+        value: match.group(1)!,
+      ));
+    }
+
     return entities;
   }
 
@@ -350,6 +398,24 @@ class TextSpanBuilder {
         return TextSpan(
           text: entity.value,
           style: textStyle.copyWith(decoration: TextDecoration.underline),
+        );
+
+      case EntityType.htmlStrong:
+        return TextSpan(
+          text: entity.value,
+          style: textStyle.copyWith(fontWeight: FontWeight.bold),
+        );
+
+      case EntityType.htmlEm:
+        return TextSpan(
+          text: entity.value,
+          style: textStyle.copyWith(fontStyle: FontStyle.italic),
+        );
+
+      case EntityType.htmlStrikethrough:
+        return TextSpan(
+          text: entity.value,
+          style: textStyle.copyWith(decoration: TextDecoration.lineThrough),
         );
     }
   }
@@ -533,6 +599,9 @@ enum EntityType {
   htmlBold,
   htmlItalic,
   htmlUnderline,
+  htmlStrong,
+  htmlEm,
+  htmlStrikethrough,
 }
 
 /// Action Sheet cho URL

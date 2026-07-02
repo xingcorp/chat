@@ -99,6 +99,89 @@ class AppHtmlContent extends BaseStatelessWidget {
         margin: Margins.zero,
         padding: HtmlPaddings.zero,
       ),
+      // ── Block-level elements ──────────────────────────────
+      'h1': Style(
+        fontSize: FontSize(24),
+        fontWeight: FontWeight.bold,
+        margin: Margins.only(top: 8, bottom: 4),
+        padding: HtmlPaddings.zero,
+      ),
+      'h2': Style(
+        fontSize: FontSize(20),
+        fontWeight: FontWeight.bold,
+        margin: Margins.only(top: 8, bottom: 4),
+        padding: HtmlPaddings.zero,
+      ),
+      'h3': Style(
+        fontSize: FontSize(18),
+        fontWeight: FontWeight.bold,
+        margin: Margins.only(top: 6, bottom: 2),
+        padding: HtmlPaddings.zero,
+      ),
+      'h4': Style(
+        fontSize: FontSize(16),
+        fontWeight: FontWeight.w600,
+        margin: Margins.only(top: 4, bottom: 2),
+        padding: HtmlPaddings.zero,
+      ),
+      'h5': Style(
+        fontSize: FontSize(14),
+        fontWeight: FontWeight.w600,
+        margin: Margins.only(top: 4, bottom: 2),
+        padding: HtmlPaddings.zero,
+      ),
+      'h6': Style(
+        fontSize: FontSize(12),
+        fontWeight: FontWeight.w600,
+        margin: Margins.only(top: 4, bottom: 2),
+        padding: HtmlPaddings.zero,
+      ),
+      'ol': Style(
+        margin: Margins.only(top: 4, bottom: 4),
+        padding: HtmlPaddings.only(left: 24),
+      ),
+      'ul': Style(
+        margin: Margins.only(top: 4, bottom: 4),
+        padding: HtmlPaddings.only(left: 24),
+      ),
+      'li': Style(
+        margin: Margins.only(bottom: 2),
+        padding: HtmlPaddings.zero,
+      ),
+      'code': Style(
+        fontFamily: 'monospace',
+        backgroundColor: isDark
+            ? const Color(0xFF2D2D2D)
+            : const Color(0xFFF5F5F5),
+        padding: HtmlPaddings.symmetric(horizontal: 4, vertical: 1),
+      ),
+      'pre': Style(
+        fontFamily: 'monospace',
+        backgroundColor: isDark
+            ? const Color(0xFF2D2D2D)
+            : const Color(0xFFF5F5F5),
+        padding: HtmlPaddings.all(8),
+        margin: Margins.only(top: 4, bottom: 4),
+      ),
+      'blockquote': Style(
+        border: Border(
+          left: BorderSide(color: AppColors.primary, width: 3),
+        ),
+        padding: HtmlPaddings.only(left: 8),
+        margin: Margins.only(top: 4, bottom: 4),
+        fontStyle: FontStyle.italic,
+      ),
+      'u': Style(textDecoration: TextDecoration.underline),
+      's': Style(textDecoration: TextDecoration.lineThrough),
+      'del': Style(textDecoration: TextDecoration.lineThrough),
+      'hr': Style(
+        margin: Margins.symmetric(vertical: 8),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF555555) : const Color(0xFFDDDDDD),
+          ),
+        ),
+      ),
     };
 
     // Merge user overrides on top of defaults

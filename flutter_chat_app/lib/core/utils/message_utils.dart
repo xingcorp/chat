@@ -136,6 +136,12 @@ class MessageUtils {
       RegExp(r'<i>([^<]*)</i>', caseSensitive: false);
   static final RegExp _underlineRegex =
       RegExp(r'<u>([^<]*)</u>', caseSensitive: false);
+  static final RegExp _strongRegex =
+      RegExp(r'<strong>([^<]*)</strong>', caseSensitive: false);
+  static final RegExp _emRegex =
+      RegExp(r'<em>([^<]*)</em>', caseSensitive: false);
+  static final RegExp _strikethroughRegex =
+      RegExp(r'<(?:s|del)>([^<]*)</(?:s|del)>', caseSensitive: false);
 
   /// Trích xuất plain text từ raw message content cho clipboard.
   ///
@@ -144,9 +150,10 @@ class MessageUtils {
   /// - `@<uuid>` -> `@DisplayName`
   /// - `<br>`, `<br/>` -> newline
   /// - `<a href="url">text</a>` -> `text`
-  /// - `<b>text</b>` -> `text`
-  /// - `<i>text</i>` -> `text`
+  /// - `<b>text</b>`, `<strong>text</strong>` -> `text`
+  /// - `<i>text</i>`, `<em>text</em>` -> `text`
   /// - `<u>text</u>` -> `text`
+  /// - `<s>text</s>`, `<del>text</del>` -> `text`
   /// - URLs, phone numbers, emails giữ nguyên
   ///
   /// [rawContent] nội dung gốc từ message (chứa markup)
@@ -179,6 +186,18 @@ class MessageUtils {
       _underlineRegex,
       (match) => match.group(1) ?? '',
     );
+    result = result.replaceAllMapped(
+      _strongRegex,
+      (match) => match.group(1) ?? '',
+    );
+    result = result.replaceAllMapped(
+      _emRegex,
+      (match) => match.group(1) ?? '',
+    );
+    result = result.replaceAllMapped(
+      _strikethroughRegex,
+      (match) => match.group(1) ?? '',
+    );
 
     // 4. Replace [@id] mentions -> @DisplayName
     result = result.replaceAllMapped(_mentionBracketRegex, (match) {
@@ -203,6 +222,28 @@ class MessageUtils {
     });
 
     return result;
+  }
+
+  // ══════════════════════════════════════════
+  // Block-level HTML Detection
+  // ══════════════════════════════════════════
+
+  /// Regex kiểm tra block-level HTML tags trong message content.
+  ///
+  /// Detect: h1-h6, ol, ul, li, pre, blockquote, table, tr, td, th, hr, div.
+  /// Không detect inline tags (b, i, em, strong, a, br, s, del, u, span)
+  /// vì chúng đã được xử lý bởi [TextSpanBuilder].
+  static final RegExp _blockHtmlRegex = RegExp(
+    r'<(?:h[1-6]|ol|ul|li|pre|blockquote|table|tr|td|th|hr|div)[\s>]',
+    caseSensitive: false,
+  );
+
+  /// Kiểm tra xem nội dung có chứa block-level HTML không.
+  ///
+  /// Dùng để quyết định render bằng [AppHtmlContent] (flutter_html)
+  /// thay vì [TextSpanBuilder] (regex-based inline spans).
+  static bool containsBlockHtml(String content) {
+    return _blockHtmlRegex.hasMatch(content);
   }
 
   /// Trả về tin nhắn ngắn gọn cho thông báo
