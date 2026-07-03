@@ -682,10 +682,9 @@ class _ChatListPageState extends BaseState<ChatListPage> {
               ),
               if (retryAction != null) ...[
                 const SizedBox(height: AppDimens.spaceLarge),
-                // TODO(icons): AppButton.primary accepts IconData — refactor AppButton to support SVG icon paths
                 AppButton.primary(
                   text: context.l10n.retryOperation,
-                  icon: Icons.refresh,
+                  icon: AppIcons.refresh,
                   onPressed: retryAction,
                 ),
               ],

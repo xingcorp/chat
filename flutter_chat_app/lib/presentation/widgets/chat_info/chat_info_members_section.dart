@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 
 /// Members section row for group chat info panel
@@ -47,8 +49,8 @@ class ChatInfoMembersSection extends BaseStatelessWidget {
                     .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
               ),
-              child: Icon(
-                Icons.people_outline,
+              child: AppIcon.svg(
+                AppIcons.group,
                 color: isDark ? AppColors.primaryDarkMode : AppColors.primary,
                 size: 20,
               ),
@@ -84,8 +86,8 @@ class ChatInfoMembersSection extends BaseStatelessWidget {
             ),
 
             // Arrow icon
-            Icon(
-              Icons.chevron_right,
+            AppIcon.svg(
+              AppIcons.chevronRight,
               color: isDark
                   ? AppColors.textSecondaryDarkMode
                   : AppColors.textSecondary,

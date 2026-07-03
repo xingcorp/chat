@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
@@ -328,7 +330,7 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
               pinned: true,
               expandedHeight: 0,
               leading: IconButton(
-                icon: Icon(Icons.close),
+                icon: AppIcon.svg(AppIcons.close),
                 onPressed: widget.onClose ?? () => Navigator.of(context).pop(),
               ),
               title: AppText(context.l10n.chatInfo),
@@ -438,7 +440,7 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.schedule),
+              leading: AppIcon.svg(AppIcons.statusPending),
               title: Text('1 hour'),
               onTap: () {
                 Navigator.pop(context);
@@ -446,7 +448,7 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.schedule),
+              leading: AppIcon.svg(AppIcons.statusPending),
               title: Text('8 hours'),
               onTap: () {
                 Navigator.pop(context);
@@ -454,7 +456,7 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.schedule),
+              leading: AppIcon.svg(AppIcons.statusPending),
               title: Text('1 day'),
               onTap: () {
                 Navigator.pop(context);
@@ -462,7 +464,7 @@ class _ChatInfoPanelState extends BaseState<ChatInfoPanel> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.block),
+              leading: AppIcon.svg(AppIcons.blocked),
               title: Text('Forever'),
               onTap: () {
                 Navigator.pop(context);

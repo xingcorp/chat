@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_reposi
 import 'package:flutter_chat_app/features/chat/presentation/blocs/message_search/message_search_bloc.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_html_content.dart';
 
 /// Panel for searching messages within a conversation.
@@ -175,8 +177,8 @@ class _MessageSearchPanelState extends BaseState<MessageSearchPanel> {
             ),
           ),
           IconButton(
-            icon: Icon(
-              Icons.close,
+            icon: AppIcon.svg(
+              AppIcons.close,
               color: isDark
                   ? AppColors.iconDarkMode
                   : AppColors.icon,
@@ -196,14 +198,18 @@ class _MessageSearchPanelState extends BaseState<MessageSearchPanel> {
         focusNode: _focusNode,
         decoration: InputDecoration(
           hintText: l10n.searchMessages,
-          prefixIcon: Icon(
-            Icons.search,
-            color: isDark ? AppColors.iconDarkMode : AppColors.icon,
+          prefixIcon: Padding(
+            padding: const EdgeInsets.all(AppDimens.paddingSmall),
+            child: AppIcon.svg(
+              AppIcons.search,
+              color: isDark ? AppColors.iconDarkMode : AppColors.icon,
+              size: 20,
+            ),
           ),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
-                  icon: Icon(
-                    Icons.clear,
+                  icon: AppIcon.svg(
+                    AppIcons.close,
                     color: isDark ? AppColors.iconDarkMode : AppColors.icon,
                   ),
                   onPressed: _onClearSearch,
@@ -265,8 +271,8 @@ class _MessageSearchPanelState extends BaseState<MessageSearchPanel> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.search,
+          AppIcon.svg(
+            AppIcons.search,
             size: 48,
             color: isDark ? AppColors.iconDarkMode : AppColors.icon,
           ),
@@ -289,8 +295,8 @@ class _MessageSearchPanelState extends BaseState<MessageSearchPanel> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.search_off,
+          AppIcon.svg(
+            AppIcons.search,
             size: 48,
             color: isDark ? AppColors.iconDarkMode : AppColors.icon,
           ),
@@ -323,8 +329,8 @@ class _MessageSearchPanelState extends BaseState<MessageSearchPanel> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isOffline ? Icons.wifi_off : Icons.error_outline,
+            AppIcon.svg(
+              isOffline ? AppIcons.wifiOff : AppIcons.errorOutline,
               size: 48,
               color: isDark ? AppColors.iconDarkMode : AppColors.icon,
             ),
@@ -350,7 +356,7 @@ class _MessageSearchPanelState extends BaseState<MessageSearchPanel> {
                       );
                 }
               },
-              icon: const Icon(Icons.refresh),
+              icon: AppIcon.svg(AppIcons.refresh),
               label: Text(l10n.retry),
             ),
           ],

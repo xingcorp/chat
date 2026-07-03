@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
@@ -58,7 +59,7 @@ class ChatInfoHeader extends BaseStatelessWidget {
               ),
               if (onClose != null)
                 AppIconButton(
-                  icon: Icons.close,
+                  icon: AppIcons.close,
                   onPressed: onClose,
                   tooltip: context.l10n.close,
                 ),

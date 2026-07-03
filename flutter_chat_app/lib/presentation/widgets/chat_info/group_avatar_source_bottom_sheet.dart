@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_bottom_sheet.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/lists/app_list_tile.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// Bottom sheet chọn nguồn ảnh đại diện nhóm.
@@ -31,16 +33,16 @@ class GroupAvatarSourceBottomSheet extends BaseBottomSheet {
       mainAxisSize: MainAxisSize.min,
       children: [
         AppListTile(
-          leading: Icon(
-            Icons.photo_library_outlined,
+          leading: AppIcon.svg(
+            AppIcons.photo,
             color: isDark ? AppColors.iconDarkMode : AppColors.icon,
           ),
           title: context.l10n.gallery,
           onTap: () => Navigator.of(context).pop(ImageSource.gallery),
         ),
         AppListTile(
-          leading: Icon(
-            Icons.camera_alt_outlined,
+          leading: AppIcon.svg(
+            AppIcons.cameraAlt,
             color: isDark ? AppColors.iconDarkMode : AppColors.icon,
           ),
           title: context.l10n.camera,

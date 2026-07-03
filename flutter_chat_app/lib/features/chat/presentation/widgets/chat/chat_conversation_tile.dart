@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/core/formatters/relative_time_formatter.dart';
 import 'package:flutter_chat_app/core/services/animation_service.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
@@ -80,8 +82,8 @@ class ChatConversationTile extends StatelessWidget {
                             ),
                             if (chat.isMuted) ...[
                               const SizedBox(width: 4),
-                              Icon(
-                                Icons.notifications_off_outlined,
+                              AppIcon.svg(
+                                AppIcons.mute,
                                 size: 14,
                                 color: secondaryTextColor,
                               ),

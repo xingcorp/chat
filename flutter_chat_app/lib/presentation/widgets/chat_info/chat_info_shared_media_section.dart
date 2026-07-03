@@ -2,9 +2,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/domain/entities/chat_info/shared_media.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 
 /// Shared media section widget for chat info panel
@@ -94,8 +96,8 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
                           ),
                         ),
                         const SizedBox(width: AppDimens.spaceXSmall),
-                        Icon(
-                          Icons.chevron_right,
+                        AppIcon.svg(
+                          AppIcons.chevronRight,
                           size: AppDimens.iconSizeSmall,
                           color: isDark
                               ? AppColors.primaryDarkMode
@@ -134,7 +136,7 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
               if (files.isNotEmpty)
                 _buildCompactRow(
                   context: context,
-                  icon: Icons.insert_drive_file_outlined,
+                  icon: AppIcons.file,
                   title: l10n.files,
                   count: files.length,
                   onTap: onViewAllFiles,
@@ -147,7 +149,7 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
                   const SizedBox(height: AppDimens.spaceSmall),
                 _buildCompactRow(
                   context: context,
-                  icon: Icons.link_outlined,
+                  icon: AppIcons.formatLink,
                   title: l10n.links,
                   count: links.length,
                   onTap: onViewAllLinks,
@@ -249,8 +251,8 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
                     borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
                   ),
                   child: const Center(
-                    child: Icon(
-                      Icons.play_circle_outline,
+                    child: AppIcon.svg(
+                      AppIcons.playCircle,
                       color: Colors.white,
                       size: AppDimens.iconSizeLarge,
                     ),
@@ -291,8 +293,8 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
     if (thumbnailUrl.isEmpty) {
       return Container(
         color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
-        child: Icon(
-          media.type == SharedMediaType.video ? Icons.videocam : Icons.image,
+        child: AppIcon.svg(
+          media.type == SharedMediaType.video ? AppIcons.video : AppIcons.photo,
           color: isDark
               ? AppColors.textSecondaryDarkMode
               : AppColors.textSecondary,
@@ -319,8 +321,8 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
       ),
       errorWidget: (context, url, error) => Container(
         color: isDark ? AppColors.surfaceDarkMode : AppColors.surface,
-        child: Icon(
-          Icons.broken_image,
+        child: AppIcon.svg(
+          AppIcons.photo,
           color: isDark
               ? AppColors.textSecondaryDarkMode
               : AppColors.textSecondary,
@@ -332,7 +334,7 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
   /// Build compact row for files/links
   Widget _buildCompactRow({
     required BuildContext context,
-    required IconData icon,
+    required String icon,
     required String title,
     required int count,
     required VoidCallback onTap,
@@ -361,7 +363,7 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
                     .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
               ),
-              child: Icon(
+              child: AppIcon.svg(
                 icon,
                 color: isDark ? AppColors.primaryDarkMode : AppColors.primary,
                 size: AppDimens.iconSizeSmall,
@@ -381,8 +383,8 @@ class ChatInfoSharedMediaSection extends BaseStatelessWidget {
             ),
 
             // Arrow
-            Icon(
-              Icons.chevron_right,
+            AppIcon.svg(
+              AppIcons.chevronRight,
               color: isDark
                   ? AppColors.textSecondaryDarkMode
                   : AppColors.textSecondary,

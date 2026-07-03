@@ -423,4 +423,7 @@ class AppIcons {
 
   /// Lightbulb / tip idea
   static const String lightbulb = '$_light/lightbulb.svg';
+
+  /// Mute / notifications off
+  static const String mute = '$_light/bell-slash.svg';
 }

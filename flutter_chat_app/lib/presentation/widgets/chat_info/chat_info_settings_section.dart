@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 
 /// Settings section widget for chat info panel
@@ -66,7 +68,7 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
                 // Leave group
                 _buildSettingRow(
                   context: context,
-                  icon: Icons.exit_to_app,
+                  icon: AppIcons.logout,
                   title: context.l10n.leaveGroup,
                   subtitle: context.l10n.leaveThisGroup,
                   onTap: isActionInProgress ? null : onLeaveGroup,
@@ -93,7 +95,7 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
 
   Widget _buildSettingRow({
     required BuildContext context,
-    required IconData icon,
+    required String icon,
     required String title,
     required String subtitle,
     required VoidCallback? onTap,
@@ -125,7 +127,7 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
                 color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
               ),
-              child: Icon(
+              child: AppIcon.svg(
                 icon,
                 color: iconColor,
                 size: 20,
@@ -162,8 +164,8 @@ class ChatInfoSettingsSection extends BaseStatelessWidget {
             ),
 
             // Arrow icon
-            Icon(
-              Icons.chevron_right,
+            AppIcon.svg(
+              AppIcons.chevronRight,
               color: isDark
                   ? AppColors.textSecondaryDarkMode
                   : AppColors.textSecondary,
