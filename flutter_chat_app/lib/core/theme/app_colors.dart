@@ -142,6 +142,84 @@ class AppColors {
     end: Alignment.bottomRight,
   );
 
+  // ═══════════════════════════════════════════════════════════
+  // Premium V2 UI Tokens
+  // ═══════════════════════════════════════════════════════════
+
+  // Gradient Bubble Colors (own messages — Navy gradient)
+  /// Own message bubble gradient start color
+  static const Color bubbleOwnGradientStart = Color(0xFF1A237E);
+
+  /// Own message bubble gradient end color
+  static const Color bubbleOwnGradientEnd = Color(0xFF3F51B5);
+
+  /// Own message bubble gradient
+  static const LinearGradient bubbleOwnGradient = LinearGradient(
+    colors: [bubbleOwnGradientStart, bubbleOwnGradientEnd],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  /// Other's message bubble background (light mode)
+  static const Color bubbleOtherLight = Color(0xFFF5F5F5);
+
+  /// Other's message bubble background (dark mode)
+  static const Color bubbleOtherDark = Color(0xFF2C2C2E);
+
+  /// Other's message bubble border (light mode)
+  static const Color bubbleOtherBorderLight = Color(0xFFE2E8F0);
+
+  /// Other's message bubble border (dark mode)
+  static const Color bubbleOtherBorderDark = Color(0xFF3A3A3C);
+
+  // Glassmorphism
+  /// Glass background (light mode) — 80% white opacity
+  static const Color glassBgLight = Color(0xCCFFFFFF);
+
+  /// Glass background (dark mode) — 80% dark opacity
+  static const Color glassBgDark = Color(0xCC1C1C1E);
+
+  // Mention Pill Tag Colors
+  /// Mention pill background (light mode)
+  static const Color mentionBgLight = Color(0xFFE3F2FD);
+
+  /// Mention pill text (light mode)
+  static const Color mentionTextLight = Color(0xFF1565C0);
+
+  /// Mention pill background (dark mode)
+  static const Color mentionBgDark = Color(0xFF1A237E);
+
+  /// Mention pill text (dark mode)
+  static const Color mentionTextDark = Color(0xFF90CAF9);
+
+  // Presence Indicator
+  /// Online presence glow color
+  static const Color presenceOnline = Color(0xFF4CAF50);
+
+  /// Online presence glow ring (semi-transparent)
+  static const Color presenceGlow = Color(0x664CAF50);
+
+  // Tab Pill
+  /// Tab pill background (active tab)
+  static const Color tabPillBg = Color(0x1A1976D2);
+
+  /// Tab pill background (dark mode)
+  static const Color tabPillBgDark = Color(0x332196F3);
+
+  // Message Status Icons
+  /// Message read status (double check blue)
+  static const Color messageReadStatus = Color(0xFF4FC3F7);
+
+  /// Message sent status (single check grey)
+  static const Color messageSentStatus = Color(0xFF9E9E9E);
+
+  // Bubble text on gradient
+  /// Text color on own bubble (white for gradient background)
+  static const Color bubbleOwnText = Color(0xFFFFFFFF);
+
+  /// Time text on own bubble (semi-transparent white)
+  static const Color bubbleOwnTimeText = Color(0xB3FFFFFF);
+
   // Helper methods
   /// Get message background color based on theme mode
   static Color getSentMessageBackgroundColor(bool isDarkMode) {

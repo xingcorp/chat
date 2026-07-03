@@ -1,6 +1,7 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:app_settings/app_settings.dart';
 import 'package:file_picker/file_picker.dart';
@@ -3258,19 +3259,34 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
 
   Widget _buildDateSeparator(String text) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppDimens.spaceSmall),
       child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.paddingMedium,
-              vertical: AppDimens.paddingXSmall),
-          decoration: BoxDecoration(
-              color: AppColors.textSecondary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppDimens.radiusSmall)),
-          child: AppText(text,
-              style: AppTextStyles.labelSmall
-                  .copyWith(color: AppColors.textSecondary)),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppDimens.tabPillRadius),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: AppDimens.glassBlurSigma,
+              sigmaY: AppDimens.glassBlurSigma,
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.paddingMedium,
+                  vertical: AppDimens.paddingXSmall),
+              decoration: BoxDecoration(
+                  color: isDarkMode
+                      ? AppColors.glassBgDark
+                      : AppColors.glassBgLight,
+                  borderRadius:
+                      BorderRadius.circular(AppDimens.tabPillRadius)),
+              child: AppText(text,
+                  style: AppTextStyles.labelSmall.copyWith(
+                      color: isDarkMode
+                          ? AppColors.textSecondaryDarkMode
+                          : AppColors.textSecondary)),
+            ),
+          ),
         ),
       ),
     );

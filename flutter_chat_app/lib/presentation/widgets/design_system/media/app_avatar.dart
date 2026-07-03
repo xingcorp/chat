@@ -50,6 +50,7 @@ class AppAvatar extends BaseStatelessWidget {
     this.status,
     this.shape = BoxShape.circle,
     this.backgroundColor,
+    this.backgroundGradient,
     this.foregroundColor,
     this.borderColor,
     this.borderWidth,
@@ -195,8 +196,29 @@ class AppAvatar extends BaseStatelessWidget {
   /// The border width.
   final double? borderWidth;
 
+  /// Optional gradient background (overrides backgroundColor for initials).
+  final Gradient? backgroundGradient;
+
   /// Called when the avatar is tapped.
   final VoidCallback? onTap;
+
+  /// Generate a deterministic gradient from a string (chat ID, name, etc.)
+  ///
+  /// Produces a unique, visually pleasant gradient based on the hash code
+  /// of the input string.
+  static LinearGradient gradientFromString(String input) {
+    final hash = input.hashCode;
+    final hue1 = (hash.abs() % 360).toDouble();
+    final hue2 = ((hash.abs() ~/ 360) % 360).toDouble();
+    return LinearGradient(
+      colors: [
+        HSLColor.fromAHSL(1.0, hue1, 0.6, 0.45).toColor(),
+        HSLColor.fromAHSL(1.0, hue2, 0.5, 0.55).toColor(),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
 
   @override
   Widget buildContent(BuildContext context) {
@@ -207,7 +229,10 @@ class AppAvatar extends BaseStatelessWidget {
       width: avatarSize,
       height: avatarSize,
       decoration: BoxDecoration(
-        color: backgroundColor ?? theme.colorScheme.primaryContainer,
+        gradient: backgroundGradient,
+        color: backgroundGradient == null
+            ? (backgroundColor ?? theme.colorScheme.primaryContainer)
+            : null,
         shape: shape,
         borderRadius: shape == BoxShape.rectangle
             ? BorderRadius.circular(AppDimens.radiusSmall)

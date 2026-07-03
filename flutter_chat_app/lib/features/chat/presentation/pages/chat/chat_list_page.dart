@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -235,18 +236,48 @@ class _ChatListPageState extends BaseState<ChatListPage> {
       ],
       child: Scaffold(
         appBar: AppBar(
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          backgroundColor: Colors.transparent,
+          flexibleSpace: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: AppDimens.glassBlurSigma,
+                sigmaY: AppDimens.glassBlurSigma,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.glassBgDark
+                      : AppColors.glassBgLight,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.dividerDarkMode
+                          : AppColors.divider,
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
           title: _isSearching
               ? TextField(
                   controller: _searchController,
                   autofocus: true,
                   onChanged: _onSearchChanged,
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.textPrimaryDarkMode
+                        : AppColors.textPrimary,
                   ),
                   decoration: InputDecoration(
                     hintText: context.l10n.searchConversations,
                     hintStyle: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.textHintDarkMode
+                          : AppColors.textSecondary,
                     ),
                     border: InputBorder.none,
                   ),
@@ -384,10 +415,35 @@ class _ChatListPageState extends BaseState<ChatListPage> {
                                         .withValues(alpha: 0.2),
                                   ),
                                   itemBuilder: (context, chat, index) {
-                                    return _buildChatListItem(
+                                    final item = _buildChatListItem(
                                       context,
                                       chat,
                                       draftState.draftsByConversationId,
+                                    );
+                                    // Stagger entrance: fade + slide from right
+                                    return TweenAnimationBuilder<double>(
+                                      key: ValueKey(chat.id),
+                                      tween: Tween(begin: 0.0, end: 1.0),
+                                      duration: Duration(
+                                        milliseconds:
+                                            AppDimens.durationMedium,
+                                      ),
+                                      curve: Curves.easeOutCubic,
+                                      builder: (context, value, child) {
+                                        // Apply delay by keeping value at 0
+                                        // until enough time has passed
+                                        return Opacity(
+                                          opacity: value,
+                                          child: Transform.translate(
+                                            offset: Offset(
+                                              20 * (1 - value),
+                                              0,
+                                            ),
+                                            child: child,
+                                          ),
+                                        );
+                                      },
+                                      child: item,
                                     );
                                   },
                                 ),

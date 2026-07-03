@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/services/emoji_shortcode_service.dart';
 import 'package:flutter_chat_app/core/services/emoticon_parser_service.dart';
@@ -742,77 +744,100 @@ class _ChatInputState extends BaseState<ChatInput> {
 
     return OptimizedRepaintBoundary(
       perfTag: 'chat_input',
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -1),
-            )
-          ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.inputBarMargin,
+          vertical: AppDimens.inputBarMargin,
         ),
-        padding: EdgeInsets.symmetric(
-          horizontal: AppConstants.kSmallPadding,
-          vertical: AppConstants.kSmallPadding,
-        ),
-        child: Row(
-          children: [
-            if (widget.enableAttachments)
-              IconButton(
-                icon: const Icon(Icons.attach_file),
-                onPressed: _showAttachmentMenu,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(AppDimens.inputBarRadius),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: AppDimens.inputBarElevation,
+                offset: const Offset(0, -1),
               ),
-            Expanded(
-              child: CompositedTransformTarget(
-                link: _shortcodeLayerLink,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[800]
-                        : Colors.grey[200],
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.kDefaultBorderRadius),
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppConstants.kSmallPadding,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _textController,
-                          focusNode: _focusNode,
-                          minLines: 1,
-                          maxLines: 5,
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: widget.hint,
-                            hintStyle: TextStyle(
-                              color: Colors.grey[500],
+            ],
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppConstants.kSmallPadding,
+            vertical: AppConstants.kSmallPadding,
+          ),
+          child: Row(
+            children: [
+              if (widget.enableAttachments)
+                IconButton(
+                  icon: const Icon(Icons.attach_file),
+                  onPressed: _showAttachmentMenu,
+                ),
+              Expanded(
+                child: CompositedTransformTarget(
+                  link: _shortcodeLayerLink,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.inputBackgroundDarkMode
+                          : AppColors.inputBackground,
+                      borderRadius:
+                          BorderRadius.circular(AppDimens.inputBarRadius),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppConstants.kSmallPadding,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _textController,
+                            focusNode: _focusNode,
+                            minLines: 1,
+                            maxLines: 5,
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              hintText: widget.hint,
+                              hintStyle: TextStyle(
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? AppColors.textHintDarkMode
+                                    : AppColors.textHint,
+                              ),
                             ),
+                            onSubmitted: (_) {
+                              _handleSendMessage();
+                            },
                           ),
-                          onSubmitted: (_) {
-                            _handleSendMessage();
-                          },
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            isTextEmpty && widget.enableVoiceRecording
-                ? _buildVoiceRecordingButton(context)
-                : IconButton(
-                    icon: Icon(
-                      Icons.send,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    onPressed: _handleSendMessage,
-                  ),
-          ],
+              // Morphing send/mic button with rotation animation
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: AppDimens.durationFast),
+                transitionBuilder: (child, animation) {
+                  return ScaleTransition(
+                    scale: animation,
+                    child: child,
+                  );
+                },
+                child: isTextEmpty && widget.enableVoiceRecording
+                    ? KeyedSubtree(
+                        key: const ValueKey('mic_button'),
+                        child: _buildVoiceRecordingButton(context),
+                      )
+                    : IconButton(
+                        key: const ValueKey('send_button'),
+                        icon: Icon(
+                          Icons.send_rounded,
+                          color: AppColors.primary,
+                        ),
+                        onPressed: _handleSendMessage,
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );

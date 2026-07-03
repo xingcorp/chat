@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/domain/entities/conversation_type_filter.dart';
@@ -6,8 +8,8 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// Tab bar for filtering conversations by type (All / Direct / Group).
 ///
-/// Zalo-style TabBar with underline indicator, replaces previous chip buttons.
-class ConversationTypeTabBar extends StatelessWidget {
+/// Sliding pill-style tab bar with animated background indicator.
+class ConversationTypeTabBar extends BaseStatelessWidget {
   const ConversationTypeTabBar({
     super.key,
     required this.activeFilter,
@@ -18,7 +20,7 @@ class ConversationTypeTabBar extends StatelessWidget {
   final ValueChanged<ConversationTypeFilter> onFilterChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildContent(BuildContext context) {
     final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -28,23 +30,17 @@ class ConversationTypeTabBar extends StatelessWidget {
       (ConversationTypeFilter.group, l10n.groupConversations),
     ];
 
-    final activeIndex = filters.indexWhere((f) => f.$1 == activeFilter);
-
-    return DefaultTabController(
-      length: filters.length,
-      initialIndex: activeIndex >= 0 ? activeIndex : 0,
-      child: _TabBarContent(
-        filters: filters,
-        activeFilter: activeFilter,
-        onFilterChanged: onFilterChanged,
-        isDark: isDark,
-      ),
+    return _PillTabBarContent(
+      filters: filters,
+      activeFilter: activeFilter,
+      onFilterChanged: onFilterChanged,
+      isDark: isDark,
     );
   }
 }
 
-class _TabBarContent extends StatefulWidget {
-  const _TabBarContent({
+class _PillTabBarContent extends BaseStatefulWidget {
+  const _PillTabBarContent({
     required this.filters,
     required this.activeFilter,
     required this.onFilterChanged,
@@ -57,78 +53,137 @@ class _TabBarContent extends StatefulWidget {
   final bool isDark;
 
   @override
-  State<_TabBarContent> createState() => _TabBarContentState();
+  State<_PillTabBarContent> createState() => _PillTabBarContentState();
 }
 
-class _TabBarContentState extends State<_TabBarContent> {
-  late TabController _tabController;
+class _PillTabBarContentState extends BaseState<_PillTabBarContent> {
+  late int _activeIndex;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _tabController = DefaultTabController.of(context);
-    _tabController.addListener(_onTabChanged);
+  void initState() {
+    super.initState();
+    final index = widget.filters.indexWhere(
+      (f) => f.$1 == widget.activeFilter,
+    );
+    _activeIndex = index >= 0 ? index : 0;
   }
 
   @override
-  void didUpdateWidget(covariant _TabBarContent oldWidget) {
+  void didUpdateWidget(covariant _PillTabBarContent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Sync tab controller with external activeFilter changes
-    final targetIndex = widget.filters.indexWhere((f) => f.$1 == widget.activeFilter);
-    if (targetIndex >= 0 && _tabController.index != targetIndex) {
-      _tabController.animateTo(targetIndex);
+    // Sync internal index with external activeFilter changes
+    final targetIndex = widget.filters.indexWhere(
+      (f) => f.$1 == widget.activeFilter,
+    );
+    if (targetIndex >= 0 && _activeIndex != targetIndex) {
+      safeSetState(() {
+        _activeIndex = targetIndex;
+      });
     }
   }
 
-  void _onTabChanged() {
-    if (!_tabController.indexIsChanging) {
-      final selected = widget.filters[_tabController.index].$1;
-      if (selected != widget.activeFilter) {
-        widget.onFilterChanged(selected);
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _tabController.removeListener(_onTabChanged);
-    super.dispose();
+  void _onTabTapped(int index) {
+    if (index == _activeIndex) return;
+    safeSetState(() {
+      _activeIndex = index;
+    });
+    widget.onFilterChanged(widget.filters[index].$1);
   }
 
   @override
   Widget build(BuildContext context) {
+    final tabCount = widget.filters.length;
+
     return Container(
       decoration: BoxDecoration(
-        color: widget.isDark ? AppColors.surfaceDarkMode : AppColors.surface,
+        color: widget.isDark
+            ? AppColors.surfaceDarkMode
+            : AppColors.surface,
         border: Border(
           bottom: BorderSide(
-            color: widget.isDark ? AppColors.dividerDarkMode : AppColors.divider,
+            color: widget.isDark
+                ? AppColors.dividerDarkMode
+                : AppColors.divider,
             width: 0.5,
           ),
         ),
       ),
-      child: TabBar(
-        controller: _tabController,
-        labelColor: AppColors.primary,
-        unselectedLabelColor: widget.isDark
-            ? AppColors.textSecondaryDarkMode
-            : AppColors.textSecondary,
-        labelStyle: AppTextStyles.labelLarge.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: AppTextStyles.labelLarge.copyWith(
-          fontWeight: FontWeight.w400,
-        ),
-        indicatorColor: AppColors.primary,
-        indicatorWeight: 2.5,
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerHeight: 0,
-        labelPadding: EdgeInsets.zero,
-        tabs: widget.filters.map((f) {
-          return Tab(
-            text: f.$2,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.paddingSmall,
+        vertical: AppDimens.paddingSmall,
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tabWidth = constraints.maxWidth / tabCount;
+
+          return SizedBox(
+            height: AppDimens.tabPillHeight,
+            child: Stack(
+              children: [
+                // Animated pill background
+                AnimatedPositioned(
+                  duration: const Duration(
+                    milliseconds: AppDimens.durationMedium,
+                  ),
+                  curve: Curves.easeInOut,
+                  left: tabWidth * _activeIndex,
+                  top: 0,
+                  bottom: 0,
+                  width: tabWidth,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: widget.isDark
+                          ? AppColors.tabPillBgDark
+                          : AppColors.tabPillBg,
+                      borderRadius: BorderRadius.circular(
+                        AppDimens.tabPillRadius,
+                      ),
+                    ),
+                  ),
+                ),
+                // Tab labels row
+                Row(
+                  children: List.generate(tabCount, (index) {
+                    final isActive = index == _activeIndex;
+                    final label = widget.filters[index].$2;
+
+                    return Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _onTabTapped(index),
+                        child: SizedBox(
+                          height: AppDimens.tabPillHeight,
+                          child: Center(
+                            child: AnimatedDefaultTextStyle(
+                              duration: const Duration(
+                                milliseconds: AppDimens.durationMedium,
+                              ),
+                              style: AppTextStyles.labelLarge.copyWith(
+                                color: isActive
+                                    ? AppColors.primary
+                                    : widget.isDark
+                                        ? AppColors.textSecondaryDarkMode
+                                        : AppColors.textSecondary,
+                                fontWeight: isActive
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
+                              child: Text(
+                                label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
           );
-        }).toList(),
+        },
       ),
     );
   }

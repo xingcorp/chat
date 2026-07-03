@@ -18,6 +18,7 @@ import 'package:flutter_chat_app/features/chat/domain/repositories/i_chat_reposi
 import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/audio_player_widget.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/bubble_shape.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/expandable_rich_text.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/rich_text_bubble.dart';
@@ -887,6 +888,18 @@ class _MessageItemState extends State<MessageItem>
 
     final isOnPrimaryBackground = isFromCurrentUser && !hasOnlyMedia;
 
+    // ── BubbleShape grouping derived from BubblePosition ──
+    final bubblePosition = widget.uiState.position;
+    final isFirstInGroup = bubblePosition == BubblePosition.first ||
+        bubblePosition == BubblePosition.standalone;
+    final isLastInGroup = bubblePosition == BubblePosition.last ||
+        bubblePosition == BubblePosition.standalone;
+
+    // Use BubbleShape for visual decoration — skip flat color for normal
+    // text bubbles. Media-only and file-only messages keep their own colours
+    // because BubbleShape is not used for them.
+    final useBubbleShape = !hasOnlyMedia && !hasOnlyFiles;
+
     final bubbleColor = hasOnlyFiles
         ? (isFromCurrentUser
             ? theme.colorScheme.primary
@@ -900,7 +913,7 @@ class _MessageItemState extends State<MessageItem>
     final textColor = hasOnlyFiles
         ? (theme.textTheme.bodyMedium?.color ?? Colors.black)
         : (isFromCurrentUser
-            ? theme.colorScheme.onPrimary
+            ? AppColors.bubbleOwnText
             : theme.textTheme.bodyMedium?.color ?? Colors.black);
 
     // Determine if we should use audio/video player instead of media gallery
@@ -917,17 +930,8 @@ class _MessageItemState extends State<MessageItem>
         renderableAttachments.length == 1 &&
         !hasUploadingAttachment;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxWidth: bubbleMaxWidth(),
-      ),
-      decoration: BoxDecoration(
-        color: widget.uiState.isHighlighted
-            ? bubbleColor.withValues(alpha: 0.7)
-            : bubbleColor,
-        borderRadius: _getBubbleBorderRadius(isFromCurrentUser),
-      ),
-      child: ClipRRect(
+    // Build the inner column first, then conditionally wrap with BubbleShape.
+    Widget bubbleContent = ClipRRect(
         borderRadius: _getBubbleBorderRadius(isFromCurrentUser),
         child: Column(
           crossAxisAlignment: messageAlignment,
@@ -1151,7 +1155,35 @@ class _MessageItemState extends State<MessageItem>
               ),
           ],
         ),
+    );
+
+    // Wrap with BubbleShape for text/mixed bubbles; media-only and file-only
+    // keep the legacy Container+BoxDecoration path.
+    if (useBubbleShape) {
+      return Container(
+        constraints: BoxConstraints(
+          maxWidth: bubbleMaxWidth(),
+        ),
+        child: BubbleShape(
+          isOwn: isFromCurrentUser,
+          isFirstInGroup: isFirstInGroup,
+          isLastInGroup: isLastInGroup,
+          child: bubbleContent,
+        ),
+      );
+    }
+
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: bubbleMaxWidth(),
       ),
+      decoration: BoxDecoration(
+        color: widget.uiState.isHighlighted
+            ? bubbleColor.withValues(alpha: 0.7)
+            : bubbleColor,
+        borderRadius: _getBubbleBorderRadius(isFromCurrentUser),
+      ),
+      child: bubbleContent,
     );
   }
 
@@ -1159,6 +1191,15 @@ class _MessageItemState extends State<MessageItem>
     if (!widget.uiState.showTimestamp && !widget.uiState.isEdited) {
       return const SizedBox.shrink();
     }
+
+    // On own-message gradient, use the dedicated time-text token for
+    // better contrast; for others keep the passed-in textColor.
+    final metaColor = widget.uiState.isFromCurrentUser
+        ? AppColors.bubbleOwnTimeText
+        : textColor.withOpacity(0.7);
+    final editedColor = widget.uiState.isFromCurrentUser
+        ? AppColors.bubbleOwnTimeText
+        : textColor.withOpacity(0.5);
 
     return RepaintBoundary(
       child: Row(
@@ -1168,7 +1209,7 @@ class _MessageItemState extends State<MessageItem>
             Text(
               '${context.l10n.edited}  ',
               style: TextStyle(
-                color: textColor.withOpacity(0.5),
+                color: editedColor,
                 fontSize: 10.0,
                 fontStyle: FontStyle.italic,
               ),
@@ -1177,7 +1218,7 @@ class _MessageItemState extends State<MessageItem>
             Text(
               widget.uiState.formattedTime,
               style: TextStyle(
-                color: textColor.withOpacity(0.7),
+                color: metaColor,
                 fontSize: 10.0,
               ),
             ),

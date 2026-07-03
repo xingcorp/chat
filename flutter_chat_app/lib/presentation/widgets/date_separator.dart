@@ -1,57 +1,67 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter_chat_app/core/services/date_formatter_service.dart';
+import 'dart:ui';
 
-/// Widget hiển thị ngày phân cách giữa các nhóm tin nhắn
-class DateSeparator extends StatelessWidget {
-  /// Ngày cần hiển thị
+import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/services/date_formatter_service.dart';
+import 'package:flutter_chat_app/core/theme/app_colors.dart';
+import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
+
+/// Glassmorphism date separator that floats over the message list as a
+/// frosted-glass pill, showing the date boundary between message groups.
+class DateSeparator extends BaseStatelessWidget {
+  /// The date to display
   final DateTime date;
-  
-  /// Chiều rộng tối đa của widget
+
+  /// Optional maximum width constraint
   final double? maxWidth;
 
   const DateSeparator({
-    Key? key,
+    super.key,
     required this.date,
     this.maxWidth,
-  }) : super(key: key);
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildContent(BuildContext context) {
     final formattedDate = DateFormatterService.formatDateForGrouping(date);
-    
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      constraints: maxWidth != null 
-          ? BoxConstraints(maxWidth: maxWidth!) 
-          : null,
-      margin: EdgeInsets.symmetric(vertical: 16.0),
+      constraints:
+          maxWidth != null ? BoxConstraints(maxWidth: maxWidth ?? 0) : null,
+      margin: const EdgeInsets.symmetric(vertical: AppDimens.spaceSmall),
       child: Center(
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: 16.0,
-            vertical: 6.0,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(16.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppDimens.tabPillRadius),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: AppDimens.glassBlurSigma,
+              sigmaY: AppDimens.glassBlurSigma,
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.paddingMedium,
+                vertical: AppDimens.paddingXSmall,
               ),
-            ],
-          ),
-          child: Text(
-            formattedDate,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              decoration: BoxDecoration(
+                color: isDarkMode
+                    ? AppColors.glassBgDark
+                    : AppColors.glassBgLight,
+                borderRadius: BorderRadius.circular(AppDimens.tabPillRadius),
+              ),
+              child: Text(
+                formattedDate,
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: isDarkMode
+                      ? AppColors.textSecondaryDarkMode
+                      : AppColors.textSecondary,
+                ),
+              ),
             ),
           ),
         ),
       ),
     );
   }
-} 
+}

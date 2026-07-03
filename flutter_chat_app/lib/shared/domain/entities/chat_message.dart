@@ -743,8 +743,12 @@ class ChatMessage {
   /// Tên người gửi
   String get senderName => sender.name;
   
+  /// Kiểm tra tin nhắn có phải từ người dùng được chỉ định
+  bool isFromUser(String currentUserId) => sender.id == currentUserId;
+
   /// Kiểm tra tin nhắn có phải từ người dùng hiện tại
-  bool get isFromCurrentUser => sender.id == 'current_user_id'; // Replace with actual logic
+  @Deprecated('Use isFromUser(currentUserId) instead')
+  bool get isFromCurrentUser => sender.id == 'current_user_id';
   
   /// Kiểm tra tin nhắn có chứa media
   bool get hasMedia => contentType == ContentType.image || 
@@ -787,6 +791,10 @@ class ChatMessage {
   /// Backend hard-delete nên getter này luôn return false với data từ server.
   bool get isDeleted => deletedAt != null;
 
+  /// Kiểm tra tin nhắn đã được đọc bởi người dùng được chỉ định
+  bool isReadByUser(String currentUserId) => readBy.contains(currentUserId);
+
   /// Kiểm tra tin nhắn đã được đọc bởi người dùng hiện tại
-  bool get isReadByCurrentUser => readBy.contains('current_user_id'); // Replace with actual logic
+  @Deprecated('Use isReadByUser(currentUserId) instead')
+  bool get isReadByCurrentUser => readBy.contains('current_user_id');
 }

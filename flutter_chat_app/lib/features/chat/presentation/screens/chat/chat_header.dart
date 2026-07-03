@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
@@ -47,6 +50,32 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
     final directPresence = _resolveDirectChatPresence();
 
     return AppBar(
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      backgroundColor: Colors.transparent,
+      flexibleSpace: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: AppDimens.glassBlurSigma,
+            sigmaY: AppDimens.glassBlurSigma,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.brightness == Brightness.dark
+                  ? AppColors.glassBgDark
+                  : AppColors.glassBgLight,
+              border: Border(
+                bottom: BorderSide(
+                  color: theme.brightness == Brightness.dark
+                      ? AppColors.dividerDarkMode
+                      : AppColors.divider,
+                  width: 0.5,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
       automaticallyImplyLeading: false,
       titleSpacing: showBackButton ? 0 : 8,
       leading: showBackButton
@@ -121,9 +150,12 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
       clipBehavior: Clip.none,
       children: <Widget>[
         avatar,
+        // The PresenceIndicator bounding box is larger than the visible
+        // dot due to the pulse ring (presencePulseMaxScale = 2.0).
+        // Offset compensates: -(dotSize + borderWidth * 2) * (scale - 1) / 2
         Positioned(
-          right: 0,
-          bottom: 0,
+          right: -9,
+          bottom: -9,
           child: LivePresenceIndicator(
             userId: directPresence.userId,
             showLabel: false,

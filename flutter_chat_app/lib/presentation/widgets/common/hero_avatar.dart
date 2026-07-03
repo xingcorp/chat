@@ -108,9 +108,11 @@ class AppHeroAvatar extends StatelessWidget {
             borderColor: hasBorder ? resolvedBorderColor : null,
             borderWidth: hasBorder ? borderWidth : null,
           )
-        : AppAvatar.initials(
-            name: (displayName?.trim().isNotEmpty ?? false) ? displayName!.trim() : '?',
+        : AppAvatar(
+            initials: (displayName?.trim().isNotEmpty ?? false) ? displayName!.trim() : '?',
             size: size,
+            backgroundGradient: AppAvatar.gradientFromString(id),
+            foregroundColor: Colors.white,
             borderColor: hasBorder ? resolvedBorderColor : null,
             borderWidth: hasBorder ? borderWidth : null,
           );

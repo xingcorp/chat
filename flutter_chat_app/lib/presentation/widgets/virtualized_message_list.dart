@@ -27,6 +27,7 @@ import 'package:logger/logger.dart';
 /// **Architecture**: Optimized widget with enterprise memory management
 class VirtualizedMessageList extends StatefulWidget {
   final List<ChatMessage> messages;
+  final String currentUserId;
   final ScrollController? scrollController;
   final Function(ChatMessage)? onMessageTap;
   final Function(ChatMessage)? onMessageLongPress;
@@ -40,6 +41,7 @@ class VirtualizedMessageList extends StatefulWidget {
   const VirtualizedMessageList({
     Key? key,
     required this.messages,
+    required this.currentUserId,
     this.scrollController,
     this.onMessageTap,
     this.onMessageLongPress,
@@ -291,7 +293,7 @@ class _VirtualizedMessageListState extends State<VirtualizedMessageList>
       },
       child: MessageItem(
         uiState: MessageUIState.fromMessage(message).copyWith(
-          isFromCurrentUser: message.isFromCurrentUser,
+          isFromCurrentUser: message.isFromUser(widget.currentUserId),
         ),
         onTap: widget.onMessageTap != null
             ? () => widget.onMessageTap!(message)

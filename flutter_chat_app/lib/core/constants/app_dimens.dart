@@ -389,6 +389,65 @@ class AppDimens {
   /// Page transition: 350ms
   static const int durationPageTransition = 350;
 
+  /// Stagger delay per item: 50ms
+  static const int durationStagger = 50;
+
+  // ============================================================================
+  // PREMIUM V2 — BUBBLE SHAPE
+  // ============================================================================
+
+  /// Bubble large border radius (regular corners)
+  static const double bubbleRadiusLarge = 18.0;
+
+  /// Bubble medium border radius (grouped message corners)
+  static const double bubbleRadiusMedium = 12.0;
+
+  /// Bubble small border radius (tail corner)
+  static const double bubbleRadiusSmall = 4.0;
+
+  // ============================================================================
+  // PREMIUM V2 — GLASSMORPHISM
+  // ============================================================================
+
+  /// Blur sigma for glassmorphism effect
+  static const double glassBlurSigma = 15.0;
+
+  // ============================================================================
+  // PREMIUM V2 — FLOATING INPUT BAR
+  // ============================================================================
+
+  /// Input bar floating margin from edges
+  static const double inputBarMargin = 8.0;
+
+  /// Input bar border radius (fully rounded)
+  static const double inputBarRadius = 24.0;
+
+  /// Input bar shadow elevation
+  static const double inputBarElevation = 8.0;
+
+  // ============================================================================
+  // PREMIUM V2 — PRESENCE INDICATOR
+  // ============================================================================
+
+  /// Presence dot size (online indicator)
+  static const double presenceDotSize = 12.0;
+
+  /// Presence dot border width (white outline)
+  static const double presenceDotBorder = 2.0;
+
+  /// Presence pulse max scale
+  static const double presencePulseMaxScale = 2.0;
+
+  // ============================================================================
+  // PREMIUM V2 — TAB PILL
+  // ============================================================================
+
+  /// Tab pill height
+  static const double tabPillHeight = 36.0;
+
+  /// Tab pill border radius
+  static const double tabPillRadius = 20.0;
+
   // ============================================================================
   // HELPER METHODS
   // ============================================================================
