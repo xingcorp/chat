@@ -104,9 +104,6 @@ class _LinkPreviewCardState extends State<LinkPreviewCard> {
 
     if (!hasTitle && !hasDescription) return const SizedBox.shrink();
 
-    final bgColor = widget.isFromCurrentUser
-        ? Colors.white.withValues(alpha: 0.12)
-        : theme.colorScheme.surfaceContainerHighest;
     final textColor = widget.isFromCurrentUser
         ? Colors.white
         : theme.textTheme.bodyMedium?.color ?? Colors.black87;
@@ -121,12 +118,22 @@ class _LinkPreviewCardState extends State<LinkPreviewCard> {
       child: Container(
         margin: const EdgeInsets.only(top: 8),
         decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: widget.isFromCurrentUser
-                ? Colors.white.withValues(alpha: 0.2)
-                : theme.dividerColor,
+          color: widget.isFromCurrentUser
+              ? Colors.white.withOpacity(0.08)
+              : theme.colorScheme.primary.withOpacity(0.06),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(4),
+            bottomLeft: Radius.circular(4),
+            topRight: Radius.circular(12),
+            bottomRight: Radius.circular(12),
+          ),
+          border: Border(
+            left: BorderSide(
+              color: widget.isFromCurrentUser
+                  ? Colors.white.withOpacity(0.6)
+                  : theme.colorScheme.primary,
+              width: 3.5,
+            ),
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -142,7 +149,7 @@ class _LinkPreviewCardState extends State<LinkPreviewCard> {
                 fit: BoxFit.cover,
               ),
             Padding(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -154,28 +161,31 @@ class _LinkPreviewCardState extends State<LinkPreviewCard> {
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: textColor,
+                        height: 1.3,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   if (hasDescription) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 5),
                     Text(
                       meta.desc!,
                       style: TextStyle(
-                        fontSize: 11,
-                        color: textColor.withValues(alpha: 0.7),
+                        fontSize: 11.5,
+                        color: textColor.withOpacity(0.75),
+                        height: 1.35,
                       ),
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
                   Text(
                     _extractDomain(widget.url),
                     style: TextStyle(
                       fontSize: 10,
-                      color: textColor.withValues(alpha: 0.5),
+                      fontWeight: FontWeight.w500,
+                      color: textColor.withOpacity(0.5),
                     ),
                   ),
                 ],

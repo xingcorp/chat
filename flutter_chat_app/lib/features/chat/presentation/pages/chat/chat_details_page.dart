@@ -26,6 +26,7 @@ import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_reaction_emoji.dart';
 import 'package:flutter_chat_app/data/datasources/clipboard/clipboard_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/domain/entities/pending_file.dart';
@@ -3315,14 +3316,29 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
   }
 
   Widget _buildSystemEvent(MessageUIState uiState) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(
           vertical: AppDimens.spaceSmall, horizontal: AppDimens.paddingMedium),
       child: Center(
-          child: AppText(uiState.systemEvent?.formattedText ?? uiState.content,
-              style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textSecondary, fontStyle: FontStyle.italic),
-              textAlign: TextAlign.center)),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: isDark 
+                ? Colors.white.withOpacity(0.08) 
+                : Colors.black.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: AppText(
+            uiState.systemEvent?.formattedText ?? uiState.content,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
     );
   }
 
@@ -3373,44 +3389,64 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
   void _showMessageOptions(
       BuildContext context, ChatMessage message, bool isCurrentUser) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) => SafeArea(
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const SizedBox(height: 8),
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: (isDark ? Colors.white : Colors.black).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               Padding(
-                padding: const EdgeInsets.all(AppDimens.paddingSmall),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Expanded(
-                      child: Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [
-                          for (final emoji
-                              in (_messageBloc.state is MessagesLoaded)
-                                  ? (_messageBloc.state as MessagesLoaded)
-                                      .frequentReactions
-                                  : const <String>[
-                                      '👍',
-                                      '❤️',
-                                      '😂',
-                                      '😮',
-                                      '😢',
-                                      '😡'
-                                    ])
-                            _buildReactionItem(ctx, emoji, () {
-                              Navigator.pop(ctx);
-                              _messageBloc.add(ToggleReaction(
-                                  messageId: message.id, emojiCode: emoji));
-                            }),
-                        ],
+                      child: Center(
+                        child: Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            for (final emoji
+                                in (_messageBloc.state is MessagesLoaded)
+                                    ? (_messageBloc.state as MessagesLoaded)
+                                        .frequentReactions
+                                    : const <String>[
+                                        '👍',
+                                        '❤️',
+                                        '😂',
+                                        '😮',
+                                        '😢'
+                                      ])
+                              _buildReactionItem(ctx, emoji, () {
+                                Navigator.pop(ctx);
+                                _messageBloc.add(ToggleReaction(
+                                    messageId: message.id, emojiCode: emoji));
+                              }),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     _buildAddReactionItem(ctx, () {
                       Navigator.pop(ctx);
                       EmojiPickerBottomSheet.show(this.context,
@@ -3421,7 +3457,12 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                   ],
                 ),
               ),
-              const Divider(height: 1),
+              const SizedBox(height: 16),
+              Divider(
+                height: 1,
+                thickness: 0.5,
+                color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+              ),
               if (message.contentType == ContentType.text)
                 _buildActionTile(AppIcons.copy, ctx.l10n.copyMessage, () {
                   Navigator.pop(ctx);
@@ -3466,34 +3507,38 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
   Widget _buildReactionItem(
       BuildContext context, String emoji, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       borderRadius: BorderRadius.circular(999),
       onTap: onTap,
       child: Container(
-        width: 40,
-        height: 40,
+        width: 44,
+        height: 44,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border.all(color: Theme.of(context).dividerColor),
+          color: isDark 
+              ? Colors.white.withOpacity(0.08) 
+              : Colors.black.withOpacity(0.04),
           borderRadius: BorderRadius.circular(999),
         ),
-        child: Text(emoji, style: const TextStyle(fontSize: 20)),
+        child: AppReactionEmoji(emoji: emoji, size: 26),
       ),
     );
   }
 
   Widget _buildAddReactionItem(BuildContext context, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       borderRadius: BorderRadius.circular(999),
       onTap: onTap,
       child: Container(
-        width: 40,
-        height: 40,
+        width: 44,
+        height: 44,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border.all(color: Theme.of(context).dividerColor),
+          color: isDark 
+              ? Colors.white.withOpacity(0.08) 
+              : Colors.black.withOpacity(0.04),
           borderRadius: BorderRadius.circular(999),
         ),
         child:
@@ -3504,8 +3549,18 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
   Widget _buildActionTile(String icon, String title, VoidCallback onTap) {
     return ListTile(
-      leading: AppIcon.svg(icon),
-      title: AppText(title),
+      leading: AppIcon.svg(
+        icon, 
+        size: 20, 
+        color: Theme.of(context).iconTheme.color?.withOpacity(0.8)
+      ),
+      title: AppText(
+        title,
+        style: AppTextStyles.bodyMedium.copyWith(
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 2),
       onTap: onTap,
     );
   }

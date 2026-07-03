@@ -506,6 +506,7 @@ class _MessageItemState extends State<MessageItem>
                 // Selection checkbox
                 if (widget.isSelectionMode)
                   Padding(
+                    key: const ValueKey('msg_item_selection_checkbox'),
                     padding: const EdgeInsets.only(right: 8.0),
                     child: Checkbox(
                       value: widget.isSelected,
@@ -519,16 +520,21 @@ class _MessageItemState extends State<MessageItem>
                 // Avatar for messages from others
                 if (!isCurrentUser && widget.uiState.showAvatar)
                   RepaintBoundary(
+                    key: const ValueKey('msg_item_avatar_boundary'),
                     child: _buildAvatar(
                       context,
                       size: messageAvatarSize,
                     ),
                   )
                 else if (!isCurrentUser && !widget.isSelectionMode)
-                  SizedBox(width: messageAvatarSlotWidth),
+                  SizedBox(
+                    key: const ValueKey('msg_item_avatar_spacer'),
+                    width: messageAvatarSlotWidth,
+                  ),
 
                 // Sender name + message bubble aligned to the same start as bubble
                 Flexible(
+                  key: const ValueKey('msg_item_flexible'),
                   child: Column(
                     crossAxisAlignment: isCurrentUser
                         ? CrossAxisAlignment.end

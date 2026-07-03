@@ -22,7 +22,7 @@ class FrequentReactionService {
   final GraphQLClientWrapper _graphqlClient;
   final AppLogger _logger;
 
-  static const List<String> _defaultReactions = ['👍', '❤️', '😂', '😮', '😢', '😡'];
+  static const List<String> _defaultReactions = ['👍', '❤️', '😂', '😮', '😢'];
   static const Duration _cacheTtl = Duration(minutes: 5);
   static const Duration _refetchDebounce = Duration(seconds: 10);
 
@@ -55,9 +55,14 @@ class FrequentReactionService {
       );
 
       final rawList = data['chatReactionFrequentlyUsed'];
-      final reactions = (rawList is List && rawList.isNotEmpty)
-          ? rawList.cast<String>()
-          : _defaultReactions;
+      final List<String> reactions;
+      if (rawList is List && rawList.isNotEmpty) {
+        final List<String> list = rawList.cast<String>();
+        final mergedSet = <String>{...list, ..._defaultReactions};
+        reactions = mergedSet.toList().take(5).toList();
+      } else {
+        reactions = _defaultReactions;
+      }
 
       _cachedReactions = reactions;
       _lastFetchTime = DateTime.now();
