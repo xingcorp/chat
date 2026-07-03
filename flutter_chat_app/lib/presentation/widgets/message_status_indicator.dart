@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_icons.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
 import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 
@@ -149,7 +149,7 @@ class MessageStatusIndicator extends StatelessWidget {
       // Cho phép nhấn để thử lại nếu gặp lỗi
       return InkWell(
         onTap: onPressed,
-        child: AppIcon(
+        child: AppIcon.svg(
            iconPath,
            size: size,
            color: color,
@@ -157,7 +157,7 @@ class MessageStatusIndicator extends StatelessWidget {
       );
     } else {
       // Trạng thái thông thường
-      return AppIcon(
+      return AppIcon.svg(
         iconPath,
         size: size,
         color: color,

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_icons.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -106,7 +106,7 @@ class _ContactsPageState extends BaseState<ContactsPage> {
         title: AppText(context.l10n.contacts),
         actions: [
           IconButton(
-            icon: const AppIcon(AppIcons.personAdd),
+            icon: const AppIcon.svg(AppIcons.personAdd),
             onPressed: () {
               // TODO: Navigate to add contact page
             },
@@ -123,10 +123,10 @@ class _ContactsPageState extends BaseState<ContactsPage> {
                 controller: _searchController,
                 decoration: InputDecoration(
                   hintText: context.l10n.search,
-                  prefixIcon: const AppIcon(AppIcons.search),
+                  prefixIcon: const AppIcon.svg(AppIcons.search),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const AppIcon(AppIcons.close),
+                          icon: const AppIcon.svg(AppIcons.close),
                           onPressed: () {
                             _searchController.clear();
                           },
@@ -224,7 +224,7 @@ class _ContactsPageState extends BaseState<ContactsPage> {
         overflow: TextOverflow.ellipsis,
       ),
       trailing: IconButton(
-        icon: const AppIcon(AppIcons.chatBubble),
+        icon: const AppIcon.svg(AppIcons.chatBubble),
         onPressed: () => _startChat(user),
       ),
       onTap: () => _navigateToChat(user),
@@ -304,7 +304,7 @@ class _ContactsPageState extends BaseState<ContactsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AppIcon(
+            AppIcon.svg(
               AppIcons.emptyContacts,
               size: AppDimens.iconSizeXXLarge,
               color: secondaryTextColor,
@@ -336,7 +336,7 @@ class _ContactsPageState extends BaseState<ContactsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AppIcon(
+            AppIcon.svg(
               AppIcons.errorOutline,
               size: AppDimens.iconSizeXXLarge,
               color: AppColors.error,
@@ -352,7 +352,7 @@ class _ContactsPageState extends BaseState<ContactsPage> {
             const SizedBox(height: AppDimens.spaceLarge),
             ElevatedButton.icon(
               onPressed: () => _loadContacts(_searchController.text.trim()),
-              icon: const AppIcon(AppIcons.refresh),
+              icon: const AppIcon.svg(AppIcons.refresh),
               label: Text(context.l10n.retryOperation),
             ),
           ],

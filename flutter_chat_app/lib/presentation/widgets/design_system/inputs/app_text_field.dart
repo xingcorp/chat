@@ -5,7 +5,7 @@ import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 
 /// **APP TEXT FIELD**
 ///
@@ -49,7 +49,7 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dar
 ///   label: 'Search',
 ///   prefixIcon: AppIcons.search,
 ///   suffixIcon: IconButton(
-///     icon: AppIcon(AppIcons.close),
+///     icon: AppIcon.svg(AppIcons.close),
 ///     onPressed: () => _handleClear(),
 ///   ),
 /// )
@@ -289,7 +289,7 @@ class AppTextFieldState extends BaseState<AppTextField> {
         color: AppColors.error,
       ),
       prefixIcon: widget.prefixIcon != null
-          ? AppIcon(
+          ? AppIcon.svg(
               widget.prefixIcon!,
               size: AppDimens.iconMedium,
               color: _isFocused

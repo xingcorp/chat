@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/composer_constants.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 
 /// A single format toggle button (bold, italic, underline, etc.).
 ///
@@ -77,7 +77,7 @@ class FormatButton extends StatelessWidget {
           child: SizedBox(
             width: ComposerConstants.formatButtonSize,
             height: ComposerConstants.formatButtonSize,
-            child: AppIcon(
+            child: AppIcon.svg(
               icon,
               size: ComposerConstants.formatIconSize,
               color: iconColor,

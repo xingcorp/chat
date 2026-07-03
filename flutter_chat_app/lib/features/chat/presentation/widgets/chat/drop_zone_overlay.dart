@@ -4,7 +4,7 @@ import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/typography/app_text.dart';
 
 /// Full-screen animated overlay shown when files are dragged over the chat area.
@@ -59,7 +59,7 @@ class DropZoneOverlay extends BaseStatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AppIcon(
+                  AppIcon.svg(
                     AppIcons.cloudUpload,
                     size: 64.0,
                     color: AppColors.primary,

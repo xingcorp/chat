@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_icons.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/config/app_identity.dart';
@@ -254,7 +254,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
                 ],
               ),
             ),
-            AppIcon(
+            AppIcon.svg(
               AppIcons.chevronRight,
               color: secondaryTextColor,
             ),
@@ -446,7 +446,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
           onTap = () => UpdateProgressDialog.show(context);
         } else if (state is UpdateReadyToInstall) {
           subtitle = context.l10n.restartToUpdate;
-          trailing = AppIcon(
+          trailing = AppIcon.svg(
             AppIcons.updateReady,
             color: AppColors.success,
             size: AppDimens.iconMedium,
@@ -474,7 +474,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
             isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
 
         return ListTile(
-          leading: AppIcon(
+          leading: AppIcon.svg(
             AppIcons.systemUpdate,
             color: isDark ? AppColors.primaryDarkMode : AppColors.primary,
           ),
@@ -493,7 +493,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
             ),
           ),
           trailing: trailing ??
-              AppIcon(AppIcons.chevronRight, color: secondaryTextColor),
+              AppIcon.svg(AppIcons.chevronRight, color: secondaryTextColor),
           onTap: onTap,
         );
       },
@@ -514,7 +514,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
     final secondaryTextColor = isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
 
     return ListTile(
-      leading: AppIcon(
+      leading: AppIcon.svg(
         iconPath,
         color: textColor ?? (isDark ? AppColors.primaryDarkMode : AppColors.primary),
       ),
@@ -532,7 +532,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
               ),
             )
           : null,
-      trailing: AppIcon(
+      trailing: AppIcon.svg(
         AppIcons.chevronRight,
         color: secondaryTextColor,
       ),

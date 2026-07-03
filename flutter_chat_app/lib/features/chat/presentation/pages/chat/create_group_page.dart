@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_icons.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -602,7 +602,7 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
               color: AppColors.secondary,
               shape: BoxShape.circle,
             ),
-            child: AppIcon(
+            child: AppIcon.svg(
               AppIcons.cameraAlt,
               size: AppDimens.iconXSmall,
               color: isDark
@@ -729,7 +729,7 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
                           color: AppColors.error,
                           shape: BoxShape.circle,
                         ),
-                        child: const AppIcon(
+                        child: const AppIcon.svg(
                           AppIcons.close,
                           size: AppDimens.iconXSmall - 2,
                           color: AppColors.cardBackground,
@@ -786,7 +786,7 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
           color: isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary,
         ),
       ),
-      trailing: AppIcon(
+      trailing: AppIcon.svg(
         isSelected ? AppIcons.checkCircle : AppIcons.checkCircleOutline,
         color: isSelected ? AppColors.success : AppColors.textHint,
       ),

@@ -5,7 +5,7 @@ import 'package:app_settings/app_settings.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_icons.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -490,7 +490,7 @@ class _ChatInputState extends BaseState<ChatInput> {
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: AppIcon(
+              child: AppIcon.svg(
                 icon,
                 color: Theme.of(context).primaryColor,
                 size: 28,
@@ -617,7 +617,7 @@ class _ChatInputState extends BaseState<ChatInput> {
         width: 44,
         height: 44,
         alignment: Alignment.center,
-        child: AppIcon(
+        child: AppIcon.svg(
           AppIcons.mic,
           color: isDark ? AppColors.iconDarkMode : AppColors.icon,
           size: 26,
@@ -769,7 +769,7 @@ class _ChatInputState extends BaseState<ChatInput> {
             children: [
               if (widget.enableAttachments)
                 IconButton(
-                  icon: AppIcon(
+                  icon: AppIcon.svg(
                     AppIcons.addCircle,
                     color: isDark ? AppColors.iconDarkMode : AppColors.icon,
                     size: 26,
@@ -821,7 +821,7 @@ class _ChatInputState extends BaseState<ChatInput> {
                           ),
                         ),
                         IconButton(
-                          icon: AppIcon(
+                          icon: AppIcon.svg(
                             AppIcons.emoji,
                             color: isDark ? AppColors.iconDarkMode : AppColors.icon,
                             size: 22,
@@ -863,7 +863,7 @@ class _ChatInputState extends BaseState<ChatInput> {
                       )
                     : IconButton(
                         key: const ValueKey('send_button'),
-                        icon: AppIcon(
+                        icon: AppIcon.svg(
                           AppIcons.send,
                           color: AppColors.primary,
                           size: 26,
@@ -917,12 +917,12 @@ class _ChatInputState extends BaseState<ChatInput> {
           child: Row(
             children: [
               if (_isDraggingToCancel)
-                AppIcon(
+                AppIcon.svg(
                   AppIcons.deleteRecording,
                   color: Colors.red,
                 )
               else
-                AppIcon(
+                AppIcon.svg(
                   AppIcons.micRecording,
                   color: Colors.red,
                 ),

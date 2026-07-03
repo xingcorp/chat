@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_icons.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 
 /// Displays message delivery status icons in chat list preview (WhatsApp-style).
@@ -38,31 +38,31 @@ class MessageStatusIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (status) {
       case MessageDeliveryStatus.pending:
-        return AppIcon(
+        return AppIcon.svg(
           AppIcons.statusPending,
           size: size,
           color: AppColors.messageSentStatus,
         );
       case MessageDeliveryStatus.sending:
-        return AppIcon(
+        return AppIcon.svg(
           AppIcons.statusSending,
           size: size,
           color: AppColors.messageSentStatus,
         );
       case MessageDeliveryStatus.sent:
-        return AppIcon(
+        return AppIcon.svg(
           AppIcons.statusSent,
           size: size,
           color: AppColors.messageSentStatus,
         );
       case MessageDeliveryStatus.read:
-        return AppIcon(
+        return AppIcon.svg(
           AppIcons.statusRead,
           size: size,
           color: AppColors.messageReadStatus,
         );
       case MessageDeliveryStatus.failed:
-        return AppIcon(
+        return AppIcon.svg(
           AppIcons.statusFailed,
           size: size,
           color: AppColors.error,

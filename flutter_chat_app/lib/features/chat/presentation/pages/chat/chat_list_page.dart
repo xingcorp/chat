@@ -3,7 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_icons.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/chat_module.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
@@ -287,11 +287,11 @@ class _ChatListPageState extends BaseState<ChatListPage> {
               : AppText(context.l10n.chats),
           actions: [
             IconButton(
-              icon: AppIcon(_isSearching ? AppIcons.close : AppIcons.search),
+              icon: AppIcon.svg(_isSearching ? AppIcons.close : AppIcons.search),
               onPressed: _toggleSearch,
             ),
             PopupMenuButton<String>(
-              icon: const AppIcon(AppIcons.add),
+              icon: const AppIcon.svg(AppIcons.add),
               onSelected: (value) async {
                 if (value == 'newConversation') {
                   await _openNewConversation();
@@ -512,7 +512,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        AppIcon(
+                        AppIcon.svg(
                           AppIcons.cloudOff,
                           size: AppDimens.iconSizeXXLarge,
                           color: AppColors.textSecondary,
@@ -534,15 +534,15 @@ class _ChatListPageState extends BaseState<ChatListPage> {
                 currentIndex: 0,
                 items: [
                   BottomNavigationBarItem(
-                    icon: const AppIcon(AppIcons.navChat),
+                    icon: const AppIcon.svg(AppIcons.navChat),
                     label: context.l10n.chats,
                   ),
                   BottomNavigationBarItem(
-                    icon: const AppIcon(AppIcons.navContacts),
+                    icon: const AppIcon.svg(AppIcons.navContacts),
                     label: context.l10n.contacts,
                   ),
                   BottomNavigationBarItem(
-                    icon: const AppIcon(AppIcons.navSettings),
+                    icon: const AppIcon.svg(AppIcons.navSettings),
                     label: context.l10n.settingsTitle,
                   ),
                 ],
@@ -639,7 +639,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AppIcon(
+            AppIcon.svg(
               AppIcons.emptyChat,
               size: AppDimens.iconSizeXXLarge,
               color: AppColors.textSecondary,
@@ -667,7 +667,7 @@ class _ChatListPageState extends BaseState<ChatListPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AppIcon(
+              AppIcon.svg(
                 AppIcons.errorOutline,
                 size: AppDimens.iconSizeXXLarge,
                 color: AppColors.error,

@@ -36,7 +36,7 @@ import 'package:flutter_chat_app/presentation/widgets/common/hero_avatar.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/read_receipt_avatars.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/read_receipt_bottom_sheet.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/sticker_message.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/voice_note_player.dart';
 import 'package:flutter_chat_app/presentation/widgets/message_status_indicator.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart'
@@ -610,7 +610,7 @@ class _MessageItemState extends State<MessageItem>
         background: Container(
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.only(left: 24.0),
-          child: AppIcon(
+          child: AppIcon.svg(
             AppIcons.reply,
             color: theme.colorScheme.primary,
           ),
@@ -618,7 +618,7 @@ class _MessageItemState extends State<MessageItem>
         secondaryBackground: Container(
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 24.0),
-          child: AppIcon(
+          child: AppIcon.svg(
             AppIcons.reply,
             color: theme.colorScheme.primary,
           ),
@@ -841,7 +841,7 @@ class _MessageItemState extends State<MessageItem>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppIcon(
+            AppIcon.svg(
               AppIcons.blocked,
               size: 14.0,
               color: theme.textTheme.bodySmall?.color?.withOpacity(0.5),
@@ -1279,7 +1279,7 @@ class _MessageItemState extends State<MessageItem>
           value: 'profile',
           child: Row(
             children: [
-              AppIcon(AppIcons.personOutline, size: 20),
+              AppIcon.svg(AppIcons.personOutline, size: 20),
               const SizedBox(width: 12),
               Text(l10n.viewProfile),
             ],
@@ -1289,7 +1289,7 @@ class _MessageItemState extends State<MessageItem>
           value: 'message',
           child: Row(
             children: [
-              AppIcon(AppIcons.chatBubble, size: 20),
+              AppIcon.svg(AppIcons.chatBubble, size: 20),
               const SizedBox(width: 12),
               Text(l10n.sendDirectMessage),
             ],

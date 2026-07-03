@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_icons.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/services/connectivity_analyzer_service.dart';
@@ -90,7 +90,7 @@ class ConnectionStatusWidget extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppIcon(iconPath, size: 14.0, color: color),
+          AppIcon.svg(iconPath, size: 14.0, color: color),
           const SizedBox(width: 8.0),
           Text(
             typeText,
@@ -146,7 +146,7 @@ class ConnectionStatusWidget extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AppIcon(AppIcons.cloudOff, size: 14.0, color: Colors.red),
+            AppIcon.svg(AppIcons.cloudOff, size: 14.0, color: Colors.red),
             const SizedBox(width: 8.0),
             Text(
               "Mất kết nối - Nhấn để thử lại",

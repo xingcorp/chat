@@ -7,7 +7,7 @@ import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_action_callbacks.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 
 // ---------------------------------------------------------------------------
@@ -396,7 +396,7 @@ class _CompactActionBarState extends BaseState<CompactActionBar> {
           borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
           child: Padding(
             padding: const EdgeInsets.all(6.0),
-            child: AppIcon(
+            child: AppIcon.svg(
               AppIcons.thumbUp,
               size: AppDimens.iconSmall,
               color: theme.iconTheme.color?.withValues(alpha: 0.6),
@@ -422,7 +422,7 @@ class _CompactActionBarState extends BaseState<CompactActionBar> {
         borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
         child: Padding(
           padding: const EdgeInsets.all(6.0),
-          child: AppIcon(
+          child: AppIcon.svg(
             icon,
             size: AppDimens.iconSmall,
             color: theme.iconTheme.color?.withValues(alpha: 0.6),
@@ -603,7 +603,7 @@ class _EmojiQuickPickerContent extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
           hoverColor: theme.hoverColor,
           child: Center(
-            child: AppIcon(
+            child: AppIcon.svg(
               AppIcons.addReaction,
               size: 20.0,
               color: theme.iconTheme.color?.withValues(alpha: 0.4),
@@ -779,7 +779,7 @@ class MoreActionsPopup {
                       ),
                       child: Row(
                         children: [
-                          AppIcon(
+                          AppIcon.svg(
                             item.icon,
                             size: AppDimens.iconSmall,
                             color: item.isDestructive

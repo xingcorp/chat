@@ -4,7 +4,7 @@ import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/composer_constants.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 
 /// Zalo-style desktop toolbar row displayed above the editor.
 ///
@@ -168,7 +168,7 @@ class _ToolbarIcon extends StatelessWidget {
         child: SizedBox(
           width: ComposerConstants.formatButtonSize,
           height: ComposerConstants.formatButtonSize,
-          child: AppIcon(
+          child: AppIcon.svg(
             icon,
             size: ComposerConstants.desktopToolbarIconSize,
             color: color,

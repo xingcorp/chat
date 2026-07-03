@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_icons.dart';
-import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -82,7 +82,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
       titleSpacing: showBackButton ? 0 : 8,
       leading: showBackButton
           ? IconButton(
-              icon: const AppIcon(AppIcons.arrowBack),
+              icon: const AppIcon.svg(AppIcons.arrowBack),
               onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
             )
           : null,
@@ -119,16 +119,16 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: <Widget>[
         IconButton(
-          icon: const AppIcon(AppIcons.search),
+          icon: const AppIcon.svg(AppIcons.search),
           onPressed: onSearchPressed,
         ),
         if (chat.type == ChatType.group)
           IconButton(
-            icon: const AppIcon(AppIcons.personAdd),
+            icon: const AppIcon.svg(AppIcons.personAdd),
             onPressed: onAddMemberPressed,
           ),
         IconButton(
-          icon: const AppIcon(AppIcons.info),
+          icon: const AppIcon.svg(AppIcons.info),
           onPressed: onInfoPressed,
         ),
       ],
