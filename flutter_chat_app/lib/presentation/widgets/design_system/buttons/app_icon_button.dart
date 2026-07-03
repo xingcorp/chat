@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -61,8 +62,8 @@ class AppIconButton extends BaseStatelessWidget {
     super.key,
   });
 
-  /// Icon to display
-  final IconData icon;
+  /// Icon to display (can be [IconData] or [String] SVG asset path)
+  final dynamic icon;
 
   /// Callback when button is pressed
   final VoidCallback? onPressed;
@@ -123,8 +124,25 @@ class AppIconButton extends BaseStatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final Widget iconWidget;
+    if (icon is IconData) {
+      iconWidget = Icon(icon as IconData, size: _iconSize);
+    } else if (icon is String) {
+      iconWidget = AppIcon.svg(
+        icon as String,
+        size: _iconSize,
+        color: _isDisabled
+            ? (isDark ? AppColors.iconDarkMode : AppColors.icon).withOpacity(0.5)
+            : null,
+      );
+    } else if (icon is Widget) {
+      iconWidget = icon as Widget;
+    } else {
+      iconWidget = const SizedBox.shrink();
+    }
+
     Widget button = IconButton(
-      icon: Icon(icon, size: _iconSize),
+      icon: iconWidget,
       onPressed: _isDisabled ? null : _handlePressed,
       iconSize: _iconSize,
       padding: EdgeInsets.zero,

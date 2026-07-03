@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 // TODO: Removed MediaService - use MediaRepository through MediaBloc instead
@@ -12,6 +13,7 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/core/services/user_cache_service.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
@@ -291,7 +293,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(Icons.reply),
+            leading: const AppIcon.svg(AppIcons.reply),
             title: Text(context.l10n.reply),
             onTap: () {
               Navigator.pop(context);
@@ -301,7 +303,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
             },
           ),
           ListTile(
-            leading: const Icon(Icons.forward),
+            leading: const AppIcon.svg(AppIcons.forward),
             title: Text(context.l10n.forward),
             onTap: () {
               Navigator.pop(context);
@@ -310,7 +312,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
           ),
           if (message.isFromCurrentUser)
             ListTile(
-              leading: Icon(Icons.delete, color: Colors.red),
+              leading: const AppIcon.svg(AppIcons.delete, color: Colors.red),
               title: Text(context.l10n.delete, style: TextStyle(color: Colors.red)),
               onTap: () {
                 Navigator.pop(context);
@@ -494,19 +496,19 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.call),
+            icon: const AppIcon.svg(AppIcons.phone),
             onPressed: () {
               // Implement voice call
             },
           ),
           IconButton(
-            icon: const Icon(Icons.videocam),
+            icon: const AppIcon.svg(AppIcons.video),
             onPressed: () {
               // Implement video call
             },
           ),
           IconButton(
-            icon: const Icon(Icons.more_vert),
+            icon: const AppIcon.svg(AppIcons.dotsThreeVertical),
             onPressed: () {
               // Show chat options
             },
@@ -555,7 +557,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close),
+                            icon: const AppIcon.svg(AppIcons.close),
                             onPressed: () {
                               setState(() {
                                 _replyToMessageId = null;
@@ -718,9 +720,9 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                     child: Row(
                       children: [
                         IconButton(
-                          icon: Icon(_isAttachmentMenuOpen 
-                            ? Icons.close 
-                            : Icons.add,
+                          icon: AppIcon.svg(_isAttachmentMenuOpen 
+                            ? AppIcons.close 
+                            : AppIcons.add,
                           ),
                           onPressed: () {
                             setState(() {
@@ -766,7 +768,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.camera_alt_outlined),
+                                  icon: const AppIcon.svg(AppIcons.cameraAlt),
                                   onPressed: () {
                                     _handleAttachmentSelection(ContentType.image);
                                   },
@@ -788,10 +790,10 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                                 backgroundColor: Theme.of(context).primaryColor,
                                 foregroundColor: Colors.transparent,
                               ),
-                              Icon(
+                              AppIcon.svg(
                                 _messageController.text.trim().isEmpty
-                                    ? (_isRecording ? Icons.stop : Icons.mic)
-                                    : Icons.send,
+                                    ? (_isRecording ? AppIcons.stop : AppIcons.mic)
+                                    : AppIcons.send,
                                 color: Colors.white,
                               ),
                             ],
@@ -817,25 +819,25 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildAttachmentOption(
-            icon: Icons.photo,
+            icon: AppIcons.photo,
             label: context.l10n.attachmentImage,
             color: Colors.purple,
             onTap: () => _handleAttachmentSelection(ContentType.image),
           ),
           _buildAttachmentOption(
-            icon: Icons.videocam,
+            icon: AppIcons.video,
             label: context.l10n.attachmentVideo,
             color: Colors.red,
             onTap: () => _handleAttachmentSelection(ContentType.video),
           ),
           _buildAttachmentOption(
-            icon: Icons.insert_drive_file,
+            icon: AppIcons.file,
             label: context.l10n.attachmentFile,
             color: Colors.blue,
             onTap: () => _handleAttachmentSelection(ContentType.file),
           ),
           _buildAttachmentOption(
-            icon: Icons.location_on,
+            icon: AppIcons.location,
             label: context.l10n.attachmentLocation,
             color: Colors.green,
             onTap: () => _handleAttachmentSelection(ContentType.location),
@@ -846,7 +848,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
   }
   
   Widget _buildAttachmentOption({
-    required IconData icon,
+    required String icon,
     required String label,
     required Color color,
     required VoidCallback onTap,
@@ -865,7 +867,7 @@ class _OptimizedChatScreenState extends State<OptimizedChatScreen> with WidgetsB
                 backgroundColor: color,
                 foregroundColor: Colors.transparent,
               ),
-              Icon(icon, color: Colors.white),
+              AppIcon.svg(icon, color: Colors.white),
             ],
           ),
           const SizedBox(height: 4),

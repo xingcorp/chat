@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/config/app_identity.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/data/models/chat_model.dart';
 import 'package:flutter_chat_app/data/models/message_model.dart';
 import 'package:flutter_chat_app/data/models/user_model.dart';
 import 'package:flutter_chat_app/data/repositories/offline_first_repository.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat.dart';
 import 'package:get_it/get_it.dart';
 import 'package:uuid/uuid.dart';
@@ -132,7 +134,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
-            icon: const Icon(Icons.help_outline),
+            icon: const AppIcon.svg(AppIcons.help),
             onPressed: () {
               showDialog(
                 context: context,
@@ -174,18 +176,18 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
                         ),
                       ),
                       ListTile(
-                        leading: const Icon(Icons.home),
+                        leading: const AppIcon.svg(AppIcons.home),
                         title: const Text('Home'),
                         selected: true,
                         onTap: () {},
                       ),
                       ListTile(
-                        leading: const Icon(Icons.chat),
+                        leading: const AppIcon.svg(AppIcons.navChat),
                         title: const Text('Chats'),
                         onTap: () {},
                       ),
                       ListTile(
-                        leading: const Icon(Icons.settings),
+                        leading: const AppIcon.svg(AppIcons.navSettings),
                         title: const Text('Settings'),
                         onTap: () {},
                       ),
@@ -218,13 +220,13 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
                             Row(
                               children: [
                                 ElevatedButton.icon(
-                                  icon: const Icon(Icons.add),
+                                  icon: const AppIcon.svg(AppIcons.add),
                                   label: const Text('Create Test Data'),
                                   onPressed: _createTestData,
                                 ),
                                 const SizedBox(width: 8),
                                 ElevatedButton.icon(
-                                  icon: const Icon(Icons.delete),
+                                  icon: const AppIcon.svg(AppIcons.delete),
                                   label: const Text('Clear Data'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
@@ -288,7 +290,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
                                               title: Text('Chat ${chat.id}'),
                                               subtitle: Text(
                                                   'Type: ${chat.type.name}'),
-                                              leading: const Icon(Icons.chat),
+                                              leading: const AppIcon.svg(AppIcons.navChat),
                                             );
                                           },
                                         ),

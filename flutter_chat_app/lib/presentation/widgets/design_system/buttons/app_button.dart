@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -71,7 +72,7 @@ class AppButton extends BaseStatelessWidget {
     required String text,
     required VoidCallback? onPressed,
     ButtonSize size = ButtonSize.medium,
-    IconData? icon,
+    dynamic icon,
     bool isLoading = false,
     bool isFullWidth = false,
   }) : this._(
@@ -91,7 +92,7 @@ class AppButton extends BaseStatelessWidget {
     required String text,
     required VoidCallback? onPressed,
     ButtonSize size = ButtonSize.medium,
-    IconData? icon,
+    dynamic icon,
     bool isLoading = false,
     bool isFullWidth = false,
   }) : this._(
@@ -111,7 +112,7 @@ class AppButton extends BaseStatelessWidget {
     required String text,
     required VoidCallback? onPressed,
     ButtonSize size = ButtonSize.medium,
-    IconData? icon,
+    dynamic icon,
     bool isLoading = false,
     bool isFullWidth = false,
   }) : this._(
@@ -131,7 +132,7 @@ class AppButton extends BaseStatelessWidget {
     required String text,
     required VoidCallback? onPressed,
     ButtonSize size = ButtonSize.medium,
-    IconData? icon,
+    dynamic icon,
     bool isLoading = false,
     bool isFullWidth = false,
   }) : this._(
@@ -158,7 +159,7 @@ class AppButton extends BaseStatelessWidget {
   final ButtonSize size;
 
   /// Optional icon to display before text
-  final IconData? icon;
+  final dynamic icon;
 
   /// Whether button is in loading state
   final bool isLoading;
@@ -300,10 +301,23 @@ class AppButton extends BaseStatelessWidget {
     }
 
     if (icon != null) {
+      final Widget iconWidget;
+      if (icon is IconData) {
+        iconWidget = Icon(icon as IconData, size: _iconSize);
+      } else if (icon is String) {
+        // Find text color to apply to SVG icon
+        final textColor = _getTextStyle(context).color ?? Colors.white;
+        iconWidget = AppIcon.svg(icon as String, size: _iconSize, color: textColor);
+      } else if (icon is Widget) {
+        iconWidget = icon as Widget;
+      } else {
+        iconWidget = const SizedBox.shrink();
+      }
+
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: _iconSize),
+          iconWidget,
           const SizedBox(width: AppDimens.spaceSmall),
           Text(text, style: _getTextStyle(context)),
         ],

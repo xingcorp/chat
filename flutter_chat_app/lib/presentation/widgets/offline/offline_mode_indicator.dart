@@ -9,12 +9,13 @@
 /// **Architecture:** Clean Architecture + Flutter Best Practices + Material Design 3
 
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/network/websocket_client.dart' as ws;
 import 'package:flutter_chat_app/core/services/messaging_service.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 
 /// **Offline Mode Type**
 enum OfflineModeType {
@@ -112,7 +113,7 @@ class OfflineModeIndicator extends StatelessWidget {
       child: Row(
         children: [
           // **Mode Icon**
-          Icon(
+          AppIcon.svg(
             modeInfo.icon,
             color: modeInfo.color,
             size: 20,
@@ -168,7 +169,7 @@ class OfflineModeIndicator extends StatelessWidget {
                 color: modeInfo.color.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: AppIcon.svg(
                 modeInfo.icon,
                 color: modeInfo.color,
                 size: 32,
@@ -234,8 +235,8 @@ class OfflineModeIndicator extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.lightbulb_outline_rounded,
+              AppIcon.svg(
+                AppIcons.lightbulb,
                 color: modeInfo.color,
                 size: 20,
               ),
@@ -320,7 +321,7 @@ class OfflineModeIndicator extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(
+          AppIcon.svg(
             statusInfo.icon,
             color: statusInfo.color,
             size: 16,
@@ -354,7 +355,11 @@ class OfflineModeIndicator extends StatelessWidget {
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
+              icon: AppIcon.svg(
+                AppIcons.refresh,
+                size: 18,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
               label: const Text('Thử kết nối lại'),
             ),
           ),
@@ -368,13 +373,21 @@ class OfflineModeIndicator extends StatelessWidget {
             if (onGoOnline != null)
               TextButton.icon(
                 onPressed: onGoOnline,
-                icon: const Icon(Icons.wifi_rounded, size: 18),
+                icon: AppIcon.svg(
+                  AppIcons.wifiConnected,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 label: const Text('Kết nối'),
               ),
             
             TextButton.icon(
               onPressed: () => _showOfflineHelp(context),
-              icon: const Icon(Icons.help_outline_rounded, size: 18),
+              icon: AppIcon.svg(
+                AppIcons.help,
+                size: 18,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               label: const Text('Trợ giúp'),
             ),
           ],
@@ -407,7 +420,7 @@ class OfflineModeIndicator extends StatelessWidget {
           title: 'Chế độ offline',
           description: 'Bạn đang ở chế độ offline. Một số tính năng có thể không khả dụng.',
           bannerMessage: 'Offline - Kiểm tra kết nối mạng',
-          icon: Icons.wifi_off_rounded,
+          icon: AppIcons.wifiOff,
           color: Colors.orange,
           showRetry: true,
           recoverySteps: [
@@ -423,7 +436,7 @@ class OfflineModeIndicator extends StatelessWidget {
           title: 'Kết nối không ổn định',
           description: 'Một số dịch vụ có thể không khả dụng do kết nối không ổn định.',
           bannerMessage: 'Kết nối không ổn định',
-          icon: Icons.signal_wifi_bad_rounded,
+          icon: AppIcons.wifiOff,
           color: Colors.amber,
           showRetry: true,
           recoverySteps: [
@@ -438,7 +451,7 @@ class OfflineModeIndicator extends StatelessWidget {
           title: 'Dịch vụ bị hạn chế',
           description: 'Một số tính năng tạm thời không khả dụng do sự cố kỹ thuật.',
           bannerMessage: 'Dịch vụ bị hạn chế',
-          icon: Icons.warning_amber_rounded,
+          icon: AppIcons.statusConflict,
           color: Colors.red,
           showRetry: true,
           recoverySteps: [
@@ -453,7 +466,7 @@ class OfflineModeIndicator extends StatelessWidget {
           title: 'Đang đồng bộ dữ liệu',
           description: 'Đang đồng bộ dữ liệu với server. Vui lòng chờ trong giây lát.',
           bannerMessage: 'Đang đồng bộ...',
-          icon: Icons.sync_rounded,
+          icon: AppIcons.systemUpdate,
           color: Colors.blue,
           showRetry: false,
           recoverySteps: [
@@ -482,25 +495,25 @@ class OfflineModeIndicator extends StatelessWidget {
       case ServiceStatus.available:
         return ServiceStatusInfo(
           label: 'Khả dụng',
-          icon: Icons.check_circle_rounded,
+          icon: AppIcons.checkCircle,
           color: Colors.green,
         );
       case ServiceStatus.unavailable:
         return ServiceStatusInfo(
           label: 'Không khả dụng',
-          icon: Icons.cancel_rounded,
+          icon: AppIcons.statusCancelled,
           color: Colors.red,
         );
       case ServiceStatus.degraded:
         return ServiceStatusInfo(
           label: 'Hạn chế',
-          icon: Icons.warning_rounded,
+          icon: AppIcons.statusConflict,
           color: Colors.orange,
         );
       case ServiceStatus.unknown:
         return ServiceStatusInfo(
           label: 'Không rõ',
-          icon: Icons.help_rounded,
+          icon: AppIcons.help,
           color: Colors.grey,
         );
     }
@@ -536,7 +549,7 @@ class OfflineModeInfo {
   final String title;
   final String description;
   final String bannerMessage;
-  final IconData icon;
+  final String icon;
   final Color color;
   final bool showRetry;
   final List<String> recoverySteps;
@@ -555,7 +568,7 @@ class OfflineModeInfo {
 /// **Service Status Info Model**
 class ServiceStatusInfo {
   final String label;
-  final IconData icon;
+  final String icon;
   final Color color;
 
   const ServiceStatusInfo({

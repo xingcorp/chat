@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
@@ -106,8 +108,8 @@ class ForwardPreview extends StatelessWidget {
                   // Forward label + sender name
                   Row(
                     children: [
-                      Icon(
-                        Icons.forward_rounded,
+                      AppIcon.svg(
+                        AppIcons.forward,
                         size: 14.0,
                         color: forwardIconColor,
                       ),
@@ -199,7 +201,7 @@ class ForwardPreview extends StatelessWidget {
         }
         return _buildIconContainer(
           theme,
-          Icons.image_outlined,
+          AppIcons.photo,
           size,
           iconColor,
         );
@@ -222,10 +224,12 @@ class ForwardPreview extends StatelessWidget {
                 Positioned.fill(
                   child: Container(
                     color: Colors.black.withValues(alpha: 0.3),
-                    child: const Icon(
-                      Icons.play_circle_outline,
-                      color: Colors.white,
-                      size: 20,
+                    child: Center(
+                      child: AppIcon.svg(
+                        AppIcons.playCircle,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ),
@@ -235,7 +239,7 @@ class ForwardPreview extends StatelessWidget {
         }
         return _buildIconContainer(
           theme,
-          Icons.videocam_outlined,
+          AppIcons.video,
           size,
           iconColor,
         );
@@ -243,7 +247,7 @@ class ForwardPreview extends StatelessWidget {
       case ContentType.audio:
         return _buildIconContainer(
           theme,
-          Icons.mic_outlined,
+          AppIcons.mic,
           size,
           iconColor,
         );
@@ -251,7 +255,7 @@ class ForwardPreview extends StatelessWidget {
       case ContentType.file:
         return _buildIconContainer(
           theme,
-          Icons.insert_drive_file_outlined,
+          AppIcons.file,
           size,
           iconColor,
         );
@@ -259,7 +263,7 @@ class ForwardPreview extends StatelessWidget {
       case ContentType.location:
         return _buildIconContainer(
           theme,
-          Icons.location_on_outlined,
+          AppIcons.location,
           size,
           iconColor,
         );
@@ -267,7 +271,7 @@ class ForwardPreview extends StatelessWidget {
       case ContentType.link:
         return _buildIconContainer(
           theme,
-          Icons.link,
+          AppIcons.formatLink,
           size,
           iconColor,
         );
@@ -275,7 +279,7 @@ class ForwardPreview extends StatelessWidget {
       case ContentType.sticker:
         return _buildIconContainer(
           theme,
-          Icons.emoji_emotions_outlined,
+          AppIcons.emoji,
           size,
           iconColor,
         );
@@ -283,7 +287,7 @@ class ForwardPreview extends StatelessWidget {
       case ContentType.event:
         return _buildIconContainer(
           theme,
-          Icons.info_outline,
+          AppIcons.about,
           size,
           iconColor,
         );
@@ -292,7 +296,7 @@ class ForwardPreview extends StatelessWidget {
         // Text message - hiển thị icon message
         return _buildIconContainer(
           theme,
-          Icons.message_outlined,
+          AppIcons.chatBubble,
           size,
           iconColor,
         );
@@ -302,7 +306,7 @@ class ForwardPreview extends StatelessWidget {
   /// Helper: build icon container
   Widget _buildIconContainer(
     ThemeData theme,
-    IconData icon,
+    String icon,
     double size,
     Color? iconColor,
   ) {
@@ -313,10 +317,12 @@ class ForwardPreview extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(4.0),
       ),
-      child: Icon(
-        icon,
-        size: 20,
-        color: iconColor,
+      child: Center(
+        child: AppIcon.svg(
+          icon,
+          size: 20,
+          color: iconColor,
+        ),
       ),
     );
   }

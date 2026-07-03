@@ -332,4 +332,95 @@ class AppIcons {
 
   /// Delete recording
   static const String deleteRecording = '$_light/trash.svg';
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ADDITIONAL ICONS
+  // ══════════════════════════════════════════════════════════════════════════
+  
+  /// Caret down arrow
+  static const String caretDown = '$_light/caret-down.svg';
+
+  /// Phone call / handset (inactive)
+  static const String phone = '$_light/phone.svg';
+
+  /// Phone call / handset (active/filled)
+  static const String phoneActive = '$_fill/phone.svg';
+
+  /// Vertical three dots (vertical context menu)
+  static const String dotsThreeVertical = '$_light/dots-three-vertical.svg';
+
+  /// Stop icon
+  static const String stop = '$_light/stop.svg';
+
+  /// Chart / analytics bar
+  static const String chartBar = '$_light/chart-bar.svg';
+
+  /// Palette / theme selection
+  static const String palette = '$_light/palette.svg';
+
+  /// Gauge / speed indicator
+  static const String gauge = '$_light/gauge.svg';
+
+  /// CPU / memory / hardware info
+  static const String cpu = '$_light/cpu.svg';
+
+  /// Bug / bug report
+  static const String bug = '$_light/bug.svg';
+
+  /// Text align right / text direction format
+  static const String textAlignRight = '$_light/text-align-right.svg';
+
+  /// Calendar / date
+  static const String calendar = '$_light/calendar.svg';
+
+  /// Chat text / SMS indicator
+  static const String chatText = '$_light/chat-text.svg';
+
+  /// Fingerprint / biometric
+  static const String fingerprint = '$_light/fingerprint.svg';
+
+  /// Bluetooth
+  static const String bluetooth = '$_light/bluetooth.svg';
+
+  /// Play triangle
+  static const String play = '$_light/play.svg';
+
+  /// Play circle (inactive)
+  static const String playCircle = '$_light/play-circle.svg';
+
+  /// Play circle (active/filled)
+  static const String playCircleActive = '$_fill/play-circle.svg';
+
+  /// Open in new window/tab
+  static const String openInNew = '$_light/arrow-square-out.svg';
+
+  /// Audio / music track
+  static const String audioTrack = '$_light/music-notes.svg';
+
+  /// PDF document file
+  static const String filePdf = '$_light/file-pdf.svg';
+
+  /// Security shield
+  static const String security = '$_light/shield.svg';
+
+  /// Help / question indicator
+  static const String help = '$_light/question.svg';
+
+  /// WiFi disconnected
+  static const String wifiOff = '$_light/wifi-slash.svg';
+
+  /// Login / sign in
+  static const String login = '$_light/sign-in.svg';
+
+  /// Lightning / offline bolt
+  static const String lightning = '$_light/lightning.svg';
+
+  /// Support / agent headset
+  static const String support = '$_light/headset.svg';
+
+  /// Storage / hard drive
+  static const String storage = '$_light/hard-drive.svg';
+
+  /// Lightbulb / tip idea
+  static const String lightbulb = '$_light/lightbulb.svg';
 }

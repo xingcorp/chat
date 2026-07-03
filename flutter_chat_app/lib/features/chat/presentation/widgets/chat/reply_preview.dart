@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/shared/domain/entities/chat_message.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
@@ -99,8 +101,8 @@ class ReplyPreview extends StatelessWidget {
                   // Sender name
                   Row(
                     children: [
-                      Icon(
-                        Icons.reply,
+                      AppIcon.svg(
+                        AppIcons.reply,
                         size: 14.0,
                         color: accentColor,
                       ),
@@ -167,7 +169,6 @@ class ReplyPreview extends StatelessWidget {
       case ContentType.event:
         return l10nHelper.replyPreviewSystemEvent;
       case ContentType.text:
-      default:
         return l10n.noMessages;
     }
   }
@@ -194,7 +195,7 @@ class ReplyPreview extends StatelessWidget {
         }
         return _buildIconContainer(
           theme,
-          Icons.image_outlined,
+          AppIcons.photo,
           size,
           iconColor,
         );
@@ -217,10 +218,12 @@ class ReplyPreview extends StatelessWidget {
                 Positioned.fill(
                   child: Container(
                     color: Colors.black.withValues(alpha: 0.3),
-                    child: const Icon(
-                      Icons.play_circle_outline,
-                      color: Colors.white,
-                      size: 20,
+                    child: Center(
+                      child: AppIcon.svg(
+                        AppIcons.playCircle,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ),
@@ -230,7 +233,7 @@ class ReplyPreview extends StatelessWidget {
         }
         return _buildIconContainer(
           theme,
-          Icons.videocam_outlined,
+          AppIcons.video,
           size,
           iconColor,
         );
@@ -238,7 +241,7 @@ class ReplyPreview extends StatelessWidget {
       case ContentType.audio:
         return _buildIconContainer(
           theme,
-          Icons.mic_outlined,
+          AppIcons.mic,
           size,
           iconColor,
         );
@@ -246,7 +249,7 @@ class ReplyPreview extends StatelessWidget {
       case ContentType.file:
         return _buildIconContainer(
           theme,
-          Icons.insert_drive_file_outlined,
+          AppIcons.file,
           size,
           iconColor,
         );
@@ -254,7 +257,7 @@ class ReplyPreview extends StatelessWidget {
       case ContentType.location:
         return _buildIconContainer(
           theme,
-          Icons.location_on_outlined,
+          AppIcons.location,
           size,
           iconColor,
         );
@@ -262,7 +265,7 @@ class ReplyPreview extends StatelessWidget {
       case ContentType.link:
         return _buildIconContainer(
           theme,
-          Icons.link,
+          AppIcons.formatLink,
           size,
           iconColor,
         );
@@ -270,7 +273,7 @@ class ReplyPreview extends StatelessWidget {
       case ContentType.sticker:
         return _buildIconContainer(
           theme,
-          Icons.emoji_emotions_outlined,
+          AppIcons.emoji,
           size,
           iconColor,
         );
@@ -278,7 +281,7 @@ class ReplyPreview extends StatelessWidget {
       default:
         return _buildIconContainer(
           theme,
-          Icons.message_outlined,
+          AppIcons.chatBubble,
           size,
           iconColor,
         );
@@ -288,7 +291,7 @@ class ReplyPreview extends StatelessWidget {
   /// Helper: build icon container
   Widget _buildIconContainer(
     ThemeData theme,
-    IconData icon,
+    String icon,
     double size,
     Color? iconColor,
   ) {
@@ -299,10 +302,12 @@ class ReplyPreview extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(4.0),
       ),
-      child: Icon(
-        icon,
-        size: 20,
-        color: iconColor,
+      child: Center(
+        child: AppIcon.svg(
+          icon,
+          size: 20,
+          color: iconColor,
+        ),
       ),
     );
   }
@@ -343,8 +348,8 @@ class ReplyInputBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.reply,
+          AppIcon.svg(
+            AppIcons.reply,
             size: 16.0,
             color: theme.colorScheme.primary,
           ),
@@ -376,7 +381,7 @@ class ReplyInputBar extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.close, size: 20.0),
+            icon: AppIcon.svg(AppIcons.close, size: 20.0),
             onPressed: onCancel,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),

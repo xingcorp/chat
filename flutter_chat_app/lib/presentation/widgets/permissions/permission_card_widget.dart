@@ -11,9 +11,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/app_localizations.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/shared/domain/entities/permission_entity.dart';
 
 /// **Enterprise Permission Card Widget**
@@ -36,7 +38,7 @@ class PermissionCardWidget extends StatefulWidget {
   final bool showDescription;
   
   /// Custom icon (optional)
-  final IconData? customIcon;
+  final String? customIcon;
   
   /// Whether the card is disabled
   final bool isDisabled;
@@ -174,7 +176,7 @@ class _PermissionCardWidgetState extends State<PermissionCardWidget>
           ),
           child: widget.isLoading
               ? _buildLoadingIndicator()
-              : Icon(
+              : AppIcon.svg(
                   widget.customIcon ?? _getPermissionIcon(widget.permissionType),
                   color: _getIconColor(isGranted, isDenied, isPermanentlyDenied),
                   size: 24.sp,
@@ -204,20 +206,20 @@ class _PermissionCardWidgetState extends State<PermissionCardWidget>
           ),
         ),
         if (isGranted)
-          Icon(
-            Icons.check_circle,
+          AppIcon.svg(
+            AppIcons.checkCircle,
             color: AppColors.success,
             size: 20.sp,
           )
         else if (isPermanentlyDenied)
-          Icon(
-            Icons.block,
+          AppIcon.svg(
+            AppIcons.blocked,
             color: AppColors.error,
             size: 20.sp,
           )
         else if (isDenied)
-          Icon(
-            Icons.warning,
+          AppIcon.svg(
+            AppIcons.statusConflict,
             color: AppColors.warning,
             size: 20.sp,
           ),
@@ -365,30 +367,30 @@ class _PermissionCardWidgetState extends State<PermissionCardWidget>
     }
   }
 
-  IconData _getPermissionIcon(PermissionType type) {
+  String _getPermissionIcon(PermissionType type) {
     switch (type) {
       case PermissionType.camera:
-        return Icons.camera_alt;
+        return AppIcons.cameraAlt;
       case PermissionType.microphone:
-        return Icons.mic;
+        return AppIcons.mic;
       case PermissionType.storage:
-        return Icons.storage;
+        return AppIcons.storage;
       case PermissionType.notification:
-        return Icons.notifications;
+        return AppIcons.notifications;
       case PermissionType.contacts:
-        return Icons.contacts;
+        return AppIcons.navContacts;
       case PermissionType.location:
-        return Icons.location_on;
+        return AppIcons.location;
       case PermissionType.phone:
-        return Icons.phone;
+        return AppIcons.phone;
       case PermissionType.calendar:
-        return Icons.calendar_today;
+        return AppIcons.calendar;
       case PermissionType.sms:
-        return Icons.sms;
+        return AppIcons.chatText;
       case PermissionType.biometric:
-        return Icons.fingerprint;
+        return AppIcons.fingerprint;
       case PermissionType.bluetooth:
-        return Icons.bluetooth;
+        return AppIcons.bluetooth;
     }
   }
 }

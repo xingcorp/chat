@@ -21,9 +21,11 @@ import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/services/location_service.dart';
 import 'package:flutter_chat_app/core/services/realtime_service.dart';
 import 'package:flutter_chat_app/core/services/voice_recorder_service.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/image_compression_helper.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/data/datasources/clipboard/clipboard_datasource.dart';
 import 'package:flutter_chat_app/data/datasources/user/user_remote_datasource.dart';
 import 'package:flutter_chat_app/domain/entities/pending_file.dart';
@@ -2440,7 +2442,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                             heroTag: 'scrollToBottom',
                             onPressed: _scrollToBottom,
                             tooltip: context.l10n.scrollToBottom,
-                            child: const Icon(Icons.keyboard_arrow_down),
+                            child: const AppIcon.svg(AppIcons.caretDown),
                           ),
                         ),
                       ),
@@ -2754,7 +2756,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       ),
       child: Row(
         children: [
-          Icon(Icons.edit,
+          AppIcon.svg(AppIcons.edit,
               size: 16, color: Theme.of(context).colorScheme.tertiary),
           const SizedBox(width: 8),
           Expanded(
@@ -2767,7 +2769,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.close, size: 20),
+            icon: const AppIcon.svg(AppIcons.close, size: 20),
             onPressed: () {
               _cancelEditMode();
               _composerController.clear();
@@ -2824,7 +2826,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           AppIconButton(
-            icon: Icons.add_circle_outline,
+            icon: AppIcons.addCircle,
             onPressed: _showAttachmentPicker,
             tooltip: context.l10n.attachments,
           ),
@@ -2842,7 +2844,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             ),
           ),
           AppIconButton(
-            icon: Icons.sticky_note_2_outlined,
+            icon: AppIcons.sticker,
             onPressed: _showStickerPicker,
             tooltip: context.l10n.stickers,
           ),
@@ -2856,14 +2858,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
               if (canSend) {
                 return AppIconButton(
-                  icon: _isEditMode ? Icons.check : Icons.send,
+                  icon: _isEditMode ? AppIcons.statusSent : AppIcons.send,
                   onPressed: _sendMessage,
                   tooltip: _isEditMode ? context.l10n.save : context.l10n.send,
                 );
               }
               if (_isEditMode) {
                 return AppIconButton(
-                  icon: Icons.check,
+                  icon: AppIcons.statusSent,
                   onPressed: null,
                   tooltip: context.l10n.save,
                 );
@@ -2901,8 +2903,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             color: AppColors.primary,
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.mic_rounded,
+          child: const AppIcon.svg(
+            AppIcons.mic,
             color: AppColors.textButton,
             size: AppDimens.iconMedium,
           ),
@@ -2920,8 +2922,8 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       padding: const EdgeInsets.all(AppDimens.paddingSmall),
       child: Row(
         children: [
-          Icon(
-            isCancelling ? Icons.delete_outline_rounded : Icons.mic_rounded,
+          AppIcon.svg(
+            isCancelling ? AppIcons.delete : AppIcons.mic,
             color: statusColor,
             size: AppDimens.iconMedium,
           ),
@@ -2953,13 +2955,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     AppIconButton(
-                      icon: Icons.close_rounded,
+                      icon: AppIcons.close,
                       onPressed: _cancelVoiceRecordingFromPanel,
                       size: ButtonSize.small,
                       tooltip: context.l10n.cancelRecording,
                     ),
                     AppIconButton(
-                      icon: Icons.send_rounded,
+                      icon: AppIcons.send,
                       onPressed: _sendVoiceRecordingFromPanel,
                       size: ButtonSize.small,
                       tooltip: context.l10n.send,
@@ -3088,24 +3090,24 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
 
     return AppBar(
       leading: IconButton(
-          icon: const Icon(Icons.close), onPressed: _exitSelectionMode),
+          icon: const AppIcon.svg(AppIcons.close), onPressed: _exitSelectionMode),
       title: AppText(context.l10n.selectedCount(_selectedMessageIds.length),
           style: AppTextStyles.titleMedium),
       actions: [
         IconButton(
-            icon: const Icon(Icons.copy),
+            icon: const AppIcon.svg(AppIcons.copy),
             tooltip: context.l10n.copyMessage,
             onPressed: selectedUiMessages.isEmpty
                 ? null
                 : () => _copySelectedMessages(uiMessages)),
         IconButton(
-            icon: const Icon(Icons.forward),
+            icon: const AppIcon.svg(AppIcons.forward),
             tooltip: context.l10n.forwardMessage,
             onPressed:
                 selectedUiMessages.isEmpty ? null : _forwardSelectedMessages),
         if (canDeleteSelected)
           IconButton(
-              icon: const Icon(Icons.delete),
+              icon: const AppIcon.svg(AppIcons.delete),
               tooltip: context.l10n.deleteMessage,
               onPressed: _deleteSelectedMessages),
       ],
@@ -3329,7 +3331,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.chat_bubble_outline,
+          const AppIcon.svg(AppIcons.chatBubble,
               size: AppDimens.iconSizeXXLarge, color: AppColors.textSecondary),
           const SizedBox(height: AppDimens.spaceMedium),
           AppText(context.l10n.noMessagesInChat,
@@ -3349,7 +3351,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline,
+            AppIcon.svg(AppIcons.errorOutline,
                 size: AppDimens.iconSizeXXLarge, color: AppColors.error),
             const SizedBox(height: AppDimens.spaceMedium),
             AppText(message,
@@ -3360,7 +3362,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
               const SizedBox(height: AppDimens.spaceLarge),
               AppButton.primary(
                   text: context.l10n.retryOperation,
-                  icon: Icons.refresh,
+                  icon: AppIcons.refresh,
                   onPressed: retryAction),
             ],
           ],
@@ -3421,7 +3423,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
               ),
               const Divider(height: 1),
               if (message.contentType == ContentType.text)
-                _buildActionTile(Icons.copy, ctx.l10n.copyMessage, () {
+                _buildActionTile(AppIcons.copy, ctx.l10n.copyMessage, () {
                   Navigator.pop(ctx);
                   Clipboard.setData(ClipboardData(text: message.content));
                   AppSnackBar.show(
@@ -3429,21 +3431,21 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                       message: this.context.l10n.messageCopied,
                       type: FeedbackType.success);
                 }),
-              _buildActionTile(Icons.reply, ctx.l10n.replyMessage, () {
+              _buildActionTile(AppIcons.reply, ctx.l10n.replyMessage, () {
                 Navigator.pop(ctx);
                 _startReply(message);
               }),
               if (isCurrentUser && message.contentType == ContentType.text) ...[
-                _buildActionTile(Icons.edit, ctx.l10n.editMessage, () {
+                _buildActionTile(AppIcons.edit, ctx.l10n.editMessage, () {
                   Navigator.pop(ctx);
                   _startEditMode(message);
                 }),
-                _buildActionTile(Icons.delete, ctx.l10n.deleteMessage, () {
+                _buildActionTile(AppIcons.delete, ctx.l10n.deleteMessage, () {
                   Navigator.pop(ctx);
                   _confirmDeleteMessage(message);
                 }),
               ],
-              _buildActionTile(Icons.forward, ctx.l10n.forwardMessage, () {
+              _buildActionTile(AppIcons.forward, ctx.l10n.forwardMessage, () {
                 Navigator.pop(ctx);
                 showForwardMessageSheet(
                   this.context,
@@ -3451,7 +3453,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                   sourceChatId: widget.chatId,
                 );
               }),
-              _buildActionTile(Icons.checklist, ctx.l10n.selectAll, () {
+              _buildActionTile(AppIcons.select, ctx.l10n.selectAll, () {
                 Navigator.pop(ctx);
                 _enterSelectionMode(message.id);
               }),
@@ -3495,14 +3497,14 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
           borderRadius: BorderRadius.circular(999),
         ),
         child:
-            Icon(Icons.add, size: 20, color: Theme.of(context).iconTheme.color),
+            AppIcon.svg(AppIcons.add, size: 20, color: Theme.of(context).iconTheme.color),
       ),
     );
   }
 
-  Widget _buildActionTile(IconData icon, String title, VoidCallback onTap) {
+  Widget _buildActionTile(String icon, String title, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon),
+      leading: AppIcon.svg(icon),
       title: AppText(title),
       onTap: onTap,
     );

@@ -9,10 +9,11 @@
 /// **Architecture:** Clean Architecture + Flutter Best Practices + Material Design 3
 
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 
 /// **Error Recovery Action Type**
 enum ErrorRecoveryActionType {
@@ -33,7 +34,7 @@ class ErrorRecoveryAction {
   final String label;
   
   /// Icon for button
-  final IconData icon;
+  final String icon;
   
   /// Callback function
   final VoidCallback onPressed;
@@ -137,7 +138,7 @@ class ErrorRecoveryWidget extends StatelessWidget {
         color: color.withOpacity(0.1),
         shape: BoxShape.circle,
       ),
-      child: Icon(
+      child: AppIcon.svg(
         icon,
         size: 40,
         color: color,
@@ -237,7 +238,11 @@ class ErrorRecoveryWidget extends StatelessWidget {
                   ),
                 ),
               )
-            : Icon(action.icon),
+            : AppIcon.svg(
+                action.icon,
+                size: 20,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
         label: Text(action.label),
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -265,7 +270,11 @@ class ErrorRecoveryWidget extends StatelessWidget {
                 ),
               ),
             )
-          : Icon(action.icon, size: 18),
+          : AppIcon.svg(
+              action.icon,
+              size: 18,
+              color: Theme.of(context).colorScheme.primary,
+            ),
       label: Text(action.label),
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -340,27 +349,27 @@ class ErrorRecoveryWidget extends StatelessWidget {
   }
 
   /// **Get Error Icon**
-  IconData _getErrorIcon() {
+  String _getErrorIcon() {
     switch (failure.runtimeType) {
       case ConnectionFailure:
       case NetworkFailure:
-        return Icons.wifi_off_rounded;
+        return AppIcons.wifiOff;
       case AuthenticationFailure:
-        return Icons.lock_outline_rounded;
+        return AppIcons.lockOutline;
       case ServerFailure:
-        return Icons.cloud_off_rounded;
+        return AppIcons.cloudOff;
       case ValidationFailure:
-        return Icons.error_outline_rounded;
+        return AppIcons.errorOutline;
       case TimeoutFailure:
-        return Icons.access_time_rounded;
+        return AppIcons.statusPending;
       case RealtimeFailure:
-        return Icons.sync_problem_rounded;
+        return AppIcons.statusConflict;
       case UploadFailure:
-        return Icons.cloud_upload_outlined;
+        return AppIcons.cloudUpload;
       case DownloadFailure:
-        return Icons.cloud_download_outlined;
+        return AppIcons.updateReady;
       default:
-        return Icons.warning_amber_rounded;
+        return AppIcons.statusConflict;
     }
   }
 
@@ -422,7 +431,7 @@ class ErrorRecoveryWidget extends StatelessWidget {
     return ErrorRecoveryAction(
       type: ErrorRecoveryActionType.retry,
       label: 'Thử lại',
-      icon: Icons.refresh_rounded,
+      icon: AppIcons.refresh,
       onPressed: onRetry,
       isPrimary: true,
       isLoading: isLoading,
@@ -437,7 +446,7 @@ class ErrorRecoveryWidget extends StatelessWidget {
     return ErrorRecoveryAction(
       type: ErrorRecoveryActionType.reconnect,
       label: 'Kết nối lại',
-      icon: Icons.wifi_rounded,
+      icon: AppIcons.wifiConnected,
       onPressed: onReconnect,
       isPrimary: true,
       isLoading: isLoading,
@@ -452,7 +461,7 @@ class ErrorRecoveryWidget extends StatelessWidget {
     return ErrorRecoveryAction(
       type: ErrorRecoveryActionType.refresh,
       label: 'Làm mới',
-      icon: Icons.refresh_rounded,
+      icon: AppIcons.refresh,
       onPressed: onRefresh,
       isPrimary: false,
       isLoading: isLoading,
@@ -467,7 +476,7 @@ class ErrorRecoveryWidget extends StatelessWidget {
     return ErrorRecoveryAction(
       type: ErrorRecoveryActionType.reauthenticate,
       label: 'Đăng nhập lại',
-      icon: Icons.login_rounded,
+      icon: AppIcons.login,
       onPressed: onReauthenticate,
       isPrimary: true,
       isLoading: isLoading,
@@ -481,7 +490,7 @@ class ErrorRecoveryWidget extends StatelessWidget {
     return ErrorRecoveryAction(
       type: ErrorRecoveryActionType.goOffline,
       label: 'Chế độ offline',
-      icon: Icons.offline_bolt_rounded,
+      icon: AppIcons.lightning,
       onPressed: onGoOffline,
       isPrimary: false,
     );
@@ -494,7 +503,7 @@ class ErrorRecoveryWidget extends StatelessWidget {
     return ErrorRecoveryAction(
       type: ErrorRecoveryActionType.contactSupport,
       label: 'Liên hệ hỗ trợ',
-      icon: Icons.support_agent_rounded,
+      icon: AppIcons.support,
       onPressed: onContactSupport,
       isPrimary: false,
     );

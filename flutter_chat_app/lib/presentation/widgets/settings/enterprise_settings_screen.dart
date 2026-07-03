@@ -12,9 +12,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 
 import 'language_selector.dart';
 import 'theme_toggle_button.dart';
@@ -31,7 +33,7 @@ class EnterpriseSettingsScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.analytics),
+            icon: const AppIcon.svg(AppIcons.chartBar),
             tooltip: 'System Diagnostics',
             onPressed: () => _showSystemDiagnostics(context),
           ),
@@ -41,7 +43,7 @@ class EnterpriseSettingsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           // Theme Section
-          _buildSectionHeader(context, 'Theme Settings', Icons.palette),
+          _buildSectionHeader(context, 'Theme Settings', AppIcons.palette),
           const SizedBox(height: 8),
           Card(
             child: Column(
@@ -60,7 +62,7 @@ class EnterpriseSettingsScreen extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.speed),
+                  leading: const AppIcon.svg(AppIcons.gauge),
                   title: const Text('Theme Performance'),
                   subtitle: BlocBuilder<ThemeCubit, ThemeState>(
                     builder: (context, state) {
@@ -78,7 +80,7 @@ class EnterpriseSettingsScreen extends StatelessWidget {
                       return const Text('No performance data yet');
                     },
                   ),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const AppIcon.svg(AppIcons.chevronRight),
                   onTap: () => _showThemeMetrics(context),
                 ),
               ],
@@ -88,13 +90,13 @@ class EnterpriseSettingsScreen extends StatelessWidget {
           const SizedBox(height: 24),
           
           // Language Section
-          _buildSectionHeader(context, 'Language Settings', Icons.language),
+          _buildSectionHeader(context, 'Language Settings', AppIcons.language),
           const SizedBox(height: 8),
           Card(
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.translate),
+                  leading: const AppIcon.svg(AppIcons.language),
                   title: Text(context.l10n.selectLanguage),
                   subtitle: BlocBuilder<LocaleCubit, LocaleState>(
                     builder: (context, state) {
@@ -104,8 +106,8 @@ class EnterpriseSettingsScreen extends StatelessWidget {
                           Text('Current: ${locale.languageCode.toUpperCase()}'),
                           if (state.isRtl) ...[
                             const SizedBox(width: 8),
-                            Icon(
-                              Icons.format_textdirection_r_to_l,
+                            AppIcon.svg(
+                              AppIcons.textAlignRight,
                               size: 16,
                               color: Theme.of(context).colorScheme.primary,
                             ),
@@ -115,7 +117,7 @@ class EnterpriseSettingsScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const AppIcon.svg(AppIcons.chevronRight),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -126,7 +128,7 @@ class EnterpriseSettingsScreen extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.speed),
+                  leading: const AppIcon.svg(AppIcons.gauge),
                   title: const Text('Translation Performance'),
                   subtitle: BlocBuilder<LocaleCubit, LocaleState>(
                     builder: (context, state) {
@@ -144,7 +146,7 @@ class EnterpriseSettingsScreen extends StatelessWidget {
                       return const Text('No performance data yet');
                     },
                   ),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const AppIcon.svg(AppIcons.chevronRight),
                   onTap: () => _showI18nMetrics(context),
                 ),
               ],
@@ -154,20 +156,20 @@ class EnterpriseSettingsScreen extends StatelessWidget {
           const SizedBox(height: 24),
           
           // System Section
-          _buildSectionHeader(context, 'System', Icons.settings),
+          _buildSectionHeader(context, 'System', AppIcons.navSettings),
           const SizedBox(height: 8),
           Card(
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.memory),
+                  leading: const AppIcon.svg(AppIcons.cpu),
                   title: const Text('Cache Management'),
                   subtitle: const Text('Clear theme and translation caches'),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const AppIcon.svg(AppIcons.chevronRight),
                   onTap: () => _showCacheManagement(context),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.bug_report),
+                  leading: const AppIcon.svg(AppIcons.bug),
                   title: const Text('Error Diagnostics'),
                   subtitle: BlocBuilder<ThemeCubit, ThemeState>(
                     builder: (context, themeState) {
@@ -184,7 +186,7 @@ class EnterpriseSettingsScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const AppIcon.svg(AppIcons.chevronRight),
                   onTap: () => _showErrorDiagnostics(context),
                 ),
               ],
@@ -195,10 +197,10 @@ class EnterpriseSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
+  Widget _buildSectionHeader(BuildContext context, String title, String icon) {
     return Row(
       children: [
-        Icon(
+        AppIcon.svg(
           icon,
           color: Theme.of(context).colorScheme.primary,
         ),

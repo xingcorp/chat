@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/generated/l10n/app_localizations.dart';
@@ -304,7 +306,7 @@ class AppMessageBubble extends BaseStatelessWidget {
   @override
   Widget buildContent(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final isDark = theme.brightness == Brightness.dark;
 
     // Determine alignment
@@ -451,8 +453,8 @@ class AppMessageBubble extends BaseStatelessWidget {
                 width: 200,
                 height: 200,
                 color: theme.colorScheme.errorContainer,
-                child: Icon(
-                  Icons.broken_image,
+                child: AppIcon.svg(
+                  AppIcons.photo,
                   color: theme.colorScheme.onErrorContainer,
                   size: AppDimens.iconLarge,
                 ),
@@ -491,8 +493,8 @@ class AppMessageBubble extends BaseStatelessWidget {
                 width: 200,
                 height: 200,
                 color: theme.colorScheme.surfaceContainerHighest,
-                child: Icon(
-                  Icons.videocam,
+                child: AppIcon.svg(
+                  AppIcons.video,
                   color: theme.colorScheme.onSurfaceVariant,
                   size: AppDimens.iconXLarge,
                 ),
@@ -505,8 +507,8 @@ class AppMessageBubble extends BaseStatelessWidget {
                 color: theme.colorScheme.primary.withValues(alpha: 0.9),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.play_arrow,
+              child: AppIcon.svg(
+                AppIcons.play,
                 color: theme.colorScheme.onPrimary,
                 size: AppDimens.iconLarge,
               ),
@@ -533,8 +535,8 @@ class AppMessageBubble extends BaseStatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          Icons.play_circle_filled,
+        AppIcon.svg(
+          AppIcons.playCircle,
           color: theme.colorScheme.primary,
           size: AppDimens.iconLarge,
         ),
@@ -582,8 +584,8 @@ class AppMessageBubble extends BaseStatelessWidget {
             color: theme.colorScheme.primaryContainer,
             borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
           ),
-          child: Icon(
-            Icons.insert_drive_file,
+          child: AppIcon.svg(
+            AppIcons.file,
             color: theme.colorScheme.onPrimaryContainer,
             size: AppDimens.iconMedium,
           ),
@@ -629,8 +631,8 @@ class AppMessageBubble extends BaseStatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          Icons.location_on,
+        AppIcon.svg(
+          AppIcons.location,
           color: theme.colorScheme.error,
           size: AppDimens.iconLarge,
         ),
@@ -658,8 +660,8 @@ class AppMessageBubble extends BaseStatelessWidget {
         CircleAvatar(
           radius: AppDimens.iconMedium,
           backgroundColor: theme.colorScheme.primaryContainer,
-          child: Icon(
-            Icons.person,
+          child: AppIcon.svg(
+            AppIcons.contact,
             color: theme.colorScheme.onPrimaryContainer,
             size: AppDimens.iconMedium,
           ),
@@ -763,37 +765,37 @@ class AppMessageBubble extends BaseStatelessWidget {
 
   /// Builds status icon
   Widget _buildStatusIcon(ThemeData theme, MessageStatus status) {
-    IconData icon;
+    String icon;
     Color color;
 
     switch (status) {
       case MessageStatus.sending:
-        icon = Icons.access_time;
+        icon = AppIcons.statusPending;
         color = theme.colorScheme.onSurfaceVariant;
         break;
       case MessageStatus.sent:
-        icon = Icons.check;
+        icon = AppIcons.statusSent;
         color = theme.colorScheme.onSurfaceVariant;
         break;
       case MessageStatus.delivered:
-        icon = Icons.done_all;
+        icon = AppIcons.statusRead;
         color = theme.colorScheme.onSurfaceVariant;
         break;
       case MessageStatus.read:
-        icon = Icons.done_all;
+        icon = AppIcons.statusRead;
         color = theme.colorScheme.primary;
         break;
       case MessageStatus.failed:
-        icon = Icons.error_outline;
+        icon = AppIcons.errorOutline;
         color = theme.colorScheme.error;
         break;
       case MessageStatus.pending:
-        icon = Icons.schedule;
+        icon = AppIcons.statusPending;
         color = theme.colorScheme.onSurfaceVariant;
         break;
     }
 
-    return Icon(
+    return AppIcon.svg(
       icon,
       size: 14,
       color: color,

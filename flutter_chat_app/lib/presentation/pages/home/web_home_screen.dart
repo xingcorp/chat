@@ -13,10 +13,12 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/config/app_identity.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/blocs/locale/locale_cubit.dart';
 import 'package:flutter_chat_app/presentation/blocs/theme/theme_cubit.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_brand_logo.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/presentation/widgets/settings/enterprise_settings_screen.dart';
 
 /// **WEB HOME SCREEN**
@@ -34,8 +36,8 @@ class WebHomeScreen extends StatelessWidget {
           BlocBuilder<ThemeCubit, ThemeState>(
             builder: (context, state) {
               return IconButton(
-                icon: Icon(
-                  state.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                icon: AppIcon.svg(
+                  state.isDarkMode ? AppIcons.lightMode : AppIcons.darkMode,
                 ),
                 tooltip: 'Toggle Theme',
                 onPressed: () {
@@ -49,7 +51,7 @@ class WebHomeScreen extends StatelessWidget {
           BlocBuilder<LocaleCubit, LocaleState>(
             builder: (context, state) {
               return IconButton(
-                icon: const Icon(Icons.language),
+                icon: const AppIcon.svg(AppIcons.language),
                 tooltip: 'Change Language',
                 onPressed: () {
                   context.read<LocaleCubit>().toggleLocale();
@@ -60,7 +62,7 @@ class WebHomeScreen extends StatelessWidget {
 
           // Settings
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const AppIcon.svg(AppIcons.navSettings),
             tooltip: 'Settings',
             onPressed: () {
               Navigator.push(
@@ -156,7 +158,7 @@ class WebHomeBody extends StatelessWidget {
               CircleAvatar(
                 radius: 30,
                 backgroundColor: Theme.of(context).colorScheme.primary,
-                child: const Icon(Icons.person, size: 30, color: Colors.white),
+                child: const AppIcon.svg(AppIcons.contact, size: 30, color: Colors.white),
               ),
               const SizedBox(height: 8),
               Text(
@@ -180,28 +182,28 @@ class WebHomeBody extends StatelessWidget {
           child: ListView(
             children: [
               ListTile(
-                leading: const Icon(Icons.chat),
+                leading: const AppIcon.svg(AppIcons.navChat),
                 title: Text(context.l10n.chats),
                 onTap: () {
                   // Navigate to chats
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.contacts),
+                leading: const AppIcon.svg(AppIcons.navContacts),
                 title: Text(context.l10n.contacts),
                 onTap: () {
                   // Navigate to contacts
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.group),
+                leading: const AppIcon.svg(AppIcons.group),
                 title: Text(context.l10n.groups),
                 onTap: () {
                   // Navigate to groups
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.settings),
+                leading: const AppIcon.svg(AppIcons.navSettings),
                 title: Text(context.l10n.settingsTitle),
                 onTap: () {
                   Navigator.push(
@@ -253,25 +255,25 @@ class WebHomeBody extends StatelessWidget {
                     children: [
                       _buildFeatureCard(
                         context,
-                        Icons.palette,
+                        AppIcons.palette,
                         'Dynamic Themes',
                         'Material Design 3 with dynamic colors',
                       ),
                       _buildFeatureCard(
                         context,
-                        Icons.language,
+                        AppIcons.language,
                         'Internationalization',
                         'Multi-language support with RTL',
                       ),
                       _buildFeatureCard(
                         context,
-                        Icons.speed,
+                        AppIcons.gauge,
                         'Performance',
                         'Optimized for web browsers',
                       ),
                       _buildFeatureCard(
                         context,
-                        Icons.security,
+                        AppIcons.security,
                         'Enterprise Ready',
                         'Production-grade features',
                       ),
@@ -358,7 +360,7 @@ class WebHomeBody extends StatelessWidget {
 
   Widget _buildFeatureCard(
     BuildContext context,
-    IconData icon,
+    String icon,
     String title,
     String description,
   ) {
@@ -369,7 +371,7 @@ class WebHomeBody extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Icon(
+              AppIcon.svg(
                 icon,
                 size: 48,
                 color: Theme.of(context).colorScheme.primary,

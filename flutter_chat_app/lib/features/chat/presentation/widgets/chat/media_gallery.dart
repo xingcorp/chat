@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_chat_app/domain/services/file_download_state.dart';
 import 'package:flutter_chat_app/domain/services/i_file_download_manager.dart';
@@ -239,8 +241,8 @@ class MediaGallery extends StatelessWidget {
             child: Container(
               color: Colors.grey[850],
               alignment: Alignment.center,
-              child: const Icon(
-                Icons.videocam,
+              child: AppIcon.svg(
+                AppIcons.video,
                 color: Colors.white54,
                 size: 48,
               ),
@@ -368,19 +370,19 @@ class MediaGallery extends StatelessWidget {
                 color: primaryIconColor,
               )
             else if (isDownloaded)
-              Icon(
-                Icons.check_circle,
+              AppIcon.svg(
+                AppIcons.checkCircle,
                 color: theme.colorScheme.tertiary,
                 size: 28,
               )
             else if (isDownloadFailed)
-              Icon(
-                Icons.error_outline,
+              AppIcon.svg(
+                AppIcons.errorOutline,
                 color: theme.colorScheme.error,
                 size: 28,
               )
             else
-              Icon(
+              AppIcon.svg(
                 _getFileIcon(file.type),
                 color: primaryIconColor,
                 size: 32,
@@ -442,14 +444,14 @@ class MediaGallery extends StatelessWidget {
               ),
             ),
             if (!isUploading)
-              Icon(
+              AppIcon.svg(
                 isDownloading
-                    ? Icons.close
+                    ? AppIcons.close
                     : isDownloaded
-                        ? Icons.open_in_new
+                        ? AppIcons.openInNew
                         : isDownloadFailed
-                            ? Icons.refresh
-                            : Icons.download,
+                            ? AppIcons.refresh
+                            : AppIcons.updateReady,
                 color: downloadIconColor,
                 size: 20,
               ),
@@ -518,19 +520,19 @@ class MediaGallery extends StatelessWidget {
   }
 
   /// Get icon cho file type
-  IconData _getFileIcon(String type) {
+  String _getFileIcon(String type) {
     switch (type.toLowerCase()) {
       case 'audio':
-        return Icons.audiotrack;
+        return AppIcons.audioTrack;
       case 'location':
-        return Icons.location_on;
+        return AppIcons.location;
       case 'doc':
-        return Icons.description;
+        return AppIcons.file;
       case 'pdf':
-        return Icons.picture_as_pdf;
+        return AppIcons.filePdf;
       case 'file':
       default:
-        return Icons.insert_drive_file;
+        return AppIcons.file;
     }
   }
 

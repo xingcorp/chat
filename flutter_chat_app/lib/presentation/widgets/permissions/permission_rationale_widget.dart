@@ -11,9 +11,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/core/utils/app_localizations.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/shared/domain/entities/permission_entity.dart';
 
 /// **Enterprise Permission Rationale Widget**
@@ -95,7 +97,7 @@ class PermissionRationaleWidget extends StatelessWidget {
             color: isCritical ? AppColors.error.withOpacity(0.1) : AppColors.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(16.r),
           ),
-          child: Icon(
+          child: AppIcon.svg(
             _getPermissionIcon(permissionType),
             size: 32.sp,
             color: isCritical ? AppColors.error : AppColors.primary,
@@ -126,9 +128,6 @@ class PermissionRationaleWidget extends StatelessWidget {
   Widget _buildContent(BuildContext context, AppLocalizations localizations) {
     final description = customDescription ?? 
         localizations.getPermissionDescription(permissionType.name);
-    final rationale = localizations.permissionRequiredMessage(
-      localizations.getPermissionName(permissionType.name)
-    );
     
     return Column(
       children: [
@@ -147,8 +146,8 @@ class PermissionRationaleWidget extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(
-                    Icons.info_outline,
+                  AppIcon.svg(
+                    AppIcons.info,
                     size: 20.sp,
                     color: AppColors.info,
                   ),
@@ -187,8 +186,8 @@ class PermissionRationaleWidget extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.priority_high,
+                AppIcon.svg(
+                  AppIcons.statusConflict,
                   size: 20.sp,
                   color: AppColors.error,
                 ),
@@ -230,9 +229,10 @@ class PermissionRationaleWidget extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.check_circle_outline,
+                AppIcon.svg(
+                  AppIcons.checkCircleOutline,
                   size: 20.sp,
+                  color: Colors.white,
                 ),
                 SizedBox(width: 8.w),
                 Text(
@@ -317,30 +317,30 @@ class PermissionRationaleWidget extends StatelessWidget {
     );
   }
 
-  IconData _getPermissionIcon(PermissionType type) {
+  String _getPermissionIcon(PermissionType type) {
     switch (type) {
       case PermissionType.camera:
-        return Icons.camera_alt;
+        return AppIcons.cameraAlt;
       case PermissionType.microphone:
-        return Icons.mic;
+        return AppIcons.mic;
       case PermissionType.storage:
-        return Icons.storage;
+        return AppIcons.storage;
       case PermissionType.notification:
-        return Icons.notifications;
+        return AppIcons.notifications;
       case PermissionType.contacts:
-        return Icons.contacts;
+        return AppIcons.navContacts;
       case PermissionType.location:
-        return Icons.location_on;
+        return AppIcons.location;
       case PermissionType.phone:
-        return Icons.phone;
+        return AppIcons.phone;
       case PermissionType.calendar:
-        return Icons.calendar_today;
+        return AppIcons.calendar;
       case PermissionType.sms:
-        return Icons.sms;
+        return AppIcons.chatText;
       case PermissionType.biometric:
-        return Icons.fingerprint;
+        return AppIcons.fingerprint;
       case PermissionType.bluetooth:
-        return Icons.bluetooth;
+        return AppIcons.bluetooth;
     }
   }
 
