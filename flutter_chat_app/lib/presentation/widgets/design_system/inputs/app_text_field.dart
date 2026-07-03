@@ -5,6 +5,7 @@ import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 
 /// **APP TEXT FIELD**
 ///
@@ -46,9 +47,9 @@ import 'package:flutter_chat_app/l10n/l10n.dart';
 /// // Text field with icons
 /// AppTextField(
 ///   label: 'Search',
-///   prefixIcon: Icons.search,
+///   prefixIcon: AppIcons.search,
 ///   suffixIcon: IconButton(
-///     icon: Icon(Icons.clear),
+///     icon: AppIcon(AppIcons.close),
 ///     onPressed: () => _handleClear(),
 ///   ),
 /// )
@@ -95,8 +96,8 @@ class AppTextField extends BaseStatefulWidget {
   /// Error text displayed below field (overrides helperText)
   final String? errorText;
 
-  /// Icon displayed at start of field
-  final IconData? prefixIcon;
+  /// SVG icon asset path displayed at start of field (use [AppIcons] constants)
+  final String? prefixIcon;
 
   /// Widget displayed at end of field
   final Widget? suffixIcon;
@@ -288,8 +289,8 @@ class AppTextFieldState extends BaseState<AppTextField> {
         color: AppColors.error,
       ),
       prefixIcon: widget.prefixIcon != null
-          ? Icon(
-              widget.prefixIcon,
+          ? AppIcon(
+              widget.prefixIcon!,
               size: AppDimens.iconMedium,
               color: _isFocused
                   ? AppColors.primary

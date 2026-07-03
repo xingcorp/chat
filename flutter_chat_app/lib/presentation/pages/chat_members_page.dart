@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
@@ -143,7 +144,7 @@ class _ChatMembersPageState extends BaseState<ChatMembersPage> {
                 child: AppTextField(
                   controller: _searchController,
                   hint: l10n.searchMembers,
-                  prefixIcon: Icons.search,
+                  prefixIcon: AppIcons.search,
                   autofocus: true,
                   suffixIcon: _searchController.text.isNotEmpty
                       ? AppIconButton(

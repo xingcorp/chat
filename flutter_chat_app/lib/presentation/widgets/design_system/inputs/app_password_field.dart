@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/inputs/app_text_field.dart';
 
 /// **APP PASSWORD FIELD**
@@ -48,6 +49,6 @@ class AppPasswordField extends AppTextField {
   }) : super(
           obscureText: true,
           keyboardType: TextInputType.visiblePassword,
-          prefixIcon: Icons.lock_outline,
+          prefixIcon: AppIcons.lockOutline,
         );
 }

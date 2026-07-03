@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/config/app_identity.dart';
@@ -140,7 +142,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
                 // Notifications
                 _buildSettingsItem(
                   context: context,
-                  icon: Icons.notifications_outlined,
+                  iconPath: AppIcons.notifications,
                   title: context.l10n.notificationSettings,
                   onTap: () {
                     // TODO: Navigate to notification settings
@@ -159,7 +161,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
 
                     return _buildSettingsItem(
                       context: context,
-                      icon: Icons.language,
+                      iconPath: AppIcons.language,
                       title: context.l10n.languageSettings,
                       subtitle: subtitle,
                       onTap: () {
@@ -188,7 +190,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
                 // About
                 _buildSettingsItem(
                   context: context,
-                  icon: Icons.info_outline,
+                  iconPath: AppIcons.about,
                   title: context.l10n.aboutSettings,
                   subtitle: '${context.l10n.version}: $_appVersion',
                   onTap: () {
@@ -202,7 +204,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
                 // Logout
                 _buildSettingsItem(
                   context: context,
-                  icon: Icons.logout,
+                  iconPath: AppIcons.logout,
                   title: context.l10n.logout,
                   textColor: AppColors.error,
                   onTap: _logout,
@@ -252,8 +254,8 @@ class _SettingsPageState extends BaseState<SettingsPage> {
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right,
+            AppIcon(
+              AppIcons.chevronRight,
               color: secondaryTextColor,
             ),
           ],
@@ -280,7 +282,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
 
         return _buildSettingsItem(
           context: context,
-          icon: isDark ? Icons.dark_mode : Icons.light_mode,
+          iconPath: isDark ? AppIcons.darkMode : AppIcons.lightMode,
           title: context.l10n.themeSettings,
           subtitle: themeLabel,
           onTap: () => _showThemeDialog(context),
@@ -444,8 +446,8 @@ class _SettingsPageState extends BaseState<SettingsPage> {
           onTap = () => UpdateProgressDialog.show(context);
         } else if (state is UpdateReadyToInstall) {
           subtitle = context.l10n.restartToUpdate;
-          trailing = Icon(
-            Icons.restart_alt,
+          trailing = AppIcon(
+            AppIcons.updateReady,
             color: AppColors.success,
             size: AppDimens.iconMedium,
           );
@@ -472,8 +474,8 @@ class _SettingsPageState extends BaseState<SettingsPage> {
             isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
 
         return ListTile(
-          leading: Icon(
-            Icons.system_update_outlined,
+          leading: AppIcon(
+            AppIcons.systemUpdate,
             color: isDark ? AppColors.primaryDarkMode : AppColors.primary,
           ),
           title: AppText(
@@ -491,7 +493,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
             ),
           ),
           trailing: trailing ??
-              Icon(Icons.chevron_right, color: secondaryTextColor),
+              AppIcon(AppIcons.chevronRight, color: secondaryTextColor),
           onTap: onTap,
         );
       },
@@ -500,7 +502,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
 
   Widget _buildSettingsItem({
     required BuildContext context,
-    required IconData icon,
+    required String iconPath,
     required String title,
     String? subtitle,
     Color? textColor,
@@ -512,8 +514,8 @@ class _SettingsPageState extends BaseState<SettingsPage> {
     final secondaryTextColor = isDark ? AppColors.textSecondaryDarkMode : AppColors.textSecondary;
 
     return ListTile(
-      leading: Icon(
-        icon,
+      leading: AppIcon(
+        iconPath,
         color: textColor ?? (isDark ? AppColors.primaryDarkMode : AppColors.primary),
       ),
       title: AppText(
@@ -530,8 +532,8 @@ class _SettingsPageState extends BaseState<SettingsPage> {
               ),
             )
           : null,
-      trailing: Icon(
-        Icons.chevron_right,
+      trailing: AppIcon(
+        AppIcons.chevronRight,
         color: secondaryTextColor,
       ),
       onTap: onTap,

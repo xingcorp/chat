@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/composer_constants.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 
 /// A single format toggle button (bold, italic, underline, etc.).
 ///
@@ -22,7 +23,7 @@ class FormatButton extends StatelessWidget {
   });
 
   /// Icon shown inside the button.
-  final IconData icon;
+  final String icon;
 
   /// Accessibility / hover tooltip.
   final String tooltip;
@@ -76,7 +77,7 @@ class FormatButton extends StatelessWidget {
           child: SizedBox(
             width: ComposerConstants.formatButtonSize,
             height: ComposerConstants.formatButtonSize,
-            child: Icon(
+            child: AppIcon(
               icon,
               size: ComposerConstants.formatIconSize,
               color: iconColor,

@@ -161,13 +161,13 @@ class AppColors {
   );
 
   /// Other's message bubble background (light mode)
-  static const Color bubbleOtherLight = Color(0xFFF5F5F5);
+  static const Color bubbleOtherLight = Color(0xFFE8E8ED);
 
   /// Other's message bubble background (dark mode)
   static const Color bubbleOtherDark = Color(0xFF2C2C2E);
 
   /// Other's message bubble border (light mode)
-  static const Color bubbleOtherBorderLight = Color(0xFFE2E8F0);
+  static const Color bubbleOtherBorderLight = Color(0xFFDFDFE4);
 
   /// Other's message bubble border (dark mode)
   static const Color bubbleOtherBorderDark = Color(0xFF3A3A3C);

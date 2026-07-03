@@ -4,8 +4,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_action_callbacks.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 
 // ---------------------------------------------------------------------------
@@ -352,7 +354,7 @@ class _CompactActionBarState extends BaseState<CompactActionBar> {
 
               // === Reply ===
               _buildActionIconButton(
-                icon: Icons.reply,
+                icon: AppIcons.reply,
                 tooltip: l10n.reply,
                 onPressed: widget.callbacks.onReply,
                 theme: theme,
@@ -360,7 +362,7 @@ class _CompactActionBarState extends BaseState<CompactActionBar> {
 
               // === Forward ===
               _buildActionIconButton(
-                icon: Icons.shortcut,
+                icon: AppIcons.forward,
                 tooltip: l10n.forward,
                 onPressed: widget.callbacks.onForward,
                 theme: theme,
@@ -369,7 +371,7 @@ class _CompactActionBarState extends BaseState<CompactActionBar> {
               // === More ===
               _buildActionIconButton(
                 key: widget.moreButtonKey,
-                icon: Icons.more_horiz,
+                icon: AppIcons.moreHoriz,
                 tooltip: l10n.moreActions,
                 onPressed: _showMoreActions,
                 theme: theme,
@@ -394,8 +396,8 @@ class _CompactActionBarState extends BaseState<CompactActionBar> {
           borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
           child: Padding(
             padding: const EdgeInsets.all(6.0),
-            child: Icon(
-              Icons.thumb_up_outlined,
+            child: AppIcon(
+              AppIcons.thumbUp,
               size: AppDimens.iconSmall,
               color: theme.iconTheme.color?.withValues(alpha: 0.6),
             ),
@@ -407,7 +409,7 @@ class _CompactActionBarState extends BaseState<CompactActionBar> {
 
   Widget _buildActionIconButton({
     Key? key,
-    required IconData icon,
+    required String icon,
     required String tooltip,
     required VoidCallback onPressed,
     required ThemeData theme,
@@ -420,7 +422,7 @@ class _CompactActionBarState extends BaseState<CompactActionBar> {
         borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
         child: Padding(
           padding: const EdgeInsets.all(6.0),
-          child: Icon(
+          child: AppIcon(
             icon,
             size: AppDimens.iconSmall,
             color: theme.iconTheme.color?.withValues(alpha: 0.6),
@@ -601,8 +603,8 @@ class _EmojiQuickPickerContent extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
           hoverColor: theme.hoverColor,
           child: Center(
-            child: Icon(
-              Icons.add_circle_outline,
+            child: AppIcon(
+              AppIcons.addReaction,
               size: 20.0,
               color: theme.iconTheme.color?.withValues(alpha: 0.4),
             ),
@@ -663,7 +665,7 @@ class MoreActionsPopup {
 
     if (isTextMessage) {
       items.add(_MoreActionItem(
-        icon: Icons.copy,
+        icon: AppIcons.copy,
         label: l10n.copyMessage,
         onTap: () {
           dismiss();
@@ -674,7 +676,7 @@ class MoreActionsPopup {
 
     if (isCurrentUser && isTextMessage) {
       items.add(_MoreActionItem(
-        icon: Icons.edit,
+        icon: AppIcons.edit,
         label: l10n.editMessage,
         onTap: () {
           dismiss();
@@ -685,7 +687,7 @@ class MoreActionsPopup {
 
     if (isCurrentUser) {
       items.add(_MoreActionItem(
-        icon: Icons.delete_outline,
+        icon: AppIcons.delete,
         label: l10n.deleteMessage,
         onTap: () {
           dismiss();
@@ -696,7 +698,7 @@ class MoreActionsPopup {
     }
 
     items.add(_MoreActionItem(
-      icon: Icons.checklist,
+      icon: AppIcons.select,
       label: l10n.selectMessage,
       onTap: () {
         dismiss();
@@ -777,7 +779,7 @@ class MoreActionsPopup {
                       ),
                       child: Row(
                         children: [
-                          Icon(
+                          AppIcon(
                             item.icon,
                             size: AppDimens.iconSmall,
                             color: item.isDestructive
@@ -826,7 +828,7 @@ class MoreActionsPopup {
 
 /// Internal data class for a single menu item in [MoreActionsPopup].
 class _MoreActionItem {
-  final IconData icon;
+  final String icon;
   final String label;
   final VoidCallback onTap;
   final bool isDestructive;

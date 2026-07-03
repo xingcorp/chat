@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 
 /// Error page
@@ -27,8 +29,8 @@ class ErrorPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
+              const AppIcon(
+                AppIcons.errorOutline,
                 color: Colors.red,
                 size: 80,
               ),
@@ -55,7 +57,7 @@ class ErrorPage extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                icon: const Icon(Icons.arrow_back),
+                icon: const AppIcon(AppIcons.arrowBack),
                 label: const Text('Quay lại'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -69,7 +71,7 @@ class ErrorPage extends StatelessWidget {
                 onPressed: () {
                   // Navigate to home
                 },
-                icon: const Icon(Icons.home),
+                icon: const AppIcon(AppIcons.home),
                 label: const Text('Trang chủ'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[200],

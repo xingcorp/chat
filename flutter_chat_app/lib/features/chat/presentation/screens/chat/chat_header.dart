@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/services/current_user_provider.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -80,7 +82,7 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
       titleSpacing: showBackButton ? 0 : 8,
       leading: showBackButton
           ? IconButton(
-              icon: const Icon(Icons.arrow_back),
+              icon: const AppIcon(AppIcons.arrowBack),
               onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
             )
           : null,
@@ -117,16 +119,16 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: <Widget>[
         IconButton(
-          icon: const Icon(Icons.search),
+          icon: const AppIcon(AppIcons.search),
           onPressed: onSearchPressed,
         ),
         if (chat.type == ChatType.group)
           IconButton(
-            icon: const Icon(Icons.person_add),
+            icon: const AppIcon(AppIcons.personAdd),
             onPressed: onAddMemberPressed,
           ),
         IconButton(
-          icon: const Icon(Icons.info_outline),
+          icon: const AppIcon(AppIcons.info),
           onPressed: onInfoPressed,
         ),
       ],
@@ -150,18 +152,25 @@ class ChatHeader extends StatelessWidget implements PreferredSizeWidget {
       clipBehavior: Clip.none,
       children: <Widget>[
         avatar,
-        // The PresenceIndicator bounding box is larger than the visible
-        // dot due to the pulse ring (presencePulseMaxScale = 2.0).
-        // Offset compensates: -(dotSize + borderWidth * 2) * (scale - 1) / 2
-        Positioned(
-          right: -9,
-          bottom: -9,
-          child: LivePresenceIndicator(
-            userId: directPresence.userId,
-            showLabel: false,
-            dotSize: 14.0,
-            fallbackPresence: directPresence.fallbackPresence,
-          ),
+        Builder(
+          builder: (context) {
+            final dotSize = AppDimens.presenceDotSize;
+            final borderWidth = AppDimens.presenceDotBorder;
+            final scale = AppDimens.presencePulseMaxScale;
+            final dotWithBorder = dotSize + borderWidth * 2;
+            final pulseOffset = dotWithBorder * (scale - 1) / 2;
+
+            return Positioned(
+              right: -pulseOffset,
+              bottom: -pulseOffset,
+              child: LivePresenceIndicator(
+                userId: directPresence.userId,
+                showLabel: false,
+                dotSize: dotSize,
+                fallbackPresence: directPresence.fallbackPresence,
+              ),
+            );
+          },
         ),
       ],
     );

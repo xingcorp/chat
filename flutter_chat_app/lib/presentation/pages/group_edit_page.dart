@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/di/injection.dart';
 import 'package:flutter_chat_app/core/error/failures.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
@@ -349,14 +350,14 @@ class _GroupEditPageState extends BaseState<GroupEditPage> {
                       enabled: !_isSaving,
                       textInputAction: TextInputAction.next,
                       label: context.l10n.groupName,
-                      prefixIcon: Icons.group_outlined,
+                      prefixIcon: AppIcons.group,
                     ),
                     const SizedBox(height: AppDimens.spaceMedium),
                     AppTextField(
                       controller: _descriptionController,
                       enabled: !_isSaving,
                       label: context.l10n.groupDescription,
-                      prefixIcon: Icons.notes_rounded,
+                      prefixIcon: AppIcons.notes,
                       maxLines: 3,
                       minLines: 3,
                       textInputAction: TextInputAction.newline,

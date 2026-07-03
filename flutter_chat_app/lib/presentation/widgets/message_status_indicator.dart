@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 import 'package:flutter_chat_app/core/services/message_queue_service.dart';
 import 'package:flutter_chat_app/shared/domain/entities/message_queue_status.dart';
 
@@ -86,46 +88,46 @@ class MessageStatusIndicator extends StatelessWidget {
   
   /// Xây dựng chỉ báo trạng thái dựa trên status
   Widget _buildIndicator(MessageQueueStatus status) {
-    IconData iconData;
+    String iconPath;
     Color color;
     bool showProgress = false;
     
     switch (status) {
       case MessageQueueStatus.draft:
-        iconData = Icons.edit;
+        iconPath = AppIcons.statusDraft;
         color = pendingColor;
         break;
       case MessageQueueStatus.pending:
-        iconData = Icons.access_time;
+        iconPath = AppIcons.statusPending;
         color = pendingColor;
         break;
       case MessageQueueStatus.sending:
-        iconData = Icons.send;
+        iconPath = AppIcons.statusSending;
         color = pendingColor;
         showProgress = true;
         break;
       case MessageQueueStatus.sent:
-        iconData = Icons.check;
+        iconPath = AppIcons.statusSent;
         color = sentColor;
         break;
       case MessageQueueStatus.delivered:
-        iconData = Icons.done_all;
+        iconPath = AppIcons.statusDelivered;
         color = deliveredColor;
         break;
       case MessageQueueStatus.read:
-        iconData = Icons.done_all;
+        iconPath = AppIcons.statusRead;
         color = readColor;
         break;
       case MessageQueueStatus.failed:
-        iconData = Icons.error_outline;
+        iconPath = AppIcons.statusFailed;
         color = errorColor;
         break;
       case MessageQueueStatus.cancelled:
-        iconData = Icons.cancel;
+        iconPath = AppIcons.statusCancelled;
         color = errorColor;
         break;
       case MessageQueueStatus.conflicted:
-        iconData = Icons.warning;
+        iconPath = AppIcons.statusConflict;
         color = errorColor;
         break;
     }
@@ -147,16 +149,16 @@ class MessageStatusIndicator extends StatelessWidget {
       // Cho phép nhấn để thử lại nếu gặp lỗi
       return InkWell(
         onTap: onPressed,
-        child: Icon(
-          iconData,
-          size: size,
-          color: color,
-        ),
+        child: AppIcon(
+           iconPath,
+           size: size,
+           color: color,
+         ),
       );
     } else {
       // Trạng thái thông thường
-      return Icon(
-        iconData,
+      return AppIcon(
+        iconPath,
         size: size,
         color: color,
       );

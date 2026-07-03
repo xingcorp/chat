@@ -430,13 +430,13 @@ class AppDimens {
   // ============================================================================
 
   /// Presence dot size (online indicator)
-  static const double presenceDotSize = 12.0;
+  static const double presenceDotSize = 9.0;
 
   /// Presence dot border width (white outline)
-  static const double presenceDotBorder = 2.0;
+  static const double presenceDotBorder = 1.5;
 
   /// Presence pulse max scale
-  static const double presencePulseMaxScale = 2.0;
+  static const double presencePulseMaxScale = 1.5;
 
   // ============================================================================
   // PREMIUM V2 — TAB PILL

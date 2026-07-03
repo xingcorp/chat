@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -382,11 +384,11 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
                           : AppText(context.l10n.chats),
                     ),
                     IconButton(
-                      icon: Icon(_isSearching ? Icons.close : Icons.search),
+                      icon: AppIcon(_isSearching ? AppIcons.close : AppIcons.search),
                       onPressed: _toggleSearch,
                     ),
                     PopupMenuButton<String>(
-                      icon: const Icon(Icons.add),
+                      icon: const AppIcon(AppIcons.add),
                       onSelected: (value) async {
                         if (value == 'newConversation') {
                           await _openNewConversation();
@@ -654,8 +656,8 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.chat_bubble_outline,
+            AppIcon(
+              AppIcons.emptyChat,
               size: AppDimens.iconSizeXXLarge,
               color: AppColors.textSecondary,
             ),
@@ -679,8 +681,8 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
+              AppIcon(
+                AppIcons.errorOutline,
                 size: AppDimens.iconSizeXXLarge,
                 color: AppColors.error,
               ),
@@ -709,8 +711,8 @@ class _ChatListPanelState extends BaseState<ChatListPanel> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.cloud_off,
+            AppIcon(
+              AppIcons.cloudOff,
               size: AppDimens.iconSizeXXLarge,
               color: AppColors.textSecondary,
             ),

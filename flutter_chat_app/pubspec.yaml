@@ -201,6 +201,8 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/icons/light/
+    - assets/icons/fill/
     - assets/splash/
     - assets/translations/
     - assets/animations/

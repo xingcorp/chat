@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -600,8 +602,8 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
               color: AppColors.secondary,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.camera_alt,
+            child: AppIcon(
+              AppIcons.cameraAlt,
               size: AppDimens.iconXSmall,
               color: isDark
                   ? AppColors.textPrimaryDarkMode
@@ -618,7 +620,7 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
     return AppTextField(
       controller: _groupNameController,
       label: context.l10n.groupName,
-      prefixIcon: Icons.group,
+      prefixIcon: AppIcons.group,
       enabled: !isCreating,
       textInputAction: TextInputAction.next,
       onChanged: (_) => safeSetState(() {}),
@@ -629,7 +631,7 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
     return AppTextField(
       controller: _groupDescriptionController,
       label: context.l10n.groupDescription,
-      prefixIcon: Icons.notes_rounded,
+      prefixIcon: AppIcons.notes,
       enabled: !isCreating,
       maxLines: 3,
       minLines: 3,
@@ -666,11 +668,11 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
     return AppTextField(
       controller: _searchController,
       label: context.l10n.search,
-      prefixIcon: Icons.search,
+      prefixIcon: AppIcons.search,
       enabled: !isCreating,
       suffixIcon: _searchQuery.isNotEmpty
           ? AppIconButton(
-              icon: Icons.close_rounded,
+              icon: Icons.close_rounded, // TODO: Change to AppIcons.close when AppIconButton supports String iconPath
               size: ButtonSize.small,
               tooltip: context.l10n.cancel,
               onPressed: _searchController.clear,
@@ -727,8 +729,8 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
                           color: AppColors.error,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.close,
+                        child: const AppIcon(
+                          AppIcons.close,
                           size: AppDimens.iconXSmall - 2,
                           color: AppColors.cardBackground,
                         ),
@@ -784,8 +786,8 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
           color: isDark ? AppColors.textPrimaryDarkMode : AppColors.textPrimary,
         ),
       ),
-      trailing: Icon(
-        isSelected ? Icons.check_circle : Icons.check_circle_outline,
+      trailing: AppIcon(
+        isSelected ? AppIcons.checkCircle : AppIcons.checkCircleOutline,
         color: isSelected ? AppColors.success : AppColors.textHint,
       ),
       onTap: () => _toggleUser(user),

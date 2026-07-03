@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_constants.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
@@ -23,6 +25,7 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_toast.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/feedback_type.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/menus/app_tooltip.dart';
+import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/shortcode_autocomplete_overlay.dart';
 
 /// Widget input cho chat
@@ -419,7 +422,7 @@ class _ChatInputState extends BaseState<ChatInput> {
                 padding: EdgeInsets.all(AppConstants.kDefaultPadding),
                 children: [
                   _buildAttachmentButton(
-                    icon: Icons.photo,
+                    icon: AppIcons.photo,
                     label: 'Ảnh',
                     onTap: () {
                       Navigator.pop(context);
@@ -427,7 +430,7 @@ class _ChatInputState extends BaseState<ChatInput> {
                     },
                   ),
                   _buildAttachmentButton(
-                    icon: Icons.videocam,
+                    icon: AppIcons.video,
                     label: 'Video',
                     onTap: () {
                       Navigator.pop(context);
@@ -435,7 +438,7 @@ class _ChatInputState extends BaseState<ChatInput> {
                     },
                   ),
                   _buildAttachmentButton(
-                    icon: Icons.insert_drive_file,
+                    icon: AppIcons.file,
                     label: 'File',
                     onTap: () {
                       Navigator.pop(context);
@@ -443,7 +446,7 @@ class _ChatInputState extends BaseState<ChatInput> {
                     },
                   ),
                   _buildAttachmentButton(
-                    icon: Icons.location_on,
+                    icon: AppIcons.location,
                     label: 'Vị trí',
                     onTap: () {
                       Navigator.pop(context);
@@ -452,7 +455,7 @@ class _ChatInputState extends BaseState<ChatInput> {
                     },
                   ),
                   _buildAttachmentButton(
-                    icon: Icons.person,
+                    icon: AppIcons.contact,
                     label: 'Liên hệ',
                     onTap: () {
                       Navigator.pop(context);
@@ -470,7 +473,7 @@ class _ChatInputState extends BaseState<ChatInput> {
 
   /// Widget button cho attachment
   Widget _buildAttachmentButton({
-    required IconData icon,
+    required String icon,
     required String label,
     required VoidCallback onTap,
   }) {
@@ -486,10 +489,12 @@ class _ChatInputState extends BaseState<ChatInput> {
               color: Theme.of(context).primaryColor.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              color: Theme.of(context).primaryColor,
-              size: 28,
+            child: Center(
+              child: AppIcon(
+                icon,
+                color: Theme.of(context).primaryColor,
+                size: 28,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -594,7 +599,7 @@ class _ChatInputState extends BaseState<ChatInput> {
   }
 
   Widget _buildVoiceRecordingButton(BuildContext context) {
-    debugPrint('[ChatInput] _buildVoiceRecordingButton: _usesDesktopVoiceRecordingUx=$_usesDesktopVoiceRecordingUx');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final micButton = GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
@@ -609,15 +614,13 @@ class _ChatInputState extends BaseState<ChatInput> {
       onLongPressEnd:
           _usesDesktopVoiceRecordingUx ? null : _stopRecording,
       child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          Icons.mic,
-          color: Colors.white,
+        width: 44,
+        height: 44,
+        alignment: Alignment.center,
+        child: AppIcon(
+          AppIcons.mic,
+          color: isDark ? AppColors.iconDarkMode : AppColors.icon,
+          size: 26,
         ),
       ),
     );
@@ -742,49 +745,52 @@ class _ChatInputState extends BaseState<ChatInput> {
       return _buildRecordingUI();
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return OptimizedRepaintBoundary(
       perfTag: 'chat_input',
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimens.inputBarMargin,
-          vertical: AppDimens.inputBarMargin,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          border: Border(
+            top: BorderSide(
+              color: isDark ? AppColors.dividerDarkMode : AppColors.divider,
+              width: 0.5,
+            ),
+          ),
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(AppDimens.inputBarRadius),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadow,
-                blurRadius: AppDimens.inputBarElevation,
-                offset: const Offset(0, -1),
-              ),
-            ],
-          ),
-          padding: EdgeInsets.symmetric(
-            horizontal: AppConstants.kSmallPadding,
-            vertical: AppConstants.kSmallPadding,
-          ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 8.0,
+          vertical: 6.0,
+        ),
+        child: SafeArea(
+          top: false,
           child: Row(
             children: [
               if (widget.enableAttachments)
                 IconButton(
-                  icon: const Icon(Icons.attach_file),
+                  icon: AppIcon(
+                    AppIcons.addCircle,
+                    color: isDark ? AppColors.iconDarkMode : AppColors.icon,
+                    size: 26,
+                  ),
                   onPressed: _showAttachmentMenu,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
+              const SizedBox(width: 8),
               Expanded(
                 child: CompositedTransformTarget(
                   link: _shortcodeLayerLink,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
+                      color: isDark
                           ? AppColors.inputBackgroundDarkMode
                           : AppColors.inputBackground,
-                      borderRadius:
-                          BorderRadius.circular(AppDimens.inputBarRadius),
+                      borderRadius: BorderRadius.circular(20.0),
                     ),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppConstants.kSmallPadding,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12.0,
                     ),
                     child: Row(
                       children: [
@@ -798,22 +804,50 @@ class _ChatInputState extends BaseState<ChatInput> {
                               border: InputBorder.none,
                               hintText: widget.hint,
                               hintStyle: TextStyle(
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color: isDark
                                     ? AppColors.textHintDarkMode
                                     : AppColors.textHint,
+                                fontSize: 15.0,
+                              ),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 10.0,
                               ),
                             ),
+                            style: const TextStyle(fontSize: 15.0),
                             onSubmitted: (_) {
                               _handleSendMessage();
                             },
                           ),
+                        ),
+                        IconButton(
+                          icon: AppIcon(
+                            AppIcons.emoji,
+                            color: isDark ? AppColors.iconDarkMode : AppColors.icon,
+                            size: 22,
+                          ),
+                          onPressed: () {
+                            EmojiPickerBottomSheet.show(
+                              context,
+                              onEmojiSelected: (emoji) {
+                                EmojiTextEditingHelper.insertEmoji(
+                                  _textController,
+                                  emoji,
+                                );
+                              },
+                              textController: _textController,
+                            );
+                          },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                         ),
                       ],
                     ),
                   ),
                 ),
               ),
-              // Morphing send/mic button with rotation animation
+              const SizedBox(width: 8),
+              // Morphing send/mic button
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: AppDimens.durationFast),
                 transitionBuilder: (child, animation) {
@@ -829,11 +863,14 @@ class _ChatInputState extends BaseState<ChatInput> {
                       )
                     : IconButton(
                         key: const ValueKey('send_button'),
-                        icon: Icon(
-                          Icons.send_rounded,
+                        icon: AppIcon(
+                          AppIcons.send,
                           color: AppColors.primary,
+                          size: 26,
                         ),
                         onPressed: _handleSendMessage,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
               ),
             ],
@@ -880,13 +917,13 @@ class _ChatInputState extends BaseState<ChatInput> {
           child: Row(
             children: [
               if (_isDraggingToCancel)
-                Icon(
-                  Icons.delete,
+                AppIcon(
+                  AppIcons.deleteRecording,
                   color: Colors.red,
                 )
               else
-                Icon(
-                  Icons.mic,
+                AppIcon(
+                  AppIcons.micRecording,
                   color: Colors.red,
                 ),
               const SizedBox(width: 16),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/inputs/app_text_field.dart';
 
 /// **APP SEARCH FIELD**
@@ -112,10 +114,10 @@ class AppSearchFieldState extends BaseState<AppSearchField> {
     return AppTextField(
       controller: _controller,
       hint: widget.hint ?? l10n.search,
-      prefixIcon: Icons.search,
+      prefixIcon: AppIcons.search,
       suffixIcon: _hasText
           ? IconButton(
-              icon: Icon(Icons.clear, size: AppDimens.iconMedium),
+              icon: AppIcon(AppIcons.close, size: AppDimens.iconMedium),
               onPressed: _handleClear,
               tooltip: l10n.close,
             )

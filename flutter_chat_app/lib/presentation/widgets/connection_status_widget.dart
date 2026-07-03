@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/services/connectivity_analyzer_service.dart';
@@ -78,9 +80,9 @@ class ConnectionStatusWidget extends StatelessWidget {
         : Colors.orange;
     
     // Icon dựa vào loại kết nối
-    final IconData icon = connectionType == realtime.ConnectionType.webSocket 
-        ? Icons.wifi 
-        : Icons.network_check;
+    final String iconPath = connectionType == realtime.ConnectionType.webSocket 
+        ? AppIcons.wifiConnected 
+        : AppIcons.networkCheck;
     
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
@@ -88,7 +90,7 @@ class ConnectionStatusWidget extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14.0, color: color),
+          AppIcon(iconPath, size: 14.0, color: color),
           const SizedBox(width: 8.0),
           Text(
             typeText,
@@ -144,7 +146,7 @@ class ConnectionStatusWidget extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.cloud_off, size: 14.0, color: Colors.red),
+            AppIcon(AppIcons.cloudOff, size: 14.0, color: Colors.red),
             const SizedBox(width: 8.0),
             Text(
               "Mất kết nối - Nhấn để thử lại",

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/composer_constants.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/format_button.dart';
@@ -66,25 +67,25 @@ class FormattingPanel extends StatelessWidget {
               children: [
                 // ── Inline styles ──
                 FormatButton(
-                  icon: Icons.format_bold,
+                  icon: AppIcons.formatBold,
                   tooltip: 'Bold',
                   isActive: attrs.containsKey(Attribute.bold.key),
                   onPressed: () => _toggleInline(Attribute.bold),
                 ),
                 FormatButton(
-                  icon: Icons.format_italic,
+                  icon: AppIcons.formatItalic,
                   tooltip: 'Italic',
                   isActive: attrs.containsKey(Attribute.italic.key),
                   onPressed: () => _toggleInline(Attribute.italic),
                 ),
                 FormatButton(
-                  icon: Icons.format_underlined,
+                  icon: AppIcons.formatUnderline,
                   tooltip: 'Underline',
                   isActive: attrs.containsKey(Attribute.underline.key),
                   onPressed: () => _toggleInline(Attribute.underline),
                 ),
                 FormatButton(
-                  icon: Icons.format_strikethrough,
+                  icon: AppIcons.formatStrikethrough,
                   tooltip: 'Strikethrough',
                   isActive: attrs.containsKey(Attribute.strikeThrough.key),
                   onPressed: () => _toggleInline(Attribute.strikeThrough),
@@ -94,13 +95,13 @@ class FormattingPanel extends StatelessWidget {
 
                 // ── Block styles ──
                 FormatButton(
-                  icon: Icons.format_list_bulleted,
+                  icon: AppIcons.formatBulletList,
                   tooltip: 'Bullet list',
                   isActive: attrs[Attribute.list.key]?.value == 'bullet',
                   onPressed: () => _toggleBlock(Attribute.ul),
                 ),
                 FormatButton(
-                  icon: Icons.format_list_numbered,
+                  icon: AppIcons.formatNumberList,
                   tooltip: 'Numbered list',
                   isActive: attrs[Attribute.list.key]?.value == 'ordered',
                   onPressed: () => _toggleBlock(Attribute.ol),
@@ -110,7 +111,7 @@ class FormattingPanel extends StatelessWidget {
 
                 // ── Link ──
                 FormatButton(
-                  icon: Icons.link,
+                  icon: AppIcons.formatLink,
                   tooltip: 'Insert link',
                   isActive: attrs.containsKey(Attribute.link.key),
                   onPressed: onInsertLink,
@@ -118,7 +119,7 @@ class FormattingPanel extends StatelessWidget {
 
                 // ── Clear formatting ──
                 FormatButton(
-                  icon: Icons.format_clear,
+                  icon: AppIcons.formatClear,
                   tooltip: 'Clear formatting',
                   onPressed: _clearFormatting,
                 ),
@@ -127,13 +128,13 @@ class FormattingPanel extends StatelessWidget {
 
                 // ── Undo / Redo ──
                 FormatButton(
-                  icon: Icons.undo,
+                  icon: AppIcons.undo,
                   tooltip: 'Undo',
                   isEnabled: controller.hasUndo,
                   onPressed: () => controller.undo(),
                 ),
                 FormatButton(
-                  icon: Icons.redo,
+                  icon: AppIcons.redo,
                   tooltip: 'Redo',
                   isEnabled: controller.hasRedo,
                   onPressed: () => controller.redo(),

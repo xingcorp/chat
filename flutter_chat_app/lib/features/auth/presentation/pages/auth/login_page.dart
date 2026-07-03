@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
 import 'package:flutter_chat_app/core/config/app_identity.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 import 'package:flutter_chat_app/features/auth/presentation/blocs/auth/auth_bloc.dart';
@@ -463,7 +464,7 @@ class _LoginPageState extends BaseState<LoginPage> {
             controller: _phoneController,
             label: context.l10n.phoneNumber,
             hint: context.l10n.phoneNumber,
-            prefixIcon: Icons.phone_outlined,
+            prefixIcon: AppIcons.contact, // TODO: Add phone SVG icon to assets and AppIcons
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.next,
             enabled: !isLoading,

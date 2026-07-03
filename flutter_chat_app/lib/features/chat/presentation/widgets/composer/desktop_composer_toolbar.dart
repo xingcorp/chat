@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/composer_constants.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/app_icon.dart';
 
 /// Zalo-style desktop toolbar row displayed above the editor.
 ///
@@ -62,49 +64,49 @@ class DesktopComposerToolbar extends StatelessWidget {
         children: [
           // ── Sticker (distinct from emoji) ──
           _ToolbarIcon(
-            icon: Icons.sticky_note_2_outlined,
+            icon: AppIcons.sticker,
             tooltip: context.l10n.stickers,
             color: iconColor,
             onPressed: onStickerPressed,
           ),
           // ── Emoji ──
           _ToolbarIcon(
-            icon: Icons.emoji_emotions_outlined,
+            icon: AppIcons.emoji,
             tooltip: 'Emoji',
             color: iconColor,
             onPressed: onEmojiPressed,
           ),
           // ── Image gallery ──
           _ToolbarIcon(
-            icon: Icons.image_outlined,
+            icon: AppIcons.imageGallery,
             tooltip: context.l10n.attachments,
             color: iconColor,
             onPressed: onImagePressed,
           ),
           // ── Camera ──
           _ToolbarIcon(
-            icon: Icons.camera_alt_outlined,
+            icon: AppIcons.camera,
             tooltip: 'Camera',
             color: iconColor,
             onPressed: onCameraPressed,
           ),
           // ── Video ──
           _ToolbarIcon(
-            icon: Icons.videocam_outlined,
+            icon: AppIcons.video,
             tooltip: 'Video',
             color: iconColor,
             onPressed: onVideoPressed,
           ),
           // ── File attach ──
           _ToolbarIcon(
-            icon: Icons.attach_file,
+            icon: AppIcons.attach,
             tooltip: context.l10n.attachments,
             color: iconColor,
             onPressed: onFilePressed,
           ),
           // ── Location ──
           _ToolbarIcon(
-            icon: Icons.location_on_outlined,
+            icon: AppIcons.location,
             tooltip: 'Location',
             color: iconColor,
             onPressed: onLocationPressed,
@@ -112,14 +114,14 @@ class DesktopComposerToolbar extends StatelessWidget {
           // ── Screenshot ──
           if (onScreenshotPressed != null)
             _ToolbarIcon(
-              icon: Icons.screenshot_outlined,
+              icon: AppIcons.screenshot,
               tooltip: 'Screenshot',
               color: iconColor,
               onPressed: onScreenshotPressed!,
             ),
           // ── Format toggle (Aa) ──
           _ToolbarIcon(
-            icon: Icons.text_format,
+            icon: AppIcons.textFormat,
             tooltip: isFormattingExpanded
                 ? context.l10n.save
                 : 'Aa',
@@ -130,7 +132,7 @@ class DesktopComposerToolbar extends StatelessWidget {
           // ── More options ──
           if (onMorePressed != null)
             _ToolbarIcon(
-              icon: Icons.more_horiz,
+              icon: AppIcons.moreHoriz,
               tooltip: context.l10n.attachments,
               color: iconColor,
               onPressed: onMorePressed!,
@@ -149,7 +151,7 @@ class _ToolbarIcon extends StatelessWidget {
     required this.onPressed,
   });
 
-  final IconData icon;
+  final String icon;
   final String tooltip;
   final Color color;
   final VoidCallback onPressed;
@@ -166,7 +168,7 @@ class _ToolbarIcon extends StatelessWidget {
         child: SizedBox(
           width: ComposerConstants.formatButtonSize,
           height: ComposerConstants.formatButtonSize,
-          child: Icon(
+          child: AppIcon(
             icon,
             size: ComposerConstants.desktopToolbarIconSize,
             color: color,
