@@ -20,7 +20,7 @@ import 'package:flutter_chat_app/features/chat/presentation/blocs/chat/chat_bloc
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/audio_player_widget.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/bubble_shape.dart';
-import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/emoji_picker_widget.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/chat/reaction_emoji_picker.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/expandable_rich_text.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/composer/rich_text_bubble.dart';
 import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/forward_preview.dart';
@@ -1043,7 +1043,7 @@ class _MessageItemState extends State<MessageItem>
                           }
                         },
                         onAddReaction: () {
-                          EmojiPickerBottomSheet.show(
+                          ReactionEmojiPickerBottomSheet.show(
                             context,
                             onEmojiSelected: (emoji) {
                               context.read<MessageBloc>().add(
@@ -1147,7 +1147,7 @@ class _MessageItemState extends State<MessageItem>
                     }
                   },
                   onAddReaction: () {
-                    EmojiPickerBottomSheet.show(
+                    ReactionEmojiPickerBottomSheet.show(
                       context,
                       onEmojiSelected: (emoji) {
                         context.read<MessageBloc>().add(
@@ -1510,7 +1510,7 @@ class _MessageItemState extends State<MessageItem>
                   }
                 },
                 onAddReaction: () {
-                  EmojiPickerBottomSheet.show(
+                  ReactionEmojiPickerBottomSheet.show(
                     context,
                     onEmojiSelected: (emoji) {
                       context.read<MessageBloc>().add(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_reaction_emoji.dart';
 
 /// Widget hiển thị reactions gom nhóm dưới message bubble
 ///
@@ -147,9 +148,9 @@ class ReactionBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Emoji
-          Text(
-            reaction.code,
-            style: const TextStyle(fontSize: 18.0),
+          AppReactionEmoji(
+            emoji: reaction.code,
+            size: 20.0,
           ),
           const SizedBox(width: 4.0),
           // Số lượng reactors
@@ -638,9 +639,9 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                                     theme.colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(12.0),
                               ),
-                              child: Text(
-                                widget.emojiCode,
-                                style: const TextStyle(fontSize: 28.0),
+                              child: AppReactionEmoji(
+                                emoji: widget.emojiCode,
+                                size: 32.0,
                               ),
                             ),
                             const SizedBox(width: 12.0),
@@ -773,10 +774,9 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                                           borderRadius:
                                               BorderRadius.circular(12.0),
                                         ),
-                                        child: Text(
-                                          widget.emojiCode,
-                                          style:
-                                              const TextStyle(fontSize: 16.0),
+                                        child: AppReactionEmoji(
+                                          emoji: widget.emojiCode,
+                                          size: 20.0,
                                         ),
                                       ),
                                     ),

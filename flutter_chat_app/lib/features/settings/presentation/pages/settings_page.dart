@@ -232,6 +232,7 @@ class _SettingsPageState extends BaseState<SettingsPage> {
               displayName: _currentUser?.fullName,
               size: AvatarSize.large,
               hasBorder: false,
+              enableHero: false,
             ),
             const SizedBox(width: AppDimens.spaceMedium),
             Expanded(

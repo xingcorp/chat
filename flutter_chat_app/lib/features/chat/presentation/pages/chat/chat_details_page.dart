@@ -74,6 +74,7 @@ import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/app_
 import 'package:flutter_chat_app/presentation/widgets/design_system/buttons/button_enums.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/cards/app_card.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/chat/sticker_picker.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/chat/reaction_emoji_picker.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/dialogs/app_alert_dialog.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_progress_indicator.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/feedback/app_snack_bar.dart';
@@ -212,15 +213,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
   // Highlight state (scroll-to-reply)
   // ══════════════════════════════════════════
   String? _highlightedMessageId;
-
-  // ══════════════════════════════════════════
-  // Bubble keys for desktop hover positioning
-  // ══════════════════════════════════════════
-  final Map<String, GlobalKey> _bubbleKeys = {};
-
-  GlobalKey _getBubbleKey(String messageId) {
-    return _bubbleKeys.putIfAbsent(messageId, () => GlobalKey());
-  }
 
   // ══════════════════════════════════════════
   // Mark-as-read state
@@ -3154,7 +3146,6 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                         '\u{1F622}',
                         '\u{1F621}'
                       ],
-                bubbleKey: _getBubbleKey(uiState.id),
                 callbacks: MessageActionCallbacks(
                   onReaction: (emoji) => _messageBloc.add(
                     ToggleReaction(
@@ -3218,10 +3209,10 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                     );
                   },
                 ),
-                child: MessageItem(
+                childBuilder: (context, bubbleKey) => MessageItem(
                   uiState: uiState,
                   currentUserId: _currentUserId,
-                  bubbleKey: _getBubbleKey(uiState.id),
+                  bubbleKey: bubbleKey,
                   isSelectionMode: _isSelectionMode,
                   isSelected: _selectedMessageIds.contains(uiState.id),
                   onSelectionChanged: (_) => _toggleSelection(uiState.id),
@@ -3449,7 +3440,7 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
                     const SizedBox(width: 8),
                     _buildAddReactionItem(ctx, () {
                       Navigator.pop(ctx);
-                      EmojiPickerBottomSheet.show(this.context,
+                      ReactionEmojiPickerBottomSheet.show(this.context,
                           onEmojiSelected: (emoji) => _messageBloc.add(
                               ToggleReaction(
                                   messageId: message.id, emojiCode: emoji)));

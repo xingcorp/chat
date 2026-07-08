@@ -207,6 +207,7 @@ flutter:
     - assets/translations/
     - assets/animations/
     - assets/stickers/
+    - assets/images/reactions/
 
   # Production-optimized fonts (temporarily disabled)
   # fonts:

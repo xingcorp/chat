@@ -205,6 +205,7 @@ class _ContactsPageState extends BaseState<ContactsPage> {
           displayName: user.fullName,
           size: AvatarSize.medium,
           hasBorder: false,
+          enableHero: false,
         ),
       ),
       title: AppText(

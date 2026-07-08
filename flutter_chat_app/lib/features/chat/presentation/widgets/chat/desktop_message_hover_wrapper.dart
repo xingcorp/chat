@@ -15,16 +15,28 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message
 /// and to the left for the current user's messages.
 ///
 /// On mobile (or when [isDesktop] is false), this widget is a transparent
-/// pass-through with zero overhead — it simply returns [child] directly.
+/// pass-through with zero overhead — it simply builds the child directly.
 ///
 /// **Key behaviors**:
 /// - Uses [MouseRegion] for hover detection
 /// - Uses [OverlayEntry] to render the action bar above the scroll container
-/// - Uses [bubbleKey] to measure the actual bubble position for precise placement
+/// - Owns a per-instance [GlobalKey] (in its [State]) that it hands to
+///   [childBuilder] so it can measure the actual bubble position for precise
+///   placement. The key MUST NOT be shared across widgets — see note below.
 /// - 200ms hide delay prevents flicker when cursor moves between message and bar
 /// - Only one action bar is visible at a time (singleton pattern)
 /// - Scroll events (both mouse wheel and precision touchpad) dismiss the bar
 /// - Right-click opens the "More" actions popup directly
+///
+/// **Why [childBuilder] instead of a plain `child`**:
+/// [ScrollablePositionedList] builds each item in TWO internal lists (visible +
+/// measurement registry — see `element_registry.dart`), calling the same
+/// `itemBuilder` for both in the same frame. If a single [GlobalKey] object is
+/// created outside (e.g. a page-level `Map<messageId, GlobalKey>`) and injected
+/// into both subtrees, Flutter tries to reparent the same key across two live
+/// elements in one frame → `_retakeInactiveElement` assertion crash. Owning the
+/// key inside this widget's [State] guarantees each element subtree gets its
+/// own key instance, so duplication is impossible.
 ///
 /// **Usage**:
 /// ```dart
@@ -34,14 +46,18 @@ import 'package:flutter_chat_app/features/chat/presentation/widgets/chat/message
 ///   isTextMessage: uiState.contentType == ContentType.text,
 ///   enabled: !_isSelectionMode && uiState.message != null,
 ///   quickReactions: ['👍', '❤️', '😂', '😮', '😢', '😡'],
-///   bubbleKey: bubbleKey,
 ///   callbacks: MessageActionCallbacks(...),
-///   child: MessageItem(bubbleKey: bubbleKey, ...),
+///   childBuilder: (context, bubbleKey) =>
+///       MessageItem(bubbleKey: bubbleKey, ...),
 /// )
 /// ```
 class DesktopMessageHoverWrapper extends BaseStatefulWidget {
-  /// The message widget to wrap (typically a [MessageItem])
-  final Widget child;
+  /// Builds the message widget to wrap (typically a [MessageItem]).
+  ///
+  /// Receives the per-instance bubble [GlobalKey] owned by this widget's
+  /// [State]. Attach it to the bubble's [RepaintBoundary] so the hover bar can
+  /// be positioned beside the bubble. Do NOT store or share this key elsewhere.
+  final Widget Function(BuildContext context, GlobalKey bubbleKey) childBuilder;
 
   /// All action callbacks for the hover action bar
   final MessageActionCallbacks callbacks;
@@ -61,21 +77,15 @@ class DesktopMessageHoverWrapper extends BaseStatefulWidget {
   /// Whether hover actions are enabled (false in selection mode, deleted msgs)
   final bool enabled;
 
-  /// Key attached to the message bubble [RepaintBoundary] inside [MessageItem].
-  /// Used to measure the bubble's exact position for side-placement.
-  /// When null, falls back to legacy above/below positioning.
-  final GlobalKey? bubbleKey;
-
   const DesktopMessageHoverWrapper({
     super.key,
-    required this.child,
+    required this.childBuilder,
     required this.callbacks,
     required this.isCurrentUser,
     required this.isTextMessage,
     required this.isDesktop,
     required this.quickReactions,
     this.enabled = true,
-    this.bubbleKey,
   });
 
   @override
@@ -123,6 +133,12 @@ class _DesktopMessageHoverWrapperState
   bool _isMouseOnMessage = false;
   bool _isMouseOnBar = false;
   final GlobalKey _moreButtonKey = GlobalKey();
+
+  /// Per-instance key attached to the message bubble via [childBuilder].
+  /// Owned by this State (never shared) so it is unique per element subtree,
+  /// which is what prevents the [ScrollablePositionedList] double-build from
+  /// duplicating a GlobalKey. Used to measure the bubble for side-placement.
+  final GlobalKey _bubbleKey = GlobalKey();
 
   /// Compact bar estimated height (4 icon buttons + padding).
   static const double _barHeight = 36.0;
@@ -346,8 +362,9 @@ class _DesktopMessageHoverWrapperState
     // STRATEGY 1: Use bubbleKey to position BESIDE the bubble (Lark-style)
     // -----------------------------------------------------------------------
     RenderBox? bubbleRenderBox;
-    if (widget.bubbleKey?.currentContext != null) {
-      final renderObj = widget.bubbleKey!.currentContext!.findRenderObject();
+    final bubbleContext = _bubbleKey.currentContext;
+    if (bubbleContext != null) {
+      final renderObj = bubbleContext.findRenderObject();
       if (renderObj is RenderBox && renderObj.hasSize) {
         bubbleRenderBox = renderObj;
       }
@@ -400,7 +417,7 @@ class _DesktopMessageHoverWrapperState
     }
 
     // -----------------------------------------------------------------------
-    // STRATEGY 2: Fallback — legacy above/below positioning (no bubbleKey)
+    // STRATEGY 2: Fallback — legacy above/below positioning (bubble not measured)
     // -----------------------------------------------------------------------
     double dx;
     if (widget.isCurrentUser) {
@@ -476,9 +493,11 @@ class _DesktopMessageHoverWrapperState
 
   @override
   Widget build(BuildContext context) {
-    // On mobile or when disabled: zero-overhead pass-through
+    // On mobile or when disabled: zero-overhead pass-through.
+    // Still build via childBuilder (single subtree per State → the bubble key
+    // stays unique); it simply goes unused for measurement here.
     if (!widget.isDesktop || !widget.enabled) {
-      return widget.child;
+      return widget.childBuilder(context, _bubbleKey);
     }
 
     return Listener(
@@ -503,7 +522,7 @@ class _DesktopMessageHoverWrapperState
         onHover: (_) => _onMessageMouseMove(),
         child: GestureDetector(
           onSecondaryTapUp: _onSecondaryTap,
-          child: widget.child,
+          child: widget.childBuilder(context, _bubbleKey),
         ),
       ),
     );

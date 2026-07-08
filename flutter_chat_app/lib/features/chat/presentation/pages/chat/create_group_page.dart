@@ -718,6 +718,7 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
                       displayName: user.fullName ?? user.username,
                       size: AvatarSize.medium,
                       hasBorder: false,
+                      enableHero: false,
                     ),
                     GestureDetector(
                       onTap: () => _toggleUser(user),
@@ -778,6 +779,7 @@ class _CreateGroupPageState extends BaseState<CreateGroupPage> {
           displayName: user.fullName ?? user.username,
           size: AvatarSize.medium,
           hasBorder: false,
+          enableHero: false,
         ),
       ),
       title: AppText(
