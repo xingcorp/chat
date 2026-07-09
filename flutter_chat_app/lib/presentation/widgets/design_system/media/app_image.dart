@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/config/app_environment.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 
@@ -171,6 +172,7 @@ class AppImage extends BaseStatelessWidget {
         width: width,
         height: height,
         fit: fit,
+        package: AppEnvironment.assetPackage,
         errorBuilder: (context, error, stackTrace) =>
             errorWidget ?? _buildDefaultError(context),
       );

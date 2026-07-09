@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/config/app_environment.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_colors.dart';
 
@@ -89,6 +90,7 @@ class AppIcon extends BaseStatelessWidget {
       height: effectiveSize,
       colorFilter: ColorFilter.mode(effectiveColor, BlendMode.srcIn),
       semanticsLabel: semanticLabel,
+      package: AppEnvironment.assetPackage,
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/base/base_widget.dart';
+import 'package:flutter_chat_app/core/config/app_environment.dart';
 import 'package:flutter_chat_app/core/constants/app_dimens.dart';
 import 'package:flutter_chat_app/core/theme/app_text_styles.dart';
 
@@ -292,6 +293,7 @@ class AppAvatar extends BaseStatelessWidget {
       return Image.asset(
         assetPath!,
         fit: BoxFit.cover,
+        package: AppEnvironment.assetPackage,
         errorBuilder: (context, error, stackTrace) => _buildError(theme),
       );
     }

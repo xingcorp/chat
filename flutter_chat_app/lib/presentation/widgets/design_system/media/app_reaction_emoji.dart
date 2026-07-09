@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/config/app_environment.dart';
 
 /// Design system component to render high-quality 3D reaction emojis.
 ///
@@ -53,7 +54,7 @@ class AppReactionEmoji extends StatelessWidget {
         width: size,
         height: size,
         fit: BoxFit.contain,
-        package: 'flutter_chat_app',
+        package: AppEnvironment.assetPackage,
         errorBuilder: (context, error, stackTrace) => Text(
           emoji,
           style: TextStyle(

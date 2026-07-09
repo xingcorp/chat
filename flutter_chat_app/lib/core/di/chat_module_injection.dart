@@ -24,6 +24,7 @@ import 'package:flutter_chat_app/core/utils/logger.dart' show AppLogger;
 import 'package:flutter_chat_app/core/cache/app_cache_manager.dart';
 import 'package:flutter_chat_app/chat_config.dart';
 import 'package:flutter_chat_app/core/config/app_config.dart';
+import 'package:flutter_chat_app/core/config/app_environment.dart';
 import 'package:flutter_chat_app/core/error/retry_config.dart' as app_retry;
 import 'package:flutter_chat_app/core/initialization/media_kit_initializer.dart';
 import 'package:flutter_chat_app/core/localization/error_message_provider.dart';
@@ -115,6 +116,10 @@ class ChatModuleInjection {
   /// Initialize all dependencies from [ChatConfig].
   static Future<void> initialize(ChatConfig config) async {
     _getIt.allowReassignment = true;
+
+    // Package mode: bundled assets resolve under packages/<name>/... — set the
+    // runtime mode before any UI (and its asset loaders) can build.
+    AppEnvironment.mode = AppRuntimeMode.package;
 
     _logger.i('ChatModule: Initializing DI from ChatConfig...');
     final stopwatch = Stopwatch()..start();
@@ -484,8 +489,9 @@ class ChatModuleInjection {
     _tryUnregister<IChatRepository>();
     _tryUnregister<ChatLocalDataSource>();
 
-    // ── Step 9: Clear AppConfig overrides ──
+    // ── Step 9: Clear AppConfig overrides + reset runtime mode ──
     AppConfig.clearOverrides();
+    AppEnvironment.mode = AppRuntimeMode.standalone;
 
     // ── Step 10: Unregister user-specific named instances — MEDIUM PRIORITY ──
     // These were set in _registerExternalDeps() with the old user's values.
