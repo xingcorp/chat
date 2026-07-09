@@ -349,7 +349,16 @@ class _DesktopMessageHoverWrapperState
       ),
     );
 
-    overlay.insert(_overlayEntry!);
+    // Defer insert to after the current frame. Inserting synchronously inside
+    // a MouseRegion.onEnter/onHover callback mutates the tree (and this overlay
+    // itself contains MouseRegions) while the framework is still dispatching the
+    // pointer event, which trips a MouseTracker assertion (PointerAdded/Removed
+    // pairing) in debug builds.
+    final entry = _overlayEntry!;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _overlayEntry != entry || entry.mounted) return;
+      overlay.insert(entry);
+    });
   }
 
   _BarPosition _calculateBarPosition({
@@ -444,7 +453,12 @@ class _DesktopMessageHoverWrapperState
 
   void _dismissOverlay() {
     MoreActionsPopup.dismiss();
-    _overlayEntry?.remove();
+    // Only remove if actually inserted — insert is deferred to post-frame, so a
+    // quick enter→exit can call dismiss before the entry was ever mounted.
+    final entry = _overlayEntry;
+    if (entry != null && entry.mounted) {
+      entry.remove();
+    }
     _overlayEntry = null;
     _hideTimer?.cancel();
     if (_activeInstance == this) {

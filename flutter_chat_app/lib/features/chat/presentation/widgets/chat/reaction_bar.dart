@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/constants/app_dimens.dart';
+import 'package:flutter_chat_app/core/constants/app_icons.dart';
 import 'package:flutter_chat_app/features/chat/presentation/models/message_ui_state.dart';
 import 'package:flutter_chat_app/l10n/l10n.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_avatar.dart';
+import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_icon.dart';
 import 'package:flutter_chat_app/presentation/widgets/design_system/media/app_reaction_emoji.dart';
 
 /// Widget hiển thị reactions gom nhóm dưới message bubble
@@ -205,10 +208,12 @@ class ReactionBar extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(16.0),
           ),
-          child: Icon(
-            Icons.add_rounded,
-            size: 18.0,
-            color: iconColor,
+          child: Center(
+            child: AppIcon.svg(
+              AppIcons.add,
+              size: AppDimens.iconSmall,
+              color: iconColor,
+            ),
           ),
         ),
       ),
@@ -300,7 +305,8 @@ class _AnimatedReactionChipState extends State<_AnimatedReactionChip>
 
     _removeOverlay();
 
-    _overlayEntry = OverlayEntry(
+    final overlay = Overlay.of(context);
+    final entry = OverlayEntry(
       builder: (context) {
         return _ReactorTooltipOverlay(
           link: _layerLink,
@@ -309,14 +315,26 @@ class _AnimatedReactionChipState extends State<_AnimatedReactionChip>
         );
       },
     );
+    _overlayEntry = entry;
 
-    Overlay.of(context).insert(_overlayEntry!);
+    // Defer insert to after the current frame. Inserting synchronously inside
+    // a MouseRegion.onEnter callback mutates the tree while the framework is
+    // still dispatching the pointer event, which trips a MouseTracker
+    // assertion (PointerAdded/Removed pairing) in debug builds.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _overlayEntry != entry) return;
+      overlay.insert(entry);
+    });
   }
 
   void _removeOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry?.dispose();
+    final entry = _overlayEntry;
     _overlayEntry = null;
+    if (entry == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (entry.mounted) entry.remove();
+      entry.dispose();
+    });
   }
 
   @override
@@ -665,7 +683,10 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.close_rounded),
+                              icon: AppIcon.svg(
+                                AppIcons.close,
+                                size: AppDimens.iconMedium,
+                              ),
                               onPressed: _handleClose,
                               style: IconButton.styleFrom(
                                 backgroundColor:
@@ -686,9 +707,9 @@ class _ReactionDetailModalState extends State<ReactionDetailModal>
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
-                                      Icons.sentiment_neutral_rounded,
-                                      size: 48,
+                                    AppIcon.svg(
+                                      AppIcons.emoji,
+                                      size: AppDimens.iconXLarge,
                                       color: theme.disabledColor,
                                     ),
                                     const SizedBox(height: 16),

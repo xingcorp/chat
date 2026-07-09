@@ -82,6 +82,9 @@ class AppIcons {
   /// Microphone (voice recording — idle state)
   static const String mic = '$_light/microphone.svg';
 
+  /// Microphone filled — for solid circular action button (send/mic morph)
+  static const String micFill = '$_fill/microphone.svg';
+
   /// Emoji / smiley face picker
   static const String emoji = '$_light/smiley.svg';
 

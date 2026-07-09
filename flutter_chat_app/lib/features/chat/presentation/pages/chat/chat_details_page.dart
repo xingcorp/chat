@@ -2811,36 +2811,71 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
       );
     }
 
-    // Mobile: single-row layout with QuillMentionComposer
-    return AppCard.outlined(
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(AppDimens.paddingSmall),
+    // Mobile: [+]  [ pill: text + sticker ]  [circular send/mic]
+    // Layout mirrors Messenger/Zalo — the pill groups the editor with its
+    // inline sticker action, keeping the outer row visually balanced.
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? AppColors.dividerDarkMode : AppColors.divider,
+            width: 0.5,
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.paddingSmall,
+        vertical: AppDimens.spaceXSmall,
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           AppIconButton(
             icon: AppIcons.addCircle,
             onPressed: _showAttachmentPicker,
             tooltip: context.l10n.attachments,
           ),
+          const SizedBox(width: AppDimens.spaceXSmall),
           Expanded(
-            child: QuillMentionComposer(
-              composerController: _composerController,
-              mentionTracker: _mentionTracker,
-              focusNode: _messageFocusNode,
-              members: _chat?.members ?? const <ConversationMember>[],
-              currentUserId: _currentUserId,
-              slashCommands: _buildSlashCommandOptions(context),
-              placeholder: context.l10n.typeMessage,
-              minHeight: ComposerConstants.mobileEditorMinHeight,
-              maxHeight: ComposerConstants.mobileEditorMaxHeight,
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.inputBackgroundDarkMode
+                    : AppColors.inputBackground,
+                borderRadius: BorderRadius.circular(AppDimens.radiusXLarge),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: QuillMentionComposer(
+                      composerController: _composerController,
+                      mentionTracker: _mentionTracker,
+                      focusNode: _messageFocusNode,
+                      members:
+                          _chat?.members ?? const <ConversationMember>[],
+                      currentUserId: _currentUserId,
+                      slashCommands: _buildSlashCommandOptions(context),
+                      placeholder: context.l10n.typeMessage,
+                      minHeight: ComposerConstants.mobileEditorMinHeight,
+                      maxHeight: ComposerConstants.mobileEditorMaxHeight,
+                    ),
+                  ),
+                  AppIconButton(
+                    icon: AppIcons.sticker,
+                    onPressed: _showStickerPicker,
+                    tooltip: context.l10n.stickers,
+                    size: ButtonSize.small,
+                  ),
+                  const SizedBox(width: AppDimens.spaceXSmall),
+                ],
+              ),
             ),
           ),
-          AppIconButton(
-            icon: AppIcons.sticker,
-            onPressed: _showStickerPicker,
-            tooltip: context.l10n.stickers,
-          ),
+          const SizedBox(width: AppDimens.spaceXSmall),
           // Send / Mic button — reacts to both text changes and file attachments
           BlocBuilder<FileAttachmentBloc, FileAttachmentState>(
             bloc: _fileAttachmentBloc,
@@ -2850,14 +2885,15 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
               final canSend = canSendText || attachState.hasFiles;
 
               if (canSend) {
-                return AppIconButton(
+                return _buildCircularActionButton(
                   icon: _isEditMode ? AppIcons.statusSent : AppIcons.send,
                   onPressed: _sendMessage,
-                  tooltip: _isEditMode ? context.l10n.save : context.l10n.send,
+                  tooltip:
+                      _isEditMode ? context.l10n.save : context.l10n.send,
                 );
               }
               if (_isEditMode) {
-                return AppIconButton(
+                return _buildCircularActionButton(
                   icon: AppIcons.statusSent,
                   onPressed: null,
                   tooltip: context.l10n.save,
@@ -2867,6 +2903,47 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
             },
           ),
         ],
+      ),
+    );
+  }
+
+  /// Solid circular brand-colored action button (send / save).
+  /// Visually consistent with [_buildMicButton] so the morph between
+  /// send and mic states feels seamless.
+  Widget _buildCircularActionButton({
+    required String icon,
+    required VoidCallback? onPressed,
+    required String tooltip,
+  }) {
+    final bool enabled = onPressed != null;
+    return AppTooltip(
+      message: tooltip,
+      enableHover: _usesDesktopVoiceRecordingUx,
+      enableLongPress: false,
+      child: GestureDetector(
+        onTap: onPressed,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: AppDimens.iconButtonSize,
+          height: AppDimens.iconButtonSize,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: enabled
+                ? AppColors.primary
+                : AppColors.primary.withValues(alpha: 0.4),
+            shape: BoxShape.circle,
+          ),
+          // paper-plane-tilt carries its visual weight toward the top-right,
+          // so nudge it slightly to optically center within the circle.
+          child: Transform.translate(
+            offset: icon == AppIcons.send ? const Offset(-1, 1) : Offset.zero,
+            child: AppIcon.svg(
+              icon,
+              color: AppColors.textButton,
+              size: AppDimens.iconMedium,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -2892,12 +2969,13 @@ class _ChatDetailsPageState extends BaseState<ChatDetailsPage>
         child: Container(
           width: AppDimens.iconButtonSize,
           height: AppDimens.iconButtonSize,
+          alignment: Alignment.center,
           decoration: const BoxDecoration(
             color: AppColors.primary,
             shape: BoxShape.circle,
           ),
           child: const AppIcon.svg(
-            AppIcons.mic,
+            AppIcons.micFill,
             color: AppColors.textButton,
             size: AppDimens.iconMedium,
           ),

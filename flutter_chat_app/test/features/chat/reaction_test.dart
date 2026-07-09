@@ -81,13 +81,16 @@ void main() {
       // Convert to domain entity
       final entity = dto.toDomain();
 
-      // Verify entity has reactions
-      expect(entity.reactions, hasLength(2));
+      // Domain model stores one MessageReaction per user (flattened),
+      // so 2 reactorIds on 👍 + 1 on ❤️ = 3 entries.
+      expect(entity.reactions, hasLength(3));
       expect(entity.reactions[0].code, '👍');
       expect(entity.reactions[0].userId, 'user-2');
       expect(entity.reactions[0].userName, 'User Two');
-      expect(entity.reactions[1].code, '❤️');
-      expect(entity.reactions[1].userId, 'user-1');
+      expect(entity.reactions[1].code, '👍');
+      expect(entity.reactions[1].userId, 'user-3');
+      expect(entity.reactions[2].code, '❤️');
+      expect(entity.reactions[2].userId, 'user-1');
     });
 
     test('MessageListTransformer should group reactions correctly', () {
@@ -105,16 +108,19 @@ void main() {
             code: '👍',
             userId: 'user-2',
             userName: 'User Two',
+            createdAt: DateTime.now(),
           ),
           MessageReaction(
             code: '👍',
             userId: 'user-3',
             userName: 'User Three',
+            createdAt: DateTime.now(),
           ),
           MessageReaction(
             code: '❤️',
             userId: 'user-1',
             userName: 'Current User',
+            createdAt: DateTime.now(),
           ),
         ],
       );

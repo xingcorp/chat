@@ -910,7 +910,7 @@ class _MessageItemState extends State<MessageItem>
 
     final bubbleColor = hasOnlyFiles
         ? (isFromCurrentUser
-            ? theme.colorScheme.primary
+            ? AppColors.bubbleOwnGradientEnd
             : theme.colorScheme.surfaceContainerHighest)
         : (hasOnlyMedia
             ? Colors.transparent
@@ -919,7 +919,9 @@ class _MessageItemState extends State<MessageItem>
                 : theme.cardColor));
 
     final textColor = hasOnlyFiles
-        ? (theme.textTheme.bodyMedium?.color ?? Colors.black)
+        ? (isFromCurrentUser
+            ? AppColors.bubbleOwnText
+            : theme.textTheme.bodyMedium?.color ?? Colors.black)
         : (isFromCurrentUser
             ? AppColors.bubbleOwnText
             : theme.textTheme.bodyMedium?.color ?? Colors.black);
@@ -1218,7 +1220,7 @@ class _MessageItemState extends State<MessageItem>
               '${context.l10n.edited}  ',
               style: TextStyle(
                 color: editedColor,
-                fontSize: 10.0,
+                fontSize: 11.0,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -1227,7 +1229,7 @@ class _MessageItemState extends State<MessageItem>
               widget.uiState.formattedTime,
               style: TextStyle(
                 color: metaColor,
-                fontSize: 10.0,
+                fontSize: 11.0,
               ),
             ),
         ],
@@ -1463,7 +1465,7 @@ class _MessageItemState extends State<MessageItem>
                       '${context.l10n.edited}  ',
                       style: TextStyle(
                         color: textColor.withOpacity(0.5),
-                        fontSize: 10.0,
+                        fontSize: 11.0,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -1472,7 +1474,7 @@ class _MessageItemState extends State<MessageItem>
                       widget.uiState.formattedTime,
                       style: TextStyle(
                         color: textColor.withOpacity(0.7),
-                        fontSize: 10.0,
+                        fontSize: 11.0,
                       ),
                     ),
                 ],

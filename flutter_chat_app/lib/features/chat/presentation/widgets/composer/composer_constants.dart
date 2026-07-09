@@ -93,9 +93,9 @@ class ComposerConstants {
 
   // ───────────────────── Mobile ─────────────────────
 
-  /// Minimum height of the editor on mobile — matches [AppDimens.iconButtonSize]
-  /// so that single-line text aligns vertically with adjacent icon buttons.
-  static const double mobileEditorMinHeight = 48.0;
+  /// Minimum height of the editor on mobile — kept compact so a single-line
+  /// message reads tight inside the rounded input pill (Messenger/Zalo style).
+  static const double mobileEditorMinHeight = 40.0;
 
   /// Maximum height of the editor on mobile before scrolling.
   static const double mobileEditorMaxHeight = 150.0;
